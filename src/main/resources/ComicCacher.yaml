@@ -1,0 +1,3 @@
+cacheDirectory: "Z:/ComicCache"
+dailyComics:
+  - { name: "Adam At Home", startDate: 2008-01-09 }
