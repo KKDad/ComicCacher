@@ -1,4 +1,4 @@
-image: java:8-jdk
+image: 8u181-slim
 
 stages:
   - build
