@@ -1,7 +1,27 @@
-java:
+image: java:8-jdk
+
+stages:
+  - build
+  - test
+  
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle  
+
+build:
+  stage: build
+  script:
+    - ./gradlew assemble
+  artifacts:
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 week
+  only:
+    - master
+
+test:
   stage: test
   script:
-  - gradle test
+    - ./gradlew check
   artifacts:
     reports:
       junit: build/test-results/test/TEST-*.xml
