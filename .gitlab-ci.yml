@@ -1,4 +1,4 @@
-image: 8u181-slim
+image: openjdk:8-jdk
 
 stages:
   - build
