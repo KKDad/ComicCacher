@@ -7,10 +7,15 @@ before_script:
   - export GRADLE_USER_HOME=`pwd`/.gradle
   - chmod +x ./gradlew  
 
+cache:
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
 build:
   stage: build
   script:
-    - ./gradlew assemble
+    - ./gradlew build --debug
   artifacts:
     paths:
       - build/libs/*.jar
