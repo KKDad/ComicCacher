@@ -1,24 +1,29 @@
 package org.stapledon.config;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
-public class ComicCacherConfig {
-        public String getCacheDirectory() {
-                return cacheDirectory;
-        }
+public class ComicCacherConfig
+{
+        ComicCacherConfig()
+        {
+                this.dailyComics = new ArrayList<>();
 
-        public void setCacheDirectory(String cacheDirectory) {
-                this.cacheDirectory = cacheDirectory;
         }
+        public class GoComics
+        {
+                // Name of the Comic Strip
+                public String name;
 
-        public List<DailyComicConfig> getDailyComics() {
-                return dailyComics;
+                // Earliest Date to go back and start caching from
+                public LocalDate startDate;
+
+                public GoComics() {
+                        // No args constructor for required for Gson deserialize
+                }
+
         }
-
-        public void setDailyComics(List<DailyComicConfig> dailyComics) {
-                this.dailyComics = dailyComics;
-        }
-
-        private String cacheDirectory;
-        private List<DailyComicConfig> dailyComics;
+        public String cacheDirectory;
+        public List<GoComics> dailyComics;
 }
