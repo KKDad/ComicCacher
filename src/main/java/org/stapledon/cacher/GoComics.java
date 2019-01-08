@@ -37,6 +37,7 @@ public class GoComics extends DailyComic  {
     /**
      * Set the GoComic that to caching
      * @param comicName Name of the comic to process
+     * @return this
      */
     public GoComics setComic(String comicName)
     {

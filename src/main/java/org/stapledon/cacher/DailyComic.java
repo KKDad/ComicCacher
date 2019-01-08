@@ -12,6 +12,9 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.time.LocalDate;
 
+/**
+ * Base class for all ComicCachers.
+ */
 public abstract class DailyComic
 {
 
