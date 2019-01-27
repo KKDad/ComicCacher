@@ -1,3 +1,4 @@
-rootProject.name = 'ComicCacher'
+rootProject.name = 'TheComicProcessor'
+include 'ComicAPI'
+include 'ComicCacher'
 include 'ComicObjects'
-project(":ComicObjects").projectDir = file("../ComicObjects")
