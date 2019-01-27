@@ -78,6 +78,15 @@ public class GoComics extends DailyComic  {
     }
 
     /**
+     * Link to the About the comic page
+     * @return
+     */
+    private String generateAboutUTL()
+    {
+        return String.format("https://www.gocomics.com/%s/about",  this.comicNameParsed);
+    }
+
+    /**
      * Determines which links represent the comic image that we should cache
      * @param media list of image links to choose from
      */
