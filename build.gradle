@@ -3,7 +3,7 @@ plugins {
     id 'application'
 }
 
-group 'org.stapledon'
+group 'com.stapledon'
 version '1.0-SNAPSHOT'
 
 mainClassName = "org.stapledon.cacher.ComicCacher"

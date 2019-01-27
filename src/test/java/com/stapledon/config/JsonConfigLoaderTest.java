@@ -1,4 +1,4 @@
-package org.stapledon.config;
+package com.stapledon.config;
 
 import com.google.common.io.CharSource;
 import com.google.gson.Gson;

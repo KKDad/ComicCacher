@@ -1,4 +1,4 @@
-package org.stapledon.cacher;
+package com.stapledon.cacher;
 
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateException;

@@ -1,4 +1,4 @@
-package org.stapledon.cacher;
+package com.stapledon.cacher;
 
 import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;

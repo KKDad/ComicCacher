@@ -1,7 +1,7 @@
-package org.stapledon.cacher;
+package com.stapledon.cacher;
 
-import org.stapledon.config.ComicCacherConfig;
-import org.stapledon.config.JsonConfigLoader;
+import com.stapledon.config.ComicCacherConfig;
+import com.stapledon.config.JsonConfigLoader;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;

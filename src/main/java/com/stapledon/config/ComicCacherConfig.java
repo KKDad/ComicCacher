@@ -1,4 +1,4 @@
-package org.stapledon.config;
+package com.stapledon.config;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
