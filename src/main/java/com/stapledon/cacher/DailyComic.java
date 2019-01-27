@@ -1,30 +1,49 @@
 package com.stapledon.cacher;
 
+import com.google.common.base.Preconditions;
 import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 /**
  * Base class for all ComicCachers.
  */
-public abstract class DailyComic
+public abstract class DailyComic implements IDailyComic
 {
 
-    static final String ABS_SRC = "abs:src";
+    private static final String ABS_SRC = "abs:src";
     static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
     static final int TIMEOUT = 5 * 1000;
 
-    static final String CACHE_DIRECTORY = "Z:/ComicCache";
+    private Path cacheDirectory;
 
     private final Logger logger = Logger.getLogger(DailyComic.class);
+
+    String comicName;
+    String comicNameParsed;
+    LocalDate currentDate;
+
+
+    IDailyComic setCacheDirectory(String path)
+    {
+
+        this.cacheDirectory = Paths.get(Objects.requireNonNull(path, "path cannot be null"));
+        return this;
+    }
+
+    Path getCacheDirectory()
+    {
+        return cacheDirectory;
+    }
 
 
     void cacheImage(Element sourceImageElement, String destinationFile) throws IOException
@@ -48,6 +67,21 @@ public abstract class DailyComic
             if (os != null)
                 os.close();
         }
+    }
+
+    IDailyComic ensureCacheDirectoryExists()
+    {
+        Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectoryExists()");
+        Preconditions.checkNotNull(this.getCacheDirectory(), "Must call setCacheDirectory() before ensureCacheDirectoryExists()");
+
+        String directoryName = String.format("%s/%s/%s", this.getCacheDirectory(), comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
+        File directory = new File(directoryName);
+        if (!directory.exists()) {
+            if (logger.isDebugEnabled())
+                logger.debug("Creating cache directory to: " + directoryName);
+            directory.mkdirs();
+        }
+        return this;
     }
 
     // *********************************************************************************************************

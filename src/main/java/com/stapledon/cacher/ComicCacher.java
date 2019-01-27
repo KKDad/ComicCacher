@@ -31,10 +31,10 @@ public class ComicCacher {
                 comicItem.name = dcc.name;
             }
 
-            GoComics comics = new GoComics()
+            IDailyComic comics = new GoComics()
+                    .setCacheDirectory(config.cacheDirectory)
                     .setComic(dcc.name)
-                    .setDate(dcc.startDate)
-                    .ensureCacheDirectoryExists();
+                    .setDate(dcc.startDate);
 
             while (!comics.advance().equals(comics.getLastStripOn()))
                 comics.ensureCache();

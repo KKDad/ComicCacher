@@ -12,20 +12,17 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-public class GoComics extends DailyComic  {
+public class GoComics extends DailyComic {
 
     private static final Logger logger = Logger.getLogger(GoComics.class);
-
-    private String comicName;
-    private String comicNameParsed;
-    private LocalDate currentDate;
 
     /**
      * Set the date for the retrieval
      * @param date date to set
      * @return this
      */
-    public GoComics setDate(LocalDate date)
+    @Override
+    public IDailyComic setDate(LocalDate date)
     {
         this.currentDate = date;
         if (logger.isInfoEnabled())
@@ -39,24 +36,11 @@ public class GoComics extends DailyComic  {
      * @param comicName Name of the comic to process
      * @return this
      */
-    public GoComics setComic(String comicName)
+    @Override
+    public IDailyComic setComic(String comicName)
     {
         this.comicName = comicName;
         this.comicNameParsed = comicName.replace(" ", "");
-        return this;
-    }
-
-    public GoComics ensureCacheDirectoryExists()
-    {
-        Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectoryExists()");
-
-        String directoryName = String.format("%s/%s/%s", CACHE_DIRECTORY, comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
-        File directory = new File(directoryName);
-        if (!directory.exists()) {
-            if (logger.isDebugEnabled())
-                logger.debug("Creating cache directory to: " + directoryName);
-            directory.mkdirs();
-        }
         return this;
     }
 
@@ -113,11 +97,12 @@ public class GoComics extends DailyComic  {
         ensureCacheDirectoryExists();
         // TODO: Autodetect image type. Perhaps https://stackoverflow.com/questions/12531797/how-to-get-an-image-type-without-knowing-its-file-extension?
         String extension = "png";
-        return String.format("%s/%s/%s.%s", CACHE_DIRECTORY, comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
+        return String.format("%s/%s/%s.%s", this.getCacheDirectory(), comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
     }
 
 
 
+    @Override
     public boolean ensureCache() {
 
         File f = new File(generateCachedName());
