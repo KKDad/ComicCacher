@@ -27,7 +27,8 @@ public class JsonConfigWriter
             loadComics();
             logger.info(String.format("Saving %s", item.name));
 
-            comics.items.add(item);
+
+            comics.items.put(item.name.hashCode(), item);
 
             saveComics();
         } catch (IOException e) {
@@ -48,11 +49,8 @@ public class JsonConfigWriter
             loadComics();
             logger.info(String.format("Fetching %s", name));
 
-            for(ComicItem ci : this.comics.items)
-            {
-                if (ci.name.equalsIgnoreCase(name))
-                    return ci;
-            }
+            if (this.comics.items.containsKey(name.hashCode()))
+                return this.comics.items.get(name.hashCode());
         } catch (FileNotFoundException e) {
             logger.error(e);
         }

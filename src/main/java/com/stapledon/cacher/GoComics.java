@@ -70,6 +70,21 @@ public class GoComics extends DailyComic {
         return String.format("https://www.gocomics.com/%s/about",  this.comicNameParsed);
     }
 
+    public String getComicDescription()
+    {
+        try {
+            String url = this.generateAboutUTL();
+
+            Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(TIMEOUT).get();
+            // Fragile, however there appears to only be one "section" class and the description seems to be the
+            // first div inside it.
+            return doc.select("section").select("div").get(0).text();
+
+        } catch (IOException ioe) {
+            return null;
+        }
+    }
+
     /**
      * Determines which links represent the comic image that we should cache
      * @param media list of image links to choose from

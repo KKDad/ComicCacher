@@ -41,4 +41,10 @@ public interface IDailyComic
      * @return Mst recent date we can get a comic for
      */
     LocalDate getLastStripOn();
+
+    /**
+     * Get a description of the comic from the authors/publishers website
+     * @return description of the comic
+     */
+    String getComicDescription();
 }

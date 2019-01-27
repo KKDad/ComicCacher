@@ -34,7 +34,7 @@ public class GoComicsTest {
                 .forEach(File::delete);
     }
 
-    private IDailyComic getSubject()
+    private GoComics getSubject()
     {
         GoComics gc = new GoComics();
         gc.setComic("Adam At Home");
@@ -62,14 +62,27 @@ public class GoComicsTest {
     }
 
     @Test
-    public void advanceTest() {
+    public void advanceTest()
+    {
         // Arrange
-        IDailyComic subject = getSubject();
+        GoComics subject = getSubject();
 
         // Act
         LocalDate result = subject.advance();
 
         // Assert
         Assert.assertEquals(LocalDate.of(2019, 1, 2), result);
+    }
+
+    @Test
+    public void getComicDescription() {
+        // Arrange
+        GoComics subject = getSubject();
+
+        // Act
+        String result = subject.getComicDescription();
+
+        // Assert
+        Assert.assertTrue(result.contains("humor of Rob Harrell"));
     }
 }

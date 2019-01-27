@@ -25,21 +25,26 @@ public class ComicCacher {
         JsonConfigWriter statsUpdater = new JsonConfigWriter(config.cacheDirectory + "/comics.json");
 
         for (ComicCacherConfig.GoComics dcc : config.dailyComics) {
-            ComicItem comicItem = statsUpdater.fetch(dcc.name);
-            if (comicItem == null) {
-                comicItem = new ComicItem();
-                comicItem.name = dcc.name;
-            }
 
             IDailyComic comics = new GoComics()
                     .setCacheDirectory(config.cacheDirectory)
                     .setComic(dcc.name)
                     .setDate(dcc.startDate);
 
+            ComicItem comicItem = statsUpdater.fetch(dcc.name);
+            if (comicItem == null) {
+                comicItem = new ComicItem();
+                comicItem.name = dcc.name;
+                comicItem.description = comics.getComicDescription();
+                comicItem.oldest = dcc.startDate;
+            }
+
+
             while (!comics.advance().equals(comics.getLastStripOn()))
                 comics.ensureCache();
 
             //comics.up
+            comicItem.newest = comics.getLastStripOn();
             statsUpdater.save(comicItem);
         }
     }
