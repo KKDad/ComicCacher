@@ -6,7 +6,7 @@ plugins {
 group 'com.stapledon'
 version '1.0-SNAPSHOT'
 
-mainClassName = "org.stapledon.cacher.ComicCacher"
+mainClassName = "com.stapledon.cacher.ComicCacher"
 
 sourceCompatibility = 1.8
 
