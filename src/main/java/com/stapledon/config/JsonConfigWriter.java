@@ -3,40 +3,82 @@ package com.stapledon.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.stapledon.interop.ComicItem;
-import com.stapledon.interop.Comics;
+import com.stapledon.interop.ComicConfig;
 import org.apache.log4j.Logger;
 
 import java.io.*;
 
-class JsonConfigWriter
+public class JsonConfigWriter
 {
     private final Logger logger = Logger.getLogger(JsonConfigWriter.class);
+    private final Gson gson;
+    private final String configPath;
+    private ComicConfig comics;
 
-
-    void save(ComicItem item, String path) throws IOException
+    public JsonConfigWriter(String path)
     {
+        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.configPath = path;
+    }
 
-        Gson gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
-        Comics comics;
+    public void save(ComicItem item)
+    {
+        try {
+            loadComics();
+            logger.info(String.format("Saving %s", item.name));
 
-        File initialFile = new File(path);
-        if (initialFile.exists()) {
-            InputStream inputStream = new FileInputStream(initialFile);
-            Reader reader = new InputStreamReader(inputStream);
+            comics.items.add(item);
 
-            comics = gson.fromJson(reader, Comics.class);
-        } else {
-            logger.warn(String.format("%s does not exist, creating", path));
-            comics = new Comics();
-
+            saveComics();
+        } catch (IOException e) {
+            logger.error(e);
         }
-        comics.items.add(item);
-        Writer writer = new FileWriter(path);
+    }
+
+    private void saveComics() throws IOException {
+        Writer writer = new FileWriter(configPath);
         gson.toJson(comics, writer);
         writer.flush();
         writer.close();
     }
 
+    public ComicItem fetch(String name)
+    {
+        try {
+            loadComics();
+            logger.info(String.format("Fetching %s", name));
+
+            for(ComicItem ci : this.comics.items)
+            {
+                if (ci.name.equalsIgnoreCase(name))
+                    return ci;
+            }
+        } catch (FileNotFoundException e) {
+            logger.error(e);
+        }
+        return null;
+    }
+
+
+    /**
+     * Load any previously saved configuration
+     * @throws FileNotFoundException
+     */
+    private void loadComics() throws FileNotFoundException
+    {
+        if (comics != null)
+            return;
+
+        File initialFile = new File(configPath);
+        if (initialFile.exists()) {
+            InputStream inputStream = new FileInputStream(initialFile);
+            Reader reader = new InputStreamReader(inputStream);
+
+            comics = gson.fromJson(reader, ComicConfig.class);
+            logger.info(String.format("Loaded %s", configPath));
+        } else {
+            logger.warn(String.format("%s does not exist, creating", configPath));
+            comics = new ComicConfig();
+        }
+    }
 }

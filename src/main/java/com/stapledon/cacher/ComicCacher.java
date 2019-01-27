@@ -2,6 +2,8 @@ package com.stapledon.cacher;
 
 import com.stapledon.config.ComicCacherConfig;
 import com.stapledon.config.JsonConfigLoader;
+import com.stapledon.config.JsonConfigWriter;
+import com.stapledon.interop.ComicItem;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -20,8 +22,15 @@ public class ComicCacher {
         SSLContext.setDefault(ctx);
 
         ComicCacherConfig config = new JsonConfigLoader().load();
+        JsonConfigWriter statsUpdater = new JsonConfigWriter(config.cacheDirectory + "/comics.json");
 
         for (ComicCacherConfig.GoComics dcc : config.dailyComics) {
+            ComicItem comicItem = statsUpdater.fetch(dcc.name);
+            if (comicItem == null) {
+                comicItem = new ComicItem();
+                comicItem.name = dcc.name;
+            }
+
             GoComics comics = new GoComics()
                     .setComic(dcc.name)
                     .setDate(dcc.startDate)
@@ -29,6 +38,9 @@ public class ComicCacher {
 
             while (!comics.advance().equals(comics.getLastStripOn()))
                 comics.ensureCache();
+
+            //comics.up
+            statsUpdater.save(comicItem);
         }
     }
 }

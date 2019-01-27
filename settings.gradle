@@ -1,3 +1,3 @@
-rootProject.name = 'cacher'
+rootProject.name = 'ComicCacher'
 include 'ComicObjects'
 project(":ComicObjects").projectDir = file("../ComicObjects")

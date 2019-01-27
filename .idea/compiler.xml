@@ -2,6 +2,10 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="com.stapledon.cacher.main" target="1.8" />
+      <module name="com.stapledon.cacher.test" target="1.8" />
+      <module name="com.stapledon.comic.main" target="1.8" />
+      <module name="com.stapledon.comic.test" target="1.8" />
       <module name="com.stapledon.objects.main" target="1.8" />
       <module name="com.stapledon.objects.test" target="1.8" />
       <module name="org.stapledon.cacher.main" target="1.8" />
