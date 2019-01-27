@@ -1,2 +1,3 @@
 rootProject.name = 'cacher'
-
+include 'ComicObjects'
+project(":ComicObjects").projectDir = file("../ComicObjects")
