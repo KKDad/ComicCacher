@@ -7,12 +7,32 @@ import java.time.LocalDate;
  */
 public interface IDailyComic
 {
+    /**
+     * Set the date for the retrieval
+     * @param date date to set
+     * @return this
+     */
     IDailyComic setDate(LocalDate date);
 
+    /**
+     * Set the GoComic that to caching
+     * @param comicName Name of the comic to process
+     * @return this
+     */
     IDailyComic setComic(String comicName);
 
+
+    /**
+     * Ensure that the comic is cached for the current date
+     * @return True if the comic has been cached on this date
+     */
     boolean ensureCache();
 
+    /**
+     * Advances the date by the interval that the comic is published on. For daily comics, this is one dat. For
+     * periodically published comics, this may be multiple days. This cannot go past getLastStripOn.
+     * @return Next available date.
+     */
     LocalDate advance();
 
     /**

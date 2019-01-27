@@ -61,4 +61,15 @@ public class GoComicsTest {
         Assert.assertTrue(expectedFile.exists());
     }
 
+    @Test
+    public void advanceTest() {
+        // Arrange
+        IDailyComic subject = getSubject();
+
+        // Act
+        LocalDate result = subject.advance();
+
+        // Assert
+        Assert.assertEquals(LocalDate.of(2019, 1, 2), result);
+    }
 }

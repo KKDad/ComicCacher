@@ -101,7 +101,9 @@ public class GoComics extends DailyComic {
     }
 
 
-
+    /**
+     * Ensure that the comic is cached for the current date
+     */
     @Override
     public boolean ensureCache() {
 
@@ -133,7 +135,8 @@ public class GoComics extends DailyComic {
 
     @Override
     public LocalDate advance() {
-        this.currentDate = this.currentDate.plusDays(1);
+        if (this.currentDate.isBefore(this.getLastStripOn()))
+            this.currentDate = this.currentDate.plusDays(1);
         return this.currentDate;
     }
 }
