@@ -2,8 +2,8 @@ package com.stapledon.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.stapledon.interop.ComicItem;
 import com.stapledon.interop.ComicConfig;
+import com.stapledon.interop.ComicItem;
 import org.apache.log4j.Logger;
 
 import java.io.*;
@@ -60,7 +60,6 @@ public class JsonConfigWriter
 
     /**
      * Load any previously saved configuration
-     * @throws FileNotFoundException
      */
     private void loadComics() throws FileNotFoundException
     {

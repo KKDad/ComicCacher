@@ -34,10 +34,10 @@ public class GoComicsTest {
                 .forEach(File::delete);
     }
 
-    private GoComics getSubject()
+    private GoComics getSubject(String name)
     {
         GoComics gc = new GoComics();
-        gc.setComic("Adam At Home");
+        gc.setComic(name);
         gc.setDate(LocalDate.of(2019, 1, 1 ));
         gc.setCacheDirectory(path.toString());
 
@@ -51,7 +51,7 @@ public class GoComicsTest {
         log.info("Expecting to get file: " + expectedFile.toString());
         Assert.assertFalse(expectedFile.exists());
 
-        IDailyComic subject = getSubject();
+        IDailyComic subject = getSubject("Adam at Home");
 
         // Act
         boolean result = subject.ensureCache();
@@ -65,7 +65,7 @@ public class GoComicsTest {
     public void advanceTest()
     {
         // Arrange
-        GoComics subject = getSubject();
+        GoComics subject = getSubject("Adam at Home");
 
         // Act
         LocalDate result = subject.advance();
@@ -75,14 +75,26 @@ public class GoComicsTest {
     }
 
     @Test
-    public void getComicDescription() {
+    public void getAdamComicDescription() {
         // Arrange
-        GoComics subject = getSubject();
+        GoComics subject = getSubject("Adam at Home");
 
         // Act
         String result = subject.getComicDescription();
 
         // Assert
         Assert.assertTrue(result.contains("humor of Rob Harrell"));
+    }
+
+    @Test
+    public void getHermanComicDescription() {
+        // Arrange
+        GoComics subject = getSubject("Herman");
+
+        // Act
+        String result = subject.getComicDescription();
+
+        // Assert
+        Assert.assertTrue(result.contains("It was his greatest wish that HERMAN live on and continue to make us laugh."));
     }
 }

@@ -34,10 +34,12 @@ public class ComicCacher {
             ComicItem comicItem = statsUpdater.fetch(dcc.name);
             if (comicItem == null) {
                 comicItem = new ComicItem();
+                comicItem.id = dcc.name.hashCode();
                 comicItem.name = dcc.name;
-                comicItem.description = comics.getComicDescription();
                 comicItem.oldest = dcc.startDate;
             }
+            if (comicItem.description == null || comicItem.description.length() == 0)
+                comicItem.description = comics.getComicDescription();
 
 
             while (!comics.advance().equals(comics.getLastStripOn()))
