@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="com.stapledon.ComicAPI.main" target="1.8" />
+      <module name="com.stapledon.ComicAPI.test" target="1.8" />
+      <module name="com.stapledon.ComicObjects.main" target="1.8" />
+      <module name="com.stapledon.ComicObjects.test" target="1.8" />
+      <module name="ComicCache_main" target="1.8" />
+      <module name="ComicCache_test" target="1.8" />
+      <module name="TheComicProcessor.ComicCache.main" target="1.8" />
+      <module name="TheComicProcessor.ComicCache.test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

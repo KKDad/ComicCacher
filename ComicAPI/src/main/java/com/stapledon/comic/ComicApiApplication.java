@@ -11,13 +11,13 @@ import java.util.logging.Logger;
 public class ComicApiApplication
 {
 	private static final Logger logger = Logger.getLogger(ComicApiApplication.class.getName());
-	private final ApiConfig config;
+	public static ApiConfig config;
 
 	public ComicApiApplication()
 	{
 		logger.info("ComicApiApplication starting...");
-		this.config = new JsonConfigLoader().load();
-		logger.info(String.format("Cache Directory: %s", this.config.cacheDirectory));
+		ComicApiApplication.config = new JsonConfigLoader().load();
+		logger.info(String.format("Cache Directory: %s", ComicApiApplication.config.cacheDirectory));
 	}
 
 
