@@ -49,7 +49,7 @@ public class GoComicsTest {
     public void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
         log.info("Expecting to get file: " + expectedFile.toString());
-        Assert.assertFalse(expectedFile.exists());
+        Assert.assertFalse("expectedFile should not exist before the subject acts.", expectedFile.exists());
 
         IDailyComic subject = getSubject("Adam at Home");
 
@@ -57,8 +57,8 @@ public class GoComicsTest {
         boolean result = subject.ensureCache();
 
         // Assert
-        Assert.assertTrue(result);
-        Assert.assertTrue(expectedFile.exists());
+        Assert.assertTrue("ensureCache() expected to return true", result);
+        Assert.assertTrue("expectedFile does not exist", expectedFile.exists());
     }
 
     @Test
