@@ -45,7 +45,7 @@ public class GoComicsTest {
     }
 
 
-    @Test
+    //@Test
     public void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
         log.info("Expecting to get file: " + expectedFile.toString());
