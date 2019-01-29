@@ -1,29 +1,34 @@
 package com.stapledon.cacher;
 
 import org.apache.log4j.Logger;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Comparator;
 
 public class GoComicsTest {
-    private final Logger log = Logger.getLogger(GoComicsTest.class);
-    private Path path;
+    private static final Logger log = Logger.getLogger(GoComicsTest.class);
+    private static Path path;
 
-    @Before
-    public void setUp() throws Exception {
-        path = Files.createTempDirectory("GoComicsTest");
+    @BeforeClass
+    public static void setUp() throws Exception {
+        Path currentRelativePath = Paths.get("","build/tests");
+        currentRelativePath.toFile().mkdirs();
 
+        path = Files.createTempDirectory(currentRelativePath, "GoComicsTest");
+        log.info("Expecting to get file: " + path.toString());
+        log.info(String.format("%s", System.getProperty("user.dir")));
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterClass
+    public static void tearDown() throws Exception {
         if (!Files.exists(path))
             return;
 
@@ -45,7 +50,7 @@ public class GoComicsTest {
     }
 
 
-    //@Test
+    @Test
     public void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
         log.info("Expecting to get file: " + expectedFile.toString());
