@@ -46,7 +46,7 @@ public abstract class DailyComic implements IDailyComic
     }
 
 
-    void cacheImage(Element sourceImageElement, String destinationFile) throws IOException
+    boolean cacheImage(Element sourceImageElement, String destinationFile) throws IOException
     {
         OutputStream os = null;
         try {
@@ -61,12 +61,15 @@ public abstract class DailyComic implements IDailyComic
                 }
             }
             logger.trace("Image saved");
-        } catch (IOException e) {
+            return true;
+        } catch (FileNotFoundException e) {
             logger.error("Failed to cache Image:", e);
+
         } finally {
             if (os != null)
                 os.close();
         }
+        return false;
     }
 
     IDailyComic ensureCacheDirectoryExists()
@@ -113,7 +116,7 @@ public abstract class DailyComic implements IDailyComic
     }
 
     void dumpMedia(Elements media) {
-        print("\nMedia: (%d)", media.size());
+        print("Media: (%d)", media.size());
         for (Element src : media) {
             if (src.tagName().equals("img"))
                 print(" * %s: <%s> %sx%s (%s)",
@@ -125,7 +128,7 @@ public abstract class DailyComic implements IDailyComic
     }
 
     /**
-     * Utility method to log a sinlge line to Log4j is logging at debug is enabled.
+     * Utility method to log a single line to Log4j if logging at debug is enabled.
      * @param msg Line to Log
      * @param args Parameter to Line
      */

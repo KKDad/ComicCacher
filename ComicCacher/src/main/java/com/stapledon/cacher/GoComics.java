@@ -1,6 +1,5 @@
 package com.stapledon.cacher;
 
-import com.google.common.base.Preconditions;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -41,6 +40,9 @@ public class GoComics extends DailyComic {
     {
         this.comicName = comicName;
         this.comicNameParsed = comicName.replace(" ", "");
+        if (logger.isInfoEnabled())
+            logger.info("Comic: " + this.comicName);
+
         return this;
     }
 
@@ -63,7 +65,7 @@ public class GoComics extends DailyComic {
 
     /**
      * Link to the About the comic page
-     * @return
+     * @return URL where we can get the about information for this strip
      */
     private String generateAboutUTL()
     {
@@ -74,6 +76,7 @@ public class GoComics extends DailyComic {
     {
         try {
             String url = this.generateAboutUTL();
+            logger.info("Getting Comic Description from " + url);
 
             Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(TIMEOUT).get();
             // Fragile, however there appears to only be one "section" class and the description seems to be the
@@ -118,6 +121,7 @@ public class GoComics extends DailyComic {
 
     /**
      * Ensure that the comic is cached for the current date
+     * @return true if the comic for the current day has been successfully cached.
      */
     @Override
     public boolean ensureCache() {
@@ -140,8 +144,7 @@ public class GoComics extends DailyComic {
             Elements media = doc.select("[src]");
 
             Elements image = this.pickImages(media);
-            cacheImage(image.first(), f.getAbsolutePath());
-            return true;
+            return cacheImage(image.first(), f.getAbsolutePath());
 
         } catch (IOException ioe) {
             return false;
