@@ -1,38 +1,29 @@
 package com.stapledon.comic;
 
-import com.google.gson.Gson;
-import com.stapledon.interop.ComicConfig;
 import com.stapledon.interop.ComicItem;
 import com.stapledon.interop.ComicList;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
-public class ComicController {
-
-    private final AtomicLong counter = new AtomicLong();
+public class ComicController
+{
+    @Autowired
+    private ComicsService comicsService;
 
     @RequestMapping(method=GET, path = "/comics/v1/list")
-    public ComicList list(@RequestParam(value="filter", defaultValue="") String filter) throws FileNotFoundException {
+    public ComicList getAll()
+    {
+        return comicsService.retrieveAll();
+    }
 
-        File initialFile = new File(ComicApiApplication.config.cacheDirectory + "/comics.json");
-        InputStream inputStream = new FileInputStream(initialFile);
-        Reader reader = new InputStreamReader(inputStream);
-        ComicConfig comics = new Gson().fromJson(reader, ComicConfig.class);
-
-        ComicList list = new ComicList();
-        list.getComics().addAll(comics.items.values());
-        Collections.sort(list.getComics());
-
-        return list;
+    @RequestMapping(method=GET, path = "/comics/v1/list/{id}")
+    public ComicItem getSpecific(@PathVariable String id)
+    {
+        return comicsService.retrieveComic(id);
     }
 }

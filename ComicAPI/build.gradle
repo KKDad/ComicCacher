@@ -33,11 +33,24 @@ dependencies {
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc:2.0.3.RELEASE'
+	asciidoctor 'org.springframework.restdocs:spring-restdocs-asciidoctor:1.2.6.RELEASE'
+}
+
+jar {
+	dependsOn asciidoctor
+	from ("${asciidoctor.outputDir}/html5") {
+		into 'static/docs'
+	}
 }
 
 bootJar {
 	baseName = 'comic-api'
+	dependsOn asciidoctor 
+	from ("${asciidoctor.outputDir}/html5") {
+		into 'static/docs'
+	}
 }
+
 task unpack(type: Copy) {
 	dependsOn bootJar
 	from(zipTree(tasks.bootJar.outputs.files.singleFile))
@@ -49,7 +62,6 @@ docker {
 	copySpec.from(tasks.unpack.outputs).into("dependency")
 	buildArgs(['DEPENDENCY': "dependency"])
 }
-
 
 test {
 	outputs.dir snippetsDir

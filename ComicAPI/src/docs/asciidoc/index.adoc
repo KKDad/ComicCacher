@@ -1,0 +1,32 @@
+= ComicsAPI API Guide
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+= Resources
+
+== ComicsAPI REST Service
+
+The Greeting provides the entry point into the service.
+
+=== Accessing the greeting GET with provided content
+
+==== Request structure
+
+include::{snippets}/listTest/http-request.adoc[]
+
+//==== Request parameters
+//
+//include::{snippets}/listTest/request-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/listTest/response-fields.adoc[]
+
+==== Example response
+
+include::{snippets}/listTest/http-response.adoc[]
+
