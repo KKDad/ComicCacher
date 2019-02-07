@@ -10,13 +10,16 @@
 
 == ComicsAPI REST Service
 
-The Greeting provides the entry point into the service.
+The list provides the entry point into the ComicsAPI service.
+- listing all cached comics
+- getting the details of a specific comic
+- retrieve previous/next cached images for a comic
 
-=== Accessing the greeting GET with provided content
+=== Accessing the list of comics with GET
 
 ==== Request structure
 
-include::{snippets}/listTest/http-request.adoc[]
+include::{snippets}/listAllTest/http-request.adoc[]
 
 //==== Request parameters
 //
@@ -24,9 +27,30 @@ include::{snippets}/listTest/http-request.adoc[]
 
 ==== Response fields
 
-include::{snippets}/listTest/response-fields.adoc[]
+include::{snippets}/listAllTest/response-fields.adoc[]
 
 ==== Example response
 
-include::{snippets}/listTest/http-response.adoc[]
+include::{snippets}/listAllTest/http-response.adoc[]
+
+
+=== Accessing a specific comics with GET
+
+Use the generated id of a comic to retrieve all details about it.
+
+==== Request structure
+
+include::{snippets}/retieveSpecificTest/http-request.adoc[]
+
+==== Request parameters
+
+include::{snippets}/retieveSpecificTest/request-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retieveSpecificTest/response-fields.adoc[]
+
+==== Example response
+
+include::{snippets}/retieveSpecificTest/http-response.adoc[]
 
