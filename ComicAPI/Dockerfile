@@ -12,6 +12,6 @@ EXPOSE 8888
 
 ENTRYPOINT ["java", "-cp", "app:app/lib/*", "com.stapledon.comic.ComicApiApplication"]
 
-# To figure out what is gonig on
+# To figure out what is going on inside the container
 # docker ps
 # winpty docker exec -it <container name> bash
