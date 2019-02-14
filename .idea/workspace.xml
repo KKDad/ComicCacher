@@ -3,9 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="86b05363-2164-4b22-ae1a-ee9a216807fe" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/resources/ApiConfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/resources/ApiConfig.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicApiApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicApiApplication.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.gradle/" />
     <ignored path="$PROJECT_DIR$/build/" />
@@ -103,7 +101,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/comic/ComicControllerTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="561">
+            <state relative-caret-position="816">
               <caret line="75" column="9" selection-start-line="75" selection-start-column="9" selection-end-line="75" selection-end-column="9" />
               <folding>
                 <element signature="imports" expanded="true" />
@@ -125,7 +123,7 @@
         <entry file="file://$PROJECT_DIR$/ComicAPI/src/docs/asciidoc/index.adoc">
           <provider selected="true" editor-type-id="split-provider[text-editor;AsciiDocPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="363">
+              <first_editor relative-caret-position="697">
                 <caret line="41" selection-start-line="41" selection-end-line="41" />
               </first_editor>
               <second_editor />
@@ -136,7 +134,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicController.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="442">
+            <state relative-caret-position="238">
               <caret line="26" column="35" selection-start-line="26" selection-start-column="35" selection-end-line="26" selection-end-column="35" />
               <folding>
                 <element signature="imports" expanded="true" />
@@ -179,19 +177,16 @@
         <entry file="file://$PROJECT_DIR$/ComicAPI/Dockerfile">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="272">
-              <caret line="16" column="30" lean-forward="true" selection-start-line="16" selection-start-column="30" selection-end-line="16" selection-end-column="30" />
+              <caret line="16" column="46" lean-forward="true" selection-start-line="16" selection-start-column="46" selection-end-line="16" selection-end-column="46" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/README.md">
-          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-            <state split_layout="SPLIT">
-              <first_editor relative-caret-position="323">
-                <caret line="19" column="32" lean-forward="true" selection-start-line="19" selection-start-column="32" selection-end-line="19" selection-end-column="32" />
-              </first_editor>
-              <second_editor />
+        <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicApiApplication.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="425">
+              <caret line="34" column="83" selection-start-line="34" selection-start-column="83" selection-end-line="34" selection-end-column="83" />
             </state>
           </provider>
         </entry>
@@ -199,7 +194,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicsService.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="408">
+            <state relative-caret-position="289">
               <caret line="28" column="20" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="20" />
               <folding>
                 <element signature="imports" expanded="true" />
@@ -261,17 +256,17 @@
         <option value="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicController.java" />
         <option value="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicsService.java" />
         <option value="$PROJECT_DIR$/ComicAPI/build.gradle" />
-        <option value="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicApiApplication.java" />
         <option value="$PROJECT_DIR$/ComicAPI/src/main/resources/static/index.html" />
         <option value="$PROJECT_DIR$/ComicAPI/src/docs/asciidoc/index.adoc" />
         <option value="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/comic/ComicControllerTest.java" />
         <option value="$PROJECT_DIR$/ComicAPI/src/main/resources/ApiConfig.json" />
         <option value="$PROJECT_DIR$/ComicAPI/Dockerfile" />
         <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicApiApplication.java" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="-8" />
     <option name="y" value="-8" />
     <option name="width" value="1936" />
@@ -315,7 +310,31 @@
               <item name="ComicAPI" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="main" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
-              <item name="resources" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="TheComicProcessor" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ComicCacher" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="ComicAPI" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="stapledon" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="TheComicProcessor" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ComicCacher" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="ComicAPI" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="stapledon" type="462c0819:PsiDirectoryNode" />
+              <item name="comic" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="TheComicProcessor" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ComicCacher" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+              <item name="ComicViewer" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -354,7 +373,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Gradle.ComicCacher:ComicAPI [dockerTag]">
+  <component name="RunManager" selected="Gradle.ComicCacher:ComicAPI [docker]">
     <configuration name="ComicCacher:ComicAPI [dockerPrepare]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -603,20 +622,20 @@
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16897655" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.21748401" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="Favorites" order="3" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.8731343" visible="true" weight="0.2936078" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.8726013" visible="true" weight="0.2936078" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.695629" weight="0.3997833" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Terminal" order="8" />
-      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.12686567" side_tool="true" visible="true" weight="0.2936078" />
+      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.12739871" side_tool="true" visible="true" weight="0.2936078" />
       <window_info anchor="bottom" id="Build" order="10" sideWeight="0.6620469" weight="0.32936078" />
       <window_info anchor="bottom" id="Messages" order="11" sideWeight="0.4978678" weight="0.20260021" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -902,70 +921,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicApiApplication.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="35" column="14" selection-start-line="35" selection-start-column="14" selection-end-line="35" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/resources/static/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="14" column="7" selection-start-line="14" selection-start-column="7" selection-end-line="14" selection-end-column="7" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ComicViewer/README.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="459">
-            <caret line="27" selection-start-line="27" selection-end-line="27" />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bitbucket-pipelines.yml">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ComicAPI/src/docs/asciidoc/index.adoc">
-      <provider selected="true" editor-type-id="split-provider[text-editor;AsciiDocPreviewEditor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="363">
-            <caret line="41" selection-start-line="41" selection-end-line="41" />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicController.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="26" column="35" selection-start-line="26" selection-start-column="35" selection-end-line="26" selection-end-column="35" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#631#632#0" expanded="true" />
-            <element signature="e#681#682#0" expanded="true" />
-            <element signature="e#809#810#0" expanded="true" />
-            <element signature="e#863#864#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicsService.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="28" column="20" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="20" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/comic/ComicControllerTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
+        <state relative-caret-position="816">
           <caret line="75" column="9" selection-start-line="75" selection-start-column="9" selection-end-line="75" selection-end-column="9" />
           <folding>
             <element signature="imports" expanded="true" />
@@ -980,20 +938,81 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ComicAPI/Dockerfile">
+    <entry file="file://$PROJECT_DIR$/ComicAPI/src/docs/asciidoc/index.adoc">
+      <provider selected="true" editor-type-id="split-provider[text-editor;AsciiDocPreviewEditor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="697">
+            <caret line="41" selection-start-line="41" selection-end-line="41" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicController.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="16" column="30" lean-forward="true" selection-start-line="16" selection-start-column="30" selection-end-line="16" selection-end-column="30" />
+        <state relative-caret-position="238">
+          <caret line="26" column="35" selection-start-line="26" selection-start-column="35" selection-end-line="26" selection-end-column="35" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#631#632#0" expanded="true" />
+            <element signature="e#681#682#0" expanded="true" />
+            <element signature="e#809#810#0" expanded="true" />
+            <element signature="e#863#864#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/resources/static/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="14" column="7" selection-start-line="14" selection-start-column="7" selection-end-line="14" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bitbucket-pipelines.yml">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicsService.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="28" column="20" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="20" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ComicViewer/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="459">
+            <caret line="27" selection-start-line="27" selection-end-line="27" />
+          </first_editor>
+          <second_editor />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="323">
-            <caret line="19" column="32" lean-forward="true" selection-start-line="19" selection-start-column="32" selection-end-line="19" selection-end-column="32" />
+          <first_editor relative-caret-position="391">
+            <caret line="23" lean-forward="true" selection-start-line="23" selection-end-line="23" />
           </first_editor>
           <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ComicAPI/Dockerfile">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="46" lean-forward="true" selection-start-line="16" selection-start-column="46" selection-end-line="16" selection-end-column="46" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/comic/ComicApiApplication.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="425">
+          <caret line="34" column="83" selection-start-line="34" selection-start-column="83" selection-end-line="34" selection-end-column="83" />
         </state>
       </provider>
     </entry>

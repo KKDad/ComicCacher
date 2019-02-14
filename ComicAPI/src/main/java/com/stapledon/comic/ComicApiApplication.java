@@ -29,11 +29,10 @@ public class ComicApiApplication
 			ComicConfig comicConfig = new Gson().fromJson(reader, ComicConfig.class);
 			ComicsService.comics.addAll(comicConfig.items.values());
 
-			logger.log(Level.SEVERE, String.format("Loaded: %d comics.", ComicsService.comics.size()));
+			logger.info(String.format("Loaded: %d comics.", ComicsService.comics.size()));
 
 		} catch (FileNotFoundException fne) {
 			logger.log(Level.SEVERE, "Cannot load ComicList: " + fne.getMessage());
-			//throw new RuntimeException(fne);
 		}
 	}
 
