@@ -14,7 +14,7 @@ import java.security.SecureRandom;
 
 public class ComicCacher {
 
-    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException {
+    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException, InterruptedException {
 
         // configure the SSLContext with a TrustManager
         SSLContext ctx = SSLContext.getInstance("TLS");

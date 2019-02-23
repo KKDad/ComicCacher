@@ -1,5 +1,9 @@
 <ul class="comics">
-    <li *ngFor="let comic of comics">
+    <li *ngFor="let comic of comics"
+        [class.selected]="comic === currentComic"
+        (click)="onSelect(comic)">
       <span class="badge">{{comic.id}}</span> {{comic.name}}
     </li>
 </ul>
+
+<app-comic-strip [comic]="currentComic"></app-comic-strip>

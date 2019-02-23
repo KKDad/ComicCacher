@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Comic } from '../comic';
 import { COMICS } from '../mock-comics';
 
 @Component({
@@ -10,10 +11,15 @@ import { COMICS } from '../mock-comics';
 export class ComicsComponent implements OnInit {
   
   comics = COMICS;
+  currentComic: Comic;
 
   constructor() { }
 
   ngOnInit() {
+  }
+
+  onSelect(comic: Comic): void {
+    this.currentComic = comic;
   }
 
 }
