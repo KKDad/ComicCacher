@@ -57,11 +57,13 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "ComicViewer:build"
+            "browserTarget": "ComicViewer:build",
+            "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
             "production": {
-              "browserTarget": "ComicViewer:build:production"
+              "browserTarget": "ComicViewer:build:production",
+              "proxyConfig": "proxy.conf.json"
             }
           }
         },

@@ -1,0 +1,6 @@
+{
+    "/comics/v1": {
+      "target": "http://192.168.1.209:8080",
+      "secure": false
+    }
+  }
