@@ -12,6 +12,7 @@ public class ComicItem implements Comparable<ComicItem> {
     public String description;
     public LocalDate oldest;
     public LocalDate newest;
+    public Boolean enabled;
 
     @Override
     public int compareTo(ComicItem o) {

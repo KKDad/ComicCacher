@@ -23,16 +23,18 @@ export class ComicService {
   getComics(): Observable<Comic[]> {
     return this.http.get<Comic[]>(this.comicUrl)
         .pipe(
-          tap(_ => this.log('fetched comics')),
+          tap(el => this.log(`fetched ${el.length} comics`)),
           catchError(this.handleError('getComics', []))
         );
   }
 
    /** GET comic by id. Will 404 if id not found */
   getComic(id: number): Observable<Comic> {
+    if (id == 0)
+      id = 14293307;
     const url = `${this.comicUrl}/${id}`;
     return this.http.get<Comic>(url).pipe(
-      tap(_ => this.log(`fetched Comic id=${id}`)),
+      tap(el => this.log(`fetched Comic id=${id}, ${el.name}`)),      
       catchError(this.handleError<Comic>(`getComic id=${id}`))
     );
   }  

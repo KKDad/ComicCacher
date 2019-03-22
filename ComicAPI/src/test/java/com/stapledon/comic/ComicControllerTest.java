@@ -82,8 +82,8 @@ public class ComicControllerTest
                 .andDo(
                     document("{methodName}", preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
                             responseFields(
-                                    fieldWithPath("comics[]").description("Array of ComicItems"))
-                                    .andWithPrefix("comics[].", comic()),
+                                    fieldWithPath("[]").description("Array of ComicItems"))
+                                    .andWithPrefix("[].", comic()),
                             responseHeaders(headerWithName("Content-Type").description("application/json"))));
     }
 
@@ -108,7 +108,8 @@ public class ComicControllerTest
                 fieldWithPath("name").description("Name of the Comic"),
                 fieldWithPath("description").description("Description of the Comic"),
                 fieldWithPath("oldest").description("Oldest date available for retrieval."),
-                fieldWithPath("newest").description("Most recent date available for retrieval")
+                fieldWithPath("newest").description("Most recent date available for retrieval"),
+                fieldWithPath("enabled").description("Is caching of this comic enabled?")
         };
     }
 }

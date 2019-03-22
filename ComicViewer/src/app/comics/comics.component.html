@@ -12,8 +12,8 @@
  
 <ul class="comics">
   <li *ngFor="let comic of comics">
-    <a routerLink="/detail/{{comics.id}}">
-      <span class="badge">{{comics.id}}</span> {{comics.name}}
+    <a routerLink="/detail/{{comic.id}}">
+      <span class="badge">{{comic.id}}</span> {{comic.name}}
     </a>
     <button class="delete" title="delete comics"
       (click)="delete(comics)">x</button>

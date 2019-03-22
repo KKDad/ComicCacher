@@ -21,3 +21,5 @@ docker load -i comics-api.docker
 ~~~
 
 #### ComicViewer
+
+Create a class/interface from json to typescript by using this site: http://json2ts.com/
