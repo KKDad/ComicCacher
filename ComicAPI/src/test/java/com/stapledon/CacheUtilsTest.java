@@ -49,7 +49,7 @@ public class CacheUtilsTest {
         File result = subject.findFirst(comicItem(), Direction.FORWARD);
 
         Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '\"FakeComic\\\\2008\\2008-01-10.png\"'", result.getAbsolutePath()), result.getAbsolutePath().contains("FakeComic\\2008\\2008-01-10"));
+        Assert.assertTrue(String.format("Checking if '%s' contains '2008-01-10'", result.getAbsolutePath()), result.getAbsolutePath().contains("2008-01-10"));
     }
 
 
@@ -60,7 +60,7 @@ public class CacheUtilsTest {
         File result = subject.findFirst(comicItem(), Direction.BACKWARD);
 
         Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '\"FakeComic\\\\2019\\\\2019-03-22\"'", result.getAbsolutePath()), result.getAbsolutePath().contains("FakeComic\\2019\\2019-03-22"));
+        Assert.assertTrue(String.format("Checking if '%s' contains '2019-03-22'", result.getAbsolutePath()), result.getAbsolutePath().contains("2019-03-22"));
     }
 
 
