@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
 
 public class CacheUtilsTest {
@@ -17,34 +18,39 @@ public class CacheUtilsTest {
     {
         ComicItem item1 = new ComicItem();
         item1.id = 42;
-        item1.name = "Adam At Home";
-        item1.description = "Sample Test";
+        item1.name = "Fake Comic";
+        item1.description = "Comic for Unit Testss";
         item1.oldest = LocalDate.of(1995, 05, 31);
         item1.newest = LocalDate.of(2007, 12, 8);
 
         return item1;
     }
 
+    private CacheUtils getSubject() {
+        File resourcesDirectory = new File("src/test/resources");
+        ComicApiApplication.config = new JsonConfigLoader().load();
+        return new CacheUtils(resourcesDirectory.getAbsolutePath());
+    }
+
     @Test
     public void findOldestTest()
     {
-        ComicApiApplication.config = new JsonConfigLoader().load();
-        CacheUtils subject = new CacheUtils(ComicApiApplication.config.cacheDirectoryAlternate);
-
+        CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.FORWARD);
 
-        Assert.assertEquals("z:\\ComicCache\\AdamAtHome\\2008\\2008-01-10.png", result.getAbsolutePath());
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getAbsolutePath().contains("FakeComic\\2008\\2008-01-10.png"));
     }
+
 
     @Test
     public void findNewestTest()
     {
-        ComicApiApplication.config = new JsonConfigLoader().load();
-        CacheUtils subject = new CacheUtils(ComicApiApplication.config.cacheDirectoryAlternate);
-
+        CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.BACKWARD);
 
-        Assert.assertTrue(result.getAbsolutePath().startsWith("z:\\ComicCache\\AdamAtHome\\2019\\2019-03"));
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getAbsolutePath().contains("FakeComic\\2019\\2019-03-22"));
     }
 
 
