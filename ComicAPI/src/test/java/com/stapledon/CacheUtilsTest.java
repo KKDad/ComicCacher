@@ -9,8 +9,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Optional;
 
 public class CacheUtilsTest {
 
@@ -26,14 +31,19 @@ public class CacheUtilsTest {
         return item1;
     }
 
-    private CacheUtils getSubject() {
+    private CacheUtils getSubject() throws IOException {
         File resourcesDirectory = new File("src/test/resources");
+        if (!resourcesDirectory.exists())
+            resourcesDirectory = new File("../src/test/resources");
+
+        Assert.assertTrue(resourcesDirectory.exists());
+
         ComicApiApplication.config = new JsonConfigLoader().load();
         return new CacheUtils(resourcesDirectory.getAbsolutePath());
     }
 
     @Test
-    public void findOldestTest()
+    public void findOldestTest() throws IOException
     {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.FORWARD);
@@ -44,7 +54,7 @@ public class CacheUtilsTest {
 
 
     @Test
-    public void findNewestTest()
+    public void findNewestTest() throws IOException
     {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.BACKWARD);
