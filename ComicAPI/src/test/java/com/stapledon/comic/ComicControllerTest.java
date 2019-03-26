@@ -77,7 +77,7 @@ public class ComicControllerTest
     public void listAllTest() throws Exception {
 
 
-        this.mockMvc.perform(get("/comics/v1/list").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get("/api/v1/comics").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                     document("{methodName}", preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
@@ -88,18 +88,31 @@ public class ComicControllerTest
     }
 
     @Test
-    public void retieveSpecificTest() throws Exception {
-
-
-        this.mockMvc.perform(get("/comics/v1/list/{id}", "42").accept(MediaType.APPLICATION_JSON))
+    public void retieveSpecificTest() throws Exception
+    {
+        this.mockMvc.perform(get("/api/v1/comic/{comic_id}", "42").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                         document("{methodName}",
                                 preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
-                                pathParameters(parameterWithName("id").description("Specific comic to retrieve")),
+                                pathParameters(parameterWithName("comic_id").description("Specific comic to retrieve")),
                                 responseFields(comic()),
                                 responseHeaders(headerWithName("Content-Type").description("application/json"))));
     }
+
+//    @Test
+//    public void retieveFirstStripTest() throws Exception
+//    {
+//        this.mockMvc.perform(get("/api/v1/comic/{comic_id}/strips/first", "42").accept(MediaType.IMAGE_JPEG))
+//                .andExpect(status().isOk())
+//                .andDo(
+//                        document("{methodName}",
+//                                preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
+//                                pathParameters(parameterWithName("comic_id").description("Specific comic to retrieve")),
+//                                //responseFields(comic()),
+//                                responseHeaders(headerWithName("Content-Type").description("image/jpg"))));
+//    }
+
 
     private FieldDescriptor[] comic()
     {

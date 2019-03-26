@@ -8,10 +8,10 @@ import { ComicStripComponent }  from './comic-strip/comic-strip.component';
 
 
 const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: '/comics', pathMatch: 'full' },
   { path: 'dashboard', component: DashboardComponent },
-  { path: 'detail/:id', component: ComicsComponent },
-  { path: 'comics', component: ComicStripComponent }
+  // { path: 'comics/:id', component: ComicStripComponent },
+  { path: 'comics', component: ComicsComponent }
 ];
 
 @NgModule({

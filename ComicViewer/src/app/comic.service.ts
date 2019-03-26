@@ -14,7 +14,7 @@ const httpOptions = {
 @Injectable({ providedIn: 'root' })
 export class ComicService {
 
-  private comicUrl = "comics/v1/list";  // URL to web api
+  private comicUrl = "api/v1/comics";  // URL to web api
 
   constructor(
       private http: HttpClient,

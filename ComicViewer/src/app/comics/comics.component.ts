@@ -24,4 +24,9 @@ export class ComicsComponent implements OnInit {
         .subscribe(comics => this.comics = comics);
   }  
 
+  selectedComic: Comic;
+  onSelect(comic: Comic): void {
+    this.selectedComic = comic;
+  }  
+
 }

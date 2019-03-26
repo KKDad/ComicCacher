@@ -11,7 +11,7 @@ import { ComicService } from '../comic.service'
   styleUrls: ['./comic-strip.component.css']
 })
 export class ComicStripComponent implements OnInit {
-  comic: Comic;
+  @Input() comic: Comic;
  
   constructor(
     private route: ActivatedRoute,
@@ -20,14 +20,14 @@ export class ComicStripComponent implements OnInit {
   ) {}
  
   ngOnInit(): void {
-    this.getcomic();
+//    this.getcomic();
   }
  
-  getcomic(): void {
-    const id = +this.route.snapshot.paramMap.get('id');
-    this.comicService.getComic(id)
-      .subscribe(comic => this.comic = comic);
-  }
+  // getcomic(): void {
+  //   const id = +this.route.snapshot.paramMap.get('id');
+  //   this.comicService.getComic(id)
+  //     .subscribe(comic => this.comic = comic);
+  // }
  
   goBack(): void {
     this.location.back();

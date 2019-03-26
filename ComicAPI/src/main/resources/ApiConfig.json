@@ -1,3 +1,4 @@
 {
-  "cacheDirectory":"/data"
+  "cacheDirectory":"/data",
+  "cacheDirectoryAlternate":"z:/ComicCache"
 }

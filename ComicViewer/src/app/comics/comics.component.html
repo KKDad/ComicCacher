@@ -1,21 +1,22 @@
-<h2>Comics</h2>
- 
-<div>
+<!-- <div>
   <label>Comic name:
     <input #comicName />
-  </label>
-  <!-- (click) passes input value to add() and then clears the input -->
+  </label>  
   <button (click)="add(comicName.value); comicName.value=''">
     add
   </button>
-</div>
+</div> -->
  
-<ul class="comics">
-  <li *ngFor="let comic of comics">
-    <a routerLink="/detail/{{comic.id}}">
-      <span class="badge">{{comic.id}}</span> {{comic.name}}
-    </a>
-    <button class="delete" title="delete comics"
-      (click)="delete(comics)">x</button>
+<div class="left">
+  <ul class="comics">
+  <li *ngFor="let comic of comics"
+    [class.selected]="comic == selectedComic"
+    (click)="onSelect(comic)">
+    <span class="badge">{{comic.id}}</span> {{comic.name}}    
   </li>
 </ul>
+</div>
+
+<div class="right">
+  <app-comic-strip [comic]="selectedComic"></app-comic-strip>
+</div>
