@@ -23,7 +23,7 @@ include::{snippets}/listAllTest/http-request.adoc[]
 
 //==== Request parameters
 //
-//include::{snippets}/listTest/request-parameters.adoc[]
+//include::{snippets}/listAllTest/request-parameters.adoc[]
 
 ==== Response fields
 
@@ -42,9 +42,9 @@ Use the generated id of a comic to retrieve all details about it.
 
 include::{snippets}/retieveSpecificTest/http-request.adoc[]
 
-==== Request parameters
+==== Path parameters
 
-include::{snippets}/retieveSpecificTest/request-parameters.adoc[]
+include::{snippets}/retieveSpecificTest/path-parameters.adoc[]
 
 ==== Response fields
 
