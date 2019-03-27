@@ -1,0 +1,8 @@
+<div class="header" *ngIf="currentSectionName!=null">
+  <h2 >{{currentSectionName}}</h2>
+</div>
+<ul>
+<li *ngFor="let section of sections">
+    <section [content]="section" (sectionPosition)="sectionPosition($event)"></section>
+</li>
+</ul>
