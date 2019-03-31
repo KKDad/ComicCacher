@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { Comic } from '../comic';
+import { Comic } from '../dto/comic';
 import { ComicService } from '../comic.service';
 
 @Component({

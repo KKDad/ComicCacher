@@ -1,5 +1,6 @@
 package com.stapledon.comic;
 
+import com.stapledon.dto.ImageDto;
 import com.stapledon.cache.CacheUtils;
 import com.stapledon.cache.Direction;
 import com.stapledon.interop.ComicItem;
@@ -7,10 +8,13 @@ import com.stapledon.interop.ComicList;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -57,7 +61,7 @@ public class ComicsService
      * @param which - Direction to retrive from, either oldest or newest.
      * @return 200 with the image or 404 with no response body if not found
      */
-    ResponseEntity<byte[]> retrieveComicStrip(String comicId, Direction which) throws IOException
+    ResponseEntity<ImageDto> retrieveComicStrip(String comicId, Direction which) throws IOException
     {
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
@@ -70,7 +74,7 @@ public class ComicsService
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
-        headers.setContentType(MediaType.IMAGE_JPEG);
+        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
         CacheUtils cacheUtils = new CacheUtils(cacheLocation);
         File oldest = cacheUtils.findFirst(comic, which);
         if (oldest == null) {
@@ -81,6 +85,14 @@ public class ComicsService
 
         byte[] media = Files.readAllBytes(oldest.toPath());
 
-        return new ResponseEntity<>(media, headers, HttpStatus.OK);
+        BufferedImage image = ImageIO.read(oldest);
+
+        ImageDto dto = new ImageDto();
+        dto.mimeType = MediaType.IMAGE_PNG.toString();
+        dto.imageData = Base64.getEncoder().withoutPadding().encodeToString(media);
+        dto.height = image.getHeight();
+        dto.width = image.getWidth();
+
+        return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
 }

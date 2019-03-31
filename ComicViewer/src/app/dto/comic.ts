@@ -5,4 +5,5 @@ export class Comic {
   oldest: string;
   newest: string;
   enabled?: any;
+  strip: any
 }

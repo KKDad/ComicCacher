@@ -1,5 +1,6 @@
 package com.stapledon.comic;
 
+import com.stapledon.dto.ImageDto;
 import com.stapledon.cache.Direction;
 import com.stapledon.interop.ComicItem;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,13 +34,13 @@ public class ComicController
     }
 
     @RequestMapping(method=GET, path = "/api/v1/comic/{comic_id}/strips/first")
-    public @ResponseBody ResponseEntity<byte[]> retrieveFirstComicImage(@PathVariable String comic_id) throws IOException
+    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic_id) throws IOException
     {
         return comicsService.retrieveComicStrip(comic_id, Direction.FORWARD);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/comic/{comic_id}/strips/last")
-    public @ResponseBody ResponseEntity<byte[]> retrieveLastComicImage(@PathVariable String comic_id) throws IOException
+    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic_id) throws IOException
     {
         return comicsService.retrieveComicStrip(comic_id, Direction.BACKWARD);
     }

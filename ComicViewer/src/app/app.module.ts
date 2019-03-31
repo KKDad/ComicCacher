@@ -9,7 +9,6 @@ import { ComicStripComponent } from './comic-strip/comic-strip.component';
 import { MessagesComponent } from './messages/messages.component';
 import { AppRoutingModule } from './app-routing.module';
 import { DashboardComponent } from './dashboard/dashboard.component';
-import { ComicSearchComponent } from './comic-search/comic-search.component';
 import { SectionComponent } from './section/section.component';
 import { ContainerComponent } from './container/container.component';
 
@@ -20,7 +19,6 @@ import { ContainerComponent } from './container/container.component';
     ComicStripComponent,
     MessagesComponent,
     DashboardComponent,
-    ComicSearchComponent,
     SectionComponent,
     ContainerComponent
   ],

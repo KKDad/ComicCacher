@@ -1,3 +1,5 @@
 <h2>{{content.name}}</h2>
+<p>{{content.description}}</p>
 <hr>
-<img src="{{content.img}}"/>
+<img [src]="getSafeUrl()" height={{this.height}} width={{this.width}} id="comic-strip"/>
+

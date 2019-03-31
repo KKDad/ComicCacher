@@ -109,7 +109,9 @@ public class ComicControllerTest
 //                        document("{methodName}",
 //                                preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
 //                                pathParameters(parameterWithName("comic_id").description("Specific comic to retrieve")),
-//                                //responseFields(comic()),
+//                                responseFields(
+//                                        fieldWithPath("mimetype").description("Mimetype of the image"),
+//                                        fieldWithPath("imageData").description("Base64 encoded image")),
 //                                responseHeaders(headerWithName("Content-Type").description("image/jpg"))));
 //    }
 

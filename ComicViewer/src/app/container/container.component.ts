@@ -1,5 +1,8 @@
-import { Component, OnInit, Input,OnChanges, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, ElementRef, HostListener } from '@angular/core';
 import {SectionComponent} from '../section/section.component'
+
+import { Comic } from '../dto/comic';
+import { ComicService } from '../comic.service';
 
 @Component({
     selector: 'container',
@@ -8,14 +11,14 @@ import {SectionComponent} from '../section/section.component'
 })
 export class ContainerComponent implements OnInit {
 
-    private currentSectionName: string = null;
+    private currentComicName: string = null;
     private sectionsIndex: any = [];  
-    @Input()  sections: any;
-
-
-    constructor( private el: ElementRef) { }
+    @Input()  sections: Comic[];
+    
+    constructor( private el: ElementRef, private comicService: ComicService) { }
 
     ngOnInit() {
+        this.getComicSections();
     }
 
     sectionPosition($event) {
@@ -30,14 +33,14 @@ export class ContainerComponent implements OnInit {
 
         //if the page has already been scrolled find the current name
         if (document.body.scrollTop > 0) {
-            this.currentSectionName = this.getCurrentSectionName();
+            this.currentComicName = this.getCurrentSectionName();
         }
     }
 
 
     @HostListener("window:scroll", [])
     onWindowScroll() {
-        this.currentSectionName = this.getCurrentSectionName();
+        this.currentComicName = this.getCurrentSectionName();
     }
 
     private getCurrentSectionName(): string {
@@ -50,4 +53,9 @@ export class ContainerComponent implements OnInit {
         }
         return null;
     }
+
+    getComicSections(): void {
+        this.comicService.getComics()
+            .subscribe(comics => this.sections = comics);
+      }     
 }
