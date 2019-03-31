@@ -155,4 +155,7 @@ gradle-app.setting
 ### Gradle Patch ###
 **/build/
 
+## Saved Docker Images
+*.docker
+
 # End of https://www.gitignore.io/api/java,gradle,angular,intellij
