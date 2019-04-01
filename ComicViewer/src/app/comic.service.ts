@@ -6,7 +6,6 @@ import { Observable, of } from 'rxjs';
 
 import { Comic } from './dto/comic';
 import { ImageDto } from './dto/image';
-import { MessageService } from './message.service';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -15,16 +14,13 @@ const httpOptions = {
 @Injectable({ providedIn: 'root' })
 export class ComicService {
 
-  
-
-  constructor(
-      private http: HttpClient,
-      private messageService: MessageService) { }
+ 
+  constructor(private http: HttpClient) { }
  
   getComics(): Observable<Comic[]> {
     return this.http.get<Comic[]>("api/v1/comics")
         .pipe(
-          tap(el => this.log(`fetched ${el.length} comics`)),
+          tap(el => console.log(`fetched ${el.length} comics`)),
           catchError(this.handleError('getComics', []))
         );
   }
@@ -35,7 +31,7 @@ export class ComicService {
       id = 14293307;
     const url = `api/v1/comic/${id}`;
     return this.http.get<Comic>(url).pipe(
-      tap(el => this.log(`fetched Comic id=${id}, ${el.name}`)),      
+      tap(el => console.log(`fetched Comic id=${id}, ${el.name}`)),      
       catchError(this.handleError<Comic>(`getComic id=${id}`))
     );
   }  
@@ -46,14 +42,9 @@ export class ComicService {
       return null;      
     const url = `api/v1/comic/${id}/strips/last`;
     return this.http.get<ImageDto>(url).pipe(
-      tap(el => this.log(`fetched latest strip for comic id=${id}`)),      
+      tap(el => console.log(`fetched latest strip for comic id=${id}`)),      
       catchError(this.handleError<ImageDto>(`getComic id=${id}`))
     );
-  }
-
-  /** Log a message with the MessageService */
-  private log(message: string) {
-    this.messageService.add(`ComicService: ${message}`);
   }
 
   /**
@@ -65,12 +56,8 @@ export class ComicService {
   private handleError<T> (operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
   
-      // TODO: send the error to remote logging infrastructure
       console.error(error); // log to console instead
-  
-      // TODO: better job of transforming error for user consumption
-      this.log(`${operation} failed: ${error.message}`);
-  
+   
       // Let the app keep running by returning an empty result.
       return of(result as T);
     };

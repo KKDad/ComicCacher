@@ -29,7 +29,7 @@ export class SectionComponent implements OnInit {
             this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
             this.height = imagedto.height;
             this.width = imagedto.width;
-            console.log(`${this.content.name}: Image size is ${this.width}x${this.height}`);                   
+            console.log(`${this.content.name}: Image size is ${this.width}x${this.height}.`);                   
         });       
     }
 
