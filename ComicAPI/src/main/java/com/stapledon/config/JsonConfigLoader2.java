@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 
-public class JsonConfigLoader {
+public class JsonConfigLoader2 {
 
     public ComicCacherConfig load()
     {

@@ -23,7 +23,7 @@ public class JsonConfigLoaderTest {
         InputStream targetStream =   new ReaderInputStream(CharSource.wrap(initialString.replace('\'', '\"')).openStream(), Charset.defaultCharset());
 
         // Act
-        ComicCacherConfig results = new JsonConfigLoader().load(targetStream);
+        ComicCacherConfig results = new JsonConfigLoader2().load(targetStream);
 
         // Assert
         Assert.assertEquals("myCacheDir", results.cacheDirectory);

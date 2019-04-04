@@ -3,8 +3,6 @@ package com.stapledon.cacher;
 import com.stapledon.interop.ComicItem;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
 
 public class GoComics extends DailyComic {
@@ -31,7 +28,7 @@ public class GoComics extends DailyComic {
     {
         this.currentDate = date;
         if (logger.isInfoEnabled())
-            logger.info("Date set to: " + this.currentDate.toString());
+            logger.info("Date set to: {}" + this.currentDate.toString());
 
         return this;
     }
@@ -100,9 +97,9 @@ public class GoComics extends DailyComic {
             if (!avatar_cached.exists()) {
 
                 // TODO: Again, Fragile...
-                Element feature_avatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
+                Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
 
-                cacheImage(feature_avatars, avatar_cached.getAbsolutePath());
+                cacheImage(featureAvatars, avatar_cached.getAbsolutePath());
                 logger.trace("Avatar has been cached ");
             }
 

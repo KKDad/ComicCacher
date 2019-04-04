@@ -2,6 +2,7 @@ package com.stapledon.cacher;
 
 import com.stapledon.config.ComicCacherConfig;
 import com.stapledon.config.JsonConfigLoader;
+import com.stapledon.config.JsonConfigLoader2;
 import com.stapledon.config.JsonConfigWriter;
 import com.stapledon.interop.ComicItem;
 import org.apache.log4j.Logger;
@@ -24,7 +25,7 @@ public class ComicCacher {
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
 
-        ComicCacherConfig config = new JsonConfigLoader().load();
+        ComicCacherConfig config = new JsonConfigLoader2().load();
         JsonConfigWriter statsUpdater = new JsonConfigWriter(config.cacheDirectory + "/comics.json");
 
         for (ComicCacherConfig.GoComics dcc : config.dailyComics) {
