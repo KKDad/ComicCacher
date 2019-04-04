@@ -1,4 +1,4 @@
-package com.stapledon.comic;
+package com.stapledon.api;
 
 import com.google.gson.Gson;
 import com.stapledon.config.ApiConfig;

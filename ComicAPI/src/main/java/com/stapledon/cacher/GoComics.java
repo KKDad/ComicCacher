@@ -38,7 +38,7 @@ public class GoComics extends DailyComic {
 
     /**
      * Set the GoComic that to caching
-     * @param comicName Name of the comic to process
+     * @param comicName Name of the api to process
      * @return this
      */
     @Override
@@ -55,7 +55,7 @@ public class GoComics extends DailyComic {
     /**
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
      * a week after they were published in print.
-     * @return Mst recent date we can get a comic for
+     * @return Mst recent date we can get a api for
      */
     public LocalDate getLastStripOn()
     {
@@ -70,7 +70,7 @@ public class GoComics extends DailyComic {
     }
 
     /**
-     * Link to the About the comic page
+     * Link to the About the api page
      * @return URL where we can get the about information for this strip
      */
     private String generateAboutUTL()
@@ -95,13 +95,12 @@ public class GoComics extends DailyComic {
                 comicItem.author = author.get().text();
             }
 
-            // Cache the Avatar if we don't alread have it
+            // Cache the Avatar if we don't already have it
             File avatar_cached = new File(String.format("%s/%s/avatar.png", this.getCacheDirectory(), comicNameParsed));
             if (!avatar_cached.exists()) {
 
                 // TODO: Again, Fragile...
                 Element feature_avatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
-                //Attributes avatar = feature_avatars.attributes();
 
                 cacheImage(feature_avatars, avatar_cached.getAbsolutePath());
                 logger.trace("Avatar has been cached ");
@@ -118,7 +117,7 @@ public class GoComics extends DailyComic {
 //<img srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" data-srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" class=" lazyloaded" alt="Herman" src="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png">
 
     /**
-     * Determines which links represent the comic image that we should cache
+     * Determines which links represent the api image that we should cache
      * @param media list of image links to choose from
      */
     private Elements pickImages(Elements media)
@@ -149,8 +148,8 @@ public class GoComics extends DailyComic {
 
 
     /**
-     * Ensure that the comic is cached for the current date
-     * @return true if the comic for the current day has been successfully cached.
+     * Ensure that the api is cached for the current date
+     * @return true if the api for the current day has been successfully cached.
      */
     @Override
     public boolean ensureCache() {

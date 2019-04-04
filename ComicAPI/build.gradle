@@ -45,7 +45,7 @@ jar {
 }
 
 bootJar {
-	baseName = 'comic-api'
+	baseName = 'api-api'
 	dependsOn asciidoctor 
 	from ("${asciidoctor.outputDir}/html5") {
 		into 'static/docs'

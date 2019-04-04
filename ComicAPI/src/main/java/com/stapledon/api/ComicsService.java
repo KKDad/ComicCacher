@@ -1,4 +1,4 @@
-package com.stapledon.comic;
+package com.stapledon.api;
 
 import com.stapledon.dto.ImageDto;
 import com.stapledon.cache.CacheUtils;
@@ -31,10 +31,10 @@ public class ComicsService
     static List<ComicItem> comics = new ArrayList<>();
 
     /**
-     * Return details of a specific comic
+     * Return details of a specific api
      *
      * @param comicId - Comic to lookup
-     * @return details of the comic
+     * @return details of the api
      */
     ComicItem retrieveComic(String comicId)
     {
@@ -56,7 +56,7 @@ public class ComicsService
     }
 
     /**
-     * Returns the strip image for a specified comic
+     * Returns the strip image for a specified api
      * @param comicId - Comic to retrieve
      * @param which - Direction to retrive from, either oldest or newest.
      * @return 200 with the image or 404 with no response body if not found
@@ -70,7 +70,7 @@ public class ComicsService
         ComicItem comic = comics.stream().filter(p -> p.id == i).findFirst().orElse(null);
         if (comic == null) {
             if (logger.isLoggable(Level.SEVERE))
-                logger.log(Level.SEVERE, String.format("Unknown comic id=%d, total known: %d", i, comics.size()));
+                logger.log(Level.SEVERE, String.format("Unknown api id=%d, total known: %d", i, comics.size()));
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -97,7 +97,7 @@ public class ComicsService
     }
 
     /**
-     * Returns the avatar for a specified comic
+     * Returns the avatar for a specified api
      * @param comicId - Comic to retrieve
      * @return 200 with the image or 404 with no response body if not found
      */

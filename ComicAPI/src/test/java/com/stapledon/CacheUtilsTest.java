@@ -2,7 +2,7 @@ package com.stapledon;
 
 import com.stapledon.cache.CacheUtils;
 import com.stapledon.cache.Direction;
-import com.stapledon.comic.ComicApiApplication;
+import com.stapledon.api.ComicApiApplication;
 import com.stapledon.config.JsonConfigLoader;
 import com.stapledon.interop.ComicItem;
 import org.junit.Assert;
@@ -10,12 +10,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.Optional;
 
 public class CacheUtilsTest {
 

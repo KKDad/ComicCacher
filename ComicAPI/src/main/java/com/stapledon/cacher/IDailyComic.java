@@ -18,20 +18,20 @@ public interface IDailyComic
 
     /**
      * Set the GoComic that to caching
-     * @param comicName Name of the comic to process
+     * @param comicName Name of the api to process
      * @return this
      */
     IDailyComic setComic(String comicName);
 
 
     /**
-     * Ensure that the comic is cached for the current date
-     * @return True if the comic has been cached on this date
+     * Ensure that the api is cached for the current date
+     * @return True if the api has been cached on this date
      */
     boolean ensureCache();
 
     /**
-     * Advances the date by the interval that the comic is published on. For daily comics, this is one dat. For
+     * Advances the date by the interval that the api is published on. For daily comics, this is one dat. For
      * periodically published comics, this may be multiple days. This cannot go past getLastStripOn.
      * @return Next available date.
      */
@@ -40,12 +40,12 @@ public interface IDailyComic
     /**
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
      * a week after they were published in print.
-     * @return Mst recent date we can get a comic for
+     * @return Mst recent date we can get a api for
      */
     LocalDate getLastStripOn();
 
     /**
-     * Update the comic metadata from the authors/publishers website
+     * Update the api metadata from the authors/publishers website
      *  - Description
      *  - Author's name
      *  - Avatar and/or Icon

@@ -1,4 +1,4 @@
-package com.stapledon.comic;
+package com.stapledon.api;
 
 import com.stapledon.interop.ComicItem;
 import org.junit.Before;
@@ -49,7 +49,7 @@ public class ComicControllerTest
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
                 .apply(documentationConfiguration(this.restDocumentation).uris()
                         .withScheme("https")
-                        .withHost("comic.gilbert.ca")
+                        .withHost("api.gilbert.ca")
                         .withPort(443))
                 .apply(documentationConfiguration(this.restDocumentation)).build();
 
@@ -66,7 +66,7 @@ public class ComicControllerTest
         item2.id = 187;
         item2.name = "The Dysfunctional Family Circus";
         item2.author = "Bil Keane";
-        item2.description = "The Dysfunctional Family Circus is the name of several long-running parodies of the syndicated comic strip The Family Circus, featuring either Bil Keane's artwork with altered captions, or (less often) original artwork made to appear like the targeted strips.";
+        item2.description = "The Dysfunctional Family Circus is the name of several long-running parodies of the syndicated api strip The Family Circus, featuring either Bil Keane's artwork with altered captions, or (less often) original artwork made to appear like the targeted strips.";
         item2.oldest = LocalDate.of(1989, 8, 31);
         item2.newest = LocalDate.of(2013, 12, 8);
         item2.enabled = false;
@@ -94,12 +94,12 @@ public class ComicControllerTest
     @Test
     public void retieveSpecificTest() throws Exception
     {
-        this.mockMvc.perform(get("/api/v1/comic/{comic_id}", "42").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get("/api/v1/api/{comic_id}", "42").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                         document("{methodName}",
                                 preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
-                                pathParameters(parameterWithName("comic_id").description("Specific comic to retrieve")),
+                                pathParameters(parameterWithName("comic_id").description("Specific api to retrieve")),
                                 responseFields(comic()),
                                 responseHeaders(headerWithName("Content-Type").description("application/json"))));
     }
@@ -107,12 +107,12 @@ public class ComicControllerTest
 //    @Test
 //    public void retieveFirstStripTest() throws Exception
 //    {
-//        this.mockMvc.perform(get("/api/v1/comic/{comic_id}/strips/first", "42").accept(MediaType.IMAGE_JPEG))
+//        this.mockMvc.perform(get("/api/v1/api/{comic_id}/strips/first", "42").accept(MediaType.IMAGE_JPEG))
 //                .andExpect(status().isOk())
 //                .andDo(
 //                        document("{methodName}",
 //                                preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
-//                                pathParameters(parameterWithName("comic_id").description("Specific comic to retrieve")),
+//                                pathParameters(parameterWithName("comic_id").description("Specific api to retrieve")),
 //                                responseFields(
 //                                        fieldWithPath("mimetype").description("Mimetype of the image"),
 //                                        fieldWithPath("imageData").description("Base64 encoded image")),
@@ -129,7 +129,7 @@ public class ComicControllerTest
                 fieldWithPath("description").description("Description of the Comic"),
                 fieldWithPath("oldest").description("Oldest date available for retrieval."),
                 fieldWithPath("newest").description("Most recent date available for retrieval"),
-                fieldWithPath("enabled").description("Is caching of this comic enabled?")
+                fieldWithPath("enabled").description("Is caching of this api enabled?")
         };
     }
 }
