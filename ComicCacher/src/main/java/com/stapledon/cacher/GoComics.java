@@ -1,15 +1,21 @@
 package com.stapledon.cacher;
 
+import com.stapledon.interop.ComicItem;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.jsoup.select.Selector;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
 
 public class GoComics extends DailyComic {
 
@@ -72,7 +78,7 @@ public class GoComics extends DailyComic {
         return String.format("https://www.gocomics.com/%s/about",  this.comicNameParsed);
     }
 
-    public String getComicDescription()
+    public void updateComicMetadata(ComicItem comicItem)
     {
         try {
             String url = this.generateAboutUTL();
@@ -81,12 +87,35 @@ public class GoComics extends DailyComic {
             Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(TIMEOUT).get();
             // Fragile, however there appears to only be one "section" class and the description seems to be the
             // first div inside it.
-            return doc.select("section").select("div").get(0).text();
+            comicItem.description = doc.select("section").select("div").get(0).text();
 
-        } catch (IOException ioe) {
-            return null;
+
+            Optional<Element> author = doc.select("span").stream().filter(p -> p.attributes().get("class").contains("media-subheading")).findFirst();
+            if (author.isPresent()) {
+                comicItem.author = author.get().text();
+            }
+
+            // Cache the Avatar if we don't alread have it
+            File avatar_cached = new File(String.format("%s/%s/avatar.png", this.getCacheDirectory(), comicNameParsed));
+            if (!avatar_cached.exists()) {
+
+                // TODO: Again, Fragile...
+                Element feature_avatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
+                //Attributes avatar = feature_avatars.attributes();
+
+                cacheImage(feature_avatars, avatar_cached.getAbsolutePath());
+                logger.trace("Avatar has been cached ");
+            }
+
+
+
+        } catch (IOException | Selector.SelectorParseException e) {
+            logger.error(e.getMessage());
         }
     }
+
+//    https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png
+//<img srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" data-srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" class=" lazyloaded" alt="Herman" src="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png">
 
     /**
      * Determines which links represent the comic image that we should cache

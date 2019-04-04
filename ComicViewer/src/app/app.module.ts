@@ -6,6 +6,10 @@ import { HttpClientModule }    from '@angular/common/http';
 import { AppComponent } from './app.component';
 import { SectionComponent } from './section/section.component';
 import { ContainerComponent } from './container/container.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+import { MatButtonModule, MatCardModule} from '@angular/material'
+
 
 @NgModule({
   declarations: [
@@ -16,7 +20,10 @@ import { ContainerComponent } from './container/container.component';
   imports: [
     BrowserModule,
     FormsModule,
-    HttpClientModule
+    HttpClientModule,
+    BrowserAnimationsModule,
+    MatButtonModule,
+    MatCardModule
   ],
   providers: [],
   bootstrap: [AppComponent]

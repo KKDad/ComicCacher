@@ -95,4 +95,36 @@ public class ComicsService
 
         return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
+
+    /**
+     * Returns the avatar for a specified comic
+     * @param comicId - Comic to retrieve
+     * @return 200 with the image or 404 with no response body if not found
+     */
+    ResponseEntity<ImageDto> retrieveAvatar(String comicId)  throws IOException
+    {
+        HttpHeaders headers = new HttpHeaders();
+        ComicItem comic = comics.stream().filter(p -> p.id == i).findFirst().orElse(null);
+        String comicNameParsed = comic.name.replace(" ", "");
+
+
+        File avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
+        if (avatar.exists()) {
+            if (logger.isLoggable(Level.SEVERE))
+                logger.log(Level.SEVERE, String.format("Unable to locate avatar for %s", comic.name));
+            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+        }
+
+        byte[] media = Files.readAllBytes(avatar.toPath());
+
+        BufferedImage image = ImageIO.read(avatar);
+
+        ImageDto dto = new ImageDto();
+        dto.mimeType = MediaType.IMAGE_PNG.toString();
+        dto.imageData = Base64.getEncoder().withoutPadding().encodeToString(media);
+        dto.height = image.getHeight();
+        dto.width = image.getWidth();
+
+        return new ResponseEntity<>(dto, headers, HttpStatus.OK);
+    }
 }

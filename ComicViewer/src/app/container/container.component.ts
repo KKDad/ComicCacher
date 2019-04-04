@@ -34,6 +34,7 @@ export class ContainerComponent implements OnInit {
         //if the page has already been scrolled find the current name
         if (document.body.scrollTop > 0) {
             this.currentComicName = this.getCurrentSectionName();
+            console.log(`Found current name: ${this.currentComicName}`)
         }
     }
 

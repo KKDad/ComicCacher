@@ -3,6 +3,7 @@ package com.stapledon.cache;
 import com.stapledon.interop.ComicItem;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
@@ -25,7 +26,12 @@ public class CacheUtils
         File rootfolder = new File(path);
 
         // Comics are stored by year, find the smallest year
-        String[] files = rootfolder.list();
+        String[] files = rootfolder.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return !name.toLowerCase().contains("avatar");
+            }
+        });
         if (files == null || files.length == 0)
             return null;
         Arrays.sort(files, Comparator.comparing(Integer::valueOf));

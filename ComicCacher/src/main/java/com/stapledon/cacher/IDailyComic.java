@@ -1,5 +1,7 @@
 package com.stapledon.cacher;
 
+import com.stapledon.interop.ComicItem;
+
 import java.time.LocalDate;
 
 /**
@@ -43,8 +45,11 @@ public interface IDailyComic
     LocalDate getLastStripOn();
 
     /**
-     * Get a description of the comic from the authors/publishers website
-     * @return description of the comic
+     * Update the comic metadata from the authors/publishers website
+     *  - Description
+     *  - Author's name
+     *  - Avatar and/or Icon
      */
-    String getComicDescription();
+    void updateComicMetadata(ComicItem comicItem);
+
 }

@@ -9,10 +9,12 @@ public class ComicItem implements Comparable<ComicItem> {
     }
     public int id;
     public String name;
-    public String description;
+    public String author;
     public LocalDate oldest;
     public LocalDate newest;
     public Boolean enabled;
+
+    public String description;
 
     @Override
     public int compareTo(ComicItem o) {

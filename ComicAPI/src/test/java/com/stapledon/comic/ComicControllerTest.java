@@ -56,16 +56,20 @@ public class ComicControllerTest
         ComicItem item1 = new ComicItem();
         item1.id = 42;
         item1.name = "Art Comics Daily";
+        item1.author = "Bebe Williams";
         item1.description = "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.";
         item1.oldest = LocalDate.of(1995, 05, 31);
         item1.newest = LocalDate.of(2007, 12, 8);
+        item1.enabled = true;
 
         ComicItem item2 = new ComicItem();
         item2.id = 187;
         item2.name = "The Dysfunctional Family Circus";
+        item2.author = "Bil Keane";
         item2.description = "The Dysfunctional Family Circus is the name of several long-running parodies of the syndicated comic strip The Family Circus, featuring either Bil Keane's artwork with altered captions, or (less often) original artwork made to appear like the targeted strips.";
         item2.oldest = LocalDate.of(1989, 8, 31);
         item2.newest = LocalDate.of(2013, 12, 8);
+        item2.enabled = false;
 
         ComicsService.comics.clear();
         ComicsService.comics.add(item1);
@@ -121,6 +125,7 @@ public class ComicControllerTest
         return new FieldDescriptor[]{
                 fieldWithPath("id").description(""),
                 fieldWithPath("name").description("Name of the Comic"),
+                fieldWithPath("author").description("Author of the Comic"),
                 fieldWithPath("description").description("Description of the Comic"),
                 fieldWithPath("oldest").description("Oldest date available for retrieval."),
                 fieldWithPath("newest").description("Most recent date available for retrieval"),

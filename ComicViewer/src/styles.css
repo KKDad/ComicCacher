@@ -1,14 +1,6 @@
-/* .container {
-    margin: auto;
-    padding: 10px;    
+body { 
+    height: 100%; 
+    margin: 0; 
+    font-family: Roboto, "Helvetica Neue", sans-serif; 
+    background-color:#696969;
 }
-.left {    
-    float: left;
-    padding: 10px;
-    outline: 1px dashed red;
-}
-.right {    
-    position: sticky;    
-    padding: 10px;
-    height: 200px;
-} */

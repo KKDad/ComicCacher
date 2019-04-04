@@ -18,6 +18,9 @@ To export the docker file for transferring between machines without using docker
 ~~~
 docker save kkdad/comic-api -o comics-api.docker
 docker load -i comics-api.docker
+
+docker run -it -v /backups/ComicCache:/data -p 8080:8888 kkdad/comic-api
+
 ~~~
 
 #### ComicViewer

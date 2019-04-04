@@ -1,4 +1,17 @@
-<h2>{{content.name}}</h2>
-<p>{{content.description}}</p>
-<hr>
-<img [src]="getSafeUrl()" height={{this.height}} width={{this.width}} id="comic-strip"/>
+<mat-card class="example-card">
+    <mat-card-header>
+        <div mat-card-avatar class="example-header-image"></div>
+        <mat-card-title>{{content.name}}</mat-card-title>
+        <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+        <img [src]="getSafeUrl()" height={{this.height}} width={{this.width}} id="comic-strip"/>
+        <p>{{content.description}}</p>
+    </mat-card-content>
+    <mat-card-actions>
+        <button mat-button>First</button>
+        <button mat-button>Previous</button>
+        <button mat-button>Next</button>
+        <button mat-button>Last</button>
+    </mat-card-actions>      
+</mat-card>

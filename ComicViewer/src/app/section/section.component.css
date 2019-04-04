@@ -1,5 +1,13 @@
-hr {
-    margin-bottom: 21px;
-    border: 0;
-    border-top: 1px solid #434857;
+/* .example-header-image {
+  background-image: url('https://material.angular.io/assets/img/examples/shiba1.jpg');
+  background-size: cover;
+} */
+
+mat-card-header {
+  margin-bottom: 5px; 
+}
+
+mat-card { 
+  margin-bottom: 10px; 
+  width: 1000px;
 }

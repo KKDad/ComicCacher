@@ -1,5 +1,6 @@
 package com.stapledon.cacher;
 
+import com.stapledon.interop.ComicItem;
 import org.apache.log4j.Logger;
 import org.junit.*;
 
@@ -78,10 +79,11 @@ public class GoComicsTest {
         GoComics subject = getSubject("Adam at Home");
 
         // Act
-        String result = subject.getComicDescription();
+        ComicItem item = new ComicItem();
+        subject.updateComicMetadata(item);
 
         // Assert
-        Assert.assertTrue(result.contains("humor of Rob Harrell"));
+        Assert.assertTrue(item.description.contains("humor of Rob Harrell"));
     }
 
     @Test
@@ -90,9 +92,10 @@ public class GoComicsTest {
         GoComics subject = getSubject("Herman");
 
         // Act
-        String result = subject.getComicDescription();
+        ComicItem item = new ComicItem();
+        subject.updateComicMetadata(item);
 
         // Assert
-        Assert.assertTrue(result.contains("It was his greatest wish that HERMAN live on and continue to make us laugh."));
+        Assert.assertTrue(item.description.contains("It was his greatest wish that HERMAN live on and continue to make us laugh."));
     }
 }

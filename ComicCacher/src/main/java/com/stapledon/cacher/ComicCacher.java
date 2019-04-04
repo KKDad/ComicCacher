@@ -4,6 +4,7 @@ import com.stapledon.config.ComicCacherConfig;
 import com.stapledon.config.JsonConfigLoader;
 import com.stapledon.config.JsonConfigWriter;
 import com.stapledon.interop.ComicItem;
+import org.apache.log4j.Logger;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -14,7 +15,9 @@ import java.security.SecureRandom;
 
 public class ComicCacher {
 
-    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException, InterruptedException {
+    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException, InterruptedException
+    {
+        final Logger logger = Logger.getLogger(ComicCacher.class);
 
         // configure the SSLContext with a TrustManager
         SSLContext ctx = SSLContext.getInstance("TLS");
@@ -25,6 +28,10 @@ public class ComicCacher {
         JsonConfigWriter statsUpdater = new JsonConfigWriter(config.cacheDirectory + "/comics.json");
 
         for (ComicCacherConfig.GoComics dcc : config.dailyComics) {
+
+            logger.info("***********************************************************************************************");
+            logger.info("Processing: " + dcc.name);
+            logger.info("***********************************************************************************************");
 
             IDailyComic comics = new GoComics()
                     .setCacheDirectory(config.cacheDirectory)
@@ -38,15 +45,16 @@ public class ComicCacher {
                 comicItem.name = dcc.name;
                 comicItem.oldest = dcc.startDate;
             }
-            if (comicItem.description == null || comicItem.description.length() == 0)
-                comicItem.description = comics.getComicDescription();
+            //if (comicItem.description == null || comicItem.description.length() == 0)
+                comics.updateComicMetadata(comicItem);
 
 
             while (!comics.advance().equals(comics.getLastStripOn()))
                 comics.ensureCache();
 
-            //comics.up
+
             comicItem.newest = comics.getLastStripOn();
+            comicItem.enabled = true;
             statsUpdater.save(comicItem);
         }
     }

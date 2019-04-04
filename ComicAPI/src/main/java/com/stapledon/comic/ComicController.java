@@ -33,6 +33,12 @@ public class ComicController
         return comicsService.retrieveComic(comic_id);
     }
 
+    @RequestMapping(method=GET, path = "/api/v1/comic/{comic_id}/avatar")
+    public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic_id) throws IOException
+    {
+        return comicsService.retrieveAvatar(comic_id);
+    }
+
     @RequestMapping(method=GET, path = "/api/v1/comic/{comic_id}/strips/first")
     public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic_id) throws IOException
     {
