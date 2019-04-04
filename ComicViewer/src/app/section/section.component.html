@@ -1,12 +1,12 @@
 <mat-card class="example-card">
     <mat-card-header>
-        <div mat-card-avatar class="example-header-image"></div>
+        <img mat-card-avatar [src]="getAvatarImage()" /> 
         <mat-card-title>{{content.name}}</mat-card-title>
         <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-        <img [src]="getSafeUrl()" height={{this.height}} width={{this.width}} id="comic-strip"/>
-        <p>{{content.description}}</p>
+        <img [src]="getComicImage()" height={{this.height}} width={{this.width}} />
+        <!-- <p>{{content.description}}</p> -->
     </mat-card-content>
     <mat-card-actions>
         <button mat-button>First</button>

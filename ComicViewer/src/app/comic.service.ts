@@ -47,6 +47,17 @@ export class ComicService {
     );
   }
 
+  getAvatar(id : number) : Observable<ImageDto>
+  {
+    if (id == 0)
+      return null;      
+    const url = `api/v1/comic/${id}/avatar`;
+    return this.http.get<ImageDto>(url).pipe(
+      tap(el => console.log(`fetched latest strip for comic id=${id}`)),      
+      catchError(this.handleError<ImageDto>(`getComic id=${id}`))
+    );
+  }  
+
   /**
    * Handle Http operation that failed.
    * Let the app continue.

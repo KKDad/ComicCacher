@@ -26,3 +26,10 @@ docker run -it -v /backups/ComicCache:/data -p 8080:8888 kkdad/comic-api
 #### ComicViewer
 
 Create a class/interface from json to typescript by using this site: http://json2ts.com/
+
+Material Design Principles
+https://material.io/design/components/cards.html#usage
+
+Material Design in Angular
+https://material.angular.io/components/categories
+

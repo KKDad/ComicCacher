@@ -31,6 +31,17 @@ export class SectionComponent implements OnInit {
             this.width = imagedto.width;
             console.log(`${this.content.name}: Image size is ${this.width}x${this.height}.`);                   
         });       
+
+        this.comicService.getAvatar(this.content.id).subscribe(imagedto => {
+            this.content.avatar = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
+            // this.height = imagedto.height;
+            // this.width = imagedto.width;
+            //console.log(`${this.content.name}: Image size is ${this.width}x${this.height}.`);                   
+        });         
+    }
+
+    getAvatarImage() {
+        return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.avatar);     
     }
 
 
@@ -39,11 +50,7 @@ export class SectionComponent implements OnInit {
       this.sectionPosition.emit({ name: this.content.name, position: this.element.nativeElement.offsetTop });
     }
 
-    getSafeUrl() {       
+    getComicImage() {       
         return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.strip);     
-    }   
-
-    getSafeWidth() {       
-        return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.strip);     
-    }    
+    }      
 }

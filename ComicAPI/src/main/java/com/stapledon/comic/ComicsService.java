@@ -104,14 +104,17 @@ public class ComicsService
     ResponseEntity<ImageDto> retrieveAvatar(String comicId)  throws IOException
     {
         HttpHeaders headers = new HttpHeaders();
+        int i = Integer.parseInt(comicId);
         ComicItem comic = comics.stream().filter(p -> p.id == i).findFirst().orElse(null);
         String comicNameParsed = comic.name.replace(" ", "");
 
 
         File avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
-        if (avatar.exists()) {
-            if (logger.isLoggable(Level.SEVERE))
+        if (!avatar.exists()) {
+            if (logger.isLoggable(Level.SEVERE)) {
                 logger.log(Level.SEVERE, String.format("Unable to locate avatar for %s", comic.name));
+                logger.log(Level.SEVERE, String.format("   checked %s", avatar.getAbsolutePath()));
+            }
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
