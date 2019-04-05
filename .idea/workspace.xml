@@ -2,28 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="86b05363-2164-4b22-ae1a-ee9a216807fe" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/api/ComicApiApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/api/ComicApiApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/api/ComicController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/api/ComicController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/api/ComicsService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/api/ComicsService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cache/CacheUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/utils/CacheUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cache/Direction.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/utils/Direction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/ComicCacher.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/ComicCacher.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/DailyComic.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/DailyComic.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/DefaultTrustManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/utils/DefaultTrustManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/GoComics.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/GoComics.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/IDailyComic.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/cacher/IDailyComic.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/config/ComicCacherConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/config/ComicCacherConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/config/JsonConfigLoader2.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/config/CacherConfigLoader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/config/JsonConfigWriter.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/config/JsonConfigWriter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/interop/ComicConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/dto/ComicConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/interop/ComicItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/dto/ComicItem.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/interop/ComicList.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/dto/ComicList.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/CacheUtilsTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/CacheUtilsTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/api/ComicControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/api/ComicControllerTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/cacher/GoComicsTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/cacher/GoComicsTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/config/JsonConfigLoaderTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/config/CacherConfigLoaderTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/config/JsonConfigWriterTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/config/JsonConfigWriterTest.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.gradle/" />
     <ignored path="$PROJECT_DIR$/build/" />
@@ -50,6 +29,7 @@
     <SUITE FILE_PATH="coverage/TheComicProcessor$GoComicsTest.ic" NAME="GoComicsTest Coverage Results" MODIFIED="1548723768690" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>com.stapledon.cacher.*</FILTER>
     </SUITE>
+    <SUITE FILE_PATH="coverage/TheComicProcessor$All_in_ComicAPI_test.ic" NAME="All in ComicAPI_test Coverage Results" MODIFIED="1554467722900" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
@@ -135,19 +115,6 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/config/ComicCacherConfig.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="510">
-              <caret line="30" lean-forward="true" selection-start-line="30" selection-end-line="30" />
-              <folding>
-                <element signature="imports" expanded="true" />
-                <element signature="e#111#166#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/utils/DefaultTrustManager.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="119">
@@ -168,8 +135,17 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/cacher/GoComicsTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="216">
-              <caret line="47" column="16" selection-start-line="47" selection-start-column="16" selection-end-line="47" selection-end-column="16" />
+            <state relative-caret-position="192">
+              <caret line="46" column="6" selection-start-line="46" selection-start-column="6" selection-end-line="46" selection-end-column="6" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/utils/Direction.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="102">
+              <caret line="6" column="1" lean-forward="true" selection-start-line="6" selection-start-column="1" selection-end-line="6" selection-end-column="1" />
             </state>
           </provider>
         </entry>
@@ -253,7 +229,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/ComicAPI/Docckerfile" />
         <option value="$PROJECT_DIR$/ComicAPI/build/docker/Dockerfile" />
         <option value="$PROJECT_DIR$/ComicAPI/src/main/resources/application.properties" />
         <option value="$PROJECT_DIR$/bitbucket-pipelines.yml" />
@@ -304,6 +279,7 @@
         <option value="$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/dto/ComicItem.java" />
         <option value="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/config/JsonConfigLoaderTest.java" />
         <option value="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/config/CacherConfigLoaderTest.java" />
+        <option value="$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/cacher/GoComicsTest.java" />
       </list>
     </option>
   </component>
@@ -521,7 +497,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Gradle.ComicCacher:ComicAPI [test]">
+  <component name="RunManager" selected="JUnit.All in ComicAPI_test">
     <configuration name="ComicCacher:ComicAPI [assemble]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -534,25 +510,6 @@
         <option name="taskNames">
           <list>
             <option value="assemble" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
-      <method v="2" />
-    </configuration>
-    <configuration name="ComicCacher:ComicAPI [docker]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$/ComicAPI" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value="docker" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -617,6 +574,14 @@
       <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
       <method v="2" />
     </configuration>
+    <configuration name="All in ComicAPI_test" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="ComicAPI_test" />
+      <option name="PACKAGE_NAME" value="" />
+      <option name="TEST_OBJECT" value="package" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="CacheUtilsTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="ComicAPI_test" />
       <extension name="coverage">
@@ -634,11 +599,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.All in ComicAPI_test" />
         <item itemvalue="Gradle.ComicCacher:ComicAPI [test]" />
         <item itemvalue="Gradle.ComicCacher:ComicAPI [testClasses]" />
         <item itemvalue="Gradle.ComicCacher:ComicAPI [assemble]" />
         <item itemvalue="JUnit.CacheUtilsTest" />
-        <item itemvalue="Gradle.ComicCacher:ComicAPI [docker]" />
       </list>
     </recent_temporary>
   </component>
@@ -738,9 +703,6 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="ComicControllerTest - 2019.03.31 at 15h 13m 56s.xml">
-      <configuration name="ComicControllerTest" configurationId="JUnit" />
-    </history-entry>
     <history-entry file="GoComicsTest - 2019.04.03 at 19h 45m 23s.xml">
       <configuration name="GoComicsTest" configurationId="JUnit" />
     </history-entry>
@@ -768,6 +730,9 @@
     <history-entry file="CacheUtilsTest - 2019.04.03 at 21h 12m 06s.xml">
       <configuration name="CacheUtilsTest" configurationId="JUnit" />
     </history-entry>
+    <history-entry file="ComicCacher_ComicAPI_[test] - 2019.04.05 at 08h 17m 19s.xml">
+      <configuration name="ComicCacher:ComicAPI [test]" configurationId="GradleRunConfiguration" />
+    </history-entry>
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -780,6 +745,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1176" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24946696" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -934,7 +900,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/ComicAPI/build/asciidoc/html5/index.html" />
     <entry file="file://$PROJECT_DIR$/ComicAPI/build/generated-snippets/retieveSpecificTest/path-parameters.adoc" />
     <entry file="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework/spring-web/5.1.4.RELEASE/1c97085f1052ad3206bafd364eba572d9f7565c2/spring-web-5.1.4.RELEASE-sources.jar!/org/springframework/http/MediaType.java">
       <provider selected="true" editor-type-id="text-editor">
@@ -1241,10 +1206,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/ComicAPI/src/main/java/com/stapledon/utils/Direction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="1" lean-forward="true" selection-start-line="6" selection-start-column="1" selection-end-line="6" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ComicAPI/src/test/java/com/stapledon/cacher/GoComicsTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="47" column="16" selection-start-line="47" selection-start-column="16" selection-end-line="47" selection-end-column="16" />
+        <state relative-caret-position="192">
+          <caret line="46" column="6" selection-start-line="46" selection-start-column="6" selection-end-line="46" selection-end-column="6" />
         </state>
       </provider>
     </entry>
