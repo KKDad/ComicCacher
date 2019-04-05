@@ -23,7 +23,6 @@ import java.util.logging.Logger;
 @Component
 public class ComicsService
 {
-    public int i = 54;
     static String cacheLocation;
 
     private static final Logger logger = Logger.getLogger(ComicsService.class.getName());
@@ -61,16 +60,15 @@ public class ComicsService
      * @param which - Direction to retrive from, either oldest or newest.
      * @return 200 with the image or 404 with no response body if not found
      */
-    ResponseEntity<ImageDto> retrieveComicStrip(String comicId, Direction which) throws IOException
+    ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException
     {
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
-        int i = Integer.parseInt(comicId);
-        ComicItem comic = comics.stream().filter(p -> p.id == i).findFirst().orElse(null);
+        ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
         if (comic == null) {
             if (logger.isLoggable(Level.SEVERE))
-                logger.log(Level.SEVERE, String.format("Unknown api id=%d, total known: %d", i, comics.size()));
+                logger.log(Level.SEVERE, String.format("Unknown api id=%d, total known: %d", comicId, comics.size()));
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -101,11 +99,13 @@ public class ComicsService
      * @param comicId - Comic to retrieve
      * @return 200 with the image or 404 with no response body if not found
      */
-    ResponseEntity<ImageDto> retrieveAvatar(String comicId)  throws IOException
+    ResponseEntity<ImageDto> retrieveAvatar(int comicId)  throws IOException
     {
         HttpHeaders headers = new HttpHeaders();
-        int i = Integer.parseInt(comicId);
-        ComicItem comic = comics.stream().filter(p -> p.id == i).findFirst().orElse(null);
+        ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+        if (comic == null)
+            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+
         String comicNameParsed = comic.name.replace(" ", "");
 
 

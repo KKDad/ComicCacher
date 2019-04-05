@@ -16,7 +16,7 @@ import java.security.SecureRandom;
 
 public class ComicCacher {
 
-    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException, InterruptedException
+    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException
     {
         final Logger logger = Logger.getLogger(ComicCacher.class);
 
@@ -46,10 +46,7 @@ public class ComicCacher {
                 comicItem.name = dcc.name;
                 comicItem.oldest = dcc.startDate;
             }
-            //if (comicItem.description == null || comicItem.description.length() == 0)
-                comics.updateComicMetadata(comicItem);
-
-
+            comics.updateComicMetadata(comicItem);
             while (!comics.advance().equals(comics.getLastStripOn()))
                 comics.ensureCache();
 

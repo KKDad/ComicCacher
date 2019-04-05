@@ -36,19 +36,22 @@ public class ComicController
     @RequestMapping(method=GET, path = "/api/v1/api/{comic_id}/avatar")
     public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic_id) throws IOException
     {
-        return comicsService.retrieveAvatar(comic_id);
+        int comicId = Integer.parseInt(comic_id);
+        return comicsService.retrieveAvatar(comicId);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/api/{comic_id}/strips/first")
     public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic_id) throws IOException
     {
-        return comicsService.retrieveComicStrip(comic_id, Direction.FORWARD);
+        int comicId = Integer.parseInt(comic_id);
+        return comicsService.retrieveComicStrip(comicId, Direction.FORWARD);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/api/{comic_id}/strips/last")
     public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic_id) throws IOException
     {
-        return comicsService.retrieveComicStrip(comic_id, Direction.BACKWARD);
+        int comicId = Integer.parseInt(comic_id);
+        return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD);
     }
 
 }
