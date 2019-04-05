@@ -1,4 +1,4 @@
-package com.stapledon.cache;
+package com.stapledon.utils;
 
 public enum Direction
 {

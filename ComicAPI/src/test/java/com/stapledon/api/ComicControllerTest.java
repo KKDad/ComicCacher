@@ -1,6 +1,6 @@
 package com.stapledon.api;
 
-import com.stapledon.interop.ComicItem;
+import com.stapledon.dto.ComicItem;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

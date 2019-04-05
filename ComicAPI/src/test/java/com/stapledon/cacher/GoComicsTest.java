@@ -1,6 +1,6 @@
 package com.stapledon.cacher;
 
-import com.stapledon.interop.ComicItem;
+import com.stapledon.dto.ComicItem;
 import org.apache.log4j.Logger;
 import org.junit.*;
 

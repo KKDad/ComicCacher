@@ -1,6 +1,6 @@
 package com.stapledon.cacher;
 
-import com.stapledon.interop.ComicItem;
+import com.stapledon.dto.ComicItem;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -114,7 +114,7 @@ public class GoComics extends DailyComic {
 //<img srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" data-srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" class=" lazyloaded" alt="Herman" src="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png">
 
     /**
-     * Determines which links represent the api image that we should cache
+     * Determines which links represent the api image that we should utils
      * @param media list of image links to choose from
      */
     private Elements pickImages(Elements media)

@@ -3,7 +3,7 @@ package com.stapledon.api;
 import com.google.gson.Gson;
 import com.stapledon.config.ApiConfig;
 import com.stapledon.config.JsonConfigLoader;
-import com.stapledon.interop.ComicConfig;
+import com.stapledon.dto.ComicConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

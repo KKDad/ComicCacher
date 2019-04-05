@@ -1,8 +1,8 @@
 package com.stapledon.api;
 
 import com.stapledon.dto.ImageDto;
-import com.stapledon.cache.Direction;
-import com.stapledon.interop.ComicItem;
+import com.stapledon.utils.Direction;
+import com.stapledon.dto.ComicItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;

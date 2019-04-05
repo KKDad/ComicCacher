@@ -1,10 +1,10 @@
 package com.stapledon.api;
 
 import com.stapledon.dto.ImageDto;
-import com.stapledon.cache.CacheUtils;
-import com.stapledon.cache.Direction;
-import com.stapledon.interop.ComicItem;
-import com.stapledon.interop.ComicList;
+import com.stapledon.utils.CacheUtils;
+import com.stapledon.utils.Direction;
+import com.stapledon.dto.ComicItem;
+import com.stapledon.dto.ComicList;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 

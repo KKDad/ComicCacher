@@ -1,6 +1,6 @@
-package com.stapledon.cache;
+package com.stapledon.utils;
 
-import com.stapledon.interop.ComicItem;
+import com.stapledon.dto.ComicItem;
 
 import java.io.File;
 import java.io.FilenameFilter;

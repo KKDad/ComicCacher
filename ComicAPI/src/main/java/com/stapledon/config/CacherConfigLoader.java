@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 
-public class JsonConfigLoader2 {
+public class CacherConfigLoader {
 
     public ComicCacherConfig load()
     {
@@ -18,7 +18,7 @@ public class JsonConfigLoader2 {
         return load(inputStream);
     }
 
-    public ComicCacherConfig load(InputStream inputStream)
+    ComicCacherConfig load(InputStream inputStream)
     {
         Gson gson = new Gson();
         Reader reader = new InputStreamReader(inputStream);

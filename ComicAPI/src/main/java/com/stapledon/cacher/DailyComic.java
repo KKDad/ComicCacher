@@ -63,7 +63,7 @@ public abstract class DailyComic implements IDailyComic
             logger.trace("Image saved");
             return true;
         } catch (FileNotFoundException e) {
-            logger.error("Failed to cache Image:", e);
+            logger.error("Failed to utils Image:", e);
 
         } finally {
             if (os != null)
@@ -81,7 +81,7 @@ public abstract class DailyComic implements IDailyComic
         File directory = new File(directoryName);
         if (!directory.exists()) {
             if (logger.isDebugEnabled())
-                logger.debug("Creating cache directory to: " + directoryName);
+                logger.debug("Creating utils directory to: " + directoryName);
             directory.mkdirs();
         }
         return this;

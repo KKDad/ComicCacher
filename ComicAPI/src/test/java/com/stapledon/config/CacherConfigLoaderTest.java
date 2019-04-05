@@ -12,7 +12,7 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.Month;
 
-public class JsonConfigLoaderTest {
+public class CacherConfigLoaderTest {
 
     @Test
     public void loadSimpleTest() throws IOException
@@ -23,7 +23,7 @@ public class JsonConfigLoaderTest {
         InputStream targetStream =   new ReaderInputStream(CharSource.wrap(initialString.replace('\'', '\"')).openStream(), Charset.defaultCharset());
 
         // Act
-        ComicCacherConfig results = new JsonConfigLoader2().load(targetStream);
+        ComicCacherConfig results = new CacherConfigLoader().load(targetStream);
 
         // Assert
         Assert.assertEquals("myCacheDir", results.cacheDirectory);

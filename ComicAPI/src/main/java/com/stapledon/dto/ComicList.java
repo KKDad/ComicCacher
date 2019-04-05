@@ -1,4 +1,4 @@
-package com.stapledon.interop;
+package com.stapledon.dto;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,10 +1,10 @@
 package com.stapledon;
 
-import com.stapledon.cache.CacheUtils;
-import com.stapledon.cache.Direction;
+import com.stapledon.utils.CacheUtils;
+import com.stapledon.utils.Direction;
 import com.stapledon.api.ComicApiApplication;
 import com.stapledon.config.JsonConfigLoader;
-import com.stapledon.interop.ComicItem;
+import com.stapledon.dto.ComicItem;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -2,8 +2,8 @@ package com.stapledon.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.stapledon.interop.ComicConfig;
-import com.stapledon.interop.ComicItem;
+import com.stapledon.dto.ComicConfig;
+import com.stapledon.dto.ComicItem;
 import org.apache.log4j.Logger;
 
 import java.io.*;
