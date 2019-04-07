@@ -35,7 +35,27 @@ public class CacheUtilsTest {
     }
 
     @Test
-    public void findOldestTest()
+     public void findOldestTest()
+    {
+        CacheUtils subject = getSubject();
+        File result = subject.findOldest(comicItem());
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(String.format("Checking if '%s' contains '2008-01-10'", result.getAbsolutePath()), result.getAbsolutePath().contains("2008-01-10"));
+    }
+
+    @Test
+    public void findNewestTest()
+    {
+        CacheUtils subject = getSubject();
+        File result = subject.findNewest(comicItem());
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(String.format("Checking if '%s' contains '2019-03-22'", result.getAbsolutePath()), result.getAbsolutePath().contains("2019-03-22"));
+    }
+
+    @Test
+    public void findFirstForwardTest()
     {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.FORWARD);
@@ -46,7 +66,7 @@ public class CacheUtilsTest {
 
 
     @Test
-    public void findNewestTest() throws IOException
+    public void findFirstBackwardsTest() throws IOException
     {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.BACKWARD);
@@ -54,6 +74,20 @@ public class CacheUtilsTest {
         Assert.assertNotNull(result);
         Assert.assertTrue(String.format("Checking if '%s' contains '2019-03-22'", result.getAbsolutePath()), result.getAbsolutePath().contains("2019-03-22"));
     }
+
+
+    @Test
+    public void findPreviousTest() throws IOException
+    {
+        LocalDate dt =  LocalDate.of(2008, 01, 11);
+        CacheUtils subject = getSubject();
+        File result = subject.findPrevious(comicItem(), dt);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(String.format("Checking if '%s' contains '2019-03-22'", result.getAbsolutePath()), result.getAbsolutePath().contains("2019-03-22"));
+    }
+
+
 
 
     /**

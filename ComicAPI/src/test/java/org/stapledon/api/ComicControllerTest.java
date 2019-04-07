@@ -155,7 +155,8 @@ public class ComicControllerTest
                                         fieldWithPath("mimeType").description("MimeType of the image"),
                                         fieldWithPath("imageData").description("Base64 encoded image"),
                                         fieldWithPath("height").description("Height of the image, in pixels"),
-                                        fieldWithPath("width").description("Width of the image, in pixels")),
+                                        fieldWithPath("width").description("Width of the image, in pixels"),
+                                        fieldWithPath("imageDate").description("Date of the image returned")),
                                 responseHeaders(headerWithName("Content-Type").description("image/jpg"))));
     }
 

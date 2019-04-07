@@ -1,5 +1,7 @@
 package org.stapledon.dto;
 
+import java.time.LocalDate;
+
 @SuppressWarnings({"squid:ClassVariableVisibilityCheck"})
 public class ImageDto
 {
@@ -11,5 +13,5 @@ public class ImageDto
     public String  imageData;
     public Integer height;
     public Integer width;
-    public String  imageRef;
+    public LocalDate imageDate;
 }
