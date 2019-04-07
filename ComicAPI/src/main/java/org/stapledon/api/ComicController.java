@@ -52,19 +52,19 @@ public class ComicController
         return iComicsService.retrieveComicStrip(comicId, Direction.FORWARD);
     }
 
-    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/strips/next{strip_reference}")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic_id, @PathVariable String fromDate) throws IOException
+    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/next/{strip_reference}")
+    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic_id, @PathVariable String strip_reference) throws IOException
     {
         int comicId = Integer.parseInt(comic_id);
-        LocalDate from = LocalDate.parse(fromDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return iComicsService.retrieveComicStrip(comicId, Direction.FORWARD, from);
     }
 
-    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/strips/previous{strip_reference}")
-    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic_id, @PathVariable String fromDate) throws IOException
+    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/previous/{strip_reference}")
+    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic_id, @PathVariable String strip_reference) throws IOException
     {
         int comicId = Integer.parseInt(comic_id);
-        LocalDate from = LocalDate.parse(fromDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return iComicsService.retrieveComicStrip(comicId, Direction.BACKWARD, from);
     }
 

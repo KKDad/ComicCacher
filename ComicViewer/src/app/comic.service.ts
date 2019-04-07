@@ -29,10 +29,21 @@ export class ComicService {
   getComic(id: number): Observable<Comic> {
     if (id == 0)
       id = 14293307;
-    const url = `api/v1/comic/${id}`;
+    const url = `api/v1/comics/${id}`;
     return this.http.get<Comic>(url).pipe(
       tap(el => console.log(`fetched Comic id=${id}, ${el.name}`)),      
       catchError(this.handleError<Comic>(`getComic id=${id}`))
+    );
+  }  
+
+  getEarliest(id : number) : Observable<ImageDto>
+  {
+    if (id == 0)
+      return null;      
+    const url = `api/v1/comics/${id}/strips/first`;
+    return this.http.get<ImageDto>(url).pipe(
+      tap(el => console.log(`fetched first strip for comic id=${id}`)),      
+      catchError(this.handleError<ImageDto>(`getComic id=${id}`))
     );
   }  
 
@@ -40,18 +51,40 @@ export class ComicService {
   {
     if (id == 0)
       return null;      
-    const url = `api/v1/comic/${id}/strips/last`;
+    const url = `api/v1/comics/${id}/strips/last`;
     return this.http.get<ImageDto>(url).pipe(
       tap(el => console.log(`fetched latest strip for comic id=${id}`)),      
       catchError(this.handleError<ImageDto>(`getComic id=${id}`))
     );
   }
 
+  getNext(id : number, current: String) : Observable<ImageDto>
+  {
+    if (id == 0)
+      return null;      
+    const url = `api/v1/comics/${id}/next/${current}`;
+    return this.http.get<ImageDto>(url).pipe(
+      tap(el => console.log(`fetched next strip for comic id=${id}`)),      
+      catchError(this.handleError<ImageDto>(`getComic id=${id}`))
+    );
+  }  
+
+  getPrev(id : number, current: String) : Observable<ImageDto>
+  {
+    if (id == 0)
+      return null;      
+    const url = `api/v1/comics/${id}/previous/${current}`;
+    return this.http.get<ImageDto>(url).pipe(
+      tap(el => console.log(`fetched next strip for comic id=${id}`)),      
+      catchError(this.handleError<ImageDto>(`getComic id=${id}`))
+    );
+  }    
+
   getAvatar(id : number) : Observable<ImageDto>
   {
     if (id == 0)
       return null;      
-    const url = `api/v1/comic/${id}/avatar`;
+    const url = `api/v1/comics/${id}/avatar`;
     return this.http.get<ImageDto>(url).pipe(
       tap(el => console.log(`fetched latest strip for comic id=${id}`)),      
       catchError(this.handleError<ImageDto>(`getComic id=${id}`))

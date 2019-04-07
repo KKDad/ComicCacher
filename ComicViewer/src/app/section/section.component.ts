@@ -18,32 +18,23 @@ export class SectionComponent implements OnInit {
 
     width: Number;
     height: Number;
+    imageDate: String;
 
     constructor(private element: ElementRef, private comicService: ComicService, private sanitizer: DomSanitizer) {}
 
 
     ngOnInit() {
         this.sectionPosition.emit({ name: this.content.name, position: this.element.nativeElement.offsetTop });
-        this.content.strip = 'assets/images/loading_double_helix.gif';
-        this.comicService.getLatest(this.content.id).subscribe(imagedto => {
-            this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
-            this.height = imagedto.height;
-            this.width = imagedto.width;
-            console.log(`${this.content.name}: Image size is ${this.width}x${this.height}.`);                   
-        });       
-
+        this.content.strip = 'assets/images/loading_double_helix.gif';    
+        this.onNavigateLast();
         this.comicService.getAvatar(this.content.id).subscribe(imagedto => {
             this.content.avatar = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
-            // this.height = imagedto.height;
-            // this.width = imagedto.width;
-            //console.log(`${this.content.name}: Image size is ${this.width}x${this.height}.`);                   
         });         
     }
 
     getAvatarImage() {
         return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.avatar);     
     }
-
 
     @HostListener('window:resize', ['$event'])
     onResize(event) {
@@ -52,5 +43,28 @@ export class SectionComponent implements OnInit {
 
     getComicImage() {       
         return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.strip);     
-    }      
+    }
+    
+    onNavigateFirst() {
+        this.comicService.getEarliest(this.content.id).subscribe(imagedto => { this.setStrip(imagedto); });
+    }
+    onPrev() {
+        this.comicService.getPrev(this.content.id, this.imageDate).subscribe(imagedto => { this.setStrip(imagedto); });
+    }
+    onNext() {
+        this.comicService.getNext(this.content.id, this.imageDate).subscribe(imagedto => { this.setStrip(imagedto); });
+    }
+
+    onNavigateLast() {
+        this.comicService.getLatest(this.content.id).subscribe(imagedto => { this.setStrip(imagedto); });
+    }
+
+    private setStrip(imagedto: import("c:/git/ComicCacher/ComicViewer/src/app/dto/image").ImageDto) {
+        this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
+        this.height = imagedto.height;
+        this.width = imagedto.width;
+        this.imageDate = imagedto.imageDate;
+        //console.log(`${this.content.name}: Image size is ${this.width}x${this.height}.`);
+    }
+    
 }
