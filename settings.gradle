@@ -1,5 +1,2 @@
 rootProject.name = 'TheComicProcessor'
-
-include 'ComicObjects'
 include 'ComicAPI'
-include 'ComicCacher'

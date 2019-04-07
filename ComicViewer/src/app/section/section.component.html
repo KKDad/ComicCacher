@@ -9,9 +9,9 @@
         <!-- <p>{{content.description}}</p> -->
     </mat-card-content>
     <mat-card-actions>
-        <button mat-button>First</button>
-        <button mat-button>Previous</button>
-        <button mat-button>Next</button>
-        <button mat-button>Last</button>
+        <button mat-button (click)="onNavigateFirst()">First</button>
+        <button mat-button (click)="onPrev()">Previous</button>
+        <button mat-button (click)="onNext()">Next</button>
+        <button mat-button (click)="onNavigateLast()">Last</button>
     </mat-card-actions>      
 </mat-card>

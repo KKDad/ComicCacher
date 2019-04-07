@@ -10,7 +10,7 @@ COPY ${DEPENDENCY}/static /app/static
 
 EXPOSE 8888
 
-ENTRYPOINT ["java", "-cp", "app:app/lib/*", "com.stapledon.comic.ComicApiApplication"]
+ENTRYPOINT ["java", "-cp", "app:app/lib/*", "org.stapledon.api.ComicApiApplication"]
 
 # To figure out what is going on inside the container
 # docker ps
