@@ -66,25 +66,6 @@ public class CacheUtils
     {
         File root = getComicHome(comic);
 
-        File findFirstResult = findOldest(comic);
-        if (findFirstResult == null)
-            return null;
-
-        LocalDate limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        LocalDate nextCandidate = from.minusDays(1);
-        while (from.isAfter(limit)) {
-            File folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-            if (folder.exists())
-                return folder;
-            nextCandidate = nextCandidate.minusDays(1);
-        }
-        return null;
-    }
-
-    public File findPrevious(ComicItem comic, LocalDate from)
-    {
-        File root = getComicHome(comic);
-
         File findFirstResult = findNewest(comic);
         if (findFirstResult == null)
             return null;
@@ -96,6 +77,25 @@ public class CacheUtils
             if (folder.exists())
                 return folder;
             nextCandidate = nextCandidate.plusDays(1);
+        }
+        return null;
+    }
+
+    public File findPrevious(ComicItem comic, LocalDate from)
+    {
+        File root = getComicHome(comic);
+
+        File findFirstResult = findOldest(comic);
+        if (findFirstResult == null)
+            return null;
+
+        LocalDate limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate nextCandidate = from.minusDays(1);
+        while (from.isAfter(limit)) {
+            File folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
+            if (folder.exists())
+                return folder;
+            nextCandidate = nextCandidate.minusDays(1);
         }
         return null;
     }
