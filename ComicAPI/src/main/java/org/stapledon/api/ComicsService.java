@@ -1,27 +1,24 @@
 package org.stapledon.api;
 
+import org.springframework.http.*;
+import org.springframework.stereotype.Component;
+import org.stapledon.dto.ComicItem;
+import org.stapledon.dto.ComicList;
 import org.stapledon.dto.ImageDto;
 import org.stapledon.utils.CacheUtils;
 import org.stapledon.utils.Direction;
-import org.stapledon.dto.ComicItem;
-import org.stapledon.dto.ComicList;
-import org.springframework.http.*;
-import org.springframework.stereotype.Component;
+import org.stapledon.utils.ImageUtils;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
-public class ComicsService
+public class ComicsService implements IComicsService
 {
     static String cacheLocation;
 
@@ -35,7 +32,8 @@ public class ComicsService
      * @param comicId - Comic to lookup
      * @return details of the api
      */
-    ComicItem retrieveComic(String comicId)
+    @Override
+    public ComicItem retrieveComic(String comicId)
     {
         int i = Integer.parseInt(comicId);
         return comics.stream().filter(p -> p.id == i).findFirst().orElse(null);
@@ -46,7 +44,8 @@ public class ComicsService
      *
      * @return list of all configured comics
      */
-    List<ComicItem> retrieveAll()
+    @Override
+    public List<ComicItem> retrieveAll()
     {
         ComicList list = new ComicList();
         list.getComics().addAll(comics);
@@ -60,7 +59,8 @@ public class ComicsService
      * @param which - Direction to retrive from, either oldest or newest.
      * @return 200 with the image or 404 with no response body if not found
      */
-    ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException
+    @Override
+    public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException
     {
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
@@ -81,15 +81,7 @@ public class ComicsService
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
-        byte[] media = Files.readAllBytes(oldest.toPath());
-
-        BufferedImage image = ImageIO.read(oldest);
-
-        ImageDto dto = new ImageDto();
-        dto.mimeType = MediaType.IMAGE_PNG.toString();
-        dto.imageData = Base64.getEncoder().withoutPadding().encodeToString(media);
-        dto.height = image.getHeight();
-        dto.width = image.getWidth();
+        ImageDto dto = ImageUtils.getImageDto(oldest);
 
         return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
@@ -99,7 +91,8 @@ public class ComicsService
      * @param comicId - Comic to retrieve
      * @return 200 with the image or 404 with no response body if not found
      */
-    ResponseEntity<ImageDto> retrieveAvatar(int comicId)  throws IOException
+    @Override
+    public ResponseEntity<ImageDto> retrieveAvatar(int comicId)  throws IOException
     {
         HttpHeaders headers = new HttpHeaders();
         ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
@@ -118,16 +111,10 @@ public class ComicsService
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
-        byte[] media = Files.readAllBytes(avatar.toPath());
-
-        BufferedImage image = ImageIO.read(avatar);
-
-        ImageDto dto = new ImageDto();
-        dto.mimeType = MediaType.IMAGE_PNG.toString();
-        dto.imageData = Base64.getEncoder().withoutPadding().encodeToString(media);
-        dto.height = image.getHeight();
-        dto.width = image.getWidth();
+        ImageDto dto = ImageUtils.getImageDto(avatar);
 
         return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
+
+
 }

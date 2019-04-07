@@ -19,39 +19,39 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 public class ComicController
 {
     @Autowired
-    private ComicsService comicsService;
+    private IComicsService IComicsService;
 
     @RequestMapping(method=GET, path = "/api/v1/comics")
     public List<ComicItem> retrieveAllComics()
     {
-        return comicsService.retrieveAll();
+        return IComicsService.retrieveAll();
     }
 
-    @RequestMapping(method=GET, path = "/api/v1/api/{comic_id}")
+    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}")
     public ComicItem retrieveComicDetails(@PathVariable String comic_id)
     {
-        return comicsService.retrieveComic(comic_id);
+        return IComicsService.retrieveComic(comic_id);
     }
 
-    @RequestMapping(method=GET, path = "/api/v1/api/{comic_id}/avatar")
+    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/avatar")
     public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic_id) throws IOException
     {
         int comicId = Integer.parseInt(comic_id);
-        return comicsService.retrieveAvatar(comicId);
+        return IComicsService.retrieveAvatar(comicId);
     }
 
-    @RequestMapping(method=GET, path = "/api/v1/api/{comic_id}/strips/first")
+    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/strips/first")
     public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic_id) throws IOException
     {
         int comicId = Integer.parseInt(comic_id);
-        return comicsService.retrieveComicStrip(comicId, Direction.FORWARD);
+        return IComicsService.retrieveComicStrip(comicId, Direction.FORWARD);
     }
 
-    @RequestMapping(method=GET, path = "/api/v1/api/{comic_id}/strips/last")
+    @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/strips/last")
     public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic_id) throws IOException
     {
         int comicId = Integer.parseInt(comic_id);
-        return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD);
+        return IComicsService.retrieveComicStrip(comicId, Direction.BACKWARD);
     }
 
 }

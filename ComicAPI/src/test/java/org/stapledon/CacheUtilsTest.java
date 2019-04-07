@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 
 public class CacheUtilsTest {
@@ -26,19 +27,16 @@ public class CacheUtilsTest {
         return item1;
     }
 
-    private CacheUtils getSubject() throws IOException {
-        File resourcesDirectory = new File("src/test/resources");
-        if (!resourcesDirectory.exists())
-            resourcesDirectory = new File("../src/test/resources");
-
-        Assert.assertTrue(resourcesDirectory.exists());
+    private CacheUtils getSubject()
+    {
+        File resourcesDirectory = getResourcesDirectory();
 
         ComicApiApplication.config = new JsonConfigLoader().load();
         return new CacheUtils(resourcesDirectory.getAbsolutePath());
     }
 
     @Test
-    public void findOldestTest() throws IOException
+    public void findOldestTest()
     {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.FORWARD);
@@ -59,4 +57,16 @@ public class CacheUtilsTest {
     }
 
 
+    /**
+     * Helper method to the test resources directory
+     * @return File
+     */
+    public static File getResourcesDirectory() {
+        File resourcesDirectory = new File("src/test/resources");
+        if (!resourcesDirectory.exists())
+            resourcesDirectory = new File("../src/test/resources");
+
+        Assert.assertTrue(resourcesDirectory.exists());
+        return resourcesDirectory;
+    }
 }

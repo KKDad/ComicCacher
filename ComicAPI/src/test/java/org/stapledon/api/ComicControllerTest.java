@@ -1,22 +1,46 @@
 package org.stapledon.api;
 
-import org.stapledon.dto.ComicItem;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.restdocs.JUnitRestDocumentation;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.stapledon.CacheUtilsTest;
+import org.stapledon.dto.ComicItem;
+import org.stapledon.dto.ImageDto;
+import org.stapledon.utils.CacheUtils;
+import org.stapledon.utils.Direction;
+import org.stapledon.utils.ImageUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyObject;
+import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.responseHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -41,18 +65,16 @@ public class ComicControllerTest
     @Autowired
     private WebApplicationContext context;
 
+    @MockBean
+    private IComicsService comicsService;
+
     private MockMvc mockMvc;
 
+    private final List<ComicItem> comics = new ArrayList<>();
+
     @Before
-    public void setUp() {
-
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
-                .apply(documentationConfiguration(this.restDocumentation).uris()
-                        .withScheme("https")
-                        .withHost("api.gilbert.ca")
-                        .withPort(443))
-                .apply(documentationConfiguration(this.restDocumentation)).build();
-
+    public void setUp()
+    {
         ComicItem item1 = new ComicItem();
         item1.id = 42;
         item1.name = "Art Comics Daily";
@@ -71,15 +93,22 @@ public class ComicControllerTest
         item2.newest = LocalDate.of(2013, 12, 8);
         item2.enabled = false;
 
-        ComicsService.comics.clear();
-        ComicsService.comics.add(item1);
-        ComicsService.comics.add(item2);
+        this.comics.add(item1);
+        this.comics.add(item2);
+
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
+                .apply(documentationConfiguration(this.restDocumentation).uris()
+                        .withScheme("https")
+                        .withHost("api.gilbert.ca")
+                        .withPort(443))
+                .apply(documentationConfiguration(this.restDocumentation)).build();
     }
 
 
     @Test
-    public void listAllTest() throws Exception {
-
+    public void listAllTest() throws Exception
+    {
+        when(comicsService.retrieveAll()).thenReturn(this.comics);
 
         this.mockMvc.perform(get("/api/v1/comics").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -94,7 +123,9 @@ public class ComicControllerTest
     @Test
     public void retieveSpecificTest() throws Exception
     {
-        this.mockMvc.perform(get("/api/v1/api/{comic_id}", "42").accept(MediaType.APPLICATION_JSON))
+        when(comicsService.retrieveComic(any(String.class))).thenReturn(this.comics.get(0));
+
+        this.mockMvc.perform(get("/api/v1/comics/{comic_id}", "42").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                         document("{methodName}",
@@ -104,21 +135,29 @@ public class ComicControllerTest
                                 responseHeaders(headerWithName("Content-Type").description("application/json"))));
     }
 
-//    @Test
-//    public void retieveFirstStripTest() throws Exception
-//    {
-//        this.mockMvc.perform(get("/api/v1/api/{comic_id}/strips/first", "42").accept(MediaType.IMAGE_JPEG))
-//                .andExpect(status().isOk())
-//                .andDo(
-//                        document("{methodName}",
-//                                preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
-//                                pathParameters(parameterWithName("comic_id").description("Specific api to retrieve")),
-//                                responseFields(
-//                                        fieldWithPath("mimetype").description("Mimetype of the image"),
-//                                        fieldWithPath("imageData").description("Base64 encoded image")),
-//                                responseHeaders(headerWithName("Content-Type").description("image/jpg"))));
-//    }
+    @Test
+    public void retieveFirstStripTest() throws Exception
+    {
+        Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(),"FakeComic", "avatar.png");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        ResponseEntity<ImageDto> entity = new ResponseEntity<>(ImageUtils.getImageDto(path.toFile()), headers, HttpStatus.OK);
 
+        when(comicsService.retrieveComicStrip(any(int.class), any(Direction.class))).thenReturn(entity);
+
+        this.mockMvc.perform(get("/api/v1/comics/{comic_id}/strips/first", "42").accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk())
+                .andDo(
+                        document("{methodName}",
+                                preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
+                                pathParameters(parameterWithName("comic_id").description("Specific api to retrieve")),
+                                responseFields(
+                                        fieldWithPath("mimeType").description("MimeType of the image"),
+                                        fieldWithPath("imageData").description("Base64 encoded image"),
+                                        fieldWithPath("height").description("Height of the image, in pixels"),
+                                        fieldWithPath("width").description("Width of the image, in pixels")),
+                                responseHeaders(headerWithName("Content-Type").description("image/jpg"))));
+    }
 
     private FieldDescriptor[] comic()
     {
@@ -132,4 +171,8 @@ public class ComicControllerTest
                 fieldWithPath("enabled").description("Is caching of this api enabled?")
         };
     }
+
+
+
+
 }
