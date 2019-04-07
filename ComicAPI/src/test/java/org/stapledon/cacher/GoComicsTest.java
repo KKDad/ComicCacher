@@ -44,7 +44,7 @@ public class GoComicsTest {
 
 
     @Test
-    //@Ignore // Fails on bitbucket
+    @Ignore // Fails on bitbucket
     public void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
         log.info("Expecting to get file: " + expectedFile.toString());
