@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 
-public class JsonConfigLoader {
+public class ApiConfigLoader {
 
     public ApiConfig load()
     {
@@ -18,14 +18,10 @@ public class JsonConfigLoader {
         return load(inputStream);
     }
 
-    public ApiConfig load(InputStream inputStream)
+    private ApiConfig load(InputStream inputStream)
     {
         Gson gson = new Gson();
         Reader reader = new InputStreamReader(inputStream);
         return gson.fromJson(reader, ApiConfig.class);
     }
-
-
-
-
 }

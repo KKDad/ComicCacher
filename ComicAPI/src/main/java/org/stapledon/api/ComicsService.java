@@ -33,10 +33,9 @@ public class ComicsService implements IComicsService
      * @return details of the api
      */
     @Override
-    public ComicItem retrieveComic(String comicId)
+    public ComicItem retrieveComic(int comicId)
     {
-        int i = Integer.parseInt(comicId);
-        return comics.stream().filter(p -> p.id == i).findFirst().orElse(null);
+        return comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
     }
 
     /**

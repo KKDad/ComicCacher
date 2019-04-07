@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface IComicsService
 {
-    ComicItem retrieveComic(String comicId);
+    ComicItem retrieveComic(int comicId);
 
     List<ComicItem> retrieveAll();
 

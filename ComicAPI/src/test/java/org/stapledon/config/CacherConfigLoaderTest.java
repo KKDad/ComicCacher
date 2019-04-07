@@ -23,7 +23,7 @@ public class CacherConfigLoaderTest {
         InputStream targetStream =   new ReaderInputStream(CharSource.wrap(initialString.replace('\'', '\"')).openStream(), Charset.defaultCharset());
 
         // Act
-        ComicCacherConfig results = new CacherConfigLoader().load(targetStream);
+        CacherConfig results = new CacherConfigLoader().load(targetStream);
 
         // Assert
         Assert.assertEquals("myCacheDir", results.cacheDirectory);
@@ -37,9 +37,9 @@ public class CacherConfigLoaderTest {
     public void saveSimpleTest()
     {
         // Arrange
-        ComicCacherConfig config = new ComicCacherConfig();
+        CacherConfig config = new CacherConfig();
         config.cacheDirectory = "G:\\";
-        ComicCacherConfig.GoComics comic = config.new GoComics();
+        CacherConfig.GoComics comic = config.new GoComics();
         comic.name = "Adam At Home";
         comic.startDate = LocalDate.of(2019, Month.JANUARY, 1);
         config.dailyComics.add(comic);

@@ -30,7 +30,8 @@ public class ComicController
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}")
     public ComicItem retrieveComicDetails(@PathVariable String comic_id)
     {
-        return IComicsService.retrieveComic(comic_id);
+        int comicId = Integer.parseInt(comic_id);
+        return IComicsService.retrieveComic(comicId);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/avatar")

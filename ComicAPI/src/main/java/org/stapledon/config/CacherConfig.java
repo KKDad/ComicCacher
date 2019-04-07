@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings({"squid:ClassVariableVisibilityCheck"})
-public class ComicCacherConfig
+public class CacherConfig
 {
-        ComicCacherConfig()
+        CacherConfig()
         {
                 this.dailyComics = new ArrayList<>();
 

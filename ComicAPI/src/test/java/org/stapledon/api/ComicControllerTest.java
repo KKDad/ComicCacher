@@ -123,7 +123,7 @@ public class ComicControllerTest
     @Test
     public void retieveSpecificTest() throws Exception
     {
-        when(comicsService.retrieveComic(any(String.class))).thenReturn(this.comics.get(0));
+        when(comicsService.retrieveComic(any(int.class))).thenReturn(this.comics.get(0));
 
         this.mockMvc.perform(get("/api/v1/comics/{comic_id}", "42").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

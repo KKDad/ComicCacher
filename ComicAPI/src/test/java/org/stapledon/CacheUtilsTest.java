@@ -3,14 +3,13 @@ package org.stapledon;
 import org.stapledon.utils.CacheUtils;
 import org.stapledon.utils.Direction;
 import org.stapledon.api.ComicApiApplication;
-import org.stapledon.config.JsonConfigLoader;
+import org.stapledon.config.ApiConfigLoader;
 import org.stapledon.dto.ComicItem;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDate;
 
 public class CacheUtilsTest {
@@ -31,7 +30,7 @@ public class CacheUtilsTest {
     {
         File resourcesDirectory = getResourcesDirectory();
 
-        ComicApiApplication.config = new JsonConfigLoader().load();
+        ComicApiApplication.config = new ApiConfigLoader().load();
         return new CacheUtils(resourcesDirectory.getAbsolutePath());
     }
 

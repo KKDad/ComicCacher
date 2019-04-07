@@ -2,7 +2,7 @@ package org.stapledon.api;
 
 import com.google.gson.Gson;
 import org.stapledon.config.ApiConfig;
-import org.stapledon.config.JsonConfigLoader;
+import org.stapledon.config.ApiConfigLoader;
 import org.stapledon.dto.ComicConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,7 +19,7 @@ public class ComicApiApplication
 
 	public ComicApiApplication() {
 		logger.info("ComicApiApplication starting...");
-		ComicApiApplication.config = new JsonConfigLoader().load();
+		ComicApiApplication.config = new ApiConfigLoader().load();
 		File initialFile = new File(ComicApiApplication.config.cacheDirectory + "/comics.json");
 		if (!initialFile.exists()) {
 			if (logger.isLoggable(Level.INFO))

@@ -1,7 +1,7 @@
 package org.stapledon.cacher;
 
 import org.stapledon.utils.DefaultTrustManager;
-import org.stapledon.config.ComicCacherConfig;
+import org.stapledon.config.CacherConfig;
 import org.stapledon.config.CacherConfigLoader;
 import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.dto.ComicItem;
@@ -25,10 +25,10 @@ public class ComicCacher {
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
 
-        ComicCacherConfig config = new CacherConfigLoader().load();
+        CacherConfig config = new CacherConfigLoader().load();
         JsonConfigWriter statsUpdater = new JsonConfigWriter(config.cacheDirectory + "/comics.json");
 
-        for (ComicCacherConfig.GoComics dcc : config.dailyComics) {
+        for (CacherConfig.GoComics dcc : config.dailyComics) {
 
             logger.info("***********************************************************************************************");
             logger.info("Processing: " + dcc.name);
