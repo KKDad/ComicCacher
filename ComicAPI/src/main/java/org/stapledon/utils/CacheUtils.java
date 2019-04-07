@@ -3,14 +3,12 @@ package org.stapledon.utils;
 import com.google.common.io.Files;
 import org.stapledon.dto.ComicItem;
 
-import javax.swing.text.DateFormatter;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class CacheUtils
