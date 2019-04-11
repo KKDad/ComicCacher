@@ -10,6 +10,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/ComicAPI" />
+            <option value="$PROJECT_DIR$/ComicViewer" />
           </set>
         </option>
         <option name="useAutoImport" value="true" />

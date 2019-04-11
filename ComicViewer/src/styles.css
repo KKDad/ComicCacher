@@ -4,3 +4,8 @@ body {
     font-family: Roboto, "Helvetica Neue", sans-serif; 
     background-color:#696969;
 }
+link {
+    color: #545454;
+    font-family: Roboto, "Helvetica Neue", sans-serif; 
+    font-size: 13.6
+}

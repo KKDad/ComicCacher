@@ -11,7 +11,7 @@ import { ComicService } from '../comic.service';
 })
 export class ContainerComponent implements OnInit {
 
-    private currentComicName: string = null;
+    public currentComicName: string = null;
     private sectionsIndex: any = [];  
     @Input()  sections: Comic[];
     
