@@ -9,7 +9,8 @@
   } 
   ul {
     list-style-type: none; 
-    padding: 40px;
+    padding-left: 40px;
+    margin: 0px;
   }
   h2{
     margin-top: 13px;
