@@ -11,7 +11,6 @@ import { ComicService } from '../comic.service';
 })
 export class ContainerComponent implements OnInit {
 
-    public currentComicName: string = null;
     private sectionsIndex: any = [];  
     @Input()  sections: Comic[];
     
@@ -30,29 +29,6 @@ export class ContainerComponent implements OnInit {
         this.sectionsIndex.sort((a: any, b: any) => {
             return b.position - a.position;
         });
-
-        //if the page has already been scrolled find the current name
-        if (document.body.scrollTop > 0) {
-            this.currentComicName = this.getCurrentSectionName();
-            console.log(`Found current name: ${this.currentComicName}`)
-        }
-    }
-
-
-    @HostListener("window:scroll", [])
-    onWindowScroll() {
-        this.currentComicName = this.getCurrentSectionName();
-    }
-
-    private getCurrentSectionName(): string {
-        let offset: number = this.el.nativeElement.parentElement.offsetTop - this.el.nativeElement.offsetTop;
-        for (let section of this.sectionsIndex) {
-            //Note: 13px is the margin-top value of the h2 element in the header
-            if ((section.position + offset - window.scrollY - 13) < 0) {
-                return section.name;
-            }
-        }
-        return null;
     }
 
     getComicSections(): void {

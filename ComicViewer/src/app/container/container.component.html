@@ -1,8 +1,5 @@
-<div class="header" *ngIf="currentComicName!=null">
-  <h2 >{{currentSectionName}}</h2>
-</div>
 <ul>
-<li *ngFor="let section of sections">
-    <section [content]="section" (sectionPosition)="sectionPosition($event)"></section>
-</li>
+  <li *ngFor="let section of sections">
+      <section [content]="section" (sectionPosition)="sectionPosition($event)"></section>
+  </li>
 </ul>

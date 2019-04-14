@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -68,6 +69,10 @@ public class ComicControllerTest
     @MockBean
     private IComicsService comicsService;
 
+    @MockBean
+    private IComicUpdateService updateService;
+
+
     private MockMvc mockMvc;
 
     private final List<ComicItem> comics = new ArrayList<>();
@@ -75,6 +80,8 @@ public class ComicControllerTest
     @Before
     public void setUp()
     {
+        MockitoAnnotations.initMocks(this);
+
         ComicItem item1 = new ComicItem();
         item1.id = 42;
         item1.name = "Art Comics Daily";

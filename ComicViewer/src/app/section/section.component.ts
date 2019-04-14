@@ -13,7 +13,6 @@ import { Observable, of } from 'rxjs';
 })
 export class SectionComponent implements OnInit {   
 
-    @Output() sectionPosition = new EventEmitter();
     @Input()  content: Comic;
 
     width: Number;
@@ -24,7 +23,6 @@ export class SectionComponent implements OnInit {
 
 
     ngOnInit() {
-        this.sectionPosition.emit({ name: this.content.name, position: this.element.nativeElement.offsetTop });
         this.onNavigateLast();
         this.comicService.getAvatar(this.content.id).subscribe(imagedto => {
             this.content.avatar = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
@@ -33,11 +31,6 @@ export class SectionComponent implements OnInit {
 
     getAvatarImage() {
         return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.avatar);     
-    }
-
-    @HostListener('window:resize', ['$event'])
-    onResize(event) {
-      this.sectionPosition.emit({ name: this.content.name, position: this.element.nativeElement.offsetTop });
     }
 
     getComicImage() {       

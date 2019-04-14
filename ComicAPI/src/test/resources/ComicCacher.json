@@ -1,0 +1,6 @@
+{
+  "cacheDirectory":".",
+  "dailyComics":[
+    {  "name":"Fake Comic", "startDate":{ "year":2019, "month":4, "day":1 } },
+  ]
+}

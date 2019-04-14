@@ -1,17 +1,5 @@
-.header{
-    position: fixed;
-    top: 0px;
-    width:100%;
-    z-index: 2;
-    background: #8827e2;
-    height:70px; 
-    margin-left: 40px;
-  } 
-  ul {
+ul {
     list-style-type: none; 
     padding-left: 40px;
     margin: 0px;
-  }
-  h2{
-    margin-top: 13px;
-  }
+}
