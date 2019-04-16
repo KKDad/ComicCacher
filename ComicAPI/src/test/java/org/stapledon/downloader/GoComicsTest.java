@@ -1,4 +1,4 @@
-package org.stapledon.cacher;
+package org.stapledon.downloader;
 
 import org.stapledon.dto.ComicItem;
 import org.apache.log4j.Logger;

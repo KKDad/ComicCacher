@@ -8,14 +8,16 @@ import { SectionComponent } from './section/section.component';
 import { ContainerComponent } from './container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { MatButtonModule, MatCardModule} from '@angular/material'
+import { MatButtonModule, MatCardModule} from '@angular/material';
+import { JumplistComponent } from './jumplist/jumplist.component'
 
 
 @NgModule({
   declarations: [
     AppComponent,
     SectionComponent,
-    ContainerComponent
+    ContainerComponent,
+    JumplistComponent
   ],
   imports: [
     BrowserModule,

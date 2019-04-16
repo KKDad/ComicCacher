@@ -1,0 +1,9 @@
+mat-card-header {
+    margin-bottom: 5px; 
+  }
+  
+mat-card { 
+    margin-left: 10px;
+    margin-bottom: 10px; 
+    width: 200px;
+}

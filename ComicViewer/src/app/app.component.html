@@ -1,2 +1,12 @@
-<h1>The Comic Viewer</h1>
-<container [sections]="sections"></container>
+<img class="comic-header" src="/assets/images/ComicViewer.png">
+<mat-card class="mat-card header-mat">
+        <button onclick="window.location.href='https://bitbucket.org/kkdad/comiccacher/src/master/'">Project</button>
+        <button onclick="window.location.href='docs/index.html'">API Documentation</button>        
+</mat-card>
+<div class="row">
+    <div class="column"><jumplist></jumplist></div>
+    <div class="column">
+        <container [sections]="sections"></container>
+    </div>
+</div>
+

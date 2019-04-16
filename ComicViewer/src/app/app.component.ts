@@ -1,4 +1,6 @@
 import { Component, NgModule } from '@angular/core';
+import { Comic } from './dto/comic'
+import { from } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -8,5 +10,5 @@ import { Component, NgModule } from '@angular/core';
 export class AppComponent 
 {
   title = 'The Comic Viewer';
-   
+  sections = null; 
 }

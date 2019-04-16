@@ -25,7 +25,8 @@ public class ComicsService implements IComicsService
 
     private static final Logger logger = Logger.getLogger(ComicsService.class.getName());
 
-    static List<ComicItem> comics = new ArrayList<>();
+    private static List<ComicItem> comics = new ArrayList<>();
+    public  static List<ComicItem> getComics() { return comics; };
 
     /**
      * Return details of a specific api
