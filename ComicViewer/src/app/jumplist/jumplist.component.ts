@@ -1,15 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+
+import { Comic } from '../dto/comic';
+import { ComicService } from '../comic.service';
+
 
 @Component({
-  selector: 'app-jumplist',
-  templateUrl: './jumplist.component.html',
-  styleUrls: ['./jumplist.component.css']
+  selector: 'jumplist',
+  templateUrl: 'jumplist.component.html',
+  styleUrls: ['jumplist.component.css']
 })
-export class JumplistComponent implements OnInit {
+export class JumplistComponent implements OnInit 
+{
+  jumptargets: Comic[];
 
-  constructor() { }
+  constructor(private comicService: ComicService) { }
 
-  ngOnInit() {
+
+  ngOnInit() 
+  {
+    this.comicService.getComics().subscribe(c => this.jumptargets = c);    
   }
+
 
 }

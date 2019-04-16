@@ -113,7 +113,7 @@ public class ComicControllerTest
 
 
     @Test
-    public void listAllTest() throws Exception
+    public void retrieveAllTest() throws Exception
     {
         when(comicsService.retrieveAll()).thenReturn(this.comics);
 
@@ -128,7 +128,7 @@ public class ComicControllerTest
     }
 
     @Test
-    public void retieveSpecificTest() throws Exception
+    public void retrieveSpecificTest() throws Exception
     {
         when(comicsService.retrieveComic(any(int.class))).thenReturn(this.comics.get(0));
 
@@ -143,7 +143,7 @@ public class ComicControllerTest
     }
 
     @Test
-    public void retieveFirstStripTest() throws Exception
+    public void retrieveFirstStripTest() throws Exception
     {
         Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(),"FakeComic", "avatar.png");
         HttpHeaders headers = new HttpHeaders();
@@ -153,6 +153,56 @@ public class ComicControllerTest
         when(comicsService.retrieveComicStrip(any(int.class), any(Direction.class))).thenReturn(entity);
 
         this.mockMvc.perform(get("/api/v1/comics/{comic_id}/strips/first", "42").accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk())
+                .andDo(
+                        document("{methodName}",
+                                preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
+                                pathParameters(parameterWithName("comic_id").description("Specific api to retrieve")),
+                                responseFields(
+                                        fieldWithPath("mimeType").description("MimeType of the image"),
+                                        fieldWithPath("imageData").description("Base64 encoded image"),
+                                        fieldWithPath("height").description("Height of the image, in pixels"),
+                                        fieldWithPath("width").description("Width of the image, in pixels"),
+                                        fieldWithPath("imageDate").description("Date of the image returned")),
+                                responseHeaders(headerWithName("Content-Type").description("image/jpg"))));
+    }
+
+    @Test
+    public void retrieveLastStripTest() throws Exception
+    {
+        Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(),"FakeComic", "avatar.png");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        ResponseEntity<ImageDto> entity = new ResponseEntity<>(ImageUtils.getImageDto(path.toFile()), headers, HttpStatus.OK);
+
+        when(comicsService.retrieveComicStrip(any(int.class), any(Direction.class))).thenReturn(entity);
+
+        this.mockMvc.perform(get("/api/v1/comics/{comic_id}/strips/last", "42").accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk())
+                .andDo(
+                        document("{methodName}",
+                                preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()),
+                                pathParameters(parameterWithName("comic_id").description("Specific api to retrieve")),
+                                responseFields(
+                                        fieldWithPath("mimeType").description("MimeType of the image"),
+                                        fieldWithPath("imageData").description("Base64 encoded image"),
+                                        fieldWithPath("height").description("Height of the image, in pixels"),
+                                        fieldWithPath("width").description("Width of the image, in pixels"),
+                                        fieldWithPath("imageDate").description("Date of the image returned")),
+                                responseHeaders(headerWithName("Content-Type").description("image/jpg"))));
+    }
+
+    @Test
+    public void retrieveAvatarTest() throws Exception
+    {
+        Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(),"FakeComic", "avatar.png");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        ResponseEntity<ImageDto> entity = new ResponseEntity<>(ImageUtils.getImageDto(path.toFile()), headers, HttpStatus.OK);
+
+        when(comicsService.retrieveAvatar(any(int.class))).thenReturn(entity);
+
+        this.mockMvc.perform(get("/api/v1/comics/{comic_id}/avatar", "42").accept(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk())
                 .andDo(
                         document("{methodName}",

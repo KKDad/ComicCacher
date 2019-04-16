@@ -12,3 +12,14 @@ mat-card {
   padding-bottom: 5px;
   padding-left: 50px;
 }
+.column {
+  float: left;
+}
+
+.left {
+  width: 25%;
+}
+
+.right {
+  width: 75%;
+}

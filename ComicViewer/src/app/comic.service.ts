@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 
 import { Observable, of } from 'rxjs';
 
@@ -12,17 +12,22 @@ const httpOptions = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class ComicService {
+export class ComicService 
+{  
+  comics: Comic[];
 
- 
+  getComics(): Observable<Comic[]> 
+  {
+    const studentsObservable = new Observable(observer => { setTimeout(() => { observer.next(this.comics); }, 1000); return studentsObservable; });
+    return studentsObservable;  
+}
+  
+
+
   constructor(private http: HttpClient) { }
  
-  getComics(): Observable<Comic[]> {
-    return this.http.get<Comic[]>("api/v1/comics")
-        .pipe(
-          tap(el => console.log(`fetched ${el.length} comics`)),
-          catchError(this.handleError('getComics', []))
-        );
+  refresh(): void {
+    this.http.get<Comic[]>("api/v1/comics").toPromise().then(comicData => this.comics = comicData);
   }
 
    /** GET comic by id. Will 404 if id not found */

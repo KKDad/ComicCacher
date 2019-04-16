@@ -19,19 +19,15 @@ The list provides the entry point into the ComicsAPI service.
 
 ==== Request structure
 
-include::{snippets}/listAllTest/http-request.adoc[]
-
-//==== Request parameters
-//
-//include::{snippets}/listAllTest/request-parameters.adoc[]
+include::{snippets}/retrieveAllTest/http-request.adoc[]
 
 ==== Response fields
 
-include::{snippets}/listAllTest/response-fields.adoc[]
+include::{snippets}/retrieveAllTest/response-fields.adoc[]
 
 ==== Example response
 
-include::{snippets}/listAllTest/http-response.adoc[]
+include::{snippets}/retrieveAllTest/http-response.adoc[]
 
 
 === Accessing a specific comics with GET
@@ -40,17 +36,82 @@ Use the generated id of a comic to retrieve all details about it.
 
 ==== Request structure
 
-include::{snippets}/retieveSpecificTest/http-request.adoc[]
+include::{snippets}/retrieveSpecificTest/http-request.adoc[]
 
 ==== Path parameters
 
-include::{snippets}/retieveSpecificTest/path-parameters.adoc[]
+include::{snippets}/retrieveSpecificTest/path-parameters.adoc[]
 
 ==== Response fields
 
-include::{snippets}/retieveSpecificTest/response-fields.adoc[]
+include::{snippets}/retrieveSpecificTest/response-fields.adoc[]
 
 ==== Example response
 
-include::{snippets}/retieveSpecificTest/http-response.adoc[]
+include::{snippets}/retrieveSpecificTest/http-response.adoc[]
+
+
+=== Accessing the strip Avatar with GET
+
+Use the generated id of a comic to retrieve an avatar/icon to display in a header card for a comic
+
+==== Request structure
+
+include::{snippets}/retrieveAvatarTest/http-request.adoc[]
+
+==== Path parameters
+
+include::{snippets}/retrieveAvatarTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrieveAvatarTest/response-fields.adoc[]
+
+==== Example response
+
+include::{snippets}/retrieveAvatarTest/http-response.adoc[]
+
+
+
+=== Accessing the first strip of a specific comic with GET
+
+Use the generated id of a comic to retrieve the first available image that has been cached.
+
+==== Request structure
+
+include::{snippets}/retrieveFirstStripTest/http-request.adoc[]
+
+==== Path parameters
+
+include::{snippets}/retrieveFirstStripTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrieveFirstStripTest/response-fields.adoc[]
+
+==== Example response
+
+include::{snippets}/retrieveFirstStripTest/http-response.adoc[]
+
+
+
+=== Accessing the last strip of a specific comic with GET
+
+Use the generated id of a comic to retrieve the last available image that has been cached.
+
+==== Request structure
+
+include::{snippets}/retrieveLastStripTest/http-request.adoc[]
+
+==== Path parameters
+
+include::{snippets}/retrieveLastStripTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrieveLastStripTest/response-fields.adoc[]
+
+==== Example response
+
+include::{snippets}/retrieveLastStripTest/http-response.adoc[]
 
