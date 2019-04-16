@@ -1,7 +1,5 @@
 package org.stapledon.api;
 
-import org.hamcrest.Matchers;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,24 +21,16 @@ import org.springframework.web.context.WebApplicationContext;
 import org.stapledon.CacheUtilsTest;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageDto;
-import org.stapledon.utils.CacheUtils;
 import org.stapledon.utils.Direction;
 import org.stapledon.utils.ImageUtils;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.responseHeaders;
@@ -70,7 +60,7 @@ public class ComicControllerTest
     private IComicsService comicsService;
 
     @MockBean
-    private IComicUpdateService updateService;
+    private IUpdateService updateService;
 
 
     private MockMvc mockMvc;

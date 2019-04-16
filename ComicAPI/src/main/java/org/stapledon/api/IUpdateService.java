@@ -1,6 +1,6 @@
 package org.stapledon.api;
 
-public interface IComicUpdateService
+public interface IUpdateService
 {
     boolean updateAll();
 

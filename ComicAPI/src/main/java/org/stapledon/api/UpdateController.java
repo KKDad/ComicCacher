@@ -8,9 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.stapledon.dto.ComicItem;
-
-import java.util.List;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
@@ -18,7 +15,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 public class UpdateController
 {
     @Autowired
-    private IComicUpdateService comicUpdateService;
+    private IUpdateService updateService;
 
     @RequestMapping(method=GET, path = "/api/v1/update")
     public ResponseEntity<String> updateAllComics()
@@ -26,7 +23,7 @@ public class UpdateController
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
-        boolean result = comicUpdateService.updateAll();
+        boolean result = updateService.updateAll();
         if (!result)
             return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
 
@@ -40,7 +37,7 @@ public class UpdateController
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
 
-        boolean result = comicUpdateService.updateComic(comicId);
+        boolean result = updateService.updateComic(comicId);
         if (!result)
             return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
 

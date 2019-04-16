@@ -1,5 +1,6 @@
 package org.stapledon.api;
 
+import org.springframework.stereotype.Component;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.dto.ComicItem;
 
@@ -8,9 +9,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class ComicUpdateService implements IComicUpdateService
+@Component
+public class UpdateService implements IUpdateService
 {
-    private static final Logger logger = Logger.getLogger(ComicUpdateService.class.getName());
+    private static final Logger logger = Logger.getLogger(UpdateService.class.getName());
 
 
     @Override
