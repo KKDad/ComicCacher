@@ -2,11 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="77df988f-7f67-46bd-a0b9-4c59348a006f" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/ComicAPI/src/test/java/org/stapledon/api/UpdateControllerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/docs/asciidoc/index.adoc" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/docs/asciidoc/index.adoc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ComicAPI/src/test/java/org/stapledon/api/ComicControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/ComicAPI/src/test/java/org/stapledon/api/ComicControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ComicViewer/src/app/app.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/ComicViewer/src/app/app.component.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ComicViewer/src/app/app.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/ComicViewer/src/app/app.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ComicViewer/src/app/jumplist/jumplist.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/ComicViewer/src/app/jumplist/jumplist.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ComicViewer/src/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ComicViewer/src/index.html" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/build/" />
     <ignored path="$PROJECT_DIR$/ComicAPI/.gradle/" />
@@ -426,7 +425,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Gradle.ComicCacher:ComicAPI [docker]">
+  <component name="RunManager" selected="Gradle.ComicCacher:ComicAPI [run]">
     <configuration name="ComicCacher:ComicAPI [docker]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -446,13 +445,24 @@
       <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
       <method v="2" />
     </configuration>
-    <configuration name="All in kkdad.ComicAPI.test (1)" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="kkdad.ComicAPI.test" />
-      <option name="PACKAGE_NAME" value="" />
-      <option name="TEST_OBJECT" value="package" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
+    <configuration name="ComicCacher:ComicAPI [run]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/ComicAPI" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="run" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+      <method v="2" />
     </configuration>
     <configuration name="All in kkdad.ComicAPI.test (3)" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="kkdad.ComicAPI.test" />
@@ -496,11 +506,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.ComicCacher:ComicAPI [run]" />
         <item itemvalue="Gradle.ComicCacher:ComicAPI [docker]" />
         <item itemvalue="JUnit.ComicControllerTest" />
         <item itemvalue="JUnit.ComicControllerTest.retrieveAvatarTest" />
         <item itemvalue="JUnit.All in kkdad.ComicAPI.test (3)" />
-        <item itemvalue="JUnit.All in kkdad.ComicAPI.test (1)" />
       </list>
     </recent_temporary>
   </component>
