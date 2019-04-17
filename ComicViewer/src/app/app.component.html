@@ -3,10 +3,4 @@
         <button onclick="window.location.href='https://bitbucket.org/kkdad/comiccacher/src/master/'">Project</button>
         <button onclick="window.location.href='docs/index.html'">API Documentation</button>        
 </mat-card>
-<div class="row">
-    <div class="column"><jumplist></jumplist></div>
-    <div class="column">
-        <container [sections]="sections"></container>
-    </div>
-</div>
-
+<router-outlet></router-outlet>

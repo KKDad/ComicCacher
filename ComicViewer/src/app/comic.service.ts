@@ -20,10 +20,8 @@ export class ComicService
   {
     const studentsObservable = new Observable(observer => { setTimeout(() => { observer.next(this.comics); }, 1000); return studentsObservable; });
     return studentsObservable;  
-}
+  }
   
-
-
   constructor(private http: HttpClient) { }
  
   refresh(): void {

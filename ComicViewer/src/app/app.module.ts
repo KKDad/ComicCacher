@@ -9,7 +9,10 @@ import { ContainerComponent } from './container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatButtonModule, MatCardModule} from '@angular/material';
-import { JumplistComponent } from './jumplist/jumplist.component'
+import { JumplistComponent } from './jumplist/jumplist.component';
+import { AppRoutingModule } from './app-routing.module';
+import { RefreshComponent } from './refresh/refresh.component';
+import { ComicpageComponent } from './comicpage/comicpage.component'
 
 
 @NgModule({
@@ -17,7 +20,9 @@ import { JumplistComponent } from './jumplist/jumplist.component'
     AppComponent,
     SectionComponent,
     ContainerComponent,
-    JumplistComponent
+    JumplistComponent,
+    RefreshComponent,
+    ComicpageComponent
   ],
   imports: [
     BrowserModule,
@@ -25,7 +30,8 @@ import { JumplistComponent } from './jumplist/jumplist.component'
     HttpClientModule,
     BrowserAnimationsModule,
     MatButtonModule,
-    MatCardModule
+    MatCardModule,
+    AppRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]

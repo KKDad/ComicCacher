@@ -9,6 +9,5 @@ import { from } from 'rxjs';
 })
 export class AppComponent 
 {
-  title = 'The Comic Viewer';
-  sections = null; 
+  title = 'The Comic Reader';  
 }
