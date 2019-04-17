@@ -1,6 +1,6 @@
 import { Component, OnInit, ElementRef, EventEmitter, HostListener, Input, Output } from '@angular/core';
-import { Comic } from '../dto/comic'
-import { ComicService } from '../comic.service';
+import { Comic } from '../../dto/comic'
+import { ComicService } from '../../comic.service';
 import { DomSanitizer} from '@angular/platform-browser';
 
 import { Observable, of } from 'rxjs';
