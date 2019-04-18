@@ -1,6 +1,8 @@
 package org.stapledon.api;
 
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stapledon.config.ApiConfig;
 import org.stapledon.config.ApiConfigLoader;
 import org.stapledon.dto.ComicConfig;
@@ -8,13 +10,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @SpringBootApplication
 public class ComicApiApplication
 {
-	private static final Logger logger = Logger.getLogger(ComicApiApplication.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
+
 	public static ApiConfig config;
 
 	public ComicApiApplication() {
@@ -22,13 +23,11 @@ public class ComicApiApplication
 		ComicApiApplication.config = new ApiConfigLoader().load();
 		File initialFile = new File(ComicApiApplication.config.cacheDirectory + "/comics.json");
 		if (!initialFile.exists()) {
-			if (logger.isLoggable(Level.INFO))
-				logger.info(String.format("Cache Directory=%s does not appear to be valid. Trying Cache Directory=%s instead.", ComicApiApplication.config.cacheDirectory, ComicApiApplication.config.cacheDirectoryAlternate));
+			logger.info("Cache Directory={} does not appear to be valid. Trying Cache Directory={} instead.", ComicApiApplication.config.cacheDirectory, ComicApiApplication.config.cacheDirectoryAlternate);
 			initialFile = new File(ComicApiApplication.config.cacheDirectoryAlternate + "/comics.json");
 			ComicsService.cacheLocation = ComicApiApplication.config.cacheDirectoryAlternate;
 		} else {
-			if (logger.isLoggable(Level.INFO))
-				logger.info(String.format("Cache Directory: %s", ComicApiApplication.config.cacheDirectory));
+			logger.info("Cache Directory: {}", ComicApiApplication.config.cacheDirectory);
 			ComicsService.cacheLocation = ComicApiApplication.config.cacheDirectory;
 		}
 
@@ -39,11 +38,10 @@ public class ComicApiApplication
 			ComicConfig comicConfig = new Gson().fromJson(reader, ComicConfig.class);
 			ComicsService.getComics().addAll(comicConfig.items.values());
 
-			if (logger.isLoggable(Level.INFO))
-				logger.info(String.format("Loaded: %d comics.", ComicsService.getComics().size()));
+			logger.info("Loaded: {} comics.", ComicsService.getComics().size());
 
 		} catch (FileNotFoundException fne) {
-			logger.log(Level.SEVERE, "Cannot load ComicList: " + fne.getMessage());
+			logger.error("Cannot load ComicList", fne);
 		}
 	}
 

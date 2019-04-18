@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 public class CacheUtils
 {
     private final String cacheHome;
-    private final Logger logger = Logger.getLogger(CacheUtils.class.getName());
 
     public CacheUtils(String cacheHome)
     {

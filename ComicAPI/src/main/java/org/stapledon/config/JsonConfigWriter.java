@@ -2,15 +2,15 @@ package org.stapledon.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 
 public class JsonConfigWriter
 {
-    private final Logger logger = Logger.getLogger(JsonConfigWriter.class);
+    private final org.slf4j.Logger logger = LoggerFactory.getLogger(JsonConfigWriter.class);
     private final Gson gson;
     private final String configPath;
     private ComicConfig comics;
@@ -25,14 +25,14 @@ public class JsonConfigWriter
     {
         try {
             loadComics();
-            logger.info(String.format("Saving %s", item.name));
+            logger.info("Saving {}", item.name);
 
 
             comics.items.put(item.name.hashCode(), item);
 
             saveComics();
         } catch (IOException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
     }
 
@@ -47,12 +47,12 @@ public class JsonConfigWriter
     {
         try {
             loadComics();
-            logger.info(String.format("Fetching %s", name));
+            logger.info("Fetching {}", name);
 
             if (this.comics.items.containsKey(name.hashCode()))
                 return this.comics.items.get(name.hashCode());
         } catch (FileNotFoundException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
         }
         return null;
     }
@@ -72,9 +72,9 @@ public class JsonConfigWriter
             Reader reader = new InputStreamReader(inputStream);
 
             comics = gson.fromJson(reader, ComicConfig.class);
-            logger.info(String.format("Loaded %s", configPath));
+            logger.info("Loaded {}", configPath);
         } else {
-            logger.warn(String.format("%s does not exist, creating", configPath));
+            logger.warn("{} does not exist, creating", configPath);
             comics = new ComicConfig();
         }
     }

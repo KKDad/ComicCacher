@@ -1,7 +1,8 @@
 package org.stapledon.downloader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
-import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,9 +15,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-public class GoComics extends DailyComic {
-
-    private static final Logger logger = Logger.getLogger(GoComics.class);
+public class GoComics extends DailyComic
+{
+    private static final Logger logger = LoggerFactory.getLogger(GoComics.class);
 
     /**
      * Set the date for the retrieval
@@ -28,7 +29,7 @@ public class GoComics extends DailyComic {
     {
         this.currentDate = date;
         if (logger.isInfoEnabled())
-            logger.info("Date set to: {}" + this.currentDate.toString());
+            logger.info("Date set to: {}", this.currentDate);
 
         return this;
     }
@@ -44,7 +45,7 @@ public class GoComics extends DailyComic {
         this.comicName = comicName;
         this.comicNameParsed = comicName.replace(" ", "");
         if (logger.isInfoEnabled())
-            logger.info("Comic: " + this.comicName);
+            logger.info("Comic: {}", this.comicName);
 
         return this;
     }
@@ -79,7 +80,7 @@ public class GoComics extends DailyComic {
     {
         try {
             String url = this.generateAboutUTL();
-            logger.info("Getting Comic Description from " + url);
+            logger.info("Getting Comic Description from {}", url);
 
             Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(TIMEOUT).get();
             // Fragile, however there appears to only be one "section" class and the description seems to be the
@@ -88,18 +89,16 @@ public class GoComics extends DailyComic {
 
 
             Optional<Element> author = doc.select("span").stream().filter(p -> p.attributes().get("class").contains("media-subheading")).findFirst();
-            if (author.isPresent()) {
-                comicItem.author = author.get().text();
-            }
+            author.ifPresent(element -> comicItem.author = element.text());
 
             // Cache the Avatar if we don't already have it
-            File avatar_cached = new File(String.format("%s/%s/avatar.png", this.getCacheDirectory(), comicNameParsed));
-            if (!avatar_cached.exists()) {
+            File avatarCached = new File(String.format("%s/%s/avatar.png", this.getCacheDirectory(), comicNameParsed));
+            if (!avatarCached.exists()) {
 
                 // TODO: Again, Fragile...
                 Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
 
-                cacheImage(featureAvatars, avatar_cached.getAbsolutePath());
+                cacheImage(featureAvatars, avatarCached.getAbsolutePath());
                 logger.trace("Avatar has been cached ");
             }
 
@@ -154,12 +153,12 @@ public class GoComics extends DailyComic {
         File f = new File(generateCachedName());
         if (f.exists()) {
             if (logger.isDebugEnabled())
-                logger.debug("Image has already been cached as : " + f.getAbsolutePath());
+                logger.debug("Image has already been cached as: {}", f.getAbsolutePath());
             return true;
         }
 
         if (logger.isDebugEnabled())
-            logger.debug("Caching image to: " + f.getAbsolutePath());
+            logger.debug("Caching image to: {}", f.getAbsolutePath());
 
 
         try {

@@ -1,11 +1,12 @@
 package org.stapledon.downloader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stapledon.utils.DefaultTrustManager;
 import org.stapledon.config.CacherConfig;
 import org.stapledon.config.CacherConfigLoader;
 import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.dto.ComicItem;
-import org.apache.log4j.Logger;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -19,7 +20,7 @@ public class ComicCacher
 
     private final CacherConfig config;
     private final JsonConfigWriter statsUpdater;
-    private final Logger logger = Logger.getLogger(ComicCacher.class);
+    private final Logger logger = LoggerFactory.getLogger(ComicCacher.class);
 
     public ComicCacher() throws NoSuchAlgorithmException, KeyManagementException
     {
@@ -68,7 +69,7 @@ public class ComicCacher
     public boolean cacheComic(CacherConfig.GoComics dcc)
     {
         logger.info("***********************************************************************************************");
-        logger.info("Processing: " + dcc.name);
+        logger.info("Processing: {}", dcc.name);
         logger.info("***********************************************************************************************");
 
         IDailyComic comics = new GoComics()

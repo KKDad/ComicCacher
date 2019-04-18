@@ -12,3 +12,9 @@ mat-card {
   box-shadow: 0 2px 2px rgba(0,0,0,.24), 0 0 2px rgba(0,0,0,.12);
 }
 
+.pubdate {
+  margin: 0;
+  padding: 0;
+  margin-inline-end: 100px;  
+  text-align: right;   
+}
