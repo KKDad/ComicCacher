@@ -31,6 +31,8 @@ dependencies {
 	implementation 'com.google.guava:guava:27.1-jre'
 	implementation 'org.jsoup:jsoup:1.11.3'
 	implementation 'log4j:log4j:1.2.17'
+	implementation 'ch.qos.logback:logback-classic:1.0.12'
+	implementation 'ch.qos.logback:logback-core:1.0.12'
 
 	implementation(project(':ComicViewer'))
 
@@ -40,7 +42,6 @@ dependencies {
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc:2.0.3.RELEASE'
 
 	testCompile 'junit:junit:4.12'
-//	testCompile 'org.mockito:mockito-all:1.10.19'
 	testCompile 'org.powermock:powermock-module-junit4:2.0.0'
 	testCompile 'org.powermock:powermock-api-mockito2:2.0.0'
 
