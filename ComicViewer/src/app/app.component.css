@@ -1,22 +1,43 @@
-/* AppComponent's private CSS styles */
-mat-card { 
-  margin-bottom: 10px; 
-  width: 1000px;
+.topnav {
+  background-color: #58772b;
+  color: #f1f1f1;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  z-index: 2;
+  display: inline-block
 }
-mat-card.header-mat {
-  margin-left: 40px;
-  margin-bottom: 10px; 
-  width: 1000px;
+
+.menu {
+  background-color: #748f4b;
+  color: #f1f1f1;
+  width: 100%;
+  padding: 3px;
+  margin: 0;
+  position: relative;
+  top: 93px; 
 }
-.comic-header { 
-  margin-bottom: 10px; 
-  width: 1000px;
-  align-content: center;
-  padding-top: 10px;
-  padding-right: 0px;
-  padding-bottom: 5px;
-  padding-left: 50px;
+
+.title {
+  margin: 0px;  
+  text-align: center;
+  font-size: 3.35169rem;
 }
+
+.subtitle {
+  margin-top: 0px;
+  margin-bottom: 10px;
+  margin-inline-start: 180px;  
+  text-align: center;  
+}
+
+.txt {
+  font-family: Roboto,"Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
+}
+
 button {
-  margin-left: 10px
+  margin: 4px;
 }

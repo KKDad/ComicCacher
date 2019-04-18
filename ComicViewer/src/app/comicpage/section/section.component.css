@@ -1,8 +1,14 @@
 mat-card-header {
-  margin-bottom: 5px; 
+  margin-bottom: 5px;   
 }
 
 mat-card { 
   margin-bottom: 10px; 
   width: 1000px;
+  background: rgba(0,0,0,.03);
+  align-content: center;
+  align-items: center;
+  border: 1px solid rgba(0,0,0,.03);
+  box-shadow: 0 2px 2px rgba(0,0,0,.24), 0 0 2px rgba(0,0,0,.12);
 }
+

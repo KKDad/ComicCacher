@@ -1,6 +1,4 @@
 import { Component, NgModule } from '@angular/core';
-import { Comic } from './dto/comic'
-import { from } from 'rxjs';
 
 @Component({
   selector: 'app-root',
