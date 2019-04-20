@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.config.ApiConfig;
 import org.stapledon.config.ApiConfigLoader;
+import org.stapledon.downloader.DailyDownloader;
 import org.stapledon.dto.ComicConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,28 +22,31 @@ public class ComicApiApplication
 	public ComicApiApplication() {
 		logger.info("ComicApiApplication starting...");
 		ComicApiApplication.config = new ApiConfigLoader().load();
-		File initialFile = new File(ComicApiApplication.config.cacheDirectory + "/comics.json");
-		if (!initialFile.exists()) {
-			logger.info("Cache Directory={} does not appear to be valid. Trying Cache Directory={} instead.", ComicApiApplication.config.cacheDirectory, ComicApiApplication.config.cacheDirectoryAlternate);
-			initialFile = new File(ComicApiApplication.config.cacheDirectoryAlternate + "/comics.json");
-			ComicsService.cacheLocation = ComicApiApplication.config.cacheDirectoryAlternate;
-		} else {
-			logger.info("Cache Directory: {}", ComicApiApplication.config.cacheDirectory);
-			ComicsService.cacheLocation = ComicApiApplication.config.cacheDirectory;
-		}
 
+		File directory=new File(ComicApiApplication.config.cacheDirectory);
+		ComicsService.cacheLocation = directory.exists() ? ComicApiApplication.config.cacheDirectory : ComicApiApplication.config.cacheDirectoryAlternate;
+		logger.warn("Serving from {}", ComicApiApplication.config.cacheDirectory);
 
 		try {
-			InputStream inputStream = new FileInputStream(initialFile);
-			Reader reader = new InputStreamReader(inputStream);
-			ComicConfig comicConfig = new Gson().fromJson(reader, ComicConfig.class);
-			ComicsService.getComics().addAll(comicConfig.items.values());
+			File config = new File(ComicsService.cacheLocation + "/comics.json");
+			if (!config.exists())
+				logger.warn("File {} does not exist", config);
+			else {
+				InputStream is = new FileInputStream(config);
+				Reader reader = new InputStreamReader(is);
+				ComicConfig comicConfig = new Gson().fromJson(reader, ComicConfig.class);
+				ComicsService.getComics().addAll(comicConfig.items.values());
+				logger.info("Loaded: {} comics.", ComicsService.getComics().size());
+				reader.close();
+				is.close();
+			}
 
-			logger.info("Loaded: {} comics.", ComicsService.getComics().size());
-
-		} catch (FileNotFoundException fne) {
+		} catch (IOException fne) {
 			logger.error("Cannot load ComicList", fne);
 		}
+
+		// Ensure we cache comics once a day
+		DailyDownloader.EnsureDailyCaching();
 	}
 
 

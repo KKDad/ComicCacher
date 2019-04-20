@@ -2,15 +2,18 @@ package org.stapledon.downloader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stapledon.api.ComicApiApplication;
+import org.stapledon.api.ComicsService;
+import org.stapledon.config.*;
 import org.stapledon.utils.DefaultTrustManager;
-import org.stapledon.config.CacherConfig;
-import org.stapledon.config.CacherConfigLoader;
-import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.dto.ComicItem;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -22,6 +25,8 @@ public class ComicCacher
     private final JsonConfigWriter statsUpdater;
     private final Logger logger = LoggerFactory.getLogger(ComicCacher.class);
 
+    private final String cacheDirectory;
+
     public ComicCacher() throws NoSuchAlgorithmException, KeyManagementException
     {
         // configure the SSLContext with a TrustManager
@@ -29,8 +34,12 @@ public class ComicCacher
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
 
+        File directory=new File(ComicApiApplication.config.cacheDirectory);
+        cacheDirectory = directory.exists() ? ComicApiApplication.config.cacheDirectory : ComicApiApplication.config.cacheDirectoryAlternate;
+        logger.warn("Caching to {}", ComicApiApplication.config.cacheDirectory);
+
         config = new CacherConfigLoader().load();
-        statsUpdater = new JsonConfigWriter(config.cacheDirectory + "/comics.json");
+        statsUpdater = new JsonConfigWriter(cacheDirectory + "/comics.json");
     }
 
 
@@ -73,7 +82,7 @@ public class ComicCacher
         logger.info("***********************************************************************************************");
 
         IDailyComic comics = new GoComics()
-                .setCacheDirectory(config.cacheDirectory)
+                .setCacheDirectory(cacheDirectory)
                 .setComic(dcc.name)
                 .setDate(dcc.startDate);
 

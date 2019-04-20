@@ -1,5 +1,4 @@
 {
-  "cacheDirectory":"Z:/ComicCache",
   "dailyComics":[
     {  "name":"Adam At Home", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Agnes", "startDate":{ "year":2019, "month":4, "day":1 } },

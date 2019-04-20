@@ -10,7 +10,7 @@
   left: 0px;
   z-index: 2;
   display: inline-block;  
-  box-shadow: inset 5px 5px 10px 10px #58772b; 
+  box-shadow: inset 25px 25px 25px 25px #58772b; 
 }
 
 .menu {
@@ -36,7 +36,7 @@
 .title {
   text-align: center;
   font-size: 72px;
-   line-height: 58.3px; 
+  line-height: 48.3px; 
 }
 
 .subtitle {
