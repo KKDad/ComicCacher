@@ -1,5 +1,7 @@
 package org.stapledon.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.stapledon.dto.ComicItem;
@@ -15,15 +17,14 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Component
 public class ComicsService implements IComicsService
 {
     static String cacheLocation;
 
-    private static final Logger logger = Logger.getLogger(ComicsService.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
+
 
     private static List<ComicItem> comics = new ArrayList<>();
     public  static List<ComicItem> getComics() { return comics; };
@@ -38,8 +39,8 @@ public class ComicsService implements IComicsService
     public ComicItem retrieveComic(int comicId)
     {
         ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
-        if (comic == null && logger.isLoggable(Level.SEVERE))
-            logger.log(Level.SEVERE, String.format("Unknown comic id=%d, total known: %d", comicId, comics.size()));
+        if (comic == null)
+            logger.error("Unknown comic id={}, total known: {}", comicId, comics.size());
         return comic;
     }
 
@@ -76,8 +77,7 @@ public class ComicsService implements IComicsService
         CacheUtils cacheUtils = new CacheUtils(cacheLocation);
         File image = cacheUtils.findFirst(comic, which);
         if (image == null) {
-            if (logger.isLoggable(Level.SEVERE))
-                logger.log(Level.SEVERE, String.format("Unable to locate first strip for %s", comic.name));
+            logger.error("Unable to locate first strip for {}", comic.name);
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -103,8 +103,7 @@ public class ComicsService implements IComicsService
         else
             image = cacheUtils.findPrevious(comic, from);
         if (image == null) {
-            if (logger.isLoggable(Level.SEVERE))
-                logger.log(Level.SEVERE, String.format("Unable to locate first strip for %s", comic.name));
+            logger.error("Unable to locate first strip for {}", comic.name);
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -131,10 +130,8 @@ public class ComicsService implements IComicsService
         String comicNameParsed = comic.name.replace(" ", "");
         File avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
         if (!avatar.exists()) {
-            if (logger.isLoggable(Level.SEVERE)) {
-                logger.log(Level.SEVERE, String.format("Unable to locate avatar for %s", comic.name));
-                logger.log(Level.SEVERE, String.format("   checked %s", avatar.getAbsolutePath()));
-            }
+            logger.error("Unable to locate avatar for {}", comic.name);
+            logger.error("   checked {}", avatar.getAbsolutePath());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 

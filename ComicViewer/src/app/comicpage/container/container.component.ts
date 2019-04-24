@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 
-import { Comic } from '../dto/comic';
-import { ComicService } from '../comic.service';
+import { Comic } from '../../dto/comic';
+import { ComicService } from '../../comic.service';
 
 @Component({
     selector: 'container',

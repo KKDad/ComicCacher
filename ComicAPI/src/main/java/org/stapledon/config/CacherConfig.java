@@ -25,6 +25,5 @@ public class CacherConfig
                 }
 
         }
-        public String cacheDirectory;
         public List<GoComics> dailyComics;
 }

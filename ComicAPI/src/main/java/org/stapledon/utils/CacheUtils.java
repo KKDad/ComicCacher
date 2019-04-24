@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 public class CacheUtils
 {
     private final String cacheHome;
-    private final Logger logger = Logger.getLogger(CacheUtils.class.getName());
 
     public CacheUtils(String cacheHome)
     {
@@ -23,7 +22,8 @@ public class CacheUtils
         this.cacheHome = cacheHome;
     }
 
-    private File getComicHome(ComicItem comic) {
+    private File getComicHome(ComicItem comic)
+    {
         String comicNameParsed = comic.name.replace(" ", "");
         String path = String.format("%s/%s", this.cacheHome, comicNameParsed);
         return new File(path);

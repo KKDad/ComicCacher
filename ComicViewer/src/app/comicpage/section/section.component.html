@@ -5,7 +5,8 @@
         <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-        <img [src]="getComicImage()" height={{this.height}} width={{this.width}} />
+            <p class="pubdate" style="margin-inline-end: 100px;">Published on: {{this.imageDate}}</p>
+            <img [src]="getComicImage()" height={{this.height}} width={{this.width}} />
         <!-- <p>{{content.description}}</p> -->
     </mat-card-content>
     <mat-card-actions>

@@ -19,14 +19,13 @@ public class CacherConfigLoaderTest {
     {
 
         // Arrange
-        String initialString = "{'cacheDirectory':'myCacheDir','dailyComics':[{'name':'Adam At Home','startDate':{'year':2008,'month':1,'day':9}}]}\n";
+        String initialString = "{'dailyComics':[{'name':'Adam At Home','startDate':{'year':2008,'month':1,'day':9}}]}\n";
         InputStream targetStream =   new ReaderInputStream(CharSource.wrap(initialString.replace('\'', '\"')).openStream(), Charset.defaultCharset());
 
         // Act
         CacherConfig results = new CacherConfigLoader().load(targetStream);
 
         // Assert
-        Assert.assertEquals("myCacheDir", results.cacheDirectory);
         Assert.assertEquals(1, results.dailyComics.size());
         Assert.assertEquals("Adam At Home", results.dailyComics.get(0).name);
         Assert.assertEquals(LocalDate.of(2008, 1, 9), results.dailyComics.get(0).startDate);
@@ -38,7 +37,6 @@ public class CacherConfigLoaderTest {
     {
         // Arrange
         CacherConfig config = new CacherConfig();
-        config.cacheDirectory = "G:\\";
         CacherConfig.GoComics comic = config.new GoComics();
         comic.name = "Adam At Home";
         comic.startDate = LocalDate.of(2019, Month.JANUARY, 1);

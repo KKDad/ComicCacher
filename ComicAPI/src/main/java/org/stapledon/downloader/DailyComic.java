@@ -1,10 +1,11 @@
 package org.stapledon.downloader;
 
 import com.google.common.base.Preconditions;
-import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
@@ -26,7 +27,8 @@ public abstract class DailyComic implements IDailyComic
 
     private Path cacheDirectory;
 
-    private final Logger logger = Logger.getLogger(DailyComic.class);
+    private static final Logger logger = LoggerFactory.getLogger(DailyComic.class);
+
 
     String comicName;
     String comicNameParsed;
@@ -51,7 +53,7 @@ public abstract class DailyComic implements IDailyComic
         OutputStream os = null;
         try {
             URL urlImage = new URL(sourceImageElement.attr(ABS_SRC));
-            logger.info("Downloading Image from: " + urlImage);
+            logger.info("Downloading Image from: {}", urlImage);
             try (InputStream in = urlImage.openStream()) {
                 byte[] buffer = new byte[4096];
                 int n;
@@ -81,7 +83,7 @@ public abstract class DailyComic implements IDailyComic
         File directory = new File(directoryName);
         if (!directory.exists()) {
             if (logger.isDebugEnabled())
-                logger.debug("Creating utils directory to: " + directoryName);
+                logger.debug("Creating utils directory to: {}", directoryName);
             directory.mkdirs();
         }
         return this;
@@ -143,7 +145,4 @@ public abstract class DailyComic implements IDailyComic
         else
             return s;
     }
-
-
-    public abstract LocalDate advance();
 }

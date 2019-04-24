@@ -9,7 +9,9 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import org.stapledon.api.ComicApiApplication;
 import org.stapledon.api.ComicsService;
+import org.stapledon.config.ApiConfig;
 import org.stapledon.config.CacherConfig;
 import org.stapledon.dto.ComicItem;
 
@@ -20,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(ComicsService.class)
+@PrepareForTest({ ComicsService.class, ComicApiApplication.class})
 @PowerMockIgnore("javax.net.ssl.*")
 public class ComicCacherTest
 {
@@ -31,6 +33,10 @@ public class ComicCacherTest
         List<ComicItem> comics = comicItem();
         PowerMockito.mockStatic(ComicsService.class);
         Mockito.when(ComicsService.getComics()).thenReturn(comics);
+
+        ApiConfig config = new ApiConfig();
+        config.cacheDirectory = "C:\\";
+        ComicApiApplication.config = config;
 
         ComicCacher subject = getSubject();
         CacherConfig.GoComics result = subject.lookupGoComics(comics.get(0));

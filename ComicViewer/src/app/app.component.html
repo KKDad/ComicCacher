@@ -1,12 +1,11 @@
-<img class="comic-header" src="/assets/images/ComicViewer.png">
-<mat-card class="mat-card header-mat">
-        <button onclick="window.location.href='https://bitbucket.org/kkdad/comiccacher/src/master/'">Project</button>
-        <button onclick="window.location.href='docs/index.html'">API Documentation</button>        
-</mat-card>
-<div class="row">
-    <div class="column"><jumplist></jumplist></div>
-    <div class="column">
-        <container [sections]="sections"></container>
-    </div>
+<div class="topnav">
+    <p class="txt title outline">The Comic Reader</p>
+    <p class="txt subtitle outline">Serving up Daily Laughs since 2013</p>
 </div>
-
+<div class="txt menu">
+    <button mat-button onclick="window.location.href='https://bitbucket.org/kkdad/comiccacher/src/master/'">Project</button>
+    <button mat-button onclick="window.location.href='docs/index.html'">API Documentation</button>        
+    <button mat-button routerLink="/comics">Today's Strips</button>
+    <button mat-button routerLink="/refresh">Refresh</button>
+</div>
+<router-outlet></router-outlet>

@@ -1,34 +1,55 @@
-/* AppComponent's private CSS styles */
-mat-card { 
-  margin-bottom: 10px; 
-  width: 1000px;
-}
-mat-card.header-mat {
-  margin-left: 40px;
-  margin-bottom: 10px; 
-  width: 1000px;
-}
-.comic-header { 
-  margin-bottom: 10px; 
-  width: 1000px;
-  align-content: center;
-  padding-top: 10px;
-  padding-right: 0px;
-  padding-bottom: 5px;
-  padding-left: 50px;
-}
-.column {
-  float: left;
+.topnav {
+  background: url(/assets/images/moss.png) no-repeat;
+  background-color: #58772b;
+  color: #ebebeb;
+  width: 100%;
+  padding: 0;
+  margin: 5;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  z-index: 2;
+  display: inline-block;  
+  box-shadow: inset 25px 25px 25px 25px #58772b; 
 }
 
-.left {
-  width: 25%;
+.menu {
+  background-color: #58772b;
+  color: #f1f1f1;
+  width: 100%;
+  padding: 3px;
+  margin: 0;
+  position: relative;
+  top: 93px; 
 }
 
-.right {
-  width: 75%;
+.outline {
+  margin: 0px;  
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: #59772b83; 
+  -webkit-font-smoothing: subpixel-antialiased;
+  letter-spacing: 0px;
+  font-kerning: none;
+  font-weight: 900;
+}
+
+.title {
+  text-align: center;
+  font-size: 72px;
+  line-height: 48.3px; 
+}
+
+.subtitle {
+  margin-bottom: 10px;
+  margin-inline-start: 180px;  
+  font-size: 30px;
+  text-align: center;  
+}
+
+.txt {
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 button {
-  margin-left: 10px
+  margin: 4px;
 }
