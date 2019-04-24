@@ -2,6 +2,7 @@ import { Component, OnInit, ElementRef, EventEmitter, HostListener, Input, Outpu
 import { Comic } from '../../dto/comic'
 import { ComicService } from '../../comic.service';
 import { DomSanitizer} from '@angular/platform-browser';
+import { ImageDto } from '../../dto/image'
 
 import { Observable, of } from 'rxjs';
 
@@ -51,7 +52,7 @@ export class SectionComponent implements OnInit {
         this.comicService.getLatest(this.content.id).subscribe(imagedto => { this.setStrip(imagedto); });
     }
 
-    private setStrip(imagedto: import("c:/git/ComicCacher/ComicViewer/src/app/dto/image").ImageDto) {
+    private setStrip(imagedto: ImageDto) {
         this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
         this.height = imagedto.height;
         this.width = imagedto.width;
