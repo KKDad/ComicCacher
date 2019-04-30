@@ -36,7 +36,7 @@ public class ComicCacherTest
 
         ApiConfig config = new ApiConfig();
         config.cacheDirectory = "C:\\";
-        ComicApiApplication.config = config;
+        ComicApiApplication.setConfig(config);
 
         ComicCacher subject = getSubject();
         CacherConfig.GoComics result = subject.lookupGoComics(comics.get(0));

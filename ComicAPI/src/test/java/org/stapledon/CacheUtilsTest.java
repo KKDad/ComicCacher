@@ -30,7 +30,7 @@ public class CacheUtilsTest {
     {
         File resourcesDirectory = getResourcesDirectory();
 
-        ComicApiApplication.config = new ApiConfigLoader().load();
+        ComicApiApplication.getConfig();
         return new CacheUtils(resourcesDirectory.getAbsolutePath());
     }
 

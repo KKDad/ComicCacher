@@ -17,11 +17,25 @@ public class ComicApiApplication
 {
 	private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
 
-	public static ApiConfig config;
+	private static ApiConfig config;
+
+	public static ApiConfig getConfig()
+	{
+		if (ComicApiApplication.config == null)
+			ComicApiApplication.config = new ApiConfigLoader().load();
+		return ComicApiApplication.config;
+	}
+
+	public static void setConfig(ApiConfig config)
+	{
+		logger.warn("Configuration manually set");
+		ComicApiApplication.config = config;
+	}
+
 
 	public ComicApiApplication() {
 		logger.info("ComicApiApplication starting...");
-		ComicApiApplication.config = new ApiConfigLoader().load();
+		ComicApiApplication.getConfig();
 
 		File directory=new File(ComicApiApplication.config.cacheDirectory);
 		ComicsService.cacheLocation = directory.exists() ? ComicApiApplication.config.cacheDirectory : ComicApiApplication.config.cacheDirectoryAlternate;

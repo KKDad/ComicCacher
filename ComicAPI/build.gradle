@@ -91,16 +91,10 @@ asciidoctor {
 	dependsOn test
 }
 
-
-application {
-	mainClassName = "org.stapledon.downloader.ComicCacher"
+bootRun  {
+	dependsOn clean
+	mainClassName = "org.stapledon.api.ComicApiApplication"
 }
 
-task list {
-	doLast {
-		FileTree tree = fileTree('../ComicViewer/dist')
-		tree.each {
-			println it.name
-		}
-	}
-}
+// Keep from confusing anyone with two run targets - SpringBoot adds the BootRun target
+tasks.remove(run)

@@ -3,17 +3,16 @@ package org.stapledon.downloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.api.ComicApiApplication;
-import org.stapledon.api.ComicsService;
-import org.stapledon.config.*;
-import org.stapledon.utils.DefaultTrustManager;
+import org.stapledon.config.CacherConfig;
+import org.stapledon.config.CacherConfigLoader;
+import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.dto.ComicItem;
+import org.stapledon.utils.DefaultTrustManager;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -34,19 +33,12 @@ public class ComicCacher
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
 
-        File directory=new File(ComicApiApplication.config.cacheDirectory);
-        cacheDirectory = directory.exists() ? ComicApiApplication.config.cacheDirectory : ComicApiApplication.config.cacheDirectoryAlternate;
-        logger.warn("Caching to {}", ComicApiApplication.config.cacheDirectory);
+        File directory=new File(ComicApiApplication.getConfig().cacheDirectory);
+        cacheDirectory = directory.exists() ? ComicApiApplication.getConfig().cacheDirectory : ComicApiApplication.getConfig().cacheDirectoryAlternate;
+        logger.warn("Caching to {}", ComicApiApplication.getConfig().cacheDirectory);
 
         config = new CacherConfigLoader().load();
         statsUpdater = new JsonConfigWriter(cacheDirectory + "/comics.json");
-    }
-
-
-    public static void main(String[] args) throws KeyManagementException, NoSuchAlgorithmException
-    {
-        ComicCacher program = new ComicCacher();
-        program.cacheAll();
     }
 
     public boolean cacheAll()

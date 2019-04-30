@@ -5,6 +5,7 @@ pipelines:
     - step:
         caches:
           - gradle
+          - node
         script:
           - export GRADLE_OPTS='-Dorg.gradle.daemon=false'
           - bash ./gradlew build
