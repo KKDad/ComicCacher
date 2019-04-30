@@ -27,7 +27,7 @@ public class ComicsService implements IComicsService
 
 
     private static List<ComicItem> comics = new ArrayList<>();
-    public  static List<ComicItem> getComics() { return comics; };
+    public  static List<ComicItem> getComics() { return comics; }
 
     /**
      * Return details of a specific api

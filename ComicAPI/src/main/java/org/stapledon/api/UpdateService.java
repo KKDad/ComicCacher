@@ -8,7 +8,6 @@ import org.stapledon.dto.ComicItem;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.logging.Level;
 
 @Component
 public class UpdateService implements IUpdateService

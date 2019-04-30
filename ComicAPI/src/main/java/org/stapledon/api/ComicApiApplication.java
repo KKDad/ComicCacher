@@ -26,10 +26,10 @@ public class ComicApiApplication
 		return ComicApiApplication.config;
 	}
 
-	public static void setConfig(ApiConfig config)
+	public static void setConfig(ApiConfig apiConfig)
 	{
 		logger.warn("Configuration manually set");
-		ComicApiApplication.config = config;
+		ComicApiApplication.config = apiConfig;
 	}
 
 
@@ -42,11 +42,11 @@ public class ComicApiApplication
 		logger.warn("Serving from {}", ComicApiApplication.config.cacheDirectory);
 
 		try {
-			File config = new File(ComicsService.cacheLocation + "/comics.json");
-			if (!config.exists())
-				logger.warn("File {} does not exist", config);
+			File cf = new File(ComicsService.cacheLocation + "/comics.json");
+			if (!cf.exists())
+				logger.warn("File {} does not exist", cf);
 			else {
-				InputStream is = new FileInputStream(config);
+				InputStream is = new FileInputStream(cf);
 				Reader reader = new InputStreamReader(is);
 				ComicConfig comicConfig = new Gson().fromJson(reader, ComicConfig.class);
 				ComicsService.getComics().addAll(comicConfig.items.values());
@@ -60,7 +60,7 @@ public class ComicApiApplication
 		}
 
 		// Ensure we cache comics once a day
-		DailyDownloader.EnsureDailyCaching();
+		DailyDownloader.ensureDailyCaching();
 	}
 
 

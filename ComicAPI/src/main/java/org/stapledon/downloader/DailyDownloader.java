@@ -18,10 +18,15 @@ public class DailyDownloader
 {
     private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
 
+    private DailyDownloader()
+    {
+        // Sonar: Utility classes should not have public constructors
+    }
+
     /**
      * Schedule a task to download the comics once a day at 7:00am
      */
-    public static void EnsureDailyCaching()
+    public static void ensureDailyCaching()
     {
         LocalDateTime localNow = LocalDateTime.now();
         ZoneId currentZone = ZoneId.of("America/New_York");
@@ -36,7 +41,7 @@ public class DailyDownloader
 
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(new RunComicCacher(), initalDelay,
-                24*60*60, TimeUnit.SECONDS);
+                24*60*60L, TimeUnit.SECONDS);
     }
 
     private static class RunComicCacher implements Runnable

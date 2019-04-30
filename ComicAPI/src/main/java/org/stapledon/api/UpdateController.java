@@ -5,11 +5,9 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
 public class UpdateController
@@ -17,7 +15,7 @@ public class UpdateController
     @Autowired
     private IUpdateService updateService;
 
-    @RequestMapping(method=GET, path = "/api/v1/update")
+    @GetMapping(path = "/api/v1/update")
     public ResponseEntity<String> updateAllComics()
     {
         HttpHeaders headers = new HttpHeaders();
@@ -30,7 +28,7 @@ public class UpdateController
         return new ResponseEntity<>(null, headers, HttpStatus.OK);
     }
 
-    @RequestMapping(method=GET, path = "/api/v1/update/{comicId}")
+    @GetMapping(path = "/api/v1/update/{comicId}")
     public ResponseEntity<String> updateSpecificComic(@PathVariable int comicId)
     {
         HttpHeaders headers = new HttpHeaders();
