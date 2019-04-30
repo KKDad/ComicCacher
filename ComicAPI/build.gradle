@@ -92,7 +92,6 @@ asciidoctor {
 }
 
 bootRun  {
-	dependsOn clean
 	mainClassName = "org.stapledon.api.ComicApiApplication"
 }
 
