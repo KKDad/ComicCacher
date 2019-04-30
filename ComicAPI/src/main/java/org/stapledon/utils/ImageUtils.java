@@ -5,8 +5,10 @@ import org.stapledon.dto.ImageDto;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -28,9 +30,10 @@ public class ImageUtils {
      */
     public static ImageDto getImageDto(File image) throws IOException {
         byte[] media = Files.readAllBytes(image.toPath());
-        BufferedImage bi = ImageIO.read(image);
         ImageDto dto = new ImageDto();
-        try {
+        try(InputStream is = new ByteArrayInputStream(media))
+        {
+            BufferedImage bi = ImageIO.read(is);
             dto.mimeType = MediaType.IMAGE_PNG.toString();
             dto.imageData = Base64.getEncoder().withoutPadding().encodeToString(media);
             dto.height = bi.getHeight();
