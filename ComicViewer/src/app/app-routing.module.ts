@@ -7,8 +7,7 @@ import { ComicpageComponent } from './comicpage/comicpage.component'
 const routes: Routes = [
   { path: '', redirectTo: '/comics', pathMatch: 'full' },
   { path: 'refresh', component: RefreshComponent },
-  { path: 'comics', component: ComicpageComponent },
-  { path: '**', component: ComicpageComponent }
+  { path: 'comics', component: ComicpageComponent }
 ];
 
 @NgModule({
