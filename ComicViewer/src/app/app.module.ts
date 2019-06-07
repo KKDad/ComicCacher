@@ -9,7 +9,6 @@ import { ContainerComponent } from './comicpage/container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatButtonModule, MatCardModule} from '@angular/material';
-import { JumplistComponent } from './comicpage/jumplist/jumplist.component';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
 import { ComicpageComponent } from './comicpage/comicpage.component'
@@ -20,7 +19,6 @@ import { ComicpageComponent } from './comicpage/comicpage.component'
     AppComponent,
     SectionComponent,
     ContainerComponent,
-    JumplistComponent,
     RefreshComponent,
     ComicpageComponent
   ],
