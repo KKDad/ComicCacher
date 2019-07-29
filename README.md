@@ -39,3 +39,5 @@ https://material.io/design/components/cards.html#usage
 Material Design in Angular
 https://material.angular.io/components/categories
 
+Building Infinite Virtual Scrolling Lists with the new Angular 7 Cdk
+https://pusher.com/tutorials/infinite-scrolling-angular-cdk

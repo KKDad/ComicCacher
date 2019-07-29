@@ -16,6 +16,7 @@ import java.io.File;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 
 public class ComicCacher
 {
@@ -73,10 +74,15 @@ public class ComicCacher
         logger.info("Processing: {}", dcc.name);
         logger.info("***********************************************************************************************");
 
+        // Only search back 7 days unless we are refilling
+        LocalDate startDate = dcc.startDate;
+        if (startDate.equals(LocalDate.of(2019, 4, 1)))
+            startDate = LocalDate.now().minusDays(7);
+
         IDailyComic comics = new GoComics()
                 .setCacheDirectory(cacheDirectory)
                 .setComic(dcc.name)
-                .setDate(dcc.startDate);
+                .setDate(startDate);
 
         ComicItem comicItem = statsUpdater.fetch(dcc.name);
         if (comicItem == null) {

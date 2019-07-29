@@ -67,6 +67,7 @@ public class ComicsService implements IComicsService
     @Override
     public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException
     {
+        logger.trace("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
@@ -89,6 +90,7 @@ public class ComicsService implements IComicsService
     @Override
     public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException
     {
+        logger.trace("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
