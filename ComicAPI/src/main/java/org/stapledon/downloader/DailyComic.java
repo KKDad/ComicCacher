@@ -50,6 +50,9 @@ public abstract class DailyComic implements IDailyComic
 
     boolean cacheImage(Element sourceImageElement, String destinationFile) throws IOException
     {
+        Preconditions.checkNotNull(sourceImageElement, "sourceImageElement cannot be null");
+        Preconditions.checkNotNull(destinationFile, "destinationFile cannot be null");
+
         OutputStream os = null;
         try {
             URL urlImage = new URL(sourceImageElement.attr(ABS_SRC));

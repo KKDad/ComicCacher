@@ -42,13 +42,23 @@ public class ComicCacher
         statsUpdater = new JsonConfigWriter(cacheDirectory + "/comics.json");
     }
 
+    /**
+     * Attempt to cache all of the configured comics. Does not stop if one or more comics fail to be cached.
+     * @return True if all comics where successfully cached, false if one or more fail to be cached.
+     */
     public boolean cacheAll()
     {
+        boolean result = true;
         for (CacherConfig.GoComics dcc : config.dailyComics)
         {
-            cacheComic(dcc);
+            try {
+                cacheComic(dcc);
+            } catch (Exception e) {
+                logger.error(String.format("Failed to cache %s : %s", dcc.name, e.getMessage()), e);
+                result = false;
+            }
         }
-        return true;
+        return result;
     }
 
     public boolean cacheComic(ComicItem comic)
