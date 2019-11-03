@@ -11,7 +11,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import org.stapledon.api.ComicApiApplication;
 import org.stapledon.api.ComicsService;
-import org.stapledon.config.ApiConfig;
 import org.stapledon.config.CacherConfig;
 import org.stapledon.dto.ComicItem;
 
@@ -33,10 +32,6 @@ public class ComicCacherTest
         List<ComicItem> comics = comicItem();
         PowerMockito.mockStatic(ComicsService.class);
         Mockito.when(ComicsService.getComics()).thenReturn(comics);
-
-        ApiConfig config = new ApiConfig();
-        config.cacheDirectory = "C:\\";
-        ComicApiApplication.setConfig(config);
 
         ComicCacher subject = getSubject();
         CacherConfig.GoComics result = subject.lookupGoComics(comics.get(0));

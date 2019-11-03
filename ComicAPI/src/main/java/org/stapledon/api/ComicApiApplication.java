@@ -3,8 +3,6 @@ package org.stapledon.api;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stapledon.config.ApiConfig;
-import org.stapledon.config.ApiConfigLoader;
 import org.stapledon.downloader.DailyDownloader;
 import org.stapledon.dto.ComicConfig;
 import org.springframework.boot.SpringApplication;
@@ -17,29 +15,21 @@ public class ComicApiApplication
 {
 	private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
 
-	private static ApiConfig config;
-
-	public static ApiConfig getConfig()
-	{
-		if (ComicApiApplication.config == null)
-			ComicApiApplication.config = new ApiConfigLoader().load();
-		return ComicApiApplication.config;
-	}
-
-	public static void setConfig(ApiConfig apiConfig)
-	{
-		logger.warn("Configuration manually set");
-		ComicApiApplication.config = apiConfig;
-	}
-
-
 	public ComicApiApplication() {
 		logger.info("ComicApiApplication starting...");
-		ComicApiApplication.getConfig();
 
-		File directory=new File(ComicApiApplication.config.cacheDirectory);
-		ComicsService.cacheLocation = directory.exists() ? ComicApiApplication.config.cacheDirectory : ComicApiApplication.config.cacheDirectoryAlternate;
-		logger.warn("Serving from {}", ComicApiApplication.config.cacheDirectory);
+		String cache_directory = System.getenv("CACHE_DIRECTORY");
+		if (cache_directory == null) {
+			logger.error("CACHE_DIRECTORY not set. Defaulting to /comics");
+			cache_directory = "/comics";
+		}
+
+		File directory = new File(cache_directory);
+		if (!directory.exists() || directory.isDirectory()) {
+			directory.mkdirs();
+		}
+		ComicsService.cacheLocation = cache_directory;
+		logger.warn("Serving from {}", cache_directory);
 
 		try {
 			File cf = new File(ComicsService.cacheLocation + "/comics.json");

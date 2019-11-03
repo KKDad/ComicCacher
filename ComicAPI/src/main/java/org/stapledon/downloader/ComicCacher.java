@@ -34,9 +34,13 @@ public class ComicCacher
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
 
-        File directory=new File(ComicApiApplication.getConfig().cacheDirectory);
-        cacheDirectory = directory.exists() ? ComicApiApplication.getConfig().cacheDirectory : ComicApiApplication.getConfig().cacheDirectoryAlternate;
-        logger.warn("Caching to {}", ComicApiApplication.getConfig().cacheDirectory);
+        String cache_directory = System.getenv("CACHE_DIRECTORY");
+        if (cache_directory == null) {
+            logger.error("CACHE_DIRECTORY not set. Defaulting to /comics");
+            cache_directory = "/comics";
+        }
+        cacheDirectory = cache_directory;
+        logger.warn("Caching to {}", cacheDirectory);
 
         config = new CacherConfigLoader().load();
         statsUpdater = new JsonConfigWriter(cacheDirectory + "/comics.json");
