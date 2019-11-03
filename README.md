@@ -6,22 +6,19 @@ Web Comic downloader v2.0. A rethink of the initial comic caching program.
 
 #### Comic API
 
-To build and launch the Comic API docker container and share comics mounted from a remote share:
+To build and launch the Comic API, build the docker container, tag and push the image, then run a helm upgrade
 ~~~
- gradlew :ComicAPI:docker
- mkdir /backups
- mount 192.168.1.7:/volume1/Backups /backups
- docker run -it -v /backups/ComicCache:/data -p 8080:8888 kkdad/comic-api
+gradlew :ComicAPI:docker
+docker images 
+docker tag kkdad/comic-api:latest registry.local613.local:5000/kkdad/comic-api:2.0.1
+docker push registry.local613.local:5000/kkdad/comic-api:2.0.1
+
+helm upgrade comics comics
 ~~~
 
-To export the docker file for transferring between machines without using docker hub:
-~~~
-docker save kkdad/comic-api -o comics-api.docker
-
-docker load -i comics-api.docker
-docker create --name comics -v /backups/ComicCache:/data -p 8080:8888 --restart unless-stopped kkdad/comic-api:latest
-dockler start comics
-~~~
+To view the API:
+- https://comics.gilbert.ca/docs/index.html
+- https://comics.gilbert.ca/api/v1/comics
 
 #### ComicViewer
 
