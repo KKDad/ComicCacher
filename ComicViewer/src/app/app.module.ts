@@ -11,7 +11,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule, MatCardModule} from '@angular/material';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
-import { ComicpageComponent } from './comicpage/comicpage.component'
+import { ComicpageComponent } from './comicpage/comicpage.component';
+import { AboutComponent } from './about/about.component'
 
 
 @NgModule({
@@ -20,7 +21,8 @@ import { ComicpageComponent } from './comicpage/comicpage.component'
     SectionComponent,
     ContainerComponent,
     RefreshComponent,
-    ComicpageComponent
+    ComicpageComponent,
+    AboutComponent
   ],
   imports: [
     BrowserModule,

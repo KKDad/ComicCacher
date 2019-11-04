@@ -1,0 +1,17 @@
+mat-card { 
+    margin-left: auto;
+    margin-top: 100px;
+    margin-right: auto;
+    margin-bottom: 10px; 
+    width: 1000px;
+    background: rgba(0,0,0,.03);
+    align-content: center;
+    align-items: center;
+    border: 1px solid rgba(0,0,0,.03);
+    box-shadow: 0 2px 2px rgba(0,0,0,.24), 0 0 2px rgba(0,0,0,.12);
+}
+
+.wrapper {
+    display: flex;
+    justify-content: center;
+}

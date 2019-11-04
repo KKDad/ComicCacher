@@ -65,8 +65,8 @@ public class CacheUtils
         Arrays.sort(cachedStrips, String::compareTo);
 
         timer.stop();
-        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS)
-            logger.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
+        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && logger.isInfoEnabled())
+                logger.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
 
         return new File(String.format("%s/%s", folder.getAbsolutePath(), which == Direction.FORWARD ? cachedStrips[0] : cachedStrips[cachedStrips.length - 1]));
     }
@@ -87,7 +87,7 @@ public class CacheUtils
             if (folder.exists()) {
 
                 timer.stop();
-                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS)
+                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && logger.isInfoEnabled())
                     logger.info(String.format("findNext took: %s for %s", timer.toString(), comic.name));
 
                 return folder;
@@ -113,7 +113,7 @@ public class CacheUtils
             if (folder.exists()) {
 
                 timer.stop();
-                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS)
+                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && logger.isInfoEnabled())
                     logger.info(String.format("findPrevious took: %s for %s", timer.toString(), comic.name));
 
                 return folder;
