@@ -5,7 +5,7 @@ import { RefreshComponent } from './refresh/refresh.component'
 import { ComicpageComponent } from './comicpage/comicpage.component'
 
 const routes: Routes = [
-  { path: '', redirectTo: '/comics', pathMatch: 'full' },
+  { path: '', redirectTo: 'comics', pathMatch: 'full' },
   { path: 'refresh', component: RefreshComponent },
   { path: 'comics', component: ComicpageComponent }
 ];

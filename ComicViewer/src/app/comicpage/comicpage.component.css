@@ -1,15 +1,8 @@
-.column {
-    float: left;
-}
-
-.left {
-    width: 25%;
-}
-
-.right {
-    width: 75%;
-}
-
 button {
     margin-left: 10px
 }
+
+.box {
+    float: center;
+    width: 80%;
+}  

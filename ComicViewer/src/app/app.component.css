@@ -1,55 +1,62 @@
 .topnav {
-  background: url(/assets/images/moss.png) no-repeat;
-  background-color: #58772b;
-  color: #ebebeb;
+  background-color: #f7f7f7;
+  border: #a7a7a7;
+  color: #333333;
   width: 100%;
-  padding: 0;
-  margin: 5;
-  position: fixed;
+  height: 80px;
+  padding: 0px;
+  position: fixed;  
   top: 0px;
   left: 0px;
   z-index: 2;
   display: inline-block;  
-  box-shadow: inset 25px 25px 25px 25px #58772b; 
-}
-
-.menu {
-  background-color: #58772b;
-  color: #f1f1f1;
-  width: 100%;
-  padding: 3px;
-  margin: 0;
-  position: relative;
-  top: 93px; 
+  display: block;  
+  box-shadow: 5px 1px 3px #888888;
+  /* overflow: auto; */
 }
 
 .outline {
-  margin: 0px;  
+  margin: 5px;  
   -webkit-text-stroke-width: 1px;
-  -webkit-text-stroke-color: #59772b83; 
+  -webkit-text-stroke-color: #6e6e6e; 
   -webkit-font-smoothing: subpixel-antialiased;
   letter-spacing: 0px;
   font-kerning: none;
   font-weight: 900;
 }
 
-.title {
+.title {  
+  padding: 0px;
+  width: 100%;
+  position: fixed;  
+  top: 0px;
+  left: 0px;
   text-align: center;
   font-size: 72px;
-  line-height: 48.3px; 
+  line-height: 48.3px;   
 }
 
 .subtitle {
-  margin-bottom: 10px;
-  margin-inline-start: 180px;  
-  font-size: 30px;
-  text-align: center;  
+  top: 5px;
+  margin-bottom: 0px;
+  margin-inline-start: 0px;
+  font-size: 30px;  
+}
+
+.wrapper {
+  overflow:auto;
+  z-index: 0;
+}
+
+.c1 {
+  float:left;
+}
+
+
+.c2 {
+   float:right;
 }
 
 .txt {
   font-family: Arial, Helvetica, sans-serif;
-}
-
-button {
-  margin: 4px;
 }
