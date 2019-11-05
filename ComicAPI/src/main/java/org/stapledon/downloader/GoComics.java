@@ -92,7 +92,7 @@ public class GoComics extends DailyComic
             author.ifPresent(element -> comicItem.author = element.text());
 
             // Cache the Avatar if we don't already have it
-            File avatarCached = new File(String.format("%s/%s/avatar.png", this.getCacheDirectory(), comicNameParsed));
+            File avatarCached = new File(String.format("%s/avatar.png", this.CacheLocation()));
             if (!avatarCached.exists()) {
 
                 // TODO: Again, Fragile...
@@ -139,7 +139,7 @@ public class GoComics extends DailyComic
         ensureCacheDirectoryExists();
         // TODO: Autodetect image type. Perhaps https://stackoverflow.com/questions/12531797/how-to-get-an-image-type-without-knowing-its-file-extension?
         String extension = "png";
-        return String.format("%s/%s/%s.%s", this.getCacheDirectory(), comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
+        return String.format("%s/%s.%s", this.CacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
     }
 
 

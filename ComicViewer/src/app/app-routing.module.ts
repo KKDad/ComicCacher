@@ -11,8 +11,8 @@ const routes: Routes = [
   { path: 'comics', component: ComicpageComponent },
   { path: 'about', component: AboutComponent },
 
-  // otherwise redirect to home
-  { path: '**', redirectTo: '' }
+  // otherwise redirect to the comic page
+  { path: '**', redirectTo: '/comics' }
 ];
 
 @NgModule({

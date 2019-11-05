@@ -2,11 +2,11 @@
     <p class="txt title outline">Daily Comics</p>
     <div class="wrapper">
         <div class="c1">
-            <button mat-button onclick="window.location.href='https://bitbucket.org/kkdad/comiccacher/src/master/'">Project</button>
-            <button mat-button onclick="window.location.href='docs/index.html'">API</button>        
+            <button class="mat-button" onclick="window.location.href='https://bitbucket.org/kkdad/comiccacher/src/master/'">Project</button>
+            <button class="mat-button" onclick="window.location.href='docs/index.html'">API</button>
         </div>      
         <div class="c2">
-            <button mat-button onclick="window.location.href='/about'">About</button>        
+            <button class="mat-button" [routerLink]="['/about']">About</button>
         </div>      
     </div>
 </div>

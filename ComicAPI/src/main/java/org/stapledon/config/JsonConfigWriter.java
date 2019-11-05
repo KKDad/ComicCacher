@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
+import org.stapledon.dto.ImageCacheStats;
 
 import java.io.*;
 
@@ -77,5 +78,24 @@ public class JsonConfigWriter
             logger.warn("{} does not exist, creating", configPath);
             comics = new ComicConfig();
         }
+    }
+
+    /**
+     * Save ImageCacheStats Stats to the root of a Image folder
+     * @param ic Statistics to save
+     * @param targetDirectory Location to Save them to
+     * @return True if successfully written
+     */
+    public boolean save(ImageCacheStats ic, String targetDirectory) {
+        try {
+            Writer writer = new FileWriter(targetDirectory + "/stats.db");
+            gson.toJson(ic, writer);
+            writer.flush();
+            writer.close();
+            return true;
+        } catch (IOException ioe) {
+            logger.error(ioe.getMessage(), ioe);
+        }
+        return false;
     }
 }

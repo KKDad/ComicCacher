@@ -6,6 +6,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stapledon.caching.ICachable;
 
 import java.io.*;
 import java.net.URL;
@@ -18,7 +19,7 @@ import java.util.Objects;
 /**
  * Base class for all ComicCachers.
  */
-public abstract class DailyComic implements IDailyComic
+public abstract class DailyComic implements IDailyComic, ICachable
 {
 
     private static final String ABS_SRC = "abs:src";
@@ -42,9 +43,9 @@ public abstract class DailyComic implements IDailyComic
         return this;
     }
 
-    Path getCacheDirectory()
+    public String CacheLocation()
     {
-        return cacheDirectory;
+        return String.format("%s/%s", cacheDirectory, comicNameParsed);
     }
 
 
@@ -80,9 +81,8 @@ public abstract class DailyComic implements IDailyComic
     IDailyComic ensureCacheDirectoryExists()
     {
         Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectoryExists()");
-        Preconditions.checkNotNull(this.getCacheDirectory(), "Must call setCacheDirectory() before ensureCacheDirectoryExists()");
 
-        String directoryName = String.format("%s/%s/%s", this.getCacheDirectory(), comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
+        String directoryName = String.format("%s/%s", this.CacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
         File directory = new File(directoryName);
         if (!directory.exists()) {
             if (logger.isDebugEnabled())

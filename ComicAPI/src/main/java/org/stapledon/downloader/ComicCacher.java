@@ -2,7 +2,7 @@ package org.stapledon.downloader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stapledon.api.ComicApiApplication;
+import org.stapledon.caching.ImageCacheStatsUpdater;
 import org.stapledon.config.CacherConfig;
 import org.stapledon.config.CacherConfigLoader;
 import org.stapledon.config.JsonConfigWriter;
@@ -12,7 +12,6 @@ import org.stapledon.utils.DefaultTrustManager;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import java.io.File;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -34,16 +33,16 @@ public class ComicCacher
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
 
-        String cache_directory = System.getenv("CACHE_DIRECTORY");
-        if (cache_directory == null) {
+        String cacheDirectory = System.getenv("CACHE_DIRECTORY");
+        if (cacheDirectory == null) {
             logger.error("CACHE_DIRECTORY not set. Defaulting to /comics");
-            cache_directory = "/comics";
+            cacheDirectory = "/comics";
         }
-        cacheDirectory = cache_directory;
-        logger.warn("Caching to {}", cacheDirectory);
+        this.cacheDirectory = cacheDirectory;
+        logger.warn("Caching to {}", this.cacheDirectory);
 
         config = new CacherConfigLoader().load();
-        statsUpdater = new JsonConfigWriter(cacheDirectory + "/comics.json");
+        statsUpdater = new JsonConfigWriter(this.cacheDirectory + "/comics.json");
     }
 
     /**
@@ -113,6 +112,11 @@ public class ComicCacher
         comicItem.newest = comics.getLastStripOn();
         comicItem.enabled = true;
         statsUpdater.save(comicItem);
+
+        // Update statistics about the cached images
+        ImageCacheStatsUpdater cache = new ImageCacheStatsUpdater(((GoComics)comics).CacheLocation(), statsUpdater);
+        cache.updateStats();
+
 
         return true;
     }
