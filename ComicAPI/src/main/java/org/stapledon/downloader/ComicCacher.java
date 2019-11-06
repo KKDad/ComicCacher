@@ -29,16 +29,16 @@ public class ComicCacher
     public ComicCacher() throws NoSuchAlgorithmException, KeyManagementException
     {
         // configure the SSLContext with a TrustManager
-        SSLContext ctx = SSLContext.getInstance("TLS");
+        SSLContext ctx = SSLContext.getInstance("TLSv1.2");
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
 
-        String cacheDirectory = System.getenv("CACHE_DIRECTORY");
-        if (cacheDirectory == null) {
+        String directory = System.getenv("CACHE_DIRECTORY");
+        if (directory == null) {
             logger.error("CACHE_DIRECTORY not set. Defaulting to /comics");
-            cacheDirectory = "/comics";
+            directory = "/comics";
         }
-        this.cacheDirectory = cacheDirectory;
+        this.cacheDirectory = directory;
         logger.warn("Caching to {}", this.cacheDirectory);
 
         config = new CacherConfigLoader().load();

@@ -52,7 +52,7 @@ public class CacheUtils
         File root = getComicHome(comic);
 
         // Comics are stored by year, find the smallest year
-        String[] yearFolders = root.list((dir, name) -> !name.toLowerCase().contains("avatar"));
+        String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory());
         if (yearFolders == null || yearFolders.length == 0)
             return null;
         Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));

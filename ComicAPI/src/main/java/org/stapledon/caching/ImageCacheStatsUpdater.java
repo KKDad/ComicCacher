@@ -46,7 +46,7 @@ public class ImageCacheStatsUpdater
         cacheStats = new ImageCacheStats();
 
         // Images are stored by year, gather a list of all years that we have stored
-        String[] yearFolders = root.list((dir, name) -> !name.toLowerCase().contains("avatar"));
+        String[] yearFolders = root.list((dir, name) ->  new File(dir, name).isDirectory());
         if (yearFolders != null && yearFolders.length > 0) {
             cacheStats.years = Arrays.asList(yearFolders);
             Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
