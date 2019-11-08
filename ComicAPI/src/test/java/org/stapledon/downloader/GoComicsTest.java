@@ -34,10 +34,10 @@ public class GoComicsTest {
 
     private GoComics getSubject(String name)
     {
-        GoComics gc = new GoComics();
+        GoComics gc = new GoComics(null);
         gc.setComic(name);
         gc.setDate(LocalDate.of(2019, 1, 1 ));
-        gc.setCacheDirectory(path.toString());
+        gc.setCacheRoot(path.toString());
 
         return gc;
     }

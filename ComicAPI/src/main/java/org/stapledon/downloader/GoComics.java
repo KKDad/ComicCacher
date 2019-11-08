@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.select.Selector;
+import org.stapledon.web.IWebInspector;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,36 +20,11 @@ public class GoComics extends DailyComic
 {
     private static final Logger logger = LoggerFactory.getLogger(GoComics.class);
 
-    /**
-     * Set the date for the retrieval
-     * @param date date to set
-     * @return this
-     */
-    @Override
-    public IDailyComic setDate(LocalDate date)
+    public GoComics(IWebInspector inspector)
     {
-        this.currentDate = date;
-        if (logger.isInfoEnabled())
-            logger.info("Date set to: {}", this.currentDate);
-
-        return this;
+        super(inspector);
     }
 
-    /**
-     * Set the GoComic that to caching
-     * @param comicName Name of the api to process
-     * @return this
-     */
-    @Override
-    public IDailyComic setComic(String comicName)
-    {
-        this.comicName = comicName;
-        this.comicNameParsed = comicName.replace(" ", "");
-        if (logger.isInfoEnabled())
-            logger.info("Comic: {}", this.comicName);
-
-        return this;
-    }
 
     /**
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
@@ -109,9 +85,6 @@ public class GoComics extends DailyComic
         }
     }
 
-//    https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png
-//<img srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" data-srcset="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png, 72w" class=" lazyloaded" alt="Herman" src="https://avatar.amuniversal.com/feature_avatars/ubadge_images/features/hm/small_u-201701251613.png">
-
     /**
      * Determines which links represent the api image that we should utils
      * @param media list of image links to choose from
@@ -123,7 +96,7 @@ public class GoComics extends DailyComic
             if (src.tagName().equals("img") && src.attr("abs:src").contains("assets.amuniversal.com"))
                 elements.add(src);
         }
-        dumpMedia(elements);
+        webInspector.dumpMedia(elements);
         // We get back 2-3 images. The 2nd image is the hi-res version - we'll select it.
         if (elements.size() > 1) {
             Elements e = new Elements();

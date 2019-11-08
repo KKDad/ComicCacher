@@ -1,12 +1,12 @@
 package org.stapledon.downloader;
 
 import com.google.common.base.Preconditions;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.caching.ICachable;
+import org.stapledon.web.IWebInspector;
+import org.stapledon.web.WebInspector;
 
 import java.io.*;
 import java.net.URL;
@@ -21,8 +21,6 @@ import java.util.Objects;
  */
 public abstract class DailyComic implements IDailyComic, ICachable
 {
-
-    private static final String ABS_SRC = "abs:src";
     static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
     static final int TIMEOUT = 5 * 1000;
 
@@ -30,25 +28,47 @@ public abstract class DailyComic implements IDailyComic, ICachable
 
     private static final Logger logger = LoggerFactory.getLogger(DailyComic.class);
 
+    final IWebInspector webInspector;
 
     String comicName;
     String comicNameParsed;
     LocalDate currentDate;
 
+    public DailyComic(IWebInspector inspector)
+    {
+        this.webInspector = (inspector == null) ? new WebInspector() : inspector;
+    }
 
-    IDailyComic setCacheDirectory(String path)
+    /**
+     * Set the root path for this comic. The path will be later augmented with the name of the comic that is
+     * being cached.
+     * @param path Root Path to set.
+     * @return this
+     */
+    IDailyComic setCacheRoot(String path)
     {
 
         this.cacheDirectory = Paths.get(Objects.requireNonNull(path, "path cannot be null"));
         return this;
     }
 
+    /**
+     * Get the path full path where this comic has been cached. Include any augmentation
+     * @return Path
+     */
     public String CacheLocation()
     {
         return String.format("%s/%s", cacheDirectory, comicNameParsed);
     }
 
 
+    /**
+     * Download the image to the specified location.
+     * @param sourceImageElement - HTML element for the image to download
+     * @param destinationFile - Fully qualified name of the file to save
+     * @return True if successful
+     * @throws IOException
+     */
     boolean cacheImage(Element sourceImageElement, String destinationFile) throws IOException
     {
         Preconditions.checkNotNull(sourceImageElement, "sourceImageElement cannot be null");
@@ -56,7 +76,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
 
         OutputStream os = null;
         try {
-            URL urlImage = new URL(sourceImageElement.attr(ABS_SRC));
+            URL urlImage = new URL(sourceImageElement.attr(WebInspector.ABS_SRC));
             logger.info("Downloading Image from: {}", urlImage);
             try (InputStream in = urlImage.openStream()) {
                 byte[] buffer = new byte[4096];
@@ -69,7 +89,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
             logger.trace("Image saved");
             return true;
         } catch (FileNotFoundException e) {
-            logger.error("Failed to utils Image:", e);
+            logger.error("Failed to save Image:", e);
 
         } finally {
             if (os != null)
@@ -92,60 +112,35 @@ public abstract class DailyComic implements IDailyComic, ICachable
         return this;
     }
 
-    // *********************************************************************************************************
-    // Helper Methods for debugging new site retrievals
-    // *********************************************************************************************************
+    /**
+     * Set the date for the retrieval
+     * @param date date to set
+     * @return this
+     */
+    @Override
+    public IDailyComic setDate(LocalDate date)
+    {
+        this.currentDate = date;
+        if (logger.isInfoEnabled())
+            logger.info("Date set to: {}", this.currentDate);
 
-    private void dumpLinks(Document doc) {
-        Elements links = doc.select("a[href]");
-        Elements media = doc.select("[src]");
-        Elements imports = doc.select("link[href]");
-
-        dumpMedia(media);
-        dumpImports(imports);
-        dumpLinks(links);
-    }
-
-    void dumpLinks(Elements links) {
-        print("\nLinks: (%d)", links.size());
-        for (Element link : links) {
-            print(" * a: <%s>  (%s)", link.attr(ABS_SRC), trim(link.text(), 35));
-        }
-    }
-
-    void dumpImports(Elements imports) {
-        print("\nImports: (%d)", imports.size());
-        for (Element link : imports) {
-            print(" * %s <%s> (%s)", link.tagName(), link.attr("abs:href"), link.attr("rel"));
-        }
-    }
-
-    void dumpMedia(Elements media) {
-        print("Media: (%d)", media.size());
-        for (Element src : media) {
-            if (src.tagName().equals("img"))
-                print(" * %s: <%s> %sx%s (%s)",
-                        src.tagName(), src.attr(ABS_SRC), src.attr("width"), src.attr("height"),
-                        trim(src.attr("alt"), 20));
-            else
-                print(" * %s: <%s>", src.tagName(), src.attr(ABS_SRC));
-        }
+        return this;
     }
 
     /**
-     * Utility method to log a single line to Log4j if logging at debug is enabled.
-     * @param msg Line to Log
-     * @param args Parameter to Line
+     * Set the GoComic that to caching
+     * @param comicName Name of the api to process
+     * @return this
      */
-    private void print(String msg, Object... args) {
-        if (logger.isDebugEnabled())
-            logger.debug(String.format(msg, args));
+    @Override
+    public IDailyComic setComic(String comicName)
+    {
+        this.comicName = comicName;
+        this.comicNameParsed = comicName.replace(" ", "");
+        if (logger.isInfoEnabled())
+            logger.info("Comic: {}", this.comicName);
+
+        return this;
     }
 
-    private String trim(String s, int width) {
-        if (s.length() > width)
-            return s.substring(0, width - 1) + ".";
-        else
-            return s;
-    }
 }

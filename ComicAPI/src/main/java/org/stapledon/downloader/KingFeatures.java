@@ -1,10 +1,16 @@
 package org.stapledon.downloader;
 
 import org.stapledon.dto.ComicItem;
+import org.stapledon.web.IWebInspector;
 
 import java.time.LocalDate;
 
-public class KingFeatures extends DailyComic {
+public class KingFeatures extends DailyComic
+{
+    public KingFeatures(IWebInspector inspector) {
+        super(inspector);
+    }
+
     @Override
     public IDailyComic setDate(LocalDate date) {
         return null;

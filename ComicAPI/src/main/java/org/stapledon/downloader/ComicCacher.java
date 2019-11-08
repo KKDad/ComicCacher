@@ -92,8 +92,8 @@ public class ComicCacher
         if (startDate.equals(LocalDate.of(2019, 4, 1)))
             startDate = LocalDate.now().minusDays(7);
 
-        IDailyComic comics = new GoComics()
-                .setCacheDirectory(cacheDirectory)
+        IDailyComic comics = new GoComics(null)
+                .setCacheRoot(cacheDirectory)
                 .setComic(dcc.name)
                 .setDate(startDate);
 
