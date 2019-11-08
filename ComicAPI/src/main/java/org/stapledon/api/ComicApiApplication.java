@@ -3,7 +3,7 @@ package org.stapledon.api;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stapledon.downloader.DailyDownloader;
+import org.stapledon.downloader.DailyRunner;
 import org.stapledon.dto.ComicConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,18 +18,18 @@ public class ComicApiApplication
 	public ComicApiApplication() {
 		logger.info("ComicApiApplication starting...");
 
-		String cache_directory = System.getenv("CACHE_DIRECTORY");
-		if (cache_directory == null) {
+		String dir = System.getenv("CACHE_DIRECTORY");
+		if (dir == null) {
 			logger.error("CACHE_DIRECTORY not set. Defaulting to /comics");
-			cache_directory = "/comics";
+			dir = "/comics";
 		}
 
-		File directory = new File(cache_directory);
+		File directory = new File(dir);
 		if (!directory.exists() || directory.isDirectory()) {
 			directory.mkdirs();
 		}
-		ComicsService.cacheLocation = cache_directory;
-		logger.warn("Serving from {}", cache_directory);
+		ComicsService.cacheLocation = dir;
+		logger.warn("Serving from {}", dir);
 
 		try {
 			File cf = new File(ComicsService.cacheLocation + "/comics.json");
@@ -50,7 +50,7 @@ public class ComicApiApplication
 		}
 
 		// Ensure we cache comics once a day
-		DailyDownloader.ensureDailyCaching();
+		DailyRunner.ensureDailyCaching();
 	}
 
 

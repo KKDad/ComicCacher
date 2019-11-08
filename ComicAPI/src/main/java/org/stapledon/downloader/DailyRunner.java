@@ -14,11 +14,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class DailyDownloader
+/**
+ * This class ensures that all comics are fetched once a day
+ */
+public class DailyRunner
 {
     private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
 
-    private DailyDownloader()
+    private DailyRunner()
     {
         // Sonar: Utility classes should not have public constructors
     }

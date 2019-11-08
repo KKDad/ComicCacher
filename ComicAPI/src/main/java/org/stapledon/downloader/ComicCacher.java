@@ -7,7 +7,7 @@ import org.stapledon.config.CacherConfig;
 import org.stapledon.config.CacherConfigLoader;
 import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.dto.ComicItem;
-import org.stapledon.utils.DefaultTrustManager;
+import org.stapledon.web.DefaultTrustManager;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;

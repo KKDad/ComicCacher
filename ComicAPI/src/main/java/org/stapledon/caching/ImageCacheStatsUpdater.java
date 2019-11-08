@@ -109,6 +109,4 @@ public class ImageCacheStatsUpdater
         Arrays.sort(cachedStrips, String::compareTo);
         return cachedStrips;
     }
-
-
 }
