@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 public class WebInspector implements IWebInspector
 {
     public  static final String ABS_SRC = "abs:src";
+    public  static final String CONTENT = "content";
+
     private static final Logger logger = LoggerFactory.getLogger(WebInspector.class);
 
 

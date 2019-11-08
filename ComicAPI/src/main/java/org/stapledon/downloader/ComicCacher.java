@@ -114,7 +114,7 @@ public class ComicCacher
         statsUpdater.save(comicItem);
 
         // Update statistics about the cached images
-        ImageCacheStatsUpdater cache = new ImageCacheStatsUpdater(((GoComics)comics).CacheLocation(), statsUpdater);
+        ImageCacheStatsUpdater cache = new ImageCacheStatsUpdater(((GoComics)comics).cacheLocation(), statsUpdater);
         cache.updateStats();
 
 

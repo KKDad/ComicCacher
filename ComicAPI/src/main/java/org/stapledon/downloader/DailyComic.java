@@ -1,7 +1,10 @@
 package org.stapledon.downloader;
 
 import com.google.common.base.Preconditions;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.caching.ICachable;
@@ -29,14 +32,16 @@ public abstract class DailyComic implements IDailyComic, ICachable
     private static final Logger logger = LoggerFactory.getLogger(DailyComic.class);
 
     final IWebInspector webInspector;
+    final String elementSelector;
 
     String comicName;
     String comicNameParsed;
     LocalDate currentDate;
 
-    public DailyComic(IWebInspector inspector)
+    public DailyComic(IWebInspector inspector, String elementSelector)
     {
         this.webInspector = (inspector == null) ? new WebInspector() : inspector;
+        this.elementSelector = elementSelector;
     }
 
     /**
@@ -56,7 +61,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
      * Get the path full path where this comic has been cached. Include any augmentation
      * @return Path
      */
-    public String CacheLocation()
+    public String cacheLocation()
     {
         return String.format("%s/%s", cacheDirectory, comicNameParsed);
     }
@@ -76,7 +81,19 @@ public abstract class DailyComic implements IDailyComic, ICachable
 
         OutputStream os = null;
         try {
-            URL urlImage = new URL(sourceImageElement.attr(WebInspector.ABS_SRC));
+            URL urlImage;
+            switch (sourceImageElement.tagName())
+            {
+                case "src":
+                case "img":
+                    urlImage = new URL(sourceImageElement.attr(WebInspector.ABS_SRC));
+                    break;
+                case "meta":
+                    urlImage = new URL(sourceImageElement.attr(WebInspector.CONTENT));
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
             logger.info("Downloading Image from: {}", urlImage);
             try (InputStream in = urlImage.openStream()) {
                 byte[] buffer = new byte[4096];
@@ -98,18 +115,70 @@ public abstract class DailyComic implements IDailyComic, ICachable
         return false;
     }
 
-    IDailyComic ensureCacheDirectoryExists()
+    /**
+     * Ensure that the api is cached for the current date
+     * @return true if the api for the current day has been successfully cached.
+     */
+    @Override
+    public boolean ensureCache()
     {
-        Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectoryExists()");
+        File f = new File(generateCachedName());
+        if (f.exists()) {
+            if (logger.isDebugEnabled())
+                logger.debug("Image has already been cached as: {}", f.getAbsolutePath());
+            return true;
+        }
 
-        String directoryName = String.format("%s/%s", this.CacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
+        if (logger.isDebugEnabled())
+            logger.debug("Caching image to: {}", f.getAbsolutePath());
+
+
+        try {
+            String url = this.generateSiteURL();
+
+            Document doc = Jsoup.connect(url)
+                                .userAgent(USER_AGENT)
+                                .header("DNT", "1")
+                                .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
+                                .timeout(TIMEOUT)
+                                .get();
+            Elements media = doc.select(elementSelector);
+
+            Elements image = this.pickImages(media);
+            return cacheImage(image.first(), f.getAbsolutePath());
+
+        } catch (IOException ioe) {
+            return false;
+        }
+    }
+
+    protected abstract String generateSiteURL();
+
+    protected abstract Elements pickImages(Elements media);
+
+    protected String generateCachedName()
+    {
+        ensureCacheDirectory();
+        // TODO: Autodetect image type. Perhaps https://stackoverflow.com/questions/12531797/how-to-get-an-image-type-without-knowing-its-file-extension?
+        String extension = "png";
+        return String.format("%s/%s.%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
+    }
+
+    /**
+     * Check if the destination directory for the image exists or create it if it doesn't exist.
+     */
+    void ensureCacheDirectory()
+    {
+        Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectory()");
+
+        String directoryName = String.format("%s/%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
         File directory = new File(directoryName);
         if (!directory.exists()) {
             if (logger.isDebugEnabled())
                 logger.debug("Creating utils directory to: {}", directoryName);
-            directory.mkdirs();
+            if (!directory.mkdirs())
+                throw new IllegalStateException("Cannot create cache location");
         }
-        return this;
     }
 
     /**
@@ -143,4 +212,9 @@ public abstract class DailyComic implements IDailyComic, ICachable
         return this;
     }
 
+    public LocalDate advance() {
+        if (this.currentDate.isBefore(this.getLastStripOn()))
+            this.currentDate = this.currentDate.plusDays(1);
+        return this.currentDate;
+    }
 }

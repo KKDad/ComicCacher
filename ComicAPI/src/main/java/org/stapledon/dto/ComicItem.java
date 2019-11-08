@@ -15,8 +15,8 @@ public class ComicItem implements Comparable<ComicItem>
     public String author;
     public LocalDate oldest;
     public LocalDate newest;
-    public Boolean enabled;
 
+    public Boolean enabled;
     public String description;
 
     @Override

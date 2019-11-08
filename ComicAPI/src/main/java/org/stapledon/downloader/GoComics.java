@@ -22,7 +22,7 @@ public class GoComics extends DailyComic
 
     public GoComics(IWebInspector inspector)
     {
-        super(inspector);
+        super(inspector, "[src]");
     }
 
 
@@ -39,7 +39,8 @@ public class GoComics extends DailyComic
     /**
      * Generate the URL for a specific date.
      */
-    private String generateSiteURL() {
+    @Override
+    protected String generateSiteURL() {
         return String.format("http://www.gocomics.com/%s/%s/", this.comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))).toLowerCase();
     }
 
@@ -68,7 +69,7 @@ public class GoComics extends DailyComic
             author.ifPresent(element -> comicItem.author = element.text());
 
             // Cache the Avatar if we don't already have it
-            File avatarCached = new File(String.format("%s/avatar.png", this.CacheLocation()));
+            File avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
             if (!avatarCached.exists()) {
 
                 // TODO: Again, Fragile...
@@ -89,7 +90,8 @@ public class GoComics extends DailyComic
      * Determines which links represent the api image that we should utils
      * @param media list of image links to choose from
      */
-    private Elements pickImages(Elements media)
+    @Override
+    protected Elements pickImages(Elements media)
     {
         Elements elements = new Elements();
         for (Element src : media) {
@@ -105,53 +107,5 @@ public class GoComics extends DailyComic
 
         }
         return elements;
-    }
-
-    private String generateCachedName()
-    {
-        ensureCacheDirectoryExists();
-        // TODO: Autodetect image type. Perhaps https://stackoverflow.com/questions/12531797/how-to-get-an-image-type-without-knowing-its-file-extension?
-        String extension = "png";
-        return String.format("%s/%s.%s", this.CacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
-    }
-
-
-    /**
-     * Ensure that the api is cached for the current date
-     * @return true if the api for the current day has been successfully cached.
-     */
-    @Override
-    public boolean ensureCache() {
-
-        File f = new File(generateCachedName());
-        if (f.exists()) {
-            if (logger.isDebugEnabled())
-                logger.debug("Image has already been cached as: {}", f.getAbsolutePath());
-            return true;
-        }
-
-        if (logger.isDebugEnabled())
-            logger.debug("Caching image to: {}", f.getAbsolutePath());
-
-
-        try {
-            String url = this.generateSiteURL();
-
-            Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(TIMEOUT).get();
-            Elements media = doc.select("[src]");
-
-            Elements image = this.pickImages(media);
-            return cacheImage(image.first(), f.getAbsolutePath());
-
-        } catch (IOException ioe) {
-            return false;
-        }
-    }
-
-    @Override
-    public LocalDate advance() {
-        if (this.currentDate.isBefore(this.getLastStripOn()))
-            this.currentDate = this.currentDate.plusDays(1);
-        return this.currentDate;
     }
 }

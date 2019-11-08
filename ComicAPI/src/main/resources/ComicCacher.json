@@ -30,6 +30,11 @@
     {  "name":"TheGrizzWells", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"WizardOfId", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"WorkingDaze", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Ziggy", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Ziggy", "startDate":{ "year":2019, "month":4, "day":1 } }
+  ],
+
+  "kingComics":[
+    {  "name":"Baby Blues",  "website":"http://babyblues.com/comics/{0}/", "startDate":{ "year":2019, "month":4, "day":1 } }
   ]
 }

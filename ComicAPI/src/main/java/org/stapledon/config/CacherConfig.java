@@ -10,20 +10,30 @@ public class CacherConfig
         CacherConfig()
         {
                 this.dailyComics = new ArrayList<>();
+                this.kingComics = new ArrayList<>();
 
         }
+        public List<GoComics> dailyComics;
+        public List<KingComics> kingComics;
+
         public class GoComics
         {
-                // Name of the Comic Strip
                 public String name;
-
-                // Earliest Date to go back and start caching from
                 public LocalDate startDate;
 
                 public GoComics() {
                         // No args constructor for required for Gson deserialize
                 }
-
         }
-        public List<GoComics> dailyComics;
+
+        public class KingComics
+        {
+                public String name;
+                public String website;
+                public LocalDate startDate;
+
+                public KingComics() {
+                        // No args constructor for required for Gson deserialize
+                }
+        }
 }
