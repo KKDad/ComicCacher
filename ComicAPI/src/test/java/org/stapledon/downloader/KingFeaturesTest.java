@@ -2,6 +2,7 @@ package org.stapledon.downloader;
 
 import org.apache.log4j.Logger;
 import org.junit.*;
+import org.stapledon.dto.ComicItem;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -63,6 +64,20 @@ public class KingFeaturesTest {
         // Assert
         Assert.assertTrue("ensureCache() expected to return true", result);
         Assert.assertTrue("expectedFile does not exist", expectedFile.exists());
+    }
+
+    @Test
+    public void getBabyBluesComicMetadataTest() {
+        // Arrange
+        LocalDate fetchDate = LocalDate.now().minusDays(3);
+        KingFeatures subject = getSubject("Baby Blues", "https://www.comicskingdom.com/baby-blues", fetchDate);
+
+        // Act
+        ComicItem item = new ComicItem();
+        subject.updateComicMetadata(item);
+
+        // Assert
+        Assert.assertTrue(item.author.contains("Baby Blues BY RICK KIRKMAN AND JERRY SCOTT"));
     }
 
 }

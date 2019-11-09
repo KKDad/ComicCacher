@@ -9,7 +9,7 @@ import java.io.Reader;
 
 public class CacherConfigLoader {
 
-    public CacherConfig load()
+    public CacherBootstrapConfig load()
     {
         InputStream inputStream = this.getClass()
                 .getClassLoader()
@@ -18,10 +18,10 @@ public class CacherConfigLoader {
         return load(inputStream);
     }
 
-    CacherConfig load(InputStream inputStream)
+    CacherBootstrapConfig load(InputStream inputStream)
     {
         Gson gson = new Gson();
         Reader reader = new InputStreamReader(inputStream);
-        return gson.fromJson(reader, CacherConfig.class);
+        return gson.fromJson(reader, CacherBootstrapConfig.class);
     }
 }

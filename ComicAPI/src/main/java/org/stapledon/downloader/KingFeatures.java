@@ -1,16 +1,27 @@
 package org.stapledon.downloader;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.web.IWebInspector;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 public class KingFeatures extends DailyComic
 {
     private String website;
+    private static final Logger logger = LoggerFactory.getLogger(KingFeatures.class);
+
+
+    private static final String KING_FEATURES_WEB = "http://kingfeatures.com/comics/comics-a-z/?id=%s";
 
     /** Need to produce somethnig like
      * https://safr.kingfeatures.com/api/img.php?e=gif&s=c&file=QmFieUJsdWVzLzIwMTkvMTEvQmFieV9CbHVlcy4yMDE5MTEwN18xNTM2LmdpZg=='
@@ -46,7 +57,6 @@ public class KingFeatures extends DailyComic
         return elements;
     }
 
-
     /**
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
      * a week after they were published in print.
@@ -67,7 +77,39 @@ public class KingFeatures extends DailyComic
 
     @Override
     public void updateComicMetadata(ComicItem comicItem) {
-        // TODO: Finish this
+        try {
+            String url = String.format(KING_FEATURES_WEB, this.comicName.replace(' ', '_'));
 
+            Document doc = Jsoup.connect(url)
+                    .userAgent(USER_AGENT)
+                    .header("DNT", "1")
+                    .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
+                    .timeout(TIMEOUT)
+                    .get();
+
+            Optional<Element> author = doc.select("div").stream().filter(p -> p.attributes().get("id").contains("fmw_header")).findFirst();
+            author.ifPresent(element -> comicItem.author = element.text());
+
+
+            // Cache the Avatar if we don't already have it
+            File avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
+            if (!avatarCached.exists())
+            {
+                Element featureAvatars = doc.select("img[src^=https://api.kingdigital.com/img/features/]").last();
+                if (featureAvatars == null)
+                    logger.error("Unable to determine site avatar");
+                else {
+                    cacheImage(featureAvatars, avatarCached.getAbsolutePath());
+                    logger.trace("Avatar has been cached ");
+                }
+            }
+
+
+
+        } catch (IOException ioe) {
+            logger.error(ioe.getMessage());
+            return ;
+        }
     }
+
 }

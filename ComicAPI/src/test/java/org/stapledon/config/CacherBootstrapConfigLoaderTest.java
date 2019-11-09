@@ -12,7 +12,7 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.Month;
 
-public class CacherConfigLoaderTest {
+public class CacherBootstrapConfigLoaderTest {
 
     @Test
     public void loadSimpleTest() throws IOException
@@ -23,7 +23,7 @@ public class CacherConfigLoaderTest {
         InputStream targetStream =   new ReaderInputStream(CharSource.wrap(initialString.replace('\'', '\"')).openStream(), Charset.defaultCharset());
 
         // Act
-        CacherConfig results = new CacherConfigLoader().load(targetStream);
+        CacherBootstrapConfig results = new CacherConfigLoader().load(targetStream);
 
         // Assert
         Assert.assertEquals(1, results.dailyComics.size());
@@ -36,8 +36,8 @@ public class CacherConfigLoaderTest {
     public void saveSimpleTest()
     {
         // Arrange
-        CacherConfig config = new CacherConfig();
-        CacherConfig.GoComics comic = config.new GoComics();
+        CacherBootstrapConfig config = new CacherBootstrapConfig();
+        CacherBootstrapConfig.GoComicsBootstrap comic = config.new GoComicsBootstrap();
         comic.name = "Adam At Home";
         comic.startDate = LocalDate.of(2019, Month.JANUARY, 1);
         config.dailyComics.add(comic);

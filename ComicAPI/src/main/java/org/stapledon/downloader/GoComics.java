@@ -59,7 +59,12 @@ public class GoComics extends DailyComic
             String url = this.generateAboutUTL();
             logger.info("Getting Comic Description from {}", url);
 
-            Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(TIMEOUT).get();
+            Document doc = Jsoup.connect(url)
+                    .userAgent(USER_AGENT)
+                    .header("DNT", "1")
+                    .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
+                    .timeout(TIMEOUT)
+                    .get();
             // Fragile, however there appears to only be one "section" class and the description seems to be the
             // first div inside it.
             comicItem.description = doc.select("section").select("div").get(0).text();
@@ -70,11 +75,9 @@ public class GoComics extends DailyComic
 
             // Cache the Avatar if we don't already have it
             File avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
-            if (!avatarCached.exists()) {
-
-                // TODO: Again, Fragile...
+            if (!avatarCached.exists())
+            {
                 Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
-
                 cacheImage(featureAvatars, avatarCached.getAbsolutePath());
                 logger.trace("Avatar has been cached ");
             }

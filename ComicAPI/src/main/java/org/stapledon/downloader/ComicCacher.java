@@ -3,8 +3,9 @@ package org.stapledon.downloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.caching.ImageCacheStatsUpdater;
-import org.stapledon.config.CacherConfig;
+import org.stapledon.config.CacherBootstrapConfig;
 import org.stapledon.config.CacherConfigLoader;
+import org.stapledon.config.IComicsBootstrap;
 import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.web.DefaultTrustManager;
@@ -20,7 +21,7 @@ import java.time.LocalDate;
 public class ComicCacher
 {
 
-    private final CacherConfig config;
+    private final CacherBootstrapConfig config;
     private final JsonConfigWriter statsUpdater;
     private final Logger logger = LoggerFactory.getLogger(ComicCacher.class);
 
@@ -52,62 +53,87 @@ public class ComicCacher
     public boolean cacheAll()
     {
         boolean result = true;
-        for (CacherConfig.GoComics dcc : config.dailyComics)
-        {
-            try {
-                cacheComic(dcc);
-            } catch (Exception e) {
-                logger.error(String.format("Failed to cache %s : %s", dcc.name, e.getMessage()), e);
-                result = false;
-            }
+        for (IComicsBootstrap dcc : config.dailyComics)
+            result = cacheSingle(result, dcc);
+        for (IComicsBootstrap dcc : config.kingComics)
+            result = cacheSingle(result, dcc);
+        return result;
+    }
+
+    private boolean cacheSingle(boolean result, IComicsBootstrap dcc) {
+        try {
+            cacheComic(dcc);
+        } catch (Exception e) {
+            logger.error(String.format("Failed to cache %s : %s", dcc.stripName(), e.getMessage()), e);
+            result = false;
         }
         return result;
     }
 
-    public boolean cacheComic(ComicItem comic)
+    /**
+     * Cache all comics for a particular ComicItem.
+     * @param comic ComicItem to perform caching on
+     * @return true if successful
+     */
+    public boolean cacheSingle(ComicItem comic)
     {
-        CacherConfig.GoComics dailyComic = lookupGoComics(comic);
+        IComicsBootstrap dailyComic = lookupGoComics(comic);
         if (dailyComic != null)
             return cacheComic(dailyComic);
 
         return false;
     }
 
-    CacherConfig.GoComics lookupGoComics(ComicItem comic)
+    /**
+     * Giving a ComicItem, Locate the corresponding IComicsBootstrap from the BootStrap configuration
+     * @param comic ComicItem to lookup
+     * @return IComicsBootstrap or null if none could be located
+     */
+    IComicsBootstrap lookupGoComics(ComicItem comic)
     {
-        if (config.dailyComics.isEmpty())
-            return null;
-        return config.dailyComics.stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
+        if (!config.dailyComics.isEmpty()) {
+            IComicsBootstrap dailyComics = config.dailyComics.stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
+            if (dailyComics != null)
+                return dailyComics;
+        }
+        if (!config.kingComics.isEmpty()) {
+            IComicsBootstrap kingComics = config.kingComics.stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
+            if (kingComics != null)
+                return kingComics;
+        }
+        return null;
     }
 
 
-    public boolean cacheComic(CacherConfig.GoComics dcc)
+
+    private boolean cacheComic(IComicsBootstrap dcc)
     {
-        logger.info("***********************************************************************************************");
-        logger.info("Processing: {}", dcc.name);
-        logger.info("***********************************************************************************************");
+        if (logger.isInfoEnabled()) {
+            logger.info("***********************************************************************************************");
+            logger.info("Processing: {}", dcc.stripName());
+            logger.info("***********************************************************************************************");
+        }
 
         // Only search back 7 days unless we are refilling
-        LocalDate startDate = dcc.startDate;
+        LocalDate startDate = dcc.startDate();
         if (startDate.equals(LocalDate.of(2019, 4, 1)))
             startDate = LocalDate.now().minusDays(7);
 
         IDailyComic comics = new GoComics(null)
                 .setCacheRoot(cacheDirectory)
-                .setComic(dcc.name)
+                .setComic(dcc.stripName())
                 .setDate(startDate);
 
-        ComicItem comicItem = statsUpdater.fetch(dcc.name);
+        ComicItem comicItem = statsUpdater.fetch(dcc.stripName());
         if (comicItem == null) {
             comicItem = new ComicItem();
-            comicItem.id = dcc.name.hashCode();
-            comicItem.name = dcc.name;
-            comicItem.oldest = dcc.startDate;
+            comicItem.id = dcc.stripName().hashCode();
+            comicItem.name = dcc.stripName();
+            comicItem.oldest = dcc.startDate();
         }
         comics.updateComicMetadata(comicItem);
         while (!comics.advance().equals(comics.getLastStripOn()))
             comics.ensureCache();
-
 
         comicItem.newest = comics.getLastStripOn();
         comicItem.enabled = true;
@@ -116,7 +142,6 @@ public class ComicCacher
         // Update statistics about the cached images
         ImageCacheStatsUpdater cache = new ImageCacheStatsUpdater(((GoComics)comics).cacheLocation(), statsUpdater);
         cache.updateStats();
-
 
         return true;
     }

@@ -1,9 +1,0 @@
-1.0
-- Save statistics about the Images cached in each toplevel comics cache directory to speed up retrieval
-
-0.2
-- Initial REST api created, exposing method /comics/v1/list
-- ComicCacher now maintains the file comics.json
-
-0.1 Initial Version
-- Caches GoComics

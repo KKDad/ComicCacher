@@ -35,11 +35,10 @@ public class UpdateService implements IUpdateService
 
             // Determine the comic to be updated
             ComicItem comic = ComicsService.getComics().stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+            if (comic == null)
+                return false;
+            return comicCacher.cacheSingle(comic);
 
-            boolean cacheResult = comicCacher.cacheComic(comic);
-            if (cacheResult)
-
-            return cacheResult;
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             logger.error(e.getMessage(), e);
         }

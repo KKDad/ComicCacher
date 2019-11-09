@@ -15,7 +15,7 @@ This API documentation is written using a combination of link:https://spring.io/
 include::_toc.adoc[]
 
 == Introduction
-By the Martin Fowler definition of REST, this API is currently a link:https://martinfowler.com/articles/richardsonMaturityModel.html[level 2] REST API. As I've written this for the Comics Viewer, Level 3 with its discoverability hasn't been implemented at this time.
+By the Martin Fowler definition of REST, this API is currently a link:https://martinfowler.com/articles/richardsonMaturityModel.html[level 2] REST API. As I've written this for the Comics Viewer, Level 3 with its discoverability hasn't been needed at this time.
 
 
 == HTTP verbs

@@ -38,6 +38,9 @@ public abstract class DailyComic implements IDailyComic, ICachable
     String comicNameParsed;
     LocalDate currentDate;
 
+    protected abstract String generateSiteURL();
+
+
     public DailyComic(IWebInspector inspector, String elementSelector)
     {
         this.webInspector = (inspector == null) ? new WebInspector() : inspector;
@@ -78,6 +81,9 @@ public abstract class DailyComic implements IDailyComic, ICachable
     {
         Preconditions.checkNotNull(sourceImageElement, "sourceImageElement cannot be null");
         Preconditions.checkNotNull(destinationFile, "destinationFile cannot be null");
+
+        // Always ensure that the destination directory exists before continuing
+        ensureCacheDirectory();
 
         OutputStream os = null;
         try {
@@ -152,11 +158,9 @@ public abstract class DailyComic implements IDailyComic, ICachable
         }
     }
 
-    protected abstract String generateSiteURL();
-
     protected abstract Elements pickImages(Elements media);
 
-    protected String generateCachedName()
+    private String generateCachedName()
     {
         ensureCacheDirectory();
         // TODO: Autodetect image type. Perhaps https://stackoverflow.com/questions/12531797/how-to-get-an-image-type-without-knowing-its-file-extension?
@@ -167,7 +171,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
     /**
      * Check if the destination directory for the image exists or create it if it doesn't exist.
      */
-    void ensureCacheDirectory()
+    private void ensureCacheDirectory()
     {
         Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectory()");
 
@@ -196,6 +200,11 @@ public abstract class DailyComic implements IDailyComic, ICachable
         return this;
     }
 
+    public LocalDate getDate()
+    {
+        return this.currentDate;
+    }
+
     /**
      * Set the GoComic that to caching
      * @param comicName Name of the api to process
@@ -210,6 +219,11 @@ public abstract class DailyComic implements IDailyComic, ICachable
             logger.info("Comic: {}", this.comicName);
 
         return this;
+    }
+
+    public String getComic()
+    {
+        return this.comicName;
     }
 
     public LocalDate advance() {

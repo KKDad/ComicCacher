@@ -8,10 +8,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
 import org.stapledon.api.ComicApiApplication;
 import org.stapledon.api.ComicsService;
-import org.stapledon.config.CacherConfig;
+import org.stapledon.config.IComicsBootstrap;
 import org.stapledon.dto.ComicItem;
 
 import java.security.KeyManagementException;
@@ -34,10 +33,10 @@ public class ComicCacherTest
         Mockito.when(ComicsService.getComics()).thenReturn(comics);
 
         ComicCacher subject = getSubject();
-        CacherConfig.GoComics result = subject.lookupGoComics(comics.get(0));
+        IComicsBootstrap result = subject.lookupGoComics(comics.get(0));
 
         Assert.assertNotNull(result);
-        Assert.assertEquals("Found expected Comic", result.name, comics.get(0).name);
+        Assert.assertEquals("Found expected Comic", result.stripName(), comics.get(0).name);
     }
 
     private ComicCacher getSubject()
