@@ -1,4 +1,4 @@
-= ComicsAPI API Guide
+= ComicsAPI API Guide - About
 :doctype: book
 :icons: font
 :source-highlighter: highlightjs
@@ -6,112 +6,42 @@
 :toclevels: 4
 :sectlinks:
 
-= Resources
+Web Comic downloader v2.0. A rethink of the initial comic caching program. This is the API that the backend exposed for the Angular Frontend to use.
 
-== ComicsAPI REST Service
-
-The list provides the entry point into the ComicsAPI service.
-- listing all cached comics
-- getting the details of a specific comic
-- retrieve previous/next cached images for a comic
-
-=== Accessing the list of comics with GET
-
-==== Request structure
-
-include::{snippets}/retrieveAllTest/http-request.adoc[]
-
-==== Response fields
-
-include::{snippets}/retrieveAllTest/response-fields.adoc[]
-
-==== Example response
-
-include::{snippets}/retrieveAllTest/http-response.adoc[]
-
-
-=== Accessing a specific comics with GET
-
-Use the generated id of a comic to retrieve all details about it.
-
-==== Request structure
-
-include::{snippets}/retrieveSpecificTest/http-request.adoc[]
-
-==== Path parameters
-
-include::{snippets}/retrieveSpecificTest/path-parameters.adoc[]
-
-==== Response fields
-
-include::{snippets}/retrieveSpecificTest/response-fields.adoc[]
-
-==== Example response
-
-include::{snippets}/retrieveSpecificTest/http-response.adoc[]
-
-
-=== Accessing the strip Avatar with GET
-
-Use the generated id of a comic to retrieve an avatar/icon to display in a header card for a comic
-
-==== Request structure
-
-include::{snippets}/retrieveAvatarTest/http-request.adoc[]
-
-==== Path parameters
-
-include::{snippets}/retrieveAvatarTest/path-parameters.adoc[]
-
-==== Response fields
-
-include::{snippets}/retrieveAvatarTest/response-fields.adoc[]
-
-==== Example response
-
-include::{snippets}/retrieveAvatarTest/http-response.adoc[]
+This API documentation is written using a combination of link:https://spring.io/projects/spring-restdocs[spring-restdocs-mockmvc] and link:https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/[asciidoctor].
 
 
 
-=== Accessing the first strip of a specific comic with GET
+include::_toc.adoc[]
 
-Use the generated id of a comic to retrieve the first available image that has been cached.
-
-==== Request structure
-
-include::{snippets}/retrieveFirstStripTest/http-request.adoc[]
-
-==== Path parameters
-
-include::{snippets}/retrieveFirstStripTest/path-parameters.adoc[]
-
-==== Response fields
-
-include::{snippets}/retrieveFirstStripTest/response-fields.adoc[]
-
-==== Example response
-
-include::{snippets}/retrieveFirstStripTest/http-response.adoc[]
+== Introduction
+By the Martin Fowler definition of REST, this API is currently a link:https://martinfowler.com/articles/richardsonMaturityModel.html[level 2] REST API. As I've written this for the Comics Viewer, Level 3 with its discoverability hasn't been implemented at this time.
 
 
+== HTTP verbs
+ComicsAPI adheres as closely as possible to standard HTTP and REST conventions in its use of HTTP verbs.
 
-=== Accessing the last strip of a specific comic with GET
+|===
+|Verb|Usage
 
-Use the generated id of a comic to retrieve the last available image that has been cached.
+|GET|Used to retrieve a resource
+|POST|Used to create a new resource
+|PATCH|Used to update an existing resource, including partial updates
+|DELETE|Used to delete an existing resource
+|===
 
-==== Request structure
+== HTTP status codes
 
-include::{snippets}/retrieveLastStripTest/http-request.adoc[]
+ComicsAPI adheres as closely as possible to standard HTTP and REST conventions in its use of HTTP status codes.
+|===
+|Status code	|Usage
 
-==== Path parameters
+|200 OK|The request completed successfully
+|201 Created|A new resource has been created successfully. The resource’s URI is available from the response’s Location header
+|204 No Content|An update to an existing resource has been applied successfully
+|400 Bad Request|The request was malformed. The response body will include an error providing further information
+|404 Not Found|The requested resource did not exist
+|===
 
-include::{snippets}/retrieveLastStripTest/path-parameters.adoc[]
-
-==== Response fields
-
-include::{snippets}/retrieveLastStripTest/response-fields.adoc[]
-
-==== Example response
-
-include::{snippets}/retrieveLastStripTest/http-response.adoc[]
-
+== Authentication
+TBD

@@ -1,0 +1,113 @@
+= ComicsAPI API Guide - Image Retrieval
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+include::_toc.adoc[]
+
+== Image Retrieval REST Service
+
+.This endpoint allows for the retrieval of cached comics of comics and includes:
+- navigating to the first/last available comics
+- going forwards/backwards by a single day
+- getting an avatar for each comic strip
+
+
+=== Avatar Retrieval for a specific comics
+
+Returns a avatar for a specific comics that can be used as an icon comic badge
+
+==== Request structure
+
+include::{snippets}/retrieveAvatarTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrieveAvatarTest/response-fields.adoc[]
+
+==== Example request and response
+
+include::{snippets}/retrieveAvatarTest/http-request.adoc[]
+include::{snippets}/retrieveAvatarTest/http-response.adoc[]
+
+
+
+
+=== Retrieve the oldest strip for comic
+
+Returns the oldest cached strip for a given comics. This does not correspond to the first date a comic was published, rather it corresponds to the day we started caching a given comic.
+
+==== Request structure
+
+include::{snippets}/retrieveFirstStripTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrieveFirstStripTest/response-fields.adoc[]
+
+==== Example request and response
+
+include::{snippets}/retrieveFirstStripTest/http-request.adoc[]
+include::{snippets}/retrieveFirstStripTest/http-response.adoc[]
+
+
+
+
+=== Retrieve the latest strip for comic, GET
+
+Returns the most recent cached strip for a given comics. Some comic strips are not avaiable to be retrieved until several days after they were first published.
+
+==== Request structure
+
+include::{snippets}/retrieveLastStripTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrieveLastStripTest/response-fields.adoc[]
+
+==== Example request and response
+
+include::{snippets}/retrieveLastStripTest/http-request.adoc[]
+include::{snippets}/retrieveLastStripTest/http-response.adoc[]
+
+
+
+
+=== Retrieve the next strip
+
+Returns the next available cached strip for a given comics given a reference starting point.
+
+==== Request structure
+
+include::{snippets}/retrieveNextStripTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrieveNextStripTest/response-fields.adoc[]
+
+==== Example request and response
+
+include::{snippets}/retrieveNextStripTest/http-request.adoc[]
+include::{snippets}/retrieveNextStripTest/http-response.adoc[]
+
+
+
+=== Retrieve the previous strip
+
+Returns the previous cached strip for a given comics given a reference starting point.
+
+==== Request structure
+
+include::{snippets}/retrievePreviousStripTest/path-parameters.adoc[]
+
+==== Response fields
+
+include::{snippets}/retrievePreviousStripTest/response-fields.adoc[]
+
+==== Example request and response
+
+include::{snippets}/retrievePreviousStripTest/http-request.adoc[]
+include::{snippets}/retrievePreviousStripTest/http-response.adoc[]

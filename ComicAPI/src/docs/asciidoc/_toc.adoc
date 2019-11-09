@@ -1,0 +1,22 @@
+== ComicsAPI Operations
+
+|===
+|Section|Path(s)
+
+|link:index.html[About this API]|
+|link:comics.html[Comic Configuration]|
+GET, /api/v1/comics +
+GET, /api/v1/comics/{id} +
+POST, /api/v1/comics/{id} +
+PATCH, /api/v1/comics/{id} +
+DELETE, /api/v1/comics/{id} +
+|link:image.html[Image Retrieval]|
+GET, /api/v1/comics/{id}/avatar +
+GET, /api/v1/comics/{id}/strips/first +
+GET, /api/v1/comics/{id}/strips/last +
+GET, /api/v1/comics/{id}/next/{ref} +
+GET, /api/v1/comics/{id}/previous/{ref} +
+|link:cache.html[Cache Operations]|
+GET, /api/v1/update +
+GET, /api/v1/update/{comicId} +
+|===

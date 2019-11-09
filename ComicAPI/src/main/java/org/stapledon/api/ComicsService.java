@@ -30,6 +30,20 @@ public class ComicsService implements IComicsService
     public  static List<ComicItem> getComics() { return comics; }
 
     /**
+     * Return details of a all configured comics
+     *
+     * @return list of all configured comics
+     */
+    @Override
+    public List<ComicItem> retrieveAll()
+    {
+        ComicList list = new ComicList();
+        list.getComics().addAll(comics);
+        Collections.sort(list.getComics());
+        return list.getComics();
+    }
+
+    /**
      * Return details of a specific api
      *
      * @param comicId - Comic to lookup
@@ -44,19 +58,26 @@ public class ComicsService implements IComicsService
         return comic;
     }
 
-    /**
-     * Return details of a all configured comics
-     *
-     * @return list of all configured comics
-     */
     @Override
-    public List<ComicItem> retrieveAll()
-    {
-        ComicList list = new ComicList();
-        list.getComics().addAll(comics);
-        Collections.sort(list.getComics());
-        return list.getComics();
+    public ComicItem createComic(int comicId, ComicItem comicItem) {
+        if (comics.add(comicItem))
+            return comicItem;
+        return null;
     }
+
+    @Override
+    public ComicItem updateComic(int comicId, ComicItem comicItem) {
+        comics.add(comicItem);
+        return comicItem;
+    }
+
+    @Override
+    public boolean deleteComic(int comicId) {
+
+       ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+       return comics.remove(comic);
+    }
+
 
     /**
      * Returns the strip image for a specified api
@@ -141,6 +162,4 @@ public class ComicsService implements IComicsService
         ImageDto dto = ImageUtils.getImageDto(avatar);
         return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
-
-
 }

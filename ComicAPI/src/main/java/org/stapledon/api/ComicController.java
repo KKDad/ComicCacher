@@ -1,11 +1,10 @@
 package org.stapledon.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageDto;
 import org.stapledon.utils.Direction;
@@ -15,7 +14,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
 @SuppressWarnings({"squid:S4488","squid:S00117"}) // API parameter names don't comply with Java naming conventions.
@@ -23,6 +22,10 @@ public class ComicController
 {
     @Autowired
     private IComicsService comicsService;
+
+    /*****************************************************************************************************************
+     * Comic Strip Listing and Configuration
+     *****************************************************************************************************************/
 
     @RequestMapping(method=GET, path = "/api/v1/comics")
     public List<ComicItem> retrieveAllComics()
@@ -34,8 +37,47 @@ public class ComicController
     public ComicItem retrieveComicDetails(@PathVariable String comic_id)
     {
         int comicId = Integer.parseInt(comic_id);
-        return comicsService.retrieveComic(comicId);
+        ComicItem comicItem = comicsService.retrieveComic(comicId);
+        if (comicItem != null)
+            return comicItem;
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
+
+    @RequestMapping(method=POST, path = "/api/v1/comics/{comic_id}")
+    public ComicItem createComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic_id)
+    {
+        int comicId = Integer.parseInt(comic_id);
+        ComicItem resultItem =  comicsService.createComic(comicId, comicItem);
+        if (resultItem != null)
+            return resultItem;
+        throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "Unable to save ComicItem");
+
+    }
+
+    @RequestMapping(method=PATCH, path = "/api/v1/comics/{comic_id}")
+    public ComicItem updateComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic_id)
+    {
+        int comicId = Integer.parseInt(comic_id);
+        ComicItem resultItem =  comicsService.updateComic(comicId, comicItem);
+        if (resultItem != null)
+            return resultItem;
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Unable to save ComicItem");
+    }
+
+    @RequestMapping(method=DELETE, path = "/api/v1/comics/{comic_id}")
+    public void deleteComicDetails(@PathVariable String comic_id)
+    {
+        int comicId = Integer.parseInt(comic_id);
+        boolean result = comicsService.deleteComic(comicId);
+        if (result)
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "ComicItem has been removed");
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    /*****************************************************************************************************************
+     * Comic Strip Image Retrieval Methods
+     *****************************************************************************************************************/
 
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/avatar")
     public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic_id) throws IOException

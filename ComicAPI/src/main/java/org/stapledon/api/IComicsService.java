@@ -11,13 +11,20 @@ import java.util.List;
 
 public interface IComicsService
 {
+    List<ComicItem> retrieveAll();
+
     ComicItem retrieveComic(int comicId);
 
-    List<ComicItem> retrieveAll();
+    ComicItem createComic(int comicId, ComicItem comicItem);
+
+    ComicItem updateComic(int comicId, ComicItem comicItem);
+
+    boolean deleteComic(int comicId);
 
     ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException;
 
     ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException;
 
     ResponseEntity<ImageDto> retrieveAvatar(int comicId)  throws IOException;
+
 }
