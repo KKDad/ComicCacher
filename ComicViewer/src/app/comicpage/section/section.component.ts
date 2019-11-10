@@ -16,9 +16,11 @@ export class SectionComponent implements OnInit {
 
     @Input()  content: Comic;
 
-    width: Number;
-    height: Number;
-    imageDate: String;
+    max_width = 900;
+
+    width: number;
+    height: number;
+    imageDate: string;
 
     constructor(private element: ElementRef, private comicService: ComicService, private sanitizer: DomSanitizer) {}
 
@@ -53,10 +55,17 @@ export class SectionComponent implements OnInit {
     }
 
     private setStrip(imagedto: ImageDto) {
+      
         this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
-        this.height = imagedto.height;
-        this.width = imagedto.width;
-        this.imageDate = imagedto.imageDate;
+        if (imagedto.width > this.max_width) {
+            this.width = this.max_width;
+            let scale_factor = imagedto.width.valueOf()/this.max_width;
+            this.height = imagedto.height.valueOf() / scale_factor;            
+        } else {
+            this.width = imagedto.width.valueOf();
+            this.height = imagedto.height.valueOf();
+        }
+        this.imageDate = imagedto.imageDate.valueOf();
         //console.log(`${this.content.name}: Image size is ${this.width}x${this.height}.`);
     }
     
