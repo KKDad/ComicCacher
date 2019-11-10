@@ -52,4 +52,11 @@ public interface IDailyComic
      */
     void updateComicMetadata(ComicItem comicItem);
 
+    /**
+     * Set the root path for this comic. The path will be later augmented with the name of the comic that is
+     * being cached.
+     * @param cacheDirectory Root Path to set.
+     * @return this
+     */
+    IDailyComic setCacheRoot(String cacheDirectory);
 }

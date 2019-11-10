@@ -53,7 +53,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
      * @param path Root Path to set.
      * @return this
      */
-    IDailyComic setCacheRoot(String path)
+    public IDailyComic setCacheRoot(String path)
     {
 
         this.cacheDirectory = Paths.get(Objects.requireNonNull(path, "path cannot be null"));
@@ -75,7 +75,6 @@ public abstract class DailyComic implements IDailyComic, ICachable
      * @param sourceImageElement - HTML element for the image to download
      * @param destinationFile - Fully qualified name of the file to save
      * @return True if successful
-     * @throws IOException
      */
     boolean cacheImage(Element sourceImageElement, String destinationFile) throws IOException
     {
@@ -130,14 +129,13 @@ public abstract class DailyComic implements IDailyComic, ICachable
     {
         File f = new File(generateCachedName());
         if (f.exists()) {
-            if (logger.isDebugEnabled())
-                logger.debug("Image has already been cached as: {}", f.getAbsolutePath());
+            if (logger.isTraceEnabled())
+                logger.trace("Image has already been cached as: {}", f.getAbsolutePath());
             return true;
         }
 
         if (logger.isDebugEnabled())
             logger.debug("Caching image to: {}", f.getAbsolutePath());
-
 
         try {
             String url = this.generateSiteURL();
@@ -151,6 +149,13 @@ public abstract class DailyComic implements IDailyComic, ICachable
             Elements media = doc.select(elementSelector);
 
             Elements image = this.pickImages(media);
+            if (image == null || image.isEmpty()) {
+                logger.error("No images was selected from the media");
+                logger.error("Site:             {}", url);
+                logger.error("Element Selector: {}", elementSelector);
+                webInspector.dumpMedia(media);
+                return false;
+            }
             return cacheImage(image.first(), f.getAbsolutePath());
 
         } catch (IOException ioe) {

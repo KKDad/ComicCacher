@@ -60,9 +60,10 @@ public class ComicsService implements IComicsService
 
     @Override
     public ComicItem createComic(int comicId, ComicItem comicItem) {
-        if (comics.add(comicItem))
-            return comicItem;
-        return null;
+        if (comics.contains(comicItem))
+            return null;
+        comics.add(comicItem);
+        return comicItem;
     }
 
     @Override

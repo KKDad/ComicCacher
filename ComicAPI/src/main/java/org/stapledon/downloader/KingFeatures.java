@@ -1,5 +1,6 @@
 package org.stapledon.downloader;
 
+import com.google.common.base.Preconditions;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,8 +31,11 @@ public class KingFeatures extends DailyComic
      *  -H 'Accept: image/webp,image/apng,image/*'
      */
 
-    public KingFeatures(IWebInspector inspector) {
+    public KingFeatures(IWebInspector inspector, String website) {
         super(inspector, "meta");
+        Preconditions.checkNotNull(website, "website cannot be null");
+
+        this.website = website;
     }
 
     @Override
@@ -67,13 +71,6 @@ public class KingFeatures extends DailyComic
         return LocalDate.now();
     }
 
-    /**
-     * Each KingFeatures is accessed via a different site
-     */
-    public void setWebsite(String website)
-    {
-        this.website = website;
-    }
 
     @Override
     public void updateComicMetadata(ComicItem comicItem) {
@@ -108,7 +105,6 @@ public class KingFeatures extends DailyComic
 
         } catch (IOException ioe) {
             logger.error(ioe.getMessage());
-            return ;
         }
     }
 

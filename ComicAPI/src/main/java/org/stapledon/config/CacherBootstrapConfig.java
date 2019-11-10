@@ -1,5 +1,10 @@
 package org.stapledon.config;
 
+import org.stapledon.downloader.GoComics;
+import org.stapledon.downloader.IDailyComic;
+import org.stapledon.downloader.KingFeatures;
+import org.stapledon.web.WebInspector;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +39,11 @@ public class CacherBootstrapConfig
                 public LocalDate startDate() {
                         return this.startDate;
                 }
+
+                @Override
+                public IDailyComic getDownloader() {
+                        return new GoComics(new WebInspector());
+                }
         }
 
         public class KingComicsBootStrap implements IComicsBootstrap
@@ -53,6 +63,11 @@ public class CacherBootstrapConfig
                 @Override
                 public LocalDate startDate() {
                         return this.startDate;
+                }
+
+                @Override
+                public IDailyComic getDownloader() {
+                        return new KingFeatures(new WebInspector(), this.website);
                 }
         }
 }

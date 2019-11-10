@@ -14,7 +14,6 @@
     {  "name":"Garfield", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"GetFuzzy", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Herman", "startDate":{ "year":2019, "month":4, "day":1 } },
-    {  "name":"MinimumSecurity", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"NonSequitur", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Overboard", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"OvertheHedge", "startDate":{ "year":2019, "month":4, "day":1 } },
@@ -35,6 +34,6 @@
   ],
 
   "kingComics":[
-    {  "name":"Baby Blues",  "website":"http://babyblues.com/comics/{0}/", "startDate":{ "year":2019, "month":4, "day":1 } }
+    {  "name":"Baby Blues",  "website":"https://www.comicskingdom.com/baby-blues", "startDate":{ "year":2019, "month":4, "day":1 } }
   ]
 }

@@ -65,6 +65,9 @@ public class ImageCacheStatsUpdater
 
     private String expand(String path, String image)
     {
+        // image will be null if there are no matching images in the directory (eg: Caching failed).
+        if (image == null)
+            return "";
         return Paths.get(cacheDirectory, path, image).toFile().getAbsolutePath();
     }
 

@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.1 - November 9/2019 
 - Added support for KingFeatures
-- Updated API documentation fpr previously undocumented methods
+- Updated API documentation for previously undocumented methods
+- Deprecated Comics
+    - Minimum Security
+- Added
+    - BabyBlues    
+- Added Support to Reconcile CacherBootstrapConfig and ComicConfig     
 
 ## 1.0
 - Save statistics about the Images cached in each top-level comics cache directory to speed up retrieval

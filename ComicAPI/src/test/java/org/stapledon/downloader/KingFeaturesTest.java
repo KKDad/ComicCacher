@@ -35,9 +35,8 @@ public class KingFeaturesTest {
 
     private KingFeatures getSubject(String name, String website, LocalDate fetchDate)
     {
-        KingFeatures kingFeatures = new KingFeatures(null);
+        KingFeatures kingFeatures = new KingFeatures(null, website);
         kingFeatures.setComic(name);
-        kingFeatures.setWebsite(website);
         // Note: KingFeatures only allows retrieval of the last 5 days.
         kingFeatures.setDate(fetchDate);
         kingFeatures.setCacheRoot(path.toString());
@@ -47,7 +46,7 @@ public class KingFeaturesTest {
 
 
     @Test
-    @Ignore // Fails on bitbucket
+    //@Ignore // Fails on bitbucket
     public void ensureCacheTest() {
         LocalDate fetchDate = LocalDate.now().minusDays(3);
 

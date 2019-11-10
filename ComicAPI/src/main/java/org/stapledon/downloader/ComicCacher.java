@@ -2,6 +2,7 @@ package org.stapledon.downloader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stapledon.caching.ICachable;
 import org.stapledon.caching.ImageCacheStatsUpdater;
 import org.stapledon.config.CacherBootstrapConfig;
 import org.stapledon.config.CacherConfigLoader;
@@ -43,7 +44,12 @@ public class ComicCacher
         logger.warn("Caching to {}", this.cacheDirectory);
 
         config = new CacherConfigLoader().load();
+        logger.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.dailyComics.size(), config.kingComics.size());
         statsUpdater = new JsonConfigWriter(this.cacheDirectory + "/comics.json");
+    }
+
+    public CacherBootstrapConfig bootstrapConfig() {
+        return this.config;
     }
 
     /**
@@ -60,7 +66,7 @@ public class ComicCacher
         return result;
     }
 
-    private boolean cacheSingle(boolean result, IComicsBootstrap dcc) {
+    public boolean cacheSingle(boolean result, IComicsBootstrap dcc) {
         try {
             cacheComic(dcc);
         } catch (Exception e) {
@@ -119,7 +125,7 @@ public class ComicCacher
         if (startDate.equals(LocalDate.of(2019, 4, 1)))
             startDate = LocalDate.now().minusDays(7);
 
-        IDailyComic comics = new GoComics(null)
+        IDailyComic comics = dcc.getDownloader()
                 .setCacheRoot(cacheDirectory)
                 .setComic(dcc.stripName())
                 .setDate(startDate);
@@ -140,7 +146,7 @@ public class ComicCacher
         statsUpdater.save(comicItem);
 
         // Update statistics about the cached images
-        ImageCacheStatsUpdater cache = new ImageCacheStatsUpdater(((GoComics)comics).cacheLocation(), statsUpdater);
+        ImageCacheStatsUpdater cache = new ImageCacheStatsUpdater(((ICachable)comics).cacheLocation(), statsUpdater);
         cache.updateStats();
 
         return true;
