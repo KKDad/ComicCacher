@@ -4,7 +4,6 @@ mat-card {
     margin-right: auto;
     margin-bottom: 10px; 
     width: 1000px;
-    background: rgba(0,0,0,.03);
     align-content: center;
     align-items: center;
     border: 1px solid rgba(0,0,0,.03);
@@ -15,3 +14,17 @@ mat-card {
     display: flex;
     justify-content: center;
 }
+
+.bg {
+    background-image: url("/assets/images/gray-point-background.jpg");
+    /* Half height */
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    
+  
+    /* Center and scale the image nicely */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }

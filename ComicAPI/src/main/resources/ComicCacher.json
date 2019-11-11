@@ -4,6 +4,7 @@
     {  "name":"Agnes", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"AndyCap", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"BC", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"CalvinAndHobbes", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Cathy", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"CitizenDog", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Committed", "startDate":{ "year":2019, "month":4, "day":1 } },
@@ -11,17 +12,21 @@
     {  "name":"Drabble", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"ForBetterorForWorse", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"FoxTrot", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Frank-And-Ernest", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Garfield", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"GetFuzzy", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Herman", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Luann", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"NonSequitur", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Overboard", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"OvertheHedge", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"PCandPixel", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Peanuts", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"PearlsBeforeSwine", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Pickles", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"RealityCheck", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"RoseisRose", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"ScaryGary", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Shoe", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"TheBoondocks", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"TheBornLoser", "startDate":{ "year":2019, "month":4, "day":1 } },
@@ -34,6 +39,12 @@
   ],
 
   "kingComics":[
-    {  "name":"Baby Blues",  "website":"https://www.comicskingdom.com/baby-blues", "startDate":{ "year":2019, "month":4, "day":1 } }
+    {  "name":"Baby Blues",  "website":"https://www.comicskingdom.com/baby-blues", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Beetle Bailey",  "website":"https://www.comicskingdom.com/beetle-bailey-1", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Dustin",  "website":"https://www.comicskingdom.com/dustin", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Hagar",  "website":"http://comicskingdom.com/hagar-the-horrible", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Mother Goose & Grimm",  "website":"http://comicskingdom.com/mother-goose-grimm", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Sherman's Lagoon",  "website":"http://comicskingdom.com/sherman-s-lagoon", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Zits",  "website":"http://comicskingdom.com/zits", "startDate":{ "year":2019, "month":4, "day":1 } }
   ]
 }

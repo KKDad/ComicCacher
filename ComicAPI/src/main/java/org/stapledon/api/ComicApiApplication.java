@@ -7,6 +7,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.stapledon.config.CacherBootstrapConfig;
 import org.stapledon.config.IComicsBootstrap;
+import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.downloader.DailyRunner;
 import org.stapledon.dto.ComicConfig;
@@ -39,21 +40,13 @@ public class ComicApiApplication
 		logger.warn("Serving from {}", dir);
 
 		try {
-			File cf = new File(ComicsService.cacheLocation + "/comics.json");
-			if (!cf.exists())
-				logger.warn("File {} does not exist", cf);
-			else {
-				try (InputStream is = new FileInputStream(cf)) {
-					Reader reader = new InputStreamReader(is);
+			JsonConfigWriter jsonConfigWriter = new JsonConfigWriter(ComicsService.cacheLocation + "/comics.json");
+			ComicConfig comicConfig = jsonConfigWriter.loadComics();
+			reconcileBoostrapConfig(comicConfig);
+			comicConfig = jsonConfigWriter.loadComics();
 
-					ComicConfig comicConfig = new Gson().fromJson(reader, ComicConfig.class);
-					reconcileBoostrapConfig(comicConfig);
-
-					ComicsService.getComics().addAll(comicConfig.items.values());
-					logger.info("Loaded: {} comics.", ComicsService.getComics().size());
-					reader.close();
-				}
-			}
+			ComicsService.getComics().addAll(comicConfig.items.values());
+			logger.info("Loaded: {} comics.", ComicsService.getComics().size());
 
 		} catch (IOException fne) {
 			logger.error("Cannot load ComicList", fne);

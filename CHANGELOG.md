@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 1.2 - November 10/2019
+- Added background to main page
+- Added Comics:
+    - Launn
+    - CalvinAndHobbes
+    - Pickles
+    - Frank-And-Ernest
+    - ScaryGary
+    - Beetle Bailey
+    - Dustin
+    - Hagar
+    - Mother Goose & Grimm
+    - Sherman's Lagoon
+    - Zits
+
 ## 1.1 - November 9/2019 
 - Added support for KingFeatures
 - Updated API documentation for previously undocumented methods

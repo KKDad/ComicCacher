@@ -1,9 +1,9 @@
 {
   "cacheDirectory":".",
   "dailyComics":[
-    {  "name":"Fake Comic", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Fake Comic", "startDate":{ "year":2019, "month":4, "day":1 } }
   ],
   "kingComics":[
-    {  "name":"King Comic", "website":"https://www.comicskingdom.com/baby-blues/", "startDate":{ "year":2019, "month":11, "day":5 } },
+    {  "name":"King Comic", "website":"https://www.comicskingdom.com/baby-blues/", "startDate":{ "year":2019, "month":11, "day":5 } }
   ]
 }

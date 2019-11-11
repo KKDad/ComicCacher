@@ -1,0 +1,5 @@
+- Add support for weekly comics and flag Foxtrot as a weekly comics
+- See what's gonig on with Commited
+- Add support for indexed comics (Xkcd, etc)
+- Fix Authentication
+- Document add/remove

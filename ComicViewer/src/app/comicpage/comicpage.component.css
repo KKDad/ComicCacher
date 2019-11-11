@@ -1,3 +1,14 @@
+.bg {
+  background-image: url("/assets/images/gray-point-background.jpg");
+  width: 100%;
+  overflow: hidden; 
+
+  /* Center and scale the image nicely */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 .box {    
     float: center;
     margin-left: auto;

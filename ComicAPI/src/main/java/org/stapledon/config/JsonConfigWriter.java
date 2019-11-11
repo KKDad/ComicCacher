@@ -26,22 +26,17 @@ public class JsonConfigWriter
     {
         try {
             loadComics();
-            logger.info("Saving {}", item.name);
-
-
             comics.items.put(item.name.hashCode(), item);
+            logger.info("Saving: {}, Total comics: {}", item.name, comics.items.entrySet().size());
 
-            saveComics();
+            Writer writer = new FileWriter(configPath);
+            gson.toJson(comics, writer);
+            writer.flush();
+            writer.close();
+
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
         }
-    }
-
-    private void saveComics() throws IOException {
-        Writer writer = new FileWriter(configPath);
-        gson.toJson(comics, writer);
-        writer.flush();
-        writer.close();
     }
 
     public ComicItem fetch(String name)
@@ -62,10 +57,10 @@ public class JsonConfigWriter
     /**
      * Load any previously saved configuration
      */
-    private void loadComics() throws FileNotFoundException
+    public ComicConfig loadComics() throws FileNotFoundException
     {
-        if (comics != null)
-            return;
+        if (comics != null && !comics.items.isEmpty())
+            return comics;
 
         File initialFile = new File(configPath);
         if (initialFile.exists()) {
@@ -73,11 +68,12 @@ public class JsonConfigWriter
             Reader reader = new InputStreamReader(inputStream);
 
             comics = gson.fromJson(reader, ComicConfig.class);
-            logger.info("Loaded {}", configPath);
+            logger.info("Loaded {} comics from {}, ", comics.items.entrySet().size(), configPath);
         } else {
             logger.warn("{} does not exist, creating", configPath);
             comics = new ComicConfig();
         }
+        return comics;
     }
 
     /**
