@@ -1,4 +1,14 @@
-ul {
+cdk-virtual-scroll-viewport {
+    height:100vh;    
+    position: relative;
+}
+
+ul {    
+    width: 100%;  
+    height:100vh;
+    overflow: hidden;   
+
     list-style-type: none; 
-    margin-top: 100px;
+    margin-top: 80px;
+    margin: 10,10,10, 10;
 }

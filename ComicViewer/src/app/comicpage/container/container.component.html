@@ -1,5 +1,7 @@
 <ul>
-  <li *ngFor="let section of sections">
-      <section [content]="section" (sectionPosition)="sectionPosition($event)"></section>
-  </li>
+  <cdk-virtual-scroll-viewport autosize>
+      <div *cdkVirtualFor="let section of sections">
+            <section [content]="section" (sectionPosition)="sectionPosition($event)"></section>          
+      </div>
+  </cdk-virtual-scroll-viewport>      
 </ul>

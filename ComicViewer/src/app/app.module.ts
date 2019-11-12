@@ -3,6 +3,9 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule }    from '@angular/common/http';
 
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { ScrollingModule as ExperimentalScrollingModule } from '@angular/cdk-experimental/scrolling';
+
 import { AppComponent } from './app.component';
 import { SectionComponent } from './comicpage/section/section.component';
 import { ContainerComponent } from './comicpage/container/container.component';
@@ -31,7 +34,9 @@ import { AboutComponent } from './about/about.component'
     BrowserAnimationsModule,
     MatButtonModule,
     MatCardModule,
-    AppRoutingModule
+    AppRoutingModule,
+    ScrollingModule,
+    ExperimentalScrollingModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

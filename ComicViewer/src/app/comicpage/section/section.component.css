@@ -5,10 +5,10 @@ mat-card-header {
 mat-card { 
 
   margin-bottom: 10px; 
+  margin-top: 10px; 
   margin-left: auto;
   margin-right: auto;
-  width: 1000px;
-  /* background: rgba(0,0,0,.03); */
+  width: 1000px;  
   align-content: center;
   align-items: center;
   border: 1px solid rgba(0,0,0,.03);
