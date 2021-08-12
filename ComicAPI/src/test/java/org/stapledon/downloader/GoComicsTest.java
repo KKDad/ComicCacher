@@ -1,7 +1,8 @@
 package org.stapledon.downloader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
-import org.apache.log4j.Logger;
 import org.junit.*;
 
 import java.io.File;
@@ -11,13 +12,13 @@ import java.time.LocalDate;
 import java.util.Comparator;
 
 public class GoComicsTest {
-    private static final Logger log = Logger.getLogger(GoComicsTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GoComicsTest.class);
     private static Path path;
 
     @BeforeClass
     public static void setUp() throws Exception {
         path = Files.createTempDirectory("GoComicsTest");
-        log.info("Using TempDirectory: " + path.toString());
+        LOG.info("Using TempDirectory: " + path.toString());
     }
 
     @AfterClass
@@ -44,10 +45,10 @@ public class GoComicsTest {
 
 
     @Test
-    @Ignore // Fails on bitbucket
+    @Ignore("Fails on bitbucket")
     public void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
-        log.info("Expecting to get file: " + expectedFile.toString());
+        LOG.info("Expecting to get file: " + expectedFile.toString());
         Assert.assertFalse("expectedFile should not exist before the subject acts.", expectedFile.exists());
 
         IDailyComic subject = getSubject("Adam at Home");

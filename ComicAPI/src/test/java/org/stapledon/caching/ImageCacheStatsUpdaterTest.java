@@ -31,7 +31,7 @@ public class ImageCacheStatsUpdaterTest
 
         // Assert
         Assert.assertTrue(result);
-        Assert.assertEquals(stats.years.size(), 3);
+        Assert.assertEquals(3, stats.years.size());
         Assert.assertTrue(stats.oldestImage.contains("2008-01-10.png"));
         Assert.assertTrue(stats.newestImage.contains("2019-03-22.png"));
     }

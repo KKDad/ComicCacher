@@ -12,7 +12,7 @@ import java.security.NoSuchAlgorithmException;
 @Component
 public class UpdateService implements IUpdateService
 {
-    private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(UpdateService.class);
 
 
     @Override

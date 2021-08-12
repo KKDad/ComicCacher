@@ -1,7 +1,8 @@
 package org.stapledon.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,7 +17,7 @@ import java.util.Comparator;
 import java.util.UUID;
 
 public class JsonConfigWriterTest {
-    private final Logger logger = Logger.getLogger(JsonConfigWriterTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JsonConfigWriterTest.class);
     private Path path;
 
     @Before
@@ -44,7 +45,7 @@ public class JsonConfigWriterTest {
         ComicItem item = generateTestComicItem("saveTest");
 
         String fileName = String.format("%s/%s.json", path.toString(), UUID.randomUUID());
-        logger.info(String.format("Writing to %s", fileName));
+        LOG.info(String.format("Writing to %s", fileName));
 
         // Act
         JsonConfigWriter subject = new JsonConfigWriter(fileName);

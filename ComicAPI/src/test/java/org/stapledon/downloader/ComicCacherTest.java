@@ -1,6 +1,7 @@
 package org.stapledon.downloader;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ ComicsService.class, ComicApiApplication.class})
-@PowerMockIgnore("javax.net.ssl.*")
+@PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.dom.*", "sun.security.*"})
 public class ComicCacherTest
 {
 

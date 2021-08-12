@@ -2,7 +2,6 @@ package org.stapledon.downloader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stapledon.api.ComicApiApplication;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -19,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DailyRunner
 {
-    private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(DailyRunner.class);
 
     private DailyRunner()
     {

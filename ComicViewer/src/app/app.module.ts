@@ -8,14 +8,14 @@ import { ScrollingModule as ExperimentalScrollingModule } from '@angular/cdk-exp
 
 import { AppComponent } from './app.component';
 import { SectionComponent } from './comicpage/section/section.component';
-import { ContainerComponent } from './comicpage/container/container.component';
+import { ContainerComponent, NavBarOption } from './comicpage/container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatButtonModule, MatCardModule} from '@angular/material';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
 import { ComicpageComponent } from './comicpage/comicpage.component';
-import { AboutComponent } from './about/about.component'
+import { AboutComponent } from './about/about.component';
 
 
 @NgModule({
@@ -25,7 +25,7 @@ import { AboutComponent } from './about/about.component'
     ContainerComponent,
     RefreshComponent,
     ComicpageComponent,
-    AboutComponent
+    AboutComponent    
   ],
   imports: [
     BrowserModule,
@@ -36,9 +36,32 @@ import { AboutComponent } from './about/about.component'
     MatCardModule,
     AppRoutingModule,
     ScrollingModule,
-    ExperimentalScrollingModule,
+    ExperimentalScrollingModule    
   ],
-  providers: [],
+  providers: [ContainerComponent],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+  //containerComponent: any;
+
+  constructor(private containerComponent: ContainerComponent) { }
+
+  ngAfterViewInit(): void {
+    this.containerComponent.scrollinfo.subscribe((data: NavBarOption) => { this.onWindowScroll(data); });
+}  
+  onWindowScroll(data: NavBarOption) {
+    console.log("onWindowScroll", data)
+    switch (data) {
+      case NavBarOption.Show:
+        console.log("Expand NavBar");
+        break;
+      case NavBarOption.Hide:
+          console.log("Srink NavBar");
+          break;
+      default:
+          console.log("Unknown");
+      }
+ }
+
+  
+ }

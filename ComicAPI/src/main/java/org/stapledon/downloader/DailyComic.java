@@ -41,7 +41,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
     protected abstract String generateSiteURL();
 
 
-    public DailyComic(IWebInspector inspector, String elementSelector)
+    DailyComic(IWebInspector inspector, String elementSelector)
     {
         this.webInspector = (inspector == null) ? new WebInspector() : inspector;
         this.elementSelector = elementSelector;

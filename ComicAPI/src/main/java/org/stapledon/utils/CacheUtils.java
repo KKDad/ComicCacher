@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class CacheUtils
 {
     private static final int WARNING_TIME_MS = 100;
+    public static final String COMBINE_PATH = "%s/%s";
     private final String cacheHome;
     private static final Logger logger = LoggerFactory.getLogger(CacheUtils.class);
 
@@ -31,7 +32,7 @@ public class CacheUtils
     private File getComicHome(ComicItem comic)
     {
         String comicNameParsed = comic.name.replace(" ", "");
-        String path = String.format("%s/%s", this.cacheHome, comicNameParsed);
+        String path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
         return new File(path);
     }
 
@@ -58,7 +59,7 @@ public class CacheUtils
         Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
 
         // Comics are stored with filename that is sortable.
-        File folder = new File(String.format("%s/%s", root.getAbsolutePath(), which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
+        File folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(), which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
         String[] cachedStrips = folder.list();
         if (cachedStrips == null || cachedStrips.length == 0)
             return null;
@@ -68,7 +69,7 @@ public class CacheUtils
         if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && logger.isInfoEnabled())
                 logger.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
 
-        return new File(String.format("%s/%s", folder.getAbsolutePath(), which == Direction.FORWARD ? cachedStrips[0] : cachedStrips[cachedStrips.length - 1]));
+        return new File(String.format(COMBINE_PATH, folder.getAbsolutePath(), which == Direction.FORWARD ? cachedStrips[0] : cachedStrips[cachedStrips.length - 1]));
     }
 
     public File findNext(ComicItem comic, LocalDate from)

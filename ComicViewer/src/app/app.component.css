@@ -12,7 +12,8 @@
   display: inline-block;  
   display: block;  
   box-shadow: 5px 1px 3px #888888;
-  /* overflow: auto; */
+
+  transition: 0.4s; /* Adds a transition effect when the size is changed */
 }
 
 .outline {

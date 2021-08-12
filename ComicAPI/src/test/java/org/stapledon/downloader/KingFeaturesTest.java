@@ -1,7 +1,8 @@
 package org.stapledon.downloader;
 
-import org.apache.log4j.Logger;
 import org.junit.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
 
 import java.io.File;
@@ -12,13 +13,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 
 public class KingFeaturesTest {
-    private static final Logger log = Logger.getLogger(KingFeaturesTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KingFeaturesTest.class);
     private static Path path;
 
     @BeforeClass
     public static void setUp() throws Exception {
         path = Files.createTempDirectory("KingFeaturesTest");
-        log.info("Using TempDirectory: " + path.toString());
+        LOG.info("Using TempDirectory: " + path.toString());
     }
 
     @AfterClass
@@ -52,7 +53,7 @@ public class KingFeaturesTest {
 
 
         File expectedFile = new File(String.format("%s/BabyBlues/%s.png", path.toString(), fetchDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-        log.info("Expecting to get file: " + expectedFile.toString());
+        LOG.info("Expecting to get file: " + expectedFile.toString());
         Assert.assertFalse("expectedFile should not exist before the subject acts.", expectedFile.exists());
 
         IDailyComic subject = getSubject("Baby Blues", "https://www.comicskingdom.com/baby-blues", fetchDate);

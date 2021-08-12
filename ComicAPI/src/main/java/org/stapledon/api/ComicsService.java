@@ -23,7 +23,7 @@ public class ComicsService implements IComicsService
 {
     static String cacheLocation;
 
-    private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(ComicsService.class);
 
 
     private static List<ComicItem> comics = new ArrayList<>();

@@ -7,9 +7,9 @@ buildscript {
 		maven { url "https://plugins.gradle.org/m2/" }
 	}
 	dependencies {
-		classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.1.2.RELEASE'
-		classpath 'gradle.plugin.com.palantir.gradle.docker:gradle-docker:0.21.0'
-		classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.9.2'
+		classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.5.3'
+		classpath 'gradle.plugin.com.palantir.gradle.docker:gradle-docker:0.22.2'
+		classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.6.1'
 	}
 }
 
@@ -18,7 +18,6 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'com.palantir.docker'
 apply plugin: 'org.asciidoctor.convert'
-apply plugin: 'application'
 
 
 group = 'kkdad'
@@ -26,14 +25,13 @@ version = '0.0.1-SNAPSHOT'
 
 dependencies {
 	//implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'com.google.code.gson:gson:2.8.5'
+	implementation 'com.google.code.gson:gson:2.8.7'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'com.google.guava:guava:27.1-jre'
-	implementation 'org.jsoup:jsoup:1.11.3'
-	implementation 'log4j:log4j:1.2.17'
+	implementation 'com.google.guava:guava:30.1.1-jre'
+	implementation 'org.jsoup:jsoup:1.14.1'
 
-	implementation 'ch.qos.logback:logback-classic:1.2.3'
-	implementation 'ch.qos.logback:logback-core:1.2.3'
+	implementation 'ch.qos.logback:logback-classic:1.2.5'
+	implementation 'ch.qos.logback:logback-core:1.2.5'
 
 	implementation(project(':ComicViewer'))
 
@@ -42,13 +40,14 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc:2.0.3.RELEASE'
 
-	testCompile 'junit:junit:4.12'
-	testCompile 'org.powermock:powermock-module-junit4:2.0.0'
-	testCompile 'org.powermock:powermock-api-mockito2:2.0.0'
+	testImplementation 'junit:junit:4.12'
+	testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
+	testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
 
-	testImplementation 'commons-io:commons-io:2.6'
+	testImplementation 'commons-io:commons-io:2.11.0'
 
-	asciidoctor 'org.springframework.restdocs:spring-restdocs-asciidoctor:1.2.6.RELEASE'
+	//asciidoctor 'org.springframework.restdocs:spring-restdocs-asciidoctor:1.2.6.RELEASE'
+	implementation 'org.springframework.restdocs:spring-restdocs-asciidoctor:2.0.5.RELEASE'
 }
 
 jar {
@@ -92,8 +91,5 @@ asciidoctor {
 }
 
 bootRun  {
-	mainClassName = "org.stapledon.api.ComicApiApplication"
+	main = "org.stapledon.api.ComicApiApplication"
 }
-
-// Keep from confusing anyone with two run targets - SpringBoot adds the BootRun target
-tasks.remove(run)
