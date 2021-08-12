@@ -18,7 +18,7 @@ import java.util.Optional;
 
 public class KingFeatures extends DailyComic
 {
-    private String website;
+    private final String website;
     private static final Logger logger = LoggerFactory.getLogger(KingFeatures.class);
 
 
@@ -45,7 +45,7 @@ public class KingFeatures extends DailyComic
 
     @Override
     protected Elements pickImages(Elements media) {
-        Elements elements = new Elements();
+        var elements = new Elements();
         for (Element src : media) {
             if (src.tagName().equals("meta") && src.attr("property").contains("og:image"))
                 elements.add(src);
@@ -53,7 +53,7 @@ public class KingFeatures extends DailyComic
         webInspector.dumpMedia(elements);
         // We get back 2-3 images. The 2nd image is the hi-res version - we'll select it.
         if (elements.size() > 1) {
-            Elements e = new Elements();
+            var e = new Elements();
             e.add(elements.get(1));
             return e;
 
@@ -75,7 +75,7 @@ public class KingFeatures extends DailyComic
     @Override
     public void updateComicMetadata(ComicItem comicItem) {
         try {
-            String url = String.format(KING_FEATURES_WEB, this.comicName.replace(' ', '_'));
+            var url = String.format(KING_FEATURES_WEB, this.comicName.replace(' ', '_'));
 
             Document doc = Jsoup.connect(url)
                     .userAgent(USER_AGENT)
@@ -89,7 +89,7 @@ public class KingFeatures extends DailyComic
 
 
             // Cache the Avatar if we don't already have it
-            File avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
+            var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
             if (!avatarCached.exists())
             {
                 Element featureAvatars = doc.select("img[src^=https://api.kingdigital.com/img/features/]").last();

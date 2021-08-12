@@ -32,7 +32,7 @@ public class CacheUtils
     private File getComicHome(ComicItem comic)
     {
         String comicNameParsed = comic.name.replace(" ", "");
-        String path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
+        var path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
         return new File(path);
     }
 
@@ -49,8 +49,8 @@ public class CacheUtils
 
     public File findFirst(ComicItem comic, Direction which)
     {
-        Stopwatch timer = Stopwatch.createStarted();
-        File root = getComicHome(comic);
+        var timer = Stopwatch.createStarted();
+        var root = getComicHome(comic);
 
         // Comics are stored by year, find the smallest year
         String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory());
@@ -59,7 +59,7 @@ public class CacheUtils
         Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
 
         // Comics are stored with filename that is sortable.
-        File folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(), which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
+        var folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(), which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
         String[] cachedStrips = folder.list();
         if (cachedStrips == null || cachedStrips.length == 0)
             return null;
@@ -74,17 +74,17 @@ public class CacheUtils
 
     public File findNext(ComicItem comic, LocalDate from)
     {
-        Stopwatch timer = Stopwatch.createStarted();
-        File root = getComicHome(comic);
+        var timer = Stopwatch.createStarted();
+        var root = getComicHome(comic);
 
-        File findFirstResult = findNewest(comic);
+        var findFirstResult = findNewest(comic);
         if (findFirstResult == null)
             return null;
 
-        LocalDate limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         LocalDate nextCandidate = from.plusDays(1);
         while (from.isBefore(limit)) {
-            File folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
+            var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
             if (folder.exists()) {
 
                 timer.stop();
@@ -100,17 +100,17 @@ public class CacheUtils
 
     public File findPrevious(ComicItem comic, LocalDate from)
     {
-        Stopwatch timer = Stopwatch.createStarted();
-        File root = getComicHome(comic);
+        var timer = Stopwatch.createStarted();
+        var root = getComicHome(comic);
 
-        File findFirstResult = findOldest(comic);
+        var findFirstResult = findOldest(comic);
         if (findFirstResult == null)
             return null;
 
-        LocalDate limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         LocalDate nextCandidate = from.minusDays(1);
         while (from.isAfter(limit)) {
-            File folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
+            var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
             if (folder.exists()) {
 
                 timer.stop();

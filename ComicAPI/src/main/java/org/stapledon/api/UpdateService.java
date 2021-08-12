@@ -19,7 +19,7 @@ public class UpdateService implements IUpdateService
     public boolean updateAll()
     {
         try {
-            ComicCacher comicCacher = new ComicCacher();
+            var comicCacher = new ComicCacher();
             return comicCacher.cacheAll();
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             logger.error(e.getMessage(), e);
@@ -31,7 +31,7 @@ public class UpdateService implements IUpdateService
     public boolean updateComic(int comicId)
     {
         try {
-            ComicCacher comicCacher = new ComicCacher();
+            var comicCacher = new ComicCacher();
 
             // Determine the comic to be updated
             ComicItem comic = ComicsService.getComics().stream().filter(p -> p.id == comicId).findFirst().orElse(null);

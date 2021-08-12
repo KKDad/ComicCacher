@@ -74,7 +74,7 @@ public class GoComics extends DailyComic
             author.ifPresent(element -> comicItem.author = element.text());
 
             // Cache the Avatar if we don't already have it
-            File avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
+            var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
             if (!avatarCached.exists())
             {
                 Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
@@ -96,7 +96,7 @@ public class GoComics extends DailyComic
     @Override
     protected Elements pickImages(Elements media)
     {
-        Elements elements = new Elements();
+        var elements = new Elements();
         for (Element src : media) {
             if (src.tagName().equals("img") && src.attr("abs:src").contains("assets.amuniversal.com"))
                 elements.add(src);
@@ -104,7 +104,7 @@ public class GoComics extends DailyComic
         webInspector.dumpMedia(elements);
         // We get back 2-3 images. The 2nd image is the hi-res version - we'll select it.
         if (elements.size() > 1) {
-            Elements e = new Elements();
+            var e = new Elements();
             e.add(elements.get(1));
             return e;
 

@@ -38,7 +38,7 @@ public class ImageCacheStatsUpdater
      */
     public boolean updateStats()
     {
-        File root = new File(cacheDirectory);
+        var root = new File(cacheDirectory);
         if (!root.exists()) {
             logger.error("{} doesn't exist", cacheDirectory);
             return false;
@@ -105,8 +105,8 @@ public class ImageCacheStatsUpdater
      * @return List of folders or null if none were found
      */
     private String[] images(String location) {
-        File folder = new File(location);
-        String[] cachedStrips = folder.list();
+        var folder = new File(location);
+        var cachedStrips = folder.list();
         if (cachedStrips == null || cachedStrips.length == 0)
             return new String[] {};
         Arrays.sort(cachedStrips, String::compareTo);

@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 
 
 public class CacherConfigLoader
@@ -21,7 +20,7 @@ public class CacherConfigLoader
     {
         logger.warn("Loading CacherBootstrapConfig from: {}", this.getClass().getClassLoader().getResource("ComicCacher.json"));
 
-        InputStream inputStream = this.getClass()
+        var inputStream = this.getClass()
                 .getClassLoader()
                 .getResourceAsStream("ComicCacher.json");
 
@@ -36,8 +35,8 @@ public class CacherConfigLoader
      */
     CacherBootstrapConfig load(InputStream inputStream)
     {
-        Gson gson = new Gson();
-        Reader reader = new InputStreamReader(inputStream);
+        var gson = new Gson();
+        var reader = new InputStreamReader(inputStream);
         return gson.fromJson(reader, CacherBootstrapConfig.class);
     }
 }

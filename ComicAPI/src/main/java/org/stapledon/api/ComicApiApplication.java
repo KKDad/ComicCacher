@@ -31,7 +31,7 @@ public class ComicApiApplication
 			dir = "/comics";
 		}
 
-		File directory = new File(dir);
+		var directory = new File(dir);
 		if (!directory.exists() || directory.isDirectory()) {
 			directory.mkdirs();
 		}
@@ -39,8 +39,8 @@ public class ComicApiApplication
 		logger.warn("Serving from {}", dir);
 
 		try {
-			JsonConfigWriter jsonConfigWriter = new JsonConfigWriter(ComicsService.cacheLocation + "/comics.json");
-			ComicConfig comicConfig = jsonConfigWriter.loadComics();
+			var jsonConfigWriter = new JsonConfigWriter(ComicsService.cacheLocation + "/comics.json");
+			var comicConfig = jsonConfigWriter.loadComics();
 			reconcileBoostrapConfig(comicConfig);
 			comicConfig = jsonConfigWriter.loadComics();
 
@@ -64,12 +64,12 @@ public class ComicApiApplication
 	{
 		logger.info("Begin Reconciliation of CacherBootstrapConfig and ComicConfig");
 		try {
-			ComicCacher cacher = new ComicCacher();
+			var cacher = new ComicCacher();
 			CacherBootstrapConfig config = cacher.bootstrapConfig();
 
 			// Check for New GoComics
 			for (IComicsBootstrap daily : config.dailyComics) {
-				ComicItem comic = findComicItem(comicConfig, daily);
+				var comic = findComicItem(comicConfig, daily);
 				if (comic == null) {
 					if (logger.isInfoEnabled())
 						logger.info("Bootstrapping new DailyComic: {}", daily.stripName());
@@ -79,7 +79,7 @@ public class ComicApiApplication
 
 			// Check for New KingFeatures
 			for (IComicsBootstrap king : config.kingComics) {
-				ComicItem comic = findComicItem(comicConfig, king);
+				var comic = findComicItem(comicConfig, king);
 				if (comic == null) {
 					if (logger.isInfoEnabled())
 						logger.info("Bootstrapping new KingFeatures: {}", king.stripName());

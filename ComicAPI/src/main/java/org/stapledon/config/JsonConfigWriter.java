@@ -62,7 +62,7 @@ public class JsonConfigWriter
         if (comics != null && !comics.items.isEmpty())
             return comics;
 
-        File initialFile = new File(configPath);
+        var initialFile = new File(configPath);
         if (initialFile.exists()) {
             InputStream inputStream = new FileInputStream(initialFile);
             Reader reader = new InputStreamReader(inputStream);

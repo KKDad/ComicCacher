@@ -18,7 +18,7 @@ public class UpdateController
     @GetMapping(path = "/api/v1/update")
     public ResponseEntity<String> updateAllComics()
     {
-        HttpHeaders headers = new HttpHeaders();
+        var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
         boolean result = updateService.updateAll();
@@ -31,7 +31,7 @@ public class UpdateController
     @GetMapping(path = "/api/v1/update/{comicId}")
     public ResponseEntity<String> updateSpecificComic(@PathVariable int comicId)
     {
-        HttpHeaders headers = new HttpHeaders();
+        var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
 

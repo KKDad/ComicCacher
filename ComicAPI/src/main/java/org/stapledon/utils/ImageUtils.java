@@ -30,7 +30,7 @@ public class ImageUtils {
      */
     public static ImageDto getImageDto(File image) throws IOException {
         byte[] media = Files.readAllBytes(image.toPath());
-        ImageDto dto = new ImageDto();
+        var dto = new ImageDto();
         try(InputStream is = new ByteArrayInputStream(media))
         {
             BufferedImage bi = ImageIO.read(is);

@@ -23,7 +23,7 @@ public class ComicItem implements Comparable<ComicItem>
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ComicItem comicItem = (ComicItem) o;
+        var comicItem = (ComicItem) o;
         return id == comicItem.id &&
                 name.equals(comicItem.name);
     }

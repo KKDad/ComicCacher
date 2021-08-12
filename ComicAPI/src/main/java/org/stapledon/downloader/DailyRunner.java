@@ -30,15 +30,15 @@ public class DailyRunner
      */
     public static void ensureDailyCaching()
     {
-        LocalDateTime localNow = LocalDateTime.now();
-        ZoneId currentZone = ZoneId.of("America/New_York");
-        ZonedDateTime zonedNow = ZonedDateTime.of(localNow, currentZone);
+        var localNow = LocalDateTime.now();
+        var currentZone = ZoneId.of("America/New_York");
+        var zonedNow = ZonedDateTime.of(localNow, currentZone);
         ZonedDateTime zonedNext5 ;
         zonedNext5 = zonedNow.withHour(7).withMinute(0).withSecond(0);
         if(zonedNow.compareTo(zonedNext5) > 0)
             zonedNext5 = zonedNext5.plusDays(1);
 
-        Duration duration = Duration.between(zonedNow, zonedNext5);
+        var duration = Duration.between(zonedNow, zonedNext5);
         long initalDelay = duration.getSeconds();
 
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -51,7 +51,7 @@ public class DailyRunner
         @Override
         public void run() {
             try {
-                ComicCacher comicCacher = new ComicCacher();
+                var comicCacher = new ComicCacher();
                 comicCacher.cacheAll();
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 logger.error(e.getMessage(), e);

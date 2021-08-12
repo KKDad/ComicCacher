@@ -32,7 +32,7 @@ public class ComicCacher
     {
         // configure the SSLContext with a TrustManager
         try {
-            SSLContext ctx = SSLContext.getInstance("TLSv1.2");
+            var ctx = SSLContext.getInstance("TLSv1.2");
             ctx.init(new KeyManager[0], new TrustManager[]{new DefaultTrustManager()}, new SecureRandom());
             SSLContext.setDefault(ctx);
         } catch (NoSuchAlgorithmException | KeyManagementException e){
@@ -62,7 +62,7 @@ public class ComicCacher
      */
     public boolean cacheAll()
     {
-        boolean result = true;
+        var result = true;
         for (IComicsBootstrap dcc : config.dailyComics)
             result = cacheSingle(result, dcc);
         for (IComicsBootstrap dcc : config.kingComics)
@@ -107,9 +107,7 @@ public class ComicCacher
                 return dailyComics;
         }
         if (!config.kingComics.isEmpty()) {
-            IComicsBootstrap kingComics = config.kingComics.stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
-            if (kingComics != null)
-                return kingComics;
+            return config.kingComics.stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
         }
         return null;
     }
@@ -134,7 +132,7 @@ public class ComicCacher
                 .setComic(dcc.stripName())
                 .setDate(startDate);
 
-        ComicItem comicItem = statsUpdater.fetch(dcc.stripName());
+        var comicItem = statsUpdater.fetch(dcc.stripName());
         if (comicItem == null) {
             comicItem = new ComicItem();
             comicItem.id = dcc.stripName().hashCode();
@@ -150,7 +148,7 @@ public class ComicCacher
         statsUpdater.save(comicItem);
 
         // Update statistics about the cached images
-        ImageCacheStatsUpdater cache = new ImageCacheStatsUpdater(((ICachable)comics).cacheLocation(), statsUpdater);
+        var cache = new ImageCacheStatsUpdater(((ICachable)comics).cacheLocation(), statsUpdater);
         cache.updateStats();
 
         return true;

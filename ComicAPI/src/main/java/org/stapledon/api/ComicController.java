@@ -36,8 +36,8 @@ public class ComicController
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}")
     public ComicItem retrieveComicDetails(@PathVariable String comic_id)
     {
-        int comicId = Integer.parseInt(comic_id);
-        ComicItem comicItem = comicsService.retrieveComic(comicId);
+        var comicId = Integer.parseInt(comic_id);
+        var comicItem = comicsService.retrieveComic(comicId);
         if (comicItem != null)
             return comicItem;
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -46,7 +46,7 @@ public class ComicController
     @RequestMapping(method=POST, path = "/api/v1/comics/{comic_id}")
     public ComicItem createComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic_id)
     {
-        int comicId = Integer.parseInt(comic_id);
+        var comicId = Integer.parseInt(comic_id);
         ComicItem resultItem =  comicsService.createComic(comicId, comicItem);
         if (resultItem != null)
             return resultItem;
@@ -58,7 +58,7 @@ public class ComicController
     @RequestMapping(method=PATCH, path = "/api/v1/comics/{comic_id}")
     public ComicItem updateComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic_id)
     {
-        int comicId = Integer.parseInt(comic_id);
+        var comicId = Integer.parseInt(comic_id);
         ComicItem resultItem =  comicsService.updateComic(comicId, comicItem);
         if (resultItem != null)
             return resultItem;
@@ -68,7 +68,7 @@ public class ComicController
     @RequestMapping(method=DELETE, path = "/api/v1/comics/{comic_id}")
     public void deleteComicDetails(@PathVariable String comic_id)
     {
-        int comicId = Integer.parseInt(comic_id);
+        var comicId = Integer.parseInt(comic_id);
         boolean result = comicsService.deleteComic(comicId);
         if (result)
             throw new ResponseStatusException(HttpStatus.NO_CONTENT, "ComicItem has been removed");
@@ -82,37 +82,37 @@ public class ComicController
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/avatar")
     public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic_id) throws IOException
     {
-        int comicId = Integer.parseInt(comic_id);
+        var comicId = Integer.parseInt(comic_id);
         return comicsService.retrieveAvatar(comicId);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/strips/first")
     public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic_id) throws IOException
     {
-        int comicId = Integer.parseInt(comic_id);
+        var comicId = Integer.parseInt(comic_id);
         return comicsService.retrieveComicStrip(comicId, Direction.FORWARD);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/next/{strip_reference}")
     public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic_id, @PathVariable String strip_reference) throws IOException
     {
-        int comicId = Integer.parseInt(comic_id);
-        LocalDate from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        var comicId = Integer.parseInt(comic_id);
+        var from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicsService.retrieveComicStrip(comicId, Direction.FORWARD, from);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/previous/{strip_reference}")
     public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic_id, @PathVariable String strip_reference) throws IOException
     {
-        int comicId = Integer.parseInt(comic_id);
-        LocalDate from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        var comicId = Integer.parseInt(comic_id);
+        var from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD, from);
     }
 
     @RequestMapping(method=GET, path = "/api/v1/comics/{comic_id}/strips/last")
     public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic_id) throws IOException
     {
-        int comicId = Integer.parseInt(comic_id);
+        var comicId = Integer.parseInt(comic_id);
         return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD);
     }
 

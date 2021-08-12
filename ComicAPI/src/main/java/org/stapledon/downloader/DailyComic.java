@@ -101,7 +101,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
             }
             logger.info("Downloading Image from: {}", urlImage);
             try (InputStream in = urlImage.openStream()) {
-                byte[] buffer = new byte[4096];
+                var buffer = new byte[4096];
                 int n;
                 os = new FileOutputStream(destinationFile);
                 while ((n = in.read(buffer)) != -1) {
@@ -127,7 +127,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
     @Override
     public boolean ensureCache()
     {
-        File f = new File(generateCachedName());
+        var f = new File(generateCachedName());
         if (f.exists()) {
             if (logger.isTraceEnabled())
                 logger.trace("Image has already been cached as: {}", f.getAbsolutePath());
@@ -169,7 +169,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
     {
         ensureCacheDirectory();
         // TODO: Autodetect image type. Perhaps https://stackoverflow.com/questions/12531797/how-to-get-an-image-type-without-knowing-its-file-extension?
-        String extension = "png";
+        var extension = "png";
         return String.format("%s/%s.%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
     }
 
@@ -180,8 +180,8 @@ public abstract class DailyComic implements IDailyComic, ICachable
     {
         Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectory()");
 
-        String directoryName = String.format("%s/%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
-        File directory = new File(directoryName);
+        var directoryName = String.format("%s/%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
+        var directory = new File(directoryName);
         if (!directory.exists()) {
             if (logger.isDebugEnabled())
                 logger.debug("Creating utils directory to: {}", directoryName);

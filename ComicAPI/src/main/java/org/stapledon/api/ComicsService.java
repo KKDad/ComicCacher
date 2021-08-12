@@ -37,7 +37,7 @@ public class ComicsService implements IComicsService
     @Override
     public List<ComicItem> retrieveAll()
     {
-        ComicList list = new ComicList();
+        var list = new ComicList();
         list.getComics().addAll(comics);
         Collections.sort(list.getComics());
         return list.getComics();
@@ -52,7 +52,7 @@ public class ComicsService implements IComicsService
     @Override
     public ComicItem retrieveComic(int comicId)
     {
-        ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+        var comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
         if (comic == null)
             logger.error("Unknown comic id={}, total known: {}", comicId, comics.size());
         return comic;
@@ -90,22 +90,22 @@ public class ComicsService implements IComicsService
     public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException
     {
         logger.trace("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
-        HttpHeaders headers = new HttpHeaders();
+        var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
         ComicItem comic = this.retrieveComic(comicId);
         if (comic == null)
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
 
-        CacheUtils cacheUtils = new CacheUtils(cacheLocation);
+        var cacheUtils = new CacheUtils(cacheLocation);
         File image = cacheUtils.findFirst(comic, which);
         if (image == null) {
             logger.error("Unable to locate first strip for {}", comic.name);
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
-        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-        ImageDto dto = ImageUtils.getImageDto(image);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        var dto = ImageUtils.getImageDto(image);
         return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
 
@@ -113,14 +113,14 @@ public class ComicsService implements IComicsService
     public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException
     {
         logger.trace("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
-        HttpHeaders headers = new HttpHeaders();
+        var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
         ComicItem comic = this.retrieveComic(comicId);
         if (comic == null)
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
 
-        CacheUtils cacheUtils = new CacheUtils(cacheLocation);
+        var cacheUtils = new CacheUtils(cacheLocation);
         File image;
         if (which == Direction.FORWARD)
             image = cacheUtils.findNext(comic, from);
@@ -131,8 +131,8 @@ public class ComicsService implements IComicsService
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
-        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-        ImageDto dto = ImageUtils.getImageDto(image);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        var dto = ImageUtils.getImageDto(image);
         return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
 
@@ -144,7 +144,7 @@ public class ComicsService implements IComicsService
     @Override
     public ResponseEntity<ImageDto> retrieveAvatar(int comicId)  throws IOException
     {
-        HttpHeaders headers = new HttpHeaders();
+        var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
         ComicItem comic = this.retrieveComic(comicId);
@@ -152,15 +152,15 @@ public class ComicsService implements IComicsService
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
 
         String comicNameParsed = comic.name.replace(" ", "");
-        File avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
+        var avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
         if (!avatar.exists()) {
             logger.error("Unable to locate avatar for {}", comic.name);
             logger.error("   checked {}", avatar.getAbsolutePath());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
-        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-        ImageDto dto = ImageUtils.getImageDto(avatar);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        var dto = ImageUtils.getImageDto(avatar);
         return new ResponseEntity<>(dto, headers, HttpStatus.OK);
     }
 }
