@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://10.106.93.44:8080'
+  apiUrl: 'http://dockerhost.stapledon.local:8888/'
 };
 
 /*
