@@ -6,8 +6,7 @@ import { MessageService } from '../message.service';
   templateUrl: './refresh.component.html',
   styleUrls: ['./refresh.component.css']
 })
-export class RefreshComponent implements OnInit 
-{
+export class RefreshComponent implements OnInit {
 
   constructor(public messageService: MessageService) {}
 

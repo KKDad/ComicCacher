@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from "@angular/router";
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-about',
@@ -13,8 +13,8 @@ export class AboutComponent implements OnInit {
   ngOnInit() {
   }
 
-  onNavigateHome() {    
-    this.router.navigateByUrl("/comics")    
-  }  
+  onNavigateHome() {
+    this.router.navigateByUrl('/comics');
+  }
 
 }

@@ -9,9 +9,9 @@ export class ComicpageComponent implements OnInit {
 
   constructor() { }
 
+  sections = null;
+
   ngOnInit() {
   }
-
-  sections = null; 
 
 }

@@ -25,7 +25,7 @@ import { AboutComponent } from './about/about.component';
     ContainerComponent,
     RefreshComponent,
     ComicpageComponent,
-    AboutComponent    
+    AboutComponent
   ],
   imports: [
     BrowserModule,
@@ -36,32 +36,32 @@ import { AboutComponent } from './about/about.component';
     MatCardModule,
     AppRoutingModule,
     ScrollingModule,
-    ExperimentalScrollingModule    
+    ExperimentalScrollingModule
   ],
   providers: [ContainerComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule {
-  //containerComponent: any;
+  // containerComponent: any;
 
   constructor(private containerComponent: ContainerComponent) { }
 
   ngAfterViewInit(): void {
     this.containerComponent.scrollinfo.subscribe((data: NavBarOption) => { this.onWindowScroll(data); });
-}  
+}
   onWindowScroll(data: NavBarOption) {
-    console.log("onWindowScroll", data)
+    console.log('onWindowScroll', data);
     switch (data) {
       case NavBarOption.Show:
-        console.log("Expand NavBar");
+        console.log('Expand NavBar');
         break;
       case NavBarOption.Hide:
-          console.log("Srink NavBar");
+          console.log('Srink NavBar');
           break;
       default:
-          console.log("Unknown");
+          console.log('Unknown');
       }
  }
 
-  
+
  }
