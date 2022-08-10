@@ -5,6 +5,9 @@
     "component-max-inline-declarations": true,
     "component-selector": [true, "element", "sg", "kebab-case"],
     "contextual-lifecycle": true,
+    "deprecation": {
+      "severity": "warning"
+    },
     "directive-class-suffix": true,
     "directive-selector": [true, "attribute", "sg", "camelCase"],
     "no-attribute-decorator": true,

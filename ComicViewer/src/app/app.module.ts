@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, Directive } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule }    from '@angular/common/http';
 
@@ -11,13 +11,15 @@ import { SectionComponent } from './comicpage/section/section.component';
 import { ContainerComponent, NavBarOption } from './comicpage/container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { MatButtonModule, MatCardModule} from '@angular/material';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
 import { ComicpageComponent } from './comicpage/comicpage.component';
 import { AboutComponent } from './about/about.component';
 
 
+@Directive()
 @NgModule({
   declarations: [
     AppComponent,
