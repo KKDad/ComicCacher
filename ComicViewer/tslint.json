@@ -29,7 +29,7 @@
     "template-banana-in-box": true,
     "template-conditional-complexity": [true, 4],
     "template-cyclomatic-complexity": [true, 5],
-    "template-i18n": [true, "check-id", "check-text"],
+    "template-i18n": [false, "check-id", "check-text"],
     "template-no-negated-async": true,
     "template-use-track-by-function": true,
     "use-component-selector": true,
