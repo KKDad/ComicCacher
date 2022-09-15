@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatCard } from '@angular/material/card';
 
 @Component({
   selector: 'app-about',
