@@ -4,19 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule }    from '@angular/common/http';
 
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { ScrollingModule as ExperimentalScrollingModule } from '@angular/cdk-experimental/scrolling';
+import {CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 
 import { AppComponent } from './app.component';
 import { SectionComponent } from './comicpage/section/section.component';
 import { ContainerComponent, NavBarOption } from './comicpage/container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { MatCardContent, MatCardModule, MatCardActions, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
 import { ComicpageComponent } from './comicpage/comicpage.component';
 import { AboutComponent } from './about/about.component';
+import { RouterModule } from '@angular/router';
 
 
 @Directive()
@@ -27,18 +27,22 @@ import { AboutComponent } from './about/about.component';
     ContainerComponent,
     RefreshComponent,
     ComicpageComponent,
-    AboutComponent
+    AboutComponent, 
   ],
   imports: [
     BrowserModule,
     FormsModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    MatButtonModule,
+    MatCardContent,
     MatCardModule,
+    MatCardActions,
+    MatCardSubtitle,
+    MatCardTitle, 
     AppRoutingModule,
     ScrollingModule,
-    ExperimentalScrollingModule
+    CdkVirtualScrollViewport,    
+    RouterModule
   ],
   providers: [ContainerComponent],
   bootstrap: [AppComponent]

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ContainerComponent } from './container/container.component';
 
 @Component({
   selector: 'app-comicpage',
