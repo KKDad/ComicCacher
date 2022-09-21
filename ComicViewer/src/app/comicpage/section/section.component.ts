@@ -3,6 +3,7 @@ import { Comic } from '../../dto/comic';
 import { ComicService } from '../../comic.service';
 import { DomSanitizer} from '@angular/platform-browser';
 import { ImageDto } from '../../dto/image';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
     selector: 'section',

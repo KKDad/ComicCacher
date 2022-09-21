@@ -18,7 +18,6 @@ import { AboutComponent } from './about/about.component';
 import { RouterModule } from '@angular/router';
 
 
-@Directive()
 @NgModule({
   declarations: [
     AppComponent,
