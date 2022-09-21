@@ -1,5 +1,5 @@
 <ul>
-  <cdk-virtual-scroll-viewport autosize>
+  <cdk-virtual-scroll-viewport autosize [itemSize]="itemSizeFn">
       <div *cdkVirtualFor="let section of sections">
             <section [content]="section" (sectionPosition)="sectionPosition($event)"></section>          
       </div>

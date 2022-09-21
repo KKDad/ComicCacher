@@ -17,7 +17,7 @@ export enum NavBarOption {
 export class ContainerComponent implements OnInit {
     @Input()  sections: Comic[];
     @Output() scrollinfo = new EventEmitter();
-    lastOffset: number;
+    lastOffset: number;    
 
     constructor(private scrollDispatcher: ScrollDispatcher, private comicService: ComicService) { }
 
@@ -41,5 +41,7 @@ export class ContainerComponent implements OnInit {
 
         this.lastOffset = scrollTop;
       }
+
+      itemSizeFn = (item, index) => index % 2 ? 50 : 100;
 
 }
