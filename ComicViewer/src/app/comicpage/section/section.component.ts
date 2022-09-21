@@ -1,5 +1,4 @@
 import { Component, OnInit, ElementRef, Input } from '@angular/core';
-import { MatCardContent, MatCardModule, MatCardActions, MatCardSubtitle } from '@angular/material/card';
 import { Comic } from '../../dto/comic';
 import { ComicService } from '../../comic.service';
 import { DomSanitizer} from '@angular/platform-browser';

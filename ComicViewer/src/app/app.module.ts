@@ -4,14 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule }    from '@angular/common/http';
 
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import {CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 
 import { AppComponent } from './app.component';
 import { SectionComponent } from './comicpage/section/section.component';
 import { ContainerComponent, NavBarOption } from './comicpage/container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { MatCardContent, MatCardModule, MatCardActions, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
+import { MatCardModule } from '@angular/material/card';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
 import { ComicpageComponent } from './comicpage/comicpage.component';
@@ -27,21 +26,16 @@ import { RouterModule } from '@angular/router';
     ContainerComponent,
     RefreshComponent,
     ComicpageComponent,
-    AboutComponent, 
+    AboutComponent 
   ],
   imports: [
     BrowserModule,
     FormsModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    MatCardContent,
-    MatCardModule,
-    MatCardActions,
-    MatCardSubtitle,
-    MatCardTitle, 
+    MatCardModule, 
     AppRoutingModule,
     ScrollingModule,
-    CdkVirtualScrollViewport,    
     RouterModule
   ],
   providers: [ContainerComponent],
@@ -62,7 +56,7 @@ export class AppModule {
         console.log('Expand NavBar');
         break;
       case NavBarOption.Hide:
-          console.log('Srink NavBar');
+          console.log('Shrink NavBar');
           break;
       default:
           console.log('Unknown');
