@@ -1,6 +1,6 @@
 # ComicViewer
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.2.3, and has been updated to Angular 11.2.19
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.2.3, and has been updated to Angular 12.2.18
 
 ## Development server
 
