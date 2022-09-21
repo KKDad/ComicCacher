@@ -1,8 +1,7 @@
 package org.stapledon.downloader;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
 
 import java.io.File;
@@ -12,14 +11,17 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 
-public class KingFeaturesTest {
-    private static final Logger LOG = LoggerFactory.getLogger(KingFeaturesTest.class);
+import static org.assertj.core.api.Assertions.assertThat;
+
+@Slf4j
+public class ComicsKingdomTest {
+
     private static Path path;
 
     @BeforeClass
     public static void setUp() throws Exception {
-        path = Files.createTempDirectory("KingFeaturesTest");
-        LOG.info("Using TempDirectory: " + path.toString());
+        path = Files.createTempDirectory("ComicsKingdomTest");
+        //log.info("Using TempDirectory: " + path.toString());
     }
 
     @AfterClass
@@ -34,29 +36,29 @@ public class KingFeaturesTest {
                 .forEach(File::delete);
     }
 
-    private KingFeatures getSubject(String name, String website, LocalDate fetchDate)
+    private ComicsKingdom getSubject(String name, String website, LocalDate fetchDate)
     {
-        KingFeatures kingFeatures = new KingFeatures(null, website);
-        kingFeatures.setComic(name);
-        // Note: KingFeatures only allows retrieval of the last 5 days.
-        kingFeatures.setDate(fetchDate);
-        kingFeatures.setCacheRoot(path.toString());
+        ComicsKingdom comicsKingdom = new ComicsKingdom(null, website);
+        comicsKingdom.setComic(name);
 
-        return kingFeatures;
+        // Note: ComicsKingdom shows the previous 6 days be default, but seems to allow any date
+        comicsKingdom.setDate(fetchDate);
+        comicsKingdom.setCacheRoot(path.toString());
+
+        return comicsKingdom;
     }
 
 
     @Test
-    //@Ignore // Fails on bitbucket
     public void ensureCacheTest() {
         LocalDate fetchDate = LocalDate.now().minusDays(3);
 
 
-        File expectedFile = new File(String.format("%s/BabyBlues/%s.png", path.toString(), fetchDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-        LOG.info("Expecting to get file: " + expectedFile.toString());
+        File expectedFile = new File(String.format("%s/DaddyDaze/%s.png", path.toString(), fetchDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
+        log.info("Expecting to get file: {}",  expectedFile);
         Assert.assertFalse("expectedFile should not exist before the subject acts.", expectedFile.exists());
 
-        IDailyComic subject = getSubject("Baby Blues", "https://www.comicskingdom.com/baby-blues", fetchDate);
+        IDailyComic subject = getSubject("Daddy Daze", "https://www.comicskingdom.com/daddy-daze", fetchDate);
 
         // Act
         boolean result = subject.ensureCache();
@@ -67,17 +69,16 @@ public class KingFeaturesTest {
     }
 
     @Test
-    public void getBabyBluesComicMetadataTest() {
+    public void getDaddyDazeMetadataTest() {
         // Arrange
         LocalDate fetchDate = LocalDate.now().minusDays(3);
-        KingFeatures subject = getSubject("Baby Blues", "https://www.comicskingdom.com/baby-blues", fetchDate);
+        IDailyComic subject = getSubject("Daddy Daze", "https://www.comicskingdom.com/daddy-daze", fetchDate);
 
         // Act
         ComicItem item = new ComicItem();
         subject.updateComicMetadata(item);
 
         // Assert
-        Assert.assertTrue(item.author.contains("Baby Blues BY RICK KIRKMAN AND JERRY SCOTT"));
+        assertThat(item.author).isNotNull().contains("Daddy Daze by John Kovaleski");
     }
-
 }

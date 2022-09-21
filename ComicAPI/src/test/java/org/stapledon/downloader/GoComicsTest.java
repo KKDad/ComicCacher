@@ -1,5 +1,7 @@
 package org.stapledon.downloader;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
@@ -10,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Comparator;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GoComicsTest {
     private static final Logger LOG = LoggerFactory.getLogger(GoComicsTest.class);
@@ -98,5 +102,19 @@ public class GoComicsTest {
 
         // Assert
         Assert.assertTrue(item.description.contains("It was his greatest wish that HERMAN live on and continue to make us laugh."));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Herman,It was his greatest wish that HERMAN live on and continue to make us laugh."})
+    public void getComicDescriptionTest(String name, String expected) {
+        // Arrange
+        GoComics subject = getSubject(name);
+
+        // Act
+        ComicItem item = new ComicItem();
+        subject.updateComicMetadata(item);
+
+        // Assert
+        assertThat(item.description).isNotNull().contains(expected);
     }
 }

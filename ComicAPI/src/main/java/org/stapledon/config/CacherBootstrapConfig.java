@@ -1,8 +1,8 @@
 package org.stapledon.config;
 
+import org.stapledon.downloader.ComicsKingdom;
 import org.stapledon.downloader.GoComics;
 import org.stapledon.downloader.IDailyComic;
-import org.stapledon.downloader.KingFeatures;
 import org.stapledon.web.WebInspector;
 
 import java.time.LocalDate;
@@ -67,7 +67,7 @@ public class CacherBootstrapConfig
 
                 @Override
                 public IDailyComic getDownloader() {
-                        return new KingFeatures(new WebInspector(), this.website);
+                        return new ComicsKingdom(new WebInspector(), this.website);
                 }
         }
 }

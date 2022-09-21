@@ -160,3 +160,4 @@ gradle-app.setting
 *.docker
 
 # End of https://www.gitignore.io/api/java,gradle,angular,intellij
+/ComicViewer/.yarn/
