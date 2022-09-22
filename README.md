@@ -1,7 +1,16 @@
 # The Comic Processor
 
-Web Comic downloader v2.0. A rethink of the initial comic caching program.
+Webcomic scroller v2.0. Originally a new-hire task written in C# and .Net 3.0, this has since been re-imagined and rebuilt using modern stack:
+- Spring Boot 2.6, Java 11, Dockerized backend
+    - Read and cache comics
+    - Expose REST API
+    - OpenAPI 3.0 documentation
+- Angular + Material Design, Dockerized Frontend
+- Hosted in a K8s environment
 
+There's no public-facing deployment of this service - I developed it for my own usage and for fun. If you'd like to use
+it yourself, go ahead. 
+ 
 #### Caching Comics
 
 #### Comic API
