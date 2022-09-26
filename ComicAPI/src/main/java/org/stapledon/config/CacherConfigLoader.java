@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.stapledon.dto.Bootstrap;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;

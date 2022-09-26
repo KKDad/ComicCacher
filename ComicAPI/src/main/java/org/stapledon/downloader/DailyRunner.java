@@ -1,9 +1,9 @@
 package org.stapledon.downloader;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -16,15 +16,16 @@ import java.util.concurrent.TimeUnit;
  * This class ensures that all comics are fetched once a day
  */
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class DailyRunner {
-    private DailyRunner() {
-        // Sonar: Utility classes should not have public constructors
-    }
+
+    private final ComicCacher comicCacher;
 
     /**
      * Schedule a task to download the comics once a day at 7:00am
      */
-    public static void ensureDailyCaching() {
+    public void ensureDailyCaching() {
         var localNow = LocalDateTime.now();
         var currentZone = ZoneId.of("America/New_York");
         var zonedNow = ZonedDateTime.of(localNow, currentZone);
@@ -37,19 +38,18 @@ public class DailyRunner {
         long initalDelay = duration.getSeconds();
 
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(new RunComicCacher(), initalDelay,
+        scheduler.scheduleAtFixedRate(new RunComicCacher(comicCacher), initalDelay,
                 24 * 60 * 60L, TimeUnit.SECONDS);
     }
 
+    @RequiredArgsConstructor
     private static class RunComicCacher implements Runnable {
+
+        private final ComicCacher comicCacher;
+
         @Override
         public void run() {
-            try {
-                var comicCacher = new ComicCacher();
-                comicCacher.cacheAll();
-            } catch (NoSuchAlgorithmException | KeyManagementException e) {
-                log.error(e.getMessage(), e);
-            }
+            comicCacher.cacheAll();
         }
     }
 

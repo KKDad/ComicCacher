@@ -43,11 +43,12 @@ class JsonConfigWriterTest {
         // Arrange
         ComicItem item = generateTestComicItem("saveTest");
 
-        String fileName = String.format("%s/%s.json", path.toString(), UUID.randomUUID());
+        var uuid = UUID.randomUUID().toString();
+        String fileName = String.format("%s/%s.json", path.toString(), uuid);
         LOG.info(String.format("Writing to %s", fileName));
 
         // Act
-        JsonConfigWriter subject = new JsonConfigWriter(fileName);
+        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), path.toString(), String.format("%s.json", uuid));
         subject.save(item);
 
         // Assert

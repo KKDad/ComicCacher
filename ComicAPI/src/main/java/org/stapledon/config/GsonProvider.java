@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Configuration
 public class GsonProvider {
@@ -24,9 +23,7 @@ public class GsonProvider {
                 .create();
     }
 
-    class LocalDateAdapter extends TypeAdapter<LocalDate> {
-        private final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
-
+    static class LocalDateAdapter extends TypeAdapter<LocalDate> {
         @Override
         public void write(final JsonWriter jsonWriter, final LocalDate localDate) throws IOException {
             if (localDate == null) {
@@ -36,6 +33,17 @@ public class GsonProvider {
             }
         }
 
+        /**
+         * Deserialize a LocalDate stored one of three ways:
+         * - Serialized from Local date (Object, w/ 3 fields)
+         *     - year
+         *     - month
+         *     - day
+         * - Serialized as a String (YYYY-MM-DD)
+         * - Null Value
+         *
+         * @param jsonReader - Reader to read the LocalDate from
+         */
         @Override
         public LocalDate read(final JsonReader jsonReader) throws IOException {
             if (jsonReader.peek() == JsonToken.BEGIN_OBJECT) {

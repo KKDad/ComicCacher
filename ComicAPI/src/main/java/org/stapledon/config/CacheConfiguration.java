@@ -7,11 +7,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CacheConfiguration {
 
-    @Value("{comics.cache.location:/comics}")
+    @Value("${comics.cache.location:/comics}")
     private String location;
+
+    @Value("${conics.config:comics.json}")
+    private String comicsJson;
 
     @Bean(name = "cacheLocation")
     public String cacheLocation() {
         return location;
+    }
+
+    @Bean(name = "configName")
+    public String configName() {
+        return comicsJson;
     }
 }

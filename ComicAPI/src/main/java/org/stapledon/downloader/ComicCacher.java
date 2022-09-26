@@ -2,13 +2,17 @@ package org.stapledon.downloader;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.caching.ICachable;
 import org.stapledon.caching.ImageCacheStatsUpdater;
-import org.stapledon.config.*;
+import org.stapledon.config.IComicsBootstrap;
+import org.stapledon.config.JsonConfigWriter;
+import org.stapledon.dto.Bootstrap;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.web.DefaultTrustManager;
 
+import javax.annotation.PostConstruct;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -24,9 +28,11 @@ public class ComicCacher {
 
     private final Bootstrap config;
     private final JsonConfigWriter statsUpdater;
+    @Qualifier("cacheLocation")
     private final String cacheDirectory;
 
-    public ComicCacher() throws NoSuchAlgorithmException, KeyManagementException {
+    @PostConstruct
+    public void setup() {
         // configure the SSLContext with a TrustManager
         try {
             var ctx = SSLContext.getInstance("TLSv1.2");
@@ -35,18 +41,17 @@ public class ComicCacher {
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             // Ignore - Powermock issue during unit tests?
         }
-
-        String directory = System.getenv("CACHE_DIRECTORY");
-        if (directory == null) {
-            log.error("CACHE_DIRECTORY not set. Defaulting to /comics");
-            directory = "/comics";
-        }
-        this.cacheDirectory = directory;
-        log.warn("Caching to {}", this.cacheDirectory);
-
-        config = new CacherConfigLoader(new GsonProvider().gson()).load();
+//
+//        String directory = System.getenv("CACHE_DIRECTORY");
+//        if (directory == null) {
+//            log.error("CACHE_DIRECTORY not set. Defaulting to /comics");
+//            directory = "/comics";
+//        }
+//        this.cacheDirectory = directory;
+//        log.warn("Caching to {}", this.cacheDirectory);
+//
+//        config = new CacherConfigLoader(new GsonProvider().gson()).load();
         log.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.getDailyComics().size(), config.getKingComics().size());
-        statsUpdater = new JsonConfigWriter(this.cacheDirectory + "/comics.json");
     }
 
     public Bootstrap bootstrapConfig() {
@@ -54,7 +59,7 @@ public class ComicCacher {
     }
 
     /**
-     * Attempt to cache all of the configured comics. Does not stop if one or more comics fail to be cached.
+     * Attempt to cache all the configured comics. Does not stop if one or more comics fail to be cached.
      *
      * @return True if all comics where successfully cached, false if one or more fail to be cached.
      */

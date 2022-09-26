@@ -1,28 +1,29 @@
 package org.stapledon.config;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageCacheStats;
 
 import java.io.*;
+import java.nio.file.Paths;
 
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class JsonConfigWriter {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
-    private final String configPath;
-    private ComicConfig comics;
 
-    public JsonConfigWriter(String path) {
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
-        this.configPath = path;
-    }
+    private final String cacheLocation;
+
+    private final String configName;
+
+    private ComicConfig comics;
 
     public void save(ComicItem item) {
         try {
@@ -30,7 +31,7 @@ public class JsonConfigWriter {
             comics.items.put(item.name.hashCode(), item);
             log.info("Saving: {}, Total comics: {}", item.name, comics.items.entrySet().size());
 
-            Writer writer = new FileWriter(configPath);
+            Writer writer = new FileWriter(Paths.get(cacheLocation, configName).toFile());
             gson.toJson(comics, writer);
             writer.flush();
             writer.close();
@@ -61,15 +62,15 @@ public class JsonConfigWriter {
         if (comics != null && !comics.items.isEmpty())
             return comics;
 
-        var initialFile = new File(configPath);
+        var initialFile = Paths.get(cacheLocation, configName).toFile();
         if (initialFile.exists()) {
             InputStream inputStream = new FileInputStream(initialFile);
             Reader reader = new InputStreamReader(inputStream);
 
             comics = gson.fromJson(reader, ComicConfig.class);
-            log.info("Loaded {} comics from {}, ", comics.items.entrySet().size(), configPath);
+            log.info("Loaded {} comics from {}, ", comics.items.entrySet().size(), initialFile);
         } else {
-            log.warn("{} does not exist, creating", configPath);
+            log.warn("{} does not exist, creating", initialFile);
             comics = new ComicConfig();
         }
         return comics;

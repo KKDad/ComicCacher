@@ -5,37 +5,35 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.stapledon.config.Bootstrap;
 import org.stapledon.config.IComicsBootstrap;
 import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.downloader.DailyRunner;
+import org.stapledon.dto.Bootstrap;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 @Slf4j
 @SpringBootApplication
 @RequiredArgsConstructor
-@ComponentScan(basePackages = {"org.stapledon.config"})
+@ComponentScan(basePackages = {"org.stapledon"})
 public class ComicApiApplication {
     private final String cacheLocation;
+
+    private final JsonConfigWriter jsonConfigWriter;
+
+    private final ComicCacher comicCacher;
+
+    private final DailyRunner dailyRunner;
 
     @PostConstruct
     public void PostConstructSetup() {
         log.info("ComicApiApplication starting...");
-
-//		String dir = System.getenv("CACHE_DIRECTORY");
-//		if (dir == null) {
-//			log.error("CACHE_DIRECTORY not set. Defaulting to /comics");
-//			dir = "/comics";
-//		}
 
         var directory = new File(cacheLocation);
         if (!directory.exists() || directory.isDirectory()) {
@@ -44,7 +42,6 @@ public class ComicApiApplication {
         log.warn("Serving from {}", cacheLocation);
 
         try {
-            var jsonConfigWriter = new JsonConfigWriter(cacheLocation + "/comics.json");
             var comicConfig = jsonConfigWriter.loadComics();
             reconcileBoostrapConfig(comicConfig);
             comicConfig = jsonConfigWriter.loadComics();
@@ -57,7 +54,7 @@ public class ComicApiApplication {
         }
 
         // Ensure we cache comics once a day
-        DailyRunner.ensureDailyCaching();
+        dailyRunner.ensureDailyCaching();
     }
 
     /**
@@ -67,37 +64,32 @@ public class ComicApiApplication {
      */
     public void reconcileBoostrapConfig(ComicConfig comicConfig) {
         log.info("Begin Reconciliation of CacherBootstrapConfig and ComicConfig");
-        try {
-            var cacher = new ComicCacher();
-            Bootstrap config = cacher.bootstrapConfig();
+        Bootstrap config = comicCacher.bootstrapConfig();
 
-            // Check for New GoComics
-            for (IComicsBootstrap daily : config.getDailyComics()) {
-                var comic = findComicItem(comicConfig, daily);
-                if (comic == null) {
-                    if (log.isInfoEnabled())
-                        log.info("Bootstrapping new DailyComic: {}", daily.stripName());
-                    cacher.cacheSingle(true, daily);
-                }
+        // Check for New GoComics
+        for (IComicsBootstrap daily : config.getDailyComics()) {
+            var comic = findComicItem(comicConfig, daily);
+            if (comic == null) {
+                if (log.isInfoEnabled())
+                    log.info("Bootstrapping new DailyComic: {}", daily.stripName());
+                comicCacher.cacheSingle(true, daily);
             }
-
-            // Check for New KingFeatures
-            for (IComicsBootstrap king : config.getKingComics()) {
-                var comic = findComicItem(comicConfig, king);
-                if (comic == null) {
-                    if (log.isInfoEnabled())
-                        log.info("Bootstrapping new KingFeatures: {}", king.stripName());
-                    cacher.cacheSingle(true, king);
-                }
-            }
-
-            // Removed entries found in ComicConfig, but not in the CacherBootstrapConfig
-            comicConfig.items.entrySet().removeIf(integerComicItemEntry -> findBootstrapComic(config, integerComicItemEntry.getValue()) == null);
-
-
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            log.error(e.getMessage());
         }
+
+        // Check for New KingFeatures
+        for (IComicsBootstrap king : config.getKingComics()) {
+            var comic = findComicItem(comicConfig, king);
+            if (comic == null) {
+                if (log.isInfoEnabled())
+                    log.info("Bootstrapping new KingFeatures: {}", king.stripName());
+                comicCacher.cacheSingle(true, king);
+            }
+        }
+
+        // Removed entries found in ComicConfig, but not in the CacherBootstrapConfig
+        comicConfig.items.entrySet().removeIf(integerComicItemEntry -> findBootstrapComic(config, integerComicItemEntry.getValue()) == null);
+
+
         log.info("Reconciliation complete");
     }
 

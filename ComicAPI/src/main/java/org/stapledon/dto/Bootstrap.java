@@ -1,14 +1,14 @@
-package org.stapledon.config;
+package org.stapledon.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.context.annotation.Configuration;
+import org.stapledon.config.GoComicsBootstrap;
+import org.stapledon.config.KingComicsBootStrap;
 
 import java.util.List;
 
-@Configuration
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor

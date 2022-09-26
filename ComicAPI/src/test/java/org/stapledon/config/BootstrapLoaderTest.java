@@ -3,6 +3,7 @@ package org.stapledon.config;
 import com.google.common.io.CharSource;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
+import org.stapledon.dto.Bootstrap;
 
 import java.io.IOException;
 import java.io.InputStream;
