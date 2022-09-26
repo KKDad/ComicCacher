@@ -1,5 +1,6 @@
 package org.stapledon.downloader;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.caching.ICachable;
@@ -19,13 +20,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 
+@Slf4j
 public class ComicCacher
 {
 
     private final CacherBootstrapConfig config;
     private final JsonConfigWriter statsUpdater;
-    private final Logger logger = LoggerFactory.getLogger(ComicCacher.class);
-
     private final String cacheDirectory;
 
     public ComicCacher() throws NoSuchAlgorithmException, KeyManagementException
@@ -41,14 +41,14 @@ public class ComicCacher
 
         String directory = System.getenv("CACHE_DIRECTORY");
         if (directory == null) {
-            logger.error("CACHE_DIRECTORY not set. Defaulting to /comics");
+            log.error("CACHE_DIRECTORY not set. Defaulting to /comics");
             directory = "/comics";
         }
         this.cacheDirectory = directory;
-        logger.warn("Caching to {}", this.cacheDirectory);
+        log.warn("Caching to {}", this.cacheDirectory);
 
         config = new CacherConfigLoader().load();
-        logger.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.dailyComics.size(), config.kingComics.size());
+        log.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.dailyComics.size(), config.kingComics.size());
         statsUpdater = new JsonConfigWriter(this.cacheDirectory + "/comics.json");
     }
 
@@ -74,7 +74,7 @@ public class ComicCacher
         try {
             cacheComic(dcc);
         } catch (Exception e) {
-            logger.error(String.format("Failed to cache %s : %s", dcc.stripName(), e.getMessage()), e);
+            log.error(String.format("Failed to cache %s : %s", dcc.stripName(), e.getMessage()), e);
             result = false;
         }
         return result;
@@ -116,10 +116,10 @@ public class ComicCacher
 
     private boolean cacheComic(IComicsBootstrap dcc)
     {
-        if (logger.isInfoEnabled()) {
-            logger.info("***********************************************************************************************");
-            logger.info("Processing: {}", dcc.stripName());
-            logger.info("***********************************************************************************************");
+        if (log.isInfoEnabled()) {
+            log.info("***********************************************************************************************");
+            log.info("Processing: {}", dcc.stripName());
+            log.info("***********************************************************************************************");
         }
 
         // Only search back 7 days unless we are refilling

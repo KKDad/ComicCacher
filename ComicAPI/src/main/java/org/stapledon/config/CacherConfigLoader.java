@@ -1,6 +1,7 @@
 package org.stapledon.config;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,17 +9,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 
+@Slf4j
 public class CacherConfigLoader
 {
-    private static final Logger logger = LoggerFactory.getLogger(CacherConfigLoader.class);
-
     /**
      * Load the configuration from the default resources
      * @return CacherBootstrapConfig that was loaded
      */
     public CacherBootstrapConfig load()
     {
-        logger.warn("Loading CacherBootstrapConfig from: {}", this.getClass().getClassLoader().getResource("ComicCacher.json"));
+        log.warn("Loading CacherBootstrapConfig from: {}", this.getClass().getClassLoader().getResource("ComicCacher.json"));
 
         var inputStream = this.getClass()
                 .getClassLoader()

@@ -2,6 +2,7 @@ package org.stapledon.utils;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.io.Files;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
@@ -14,13 +15,12 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class CacheUtils
 {
     private static final int WARNING_TIME_MS = 100;
     public static final String COMBINE_PATH = "%s/%s";
     private final String cacheHome;
-    private static final Logger logger = LoggerFactory.getLogger(CacheUtils.class);
-
 
     public CacheUtils(String cacheHome)
     {
@@ -66,8 +66,8 @@ public class CacheUtils
         Arrays.sort(cachedStrips, String::compareTo);
 
         timer.stop();
-        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && logger.isInfoEnabled())
-                logger.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
+        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
+                log.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
 
         return new File(String.format(COMBINE_PATH, folder.getAbsolutePath(), which == Direction.FORWARD ? cachedStrips[0] : cachedStrips[cachedStrips.length - 1]));
     }
@@ -88,8 +88,8 @@ public class CacheUtils
             if (folder.exists()) {
 
                 timer.stop();
-                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && logger.isInfoEnabled())
-                    logger.info(String.format("findNext took: %s for %s", timer.toString(), comic.name));
+                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
+                    log.info(String.format("findNext took: %s for %s", timer.toString(), comic.name));
 
                 return folder;
             }
@@ -114,8 +114,8 @@ public class CacheUtils
             if (folder.exists()) {
 
                 timer.stop();
-                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && logger.isInfoEnabled())
-                    logger.info(String.format("findPrevious took: %s for %s", timer.toString(), comic.name));
+                if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
+                    log.info(String.format("findPrevious took: %s for %s", timer.toString(), comic.name));
 
                 return folder;
             }

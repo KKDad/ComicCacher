@@ -1,7 +1,6 @@
 package org.stapledon.api;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.dto.ComicItem;
@@ -9,12 +8,10 @@ import org.stapledon.dto.ComicItem;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
+@Slf4j
 @Component
 public class UpdateService implements IUpdateService
 {
-    private static final Logger logger = LoggerFactory.getLogger(UpdateService.class);
-
-
     @Override
     public boolean updateAll()
     {
@@ -22,7 +19,7 @@ public class UpdateService implements IUpdateService
             var comicCacher = new ComicCacher();
             return comicCacher.cacheAll();
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return false;
     }
@@ -40,7 +37,7 @@ public class UpdateService implements IUpdateService
             return comicCacher.cacheSingle(comic);
 
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return false;
     }

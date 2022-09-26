@@ -1,7 +1,6 @@
 package org.stapledon.api;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.stapledon.dto.ComicItem;
@@ -18,13 +17,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Component
 public class ComicsService implements IComicsService
 {
     static String cacheLocation;
-
-    private static final Logger logger = LoggerFactory.getLogger(ComicsService.class);
-
 
     private static List<ComicItem> comics = new ArrayList<>();
     public  static List<ComicItem> getComics() { return comics; }
@@ -54,7 +51,7 @@ public class ComicsService implements IComicsService
     {
         var comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
         if (comic == null)
-            logger.error("Unknown comic id={}, total known: {}", comicId, comics.size());
+            log.error("Unknown comic id={}, total known: {}", comicId, comics.size());
         return comic;
     }
 
@@ -89,7 +86,7 @@ public class ComicsService implements IComicsService
     @Override
     public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException
     {
-        logger.trace("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
+        log.trace("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
         var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
@@ -100,7 +97,7 @@ public class ComicsService implements IComicsService
         var cacheUtils = new CacheUtils(cacheLocation);
         File image = cacheUtils.findFirst(comic, which);
         if (image == null) {
-            logger.error("Unable to locate first strip for {}", comic.name);
+            log.error("Unable to locate first strip for {}", comic.name);
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -112,7 +109,7 @@ public class ComicsService implements IComicsService
     @Override
     public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException
     {
-        logger.trace("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
+        log.trace("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
         var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
@@ -127,7 +124,7 @@ public class ComicsService implements IComicsService
         else
             image = cacheUtils.findPrevious(comic, from);
         if (image == null) {
-            logger.error("Unable to locate first strip for {}", comic.name);
+            log.error("Unable to locate first strip for {}", comic.name);
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -154,8 +151,8 @@ public class ComicsService implements IComicsService
         String comicNameParsed = comic.name.replace(" ", "");
         var avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
         if (!avatar.exists()) {
-            logger.error("Unable to locate avatar for {}", comic.name);
-            logger.error("   checked {}", avatar.getAbsolutePath());
+            log.error("Unable to locate avatar for {}", comic.name);
+            log.error("   checked {}", avatar.getAbsolutePath());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 

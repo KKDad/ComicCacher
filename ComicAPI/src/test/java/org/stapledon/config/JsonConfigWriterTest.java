@@ -55,7 +55,7 @@ class JsonConfigWriterTest {
         // Assert
         File f = new File(fileName);
         assertThat(f).exists();
-        assertThat(f.length()).isPositive();
+        assertThat(f).isNotEmpty();
     }
 
 

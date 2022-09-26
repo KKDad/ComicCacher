@@ -1,5 +1,6 @@
 package org.stapledon.downloader;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
@@ -16,10 +17,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+@Slf4j
 public class GoComics extends DailyComic
 {
-    private static final Logger logger = LoggerFactory.getLogger(GoComics.class);
-
     public GoComics(IWebInspector inspector)
     {
         super(inspector, "[src]");
@@ -57,7 +57,7 @@ public class GoComics extends DailyComic
     {
         try {
             String url = this.generateAboutUTL();
-            logger.info("Getting Comic Description from {}", url);
+            log.info("Getting Comic Description from {}", url);
 
             Document doc = Jsoup.connect(url)
                     .userAgent(USER_AGENT)
@@ -79,13 +79,13 @@ public class GoComics extends DailyComic
             {
                 Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
                 cacheImage(featureAvatars, avatarCached.getAbsolutePath());
-                logger.trace("Avatar has been cached ");
+                log.trace("Avatar has been cached ");
             }
 
 
 
         } catch (IOException | Selector.SelectorParseException e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
         }
     }
 

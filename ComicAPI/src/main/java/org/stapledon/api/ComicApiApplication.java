@@ -1,5 +1,6 @@
 package org.stapledon.api;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -17,17 +18,16 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+@Slf4j
 @SpringBootApplication
 public class ComicApiApplication
 {
-	private static final Logger logger = LoggerFactory.getLogger(ComicApiApplication.class);
-
 	public ComicApiApplication() {
-		logger.info("ComicApiApplication starting...");
+		log.info("ComicApiApplication starting...");
 
 		String dir = System.getenv("CACHE_DIRECTORY");
 		if (dir == null) {
-			logger.error("CACHE_DIRECTORY not set. Defaulting to /comics");
+			log.error("CACHE_DIRECTORY not set. Defaulting to /comics");
 			dir = "/comics";
 		}
 
@@ -36,7 +36,7 @@ public class ComicApiApplication
 			directory.mkdirs();
 		}
 		ComicsService.cacheLocation = dir;
-		logger.warn("Serving from {}", dir);
+		log.warn("Serving from {}", dir);
 
 		try {
 			var jsonConfigWriter = new JsonConfigWriter(ComicsService.cacheLocation + "/comics.json");
@@ -45,10 +45,10 @@ public class ComicApiApplication
 			comicConfig = jsonConfigWriter.loadComics();
 
 			ComicsService.getComics().addAll(comicConfig.items.values());
-			logger.info("Loaded: {} comics.", ComicsService.getComics().size());
+			log.info("Loaded: {} comics.", ComicsService.getComics().size());
 
 		} catch (IOException fne) {
-			logger.error("Cannot load ComicList", fne);
+			log.error("Cannot load ComicList", fne);
 		}
 
 		// Ensure we cache comics once a day
@@ -62,7 +62,7 @@ public class ComicApiApplication
 	 */
 	public void reconcileBoostrapConfig(ComicConfig comicConfig)
 	{
-		logger.info("Begin Reconciliation of CacherBootstrapConfig and ComicConfig");
+		log.info("Begin Reconciliation of CacherBootstrapConfig and ComicConfig");
 		try {
 			var cacher = new ComicCacher();
 			CacherBootstrapConfig config = cacher.bootstrapConfig();
@@ -71,8 +71,8 @@ public class ComicApiApplication
 			for (IComicsBootstrap daily : config.dailyComics) {
 				var comic = findComicItem(comicConfig, daily);
 				if (comic == null) {
-					if (logger.isInfoEnabled())
-						logger.info("Bootstrapping new DailyComic: {}", daily.stripName());
+					if (log.isInfoEnabled())
+						log.info("Bootstrapping new DailyComic: {}", daily.stripName());
 					cacher.cacheSingle(true,daily);
 				}
 			}
@@ -81,8 +81,8 @@ public class ComicApiApplication
 			for (IComicsBootstrap king : config.kingComics) {
 				var comic = findComicItem(comicConfig, king);
 				if (comic == null) {
-					if (logger.isInfoEnabled())
-						logger.info("Bootstrapping new KingFeatures: {}", king.stripName());
+					if (log.isInfoEnabled())
+						log.info("Bootstrapping new KingFeatures: {}", king.stripName());
 					cacher.cacheSingle(true, king);
 				}
 			}
@@ -92,9 +92,9 @@ public class ComicApiApplication
 
 
 		} catch (NoSuchAlgorithmException | KeyManagementException e) {
-			logger.error(e.getMessage());
+			log.error(e.getMessage());
 		}
-		logger.info("Reconciliation complete");
+		log.info("Reconciliation complete");
 	}
 
 	/**
@@ -114,8 +114,8 @@ public class ComicApiApplication
 			if (kingComics != null)
 				return kingComics;
 		}
-		if (logger.isWarnEnabled())
-			logger.warn("{} was not found. Disabling", comic.name);
+		if (log.isWarnEnabled())
+			log.warn("{} was not found. Disabling", comic.name);
 		return null;
 	}
 

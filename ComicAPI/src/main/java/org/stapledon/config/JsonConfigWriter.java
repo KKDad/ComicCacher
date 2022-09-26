@@ -2,6 +2,7 @@ package org.stapledon.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
@@ -9,9 +10,9 @@ import org.stapledon.dto.ImageCacheStats;
 
 import java.io.*;
 
+@Slf4j
 public class JsonConfigWriter
 {
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(JsonConfigWriter.class);
     private final Gson gson;
     private final String configPath;
     private ComicConfig comics;
@@ -27,7 +28,7 @@ public class JsonConfigWriter
         try {
             loadComics();
             comics.items.put(item.name.hashCode(), item);
-            logger.info("Saving: {}, Total comics: {}", item.name, comics.items.entrySet().size());
+            log.info("Saving: {}, Total comics: {}", item.name, comics.items.entrySet().size());
 
             Writer writer = new FileWriter(configPath);
             gson.toJson(comics, writer);
@@ -35,7 +36,7 @@ public class JsonConfigWriter
             writer.close();
 
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -43,12 +44,12 @@ public class JsonConfigWriter
     {
         try {
             loadComics();
-            logger.info("Fetching {}", name);
+            log.info("Fetching {}", name);
 
             if (this.comics.items.containsKey(name.hashCode()))
                 return this.comics.items.get(name.hashCode());
         } catch (FileNotFoundException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -68,9 +69,9 @@ public class JsonConfigWriter
             Reader reader = new InputStreamReader(inputStream);
 
             comics = gson.fromJson(reader, ComicConfig.class);
-            logger.info("Loaded {} comics from {}, ", comics.items.entrySet().size(), configPath);
+            log.info("Loaded {} comics from {}, ", comics.items.entrySet().size(), configPath);
         } else {
-            logger.warn("{} does not exist, creating", configPath);
+            log.warn("{} does not exist, creating", configPath);
             comics = new ComicConfig();
         }
         return comics;
@@ -90,7 +91,7 @@ public class JsonConfigWriter
             writer.close();
             return true;
         } catch (IOException ioe) {
-            logger.error(ioe.getMessage(), ioe);
+            log.error(ioe.getMessage(), ioe);
         }
         return false;
     }

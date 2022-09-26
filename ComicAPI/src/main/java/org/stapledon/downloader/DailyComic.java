@@ -1,6 +1,7 @@
 package org.stapledon.downloader;
 
 import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -22,14 +23,13 @@ import java.util.Objects;
 /**
  * Base class for all ComicCachers.
  */
+@Slf4j
 public abstract class DailyComic implements IDailyComic, ICachable
 {
     static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36";
     static final int TIMEOUT = 5 * 1000;
 
     private Path cacheDirectory;
-
-    private static final Logger logger = LoggerFactory.getLogger(DailyComic.class);
 
     final IWebInspector webInspector;
     final String elementSelector;
@@ -99,7 +99,7 @@ public abstract class DailyComic implements IDailyComic, ICachable
                 default:
                     throw new UnsupportedOperationException();
             }
-            logger.info("Downloading Image from: {}", urlImage);
+            log.info("Downloading Image from: {}", urlImage);
             try (InputStream in = urlImage.openStream()) {
                 var buffer = new byte[4096];
                 int n;
@@ -108,10 +108,10 @@ public abstract class DailyComic implements IDailyComic, ICachable
                     os.write(buffer, 0, n);
                 }
             }
-            logger.trace("Image saved");
+            log.trace("Image saved");
             return true;
         } catch (FileNotFoundException e) {
-            logger.error("Failed to save Image:", e);
+            log.error("Failed to save Image:", e);
 
         } finally {
             if (os != null)
@@ -129,13 +129,13 @@ public abstract class DailyComic implements IDailyComic, ICachable
     {
         var f = new File(generateCachedName());
         if (f.exists()) {
-            if (logger.isTraceEnabled())
-                logger.trace("Image has already been cached as: {}", f.getAbsolutePath());
+            if (log.isTraceEnabled())
+                log.trace("Image has already been cached as: {}", f.getAbsolutePath());
             return true;
         }
 
-        if (logger.isDebugEnabled())
-            logger.debug("Caching image to: {}", f.getAbsolutePath());
+        if (log.isDebugEnabled())
+            log.debug("Caching image to: {}", f.getAbsolutePath());
 
         try {
             String url = this.generateSiteURL();
@@ -150,9 +150,9 @@ public abstract class DailyComic implements IDailyComic, ICachable
 
             Elements image = this.pickImages(media);
             if (image == null || image.isEmpty()) {
-                logger.error("No images was selected from the media");
-                logger.error("Site:             {}", url);
-                logger.error("Element Selector: {}", elementSelector);
+                log.error("No images was selected from the media");
+                log.error("Site:             {}", url);
+                log.error("Element Selector: {}", elementSelector);
                 webInspector.dumpMedia(media);
                 return false;
             }
@@ -183,8 +183,8 @@ public abstract class DailyComic implements IDailyComic, ICachable
         var directoryName = String.format("%s/%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
         var directory = new File(directoryName);
         if (!directory.exists()) {
-            if (logger.isDebugEnabled())
-                logger.debug("Creating utils directory to: {}", directoryName);
+            if (log.isDebugEnabled())
+                log.debug("Creating utils directory to: {}", directoryName);
             if (!directory.mkdirs())
                 throw new IllegalStateException("Cannot create cache location");
         }
@@ -199,8 +199,8 @@ public abstract class DailyComic implements IDailyComic, ICachable
     public IDailyComic setDate(LocalDate date)
     {
         this.currentDate = date;
-        if (logger.isInfoEnabled())
-            logger.info("Date set to: {}", this.currentDate);
+        if (log.isInfoEnabled())
+            log.info("Date set to: {}", this.currentDate);
 
         return this;
     }
@@ -220,8 +220,8 @@ public abstract class DailyComic implements IDailyComic, ICachable
     {
         this.comicName = comicName;
         this.comicNameParsed = comicName.replace(" ", "");
-        if (logger.isInfoEnabled())
-            logger.info("Comic: {}", this.comicName);
+        if (log.isInfoEnabled())
+            log.info("Comic: {}", this.comicName);
 
         return this;
     }
