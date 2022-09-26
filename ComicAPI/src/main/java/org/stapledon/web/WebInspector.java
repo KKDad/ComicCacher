@@ -9,10 +9,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Methods for debugging new site retrievals
  */
-public class WebInspector implements IWebInspector
-{
-    public  static final String ABS_SRC = "abs:src";
-    public  static final String CONTENT = "content";
+public class WebInspector implements IWebInspector {
+    public static final String ABS_SRC = "abs:src";
+    public static final String CONTENT = "content";
 
     private static final Logger logger = LoggerFactory.getLogger(WebInspector.class);
 
@@ -59,7 +58,8 @@ public class WebInspector implements IWebInspector
 
     /**
      * Utility method to log a single line to Log4j if logging at debug is enabled.
-     * @param msg Line to Log
+     *
+     * @param msg  Line to Log
      * @param args Parameter to Line
      */
     private void print(String msg, Object... args) {

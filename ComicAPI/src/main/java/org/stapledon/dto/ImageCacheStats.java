@@ -10,8 +10,7 @@ import java.util.List;
 @EqualsAndHashCode
 @AllArgsConstructor
 @Builder
-public class ImageCacheStats
-{
+public class ImageCacheStats {
     private String oldestImage;
     private String newestImage;
     private List<String> years;

@@ -4,8 +4,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 
 @SpringBootTest(classes = ComicApiApplication.class)
-public class ImageControllerTest
-{
+public class ImageControllerTest {
 //    @Rule
 //    public JUnitRestDocumentation restDocumentation = new JUnitRestDocumentation("build/generated-snippets");
 //

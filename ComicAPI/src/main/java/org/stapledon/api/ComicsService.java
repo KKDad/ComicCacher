@@ -9,8 +9,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface ComicsService
-{
+public interface ComicsService {
     List<ComicItem> retrieveAll();
 
     ComicItem retrieveComic(int comicId);
@@ -25,6 +24,6 @@ public interface ComicsService
 
     ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException;
 
-    ResponseEntity<ImageDto> retrieveAvatar(int comicId)  throws IOException;
+    ResponseEntity<ImageDto> retrieveAvatar(int comicId) throws IOException;
 
 }

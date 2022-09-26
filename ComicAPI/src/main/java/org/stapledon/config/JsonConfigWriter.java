@@ -2,8 +2,9 @@ package org.stapledon.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageCacheStats;
@@ -11,20 +12,19 @@ import org.stapledon.dto.ImageCacheStats;
 import java.io.*;
 
 @Slf4j
-public class JsonConfigWriter
-{
+@RequiredArgsConstructor
+public class JsonConfigWriter {
+    @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final String configPath;
     private ComicConfig comics;
 
-    public JsonConfigWriter(String path)
-    {
+    public JsonConfigWriter(String path) {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.configPath = path;
     }
 
-    public void save(ComicItem item)
-    {
+    public void save(ComicItem item) {
         try {
             loadComics();
             comics.items.put(item.name.hashCode(), item);
@@ -40,8 +40,7 @@ public class JsonConfigWriter
         }
     }
 
-    public ComicItem fetch(String name)
-    {
+    public ComicItem fetch(String name) {
         try {
             loadComics();
             log.info("Fetching {}", name);
@@ -58,8 +57,7 @@ public class JsonConfigWriter
     /**
      * Load any previously saved configuration
      */
-    public ComicConfig loadComics() throws FileNotFoundException
-    {
+    public ComicConfig loadComics() throws FileNotFoundException {
         if (comics != null && !comics.items.isEmpty())
             return comics;
 
@@ -79,7 +77,8 @@ public class JsonConfigWriter
 
     /**
      * Save ImageCacheStats Stats to the root of a Image folder
-     * @param ic Statistics to save
+     *
+     * @param ic              Statistics to save
      * @param targetDirectory Location to Save them to
      * @return True if successfully written
      */

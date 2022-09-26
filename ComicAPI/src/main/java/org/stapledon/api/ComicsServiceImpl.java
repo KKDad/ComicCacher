@@ -1,8 +1,8 @@
 package org.stapledon.api;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ComicList;
@@ -20,12 +20,15 @@ import java.util.List;
 
 @Slf4j
 @Service
-public class ComicsServiceImpl implements ComicsService
-{
-    static String cacheLocation;
+@RequiredArgsConstructor
+public class ComicsServiceImpl implements ComicsService {
+    private final String cacheLocation;
 
     private static List<ComicItem> comics = new ArrayList<>();
-    public  static List<ComicItem> getComics() { return comics; }
+
+    public static List<ComicItem> getComics() {
+        return comics;
+    }
 
     /**
      * Return details of a all configured comics
@@ -33,8 +36,7 @@ public class ComicsServiceImpl implements ComicsService
      * @return list of all configured comics
      */
     @Override
-    public List<ComicItem> retrieveAll()
-    {
+    public List<ComicItem> retrieveAll() {
         var list = new ComicList();
         list.getComics().addAll(comics);
         Collections.sort(list.getComics());
@@ -48,8 +50,7 @@ public class ComicsServiceImpl implements ComicsService
      * @return details of the api
      */
     @Override
-    public ComicItem retrieveComic(int comicId)
-    {
+    public ComicItem retrieveComic(int comicId) {
         var comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
         if (comic == null)
             log.error("Unknown comic id={}, total known: {}", comicId, comics.size());
@@ -73,20 +74,20 @@ public class ComicsServiceImpl implements ComicsService
     @Override
     public boolean deleteComic(int comicId) {
 
-       ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
-       return comics.remove(comic);
+        ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+        return comics.remove(comic);
     }
 
 
     /**
      * Returns the strip image for a specified api
+     *
      * @param comicId - Comic to retrieve
-     * @param which - Direction to retrive from, either oldest or newest.
+     * @param which   - Direction to retrive from, either oldest or newest.
      * @return 200 with the image or 404 with no response body if not found
      */
     @Override
-    public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException
-    {
+    public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException {
         log.trace("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
         var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
@@ -108,8 +109,7 @@ public class ComicsServiceImpl implements ComicsService
     }
 
     @Override
-    public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException
-    {
+    public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException {
         log.trace("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
         var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
@@ -136,12 +136,12 @@ public class ComicsServiceImpl implements ComicsService
 
     /**
      * Returns the avatar for a specified api
+     *
      * @param comicId - Comic to retrieve
      * @return 200 with the image or 404 with no response body if not found
      */
     @Override
-    public ResponseEntity<ImageDto> retrieveAvatar(int comicId)  throws IOException
-    {
+    public ResponseEntity<ImageDto> retrieveAvatar(int comicId) throws IOException {
         var headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 

@@ -22,14 +22,12 @@ class JsonConfigWriterTest {
     private Path path;
 
     @BeforeEach
-    void setup()throws IOException
-    {
+    void setup() throws IOException {
         path = Files.createTempDirectory("JsonConfigWriterTest");
     }
 
     @AfterEach
-    void teardown()throws IOException
-    {
+    void teardown() throws IOException {
         if (!Files.exists(path))
             return;
 

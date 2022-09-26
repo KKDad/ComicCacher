@@ -4,12 +4,11 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 @SuppressWarnings({"squid:ClassVariableVisibilityCheck"})
-public class ComicItem implements Comparable<ComicItem>
-{
-    public ComicItem()
-    {
+public class ComicItem implements Comparable<ComicItem> {
+    public ComicItem() {
         // No-argument constructor required for gson
     }
+
     public int id;
     public String name;
     public String author;

@@ -31,8 +31,7 @@ public class ImageUtils {
     public static ImageDto getImageDto(File image) throws IOException {
         byte[] media = Files.readAllBytes(image.toPath());
         var dto = new ImageDto();
-        try(InputStream is = new ByteArrayInputStream(media))
-        {
+        try (InputStream is = new ByteArrayInputStream(media)) {
             BufferedImage bi = ImageIO.read(is);
             dto.mimeType = MediaType.IMAGE_PNG.toString();
             dto.imageData = Base64.getEncoder().withoutPadding().encodeToString(media);

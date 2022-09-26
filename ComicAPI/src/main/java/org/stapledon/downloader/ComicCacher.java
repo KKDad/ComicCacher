@@ -1,14 +1,11 @@
 package org.stapledon.downloader;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.stapledon.caching.ICachable;
 import org.stapledon.caching.ImageCacheStatsUpdater;
-import org.stapledon.config.CacherBootstrapConfig;
-import org.stapledon.config.CacherConfigLoader;
-import org.stapledon.config.IComicsBootstrap;
-import org.stapledon.config.JsonConfigWriter;
+import org.stapledon.config.*;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.web.DefaultTrustManager;
 
@@ -21,21 +18,21 @@ import java.security.SecureRandom;
 import java.time.LocalDate;
 
 @Slf4j
-public class ComicCacher
-{
+@Component
+@RequiredArgsConstructor
+public class ComicCacher {
 
-    private final CacherBootstrapConfig config;
+    private final Bootstrap config;
     private final JsonConfigWriter statsUpdater;
     private final String cacheDirectory;
 
-    public ComicCacher() throws NoSuchAlgorithmException, KeyManagementException
-    {
+    public ComicCacher() throws NoSuchAlgorithmException, KeyManagementException {
         // configure the SSLContext with a TrustManager
         try {
             var ctx = SSLContext.getInstance("TLSv1.2");
             ctx.init(new KeyManager[0], new TrustManager[]{new DefaultTrustManager()}, new SecureRandom());
             SSLContext.setDefault(ctx);
-        } catch (NoSuchAlgorithmException | KeyManagementException e){
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
             // Ignore - Powermock issue during unit tests?
         }
 
@@ -47,25 +44,25 @@ public class ComicCacher
         this.cacheDirectory = directory;
         log.warn("Caching to {}", this.cacheDirectory);
 
-        config = new CacherConfigLoader().load();
-        log.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.dailyComics.size(), config.kingComics.size());
+        config = new CacherConfigLoader(new GsonProvider().gson()).load();
+        log.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.getDailyComics().size(), config.getKingComics().size());
         statsUpdater = new JsonConfigWriter(this.cacheDirectory + "/comics.json");
     }
 
-    public CacherBootstrapConfig bootstrapConfig() {
+    public Bootstrap bootstrapConfig() {
         return this.config;
     }
 
     /**
      * Attempt to cache all of the configured comics. Does not stop if one or more comics fail to be cached.
+     *
      * @return True if all comics where successfully cached, false if one or more fail to be cached.
      */
-    public boolean cacheAll()
-    {
+    public boolean cacheAll() {
         var result = true;
-        for (IComicsBootstrap dcc : config.dailyComics)
+        for (IComicsBootstrap dcc : config.getDailyComics())
             result = cacheSingle(result, dcc);
-        for (IComicsBootstrap dcc : config.kingComics)
+        for (IComicsBootstrap dcc : config.getKingComics())
             result = cacheSingle(result, dcc);
         return result;
     }
@@ -82,11 +79,11 @@ public class ComicCacher
 
     /**
      * Cache all comics for a particular ComicItem.
+     *
      * @param comic ComicItem to perform caching on
      * @return true if successful
      */
-    public boolean cacheSingle(ComicItem comic)
-    {
+    public boolean cacheSingle(ComicItem comic) {
         IComicsBootstrap dailyComic = lookupGoComics(comic);
         if (dailyComic != null)
             return cacheComic(dailyComic);
@@ -96,26 +93,24 @@ public class ComicCacher
 
     /**
      * Giving a ComicItem, Locate the corresponding IComicsBootstrap from the BootStrap configuration
+     *
      * @param comic ComicItem to lookup
      * @return IComicsBootstrap or null if none could be located
      */
-    IComicsBootstrap lookupGoComics(ComicItem comic)
-    {
-        if (!config.dailyComics.isEmpty()) {
-            IComicsBootstrap dailyComics = config.dailyComics.stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
+    IComicsBootstrap lookupGoComics(ComicItem comic) {
+        if (!config.getDailyComics().isEmpty()) {
+            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
             if (dailyComics != null)
                 return dailyComics;
         }
-        if (!config.kingComics.isEmpty()) {
-            return config.kingComics.stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
+        if (!config.getKingComics().isEmpty()) {
+            return config.getKingComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
         }
         return null;
     }
 
 
-
-    private boolean cacheComic(IComicsBootstrap dcc)
-    {
+    private boolean cacheComic(IComicsBootstrap dcc) {
         if (log.isInfoEnabled()) {
             log.info("***********************************************************************************************");
             log.info("Processing: {}", dcc.stripName());
@@ -148,7 +143,7 @@ public class ComicCacher
         statsUpdater.save(comicItem);
 
         // Update statistics about the cached images
-        var cache = new ImageCacheStatsUpdater(((ICachable)comics).cacheLocation(), statsUpdater);
+        var cache = new ImageCacheStatsUpdater(((ICachable) comics).cacheLocation(), statsUpdater);
         cache.updateStats();
 
         return true;

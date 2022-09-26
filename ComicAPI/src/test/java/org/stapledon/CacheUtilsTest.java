@@ -13,8 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class CacheUtilsTest {
 
-    ComicItem comicItem()
-    {
+    ComicItem comicItem() {
         ComicItem item1 = new ComicItem();
         item1.id = 42;
         item1.name = "Fake Comic";
@@ -25,16 +24,13 @@ public class CacheUtilsTest {
         return item1;
     }
 
-    private CacheUtils getSubject()
-    {
-            File resourcesDirectory = getResourcesDirectory();
-            TestUtils.setEnv("CACHE_DIRECTORY", resourcesDirectory.toString());
-            return new CacheUtils(resourcesDirectory.toString());
+    private CacheUtils getSubject() {
+        File resourcesDirectory = getResourcesDirectory();
+        return new CacheUtils(resourcesDirectory.toString());
     }
 
     @Test
-     void findOldestTest()
-    {
+    void findOldestTest() {
         CacheUtils subject = getSubject();
         File result = subject.findOldest(comicItem());
 
@@ -43,8 +39,7 @@ public class CacheUtilsTest {
     }
 
     @Test
-    void findNewestTest()
-    {
+    void findNewestTest() {
         CacheUtils subject = getSubject();
         File result = subject.findNewest(comicItem());
 
@@ -53,8 +48,7 @@ public class CacheUtilsTest {
     }
 
     @Test
-    void findFirstForwardTest()
-    {
+    void findFirstForwardTest() {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.FORWARD);
 
@@ -64,8 +58,7 @@ public class CacheUtilsTest {
 
 
     @Test
-    void findFirstBackwardsTest() throws IOException
-    {
+    void findFirstBackwardsTest() throws IOException {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.BACKWARD);
 
@@ -75,9 +68,8 @@ public class CacheUtilsTest {
 
 
     @Test
-    void findPreviousTest() throws IOException
-    {
-        LocalDate dt =  LocalDate.of(2008, 01, 11);
+    void findPreviousTest() throws IOException {
+        LocalDate dt = LocalDate.of(2008, 01, 11);
         CacheUtils subject = getSubject();
         File result = subject.findPrevious(comicItem(), dt);
 
@@ -86,9 +78,8 @@ public class CacheUtilsTest {
     }
 
     @Test
-    void findNextTest() throws IOException
-    {
-        LocalDate dt =  LocalDate.of(2008, 01, 11);
+    void findNextTest() throws IOException {
+        LocalDate dt = LocalDate.of(2008, 01, 11);
         CacheUtils subject = getSubject();
         File result = subject.findNext(comicItem(), dt);
 
@@ -97,10 +88,9 @@ public class CacheUtilsTest {
     }
 
 
-
-
     /**
      * Helper method to the test resources directory
+     *
      * @return File
      */
     public static File getResourcesDirectory() {

@@ -3,17 +3,15 @@ package org.stapledon;
 import java.lang.reflect.Field;
 import java.util.Map;
 
-public class TestUtils
-{
+public class TestUtils {
 
     /**
      * Set an Environment variable, only for testing purposes. This will only work under linux
      *
-     * @param key Environment variable
+     * @param key   Environment variable
      * @param value Value to set
      */
-    public static void setEnv(String key, String value)
-    {
+    public static void setEnv(String key, String value) {
         try {
             Map<String, String> env = System.getenv();
             Class<?> cl = env.getClass();

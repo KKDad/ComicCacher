@@ -3,12 +3,10 @@ package org.stapledon.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ComicList
-{
+public class ComicList {
     private final List<ComicItem> comics;
 
-    public ComicList()
-    {
+    public ComicList() {
         comics = new ArrayList<>();
     }
 

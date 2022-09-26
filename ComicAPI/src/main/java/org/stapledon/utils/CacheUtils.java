@@ -3,8 +3,8 @@ package org.stapledon.utils;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.stapledon.dto.ComicItem;
 
 import java.io.File;
@@ -16,39 +16,33 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class CacheUtils
-{
+@Component
+public class CacheUtils {
     private static final int WARNING_TIME_MS = 100;
     public static final String COMBINE_PATH = "%s/%s";
     private final String cacheHome;
 
-    public CacheUtils(String cacheHome)
-    {
+    public CacheUtils(@Qualifier("cacheLocation") String cacheHome) {
         Objects.requireNonNull(cacheHome, "cacheHome must be specified");
-
         this.cacheHome = cacheHome;
     }
 
-    private File getComicHome(ComicItem comic)
-    {
+    private File getComicHome(ComicItem comic) {
         String comicNameParsed = comic.name.replace(" ", "");
         var path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
         return new File(path);
     }
 
-    public File findOldest(ComicItem comic)
-    {
+    public File findOldest(ComicItem comic) {
         return this.findFirst(comic, Direction.FORWARD);
     }
 
-    public File findNewest(ComicItem comic)
-    {
+    public File findNewest(ComicItem comic) {
         return this.findFirst(comic, Direction.BACKWARD);
     }
 
 
-    public File findFirst(ComicItem comic, Direction which)
-    {
+    public File findFirst(ComicItem comic, Direction which) {
         var timer = Stopwatch.createStarted();
         var root = getComicHome(comic);
 
@@ -67,13 +61,12 @@ public class CacheUtils
 
         timer.stop();
         if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
-                log.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
+            log.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
 
         return new File(String.format(COMBINE_PATH, folder.getAbsolutePath(), which == Direction.FORWARD ? cachedStrips[0] : cachedStrips[cachedStrips.length - 1]));
     }
 
-    public File findNext(ComicItem comic, LocalDate from)
-    {
+    public File findNext(ComicItem comic, LocalDate from) {
         var timer = Stopwatch.createStarted();
         var root = getComicHome(comic);
 
@@ -98,8 +91,7 @@ public class CacheUtils
         return null;
     }
 
-    public File findPrevious(ComicItem comic, LocalDate from)
-    {
+    public File findPrevious(ComicItem comic, LocalDate from) {
         var timer = Stopwatch.createStarted();
         var root = getComicHome(comic);
 

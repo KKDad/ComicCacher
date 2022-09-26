@@ -22,8 +22,7 @@ package org.stapledon.downloader;
 //@RunWith(PowerMockRunner.class)
 //@PrepareForTest({ ComicsService.class, ComicApiApplication.class})
 //@PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "org.w3c.dom.*", "sun.security.*"})
-public class ComicCacherTest
-{
+public class ComicCacherTest {
 //
 //    @Test
 //    public void lookupGoComicsTest()

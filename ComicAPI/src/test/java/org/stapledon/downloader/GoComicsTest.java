@@ -40,11 +40,10 @@ class GoComicsTest {
                 .forEach(File::delete);
     }
 
-    private GoComics getSubject(String name)
-    {
+    private GoComics getSubject(String name) {
         GoComics gc = new GoComics(null);
         gc.setComic(name);
-        gc.setDate(LocalDate.of(2019, 1, 1 ));
+        gc.setDate(LocalDate.of(2019, 1, 1));
         gc.setCacheRoot(path.toString());
 
         return gc;
@@ -69,8 +68,7 @@ class GoComicsTest {
     }
 
     @Test
-    void advanceTest()
-    {
+    void advanceTest() {
         // Arrange
         GoComics subject = getSubject("Adam at Home");
 

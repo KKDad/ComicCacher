@@ -36,8 +36,7 @@ class ComicsKingdomTest {
                 .forEach(File::delete);
     }
 
-    private ComicsKingdom getSubject(String name, String website, LocalDate fetchDate)
-    {
+    private ComicsKingdom getSubject(String name, String website, LocalDate fetchDate) {
         ComicsKingdom comicsKingdom = new ComicsKingdom(null, website);
         comicsKingdom.setComic(name);
 

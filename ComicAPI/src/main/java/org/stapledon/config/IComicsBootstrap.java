@@ -4,9 +4,9 @@ import org.stapledon.downloader.IDailyComic;
 
 import java.time.LocalDate;
 
-public interface IComicsBootstrap
-{
+public interface IComicsBootstrap {
     String stripName();
+
     LocalDate startDate();
 
     IDailyComic getDownloader();

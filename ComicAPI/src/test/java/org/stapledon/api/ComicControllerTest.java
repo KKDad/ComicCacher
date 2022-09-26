@@ -2,8 +2,7 @@ package org.stapledon.api;
 
 //@RunWith(SpringRunner.class)
 //@SpringBootTest(classes = ComicApiApplication.class)
-public class ComicControllerTest
-{
+public class ComicControllerTest {
 //    @Rule
 //    public JUnitRestDocumentation restDocumentation = new JUnitRestDocumentation("build/generated-snippets");
 //
