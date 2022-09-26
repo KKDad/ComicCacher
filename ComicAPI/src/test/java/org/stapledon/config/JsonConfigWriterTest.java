@@ -1,12 +1,11 @@
 package org.stapledon.config;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,18 +15,20 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.UUID;
 
-public class JsonConfigWriterTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class JsonConfigWriterTest {
     private static final Logger LOG = LoggerFactory.getLogger(JsonConfigWriterTest.class);
     private Path path;
 
-    @Before
-    public void setup()throws IOException
+    @BeforeEach
+    void setup()throws IOException
     {
         path = Files.createTempDirectory("JsonConfigWriterTest");
     }
 
-    @After
-    public void teardown()throws IOException
+    @AfterEach
+    void teardown()throws IOException
     {
         if (!Files.exists(path))
             return;
@@ -40,7 +41,7 @@ public class JsonConfigWriterTest {
     }
 
     @Test
-    public void saveTest() {
+    void saveTest() {
         // Arrange
         ComicItem item = generateTestComicItem("saveTest");
 
@@ -53,8 +54,8 @@ public class JsonConfigWriterTest {
 
         // Assert
         File f = new File(fileName);
-        Assert.assertTrue(f.exists());
-        Assert.assertTrue(f.length()> 0);
+        assertThat(f).exists();
+        assertThat(f.length()).isPositive();
     }
 
 

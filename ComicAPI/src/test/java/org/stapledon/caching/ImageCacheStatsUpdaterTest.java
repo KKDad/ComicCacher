@@ -1,7 +1,6 @@
 package org.stapledon.caching;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.stapledon.CacheUtilsTest;
 import org.stapledon.TestUtils;
 import org.stapledon.config.JsonConfigWriter;
@@ -9,12 +8,13 @@ import org.stapledon.dto.ImageCacheStats;
 
 import java.io.File;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-public class ImageCacheStatsUpdaterTest
+class ImageCacheStatsUpdaterTest
 {
     @Test
-    public void UpdateStatsTest()
+    void UpdateStatsTest()
     {
         // Arrange
         File resourcesDirectory = CacheUtilsTest.getResourcesDirectory();
@@ -30,9 +30,9 @@ public class ImageCacheStatsUpdaterTest
         ImageCacheStats stats = subject.cacheStats();
 
         // Assert
-        Assert.assertTrue(result);
-        Assert.assertEquals(3, stats.years.size());
-        Assert.assertTrue(stats.oldestImage.contains("2008-01-10.png"));
-        Assert.assertTrue(stats.newestImage.contains("2019-03-22.png"));
+        assertThat(result).isTrue();
+        assertThat(stats.years).hasSize(3);
+        assertThat(stats.oldestImage).contains("2008-01-10.png");
+        assertThat(stats.newestImage).contains("2019-03-22.png");
     }
 }

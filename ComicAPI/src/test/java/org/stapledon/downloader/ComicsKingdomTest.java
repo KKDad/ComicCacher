@@ -1,7 +1,8 @@
 package org.stapledon.downloader;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.stapledon.dto.ComicItem;
 
 import java.io.File;
@@ -13,19 +14,18 @@ import java.util.Comparator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
-public class ComicsKingdomTest {
+class ComicsKingdomTest {
 
     private static Path path;
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @BeforeAll
+    static void setUp() throws Exception {
         path = Files.createTempDirectory("ComicsKingdomTest");
         //log.info("Using TempDirectory: " + path.toString());
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
+    @AfterAll
+    static void tearDown() throws Exception {
         if (!Files.exists(path))
             return;
 
@@ -50,13 +50,12 @@ public class ComicsKingdomTest {
 
 
     @Test
-    public void ensureCacheTest() {
+    void ensureCacheTest() {
         LocalDate fetchDate = LocalDate.now().minusDays(3);
 
 
         File expectedFile = new File(String.format("%s/DaddyDaze/%s.png", path.toString(), fetchDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-        log.info("Expecting to get file: {}",  expectedFile);
-        Assert.assertFalse("expectedFile should not exist before the subject acts.", expectedFile.exists());
+        assertThat(expectedFile).doesNotExist();
 
         IDailyComic subject = getSubject("Daddy Daze", "https://www.comicskingdom.com/daddy-daze", fetchDate);
 
@@ -64,12 +63,12 @@ public class ComicsKingdomTest {
         boolean result = subject.ensureCache();
 
         // Assert
-        Assert.assertTrue("ensureCache() expected to return true", result);
-        Assert.assertTrue("expectedFile does not exist", expectedFile.exists());
+        assertThat(result).isTrue();
+        assertThat(expectedFile).exists();
     }
 
     @Test
-    public void getDaddyDazeMetadataTest() {
+    void getDaddyDazeMetadataTest() {
         // Arrange
         LocalDate fetchDate = LocalDate.now().minusDays(3);
         IDailyComic subject = getSubject("Daddy Daze", "https://www.comicskingdom.com/daddy-daze", fetchDate);

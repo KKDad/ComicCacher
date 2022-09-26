@@ -1,11 +1,14 @@
 package org.stapledon.downloader;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.dto.ComicItem;
-import org.junit.*;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -15,18 +18,18 @@ import java.util.Comparator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class GoComicsTest {
+class GoComicsTest {
     private static final Logger LOG = LoggerFactory.getLogger(GoComicsTest.class);
     private static Path path;
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @BeforeAll
+    static void setUp() throws Exception {
         path = Files.createTempDirectory("GoComicsTest");
         LOG.info("Using TempDirectory: " + path.toString());
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
+    @AfterAll
+    static void tearDown() throws Exception {
         if (!Files.exists(path))
             return;
 
@@ -49,11 +52,11 @@ public class GoComicsTest {
 
 
     @Test
-    @Ignore("Fails on bitbucket")
-    public void ensureCacheTest() {
+    @Disabled("Fails on bitbucket")
+    void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
         LOG.info("Expecting to get file: " + expectedFile.toString());
-        Assert.assertFalse("expectedFile should not exist before the subject acts.", expectedFile.exists());
+        assertThat(expectedFile).doesNotExist();
 
         IDailyComic subject = getSubject("Adam at Home");
 
@@ -61,12 +64,12 @@ public class GoComicsTest {
         boolean result = subject.ensureCache();
 
         // Assert
-        Assert.assertTrue("ensureCache() expected to return true", result);
-        Assert.assertTrue("expectedFile does not exist", expectedFile.exists());
+        assertThat(result).isTrue();
+        assertThat(expectedFile).exists();
     }
 
     @Test
-    public void advanceTest()
+    void advanceTest()
     {
         // Arrange
         GoComics subject = getSubject("Adam at Home");
@@ -75,11 +78,11 @@ public class GoComicsTest {
         LocalDate result = subject.advance();
 
         // Assert
-        Assert.assertEquals(LocalDate.of(2019, 1, 2), result);
+        assertThat(result).isEqualTo(LocalDate.of(2019, 1, 2));
     }
 
     @Test
-    public void getAdamComicDescription() {
+    void getAdamComicDescription() {
         // Arrange
         GoComics subject = getSubject("Adam at Home");
 
@@ -88,11 +91,11 @@ public class GoComicsTest {
         subject.updateComicMetadata(item);
 
         // Assert
-        Assert.assertTrue(item.description.contains("humor of Rob Harrell"));
+        assertThat(item.description).contains("humor of Rob Harrell");
     }
 
     @Test
-    public void getHermanComicDescription() {
+    void getHermanComicDescription() {
         // Arrange
         GoComics subject = getSubject("Herman");
 
@@ -101,12 +104,12 @@ public class GoComicsTest {
         subject.updateComicMetadata(item);
 
         // Assert
-        Assert.assertTrue(item.description.contains("It was his greatest wish that HERMAN live on and continue to make us laugh."));
+        assertThat(item.description).contains("It was his greatest wish that HERMAN live on and continue to make us laugh.");
     }
 
     @ParameterizedTest
     @CsvSource({"Herman,It was his greatest wish that HERMAN live on and continue to make us laugh."})
-    public void getComicDescriptionTest(String name, String expected) {
+    void getComicDescriptionTest(String name, String expected) {
         // Arrange
         GoComics subject = getSubject(name);
 

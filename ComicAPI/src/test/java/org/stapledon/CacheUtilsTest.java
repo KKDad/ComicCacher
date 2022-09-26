@@ -1,7 +1,6 @@
 package org.stapledon;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.utils.CacheUtils;
 import org.stapledon.utils.Direction;
@@ -9,6 +8,8 @@ import org.stapledon.utils.Direction;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CacheUtilsTest {
 
@@ -32,67 +33,67 @@ public class CacheUtilsTest {
     }
 
     @Test
-     public void findOldestTest()
+     void findOldestTest()
     {
         CacheUtils subject = getSubject();
         File result = subject.findOldest(comicItem());
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '2008-01-10'", result.getAbsolutePath()), result.getAbsolutePath().contains("2008-01-10"));
+        assertThat(result).isNotNull();
+        assertThat(result.getAbsolutePath()).contains("2008-01-10");
     }
 
     @Test
-    public void findNewestTest()
+    void findNewestTest()
     {
         CacheUtils subject = getSubject();
         File result = subject.findNewest(comicItem());
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '2019-03-22'", result.getAbsolutePath()), result.getAbsolutePath().contains("2019-03-22"));
+        assertThat(result).isNotNull();
+        assertThat(result.getAbsolutePath()).contains("2019-03-22");
     }
 
     @Test
-    public void findFirstForwardTest()
+    void findFirstForwardTest()
     {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.FORWARD);
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '2008-01-10'", result.getAbsolutePath()), result.getAbsolutePath().contains("2008-01-10"));
+        assertThat(result).isNotNull();
+        assertThat(result.getAbsolutePath()).contains("2008-01-10");
     }
 
 
     @Test
-    public void findFirstBackwardsTest() throws IOException
+    void findFirstBackwardsTest() throws IOException
     {
         CacheUtils subject = getSubject();
         File result = subject.findFirst(comicItem(), Direction.BACKWARD);
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '2019-03-22'", result.getAbsolutePath()), result.getAbsolutePath().contains("2019-03-22"));
+        assertThat(result).isNotNull();
+        assertThat(result.getAbsolutePath()).contains("2019-03-22");
     }
 
 
     @Test
-    public void findPreviousTest() throws IOException
+    void findPreviousTest() throws IOException
     {
         LocalDate dt =  LocalDate.of(2008, 01, 11);
         CacheUtils subject = getSubject();
         File result = subject.findPrevious(comicItem(), dt);
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '2008-01-10'", result.getAbsolutePath()), result.getAbsolutePath().contains("2008-01-10"));
+        assertThat(result).isNotNull();
+        assertThat(result.getAbsolutePath()).contains("2008-01-10");
     }
 
     @Test
-    public void findNextTest() throws IOException
+    void findNextTest() throws IOException
     {
         LocalDate dt =  LocalDate.of(2008, 01, 11);
         CacheUtils subject = getSubject();
         File result = subject.findNext(comicItem(), dt);
 
-        Assert.assertNotNull(result);
-        Assert.assertTrue(String.format("Checking if '%s' contains '2010-06-28'", result.getAbsolutePath()), result.getAbsolutePath().contains("2010-06-28"));
+        assertThat(result).isNotNull();
+        assertThat(result.getAbsolutePath()).contains("2010-06-28");
     }
 
 
@@ -107,7 +108,7 @@ public class CacheUtilsTest {
         if (!resourcesDirectory.exists())
             resourcesDirectory = new File("../src/test/resources");
 
-        Assert.assertTrue(resourcesDirectory.exists());
+        assertThat(resourcesDirectory).exists();
         return resourcesDirectory;
     }
 }
