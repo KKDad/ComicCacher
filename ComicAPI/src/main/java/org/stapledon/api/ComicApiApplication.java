@@ -1,8 +1,6 @@
 package org.stapledon.api;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.stapledon.config.CacherBootstrapConfig;
@@ -35,17 +33,17 @@ public class ComicApiApplication
 		if (!directory.exists() || directory.isDirectory()) {
 			directory.mkdirs();
 		}
-		ComicsService.cacheLocation = dir;
+		ComicsServiceImpl.cacheLocation = dir;
 		log.warn("Serving from {}", dir);
 
 		try {
-			var jsonConfigWriter = new JsonConfigWriter(ComicsService.cacheLocation + "/comics.json");
+			var jsonConfigWriter = new JsonConfigWriter(ComicsServiceImpl.cacheLocation + "/comics.json");
 			var comicConfig = jsonConfigWriter.loadComics();
 			reconcileBoostrapConfig(comicConfig);
 			comicConfig = jsonConfigWriter.loadComics();
 
-			ComicsService.getComics().addAll(comicConfig.items.values());
-			log.info("Loaded: {} comics.", ComicsService.getComics().size());
+			ComicsServiceImpl.getComics().addAll(comicConfig.items.values());
+			log.info("Loaded: {} comics.", ComicsServiceImpl.getComics().size());
 
 		} catch (IOException fne) {
 			log.error("Cannot load ComicList", fne);

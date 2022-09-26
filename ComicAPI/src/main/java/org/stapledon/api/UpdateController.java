@@ -1,21 +1,23 @@
 package org.stapledon.api;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
+@RequestMapping({"/api/v1"})
 public class UpdateController
 {
-    @Autowired
-    private IUpdateService updateService;
+    private final UpdateService updateService;
 
-    @GetMapping(path = "/api/v1/update")
+    @GetMapping(path = "/update")
     public ResponseEntity<String> updateAllComics()
     {
         var headers = new HttpHeaders();
@@ -28,7 +30,7 @@ public class UpdateController
         return new ResponseEntity<>(null, headers, HttpStatus.OK);
     }
 
-    @GetMapping(path = "/api/v1/update/{comicId}")
+    @GetMapping(path = "/update/{comicId}")
     public ResponseEntity<String> updateSpecificComic(@PathVariable int comicId)
     {
         var headers = new HttpHeaders();
