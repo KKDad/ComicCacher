@@ -2,7 +2,6 @@ package org.stapledon.downloader;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -18,8 +17,8 @@ import java.util.Comparator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class GoComicsTest {
-    private static final Logger LOG = LoggerFactory.getLogger(GoComicsTest.class);
+class GoComicsIntegrationTest {
+    private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationTest.class);
     private static Path path;
 
     @BeforeAll
@@ -49,9 +48,7 @@ class GoComicsTest {
         return gc;
     }
 
-
     @Test
-    @Disabled("Fails on bitbucket")
     void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
         LOG.info("Expecting to get file: " + expectedFile.toString());
@@ -79,34 +76,45 @@ class GoComicsTest {
         assertThat(result).isEqualTo(LocalDate.of(2019, 1, 2));
     }
 
-    @Test
-    void getAdamComicDescription() {
-        // Arrange
-        GoComics subject = getSubject("Adam at Home");
-
-        // Act
-        ComicItem item = new ComicItem();
-        subject.updateComicMetadata(item);
-
-        // Assert
-        assertThat(item.description).contains("humor of Rob Harrell");
-    }
-
-    @Test
-    void getHermanComicDescription() {
-        // Arrange
-        GoComics subject = getSubject("Herman");
-
-        // Act
-        ComicItem item = new ComicItem();
-        subject.updateComicMetadata(item);
-
-        // Assert
-        assertThat(item.description).contains("It was his greatest wish that HERMAN live on and continue to make us laugh.");
-    }
 
     @ParameterizedTest
-    @CsvSource({"Herman,It was his greatest wish that HERMAN live on and continue to make us laugh."})
+    @CsvSource({
+            "Adam at Home,By Rob Harrell",
+            "Agnes,By Tony Cochran",
+            "AndyCap,By Reg Smythe",
+            "BC,By Mastroianni and Hart",
+            "CalvinAndHobbes,By Bill Watterson",
+            "Cathy,By Cathy Guisewite",
+            "CitizenDog,By Mark O'Hare",
+            "Committed,By Gary Larson",
+            "Doonesbury,By Garry Trudeau",
+            "Drabble,By Kevin Fagan",
+            "ForBetterorForWorse,By Lynn Johnston",
+            "FoxTrot,By Bill Amend",
+            "Frank-And-Ernest,By Thaves",
+            "Garfield,By Jim Davis",
+            "GetFuzzy,By Darby Conley",
+            "Herman,By Jim Unger",
+            "Luann,By Greg Evans",
+            "NonSequitur,By Wiley Miller",
+            "Overboard,By Chip Dunham",
+            "OvertheHedge,By T Lewis and Michael Fry",
+            "PCandPixel,By Tak Bui",
+            "Peanuts,By Charles Schulz",
+            "PearlsBeforeSwine,By Stephan Pastis",
+            "Pickles,By Brian Crane",
+            "RealityCheck,By Dave Whamond",
+            "RoseisRose,By Don Wimmer and Pat Brady",
+            "ScaryGary,By Mark Buford",
+            "Shoe,By Gary Brookins and Susie MacNelly",
+            "TheBoondocks,By Aaron McGruder",
+            "TheBornLoser,By Art and Chip Sansom",
+            "TheDuplex,By Glenn McCoy",
+            "TheGrizzWells,By Bill Schorr",
+            "WizardOfId,By Parker and Hart",
+            "WorkingDaze,By John Zakour and Scott Roberts",
+            "Ziggy,By Tom Wilson & Tom II"
+               })
     void getComicDescriptionTest(String name, String expected) {
         // Arrange
         GoComics subject = getSubject(name);
@@ -116,6 +124,8 @@ class GoComicsTest {
         subject.updateComicMetadata(item);
 
         // Assert
-        assertThat(item.description).isNotNull().contains(expected);
+        assertThat(item.description).isNotNull();
+        assertThat(item.avatarAvailable).isTrue();
+        assertThat(item.author).contains(expected);
     }
 }

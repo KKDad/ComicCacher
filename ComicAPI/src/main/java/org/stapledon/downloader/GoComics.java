@@ -72,8 +72,10 @@ public class GoComics extends DailyComic {
             var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
             if (!avatarCached.exists()) {
                 Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
-                cacheImage(featureAvatars, avatarCached.getAbsolutePath());
+                comicItem.avatarAvailable = cacheImage(featureAvatars, avatarCached.getAbsolutePath());
                 log.trace("Avatar has been cached ");
+            } else {
+                comicItem.avatarAvailable = true;
             }
 
 
