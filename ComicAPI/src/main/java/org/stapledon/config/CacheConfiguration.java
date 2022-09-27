@@ -10,7 +10,7 @@ public class CacheConfiguration {
     @Value("${comics.cache.location:/comics}")
     private String location;
 
-    @Value("${conics.config:comics.json}")
+    @Value("${comics.config:comics.json}")
     private String comicsJson;
 
     @Bean(name = "cacheLocation")
