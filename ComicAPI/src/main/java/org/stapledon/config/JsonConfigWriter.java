@@ -5,12 +5,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.api.service.ComicsServiceImpl;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageCacheStats;
 
-import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.file.Paths;
 

@@ -3,7 +3,6 @@ package org.stapledon.api.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.stapledon.downloader.ComicCacher;
 

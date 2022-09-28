@@ -1,5 +1,6 @@
 package org.stapledon.api.service;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -24,14 +25,11 @@ import java.util.List;
 public class ComicsServiceImpl implements ComicsService {
     private final String cacheLocation;
 
-    private static List<ComicItem> comics = new ArrayList<>();
-
-    public static List<ComicItem> getComics() {
-        return comics;
-    }
+    @Getter
+    private static final List<ComicItem> comics = new ArrayList<>();
 
     /**
-     * Return details of a all configured comics
+     * Return details of all configured comics
      *
      * @return list of all configured comics
      */
