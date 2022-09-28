@@ -5,7 +5,7 @@ ARG DEPENDENCY=target/dependency
 
 EXPOSE 8888
 
-ENTRYPOINT ["java", "-cp", "app:app/lib/*", "org.stapledon.api.ComicApiApplication"]
+ENTRYPOINT ["java", "-cp", "app:app/lib/*", "org.stapledon.ComicApiApplication"]
 
 COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY ${DEPENDENCY}/META-INF /app/META-INF

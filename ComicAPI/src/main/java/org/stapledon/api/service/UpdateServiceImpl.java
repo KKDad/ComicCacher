@@ -1,4 +1,4 @@
-package org.stapledon.api;
+package org.stapledon.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

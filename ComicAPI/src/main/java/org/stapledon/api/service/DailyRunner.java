@@ -1,8 +1,11 @@
-package org.stapledon.downloader;
+package org.stapledon.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.stapledon.downloader.ComicCacher;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -16,9 +19,9 @@ import java.util.concurrent.TimeUnit;
  * This class ensures that all comics are fetched once a day
  */
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
-public class DailyRunner {
+public class DailyRunner implements CommandLineRunner {
 
     private final ComicCacher comicCacher;
 
@@ -26,6 +29,7 @@ public class DailyRunner {
      * Schedule a task to download the comics once a day at 7:00am
      */
     public void ensureDailyCaching() {
+        log.info("Configuring daily update");
         var localNow = LocalDateTime.now();
         var currentZone = ZoneId.of("America/New_York");
         var zonedNow = ZonedDateTime.of(localNow, currentZone);
@@ -40,6 +44,13 @@ public class DailyRunner {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(new RunComicCacher(comicCacher), initalDelay,
                 24 * 60 * 60L, TimeUnit.SECONDS);
+        log.info("Daily update configured, Initial delay is {}", (initalDelay > 60) ? String.format("%d minutes", initalDelay/60) : " < 1 minute");
+
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        ensureDailyCaching();
     }
 
     @RequiredArgsConstructor

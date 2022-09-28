@@ -1,46 +1,31 @@
-package org.stapledon.api;
+package org.stapledon.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Service;
 import org.stapledon.config.IComicsBootstrap;
 import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.downloader.ComicCacher;
-import org.stapledon.downloader.DailyRunner;
 import org.stapledon.dto.Bootstrap;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 
-import javax.annotation.PostConstruct;
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 @Slf4j
-@SpringBootApplication
+@Service
 @RequiredArgsConstructor
-@ComponentScan(basePackages = {"org.stapledon"})
-public class ComicApiApplication {
-    private final String cacheLocation;
+public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunner {
 
     private final JsonConfigWriter jsonConfigWriter;
 
     private final ComicCacher comicCacher;
 
-    private final DailyRunner dailyRunner;
-
-    @PostConstruct
-    public void PostConstructSetup() {
+    @Override
+    public boolean reconcile() {
         log.info("ComicApiApplication starting...");
-
-        var directory = new File(cacheLocation);
-        if (!directory.exists() || directory.isDirectory()) {
-            directory.mkdirs();
-        }
-        log.warn("Serving from {}", cacheLocation);
-
         try {
             var comicConfig = jsonConfigWriter.loadComics();
             reconcileBoostrapConfig(comicConfig);
@@ -48,19 +33,18 @@ public class ComicApiApplication {
 
             ComicsServiceImpl.getComics().addAll(comicConfig.items.values());
             log.info("Loaded: {} comics.", ComicsServiceImpl.getComics().size());
+            return true;
 
         } catch (IOException fne) {
             log.error("Cannot load ComicList", fne);
         }
-
-        // Ensure we cache comics once a day
-        dailyRunner.ensureDailyCaching();
+        return false;
     }
 
     /**
-     * Reconcile all the entries in the CacherBootstrapConfig with the ComicList
-     * - New entries found in the CacherBootstrapConfig will be added and immediately cached
-     * - Entries found in the ComicList, but not in the CacherBootstrapConfig will be removed
+     * Reconcile all the entries in the BootstrapConfig with the ComicList
+     * - New entries found in the BootstrapConfig will be added and immediately cached
+     * - Entries found in the ComicList, but not in the BootstrapConfig will be removed
      */
     public void reconcileBoostrapConfig(ComicConfig comicConfig) {
         log.info("Begin Reconciliation of CacherBootstrapConfig and ComicConfig");
@@ -136,10 +120,8 @@ public class ComicApiApplication {
         return null;
     }
 
-
-    public static void main(String[] args) {
-        SpringApplication.run(ComicApiApplication.class, args);
+    @Override
+    public void run(String... args) throws Exception {
+        reconcile();
     }
-
 }
-

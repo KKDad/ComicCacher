@@ -1,4 +1,4 @@
-package org.stapledon.api;
+package org.stapledon.api.service;
 
 import org.springframework.http.ResponseEntity;
 import org.stapledon.dto.ComicItem;

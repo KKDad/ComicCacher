@@ -1,6 +1,7 @@
 package org.stapledon.api;
 
 import org.springframework.boot.test.context.SpringBootTest;
+import org.stapledon.ComicApiApplication;
 
 
 @SpringBootTest(classes = ComicApiApplication.class)

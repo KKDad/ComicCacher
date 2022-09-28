@@ -1,4 +1,4 @@
-package org.stapledon.api;
+package org.stapledon.api.service;
 
 public interface UpdateService {
     boolean updateAll();
