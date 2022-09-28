@@ -6,10 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2.0 - September/2022
+- Updated Angular from 7.2.3 to  14.2.3
+- Split the docker container into a separate Backend and frontend containers
+- Updated Java 8 to Java 11
+- Updated Spring 2.5 to 2.7
+    - Introduced Lombok
+    - Switched junit4 to junit5
+    - switched ascii-docs to swagger-ui
+- Split apart unit tests and integration testing 
+
 ## 1.2 - November 10/2019
 - Added background to main page
 - Added Comics:
-    - Launn
+    - Luann
     - CalvinAndHobbes
     - Pickles
     - Frank-And-Ernest

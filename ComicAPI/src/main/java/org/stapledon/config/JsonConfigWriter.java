@@ -30,8 +30,8 @@ public class JsonConfigWriter {
     public void save(ComicItem item) {
         try {
             loadComics();
-            comics.items.put(item.name.hashCode(), item);
-            log.info("Saving: {}, Total comics: {}", item.name, comics.items.entrySet().size());
+            comics.items.put(item.getName().hashCode(), item);
+            log.info("Saving: {}, Total comics: {}", item.getName(), comics.items.entrySet().size());
 
             Writer writer = new FileWriter(Paths.get(cacheLocation, configName).toFile());
             gson.toJson(comics, writer);

@@ -51,7 +51,7 @@ public class ComicsServiceImpl implements ComicsService {
      */
     @Override
     public ComicItem retrieveComic(int comicId) {
-        var comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+        var comic = comics.stream().filter(p -> p.getId() == comicId).findFirst().orElse(null);
         if (comic == null)
             log.error("Unknown comic id={}, total known: {}", comicId, comics.size());
         return comic;
@@ -74,7 +74,7 @@ public class ComicsServiceImpl implements ComicsService {
     @Override
     public boolean deleteComic(int comicId) {
 
-        ComicItem comic = comics.stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+        ComicItem comic = comics.stream().filter(p -> p.getId() == comicId).findFirst().orElse(null);
         return comics.remove(comic);
     }
 
@@ -99,7 +99,7 @@ public class ComicsServiceImpl implements ComicsService {
         var cacheUtils = new CacheUtils(cacheLocation);
         File image = cacheUtils.findFirst(comic, which);
         if (image == null) {
-            log.error("Unable to locate first strip for {}", comic.name);
+            log.error("Unable to locate first strip for {}", comic.getName());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -125,7 +125,7 @@ public class ComicsServiceImpl implements ComicsService {
         else
             image = cacheUtils.findPrevious(comic, from);
         if (image == null) {
-            log.error("Unable to locate first strip for {}", comic.name);
+            log.error("Unable to locate first strip for {}", comic.getName());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }
 
@@ -149,10 +149,10 @@ public class ComicsServiceImpl implements ComicsService {
         if (comic == null)
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
 
-        String comicNameParsed = comic.name.replace(" ", "");
+        String comicNameParsed = comic.getName().replace(" ", "");
         var avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
         if (!avatar.exists()) {
-            log.error("Unable to locate avatar for {}", comic.name);
+            log.error("Unable to locate avatar for {}", comic.getName());
             log.error("   checked {}", avatar.getAbsolutePath());
             return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
         }

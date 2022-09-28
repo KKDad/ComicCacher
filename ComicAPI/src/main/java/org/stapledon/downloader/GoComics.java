@@ -62,20 +62,20 @@ public class GoComics extends DailyComic {
                     .get();
             // Fragile, however there appears to only be one "section" class and the description seems to be the
             // first div inside it.
-            comicItem.description = doc.select("section").select("div").get(0).text();
+            comicItem.setDescription(doc.select("section").select("div").get(0).text());
 
 
             Optional<Element> author = doc.select("span").stream().filter(p -> p.attributes().get("class").contains("media-subheading")).findFirst();
-            author.ifPresent(element -> comicItem.author = element.text());
+            author.ifPresent(element -> comicItem.setAuthor(element.text()));
 
             // Cache the Avatar if we don't already have it
             var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
             if (!avatarCached.exists()) {
                 Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
-                comicItem.avatarAvailable = cacheImage(featureAvatars, avatarCached.getAbsolutePath());
+                comicItem.setAvatarAvailable(cacheImage(featureAvatars, avatarCached.getAbsolutePath()));
                 log.trace("Avatar has been cached ");
             } else {
-                comicItem.avatarAvailable = true;
+                comicItem.setAvatarAvailable(true);
             }
 
 

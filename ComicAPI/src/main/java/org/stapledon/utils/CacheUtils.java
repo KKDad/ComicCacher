@@ -28,9 +28,12 @@ public class CacheUtils {
     }
 
     private File getComicHome(ComicItem comic) {
-        String comicNameParsed = comic.name.replace(" ", "");
+        String comicNameParsed = comic.getName().replace(" ", "");
         var path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
-        return new File(path);
+        var file =new File(path);
+        if (!file.exists())
+            throw new CacheException(String.format("Cache Directory does not exist: %s", path));
+        return file;
     }
 
     public File findOldest(ComicItem comic) {
@@ -61,7 +64,7 @@ public class CacheUtils {
 
         timer.stop();
         if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
-            log.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.name, which));
+            log.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.getName(), which));
 
         return new File(String.format(COMBINE_PATH, folder.getAbsolutePath(), which == Direction.FORWARD ? cachedStrips[0] : cachedStrips[cachedStrips.length - 1]));
     }
@@ -82,7 +85,7 @@ public class CacheUtils {
 
                 timer.stop();
                 if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
-                    log.info(String.format("findNext took: %s for %s", timer.toString(), comic.name));
+                    log.info(String.format("findNext took: %s for %s", timer.toString(), comic.getName()));
 
                 return folder;
             }
@@ -107,7 +110,7 @@ public class CacheUtils {
 
                 timer.stop();
                 if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
-                    log.info(String.format("findPrevious took: %s for %s", timer.toString(), comic.name));
+                    log.info(String.format("findPrevious took: %s for %s", timer.toString(), comic.getName()));
 
                 return folder;
             }

@@ -124,8 +124,8 @@ class GoComicsIntegrationTest {
         subject.updateComicMetadata(item);
 
         // Assert
-        assertThat(item.description).isNotNull();
-        assertThat(item.avatarAvailable).isTrue();
-        assertThat(item.author).contains(expected);
+        assertThat(item.getDescription()).isNotNull();
+        assertThat(item.getAvatarAvailable()).isTrue();
+        assertThat(item.getAuthor()).contains(expected);
     }
 }

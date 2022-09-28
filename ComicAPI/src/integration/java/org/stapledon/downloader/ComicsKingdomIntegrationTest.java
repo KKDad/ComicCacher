@@ -77,6 +77,6 @@ class ComicsKingdomIntegrationTest {
         subject.updateComicMetadata(item);
 
         // Assert
-        assertThat(item.author).isNotNull().contains("Daddy Daze by John Kovaleski");
+        assertThat(item.getAuthor()).isNotNull().contains("Daddy Daze by John Kovaleski");
     }
 }

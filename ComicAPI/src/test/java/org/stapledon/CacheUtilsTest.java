@@ -14,14 +14,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CacheUtilsTest {
 
     ComicItem comicItem() {
-        ComicItem item1 = new ComicItem();
-        item1.id = 42;
-        item1.name = "Fake Comic";
-        item1.description = "Comic for Unit Tests";
-        item1.oldest = LocalDate.of(1995, 05, 31);
-        item1.newest = LocalDate.of(2007, 12, 8);
-
-        return item1;
+        return ComicItem.builder()
+                .id(42)
+                .name("Fake Comic")
+                .description("Comic for Unit Tests")
+                .oldest(LocalDate.of(1995, 05, 31))
+                .newest(LocalDate.of(2007, 12, 8))
+                .build();
     }
 
     private CacheUtils getSubject() {

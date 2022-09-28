@@ -20,7 +20,7 @@ public class UpdateServiceImpl implements UpdateService {
     @Override
     public boolean updateComic(int comicId) {
         // Determine the comic to be updated
-        ComicItem comic = ComicsServiceImpl.getComics().stream().filter(p -> p.id == comicId).findFirst().orElse(null);
+        ComicItem comic = ComicsServiceImpl.getComics().stream().filter(p -> p.getId() == comicId).findFirst().orElse(null);
         if (comic == null)
             return false;
         return comicCacher.cacheSingle(comic);

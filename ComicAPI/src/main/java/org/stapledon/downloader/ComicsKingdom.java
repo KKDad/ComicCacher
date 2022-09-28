@@ -76,8 +76,8 @@ public class ComicsKingdom extends DailyComic {
 
             var author = doc.select("title").text();
             if (!author.isEmpty()) {
-                comicItem.author = author.substring(author.indexOf("|")).replace("|", "").trim();
-                log.info("Author={}", comicItem.author);
+                comicItem.setAuthor(author.substring(author.indexOf("|")).replace("|", "").trim());
+                log.info("Author={}", comicItem.getAuthor());
             }
 
 

@@ -41,16 +41,6 @@ public class ComicCacher {
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             // Ignore - Powermock issue during unit tests?
         }
-//
-//        String directory = System.getenv("CACHE_DIRECTORY");
-//        if (directory == null) {
-//            log.error("CACHE_DIRECTORY not set. Defaulting to /comics");
-//            directory = "/comics";
-//        }
-//        this.cacheDirectory = directory;
-//        log.warn("Caching to {}", this.cacheDirectory);
-//
-//        config = new CacherConfigLoader(new GsonProvider().gson()).load();
         log.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.getDailyComics().size(), config.getKingComics().size());
     }
 
@@ -104,12 +94,12 @@ public class ComicCacher {
      */
     IComicsBootstrap lookupGoComics(ComicItem comic) {
         if (!config.getDailyComics().isEmpty()) {
-            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
+            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
             if (dailyComics != null)
                 return dailyComics;
         }
         if (!config.getKingComics().isEmpty()) {
-            return config.getKingComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.name)).findFirst().orElse(null);
+            return config.getKingComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
         }
         return null;
     }
@@ -134,17 +124,18 @@ public class ComicCacher {
 
         var comicItem = statsUpdater.fetch(dcc.stripName());
         if (comicItem == null) {
-            comicItem = new ComicItem();
-            comicItem.id = dcc.stripName().hashCode();
-            comicItem.name = dcc.stripName();
-            comicItem.oldest = dcc.startDate();
+            comicItem = ComicItem.builder()
+                    .id(dcc.stripName().hashCode())
+                    .name(dcc.stripName())
+                    .oldest(dcc.startDate())
+                    .build();
         }
         comics.updateComicMetadata(comicItem);
         while (!comics.advance().equals(comics.getLastStripOn()))
             comics.ensureCache();
 
-        comicItem.newest = comics.getLastStripOn();
-        comicItem.enabled = true;
+        comicItem.setNewest(comics.getLastStripOn());
+        comicItem.setEnabled(true);
         statsUpdater.save(comicItem);
 
         // Update statistics about the cached images

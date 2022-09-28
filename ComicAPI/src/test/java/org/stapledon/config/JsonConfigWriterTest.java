@@ -59,11 +59,12 @@ class JsonConfigWriterTest {
 
 
     private ComicItem generateTestComicItem(String name) {
-        ComicItem item = new ComicItem();
-        item.name = name;
-        item.description = "test description";
-        item.newest = LocalDate.of(2018, 1, 1);
-        item.oldest = LocalDate.of(2017, 1, 1);
-        return item;
+        return ComicItem.builder()
+                .id(42)
+                .name("test Comic")
+                .description("Comic for Unit Tests")
+                .oldest(LocalDate.of(1995, 05, 31))
+                .newest(LocalDate.of(2007, 12, 8))
+                .build();
     }
 }
