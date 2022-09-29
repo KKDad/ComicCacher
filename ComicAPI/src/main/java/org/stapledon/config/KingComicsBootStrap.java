@@ -9,9 +9,9 @@ import java.time.LocalDate;
 
 @Getter
 public class KingComicsBootStrap implements IComicsBootstrap {
-    public String name;
-    public String website;
-    public LocalDate startDate;
+    String name;
+    String website;
+    LocalDate startDate;
 
     public KingComicsBootStrap() {
         // No args constructor for required for Gson deserialize

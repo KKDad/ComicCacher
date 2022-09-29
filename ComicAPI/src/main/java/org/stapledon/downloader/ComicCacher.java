@@ -94,12 +94,12 @@ public class ComicCacher {
      */
     IComicsBootstrap lookupGoComics(ComicItem comic) {
         if (!config.getDailyComics().isEmpty()) {
-            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
+            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
             if (dailyComics != null)
                 return dailyComics;
         }
         if (!config.getKingComics().isEmpty()) {
-            return config.getKingComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
+            return config.getKingComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
         }
         return null;
     }

@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping({"/api/v1"})
-@SuppressWarnings({"squid:S4488", "squid:S00117"}) // API parameter names don't comply with Java naming conventions.
 public class ComicController {
     @Autowired
     private ComicsService comicsService;
@@ -33,38 +32,36 @@ public class ComicController {
         return comicsService.retrieveAll();
     }
 
-    @GetMapping("/comics/{comic_id}")
-    public ComicItem retrieveComicDetails(@PathVariable String comic_id) {
-        var comicId = Integer.parseInt(comic_id);
+    @GetMapping("/comics/{comic}")
+    public ComicItem retrieveComicDetails(@PathVariable String comic) {
+        var comicId = Integer.parseInt(comic);
         var comicItem = comicsService.retrieveComic(comicId);
         if (comicItem != null)
             return comicItem;
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping("/comics/{comic_id}")
-    public ComicItem createComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic_id) {
-        var comicId = Integer.parseInt(comic_id);
+    @PostMapping("/comics/{comic}")
+    public ComicItem createComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic) {
+        var comicId = Integer.parseInt(comic);
         ComicItem resultItem = comicsService.createComic(comicId, comicItem);
         if (resultItem != null)
             return resultItem;
-        throw new ResponseStatusException(
-                HttpStatus.CONFLICT, "Unable to save ComicItem");
-
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Unable to save ComicItem");
     }
 
-    @PatchMapping("/comics/{comic_id}")
-    public ComicItem updateComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic_id) {
-        var comicId = Integer.parseInt(comic_id);
+    @PatchMapping("/comics/{comic}")
+    public ComicItem updateComicDetails(@PathVariable String comic, @RequestBody ComicItem comicItem) {
+        var comicId = Integer.parseInt(comic);
         ComicItem resultItem = comicsService.updateComic(comicId, comicItem);
         if (resultItem != null)
             return resultItem;
         throw new ResponseStatusException(HttpStatus.CONFLICT, "Unable to save ComicItem");
     }
 
-    @DeleteMapping("/comics/{comic_id}")
-    public void deleteComicDetails(@PathVariable String comic_id) {
-        var comicId = Integer.parseInt(comic_id);
+    @DeleteMapping("/comics/{comic}")
+    public void deleteComicDetails(@PathVariable String comic) {
+        var comicId = Integer.parseInt(comic);
         boolean result = comicsService.deleteComic(comicId);
         if (result)
             throw new ResponseStatusException(HttpStatus.NO_CONTENT, "ComicItem has been removed");
@@ -75,35 +72,35 @@ public class ComicController {
      * Comic Strip Image Retrieval Methods
      *****************************************************************************************************************/
 
-    @GetMapping("/comics/{comic_id}/avatar")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic_id) throws IOException {
-        var comicId = Integer.parseInt(comic_id);
+    @GetMapping("/comics/{comic}/avatar")
+    public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic) throws IOException {
+        var comicId = Integer.parseInt(comic);
         return comicsService.retrieveAvatar(comicId);
     }
 
-    @GetMapping("/comics/{comic_id}/strips/first")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic_id) throws IOException {
-        var comicId = Integer.parseInt(comic_id);
+    @GetMapping("/comics/{comic}/strips/first")
+    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic) throws IOException {
+        var comicId = Integer.parseInt(comic);
         return comicsService.retrieveComicStrip(comicId, Direction.FORWARD);
     }
 
-    @GetMapping("/comics/{comic_id}/next/{strip_reference}")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic_id, @PathVariable String strip_reference) throws IOException {
-        var comicId = Integer.parseInt(comic_id);
-        var from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    @GetMapping("/comics/{comic}/next/{date}")
+    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
+        var comicId = Integer.parseInt(comic);
+        var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicsService.retrieveComicStrip(comicId, Direction.FORWARD, from);
     }
 
-    @GetMapping("/comics/{comic_id}/previous/{strip_reference}")
-    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic_id, @PathVariable String strip_reference) throws IOException {
-        var comicId = Integer.parseInt(comic_id);
-        var from = LocalDate.parse(strip_reference, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    @GetMapping("/comics/{comic}/previous/{date}")
+    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
+        var comicId = Integer.parseInt(comic);
+        var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD, from);
     }
 
-    @GetMapping("/comics/{comic_id}/strips/last")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic_id) throws IOException {
-        var comicId = Integer.parseInt(comic_id);
+    @GetMapping("/comics/{comic}/strips/last")
+    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic) throws IOException {
+        var comicId = Integer.parseInt(comic);
         return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD);
     }
 

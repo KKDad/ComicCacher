@@ -28,8 +28,8 @@ public class JsonConfigWriter {
     public void save(ComicItem item) {
         try {
             loadComics();
-            comics.items.put(item.getName().hashCode(), item);
-            log.info("Saving: {}, Total comics: {}", item.getName(), comics.items.entrySet().size());
+            comics.getItems().put(item.getName().hashCode(), item);
+            log.info("Saving: {}, Total comics: {}", item.getName(), comics.getItems().entrySet().size());
 
             Writer writer = new FileWriter(Paths.get(cacheLocation, configName).toFile());
             gson.toJson(comics, writer);
@@ -46,8 +46,8 @@ public class JsonConfigWriter {
             loadComics();
             log.info("Fetching {}", name);
 
-            if (this.comics.items.containsKey(name.hashCode()))
-                return this.comics.items.get(name.hashCode());
+            if (this.comics.getItems().containsKey(name.hashCode()))
+                return this.comics.getItems().get(name.hashCode());
         } catch (FileNotFoundException e) {
             log.error(e.getMessage(), e);
         }
@@ -59,7 +59,7 @@ public class JsonConfigWriter {
      * Load any previously saved configuration
      */
     public ComicConfig loadComics() throws FileNotFoundException {
-        if (comics != null && !comics.items.isEmpty())
+        if (comics != null && !comics.getItems().isEmpty())
             return comics;
 
         var initialFile = Paths.get(cacheLocation, configName).toFile();
@@ -68,7 +68,7 @@ public class JsonConfigWriter {
             Reader reader = new InputStreamReader(inputStream);
 
             comics = gson.fromJson(reader, ComicConfig.class);
-            log.info("Loaded {} comics from {}, ", comics.items.entrySet().size(), initialFile);
+            log.info("Loaded {} comics from {}, ", comics.getItems().entrySet().size(), initialFile);
         } else {
             log.warn("{} does not exist, creating", initialFile);
             comics = new ComicConfig();

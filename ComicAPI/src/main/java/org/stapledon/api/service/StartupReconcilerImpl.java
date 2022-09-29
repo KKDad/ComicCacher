@@ -31,7 +31,7 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
             reconcileBoostrapConfig(comicConfig);
             comicConfig = jsonConfigWriter.loadComics();
 
-            ComicsServiceImpl.getComics().addAll(comicConfig.items.values());
+            ComicsServiceImpl.getComics().addAll(comicConfig.getItems().values());
             log.info("Loaded: {} comics.", ComicsServiceImpl.getComics().size());
             return true;
 
@@ -71,7 +71,7 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
         }
 
         // Removed entries found in ComicConfig, but not in the CacherBootstrapConfig
-        comicConfig.items.entrySet().removeIf(integerComicItemEntry -> findBootstrapComic(config, integerComicItemEntry.getValue()) == null);
+        comicConfig.getItems().entrySet().removeIf(integerComicItemEntry -> findBootstrapComic(config, integerComicItemEntry.getValue()) == null);
 
 
         log.info("Reconciliation complete");
@@ -85,12 +85,12 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
      */
     IComicsBootstrap findBootstrapComic(Bootstrap config, ComicItem comic) {
         if (!config.getDailyComics().isEmpty()) {
-            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
+            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
             if (dailyComics != null)
                 return dailyComics;
         }
         if (!config.getKingComics().isEmpty()) {
-            IComicsBootstrap kingComics = config.getKingComics().stream().filter(p -> p.name.equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
+            IComicsBootstrap kingComics = config.getKingComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
             if (kingComics != null)
                 return kingComics;
         }
@@ -108,8 +108,8 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
      */
     ComicItem findComicItem(ComicConfig config, IComicsBootstrap comic) {
 
-        if (!config.items.isEmpty()) {
-            Map.Entry<Integer, ComicItem> result = config.items.entrySet()
+        if (!config.getItems().isEmpty()) {
+            Map.Entry<Integer, ComicItem> result = config.getItems().entrySet()
                     .stream()
                     .filter(p -> p.getValue().getName().equalsIgnoreCase(comic.stripName()))
                     .findFirst()
