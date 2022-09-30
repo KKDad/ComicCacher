@@ -1,34 +1,36 @@
 package org.stapledon.config;
 
+import com.google.j2objc.annotations.J2ObjCIncompatible;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
+import org.stapledon.config.properties.CacheProperties;
 
 import java.io.File;
 
-@Configuration
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class CacheConfiguration {
-
-    @Value("${comics.cache.location:/comics}")
-    private String location;
-
-    @Value("${comics.config:comics.json}")
-    private String comicsJson;
+    private final CacheProperties cacheProperties;
 
     @Bean(name = "cacheLocation")
     public String cacheLocation() {
-        var directory = new File(location);
+        var directory = new File(cacheProperties.getLocation());
         if (!directory.exists() || directory.isDirectory()) {
             directory.mkdirs();
         }
-        log.warn("Serving from {}", location);
-        return location;
+        log.warn("Serving from {}", cacheProperties.getLocation());
+        return cacheProperties.getLocation();
     }
 
     @Bean(name = "configName")
     public String configName() {
-        return comicsJson;
+        return cacheProperties.getConfig();
     }
 }

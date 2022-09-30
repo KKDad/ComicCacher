@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.caching.ICachable;
 import org.stapledon.caching.ImageCacheStatsUpdater;
+import org.stapledon.config.CacheConfiguration;
 import org.stapledon.config.IComicsBootstrap;
 import org.stapledon.config.JsonConfigWriter;
 import org.stapledon.dto.Bootstrap;
@@ -28,8 +29,8 @@ public class ComicCacher {
 
     private final Bootstrap config;
     private final JsonConfigWriter statsUpdater;
-    @Qualifier("cacheLocation")
-    private final String cacheDirectory;
+
+    private final CacheConfiguration cacheConfiguration;
 
     @PostConstruct
     public void setup() {
@@ -118,7 +119,7 @@ public class ComicCacher {
             startDate = LocalDate.now().minusDays(7);
 
         IDailyComic comics = dcc.getDownloader()
-                .setCacheRoot(cacheDirectory)
+                .setCacheRoot(cacheConfiguration.cacheLocation())
                 .setComic(dcc.stripName())
                 .setDate(startDate);
 

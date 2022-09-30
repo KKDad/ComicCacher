@@ -24,9 +24,6 @@ class UpdateControllerTest {
     private UpdateService updateService;
 
     @MockBean
-    private DailyRunner dailyRunner;
-
-    @MockBean
     private StartupReconciler startupReconciler;
 
     @Test

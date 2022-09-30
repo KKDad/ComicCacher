@@ -43,7 +43,7 @@ public class GoComics extends DailyComic {
     /**
      * Link to the About the api page
      *
-     * @return URL where we can get the about information for this strip
+     * @return URL where we can get the 'about' information for this strip
      */
     private String generateAboutUTL() {
         return String.format("https://www.gocomics.com/%s/about", this.comicNameParsed);

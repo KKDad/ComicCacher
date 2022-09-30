@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
+import org.stapledon.config.properties.DailyRunnerProperties;
 import org.stapledon.downloader.ComicCacher;
 
 import java.time.Duration;
@@ -21,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class DailyRunner implements CommandLineRunner {
+
+    private final DailyRunnerProperties dailyRunnerProperties;
 
     private final ComicCacher comicCacher;
 
@@ -49,7 +52,11 @@ public class DailyRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        ensureDailyCaching();
+        if (dailyRunnerProperties.isEnabled()) {
+            ensureDailyCaching();
+        } else {
+            log.warn("Daily Runner is disabled");
+        }
     }
 
     @RequiredArgsConstructor

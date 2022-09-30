@@ -6,6 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.stapledon.config.IComicsBootstrap;
 import org.stapledon.config.JsonConfigWriter;
+import org.stapledon.config.properties.StartupReconcilerProperties;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.dto.Bootstrap;
 import org.stapledon.dto.ComicConfig;
@@ -18,6 +19,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunner {
+
+    private final StartupReconcilerProperties startupReconcilerProperties;
 
     private final JsonConfigWriter jsonConfigWriter;
 

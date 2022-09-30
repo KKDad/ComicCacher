@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.stapledon.config.properties.CacheProperties;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageCacheStats;
@@ -19,9 +20,7 @@ public class JsonConfigWriter {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
 
-    private final String cacheLocation;
-
-    private final String configName;
+    private final CacheProperties cacheProperties;
 
     private ComicConfig comics;
 
@@ -31,7 +30,7 @@ public class JsonConfigWriter {
             comics.getItems().put(item.getName().hashCode(), item);
             log.info("Saving: {}, Total comics: {}", item.getName(), comics.getItems().entrySet().size());
 
-            Writer writer = new FileWriter(Paths.get(cacheLocation, configName).toFile());
+            Writer writer = new FileWriter(Paths.get(cacheProperties.getLocation(), cacheProperties.getConfig()).toFile());
             gson.toJson(comics, writer);
             writer.flush();
             writer.close();
@@ -62,7 +61,7 @@ public class JsonConfigWriter {
         if (comics != null && !comics.getItems().isEmpty())
             return comics;
 
-        var initialFile = Paths.get(cacheLocation, configName).toFile();
+        var initialFile = Paths.get(cacheProperties.getLocation(), cacheProperties.getConfig()).toFile();
         if (initialFile.exists()) {
             InputStream inputStream = new FileInputStream(initialFile);
             Reader reader = new InputStreamReader(inputStream);

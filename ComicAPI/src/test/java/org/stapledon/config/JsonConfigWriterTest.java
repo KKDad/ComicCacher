@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stapledon.config.properties.CacheProperties;
 import org.stapledon.dto.ComicItem;
 
 import java.io.File;
@@ -48,7 +49,10 @@ class JsonConfigWriterTest {
         LOG.info(String.format("Writing to %s", fileName));
 
         // Act
-        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), path.toString(), String.format("%s.json", uuid));
+        CacheProperties cacheProperties = new CacheProperties();
+        cacheProperties.setLocation(path.toString());
+        cacheProperties.setConfig(String.format("%s.json", uuid));
+        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), cacheProperties);
         subject.save(item);
 
         // Assert
