@@ -3,7 +3,7 @@ package org.stapledon.config;
 import lombok.Getter;
 import org.stapledon.downloader.ComicsKingdom;
 import org.stapledon.downloader.IDailyComic;
-import org.stapledon.web.WebInspector;
+import org.stapledon.web.WebInspectorImpl;
 
 import java.time.LocalDate;
 
@@ -29,6 +29,6 @@ public class KingComicsBootStrap implements IComicsBootstrap {
 
     @Override
     public IDailyComic getDownloader() {
-        return new ComicsKingdom(new WebInspector(), this.getWebsite());
+        return new ComicsKingdom(new WebInspectorImpl(), this.getWebsite());
     }
 }

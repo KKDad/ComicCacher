@@ -7,7 +7,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.select.Selector;
 import org.stapledon.dto.ComicItem;
-import org.stapledon.web.IWebInspector;
+import org.stapledon.web.WebInspector;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @Slf4j
 public class GoComics extends DailyComic {
-    public GoComics(IWebInspector inspector) {
+    public GoComics(WebInspector inspector) {
         super(inspector, "[src]");
     }
 

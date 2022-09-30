@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.stapledon.downloader.GoComics;
 import org.stapledon.downloader.IDailyComic;
-import org.stapledon.web.WebInspector;
+import org.stapledon.web.WebInspectorImpl;
 
 import java.time.LocalDate;
 
@@ -30,6 +30,6 @@ public class GoComicsBootstrap implements IComicsBootstrap {
 
     @Override
     public IDailyComic getDownloader() {
-        return new GoComics(new WebInspector());
+        return new GoComics(new WebInspectorImpl());
     }
 }

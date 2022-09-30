@@ -7,8 +7,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.stapledon.caching.ICachable;
-import org.stapledon.web.IWebInspector;
 import org.stapledon.web.WebInspector;
+import org.stapledon.web.WebInspectorImpl;
 
 import java.io.*;
 import java.net.URL;
@@ -28,7 +28,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
 
     private Path cacheDirectory;
 
-    final IWebInspector webInspector;
+    final WebInspector webInspector;
     final String elementSelector;
 
     String comicName;
@@ -38,8 +38,8 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     protected abstract String generateSiteURL();
 
 
-    DailyComic(IWebInspector inspector, String elementSelector) {
-        this.webInspector = (inspector == null) ? new WebInspector() : inspector;
+    DailyComic(WebInspector inspector, String elementSelector) {
+        this.webInspector = (inspector == null) ? new WebInspectorImpl() : inspector;
         this.elementSelector = elementSelector;
     }
 
@@ -86,10 +86,10 @@ public abstract class DailyComic implements IDailyComic, ICachable {
             switch (sourceImageElement.tagName()) {
                 case "src":
                 case "img":
-                    urlImage = new URL(sourceImageElement.attr(WebInspector.ABS_SRC));
+                    urlImage = new URL(sourceImageElement.attr(WebInspectorImpl.ABS_SRC));
                     break;
                 case "meta":
-                    urlImage = new URL(sourceImageElement.attr(WebInspector.CONTENT));
+                    urlImage = new URL(sourceImageElement.attr(WebInspectorImpl.CONTENT));
                     break;
                 default:
                     throw new UnsupportedOperationException();

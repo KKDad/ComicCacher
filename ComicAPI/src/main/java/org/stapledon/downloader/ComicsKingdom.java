@@ -7,7 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.stapledon.dto.ComicItem;
-import org.stapledon.web.IWebInspector;
+import org.stapledon.web.WebInspector;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class ComicsKingdom extends DailyComic {
     private static final String ABOUT_SITE_STRING = "https://comicskingdom.com/%s/about";
     private final String website;
 
-    public ComicsKingdom(IWebInspector inspector, String website) {
+    public ComicsKingdom(WebInspector inspector, String website) {
         super(inspector, "meta");
         Preconditions.checkNotNull(website, "website cannot be null");
 
