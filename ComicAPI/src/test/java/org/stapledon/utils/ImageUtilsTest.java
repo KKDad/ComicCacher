@@ -19,10 +19,10 @@ class ImageUtilsTest {
         Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
-        assertThat(imageDto.mimeType).isEqualTo("image/png");
-        assertThat(imageDto.height).isEqualTo(1);
-        assertThat(imageDto.width).isEqualTo(1);
-        assertThat(imageDto.imageDate).isNull();
+        assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");
+        assertThat(imageDto.getHeight()).isEqualTo(1);
+        assertThat(imageDto.getWidth()).isEqualTo(1);
+        assertThat(imageDto.getImageDate()).isNull();
     }
 
     @Test
@@ -30,10 +30,10 @@ class ImageUtilsTest {
         Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
-        assertThat(imageDto.mimeType).isEqualTo("image/png");
-        assertThat(imageDto.height).isEqualTo(1);
-        assertThat(imageDto.width).isEqualTo(1);
-        assertThat(imageDto.imageDate).isEqualTo(LocalDate.of(2008, 01, 11));
+        assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");
+        assertThat(imageDto.getHeight()).isEqualTo(1);
+        assertThat(imageDto.getWidth()).isEqualTo(1);
+        assertThat(imageDto.getImageDate()).isEqualTo(LocalDate.of(2008, 1, 11));
 
     }
 }

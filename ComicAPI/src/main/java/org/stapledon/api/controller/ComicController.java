@@ -2,7 +2,9 @@ package org.stapledon.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequiredArgsConstructor
@@ -75,33 +78,58 @@ public class ComicController {
     @GetMapping("/comics/{comic}/avatar")
     public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic) throws IOException {
         var comicId = Integer.parseInt(comic);
-        return comicsService.retrieveAvatar(comicId);
+        var avatar = comicsService.retrieveAvatar(comicId);
+        return avatar.map(imageDto -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS))
+                        .body(imageDto))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/comics/{comic}/strips/first")
     public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic) throws IOException {
         var comicId = Integer.parseInt(comic);
-        return comicsService.retrieveComicStrip(comicId, Direction.FORWARD);
+        var image = comicsService.retrieveComicStrip(comicId, Direction.FORWARD);
+        return image.map(imageDto -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                        .body(imageDto))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/comics/{comic}/next/{date}")
     public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
         var comicId = Integer.parseInt(comic);
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return comicsService.retrieveComicStrip(comicId, Direction.FORWARD, from);
+        var image = comicsService.retrieveComicStrip(comicId, Direction.FORWARD, from);
+        return image.map(imageDto -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                        .body(imageDto))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/comics/{comic}/previous/{date}")
     public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
         var comicId = Integer.parseInt(comic);
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD, from);
+        var image = comicsService.retrieveComicStrip(comicId, Direction.BACKWARD, from);
+        return image.map(imageDto -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                        .body(imageDto))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/comics/{comic}/strips/last")
     public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic) throws IOException {
         var comicId = Integer.parseInt(comic);
-        return comicsService.retrieveComicStrip(comicId, Direction.BACKWARD);
+        var image = comicsService.retrieveComicStrip(comicId, Direction.BACKWARD);
+        return image.map(imageDto -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                        .body(imageDto))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
 }

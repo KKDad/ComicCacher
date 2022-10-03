@@ -3,7 +3,6 @@ package org.stapledon.api.service;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ComicList;
@@ -18,6 +17,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -85,36 +85,29 @@ public class ComicsServiceImpl implements ComicsService {
      * @return 200 with the image or 404 with no response body if not found
      */
     @Override
-    public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException {
+    public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException {
         log.trace("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
-        var headers = new HttpHeaders();
-        headers.setCacheControl(CacheControl.noCache().getHeaderValue());
-
         ComicItem comic = this.retrieveComic(comicId);
         if (comic == null)
-            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+            return Optional.empty();
 
         var cacheUtils = new CacheUtils(cacheLocation);
         File image = cacheUtils.findFirst(comic, which);
         if (image == null) {
             log.error("Unable to locate first strip for {}", comic.getName());
-            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+            return Optional.empty();
         }
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
         var dto = ImageUtils.getImageDto(image);
-        return new ResponseEntity<>(dto, headers, HttpStatus.OK);
+        return Optional.ofNullable(dto);
     }
 
     @Override
-    public ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException {
+    public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException {
         log.trace("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
-        var headers = new HttpHeaders();
-        headers.setCacheControl(CacheControl.noCache().getHeaderValue());
-
         ComicItem comic = this.retrieveComic(comicId);
         if (comic == null)
-            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+            return Optional.empty();
 
         var cacheUtils = new CacheUtils(cacheLocation);
         File image;
@@ -124,12 +117,11 @@ public class ComicsServiceImpl implements ComicsService {
             image = cacheUtils.findPrevious(comic, from);
         if (image == null) {
             log.error("Unable to locate first strip for {}", comic.getName());
-            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+            return Optional.empty();
         }
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
         var dto = ImageUtils.getImageDto(image);
-        return new ResponseEntity<>(dto, headers, HttpStatus.OK);
+        return Optional.ofNullable(dto);
     }
 
     /**
@@ -139,24 +131,19 @@ public class ComicsServiceImpl implements ComicsService {
      * @return 200 with the image or 404 with no response body if not found
      */
     @Override
-    public ResponseEntity<ImageDto> retrieveAvatar(int comicId) throws IOException {
-        var headers = new HttpHeaders();
-        headers.setCacheControl(CacheControl.noCache().getHeaderValue());
-
+    public Optional<ImageDto> retrieveAvatar(int comicId) throws IOException {
         ComicItem comic = this.retrieveComic(comicId);
         if (comic == null)
-            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+            return Optional.empty();
 
         String comicNameParsed = comic.getName().replace(" ", "");
         var avatar = new File(String.format("%s/%s/avatar.png", cacheLocation, comicNameParsed));
         if (!avatar.exists()) {
             log.error("Unable to locate avatar for {}", comic.getName());
             log.error("   checked {}", avatar.getAbsolutePath());
-            return new ResponseEntity<>(null, headers, HttpStatus.NOT_FOUND);
+            return Optional.empty();
         }
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
         var dto = ImageUtils.getImageDto(avatar);
-        return new ResponseEntity<>(dto, headers, HttpStatus.OK);
+        return Optional.ofNullable(dto);
     }
 }

@@ -1,6 +1,5 @@
 package org.stapledon.api.service;
 
-import org.springframework.http.ResponseEntity;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageDto;
 import org.stapledon.utils.Direction;
@@ -8,6 +7,7 @@ import org.stapledon.utils.Direction;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ComicsService {
     List<ComicItem> retrieveAll();
@@ -20,10 +20,10 @@ public interface ComicsService {
 
     boolean deleteComic(int comicId);
 
-    ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException;
+    Optional<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException;
 
-    ResponseEntity<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException;
+    Optional<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException;
 
-    ResponseEntity<ImageDto> retrieveAvatar(int comicId) throws IOException;
+    Optional<ImageDto> retrieveAvatar(int comicId) throws IOException;
 
 }

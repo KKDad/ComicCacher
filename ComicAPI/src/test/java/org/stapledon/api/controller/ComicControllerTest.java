@@ -11,10 +11,12 @@ import org.stapledon.api.service.DailyRunner;
 import org.stapledon.api.service.StartupReconciler;
 import org.stapledon.config.GsonProvider;
 import org.stapledon.dto.ComicItem;
+import org.stapledon.dto.ImageDto;
 import org.stapledon.utils.TestUtil;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -168,7 +170,21 @@ class ComicControllerTest {
     }
 
     @Test
-    void retrieveAvatar() {
+    void retrieveAvatar() throws Exception {
+        var image = ImageDto.builder().build();
+        when(comicsService.retrieveAvatar(42)).thenReturn(Optional.ofNullable(image));
+
+        var mvcResult = this.mockMvc.perform(get("/api/v1/comics/42/avatar"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+
+        var item = new GsonProvider().gson().fromJson(responseBody, ImageDto.class);
+        assertThat(item).isNotNull();
+
+        verify(comicsService, times(1)).retrieveAvatar(42);
     }
 
     @Test
