@@ -39,13 +39,6 @@ tasks.withType(Test) {
 	useJUnitPlatform()
 }
 
-//docker {
-//	name "${project.group}/${bootJar.baseName}"
-//	copySpec.from(tasks.unpack.outputs).into("dependency")
-//	buildArgs(['DEPENDENCY': "dependency"])
-//}
-
-
 bootRun  {
 	main = "org.stapledon.ComicApiApplication"
 }

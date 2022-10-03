@@ -134,6 +134,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
 
         try {
             String url = this.generateSiteURL();
+            log.debug("Fetching {}", url);
 
             Document doc = Jsoup.connect(url)
                     .userAgent(USER_AGENT)
