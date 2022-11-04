@@ -86,7 +86,7 @@ public class ComicsServiceImpl implements ComicsService {
      */
     @Override
     public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException {
-        log.trace("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
+        log.info("Entering retrieveComicStrip for comicId={}, Direction={}", comicId, which);
         ComicItem comic = this.retrieveComic(comicId);
         if (comic == null)
             return Optional.empty();
@@ -104,7 +104,7 @@ public class ComicsServiceImpl implements ComicsService {
 
     @Override
     public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException {
-        log.trace("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
+        log.info("Entering retrieveComicStrip for comicId={}, Direction={}, from={}", comicId, which, from);
         ComicItem comic = this.retrieveComic(comicId);
         if (comic == null)
             return Optional.empty();

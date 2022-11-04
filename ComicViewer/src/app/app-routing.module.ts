@@ -6,13 +6,13 @@ import { ComicpageComponent } from './comicpage/comicpage.component';
 import { AboutComponent } from './about/about.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/comics', pathMatch: 'full' },
+//  { path: '', redirectTo: '/comics', pathMatch: 'full' },
   { path: 'refresh', component: RefreshComponent },
   { path: 'comics', component: ComicpageComponent },
   { path: 'about', component: AboutComponent },
 
   // otherwise redirect to the comic page
-  { path: '**', redirectTo: '/comics' }
+  { path: '**', redirectTo: '/' }
 ];
 
 @NgModule({

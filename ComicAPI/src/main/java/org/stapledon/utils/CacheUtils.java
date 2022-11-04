@@ -30,7 +30,7 @@ public class CacheUtils {
     private File getComicHome(ComicItem comic) {
         String comicNameParsed = comic.getName().replace(" ", "");
         var path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
-        var file =new File(path);
+        var file = new File(path);
         if (!file.exists())
             throw new CacheException(String.format("Cache Directory does not exist: %s", path));
         return file;
@@ -88,6 +88,8 @@ public class CacheUtils {
                     log.info(String.format("findNext took: %s for %s", timer.toString(), comic.getName()));
 
                 return folder;
+            } else {
+                log.info("folder={} does not exist", folder);
             }
             nextCandidate = nextCandidate.plusDays(1);
         }
@@ -107,12 +109,13 @@ public class CacheUtils {
         while (from.isAfter(limit)) {
             var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
             if (folder.exists()) {
-
                 timer.stop();
                 if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
                     log.info(String.format("findPrevious took: %s for %s", timer.toString(), comic.getName()));
 
                 return folder;
+            } else {
+                log.info("folder={} does not exist", folder);
             }
             nextCandidate = nextCandidate.minusDays(1);
         }
