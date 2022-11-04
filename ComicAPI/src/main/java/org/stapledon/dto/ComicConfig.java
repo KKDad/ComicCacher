@@ -1,13 +1,17 @@
 package org.stapledon.dto;
 
-import java.util.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Getter
+@Setter
 public class ComicConfig {
-    public ComicConfig()
-    {
+    public ComicConfig() {
         this.items = new ConcurrentHashMap<>();
     }
 
-    public Map<Integer,ComicItem> items;
+    Map<Integer, ComicItem> items;
 }

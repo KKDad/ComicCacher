@@ -1,14 +1,13 @@
 package org.stapledon.downloader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stapledon.dto.ComicItem;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.select.Selector;
-import org.stapledon.web.IWebInspector;
+import org.stapledon.dto.ComicItem;
+import org.stapledon.web.WebInspector;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,12 +15,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-public class GoComics extends DailyComic
-{
-    private static final Logger logger = LoggerFactory.getLogger(GoComics.class);
-
-    public GoComics(IWebInspector inspector)
-    {
+@Slf4j
+public class GoComics extends DailyComic {
+    public GoComics(WebInspector inspector) {
         super(inspector, "[src]");
     }
 
@@ -29,10 +25,10 @@ public class GoComics extends DailyComic
     /**
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
      * a week after they were published in print.
+     *
      * @return Mst recent date we can get a api for
      */
-    public LocalDate getLastStripOn()
-    {
+    public LocalDate getLastStripOn() {
         return LocalDate.now();
     }
 
@@ -46,18 +42,17 @@ public class GoComics extends DailyComic
 
     /**
      * Link to the About the api page
-     * @return URL where we can get the about information for this strip
+     *
+     * @return URL where we can get the 'about' information for this strip
      */
-    private String generateAboutUTL()
-    {
-        return String.format("https://www.gocomics.com/%s/about",  this.comicNameParsed);
+    private String generateAboutUTL() {
+        return String.format("https://www.gocomics.com/%s/about", this.comicNameParsed);
     }
 
-    public void updateComicMetadata(ComicItem comicItem)
-    {
+    public void updateComicMetadata(ComicItem comicItem) {
         try {
             String url = this.generateAboutUTL();
-            logger.info("Getting Comic Description from {}", url);
+            log.info("Getting Comic Description from {}", url);
 
             Document doc = Jsoup.connect(url)
                     .userAgent(USER_AGENT)
@@ -67,35 +62,35 @@ public class GoComics extends DailyComic
                     .get();
             // Fragile, however there appears to only be one "section" class and the description seems to be the
             // first div inside it.
-            comicItem.description = doc.select("section").select("div").get(0).text();
+            comicItem.setDescription(doc.select("section").select("div").get(0).text());
 
 
             Optional<Element> author = doc.select("span").stream().filter(p -> p.attributes().get("class").contains("media-subheading")).findFirst();
-            author.ifPresent(element -> comicItem.author = element.text());
+            author.ifPresent(element -> comicItem.setAuthor(element.text()));
 
             // Cache the Avatar if we don't already have it
             var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
-            if (!avatarCached.exists())
-            {
+            if (!avatarCached.exists()) {
                 Element featureAvatars = doc.select("img[src^=https://avatar.amuniversal.com/feature_avatars]").last();
-                cacheImage(featureAvatars, avatarCached.getAbsolutePath());
-                logger.trace("Avatar has been cached ");
+                comicItem.setAvatarAvailable(cacheImage(featureAvatars, avatarCached.getAbsolutePath()));
+                log.trace("Avatar has been cached ");
+            } else {
+                comicItem.setAvatarAvailable(true);
             }
 
 
-
         } catch (IOException | Selector.SelectorParseException e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
         }
     }
 
     /**
      * Determines which links represent the api image that we should utils
+     *
      * @param media list of image links to choose from
      */
     @Override
-    protected Elements pickImages(Elements media)
-    {
+    protected Elements pickImages(Elements media) {
         var elements = new Elements();
         for (Element src : media) {
             if (src.tagName().equals("img") && src.attr("abs:src").contains("assets.amuniversal.com"))

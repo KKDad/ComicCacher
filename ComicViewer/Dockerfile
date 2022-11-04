@@ -6,14 +6,22 @@ WORKDIR /app
 COPY package.json /app
 RUN npm install
 COPY . /app
-RUN npm run build --prod
+RUN npm run build --omit=dev
 
 # -- Stage 2
-FROM nginx:1.23
-COPY --from=build-step /app/dist/ComicViewer /usr/share/nginx/html
+FROM eclipse-temurin:11-jre-alpine
+COPY --from=build-step /app/dist/ComicViewer /static_content
 
-RUN rm /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+ENV VERSION=9.4.49.v20220914
+RUN apk add --update bash wget tar && rm -rf /var/cache/apk/*
+RUN wget -q -O /jetty.tar.gz https://repo1.maven.org/maven2/org/eclipse/jetty/jetty-distribution/${VERSION}/jetty-distribution-$VERSION.tar.gz
 
+# Install Jetty
+RUN tar -xvf /jetty.tar.gz && rm /jetty.tar.gz && mv jetty-distribution-${VERSION} /jetty
+COPY entrypoint.sh static_content.xml /
+
+RUN chmod +x entrypoint.sh && apk del wget tar
+
+EXPOSE 8080
+
+ENTRYPOINT /entrypoint.sh

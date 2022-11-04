@@ -7,13 +7,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.stapledon.dto.ComicItem;
-import org.stapledon.web.IWebInspector;
+import org.stapledon.web.WebInspector;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 
 @Slf4j
 public class ComicsKingdom extends DailyComic {
@@ -21,7 +20,7 @@ public class ComicsKingdom extends DailyComic {
     private static final String ABOUT_SITE_STRING = "https://comicskingdom.com/%s/about";
     private final String website;
 
-    public ComicsKingdom(IWebInspector inspector, String website) {
+    public ComicsKingdom(WebInspector inspector, String website) {
         super(inspector, "meta");
         Preconditions.checkNotNull(website, "website cannot be null");
 
@@ -55,11 +54,11 @@ public class ComicsKingdom extends DailyComic {
     /**
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
      * a week after they were published in print.
+     *
      * @return Mst recent date we can get a api for
      */
-    @Override     
-    public LocalDate getLastStripOn()
-    {
+    @Override
+    public LocalDate getLastStripOn() {
         return LocalDate.now();
     }
 
@@ -77,15 +76,14 @@ public class ComicsKingdom extends DailyComic {
 
             var author = doc.select("title").text();
             if (!author.isEmpty()) {
-                comicItem.author = author.substring(author.indexOf("|")).replace("|", "").trim();
-                log.info("Author={}", comicItem.author);
+                comicItem.setAuthor(author.substring(author.indexOf("|")).replace("|", "").trim());
+                log.info("Author={}", comicItem.getAuthor());
             }
 
 
             // Cache the Avatar if we don't already have it
             var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
-            if (!avatarCached.exists())
-            {
+            if (!avatarCached.exists()) {
                 Element featureAvatars = doc.select("img[src^=https://api.kingdigital.com/img/features/]").last();
                 if (featureAvatars == null)
                     log.error("Unable to determine site avatar");
@@ -94,7 +92,6 @@ public class ComicsKingdom extends DailyComic {
                     log.trace("Avatar has been cached ");
                 }
             }
-
 
 
         } catch (IOException ioe) {

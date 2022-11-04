@@ -1,13 +1,9 @@
-FROM openjdk:8-jdk-alpine
+FROM eclipse-temurin:11.0.16.1_1-jre
 LABEL MAINTAINER="adrian@gilbert.ca"
 VOLUME /tmp
-ARG DEPENDENCY=target/dependency
 
 EXPOSE 8888
 
-ENTRYPOINT ["java", "-cp", "app:app/lib/*", "org.stapledon.api.ComicApiApplication"]
+COPY build/libs/ComicAPI-1.0.0-SNAPSHOT.jar /
 
-COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
-COPY ${DEPENDENCY}/META-INF /app/META-INF
-COPY ${DEPENDENCY}/BOOT-INF/classes /app
-COPY ${DEPENDENCY}/static /app/static
+ENTRYPOINT [ "java", "-jar", "/ComicAPI-1.0.0-SNAPSHOT.jar" ]

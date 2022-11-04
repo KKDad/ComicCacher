@@ -14,7 +14,7 @@ export class AboutComponent implements OnInit {
   }
 
   onNavigateHome() {
-    this.router.navigateByUrl('/comics');
+    this.router.navigateByUrl('/');
   }
 
 }

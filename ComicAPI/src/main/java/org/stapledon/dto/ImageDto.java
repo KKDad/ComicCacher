@@ -1,17 +1,18 @@
 package org.stapledon.dto;
 
+import lombok.*;
+
 import java.time.LocalDate;
 
-@SuppressWarnings({"squid:ClassVariableVisibilityCheck"})
-public class ImageDto
-{
-    public ImageDto()
-    {
-        // No-argument constructor required for gson
-    }
-    public String  mimeType;
-    public String  imageData;
-    public Integer height;
-    public Integer width;
-    public LocalDate imageDate;
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ImageDto {
+    String mimeType;
+    String imageData;
+    Integer height;
+    Integer width;
+    LocalDate imageDate;
 }

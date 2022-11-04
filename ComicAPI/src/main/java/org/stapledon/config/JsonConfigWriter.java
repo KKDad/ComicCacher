@@ -1,54 +1,54 @@
 package org.stapledon.config;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.stapledon.config.properties.CacheProperties;
 import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageCacheStats;
 
 import java.io.*;
+import java.nio.file.Paths;
 
-public class JsonConfigWriter
-{
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(JsonConfigWriter.class);
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class JsonConfigWriter {
+    @Qualifier("gsonWithLocalDate")
     private final Gson gson;
-    private final String configPath;
+
+    private final CacheProperties cacheProperties;
+
     private ComicConfig comics;
 
-    public JsonConfigWriter(String path)
-    {
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
-        this.configPath = path;
-    }
-
-    public void save(ComicItem item)
-    {
+    public void save(ComicItem item) {
         try {
             loadComics();
-            comics.items.put(item.name.hashCode(), item);
-            logger.info("Saving: {}, Total comics: {}", item.name, comics.items.entrySet().size());
+            comics.getItems().put(item.getName().hashCode(), item);
+            log.info("Saving: {}, Total comics: {}", item.getName(), comics.getItems().entrySet().size());
 
-            Writer writer = new FileWriter(configPath);
+            Writer writer = new FileWriter(Paths.get(cacheProperties.getLocation(), cacheProperties.getConfig()).toFile());
             gson.toJson(comics, writer);
             writer.flush();
             writer.close();
 
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
-    public ComicItem fetch(String name)
-    {
+    public ComicItem fetch(String name) {
         try {
             loadComics();
-            logger.info("Fetching {}", name);
+            log.info("Fetching {}", name);
 
-            if (this.comics.items.containsKey(name.hashCode()))
-                return this.comics.items.get(name.hashCode());
+            if (this.comics.getItems().containsKey(name.hashCode()))
+                return this.comics.getItems().get(name.hashCode());
         } catch (FileNotFoundException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -57,20 +57,19 @@ public class JsonConfigWriter
     /**
      * Load any previously saved configuration
      */
-    public ComicConfig loadComics() throws FileNotFoundException
-    {
-        if (comics != null && !comics.items.isEmpty())
+    public ComicConfig loadComics() throws FileNotFoundException {
+        if (comics != null && !comics.getItems().isEmpty())
             return comics;
 
-        var initialFile = new File(configPath);
+        var initialFile = Paths.get(cacheProperties.getLocation(), cacheProperties.getConfig()).toFile();
         if (initialFile.exists()) {
             InputStream inputStream = new FileInputStream(initialFile);
             Reader reader = new InputStreamReader(inputStream);
 
             comics = gson.fromJson(reader, ComicConfig.class);
-            logger.info("Loaded {} comics from {}, ", comics.items.entrySet().size(), configPath);
+            log.info("Loaded {} comics from {}, ", comics.getItems().entrySet().size(), initialFile);
         } else {
-            logger.warn("{} does not exist, creating", configPath);
+            log.warn("{} does not exist, creating", initialFile);
             comics = new ComicConfig();
         }
         return comics;
@@ -78,7 +77,8 @@ public class JsonConfigWriter
 
     /**
      * Save ImageCacheStats Stats to the root of a Image folder
-     * @param ic Statistics to save
+     *
+     * @param ic              Statistics to save
      * @param targetDirectory Location to Save them to
      * @return True if successfully written
      */
@@ -90,7 +90,7 @@ public class JsonConfigWriter
             writer.close();
             return true;
         } catch (IOException ioe) {
-            logger.error(ioe.getMessage(), ioe);
+            log.error(ioe.getMessage(), ioe);
         }
         return false;
     }

@@ -1,6 +1,6 @@
 {
-    "/api/v1": {
-      "target": "http://dockerhost.stapledon.local:8888",
-      "secure": false
-    }
+  "/api/v1": {
+    "target": "$BACKEND_HOSTNAME",
+    "secure": false
   }
+}

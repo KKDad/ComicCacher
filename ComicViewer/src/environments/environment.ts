@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://dockerhost.stapledon.local:8888/'
+  apiUrl: "$BACKEND_HOSTNAME"
 };
 
 /*

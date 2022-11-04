@@ -30,18 +30,20 @@ public class ImageUtils {
      */
     public static ImageDto getImageDto(File image) throws IOException {
         byte[] media = Files.readAllBytes(image.toPath());
-        var dto = new ImageDto();
-        try(InputStream is = new ByteArrayInputStream(media))
-        {
+        ImageDto imageDto = null;
+        try (InputStream is = new ByteArrayInputStream(media)) {
             BufferedImage bi = ImageIO.read(is);
-            dto.mimeType = MediaType.IMAGE_PNG.toString();
-            dto.imageData = Base64.getEncoder().withoutPadding().encodeToString(media);
-            dto.height = bi.getHeight();
-            dto.width = bi.getWidth();
-            dto.imageDate = LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            imageDto = ImageDto.builder()
+                    .mimeType(MediaType.IMAGE_PNG.toString())
+                    .imageData(Base64.getEncoder().withoutPadding().encodeToString(media))
+                    .height(bi.getHeight())
+                    .width(bi.getWidth())
+                    .build();
+            imageDto.setImageDate(LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
         } catch (DateTimeParseException dte) {
             // Ignore if we don't have a date
         }
-        return dto;
+        return imageDto;
     }
 }

@@ -1,12 +1,12 @@
 package org.stapledon.config;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stapledon.config.properties.CacheProperties;
 import org.stapledon.dto.ComicItem;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,19 +16,19 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.UUID;
 
-public class JsonConfigWriterTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class JsonConfigWriterTest {
     private static final Logger LOG = LoggerFactory.getLogger(JsonConfigWriterTest.class);
     private Path path;
 
-    @Before
-    public void setup()throws IOException
-    {
+    @BeforeEach
+    void setup() throws IOException {
         path = Files.createTempDirectory("JsonConfigWriterTest");
     }
 
-    @After
-    public void teardown()throws IOException
-    {
+    @AfterEach
+    void teardown() throws IOException {
         if (!Files.exists(path))
             return;
 
@@ -40,30 +40,34 @@ public class JsonConfigWriterTest {
     }
 
     @Test
-    public void saveTest() {
+    void saveTest() {
         // Arrange
         ComicItem item = generateTestComicItem("saveTest");
 
-        String fileName = String.format("%s/%s.json", path.toString(), UUID.randomUUID());
+        var uuid = UUID.randomUUID().toString();
+        String fileName = String.format("%s/%s.json", path.toString(), uuid);
         LOG.info(String.format("Writing to %s", fileName));
 
         // Act
-        JsonConfigWriter subject = new JsonConfigWriter(fileName);
+        CacheProperties cacheProperties = new CacheProperties();
+        cacheProperties.setLocation(path.toString());
+        cacheProperties.setConfig(String.format("%s.json", uuid));
+        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), cacheProperties);
         subject.save(item);
 
         // Assert
         File f = new File(fileName);
-        Assert.assertTrue(f.exists());
-        Assert.assertTrue(f.length()> 0);
+        assertThat(f).exists().isNotEmpty();
     }
 
 
     private ComicItem generateTestComicItem(String name) {
-        ComicItem item = new ComicItem();
-        item.name = name;
-        item.description = "test description";
-        item.newest = LocalDate.of(2018, 1, 1);
-        item.oldest = LocalDate.of(2017, 1, 1);
-        return item;
+        return ComicItem.builder()
+                .id(42)
+                .name("test Comic")
+                .description("Comic for Unit Tests")
+                .oldest(LocalDate.of(1995, 05, 31))
+                .newest(LocalDate.of(2007, 12, 8))
+                .build();
     }
 }
