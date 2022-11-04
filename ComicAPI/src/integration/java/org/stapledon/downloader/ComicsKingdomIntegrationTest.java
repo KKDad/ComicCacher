@@ -2,6 +2,7 @@ package org.stapledon.downloader;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.stapledon.dto.ComicItem;
 
@@ -49,6 +50,7 @@ class ComicsKingdomIntegrationTest {
 
 
     @Test
+    @Disabled
     void ensureCacheTest() {
         LocalDate fetchDate = LocalDate.now().minusDays(3);
 
