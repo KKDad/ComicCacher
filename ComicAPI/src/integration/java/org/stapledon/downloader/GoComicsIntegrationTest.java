@@ -86,7 +86,6 @@ class GoComicsIntegrationTest {
             "CalvinAndHobbes,By Bill Watterson",
             "Cathy,By Cathy Guisewite",
             "CitizenDog,By Mark O'Hare",
-            "Committed,By Gary Larson",
             "Doonesbury,By Garry Trudeau",
             "Drabble,By Kevin Fagan",
             "ForBetterorForWorse,By Lynn Johnston",
@@ -127,5 +126,9 @@ class GoComicsIntegrationTest {
         assertThat(item.getDescription()).isNotNull();
         assertThat(item.getAvatarAvailable()).isTrue();
         assertThat(item.getAuthor()).contains(expected);
+
+//        boolean result = subject.ensureCache();
+//        assertThat(result).isTrue();
+
     }
 }

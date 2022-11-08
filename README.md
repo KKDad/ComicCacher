@@ -1,8 +1,8 @@
 # The Comic Processor
 
-Webcomic scroller v2.0. Originally a new-hire task written in C# and .Net 3.0, this has since been re-imagined and rebuilt using modern stack:
+Webcomic scroller v2.0. Originally written back in 2013 in C# and .Net 3.0, this has since been re-imagined and rebuilt using modern stack:
 - Spring Boot 2.6, Java 11, Dockerized backend
-    - Read and cache comics
+    - Read and cache comics with cleanup after 7 days
     - Expose REST API
     - OpenAPI 3.0 documentation
 - Angular + Material Design, Dockerized Frontend
