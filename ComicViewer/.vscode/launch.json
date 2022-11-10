@@ -2,6 +2,13 @@
     "version": "0.2.0",
     "configurations": [
       {
+        "name": "Ng Serve",
+        "type": "chrome",
+        "request": "launch",
+        "preLaunchTask": "npm: start",
+        "webRoot": "${workspaceFolder}"
+      },
+      {
         "name": "Launch Chrome",
         "type": "chrome",
         "request": "launch",
