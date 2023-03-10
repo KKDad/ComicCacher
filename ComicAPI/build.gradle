@@ -1,12 +1,12 @@
 plugins {
-	id 'org.springframework.boot' version '2.7.5'
+	id 'org.springframework.boot' version '3.0.4'
 	id 'io.spring.dependency-management' version '1.1.0'
 	id 'com.coditory.integration-test' version '1.4.4'
 	id 'java'
 }
 
 group = 'kkdad'
-version = '1.0.0-SNAPSHOT'
+version = '1.2.0-SNAPSHOT'
 
 configurations {
 	compileOnly {
@@ -21,8 +21,8 @@ repositories {
 dependencies {
 	implementation 'com.google.code.gson:gson:2.10'
 	implementation 'com.google.guava:guava:31.1-jre'
-	implementation 'org.jsoup:jsoup:1.15.3'
-	implementation 'org.springdoc:springdoc-openapi-ui:1.6.11'
+	implementation 'org.jsoup:jsoup:1.15.4'
+	implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
 
