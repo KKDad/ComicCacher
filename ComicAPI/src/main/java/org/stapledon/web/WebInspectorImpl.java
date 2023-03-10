@@ -48,8 +48,9 @@ public class WebInspectorImpl implements WebInspector {
                 print(" * %s: <%s> %sx%s (%s)",
                         src.tagName(), src.attr(ABS_SRC), src.attr("width"), src.attr("height"),
                         trim(src.attr("alt"), 20));
-            else
-                print(" * %s: <%s>", src.tagName(), src.attr(ABS_SRC));
+            else {
+                print(" * %s: <%s>", src.tagName(), src.attr(CONTENT));
+            }
         }
     }
 
