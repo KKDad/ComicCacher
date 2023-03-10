@@ -1,5 +1,6 @@
 package org.stapledon.downloader;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -12,7 +13,6 @@ import org.stapledon.dto.Bootstrap;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.web.DefaultTrustManager;
 
-import javax.annotation.PostConstruct;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
