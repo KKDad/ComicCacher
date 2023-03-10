@@ -10,7 +10,7 @@ if [ -z $BUILD_TAG ]; then
    exit
 fi
 
-DOCKER_REGISTRY=registry.stapledon.local
+DOCKER_REGISTRY=registry.stapledon.ca
 
 
 docker build -f Dockerfile . --tag kkdad/comics-api:$BUILD_TAG --platform linux/amd64
