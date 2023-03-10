@@ -28,7 +28,16 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+
     - name: Build with Gradle
-      uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
+      uses: gradle/gradle-build-action@6095a76664413da4c8c134ee32e8a8ae900f0f1f
       with:
         arguments: build -x integrationTest
+    - name: Store reports
+
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: linux-reports
+        path: build/reports/
+        retention-days: 5

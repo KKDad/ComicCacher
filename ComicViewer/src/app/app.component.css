@@ -1,4 +1,5 @@
 .topnav {
+  /* background-image: url("/assets/images/ComicViewer.png"); */
   background-color: #f7f7f7;
   border: #a7a7a7;
   color: #333333;
@@ -36,7 +37,8 @@
   font-size: 72px;
   line-height: 48.3px;   
 }
-
+
+
 
 .wrapper {
   overflow:auto;

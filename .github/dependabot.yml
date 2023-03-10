@@ -5,20 +5,26 @@
 
 version: 2
 updates:
-  - package-ecosystem: "github-actions" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "monthly"
       
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/ComicViewer"
     schedule:
       interval: "weekly"
     allow:
       - dependency-name: "lodash"
       - dependency-name: "react*"
+      - dependency-name: "angular*"
       
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "weekly"      
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
