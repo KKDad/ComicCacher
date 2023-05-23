@@ -1,6 +1,8 @@
 {
   "/api/v1": {
-    "target": "http://dockerhost.stapledon.local:8888/",
-    "secure": false
+    "target": "https://comics.stapledon.ca/",
+    "secure": false,
+    "allowedHosts": "all",
+    "headers": {"host":"comics.stapledon.ca"}
   }
 }

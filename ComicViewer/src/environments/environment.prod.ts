@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: "$BACKEND_HOSTNAME"
+  apiUrl: "https://comics.stapledon.ca/"
 };
