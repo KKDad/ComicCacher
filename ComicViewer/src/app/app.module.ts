@@ -10,7 +10,7 @@ import { SectionComponent } from './comicpage/section/section.component';
 import { ContainerComponent, NavBarOption } from './comicpage/container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { MatCardModule } from '@angular/material/card';
+import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
 import { ComicpageComponent } from './comicpage/comicpage.component';
