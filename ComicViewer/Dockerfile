@@ -1,5 +1,5 @@
 # -- Stage 1
-FROM node:16 as build-step
+FROM node:20 as build-step
 
 RUN mkdir -p /app
 WORKDIR /app

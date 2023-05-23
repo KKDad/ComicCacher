@@ -19,8 +19,8 @@ To build and launch the Comic API, build the docker container, tag and push the 
 ~~~
 gradlew :ComicAPI:docker
 docker images 
-docker tag kkdad/comic-api:latest registry.local613.local:5000/kkdad/comic-api:2.0.1
-docker push registry.local613.local:5000/kkdad/comic-api:2.0.1
+docker tag kkdad/comic-api:latest registry.local613.local:5000/kkdad/comic-api:2.1.0
+docker push registry.local613.local:5000/kkdad/comic-api:2.1.39
 
 helm upgrade comics comics
 ~~~
