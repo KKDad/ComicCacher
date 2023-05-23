@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: "http://dockerhost.stapledon.local:8888/"
+  apiUrl: "https://comics.stapledon.ca/"
 };
 
 /*
