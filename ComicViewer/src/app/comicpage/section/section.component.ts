@@ -3,13 +3,11 @@ import { Comic } from '../../dto/comic';
 import { ComicService } from '../../comic.service';
 import { DomSanitizer} from '@angular/platform-browser';
 import { ImageDto } from '../../dto/image';
-import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
 
 @Component({
     selector: 'section',
     templateUrl: 'section.component.html',
-    styleUrls: ['section.component.css']
-
+    styleUrls: ['section.component.css'], 
 })
 export class SectionComponent implements OnInit {
 
@@ -27,7 +25,9 @@ export class SectionComponent implements OnInit {
     ngOnInit() {
         this.onNavigateLast();
         this.comicService.getAvatar(this.content.id).subscribe(imagedto => {
-            this.content.avatar = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
+            if (imagedto && imagedto.mimeType) {
+                this.content.avatar = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
+            }
         });
     }
 
@@ -54,6 +54,9 @@ export class SectionComponent implements OnInit {
     }
 
     private setStrip(imagedto: ImageDto) {
+        if (!imagedto || !imagedto.imageData) {
+            return;
+        }
 
         this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
         if (imagedto.width > this.max_width) {

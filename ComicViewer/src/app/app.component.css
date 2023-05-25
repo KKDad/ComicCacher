@@ -1,10 +1,10 @@
 .topnav {
-  /* background-image: url("/assets/images/ComicViewer.png"); */
+  /* background-image: url("/assets/images/ComicViewer.png");  */
   background-color: #f7f7f7;
   border: #a7a7a7;
   color: #333333;
   width: 100%;
-  height: 80px;
+  height: 85px;
   padding: 0px;
   position: fixed;  
   top: 0px;
@@ -35,7 +35,7 @@
   left: 0px;
   text-align: center;
   font-size: 72px;
-  line-height: 48.3px;   
+  line-height: 48px;   
 }
 
 
@@ -56,4 +56,12 @@
 
 .txt {
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.mat-mdc-button {
+  background-color: rgb(245, 217, 170);
+  border-radius: 5px;
+  padding-left: 10;
+  padding-right: 10;
+  margin: 2px;
 }
