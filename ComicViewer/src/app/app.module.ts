@@ -10,12 +10,13 @@ import { SectionComponent } from './comicpage/section/section.component';
 import { ContainerComponent, NavBarOption } from './comicpage/container/container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { MatLegacyCardModule as MatCardModule } from '@angular/material/legacy-card';
+import { MatCardModule } from '@angular/material/card';
 import { AppRoutingModule } from './app-routing.module';
 import { RefreshComponent } from './refresh/refresh.component';
 import { ComicpageComponent } from './comicpage/comicpage.component';
 import { AboutComponent } from './about/about.component';
 import { RouterModule } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 
 
 @NgModule({
@@ -25,7 +26,7 @@ import { RouterModule } from '@angular/router';
     ContainerComponent,
     RefreshComponent,
     ComicpageComponent,
-    AboutComponent 
+    AboutComponent   
   ],
   imports: [
     BrowserModule,
@@ -35,7 +36,8 @@ import { RouterModule } from '@angular/router';
     MatCardModule, 
     AppRoutingModule,
     ScrollingModule,
-    RouterModule
+    RouterModule,
+    MatButtonModule
   ],
   providers: [ContainerComponent],
   bootstrap: [AppComponent]
