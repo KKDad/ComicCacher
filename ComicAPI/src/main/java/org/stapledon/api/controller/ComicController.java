@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @RequestMapping({"/api/v1"})
 public class ComicController {
-    @Autowired
-    private ComicsService comicsService;
+
+    private final ComicsService comicsService;
 
     /*****************************************************************************************************************
      * Comic Strip Listing and Configuration

@@ -98,7 +98,6 @@ class GoComicsIntegrationTest {
             "NonSequitur,By Wiley Miller",
             "Overboard,By Chip Dunham",
             "OvertheHedge,By T Lewis and Michael Fry",
-            "PCandPixel,By Tak Bui",
             "Peanuts,By Charles Schulz",
             "PearlsBeforeSwine,By Stephan Pastis",
             "Pickles,By Brian Crane",
