@@ -6,7 +6,7 @@ set -e
 
 DOCKER_REGISTRY=registry.stapledon.ca
 BUILD_TAG=$1
-if [ -z $BUILD_TAG ]; then
+if [ -z "${BUILD_TAG}" ]; then
    echo "Build Tag is required"
    # Get a sorted list of the current tags in the repository
    echo "Current Tags for kkdad/photo-organizer-api:"
@@ -14,6 +14,6 @@ if [ -z $BUILD_TAG ]; then
    exit
 fi
 
-docker build -f Dockerfile . --tag kkdad/comics-api:$BUILD_TAG --platform linux/amd64
-docker tag kkdad/comics-api:$BUILD_TAG $DOCKER_REGISTRY:5000/kkdad/comic-api:$BUILD_TAG
-docker push $DOCKER_REGISTRY:5000/kkdad/comic-api:$BUILD_TAG
+docker build -f Dockerfile . --tag kkdad/comics-api:"${BUILD_TAG}" --platform linux/amd64
+docker tag kkdad/comics-api:${BUILD_TAG} $DOCKER_REGISTRY/kkdad/comic-api:"${BUILD_TAG}"
+docker push $DOCKER_REGISTRY/kkdad/comic-api:"${BUILD_TAG}"
