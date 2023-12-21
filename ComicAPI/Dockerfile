@@ -4,6 +4,6 @@ VOLUME /tmp
 
 EXPOSE 8888
 
-COPY build/libs/ComicAPI-1.0.0-SNAPSHOT.jar /
+COPY build/libs/ComicAPI-1.2.0-SNAPSHOT.jar /
 
 ENTRYPOINT [ "java", "-jar", "/ComicAPI-1.2.0-SNAPSHOT.jar" ]
