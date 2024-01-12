@@ -57,7 +57,7 @@ public class CacheUtils {
 
         // Comics are stored with filename that is sortable.
         var folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(), which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
-        String[] cachedStrips = folder.list();
+        String[] cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() && !name.equals("@eaDir"));
         if (cachedStrips == null || cachedStrips.length == 0)
             return null;
         Arrays.sort(cachedStrips, String::compareTo);

@@ -41,7 +41,7 @@ public class ImageCacheStatsUpdater {
         cacheStats = new ImageCacheStats();
 
         // Images are stored by year, gather a list of all years that we have stored
-        String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory());
+        String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory() && !name.equals("@eaDir"));
         if (yearFolders != null && yearFolders.length > 0) {
             var years = Arrays.asList(yearFolders);
             Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
@@ -100,7 +100,7 @@ public class ImageCacheStatsUpdater {
      */
     private String[] images(String location) {
         var folder = new File(location);
-        var cachedStrips = folder.list();
+        var cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() && !name.equals("@eaDir"));
         if (cachedStrips == null || cachedStrips.length == 0)
             return new String[]{};
         Arrays.sort(cachedStrips, String::compareTo);
