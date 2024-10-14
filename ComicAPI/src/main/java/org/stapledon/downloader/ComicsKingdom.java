@@ -74,12 +74,12 @@ public class ComicsKingdom extends DailyComic {
                     .timeout(TIMEOUT)
                     .get();
 
-            var author = doc.select("title").text();
-            if (!author.isEmpty()) {
-                comicItem.setAuthor(author.substring(author.indexOf("|")).replace("|", "").trim());
+            var stripName = doc.select("div.feature-header h1.card-title span.card-title__link span").text();
+            var author = doc.select("div.feature-header div.card-content").text();
+            if (!stripName.isEmpty() && !author.isEmpty()) {
+                comicItem.setAuthor(String.format("%s by %s", stripName, author.replace("By ", "").trim()));
                 log.info("Author={}", comicItem.getAuthor());
             }
-
 
             // Cache the Avatar if we don't already have it
             var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
