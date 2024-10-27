@@ -7,7 +7,6 @@ plugins {
 
 group = 'kkdad'
 version = '1.2.0-SNAPSHOT'
-sourceCompatibility = '17'
 
 configurations {
 	compileOnly {
