@@ -81,37 +81,27 @@ public abstract class DailyComic implements IDailyComic, ICachable {
         // Always ensure that the destination directory exists before continuing
         ensureCacheDirectory();
 
-        OutputStream os = null;
         try {
-            URL urlImage;
-            switch (sourceImageElement.tagName()) {
-                case "src":
-                case "img":
-                    urlImage = new URL(sourceImageElement.attr(WebInspectorImpl.ABS_SRC));
-                    break;
-                case "meta":
-                    urlImage = new URL(sourceImageElement.attr(WebInspectorImpl.CONTENT));
-                    break;
-                default:
-                    throw new UnsupportedOperationException();
-            }
+            URL urlImage = switch (sourceImageElement.tagName()) {
+                case "src", "img" -> new URL(sourceImageElement.attr(WebInspectorImpl.ABS_SRC));
+                case "meta" -> new URL(sourceImageElement.attr(WebInspectorImpl.CONTENT));
+                default -> throw new UnsupportedOperationException("Unsupported tag: " + sourceImageElement.tagName());
+            };
+
             log.info("Downloading Image from: {}", urlImage);
-            try (InputStream in = urlImage.openStream()) {
+
+            try (InputStream in = urlImage.openStream();
+                 OutputStream os = new FileOutputStream(destinationFile)) {
                 var buffer = new byte[4096];
                 int n;
-                os = new FileOutputStream(destinationFile);
                 while ((n = in.read(buffer)) != -1) {
                     os.write(buffer, 0, n);
                 }
+                log.trace("Image saved");
+                return true;
             }
-            log.trace("Image saved");
-            return true;
         } catch (FileNotFoundException e) {
             log.error("Failed to save Image:", e);
-
-        } finally {
-            if (os != null)
-                os.close();
         }
         return false;
     }
