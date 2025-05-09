@@ -39,6 +39,30 @@
   box-shadow: 0 1px 3px rgba(0,0,0,.1);
 }
 
+/* Focus styles for accessibility */
+.mat-mdc-card:focus {
+  outline: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,.2);
+}
+
+.mat-mdc-card.focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Hide visually but keep accessible to screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
   .mat-mdc-card {

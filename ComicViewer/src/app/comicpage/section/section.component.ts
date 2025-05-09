@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, Input, inject, signal } from '@angular/core';
+import { Component, OnInit, ElementRef, Input, inject, signal, OnDestroy } from '@angular/core';
 import { Comic } from '../../dto/comic';
 import { ComicService } from '../../comic.service';
 import { DomSanitizer} from '@angular/platform-browser';
@@ -9,6 +9,9 @@ import { CommonModule } from '@angular/common';
 import { LoadingIndicatorComponent } from '../../shared/ui/loading-indicator/loading-indicator.component';
 import { ErrorDisplayComponent } from '../../shared/ui/error-display/error-display.component';
 import { ComicStateService } from '../../state/comic-state.service';
+import { A11yHelperDirective } from '../../shared/a11y/a11y-helper.directive';
+import { KeyboardService } from '../../shared/a11y/keyboard-service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'section',
@@ -20,15 +23,17 @@ import { ComicStateService } from '../../state/comic-state.service';
         MatCardModule,
         MatButtonModule,
         LoadingIndicatorComponent,
-        ErrorDisplayComponent
+        ErrorDisplayComponent,
+        A11yHelperDirective
     ]
 })
-export class SectionComponent implements OnInit {
+export class SectionComponent implements OnInit, OnDestroy {
     @Input() content: Comic;
 
     private comicService = inject(ComicService);
     private sanitizer = inject(DomSanitizer);
     private stateService = inject(ComicStateService);
+    private keyboardService = inject(KeyboardService);
 
     max_width = 900;
 
@@ -39,6 +44,10 @@ export class SectionComponent implements OnInit {
     // UI state signals
     loading = signal(false);
     error = signal<string | null>(null);
+    focusVisible = signal(false);
+
+    // Keep track of subscriptions for cleanup
+    private subscriptions = new Subscription();
 
     constructor(private element: ElementRef) {}
 
@@ -46,6 +55,35 @@ export class SectionComponent implements OnInit {
     ngOnInit() {
         this.loadAvatar();
         this.onNavigateLast();
+
+        // Set up keyboard shortcuts for navigation
+        this.registerKeyboardShortcuts();
+
+        // Listen for focus events
+        this.element.nativeElement.addEventListener('focus', () => this.focusVisible.set(true));
+        this.element.nativeElement.addEventListener('blur', () => this.focusVisible.set(false));
+    }
+
+    /**
+     * Clean up subscriptions when component is destroyed
+     */
+    ngOnDestroy(): void {
+        this.subscriptions.unsubscribe();
+    }
+
+    /**
+     * Register keyboard shortcuts for comic navigation
+     */
+    private registerKeyboardShortcuts(): void {
+        // Only register shortcuts if this is the focused component
+        this.subscriptions.add(
+            this.keyboardService.registerComicNavigationShortcuts(
+                () => this.onNavigateFirst(),
+                () => this.onPrev(),
+                () => this.onNext(),
+                () => this.onNavigateLast()
+            )
+        );
     }
 
     getAvatarImage() {

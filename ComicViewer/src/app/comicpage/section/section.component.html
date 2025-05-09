@@ -1,7 +1,18 @@
-<mat-card appearance="elevated" class="example-card">
+<mat-card 
+    appearance="elevated" 
+    class="example-card"
+    [class.focus-visible]="focusVisible()"
+    tabindex="0"
+    [attr.aria-labelledby]="'comic-title-' + content.id"
+    [attr.aria-describedby]="'comic-desc-' + content.id"
+    role="region">
+    
     <mat-card-header>
-        <img mat-card-avatar [src]="getAvatarImage()" />
-        <mat-card-title>{{content.name}}</mat-card-title>
+        <img 
+            mat-card-avatar 
+            [src]="getAvatarImage()" 
+            [attr.alt]="content.name + ' icon'" /> 
+        <mat-card-title [id]="'comic-title-' + content.id">{{content.name}}</mat-card-title>
         <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
     </mat-card-header>
 
@@ -14,31 +25,67 @@
     </app-error-display>
 
     <mat-card-content>
-        <div class="comic-content-container">
+        <div 
+            class="comic-content-container"
+            [id]="'comic-desc-' + content.id">
+            
             <!-- Loading indicator -->
             <app-loading-indicator
                 [loading]="loading()"
                 [loadingText]="'Loading comic...'"
                 [overlay]="true">
             </app-loading-indicator>
-
+            
             <ng-container *ngIf="imageDate">
-                <p class="pubdate">Published on: {{imageDate}}</p>
-                <img
-                    *ngIf="content.strip"
-                    [src]="getComicImage()"
-                    [height]="height"
-                    [width]="width"
-                    alt="{{content.name}} comic strip dated {{imageDate}}"
-                    class="comic-image" />
+                <p class="pubdate" [attr.aria-live]="'polite'">Published on: {{imageDate}}</p>
+                <figure>
+                    <img
+                        *ngIf="content.strip"
+                        [src]="getComicImage()"
+                        [height]="height"
+                        [width]="width"
+                        [alt]="content.name + ' comic strip published on ' + imageDate"
+                        class="comic-image"
+                        aria-describedby="comic-desc"
+                        role="img" />
+                    <figcaption id="comic-desc" class="visually-hidden">{{content.name}} by {{content.author}}, published on {{imageDate}}</figcaption>
+                </figure>
             </ng-container>
         </div>
     </mat-card-content>
-
+    
     <mat-card-actions>
-        <button mat-button color="primary" (click)="onNavigateFirst()" [disabled]="loading()">First</button>
-        <button mat-button color="primary" (click)="onPrev()" [disabled]="loading()">Previous</button>
-        <button mat-button color="primary" (click)="onNext()" [disabled]="loading()">Next</button>
-        <button mat-button color="primary" (click)="onNavigateLast()" [disabled]="loading()">Last</button>
-    </mat-card-actions>
+        <button 
+            mat-button 
+            color="primary" 
+            (click)="onNavigateFirst()" 
+            [disabled]="loading()"
+            aria-label="Go to first comic strip">
+            First
+        </button>
+        <button 
+            mat-button 
+            color="primary" 
+            (click)="onPrev()" 
+            [disabled]="loading()"
+            aria-label="Go to previous comic strip">
+            Previous
+        </button>
+        <button 
+            mat-button 
+            color="primary" 
+            (click)="onNext()" 
+            [disabled]="loading()"
+            aria-label="Go to next comic strip">
+            Next
+        </button>
+        <button 
+            mat-button 
+            color="primary" 
+            (click)="onNavigateLast()" 
+            [disabled]="loading()"
+            aria-label="Go to latest comic strip">
+            Last
+        </button>
+    </mat-card-actions>      
 </mat-card>
