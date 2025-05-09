@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, Directive } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule }    from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi }    from '@angular/common/http';
 
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
@@ -19,29 +19,22 @@ import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    SectionComponent,
-    ContainerComponent,
-    RefreshComponent,
-    ComicpageComponent,
-    AboutComponent   
-  ],
-  imports: [
-    BrowserModule,
-    FormsModule,
-    HttpClientModule,
-    BrowserAnimationsModule,
-    MatCardModule, 
-    AppRoutingModule,
-    ScrollingModule,
-    RouterModule,
-    MatButtonModule
-  ],
-  providers: [ContainerComponent],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        SectionComponent,
+        ContainerComponent,
+        RefreshComponent,
+        ComicpageComponent,
+        AboutComponent
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        FormsModule,
+        BrowserAnimationsModule,
+        MatCardModule,
+        AppRoutingModule,
+        ScrollingModule,
+        RouterModule,
+        MatButtonModule], providers: [ContainerComponent, provideHttpClient(withInterceptorsFromDi())] })
 export class AppModule {
   // containerComponent: any;
 
