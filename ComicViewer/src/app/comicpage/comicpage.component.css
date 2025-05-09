@@ -14,4 +14,9 @@
     float: center;
     margin-left: auto;
     margin-right: auto;    
-}  
+    transition: margin-top 0.3s ease;
+}
+
+.navbar-hidden {
+    margin-top: -60px; /* Adjust based on your navbar height */
+}

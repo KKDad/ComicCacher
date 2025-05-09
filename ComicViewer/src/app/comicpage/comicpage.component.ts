@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ContainerComponent } from './container/container.component';
+import { ContainerComponent, NavBarOption } from './container/container.component';
 import { SectionComponent } from './section/section.component';
 import { CommonModule } from '@angular/common';
+import { Comic } from '../dto/comic';
+import { ComicService } from '../comic.service';
 
 @Component({
   selector: 'app-comicpage',
@@ -14,12 +16,22 @@ import { CommonModule } from '@angular/common';
   ]
 })
 export class ComicpageComponent implements OnInit {
+  sections: Comic[] = [];
+  showNavbar = true;
 
-  constructor() { }
-
-  sections = null;
+  constructor(private comicService: ComicService) { }
 
   ngOnInit() {
+    // Subscribe to comics data from service
+    this.comicService.getComics().subscribe(comics => {
+      this.sections = comics;
+    });
   }
 
+  /**
+   * Handle navbar visibility events from container component
+   */
+  handleNavbarEvent(option: NavBarOption): void {
+    this.showNavbar = option === NavBarOption.Show;
+  }
 }
