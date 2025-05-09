@@ -20,6 +20,8 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -54,14 +56,37 @@ public class ComicCacher {
      * @return True if all comics where successfully cached, false if one or more fail to be cached.
      */
     public boolean cacheAll() {
-        var result = true;
-        for (IComicsBootstrap dcc : config.getDailyComics())
-            result = cacheSingle(result, dcc);
-        for (IComicsBootstrap dcc : config.getKingComics())
-            result = cacheSingle(result, dcc);
-        return result;
+        // Combine both comic sources and process using streams
+        return Stream.concat(
+                config.getDailyComics().stream(),
+                config.getKingComics().stream()
+            )
+            .map(this::cacheSingleComic)
+            .reduce(true, Boolean::logicalAnd);
     }
 
+    /**
+     * Cache a single comic, handling exceptions
+     *
+     * @param dcc Comic bootstrap configuration
+     * @return true if successful, false if failed
+     */
+    private boolean cacheSingleComic(IComicsBootstrap dcc) {
+        try {
+            return cacheComic(dcc);
+        } catch (Exception e) {
+            log.error("Failed to cache {} : {}", dcc.stripName(), e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Cache a single comic from bootstrap config
+     *
+     * @param result Current result status
+     * @param dcc Comic bootstrap configuration
+     * @return Updated result status
+     */
     public boolean cacheSingle(boolean result, IComicsBootstrap dcc) {
         try {
             cacheComic(dcc);
@@ -79,29 +104,27 @@ public class ComicCacher {
      * @return true if successful
      */
     public boolean cacheSingle(ComicItem comic) {
-        IComicsBootstrap dailyComic = lookupGoComics(comic);
-        if (dailyComic != null)
-            return cacheComic(dailyComic);
-
-        return false;
+        return Optional.ofNullable(lookupGoComics(comic))
+                .map(this::cacheSingleComic)
+                .orElse(false);
     }
 
     /**
-     * Giving a ComicItem, Locate the corresponding IComicsBootstrap from the BootStrap configuration
+     * Given a ComicItem, locate the corresponding IComicsBootstrap from the Bootstrap configuration
      *
      * @param comic ComicItem to lookup
      * @return IComicsBootstrap or null if none could be located
      */
     IComicsBootstrap lookupGoComics(ComicItem comic) {
-        if (!config.getDailyComics().isEmpty()) {
-            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
-            if (dailyComics != null)
-                return dailyComics;
-        }
-        if (!config.getKingComics().isEmpty()) {
-            return config.getKingComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
-        }
-        return null;
+        // Check daily comics first, then king comics, using a more streamlined approach
+        return Stream.of(
+                    config.getDailyComics().stream(),
+                    config.getKingComics().stream()
+                )
+                .flatMap(stream -> stream)
+                .filter(bootstrap -> bootstrap.stripName().equalsIgnoreCase(comic.getName()))
+                .findFirst()
+                .orElse(null);
     }
 
 

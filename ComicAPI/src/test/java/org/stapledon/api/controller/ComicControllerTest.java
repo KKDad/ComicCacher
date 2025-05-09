@@ -10,6 +10,9 @@ import org.stapledon.api.service.ComicsService;
 import org.stapledon.api.service.DailyRunner;
 import org.stapledon.api.service.StartupReconciler;
 import org.stapledon.config.GsonProvider;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.stapledon.api.model.ApiResponse;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageDto;
 import org.stapledon.utils.TestUtil;
@@ -39,6 +42,9 @@ class ComicControllerTest {
     @MockBean
     private StartupReconciler startupReconciler;
 
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .findAndRegisterModules(); // Automatically discover and register modules, including JavaTimeModule
+
     @Test
     void retrieveAllComics() throws Exception {
         when(comicsService.retrieveAll()).thenReturn(List.of(
@@ -53,8 +59,9 @@ class ComicControllerTest {
 
         String responseBody = mvcResult.getResponse().getContentAsString();
 
-        var responseDto = new GsonProvider().gson().fromJson(responseBody, ComicItem[].class);
-        assertThat(responseDto).hasSize(2);
+        ApiResponse<List<ComicItem>> response = objectMapper.readValue(responseBody,
+                new TypeReference<ApiResponse<List<ComicItem>>>() {});
+        assertThat(response.getData()).hasSize(2);
 
         verify(comicsService, times(1)).retrieveAll();
     }
@@ -63,7 +70,7 @@ class ComicControllerTest {
     @Test
     void retrieveComicDetails() throws Exception {
         when(comicsService.retrieveComic(42)).thenReturn(
-                getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007)
+                Optional.of(getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007))
         );
 
         var mvcResult = this.mockMvc.perform(get("/api/v1/comics/42"))
@@ -73,15 +80,16 @@ class ComicControllerTest {
 
         String responseBody = mvcResult.getResponse().getContentAsString();
 
-        var item = new GsonProvider().gson().fromJson(responseBody, ComicItem.class);
-        assertThat(item).isNotNull();
+        ApiResponse<ComicItem> response = objectMapper.readValue(responseBody,
+                new TypeReference<ApiResponse<ComicItem>>() {});
+        assertThat(response.getData()).isNotNull();
 
         verify(comicsService, times(1)).retrieveComic(42);
     }
 
     @Test
     void retrieveComicDetailsNotFound() throws Exception {
-        when(comicsService.retrieveComic(42)).thenReturn(null);
+        when(comicsService.retrieveComic(42)).thenReturn(Optional.empty());
         this.mockMvc.perform(get("/api/v1/comics/42"))
                 .andExpect(status().isNotFound());
     }
@@ -89,7 +97,7 @@ class ComicControllerTest {
     @Test
     void createComicDetailsTest() throws Exception {
         var comic = getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007);
-        when(comicsService.updateComic(42, comic)).thenReturn(comic);
+        when(comicsService.updateComic(42, comic)).thenReturn(Optional.of(comic));
 
         var mvcResult = this.mockMvc.perform(patch("/api/v1/comics/42")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -100,8 +108,9 @@ class ComicControllerTest {
 
         String responseBody = mvcResult.getResponse().getContentAsString();
 
-        var item = new GsonProvider().gson().fromJson(responseBody, ComicItem.class);
-        assertThat(item).isNotNull();
+        ApiResponse<ComicItem> response = objectMapper.readValue(responseBody,
+                new TypeReference<ApiResponse<ComicItem>>() {});
+        assertThat(response.getData()).isNotNull();
 
         verify(comicsService, times(1)).updateComic(42, comic);
     }
@@ -109,30 +118,31 @@ class ComicControllerTest {
     @Test
     void createComicDetailsNowAllowedTest() throws Exception {
         var comic = getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007);
-        when(comicsService.updateComic(42, comic)).thenReturn(null);
+        when(comicsService.updateComic(42, comic)).thenReturn(Optional.empty());
         this.mockMvc.perform(patch("/api/v1/comics/42")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
                         .content(TestUtil.convertObjectToJsonBytes(comic)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isInternalServerError());
     }
 
 
     @Test
     void updateComicDetailsTest() throws Exception {
         var comic = getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007);
-        when(comicsService.createComic(42, comic)).thenReturn(comic);
+        when(comicsService.createComic(42, comic)).thenReturn(Optional.of(comic));
 
         var mvcResult = this.mockMvc.perform(post("/api/v1/comics/42")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
                         .content(TestUtil.convertObjectToJsonBytes(comic)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
 
-        var item = new GsonProvider().gson().fromJson(responseBody, ComicItem.class);
-        assertThat(item).isNotNull();
+        ApiResponse<ComicItem> response = objectMapper.readValue(responseBody,
+                new TypeReference<ApiResponse<ComicItem>>() {});
+        assertThat(response.getData()).isNotNull();
 
         verify(comicsService, times(1)).createComic(42, comic);
     }
@@ -140,11 +150,11 @@ class ComicControllerTest {
     @Test
     void updateComicDetailsNowAllowedTest() throws Exception {
         var comic = getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007);
-        when(comicsService.updateComic(42, comic)).thenReturn(null);
+        when(comicsService.updateComic(42, comic)).thenReturn(Optional.empty());
         this.mockMvc.perform(post("/api/v1/comics/42")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
                         .content(TestUtil.convertObjectToJsonBytes(comic)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

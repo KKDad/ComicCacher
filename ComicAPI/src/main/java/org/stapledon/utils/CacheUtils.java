@@ -32,7 +32,7 @@ public class CacheUtils {
         var path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
         var file = new File(path);
         if (!file.exists())
-            throw new CacheException(String.format("Cache Directory does not exist: %s", path));
+            throw CacheException.directoryNotFound(comic.getName(), path);
         return file;
     }
 
