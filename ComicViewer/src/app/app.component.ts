@@ -1,4 +1,4 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, HostListener, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -18,23 +18,47 @@ import { ContainerComponent, NavBarOption } from './comicpage/container/containe
 export class AppComponent implements AfterViewInit {
   title = 'The Comic Reader';
 
+  // Track if the navigation bar is collapsed
+  isNavCollapsed = signal(false);
+
+  // Track last scroll position
+  private lastScrollTop = 0;
+
   constructor(private containerComponent: ContainerComponent) { }
 
   ngAfterViewInit(): void {
-    this.containerComponent.scrollinfo.subscribe((data: NavBarOption) => { this.onWindowScroll(data); });
+    // Subscribe to container component's scroll events
+    this.containerComponent.scrollinfo.subscribe((data: NavBarOption) => {
+      this.onWindowScroll(data);
+    });
   }
 
+  // Listen for window scroll events
+  @HostListener('window:scroll', ['$event'])
+  onGlobalScroll(event: Event): void {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    // Determine if we should collapse the nav bar
+    if (scrollTop > 100 && scrollTop > this.lastScrollTop) {
+      this.isNavCollapsed.set(true);
+    } else if (scrollTop < 10 || scrollTop < this.lastScrollTop) {
+      this.isNavCollapsed.set(false);
+    }
+
+    this.lastScrollTop = scrollTop;
+  }
+
+  // Handle scroll events from container component
   onWindowScroll(data: NavBarOption) {
-    console.log('onWindowScroll', data);
     switch (data) {
       case NavBarOption.Show:
-        console.log('Expand NavBar');
+        this.isNavCollapsed.set(false);
         break;
       case NavBarOption.Hide:
-        console.log('Shrink NavBar');
+        this.isNavCollapsed.set(true);
         break;
       default:
-        console.log('Unknown');
+        // Do nothing
     }
   }
 }

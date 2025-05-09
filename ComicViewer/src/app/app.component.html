@@ -1,13 +1,21 @@
-<div class="topnav">
-    <p class="txt title outline">Daily Comics</p>
-    <div class="wrapper">
-        <div class="c1">
-            <button mat-button onclick="window.location.href='https://github.com/KKDad/ComicCacher'">Project</button>
-            <button mat-button onclick="window.location.href='docs/index.html'">API</button>                
-        </div>      
-        <div class="c2">
-            <button mat-button [routerLink]="['/about']">About</button>
-        </div>      
+<div class="topnav" [class.collapsed]="isNavCollapsed">
+  <h1 class="txt title outline">Daily Comics</h1>
+  <div class="wrapper">
+    <div class="c1">
+      <a mat-button href="https://github.com/KKDad/ComicCacher" target="_blank" rel="noopener noreferrer">
+        Project
+      </a>
+      <a mat-button href="docs/index.html" target="_blank" rel="noopener noreferrer">
+        API
+      </a>
     </div>
+    <div class="c2">
+      <button mat-button [routerLink]="['/about']">About</button>
+    </div>
+  </div>
 </div>
-<router-outlet></router-outlet>
+
+<!-- Main content -->
+<div class="content-wrapper">
+  <router-outlet></router-outlet>
+</div>
