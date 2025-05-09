@@ -3,11 +3,20 @@ import { Comic } from '../../dto/comic';
 import { ComicService } from '../../comic.service';
 import { DomSanitizer} from '@angular/platform-browser';
 import { ImageDto } from '../../dto/image';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'section',
     templateUrl: 'section.component.html',
-    styleUrls: ['section.component.css'], 
+    styleUrls: ['section.component.css'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        MatCardModule,
+        MatButtonModule
+    ]
 })
 export class SectionComponent implements OnInit {
 
