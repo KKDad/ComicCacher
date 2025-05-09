@@ -7,6 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.stapledon.caching.ICachable;
+import org.stapledon.exceptions.ComicCachingException;
 import org.stapledon.web.WebInspector;
 import org.stapledon.web.WebInspectorImpl;
 
@@ -155,7 +156,8 @@ public abstract class DailyComic implements IDailyComic, ICachable {
             return cacheImage(image.first(), f.getAbsolutePath());
 
         } catch (IOException ioe) {
-            return false;
+            log.error("Failed to cache comic {}: {}", getComic(), ioe.getMessage());
+            throw ComicCachingException.forComic(getComic(), ioe);
         }
     }
 

@@ -12,11 +12,11 @@ import java.util.Optional;
 public interface ComicsService {
     List<ComicItem> retrieveAll();
 
-    ComicItem retrieveComic(int comicId);
+    Optional<ComicItem> retrieveComic(int comicId);
 
-    ComicItem createComic(int comicId, ComicItem comicItem);
+    Optional<ComicItem> createComic(int comicId, ComicItem comicItem);
 
-    ComicItem updateComic(int comicId, ComicItem comicItem);
+    Optional<ComicItem> updateComic(int comicId, ComicItem comicItem);
 
     boolean deleteComic(int comicId);
 

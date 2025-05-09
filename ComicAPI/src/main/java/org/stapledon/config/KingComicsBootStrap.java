@@ -1,8 +1,10 @@
 package org.stapledon.config;
 
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.downloader.ComicsKingdom;
 import org.stapledon.downloader.IDailyComic;
+import org.stapledon.web.WebInspector;
 import org.stapledon.web.WebInspectorImpl;
 
 import java.time.LocalDate;
@@ -12,6 +14,9 @@ public class KingComicsBootStrap implements IComicsBootstrap {
     String name;
     String website;
     LocalDate startDate;
+
+    @Autowired
+    private WebInspector webInspector;
 
     public KingComicsBootStrap() {
         // No args constructor for required for Gson deserialize
@@ -29,6 +34,6 @@ public class KingComicsBootStrap implements IComicsBootstrap {
 
     @Override
     public IDailyComic getDownloader() {
-        return new ComicsKingdom(new WebInspectorImpl(), this.getWebsite());
+        return new ComicsKingdom(webInspector != null ? webInspector : new WebInspectorImpl(), this.getWebsite());
     }
 }
