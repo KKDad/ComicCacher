@@ -1,4 +1,22 @@
 <div class="comic-container">
+  <!-- Global loading indicator -->
+  <app-loading-indicator
+    [loading]="loading()"
+    [loadingText]="'Loading comics...'"
+    [overlay]="false"
+    [diameter]="60"
+    class="global-loader">
+  </app-loading-indicator>
+
+  <!-- Global error display -->
+  <app-error-display
+    [errorMessage]="error()"
+    [dismissible]="true"
+    [retryable]="true"
+    (dismiss)="clearError()"
+    (retry)="refreshComics()">
+  </app-error-display>
+
   <cdk-virtual-scroll-viewport
     class="comic-viewport"
     [itemSize]="itemSizeFn"
@@ -6,6 +24,12 @@
     [maxBufferPx]="1000">
     <div *cdkVirtualFor="let section of sections; trackBy: trackByComicId" class="comic-item">
       <section [content]="section"></section>
+    </div>
+
+    <!-- Empty state when no comics are available -->
+    <div *ngIf="!sections || sections.length === 0" class="no-comics-message">
+      <h3>No comics available</h3>
+      <p>Check your connection and try refreshing the page.</p>
     </div>
   </cdk-virtual-scroll-viewport>
 </div>

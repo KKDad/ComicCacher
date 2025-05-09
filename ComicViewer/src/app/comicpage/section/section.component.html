@@ -1,18 +1,44 @@
 <mat-card appearance="elevated" class="example-card">
     <mat-card-header>
-            <img mat-card-avatar [src]="getAvatarImage()" /> 
-            <mat-card-title>{{content.name}}</mat-card-title>
-            <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
+        <img mat-card-avatar [src]="getAvatarImage()" />
+        <mat-card-title>{{content.name}}</mat-card-title>
+        <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
     </mat-card-header>
+
+    <!-- Display error message if there is one -->
+    <app-error-display
+        [errorMessage]="error()"
+        [retryable]="true"
+        (dismiss)="clearError()"
+        (retry)="onRetry()">
+    </app-error-display>
+
     <mat-card-content>
-            <p class="pubdate" style="margin-inline-end: 100px;">Published on: {{this.imageDate}}</p>
-            <img [src]="getComicImage()" height={{this.height}} width={{this.width}} />
-        <!-- <p>{{content.description}}</p> -->
+        <div class="comic-content-container">
+            <!-- Loading indicator -->
+            <app-loading-indicator
+                [loading]="loading()"
+                [loadingText]="'Loading comic...'"
+                [overlay]="true">
+            </app-loading-indicator>
+
+            <ng-container *ngIf="imageDate">
+                <p class="pubdate">Published on: {{imageDate}}</p>
+                <img
+                    *ngIf="content.strip"
+                    [src]="getComicImage()"
+                    [height]="height"
+                    [width]="width"
+                    alt="{{content.name}} comic strip dated {{imageDate}}"
+                    class="comic-image" />
+            </ng-container>
+        </div>
     </mat-card-content>
+
     <mat-card-actions>
-        <button mat-button className="mat-button-raised" (click)="onNavigateFirst()">First</button>
-        <button mat-button className="mat-button-raised" (click)="onPrev()">Previous</button>
-        <button mat-button className="mat-button-raised" (click)="onNext()">Next</button>
-        <button mat-button className="mat-button-raised" (click)="onNavigateLast()">Last</button>
-    </mat-card-actions>      
+        <button mat-button color="primary" (click)="onNavigateFirst()" [disabled]="loading()">First</button>
+        <button mat-button color="primary" (click)="onPrev()" [disabled]="loading()">Previous</button>
+        <button mat-button color="primary" (click)="onNext()" [disabled]="loading()">Next</button>
+        <button mat-button color="primary" (click)="onNavigateLast()" [disabled]="loading()">Last</button>
+    </mat-card-actions>
 </mat-card>
