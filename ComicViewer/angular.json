@@ -72,11 +72,11 @@
           },
           "configurations": {
             "production": {
-              "browserTarget": "ComicViewer:build:production",
-              "proxyConfig": "proxy.conf.json"
+              "proxyConfig": "proxy.conf.json",
+              "buildTarget": "ComicViewer:build:production"
             },
             "development": {
-              "browserTarget": "ComicViewer:build:development"
+              "buildTarget": "ComicViewer:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -84,7 +84,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "ComicViewer:build"
+            "buildTarget": "ComicViewer:build"
           }
         },
         "test": {
