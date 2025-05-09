@@ -50,6 +50,16 @@ export class ContainerComponent implements OnInit {
         this.lastOffset = scrollTop;
       }
 
-      itemSizeFn = (item, index) => index % 2 ? 50 : 100;
+      // Dynamic item size function for virtualization
+      itemSizeFn = (index: number) => {
+        // Use a more appropriate sizing approach based on content
+        // This is just a starting point that can be refined
+        return 550; // Approximate height of a comic card
+      };
+
+      // Track comics by their ID for better performance
+      trackByComicId(index: number, comic: Comic): number {
+        return comic?.id || index;
+      }
 
 }

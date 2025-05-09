@@ -1,7 +1,11 @@
-<ul>
-  <cdk-virtual-scroll-viewport autosize [itemSize]="itemSizeFn">
-      <div *cdkVirtualFor="let section of sections">
-            <section [content]="section"></section>
-      </div>
+<div class="comic-container">
+  <cdk-virtual-scroll-viewport
+    class="comic-viewport"
+    [itemSize]="itemSizeFn"
+    [minBufferPx]="500"
+    [maxBufferPx]="1000">
+    <div *cdkVirtualFor="let section of sections; trackBy: trackByComicId" class="comic-item">
+      <section [content]="section"></section>
+    </div>
   </cdk-virtual-scroll-viewport>
-</ul>
+</div>
