@@ -1,11 +1,11 @@
 package org.stapledon.api.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.test.web.servlet.MockMvc;
-import org.stapledon.api.service.StartupReconciler;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.stapledon.api.service.UpdateService;
 
 import static org.mockito.Mockito.*;
@@ -13,36 +13,75 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-@WebMvcTest(UpdateController.class)
+/**
+ * Standalone tests for UpdateController that don't rely on Spring context
+ */
 class UpdateControllerTest {
-    @Autowired
+    
     private MockMvc mockMvc;
-
-    @MockitoBean
+    
+    @Mock
     private UpdateService updateService;
-
-    @MockitoBean
-    private StartupReconciler startupReconciler;
-
+    
+    private UpdateController updateController;
+    
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+        updateController = new UpdateController(updateService);
+        mockMvc = MockMvcBuilders.standaloneSetup(updateController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+    
     @Test
     void updateAll() throws Exception {
+        // Given
         when(updateService.updateAll()).thenReturn(true);
-
+        
+        // When & Then
         this.mockMvc.perform(get("/api/v1/update"))
                 .andDo(print())
                 .andExpect(status().isOk());
+        
+        verify(updateService, times(1)).updateAll();
+    }
+    
+    @Test
+    void updateSpecific() throws Exception {
+        // Given
+        when(updateService.updateComic(42)).thenReturn(true);
+        
+        // When & Then
+        this.mockMvc.perform(get("/api/v1/update/42"))
+                .andDo(print())
+                .andExpect(status().isOk());
+        
+        verify(updateService, times(1)).updateComic(anyInt());
+    }
+    
+    @Test
+    void updateAllFailure() throws Exception {
+        // Given
+        when(updateService.updateAll()).thenReturn(false);
+
+        // When & Then
+        this.mockMvc.perform(get("/api/v1/update"))
+                .andDo(print())
+                .andExpect(status().isNotFound());
 
         verify(updateService, times(1)).updateAll();
     }
 
     @Test
-    void updateSpecific() throws Exception {
-        when(updateService.updateComic(42)).thenReturn(true);
+    void updateSpecificFailure() throws Exception {
+        // Given
+        when(updateService.updateComic(42)).thenReturn(false);
 
+        // When & Then
         this.mockMvc.perform(get("/api/v1/update/42"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isNotFound());
 
         verify(updateService, times(1)).updateComic(anyInt());
     }

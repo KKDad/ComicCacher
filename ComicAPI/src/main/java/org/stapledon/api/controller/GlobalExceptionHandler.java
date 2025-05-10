@@ -3,12 +3,15 @@ package org.stapledon.api.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
+import org.stapledon.exceptions.AuthenticationException;
 import org.stapledon.exceptions.ComicCachingException;
 import org.stapledon.exceptions.ComicImageNotFoundException;
 import org.stapledon.exceptions.ComicNotFoundException;
@@ -55,6 +58,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CacheException.class)
     public ResponseEntity<ApiResponse<Void>> handleCacheException(CacheException ex, WebRequest request) {
         log.error("Cache error: {}", ex.getMessage(), ex);
+        return ResponseBuilder.error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    /**
+     * Handle authentication exceptions
+     */
+    @ExceptionHandler({AuthenticationException.class, BadCredentialsException.class})
+    public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(Exception ex, WebRequest request) {
+        log.warn("Authentication failed: {}", ex.getMessage());
+        return ResponseBuilder.error(HttpStatus.UNAUTHORIZED, "Authentication failed: " + ex.getMessage());
+    }
+
+    /**
+     * Handle username not found exception
+     */
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUsernameNotFoundException(UsernameNotFoundException ex, WebRequest request) {
+        log.warn("Username not found: {}", ex.getMessage());
         return ResponseBuilder.error(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 

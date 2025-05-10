@@ -1,49 +1,58 @@
 package org.stapledon.api.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.stapledon.api.service.ComicsService;
-import org.stapledon.api.service.DailyRunner;
-import org.stapledon.api.service.StartupReconciler;
-import org.stapledon.config.GsonProvider;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.stapledon.api.model.ApiResponse;
+import org.stapledon.api.service.ComicsService;
+import org.stapledon.config.GsonProvider;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageDto;
 import org.stapledon.utils.TestUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.stapledon.utils.Direction;
 
-@WebMvcTest(ComicController.class)
+/**
+ * Standalone tests for ComicController that don't rely on Spring context
+ */
 class ComicControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @Mock
     private ComicsService comicsService;
 
-    @MockitoBean
-    private DailyRunner dailyRunner;
-
-    @MockitoBean
-    private StartupReconciler startupReconciler;
-
+    private ComicController comicController;
+    
     private final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules(); // Automatically discover and register modules, including JavaTimeModule
+
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+        comicController = new ComicController(comicsService);
+        mockMvc = MockMvcBuilders.standaloneSetup(comicController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Test
     void retrieveAllComics() throws Exception {
@@ -65,7 +74,6 @@ class ComicControllerTest {
 
         verify(comicsService, times(1)).retrieveAll();
     }
-
 
     @Test
     void retrieveComicDetails() throws Exception {
@@ -125,7 +133,6 @@ class ComicControllerTest {
                 .andExpect(status().isInternalServerError());
     }
 
-
     @Test
     void updateComicDetailsTest() throws Exception {
         var comic = getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007);
@@ -150,7 +157,7 @@ class ComicControllerTest {
     @Test
     void updateComicDetailsNowAllowedTest() throws Exception {
         var comic = getComicItem(42, "Art Comics Daily", "Bebe Williams", "Art Comics Daily is a pioneering webcomic first published in March 1995 by Bebe Williams, who lives in Arlington, Virginia, United States. The webcomic was published on the Internet rather than in print in order to reserve some artistic freedom. Art Comics Daily has been on permanent hiatus since 2007.", 1995, 5, 31, 2007);
-        when(comicsService.updateComic(42, comic)).thenReturn(Optional.empty());
+        when(comicsService.createComic(42, comic)).thenReturn(Optional.empty());
         this.mockMvc.perform(post("/api/v1/comics/42")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
                         .content(TestUtil.convertObjectToJsonBytes(comic)))
@@ -198,29 +205,61 @@ class ComicControllerTest {
     }
 
     @Test
-    void retrieveFirstComicImage() {
+    void retrieveFirstComicImage() throws Exception {
+        var image = ImageDto.builder().build();
+        when(comicsService.retrieveComicStrip(eq(42), any(Direction.class))).thenReturn(Optional.ofNullable(image));
+
+        this.mockMvc.perform(get("/api/v1/comics/42/strips/first"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE));
+
+        verify(comicsService, times(1)).retrieveComicStrip(eq(42), any(Direction.class));
     }
 
     @Test
-    void retrieveNextComicImage() {
+    void retrieveNextComicImage() throws Exception {
+        var image = ImageDto.builder().build();
+        when(comicsService.retrieveComicStrip(eq(42), eq(Direction.FORWARD), any(LocalDate.class))).thenReturn(Optional.ofNullable(image));
+
+        this.mockMvc.perform(get("/api/v1/comics/42/next/2022-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE));
+
+        verify(comicsService, times(1)).retrieveComicStrip(eq(42), eq(Direction.FORWARD), any(LocalDate.class));
     }
 
     @Test
-    void retrievePreviousComicImage() {
+    void retrievePreviousComicImage() throws Exception {
+        var image = ImageDto.builder().build();
+        when(comicsService.retrieveComicStrip(eq(42), eq(Direction.BACKWARD), any(LocalDate.class))).thenReturn(Optional.ofNullable(image));
+
+        this.mockMvc.perform(get("/api/v1/comics/42/previous/2022-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE));
+
+        verify(comicsService, times(1)).retrieveComicStrip(eq(42), eq(Direction.BACKWARD), any(LocalDate.class));
     }
 
     @Test
-    void retrieveLastComicImage() {
+    void retrieveLastComicImage() throws Exception {
+        var image = ImageDto.builder().build();
+        when(comicsService.retrieveComicStrip(eq(42), any(Direction.class))).thenReturn(Optional.ofNullable(image));
+
+        this.mockMvc.perform(get("/api/v1/comics/42/strips/last"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE));
+
+        verify(comicsService, times(1)).retrieveComicStrip(eq(42), any(Direction.class));
     }
 
-    private static ComicItem getComicItem(int id, String Art_Comics_Daily, String Bebe_Williams, String description, int year, int month, int dayOfMonth, int year1) {
+    private static ComicItem getComicItem(int id, String name, String author, String description, int year, int month, int dayOfMonth, int endYear) {
         return ComicItem.builder()
                 .id(id)
-                .name(Art_Comics_Daily)
-                .author(Bebe_Williams)
+                .name(name)
+                .author(author)
                 .description(description)
                 .oldest(LocalDate.of(year, month, dayOfMonth))
-                .newest(LocalDate.of(year1, 12, 8))
+                .newest(LocalDate.of(endYear, 12, 8))
                 .build();
     }
 }

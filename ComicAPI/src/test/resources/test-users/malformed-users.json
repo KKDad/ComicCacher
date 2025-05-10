@@ -1,0 +1,10 @@
+{
+  "users": {
+    "brokenuser": {
+      "username": "brokenuser"
+      "passwordHash": "missing-comma-error"
+      "email": "broken@example.com",
+      "roles": ["USER"]
+    }
+  }
+}

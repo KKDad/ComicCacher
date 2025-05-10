@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Configuration
 public class GsonProvider {
@@ -20,6 +22,7 @@ public class GsonProvider {
         return new GsonBuilder()
                 .setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
                 .create();
     }
 
@@ -75,6 +78,34 @@ public class GsonProvider {
             } else {
                 return LocalDate.parse(jsonReader.nextString());
             }
+        }
+    }
+
+    /**
+     * Type adapter for LocalDateTime that handles serialization and deserialization safely
+     * without accessing internal fields directly.
+     */
+    static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        @Override
+        public void write(JsonWriter jsonWriter, LocalDateTime localDateTime) throws IOException {
+            if (localDateTime == null) {
+                jsonWriter.nullValue();
+            } else {
+                jsonWriter.value(formatter.format(localDateTime));
+            }
+        }
+
+        @Override
+        public LocalDateTime read(JsonReader jsonReader) throws IOException {
+            if (jsonReader.peek() == JsonToken.NULL) {
+                jsonReader.nextNull();
+                return null;
+            }
+
+            String dateTimeStr = jsonReader.nextString();
+            return LocalDateTime.parse(dateTimeStr, formatter);
         }
     }
 }

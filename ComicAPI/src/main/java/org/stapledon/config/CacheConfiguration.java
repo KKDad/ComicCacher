@@ -3,15 +3,16 @@ package org.stapledon.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 import org.stapledon.config.properties.CacheProperties;
 
 import java.io.File;
 
 @Slf4j
-@Component
+@Configuration
 @RequiredArgsConstructor
 public class CacheConfiguration {
+
     private final CacheProperties cacheProperties;
 
     @Bean(name = "cacheLocation")

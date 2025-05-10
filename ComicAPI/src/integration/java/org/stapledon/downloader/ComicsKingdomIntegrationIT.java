@@ -14,7 +14,7 @@ import java.util.Comparator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ComicsKingdomIntegrationTest {
+class ComicsKingdomIntegrationIT {
 
     private static Path path;
 

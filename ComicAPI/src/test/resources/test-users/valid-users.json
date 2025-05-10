@@ -1,0 +1,24 @@
+{
+  "users": {
+    "testuser": {
+      "username": "testuser",
+      "passwordHash": "$2a$10$rXMPE3.nB4HjXn8HFj.1xuTOLI8YmCFHYXPEm7kQXndXDfOFYEbcG",
+      "email": "testuser@example.com",
+      "displayName": "Test User",
+      "created": "2023-01-01T12:00:00",
+      "lastLogin": "2023-01-10T15:30:45",
+      "roles": ["USER"],
+      "userToken": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "adminuser": {
+      "username": "adminuser",
+      "passwordHash": "$2a$10$Cj29YcWrcSwIBJVpCmJ8Ou4I0DYSJXvbDg5Hkh7u7YQL4Kcq2OCZO",
+      "email": "admin@example.com",
+      "displayName": "Admin User",
+      "created": "2022-12-01T10:00:00",
+      "lastLogin": "2023-01-15T09:15:30",
+      "roles": ["USER", "ADMIN"],
+      "userToken": "1d7f5d5c-5e6b-4f0b-a9b5-1d3ae23cfaa8"
+    }
+  }
+}

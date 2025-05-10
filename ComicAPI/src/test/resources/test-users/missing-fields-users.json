@@ -1,0 +1,9 @@
+{
+  "users": {
+    "missingfieldsuser": {
+      "username": "missingfieldsuser",
+      "passwordHash": "$2a$10$rXMPE3.nB4HjXn8HFj.1xuTOLI8YmCFHYXPEm7kQXndXDfOFYEbcG",
+      "email": "missing@example.com"
+    }
+  }
+}

@@ -17,8 +17,8 @@ import java.util.Comparator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class GoComicsIntegrationTest {
-    private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationTest.class);
+class GoComicsIntegrationIT {
+    private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationIT.class);
     private static Path path;
 
     @BeforeAll

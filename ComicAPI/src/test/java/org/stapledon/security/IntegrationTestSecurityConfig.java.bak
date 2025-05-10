@@ -1,0 +1,87 @@
+package org.stapledon.security;
+
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
+
+/**
+ * Security configuration specifically for integration tests
+ * Designed to work with @SpringBootTest
+ */
+@TestConfiguration
+@EnableWebSecurity
+@Profile("test") // Only activate in test profile, not integration
+public class IntegrationTestSecurityConfig {
+
+    /**
+     * Configure security for unit tests only (NOT integration tests)
+     * NOTE: This configuration is intentionally disabled for the 'integration' profile
+     */
+    @Bean
+    @Primary
+    @Profile("test") // Explicitly mark as test-only
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Disable security for unit tests
+        http.csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
+        return http.build();
+    }
+    
+    @Bean
+    @Primary
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
+    @Bean
+    @Primary
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfiguration) throws Exception {
+        return authConfiguration.getAuthenticationManager();
+    }
+    
+    @Bean
+    @Primary
+    public UserDetailsService userDetailsService() {
+        // Create test users for integration tests
+        UserDetails testUser = User.builder()
+                .username("testuser")
+                .password(passwordEncoder().encode("testpassword"))
+                .roles("USER")
+                .build();
+        
+        UserDetails testAdmin = User.builder()
+                .username("testadmin")
+                .password(passwordEncoder().encode("testpassword"))
+                .roles("USER", "ADMIN")
+                .build();
+        
+        return new InMemoryUserDetailsManager(testUser, testAdmin);
+    }
+    
+    @Bean
+    @Primary
+    public JwtTokenFilter jwtTokenFilter() {
+        return new JwtTokenFilter(null, null) {
+            @Override
+            protected boolean shouldNotFilter(jakarta.servlet.http.HttpServletRequest request) {
+                // Allow all requests in test environment
+                return true;
+            }
+        };
+    }
+}

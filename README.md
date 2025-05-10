@@ -18,12 +18,15 @@ it yourself, go ahead.
 - Thread-safe image caching with automatic cleanup
 - Optimized resource management and error handling
 - Configurable cache location and retention policy
+- Comprehensive metrics for cache performance and storage usage
+- Per-comic storage and access analytics
 
 ### API Features
 - RESTful endpoints for comic retrieval and management
 - Standardized API responses with consistent formatting
 - Proper exception handling with informative error messages
 - Optional filtering by comic name, date, and other parameters
+- Metrics API for monitoring cache efficiency and usage patterns
 
 ## Building and Running
 
@@ -39,6 +42,14 @@ it yourself, go ahead.
 
 # Run integration tests
 ./gradlew :ComicAPI:integrationTest
+
+# Generate test coverage reports
+./gradlew :ComicAPI:jacocoTestReport         # Unit test coverage only
+./gradlew :ComicAPI:jacocoIntegrationTestReport   # Integration test coverage only
+./gradlew :ComicAPI:jacocoAllReport          # Combined coverage report
+
+# Generate API documentation
+./gradlew :ComicAPI:updateApiDocs
 
 # Run the application locally
 ./gradlew :ComicAPI:bootRun
@@ -60,7 +71,15 @@ helm upgrade comics comics
 To view the API:
 - Swagger UI: https://comics.gilbert.ca/swagger-ui/index.html
 - API Endpoint: https://comics.gilbert.ca/api/v1/comics
+- Metrics API: https://comics.gilbert.ca/api/v1/metrics
 - OpenAPI JSON: https://comics.gilbert.ca/v3/api-docs
+
+#### Metrics API Endpoints
+The API provides several endpoints for monitoring cache performance:
+- `/api/v1/metrics/storage` - Storage utilization by comic and year
+- `/api/v1/metrics/access` - Access patterns, hit ratios, and timing data
+- `/api/v1/metrics/combined` - Comprehensive view of storage and access metrics
+- `/api/v1/metrics/storage/refresh` - Force refresh of storage metrics
 
 ### ComicViewer
 
@@ -107,6 +126,7 @@ docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
 - **API Documentation**: OpenAPI 3.0 with springdoc-openapi-starter-webmvc-ui
 - **Build Tool**: Gradle 8.5
 - **Testing**: JUnit 5, Spring Test
+- **Test Coverage**: JaCoCo with separate unit and integration test reporting
 - **Containerization**: Docker
 
 ### Frontend (ComicViewer)
@@ -119,9 +139,32 @@ docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
 - Kubernetes (K8s) with Helm charts
 - Automated builds with GitHub Actions
 
+## Code Quality and Test Coverage
+
+The project uses JaCoCo for test coverage reporting. Coverage reports are generated automatically when running tests:
+
+- **Unit Test Coverage**: `./gradlew :ComicAPI:jacocoTestReport`
+- **Integration Test Coverage**: `./gradlew :ComicAPI:jacocoIntegrationTestReport`
+- **Combined Coverage**: `./gradlew :ComicAPI:jacocoAllReport`
+
+Coverage reports are generated in HTML and XML formats in the following locations:
+- Unit Tests: `ComicAPI/build/reports/jacoco/test/html/index.html`
+- Integration Tests: `ComicAPI/build/reports/jacoco/jacocoIntegrationTestReport/html/index.html`
+- Combined: `ComicAPI/build/reports/jacoco/jacocoAllReport/html/index.html`
+
+## API Documentation
+
+The API documentation is automatically generated using the OpenAPI Specification (formerly known as Swagger):
+
+- **Local Development**: When running locally, access the Swagger UI at `http://localhost:8080/swagger-ui/index.html`
+- **Generated Files**: OpenAPI JSON files are generated in the `docs/` directory during the build process
+- **Custom Generator**: Run `./gradlew :ComicAPI:updateApiDocs` to manually update the documentation
+
 ## Resources
 
 - **Material Design Principles**: https://material.io/design/components/cards.html#usage
 - **Material Design in Angular**: https://material.angular.io/components/categories
 - **JSON to TypeScript Converter**: http://json2ts.com/
 - **Angular Virtual Scrolling**: https://material.angular.io/cdk/scrolling/overview
+- **JaCoCo Documentation**: https://www.eclemma.org/jacoco/
+- **OpenAPI/Swagger**: https://swagger.io/specification/

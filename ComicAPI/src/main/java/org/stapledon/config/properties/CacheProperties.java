@@ -15,4 +15,8 @@ public class CacheProperties {
     private String location;
 
     private String config;
+
+    private String usersConfig;
+
+    private String preferencesConfig;
 }
