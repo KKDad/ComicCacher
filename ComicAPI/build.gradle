@@ -99,6 +99,17 @@ jacocoTestReport {
         xml.required = true
         html.required = true
     }
+
+    // Add coverage verification rules
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                "org/stapledon/config/properties/**", // Configuration classes
+                "**/dto/**",                           // Data transport objects
+                "**/*Exception.class"                  // Exception classes
+            ])
+        }))
+    }
 }
 
 // Integration test coverage
