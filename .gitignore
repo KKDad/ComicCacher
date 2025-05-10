@@ -162,4 +162,15 @@ gradle-app.setting
 # End of https://www.gitignore.io/api/java,gradle,angular,intellij
 /ComicViewer/.yarn/
 
+# Project specific ignores
 **/.claude/settings.local.json
+
+# Backup files
+**/*.bak
+**/backup/
+
+# Runtime and temporary files
+**/stats.db
+**/users.json
+**/integration-cache/
+**/test-cache/
