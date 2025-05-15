@@ -125,6 +125,10 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
 
     @Override
     public void run(String... args) throws Exception {
-        reconcile();
+        if (startupReconcilerProperties.isEnabled()) {
+            reconcile();
+        } else {
+            log.warn("Startup Reconciler is disabled");
+        }
     }
 }
