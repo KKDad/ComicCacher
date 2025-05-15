@@ -6,6 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.stapledon.config.IComicsBootstrap;
 import org.stapledon.config.JsonConfigWriter;
+import org.stapledon.config.TaskExecutionTracker;
 import org.stapledon.config.properties.StartupReconcilerProperties;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.dto.Bootstrap;
@@ -15,24 +16,39 @@ import org.stapledon.dto.ComicItem;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Responsible for reconciling comic configurations at application startup
+ * Uses TaskExecutionTracker to ensure it only runs once per day even if the application is restarted
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunner {
 
     private final StartupReconcilerProperties startupReconcilerProperties;
-
     private final JsonConfigWriter jsonConfigWriter;
-
     private final ComicCacher comicCacher;
+    private final TaskExecutionTracker taskExecutionTracker;
+    
+    private static final String TASK_NAME = "StartupReconciler";
 
     @Override
     public boolean reconcile() {
         log.info("ComicApiApplication starting...");
         try {
+            // Always load the comics to ensure the application has data to work with
             var comicConfig = jsonConfigWriter.loadComics();
-            reconcileBoostrapConfig(comicConfig);
-            comicConfig = jsonConfigWriter.loadComics();
+            
+            // Only perform the reconciliation if it hasn't run today
+            if (taskExecutionTracker.canRunToday(TASK_NAME)) {
+                log.info("Performing startup reconciliation for today");
+                reconcileBoostrapConfig(comicConfig);
+                comicConfig = jsonConfigWriter.loadComics(); // Reload after reconciliation
+                taskExecutionTracker.markTaskExecuted(TASK_NAME);
+            } else {
+                log.info("Startup reconciliation already ran today ({}), skipping", 
+                         taskExecutionTracker.getLastExecutionDate(TASK_NAME));
+            }
 
             ComicsServiceImpl.getComics().addAll(comicConfig.getItems().values());
             log.info("Loaded: {} comics.", ComicsServiceImpl.getComics().size());
@@ -76,7 +92,6 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
         // Removed entries found in ComicConfig, but not in the CacherBootstrapConfig
         comicConfig.getItems().entrySet().removeIf(integerComicItemEntry -> findBootstrapComic(config, integerComicItemEntry.getValue()) == null);
 
-
         log.info("Reconciliation complete");
     }
 
@@ -110,7 +125,6 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
      * @return ComicItem or null if none could be located
      */
     ComicItem findComicItem(ComicConfig config, IComicsBootstrap comic) {
-
         if (!config.getItems().isEmpty()) {
             Map.Entry<Integer, ComicItem> result = config.getItems().entrySet()
                     .stream()
@@ -125,6 +139,10 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
 
     @Override
     public void run(String... args) throws Exception {
-        reconcile();
+        if (startupReconcilerProperties.isEnabled()) {
+            reconcile();
+        } else {
+            log.warn("Startup Reconciler is disabled");
+        }
     }
 }

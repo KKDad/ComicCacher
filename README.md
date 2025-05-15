@@ -20,6 +20,7 @@ it yourself, go ahead.
 - Configurable cache location and retention policy
 - Comprehensive metrics for cache performance and storage usage
 - Per-comic storage and access analytics
+- Guaranteed once-daily execution tracking for startup procedures and downloads
 
 ### API Features
 - RESTful endpoints for comic retrieval and management

@@ -2,7 +2,7 @@ package org.stapledon.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,12 +12,12 @@ import org.stapledon.dto.JwtTokenDto;
 import org.stapledon.dto.User;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import javax.xml.bind.DatatypeConverter;
 
 @Slf4j
 @Component
@@ -44,7 +44,7 @@ public class JwtTokenUtil {
                 .setSubject(user.getUsername())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiration))
-                .signWith(SignatureAlgorithm.HS256, getSigningKey())
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -62,7 +62,7 @@ public class JwtTokenUtil {
                 .setSubject(user.getUsername())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiration))
-                .signWith(SignatureAlgorithm.HS256, getSigningKey())
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -158,8 +158,9 @@ public class JwtTokenUtil {
      * @return Claims
      */
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
+        return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
@@ -169,7 +170,8 @@ public class JwtTokenUtil {
      *
      * @return Signing key
      */
-    private byte[] getSigningKey() {
-        return jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+    private Key getSigningKey() {
+        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

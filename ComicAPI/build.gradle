@@ -51,14 +51,24 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.11.0'
 	implementation 'com.google.guava:guava:33.4.6-jre'
 	implementation 'org.jsoup:jsoup:1.18.1'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+	
+	// OpenAPI documentation
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation' // Add validation starter
+	
+	// Fix version incompatibility issues
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
 
 	// Security dependencies
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// Use Spring Boot managed version to ensure compatibility
 	implementation 'org.springframework.security:spring-security-config'
-	implementation 'io.jsonwebtoken:jjwt:0.9.1'
-	implementation 'javax.xml.bind:jaxb-api:2.3.1'
+	// Updated JWT dependencies compatible with Spring Boot 3.x
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	implementation 'org.mindrot:jbcrypt:0.4'
 
 	compileOnly 'org.projectlombok:lombok'
@@ -82,6 +92,14 @@ tasks.withType(Test) {
 
 bootRun  {
 	main = "org.stapledon.ComicApiApplication"
+	
+	// Allow command-line arguments to override system properties
+	// This ensures bootRun will respect spring.profiles.active when specified via --args
+	if (project.hasProperty('args')) {
+		args project.args.split(',')
+	} else {
+		systemProperty('spring.profiles.active', 'production')
+	}
 }
 
 springBoot {
@@ -98,6 +116,17 @@ jacocoTestReport {
     reports {
         xml.required = true
         html.required = true
+    }
+
+    // Add coverage verification rules
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                "org/stapledon/config/properties/**", // Configuration classes
+                "**/dto/**",                           // Data transport objects
+                "**/*Exception.class"                  // Exception classes
+            ])
+        }))
     }
 }
 
@@ -129,23 +158,42 @@ task jacocoAllReport(type: JacocoReport) {
 
 // OpenAPI documentation configuration
 openApi {
-    apiDocsUrl.set("http://localhost:8080/v3/api-docs")
+    apiDocsUrl.set("http://localhost:8888/v3/api-docs")
     outputDir.set(file("${project.buildDir}"))
     outputFileName.set("openapi.json")
     waitTimeInSeconds.set(30)
+    
+    // Configure the Spring Boot application to use the 'apidocs' profile
+    // This will disable comic caching during API docs generation
+    customBootRun {
+        args = ["--spring.profiles.active=apidocs"]
+    }
 }
 
-// API Documentation tasks
+// The API docs generation is temporarily disabled in the build process
+// to prevent build failures. Use the updateApiDocs task manually when needed.
+
+// Manual API docs generation task
 tasks.register("updateApiDocs") {
-    dependsOn generateOpenApiDocs
     doLast {
-        copy {
-            from "${project.buildDir}/openapi.json"
-            into "../docs"
+        logger.lifecycle("Generating OpenAPI docs manually using script...")
+        exec {
+            workingDir project.projectDir
+            commandLine "./generate-openapi-docs.sh"
         }
     }
 }
 
-tasks.named("build") {
-    finalizedBy("updateApiDocs")
+// Task to run the application with apidocs profile for manual testing
+tasks.register('bootRunApiDocs') {
+    dependsOn 'classes'
+    group = 'application'
+    description = 'Runs the Spring Boot application with the apidocs profile (caching disabled)'
+    
+    doLast {
+        exec {
+            workingDir project.projectDir
+            commandLine "${project.getRootDir().getAbsolutePath()}/gradlew", "bootRun", "--args=--spring.profiles.active=apidocs"
+        }
+    }
 }
