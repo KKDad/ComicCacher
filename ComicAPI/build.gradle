@@ -82,6 +82,10 @@ tasks.withType(Test) {
 
 bootRun  {
 	main = "org.stapledon.ComicApiApplication"
+	
+	// This ensures that when bootRun is used for API doc generation,
+	// it will respect the spring.profiles.active system property set by generateOpenApiDocs
+	systemProperty('spring.profiles.active', System.getProperty('spring.profiles.active', 'production'))
 }
 
 springBoot {
@@ -146,9 +150,61 @@ openApi {
     waitTimeInSeconds.set(30)
 }
 
-// API Documentation tasks
+// Configure OpenAPI docs generation to run at the right time
+// and set the correct dependencies for other tasks
+
+// The OpenAPI generation requires the Spring app to be running,
+// which means the main classes must be compiled
+tasks.named('generateOpenApiDocs') {
+    dependsOn 'compileJava'
+
+    // The Spring Boot app needs to be running before we can generate API docs
+    // but we can't add this as a task dependency because it starts a server
+    // instead, we ensure proper ordering
+    mustRunAfter 'bootRun'
+    
+    // Set Spring profile to 'apidocs' to disable comic caching during API doc generation
+    doFirst {
+        // This system property will be passed to the Spring Boot application
+        // when it's started for generating API docs
+        System.setProperty('spring.profiles.active', 'apidocs')
+    }
+}
+
+// Handle tasks that use the output of generateOpenApiDocs
+// jacocoTestReport needs access to the generateOpenApiDocs output directory
+tasks.named('jacocoTestReport') {
+    // Explicitly depend on generateOpenApiDocs
+    dependsOn 'generateOpenApiDocs'
+}
+
+// Make test run after API docs are generated
+tasks.named('test') {
+    // Allow test and generateOpenApiDocs to run in parallel if possible
+    mustRunAfter 'generateOpenApiDocs'
+}
+
+// Integration test compilation should happen after docs are generated
+tasks.named('compileIntegrationJava') {
+    // Allow integration test compilation and generateOpenApiDocs to run in parallel if possible
+    mustRunAfter 'generateOpenApiDocs'
+}
+
+// Ensure JAR task runs after API docs are generated
+tasks.named('jar') {
+    // Allow jar and generateOpenApiDocs to run in parallel if possible
+    mustRunAfter 'generateOpenApiDocs'
+}
+
+// Make test compilation run after API docs are generated
+tasks.named('compileTestJava') {
+    // Allow test compilation and generateOpenApiDocs to run in parallel if possible
+    mustRunAfter 'generateOpenApiDocs'
+}
+
+// Define task to copy generated OpenAPI docs to the docs directory
 tasks.register("updateApiDocs") {
-    dependsOn generateOpenApiDocs
+    dependsOn 'generateOpenApiDocs'
     doLast {
         copy {
             from "${project.buildDir}/openapi.json"
@@ -157,6 +213,27 @@ tasks.register("updateApiDocs") {
     }
 }
 
-tasks.named("build") {
-    finalizedBy("updateApiDocs")
+// Ensure OpenAPI docs are generated after resources are processed
+tasks.named('processResources') {
+    finalizedBy 'generateOpenApiDocs'
+}
+
+// Make build task finalize with updateApiDocs
+tasks.named('build') {
+    finalizedBy 'updateApiDocs'
+}
+
+// Task to run the application with apidocs profile for manual testing
+tasks.register('bootRunApiDocs') {
+    dependsOn 'classes'
+    group = 'application'
+    description = 'Runs the Spring Boot application with the apidocs profile (caching disabled)'
+    
+    doFirst {
+        tasks.bootRun.configure {
+            systemProperty('spring.profiles.active', 'apidocs')
+        }
+    }
+    
+    finalizedBy 'bootRun'
 }
