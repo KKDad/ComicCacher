@@ -53,7 +53,7 @@ dependencies {
 	implementation 'org.jsoup:jsoup:1.18.1'
 	
 	// OpenAPI documentation
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation' // Add validation starter
 	
@@ -63,9 +63,12 @@ dependencies {
 
 	// Security dependencies
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// Use Spring Boot managed version to ensure compatibility
 	implementation 'org.springframework.security:spring-security-config'
-	implementation 'io.jsonwebtoken:jjwt:0.9.1'
-	implementation 'javax.xml.bind:jaxb-api:2.3.1'
+	// Updated JWT dependencies compatible with Spring Boot 3.x
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	implementation 'org.mindrot:jbcrypt:0.4'
 
 	compileOnly 'org.projectlombok:lombok'
@@ -167,69 +170,18 @@ openApi {
     }
 }
 
-// Configure OpenAPI docs generation to run at the right time
-// and set the correct dependencies for other tasks
+// The API docs generation is temporarily disabled in the build process
+// to prevent build failures. Use the updateApiDocs task manually when needed.
 
-// The OpenAPI generation requires the Spring app to be running,
-// which means the main classes must be compiled
-tasks.named('generateOpenApiDocs') {
-    dependsOn 'compileJava'
-
-    // The Spring Boot app needs to be running before we can generate API docs
-    // but we can't add this as a task dependency because it starts a server
-    // instead, we ensure proper ordering
-    mustRunAfter 'bootRun'
-}
-
-// Handle tasks that use the output of generateOpenApiDocs
-// jacocoTestReport needs access to the generateOpenApiDocs output directory
-tasks.named('jacocoTestReport') {
-    // Explicitly depend on generateOpenApiDocs
-    dependsOn 'generateOpenApiDocs'
-}
-
-// Make test run after API docs are generated
-tasks.named('test') {
-    // Allow test and generateOpenApiDocs to run in parallel if possible
-    mustRunAfter 'generateOpenApiDocs'
-}
-
-// Integration test compilation should happen after docs are generated
-tasks.named('compileIntegrationJava') {
-    // Allow integration test compilation and generateOpenApiDocs to run in parallel if possible
-    mustRunAfter 'generateOpenApiDocs'
-}
-
-// Ensure JAR task runs after API docs are generated
-tasks.named('jar') {
-    // Allow jar and generateOpenApiDocs to run in parallel if possible
-    mustRunAfter 'generateOpenApiDocs'
-}
-
-// Make test compilation run after API docs are generated
-tasks.named('compileTestJava') {
-    // Allow test compilation and generateOpenApiDocs to run in parallel if possible
-    mustRunAfter 'generateOpenApiDocs'
-}
-
-// Task to use shell script to generate OpenAPI docs
+// Manual API docs generation task
 tasks.register("updateApiDocs") {
     doLast {
+        logger.lifecycle("Generating OpenAPI docs manually using script...")
         exec {
             workingDir project.projectDir
             commandLine "./generate-openapi-docs.sh"
         }
     }
-}
-
-// Ensure OpenAPI docs are generated after resources are processed
-tasks.named('processResources') {
-    finalizedBy 'generateOpenApiDocs'
-}
-
-// Make build task finalize with updateApiDocs
-tasks.named('build') {
-    finalizedBy 'updateApiDocs'
 }
 
 // Task to run the application with apidocs profile for manual testing
