@@ -212,13 +212,12 @@ tasks.named('compileTestJava') {
     mustRunAfter 'generateOpenApiDocs'
 }
 
-// Define task to copy generated OpenAPI docs to the docs directory
+// Task to use shell script to generate OpenAPI docs
 tasks.register("updateApiDocs") {
-    dependsOn 'generateOpenApiDocs'
     doLast {
-        copy {
-            from "${project.buildDir}/openapi.json"
-            into "../docs"
+        exec {
+            workingDir project.projectDir
+            commandLine "./generate-openapi-docs.sh"
         }
     }
 }
