@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**IMPORTANT: When working with ComicAPI code, always follow the standards in [ComicAPI/CLAUDE_MEMORY.md](./ComicAPI/CLAUDE_MEMORY.md).**
+
 ## Project Overview
 
 ComicCacher is a web comic downloader and viewer application with two main components:
