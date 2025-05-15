@@ -10,7 +10,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.api.service.DailyRunner;
 import org.stapledon.api.service.StartupReconcilerImpl;
-import org.stapledon.api.service.ComicsServiceImpl;
 import org.stapledon.config.properties.CacheProperties;
 import org.stapledon.config.properties.DailyRunnerProperties;
 import org.stapledon.config.properties.StartupReconcilerProperties;
@@ -24,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -40,9 +38,6 @@ class TaskExecutionTrackerImplTest {
     
     @Mock
     private CacheProperties cacheProperties;
-    
-    @Mock
-    private ComicsServiceImpl comicsService;
     
     private Gson gson;
     
@@ -65,12 +60,6 @@ class TaskExecutionTrackerImplTest {
         // Create the tracker
         tracker = new TaskExecutionTrackerImpl(gson, cacheProperties);
         tracker.init();
-    }
-    
-    @AfterEach
-    void tearDown() {
-        // Clear static comics list
-        ComicsServiceImpl.getComics().clear();
     }
     
     @Test
@@ -167,8 +156,39 @@ class TaskExecutionTrackerImplTest {
     
     @Test
     void verifyStartupReconcilerUsesTrackerCorrectly() throws Exception {
-        // Skip this test as it requires more complex setup
-        // The functionality is covered by the integration tests
+        // Create mocks
+        StartupReconcilerProperties properties = mock(StartupReconcilerProperties.class);
+        ComicCacher comicCacher = mock(ComicCacher.class);
+        TaskExecutionTracker tracker = mock(TaskExecutionTracker.class);
+        JsonConfigWriter configWriter = mock(JsonConfigWriter.class);
+        
+        // Set up mocks
+        when(properties.isEnabled()).thenReturn(true);
+        when(tracker.canRunToday("StartupReconciler")).thenReturn(true);
+        when(configWriter.loadComics()).thenReturn(new ComicConfig());
+        
+        // Create startup reconciler
+        StartupReconcilerImpl reconciler = new StartupReconcilerImpl(properties, configWriter, comicCacher, tracker);
+        
+        // Run it
+        reconciler.reconcile();
+        
+        // Verify interactions
+        verify(tracker, times(1)).markTaskExecuted("StartupReconciler");
+        
+        // Now test with already run
+        reset(properties, comicCacher, tracker, configWriter);
+        
+        when(properties.isEnabled()).thenReturn(true);
+        when(tracker.canRunToday("StartupReconciler")).thenReturn(false);
+        when(tracker.getLastExecutionDate("StartupReconciler")).thenReturn(LocalDate.now());
+        when(configWriter.loadComics()).thenReturn(new ComicConfig());
+        
+        // Run again
+        reconciler.reconcile();
+        
+        // Verify markTaskExecuted NOT called
+        verify(tracker, never()).markTaskExecuted(anyString());
     }
     
     /**
