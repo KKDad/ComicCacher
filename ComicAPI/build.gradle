@@ -83,9 +83,13 @@ tasks.withType(Test) {
 bootRun  {
 	main = "org.stapledon.ComicApiApplication"
 	
-	// This ensures that when bootRun is used for API doc generation,
-	// it will respect the spring.profiles.active system property set by generateOpenApiDocs
-	systemProperty('spring.profiles.active', System.getProperty('spring.profiles.active', 'production'))
+	// Allow command-line arguments to override system properties
+	// This ensures bootRun will respect spring.profiles.active when specified via --args
+	if (project.hasProperty('args')) {
+		args project.args.split(',')
+	} else {
+		systemProperty('spring.profiles.active', 'production')
+	}
 }
 
 springBoot {
@@ -144,10 +148,21 @@ task jacocoAllReport(type: JacocoReport) {
 
 // OpenAPI documentation configuration
 openApi {
-    apiDocsUrl.set("http://localhost:8080/v3/api-docs")
+    apiDocsUrl.set("http://localhost:8888/v3/api-docs")
     outputDir.set(file("${project.buildDir}"))
     outputFileName.set("openapi.json")
     waitTimeInSeconds.set(30)
+    
+    // Create a custom server fork for OpenAPI generation with apidocs profile
+    outputFormat.set("json")
+    executionTimeout.set(60000L)
+    
+    // Server configuration
+    server {
+        // Pass the apidocs profile to the Spring Boot application
+        serverStartCommand.set("${project.getRootDir().getAbsolutePath()}/gradlew :ComicAPI:bootRun --args='--spring.profiles.active=apidocs'")
+        serverStopCommand.set("kill -9 \$(lsof -t -i:8888)")
+    }
 }
 
 // Configure OpenAPI docs generation to run at the right time
@@ -162,13 +177,6 @@ tasks.named('generateOpenApiDocs') {
     // but we can't add this as a task dependency because it starts a server
     // instead, we ensure proper ordering
     mustRunAfter 'bootRun'
-    
-    // Set Spring profile to 'apidocs' to disable comic caching during API doc generation
-    doFirst {
-        // This system property will be passed to the Spring Boot application
-        // when it's started for generating API docs
-        System.setProperty('spring.profiles.active', 'apidocs')
-    }
 }
 
 // Handle tasks that use the output of generateOpenApiDocs
@@ -229,11 +237,10 @@ tasks.register('bootRunApiDocs') {
     group = 'application'
     description = 'Runs the Spring Boot application with the apidocs profile (caching disabled)'
     
-    doFirst {
-        tasks.bootRun.configure {
-            systemProperty('spring.profiles.active', 'apidocs')
+    doLast {
+        exec {
+            workingDir project.projectDir
+            commandLine "${project.getRootDir().getAbsolutePath()}/gradlew", "bootRun", "--args=--spring.profiles.active=apidocs"
         }
     }
-    
-    finalizedBy 'bootRun'
 }
