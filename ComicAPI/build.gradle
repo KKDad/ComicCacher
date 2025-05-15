@@ -153,15 +153,10 @@ openApi {
     outputFileName.set("openapi.json")
     waitTimeInSeconds.set(30)
     
-    // Create a custom server fork for OpenAPI generation with apidocs profile
-    outputFormat.set("json")
-    executionTimeout.set(60000L)
-    
-    // Server configuration
-    server {
-        // Pass the apidocs profile to the Spring Boot application
-        serverStartCommand.set("${project.getRootDir().getAbsolutePath()}/gradlew :ComicAPI:bootRun --args='--spring.profiles.active=apidocs'")
-        serverStopCommand.set("kill -9 \$(lsof -t -i:8888)")
+    // Configure the Spring Boot application to use the 'apidocs' profile
+    // This will disable comic caching during API docs generation
+    customBootRun {
+        args = ["--spring.profiles.active=apidocs"]
     }
 }
 
