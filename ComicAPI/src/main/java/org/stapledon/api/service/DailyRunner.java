@@ -2,6 +2,7 @@ package org.stapledon.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.stapledon.config.TaskExecutionTracker;
@@ -18,8 +19,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This class ensures that all comics are fetched once a day
- * Uses TaskExecutionTracker to ensure it only runs once per day even if the application is restarted
+ * This class ensures that all comics are fetched once a day.
+ * Uses TaskExecutionTracker to ensure it only runs once per day even if the application is restarted.
  */
 @Slf4j
 @Service
@@ -33,8 +34,8 @@ public class DailyRunner implements CommandLineRunner {
     private static final String TASK_NAME = "DailyComicCacher";
 
     /**
-     * Schedule a task to download the comics once a day at 7:00am
-     * Will only execute if it hasn't already run today
+     * Schedule a task to download the comics once a day at 7:00am.
+     * Will only execute if it hasn't already run today.
      */
     public void ensureDailyCaching() {
         log.info("Configuring daily update");
@@ -47,19 +48,23 @@ public class DailyRunner implements CommandLineRunner {
             zonedNext5 = zonedNext5.plusDays(1);
 
         var duration = Duration.between(zonedNow, zonedNext5);
-        long initalDelay = duration.getSeconds();
+        long initialDelay = duration.getSeconds();
 
         // If already run today, adjust the initial delay to tomorrow at 7 AM
         if (!taskExecutionTracker.canRunToday(TASK_NAME)) {
             LocalDate lastRun = taskExecutionTracker.getLastExecutionDate(TASK_NAME);
             log.info("Daily comic caching already ran today ({}), scheduling for tomorrow", lastRun);
-            initalDelay = Duration.between(zonedNow, zonedNext5.plusDays(1)).getSeconds();
+            initialDelay = Duration.between(zonedNow, zonedNext5.plusDays(1)).getSeconds();
         }
 
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(new RunComicCacher(comicCacher, taskExecutionTracker), initalDelay,
-                24 * 60 * 60L, TimeUnit.SECONDS);
-        log.info("Daily update configured, Initial delay is {}", (initalDelay > 60) ? String.format("%d minutes", initalDelay/60) : " < 1 minute");
+        scheduler.scheduleAtFixedRate(
+                new RunComicCacher(comicCacher, taskExecutionTracker), 
+                initialDelay,
+                24 * 60 * 60L, 
+                TimeUnit.SECONDS);
+        log.info("Daily update configured, Initial delay is {}", 
+                (initialDelay > 60) ? String.format("%d minutes", initialDelay/60) : " < 1 minute");
     }
 
     @Override

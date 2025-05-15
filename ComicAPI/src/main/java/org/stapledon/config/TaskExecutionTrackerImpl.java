@@ -2,13 +2,19 @@ package org.stapledon.config;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.config.properties.CacheProperties;
 
-import java.io.*;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,8 +25,8 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Implementation of TaskExecutionTracker that persists execution data to a JSON file
- * Ensures tasks only run once per day by tracking their last execution date
+ * Implementation of TaskExecutionTracker that persists execution data to a JSON file.
+ * Ensures tasks only run once per day by tracking their last execution date.
  */
 @Slf4j
 @Component
@@ -37,7 +43,7 @@ public class TaskExecutionTrackerImpl implements TaskExecutionTracker {
     private static final String EXECUTION_TRACKER_FILE = "task-executions.json";
     
     /**
-     * Initialize by loading existing execution data
+     * Initialize by loading existing execution data.
      */
     @jakarta.annotation.PostConstruct
     public void init() {
@@ -83,7 +89,7 @@ public class TaskExecutionTrackerImpl implements TaskExecutionTracker {
     }
     
     /**
-     * Load task execution data from the JSON file
+     * Load task execution data from the JSON file.
      */
     private void loadTaskExecutions() {
         lock.writeLock().lock();
