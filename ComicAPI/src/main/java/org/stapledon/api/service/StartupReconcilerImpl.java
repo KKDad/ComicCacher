@@ -2,6 +2,7 @@ package org.stapledon.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.stapledon.config.IComicsBootstrap;
@@ -17,8 +18,8 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Responsible for reconciling comic configurations at application startup
- * Uses TaskExecutionTracker to ensure it only runs once per day even if the application is restarted
+ * Responsible for reconciling comic configurations at application startup.
+ * Uses TaskExecutionTracker to ensure it only runs once per day even if the application is restarted.
  */
 @Slf4j
 @Service
@@ -42,7 +43,7 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
             // Only perform the reconciliation if it hasn't run today
             if (taskExecutionTracker.canRunToday(TASK_NAME)) {
                 log.info("Performing startup reconciliation for today");
-                reconcileBoostrapConfig(comicConfig);
+                reconcileBootstrapConfig(comicConfig);
                 comicConfig = jsonConfigWriter.loadComics(); // Reload after reconciliation
                 taskExecutionTracker.markTaskExecuted(TASK_NAME);
             } else {
@@ -61,11 +62,11 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
     }
 
     /**
-     * Reconcile all the entries in the BootstrapConfig with the ComicList
+     * Reconcile all the entries in the BootstrapConfig with the ComicList.
      * - New entries found in the BootstrapConfig will be added and immediately cached
      * - Entries found in the ComicList, but not in the BootstrapConfig will be removed
      */
-    public void reconcileBoostrapConfig(ComicConfig comicConfig) {
+    public void reconcileBootstrapConfig(ComicConfig comicConfig) {
         log.info("Begin Reconciliation of CacherBootstrapConfig and ComicConfig");
         Bootstrap config = comicCacher.bootstrapConfig();
 
@@ -103,12 +104,18 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
      */
     IComicsBootstrap findBootstrapComic(Bootstrap config, ComicItem comic) {
         if (!config.getDailyComics().isEmpty()) {
-            IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
+            IComicsBootstrap dailyComics = config.getDailyComics().stream()
+                    .filter(p -> p.getName().equalsIgnoreCase(comic.getName()))
+                    .findFirst()
+                    .orElse(null);
             if (dailyComics != null)
                 return dailyComics;
         }
         if (!config.getKingComics().isEmpty()) {
-            IComicsBootstrap kingComics = config.getKingComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
+            IComicsBootstrap kingComics = config.getKingComics().stream()
+                    .filter(p -> p.getName().equalsIgnoreCase(comic.getName()))
+                    .findFirst()
+                    .orElse(null);
             if (kingComics != null)
                 return kingComics;
         }

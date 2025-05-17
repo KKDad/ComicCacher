@@ -41,6 +41,26 @@ configurations {
 	integrationTestRuntimeOnly {
 	    extendsFrom runtimeOnly
 	}
+	// Prevent version conflicts
+	all*.exclude group: 'com.vaadin.external.google', module: 'android-json'
+	all*.exclude group: 'commons-logging', module: 'commons-logging'
+}
+
+// Define common dependency versions to prevent conflicts
+ext {
+    jjwtVersion = '0.11.5'
+    lombokVersion = '1.18.34'
+    gsonVersion = '2.11.0'
+    guavaVersion = '33.4.6-jre'
+    jsoupVersion = '1.18.1'
+}
+
+// Import BOMs for consistent dependency versions
+dependencyManagement {
+    imports {
+        // Use Jackson BOM to ensure consistent Jackson library versions
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.18.3"
+    }
 }
 
 repositories {
@@ -48,40 +68,39 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.google.code.gson:gson:2.13.1'
-	implementation 'com.google.guava:guava:33.4.6-jre'
-	implementation 'org.jsoup:jsoup:1.20.1'
+	// Core dependencies
+	implementation "com.google.code.gson:gson:${gsonVersion}"
+	implementation "com.google.guava:guava:${guavaVersion}"
+	implementation "org.jsoup:jsoup:${jsoupVersion}"
+
+	
+	// Spring Boot starters - use managed versions
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	
 	// OpenAPI documentation
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-validation' // Add validation starter
-	
-	// Fix version incompatibility issues
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
-	// Security dependencies
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	// Use Spring Boot managed version to ensure compatibility
-	implementation 'org.springframework.security:spring-security-config'
-	// Updated JWT dependencies compatible with Spring Boot 3.x
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+	// JWT dependencies - use consistent versions
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+	
+	// Other dependencies
 	implementation 'org.mindrot:jbcrypt:0.4'
 
-	compileOnly 'org.projectlombok:lombok'
+	// Lombok
+	compileOnly "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
+	// Annotation processors
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-	annotationProcessor 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
-	testCompileOnly 'org.projectlombok:lombok'
+	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-	// Note: The integration-test plugin automatically extends from test configurations
-	// So Lombok and other dependencies from test will be available in integration tests
 	testImplementation 'org.springframework.security:spring-security-test'
 }
 
