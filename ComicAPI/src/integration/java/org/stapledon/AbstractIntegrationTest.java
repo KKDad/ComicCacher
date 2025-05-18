@@ -13,10 +13,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.stapledon.dto.AuthRequest;
-import org.stapledon.dto.ComicItem;
-import org.stapledon.dto.ImageDto;
-import org.stapledon.dto.UserPreference;
+import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.api.dto.preference.UserPreference;
 
 import java.io.IOException;
 import java.nio.file.Files;

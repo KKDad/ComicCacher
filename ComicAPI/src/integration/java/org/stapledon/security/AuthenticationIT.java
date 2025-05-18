@@ -7,7 +7,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.dto.UserRegistrationDto;
+import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.api.dto.auth.AuthRequest;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -31,7 +32,7 @@ class AuthenticationIT extends AbstractIntegrationTest {
         createTestUser(username);
         
         // Attempt login
-        org.stapledon.dto.AuthRequest authRequest = org.stapledon.dto.AuthRequest.builder()
+        AuthRequest authRequest = AuthRequest.builder()
                 .username(username)
                 .password("test_password")
                 .build();
@@ -54,7 +55,7 @@ class AuthenticationIT extends AbstractIntegrationTest {
     @DisplayName("Should reject login with invalid credentials")
     void shouldRejectLoginWithInvalidCredentials() throws Exception {
         // Attempt login with invalid credentials
-        org.stapledon.dto.AuthRequest authRequest = org.stapledon.dto.AuthRequest.builder()
+        AuthRequest authRequest = AuthRequest.builder()
                 .username("non_existent_user")
                 .password("invalid_password")
                 .build();

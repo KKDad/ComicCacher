@@ -75,7 +75,7 @@ npm run buildProd
   - `ComicsService` provides access to cached comics
   - `UpdateService` handles comic updates
   - `DailyRunner` performs scheduled updates
-  - `StartupReconciler` initializes the system on startup
+  - `StartupReconciler` performs daily reconciliation on a configurable schedule (default 6:00 AM)
 - **Controllers**: REST endpoints exposed via `ComicController` and `UpdateController`
 
 ### ComicViewer

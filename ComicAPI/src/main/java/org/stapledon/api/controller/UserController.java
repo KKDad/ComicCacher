@@ -8,9 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.api.service.UserService;
-import org.stapledon.dto.User;
-import org.stapledon.exceptions.AuthenticationException;
+import org.stapledon.core.user.service.UserService;
+import org.stapledon.api.dto.user.User;
+import org.stapledon.core.auth.model.AuthenticationException;
 
 import java.util.HashMap;
 import java.util.Map;

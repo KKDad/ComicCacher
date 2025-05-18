@@ -6,11 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.api.service.AuthService;
-import org.stapledon.dto.AuthRequest;
-import org.stapledon.dto.AuthResponse;
-import org.stapledon.dto.UserRegistrationDto;
-import org.stapledon.exceptions.AuthenticationException;
+import org.stapledon.core.auth.service.AuthService;
+import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.api.dto.auth.AuthResponse;
+import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.core.auth.model.AuthenticationException;
 
 @Slf4j
 @RestController

@@ -8,10 +8,10 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.stapledon.api.model.ApiResponse;
-import org.stapledon.caching.ImageCacheStatsUpdater;
-import org.stapledon.dto.ComicStorageMetrics;
-import org.stapledon.dto.ImageCacheStats;
-import org.stapledon.utils.CacheUtils;
+import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
+import org.stapledon.api.dto.comic.ComicStorageMetrics;
+import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.infrastructure.caching.CacheUtils;
 
 import java.util.HashMap;
 import java.util.List;

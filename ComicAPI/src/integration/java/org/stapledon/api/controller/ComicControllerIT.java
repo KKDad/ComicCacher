@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.dto.ComicItem;
-import org.stapledon.dto.ImageDto;
+import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.api.dto.comic.ImageDto;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

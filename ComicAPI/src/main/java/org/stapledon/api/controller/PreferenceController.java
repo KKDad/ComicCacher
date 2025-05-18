@@ -8,9 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.api.service.PreferenceService;
-import org.stapledon.dto.UserPreference;
-import org.stapledon.exceptions.AuthenticationException;
+import org.stapledon.core.preference.service.PreferenceService;
+import org.stapledon.api.dto.preference.UserPreference;
+import org.stapledon.core.auth.model.AuthenticationException;
 
 import java.time.LocalDate;
 import java.util.HashMap;
