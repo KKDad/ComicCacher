@@ -6,12 +6,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.stapledon.config.properties.JwtProperties;
-import org.stapledon.dto.AuthRequest;
-import org.stapledon.dto.AuthResponse;
-import org.stapledon.dto.User;
-import org.stapledon.dto.UserRegistrationDto;
-import org.stapledon.security.JwtTokenUtil;
+import org.stapledon.infrastructure.config.properties.JwtProperties;
+import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.api.dto.auth.AuthResponse;
+import org.stapledon.api.dto.user.User;
+import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.infrastructure.security.JwtTokenUtil;
 
 import java.time.LocalDateTime;
 import java.util.Collections;

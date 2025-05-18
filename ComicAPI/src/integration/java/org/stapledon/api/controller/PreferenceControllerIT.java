@@ -8,9 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.StapledonAccountGivens;
-import org.stapledon.dto.AuthRequest;
-import org.stapledon.dto.ComicItem;
-import org.stapledon.dto.UserPreference;
+import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.api.dto.preference.UserPreference;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

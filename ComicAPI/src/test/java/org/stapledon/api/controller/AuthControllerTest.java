@@ -8,10 +8,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.stapledon.api.service.AuthService;
-import org.stapledon.dto.AuthRequest;
-import org.stapledon.dto.AuthResponse;
-import org.stapledon.dto.UserRegistrationDto;
+import org.stapledon.api.exception.GlobalExceptionHandler;
+import org.stapledon.core.auth.service.AuthService;
+import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.api.dto.auth.AuthResponse;
+import org.stapledon.api.dto.user.UserRegistrationDto;
 
 import java.util.Optional;
 

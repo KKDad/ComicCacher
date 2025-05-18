@@ -7,10 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
-import org.stapledon.config.UserConfigWriter;
-import org.stapledon.dto.User;
-import org.stapledon.dto.UserRegistrationDto;
-import org.stapledon.security.JwtTokenUtil;
+import org.stapledon.infrastructure.config.UserConfigWriter;
+import org.stapledon.api.dto.user.User;
+import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.infrastructure.security.JwtTokenUtil;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

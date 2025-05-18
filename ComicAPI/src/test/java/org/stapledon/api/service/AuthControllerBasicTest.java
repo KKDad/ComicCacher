@@ -6,10 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.stapledon.api.controller.AuthController;
 import org.stapledon.api.model.ApiResponse;
-import org.stapledon.dto.AuthRequest;
-import org.stapledon.dto.AuthResponse;
-import org.stapledon.dto.UserRegistrationDto;
-import org.stapledon.exceptions.AuthenticationException;
+import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.api.dto.auth.AuthResponse;
+import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.core.auth.model.AuthenticationException;
+import org.stapledon.core.auth.service.AuthService;
 
 import java.util.Optional;
 

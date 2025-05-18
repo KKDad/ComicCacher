@@ -9,11 +9,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.stapledon.api.model.ApiResponse;
-import org.stapledon.api.service.ComicsService;
-import org.stapledon.config.GsonProvider;
-import org.stapledon.dto.ComicItem;
-import org.stapledon.dto.ImageDto;
-import org.stapledon.utils.TestUtil;
+import org.stapledon.core.comic.service.ComicsService;
+import org.stapledon.api.exception.GlobalExceptionHandler;
+import org.stapledon.infrastructure.config.GsonProvider;
+import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.api.service.TestUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.stapledon.utils.Direction;
+import org.stapledon.common.util.Direction;
 
 /**
  * Standalone tests for ComicController that don't rely on Spring context

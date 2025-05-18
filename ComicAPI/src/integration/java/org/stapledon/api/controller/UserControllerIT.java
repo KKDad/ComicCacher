@@ -8,7 +8,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.StapledonAccountGivens;
-import org.stapledon.dto.User;
+import org.stapledon.api.dto.user.User;
 
 import java.util.HashMap;
 import java.util.Map;

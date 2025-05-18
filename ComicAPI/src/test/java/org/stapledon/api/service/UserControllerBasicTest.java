@@ -8,8 +8,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.stapledon.api.controller.UserController;
 import org.stapledon.api.model.ApiResponse;
-import org.stapledon.dto.User;
-import org.stapledon.exceptions.AuthenticationException;
+import org.stapledon.api.dto.user.User;
+import org.stapledon.core.auth.model.AuthenticationException;
+import org.stapledon.core.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.*;

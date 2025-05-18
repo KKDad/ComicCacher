@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.dto.ComicItem;
+import org.stapledon.api.dto.comic.ComicItem;
 
 import java.util.ArrayList;
 import java.util.List;

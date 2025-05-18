@@ -7,8 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.stapledon.api.controller.PreferenceController;
 import org.stapledon.api.model.ApiResponse;
-import org.stapledon.dto.UserPreference;
-import org.stapledon.exceptions.AuthenticationException;
+import org.stapledon.api.dto.preference.UserPreference;
+import org.stapledon.core.auth.model.AuthenticationException;
+import org.stapledon.core.preference.service.PreferenceService;
 
 import java.time.LocalDate;
 import java.util.*;
