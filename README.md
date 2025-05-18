@@ -21,6 +21,7 @@ it yourself, go ahead.
 - Comprehensive metrics for cache performance and storage usage
 - Per-comic storage and access analytics
 - Guaranteed once-daily execution tracking for startup procedures and downloads
+- Scheduled daily reconciliation of comic configuration at configurable times
 
 ### API Features
 - RESTful endpoints for comic retrieval and management

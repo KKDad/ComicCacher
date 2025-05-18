@@ -156,7 +156,7 @@ Tracks when scheduled tasks were last executed.
 **Purpose:**
 - Simple map of task names to their last execution date
 - Prevents tasks from running more than once per scheduled period
-- Used by DailyRunner and StartupReconciler
+- Used by DailyRunner and StartupReconciler's scheduled daily reconciliation
 
 **Location:** Stored in the cache directory (configured via `cache.location`)
 
