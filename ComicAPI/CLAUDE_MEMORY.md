@@ -1,5 +1,8 @@
 # ComicAPI Coding Standards
 
+## Documentation Resources
+- For JSON storage details, refer to [STORAGE_DETAILS.md](/STORAGE_DETAILS.md)
+
 ## Import Standards
 - **NEVER use star/wildcard imports** (e.g., `import com.package.*`)
 - **Set class count to use import on demand**: 50
