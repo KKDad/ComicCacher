@@ -15,10 +15,18 @@ import org.stapledon.dto.ComicConfig;
 import org.stapledon.dto.ComicItem;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Responsible for reconciling comic configurations at application startup.
+ * Responsible for reconciling comic configurations on a daily schedule.
  * Uses TaskExecutionTracker to ensure it only runs once per day even if the application is restarted.
  */
 @Slf4j
@@ -35,19 +43,19 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
 
     @Override
     public boolean reconcile() {
-        log.info("ComicApiApplication starting...");
+        log.info("Running comic configuration reconciliation...");
         try {
             // Always load the comics to ensure the application has data to work with
             var comicConfig = jsonConfigWriter.loadComics();
             
             // Only perform the reconciliation if it hasn't run today
             if (taskExecutionTracker.canRunToday(TASK_NAME)) {
-                log.info("Performing startup reconciliation for today");
+                log.info("Performing reconciliation for today");
                 reconcileBootstrapConfig(comicConfig);
                 comicConfig = jsonConfigWriter.loadComics(); // Reload after reconciliation
                 taskExecutionTracker.markTaskExecuted(TASK_NAME);
             } else {
-                log.info("Startup reconciliation already ran today ({}), skipping", 
+                log.info("Reconciliation already ran today ({}), skipping", 
                          taskExecutionTracker.getLastExecutionDate(TASK_NAME));
             }
 
@@ -59,6 +67,55 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
             log.error("Cannot load ComicList", fne);
         }
         return false;
+    }
+
+    /**
+     * Schedule the reconciliation task to run at the configured time.
+     */
+    public void scheduleReconciliation() {
+        log.info("Configuring scheduled reconciliation");
+        
+        // Parse the schedule time
+        String scheduleTimeStr = startupReconcilerProperties.getScheduleTime();
+        LocalTime scheduleTime = LocalTime.parse(scheduleTimeStr);
+        
+        var localNow = LocalDateTime.now();
+        var currentZone = ZoneId.of("America/New_York");
+        var zonedNow = ZonedDateTime.of(localNow, currentZone);
+        
+        // Set up next run time
+        ZonedDateTime nextRun = zonedNow.withHour(scheduleTime.getHour())
+                                       .withMinute(scheduleTime.getMinute())
+                                       .withSecond(scheduleTime.getSecond());
+        
+        // If the scheduled time for today has already passed, schedule for tomorrow
+        if (zonedNow.compareTo(nextRun) > 0) {
+            nextRun = nextRun.plusDays(1);
+        }
+
+        // Calculate initial delay
+        var duration = Duration.between(zonedNow, nextRun);
+        long initialDelay = duration.getSeconds();
+        
+        // If already run today, adjust the initial delay to tomorrow
+        if (!taskExecutionTracker.canRunToday(TASK_NAME)) {
+            log.info("Reconciliation already ran today ({}), scheduling for tomorrow", 
+                     taskExecutionTracker.getLastExecutionDate(TASK_NAME));
+            nextRun = nextRun.plusDays(1);
+            initialDelay = Duration.between(zonedNow, nextRun).getSeconds();
+        }
+
+        // Create and configure the scheduler
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(
+                new RunReconciliation(this, taskExecutionTracker), 
+                initialDelay,
+                24 * 60 * 60L, 
+                TimeUnit.SECONDS);
+        
+        log.info("Scheduled reconciliation configured for {} (in {} minutes)", 
+                nextRun.toLocalTime(),
+                initialDelay / 60);
     }
 
     /**
@@ -147,9 +204,40 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
     @Override
     public void run(String... args) throws Exception {
         if (startupReconcilerProperties.isEnabled()) {
-            reconcile();
+            // Load comics on startup to ensure the application has data to work with
+            try {
+                var comicConfig = jsonConfigWriter.loadComics();
+                ComicsServiceImpl.getComics().addAll(comicConfig.getItems().values());
+                log.info("Loaded: {} comics on startup.", ComicsServiceImpl.getComics().size());
+            } catch (IOException fne) {
+                log.error("Cannot load ComicList on startup", fne);
+            }
+            
+            // Schedule the reconciliation task
+            scheduleReconciliation();
         } else {
-            log.warn("Startup Reconciler is disabled");
+            log.warn("Scheduled Reconciler is disabled");
+        }
+    }
+    
+    /**
+     * Runnable class for scheduled reconciliation executions
+     */
+    @RequiredArgsConstructor
+    private static class RunReconciliation implements Runnable {
+
+        private final StartupReconcilerImpl reconciler;
+        private final TaskExecutionTracker taskExecutionTracker;
+
+        @Override
+        public void run() {
+            // Only run if it hasn't run today
+            if (taskExecutionTracker.canRunToday(TASK_NAME)) {
+                log.info("Running scheduled reconciliation");
+                reconciler.reconcile();
+            } else {
+                log.info("Scheduled reconciliation already ran today, skipping");
+            }
         }
     }
 }

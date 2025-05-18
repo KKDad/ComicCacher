@@ -11,4 +11,5 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "startup.reconcile")
 public class StartupReconcilerProperties {
     boolean enabled;
+    String scheduleTime = "06:00:00";
 }
