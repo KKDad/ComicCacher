@@ -30,7 +30,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should allow authenticated user to view their profile")
     void shouldAllowAuthenticatedUserToViewProfile() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)
@@ -86,7 +86,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should allow user to update their profile")
     void shouldAllowUserToUpdateProfile() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)
@@ -145,7 +145,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should allow user to update password")
     void shouldAllowUserToUpdatePassword() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)
@@ -175,7 +175,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should reject empty password update")
     void shouldRejectEmptyPasswordUpdate() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)

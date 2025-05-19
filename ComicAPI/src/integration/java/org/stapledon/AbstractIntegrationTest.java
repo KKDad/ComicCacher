@@ -17,6 +17,7 @@ import org.stapledon.api.dto.auth.AuthRequest;
 
 import java.time.LocalDate;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @SpringBootTest(classes = ComicApiApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("integration")
+@Getter
 public abstract class AbstractIntegrationTest {
 
     // Create integration cache directory and initial JSON files if they don't exist
@@ -62,16 +64,6 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    // Path to integration test resources - should match comics.cache.location in application-integration.properties
-    protected static final String INTEGRATION_TEST_RESOURCES_PATH = "./integration-cache";
-    
-    // Test paths for different file types
-    protected static final String TEST_COMICS_PATH = INTEGRATION_TEST_RESOURCES_PATH + "/comics.json";
-    protected static final String TEST_USERS_PATH = INTEGRATION_TEST_RESOURCES_PATH + "/users.json";
-    protected static final String TEST_PREFERENCES_PATH = INTEGRATION_TEST_RESOURCES_PATH + "/preferences.json";
-    protected static final String TEST_BOOTSTRAP_PATH = INTEGRATION_TEST_RESOURCES_PATH + "/bootstrap.json";
-    protected static final String TEST_IMAGES_PATH = INTEGRATION_TEST_RESOURCES_PATH;
-    
     // Integration test comics
     protected static final int TEST_COMIC_ID = 1;
     protected static final String TEST_COMIC_NAME = "Test Comic";
@@ -86,58 +78,20 @@ public abstract class AbstractIntegrationTest {
     protected MockMvc mockMvc;
 
     @Autowired
-    protected StapledonAccountGivens given;
+    protected StapledonAccountGivens givens;
 
     @Autowired
     protected ObjectMapper objectMapper;
     
     /**
-     * Get file path to a test resource
-     * @param relativePath Path relative to integration test resources directory
-     * @return Full classpath to the resource
-     */
-    protected String getTestResourcePath(String relativePath) {
-        return INTEGRATION_TEST_RESOURCES_PATH + "/" + relativePath;
-    }
-    
-    /**
-     * Get path to a test comic image
-     * @param comicName Name of the comic
-     * @param date Date of the comic strip
-     * @return Path to the comic image
-     */
-    protected String getTestComicImagePath(String comicName, LocalDate date) {
-        return String.format("%s/%s/%d/%s.png", 
-                TEST_IMAGES_PATH, 
-                comicName.replace(" ", ""),
-                date.getYear(),
-                date.toString());
-    }
-
-    /**
-     * Helper method to create a test user and return the account context
-     *
-     */
-    protected StapledonAccountGivens.GivenAccountContext createTestUser(String username) {
-        return given.givenUser(
-                StapledonAccountGivens.AccountInfoParameters.builder()
-                        .username(username)
-                        .password("test_password")
-                        .email(username + "@example.com")
-                        .build());
-    }
-
-    /**
      * Create a test user with the given username and attempt to authenticate
      * Handles errors gracefully
      *
      */
-    protected String authenticateUser(String username) {
+    protected String authenticateUser() {
         try {
-            // Create a test user with specific username for easier debugging
-            StapledonAccountGivens.GivenAccountContext context = createTestUser(username);
-
-            log.info("Created test user: {}", context.getUsername());
+            StapledonAccountGivens.GivenAccountContext context =givens.givenUser();
+            log.info("Using test user: {}", context.getUsername());
 
             return authenticateAndGetToken(context.getUsername(), context.getPassword());
         } catch (Exception e) {

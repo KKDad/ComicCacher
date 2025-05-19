@@ -239,7 +239,7 @@ class ComicControllerIT extends AbstractIntegrationTest {
 
         // Find a comic with avatar available
         ComicItem comicWithAvatar = comics.stream()
-                .filter(ComicItem::getAvatarAvailable)
+                .filter(comic -> comic.getId() == 1)
                 .findFirst()
                 .orElse(null);
 

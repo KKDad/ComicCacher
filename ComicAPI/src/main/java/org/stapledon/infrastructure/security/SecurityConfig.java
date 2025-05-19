@@ -47,9 +47,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth ->
                 auth.requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers("/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                    .requestMatchers("/api/v1/comics/*/strips/**", "/api/v1/comics/*/avatar").permitAll()
-                    .requestMatchers("/api/v1/comics").permitAll()
-                    .requestMatchers("/api/v1/comics/*").permitAll()
+                    .requestMatchers("/api/v1/comics/**").permitAll()
                     .requestMatchers("/api/v1/health").permitAll()
                     .anyRequest().authenticated()
             );

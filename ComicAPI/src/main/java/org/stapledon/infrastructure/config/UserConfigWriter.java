@@ -309,4 +309,9 @@ public class UserConfigWriter {
             return userConfig;
         }
     }
+
+    public boolean existsByUsername(String username) {
+        loadUsers();
+        return userConfig.getUsers().containsKey(username);
+    }
 }

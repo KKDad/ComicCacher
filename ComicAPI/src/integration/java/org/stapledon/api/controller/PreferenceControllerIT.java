@@ -28,7 +28,7 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should retrieve user preferences when authenticated")
     void getPreferencesTest() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)
@@ -82,7 +82,7 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should allow adding and removing comic from favorites")
     void addAndRemoveFavoriteTest() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)
@@ -142,7 +142,7 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should update last read date for a comic")
     void updateLastReadTest() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)
@@ -188,7 +188,7 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should update display settings")
     void updateDisplaySettingsTest() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)
@@ -240,7 +240,7 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should reject invalid date format when updating last read date")
     void updateLastReadWithInvalidDateFormatTest() throws Exception {
         // Create a test user and authenticate
-        String token = authenticateUser(TEST_USER);
+        String token = authenticateUser();
         
         // Verify authentication succeeded
         assertThat(token)

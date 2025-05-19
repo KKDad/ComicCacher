@@ -128,19 +128,30 @@ class MetricsControllerIT extends AbstractIntegrationTest {
                 .as("Response should contain 'data' field")
                 .contains("data");
 
-        // Verify response contains both storage and access metrics
+        // Verify response contains comic metrics
         JsonNode dataNode = objectMapper.readTree(responseContent).path("data");
         assertThat(dataNode.isObject())
                 .as("Data node should be a JSON object")
                 .isTrue();
 
-        // Check for expected fields in combined response
-        assertThat(dataNode.has("storage"))
-                .as("Combined metrics should include storage metrics")
-                .isTrue();
-
-        assertThat(dataNode.has("access"))
-                .as("Combined metrics should include access metrics")
+        // The response has comics as keys, ensure at least one comic exists in the response
+        assertThat(dataNode.size())
+                .as("Combined metrics should include at least one comic")
+                .isGreaterThan(0);
+        
+        // Check that at least one comic entry has the required fields
+        boolean hasRequiredFields = false;
+        for (JsonNode comicMetrics : dataNode) {
+            if (comicMetrics.has("comicName") && 
+                comicMetrics.has("storageBytes") && 
+                comicMetrics.has("accessCount")) {
+                hasRequiredFields = true;
+                break;
+            }
+        }
+        
+        assertThat(hasRequiredFields)
+                .as("At least one comic should have the required metrics fields")
                 .isTrue();
     }
 
