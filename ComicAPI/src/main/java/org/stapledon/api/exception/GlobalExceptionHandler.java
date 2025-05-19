@@ -1,5 +1,6 @@
 package org.stapledon.api.exception;
 
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -86,6 +87,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(ResponseStatusException ex, WebRequest request) {
         return ResponseBuilder.error(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason());
+    }
+
+    /**
+     * Handle TypeMismatchException which occurs when path variables can't be converted to the specified type
+     */
+    @ExceptionHandler(TypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatchException(TypeMismatchException ex, WebRequest request) {
+        String message = String.format("Invalid value '%s' for field '%s'. Expected type: %s", 
+                ex.getValue(), ex.getPropertyName(), ex.getRequiredType().getSimpleName());
+        log.warn("Type mismatch exception: {}", message);
+        return ResponseBuilder.error(HttpStatus.BAD_REQUEST, message);
     }
 
     /**
