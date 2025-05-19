@@ -28,6 +28,7 @@ import org.stapledon.infrastructure.security.JwtUserDetailsService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -70,7 +71,7 @@ class AuthServiceImplTest {
                 .email("newuser@example.com")
                 .displayName("New User")  // Explicit display name that matches test
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
                 
@@ -253,7 +254,7 @@ class AuthServiceImplTest {
                 .email(username + "@example.com")
                 .displayName("Test " + username)
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
     }

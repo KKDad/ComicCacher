@@ -22,6 +22,7 @@ import org.stapledon.core.user.service.UserService;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,7 +46,7 @@ class UserControllerBasicTest {
                 .email("test@example.com")
                 .displayName("Test User")
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
         
@@ -91,7 +92,7 @@ class UserControllerBasicTest {
                 .email("updated@example.com")
                 .displayName("Updated Name")
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
         
@@ -125,7 +126,7 @@ class UserControllerBasicTest {
                 .email("test@example.com")
                 .displayName("Test User")
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
         

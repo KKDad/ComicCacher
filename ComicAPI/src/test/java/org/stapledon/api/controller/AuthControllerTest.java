@@ -32,16 +32,14 @@ class AuthControllerTest {
     
     @Mock
     private AuthService authService;
-    
-    private AuthController authController;
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules();
     
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        authController = new AuthController(authService);
+        AuthController authController = new AuthController(authService);
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

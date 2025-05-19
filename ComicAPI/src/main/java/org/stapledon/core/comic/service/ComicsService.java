@@ -4,7 +4,6 @@ import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.api.dto.comic.ImageDto;
 import org.stapledon.common.util.Direction;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -20,10 +19,10 @@ public interface ComicsService {
 
     boolean deleteComic(int comicId);
 
-    Optional<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException;
+    Optional<ImageDto> retrieveComicStrip(int comicId, Direction which);
 
-    Optional<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException;
+    Optional<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from);
 
-    Optional<ImageDto> retrieveAvatar(int comicId) throws IOException;
+    Optional<ImageDto> retrieveAvatar(int comicId);
 
 }

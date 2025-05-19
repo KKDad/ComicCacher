@@ -1,22 +1,18 @@
 package org.stapledon.infrastructure.scheduling;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.core.comic.management.ComicManagementFacade;
-
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.HashMap;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
 
 @ExtendWith(MockitoExtension.class)
 class StartupReconcilerImplTest {
@@ -64,7 +60,7 @@ class StartupReconcilerImplTest {
     }
 
     @Test
-    void reconcileShouldDelegateToFacade() throws IOException {
+    void reconcileShouldDelegateToFacade() {
         // Given
         when(comicManagementFacade.reconcileWithBootstrap()).thenReturn(true);
 
@@ -77,7 +73,7 @@ class StartupReconcilerImplTest {
     }
 
     @Test
-    void reconcileShouldHandleFailure() throws IOException {
+    void reconcileShouldHandleFailure() {
         // Given
         when(comicManagementFacade.reconcileWithBootstrap()).thenReturn(false);
 

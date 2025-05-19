@@ -1,23 +1,26 @@
 package org.stapledon.infrastructure.config;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mindrot.jbcrypt.BCrypt;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,9 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class UserConfigWriterTest {
 
@@ -220,7 +220,7 @@ class UserConfigWriterTest {
     }
 
     @Test
-    void loadUsersShouldCreateEmptyConfigWhenFileDoesNotExist() throws Exception {
+    void loadUsersShouldCreateEmptyConfigWhenFileDoesNotExist() {
         // When
         UserConfig result = userConfigWriter.loadUsers();
 
@@ -231,7 +231,7 @@ class UserConfigWriterTest {
     }
 
     @Test
-    void loadUsersShouldLoadExistingUsersFromFile() throws Exception {
+    void loadUsersShouldLoadExistingUsersFromFile() {
         // Given
         UserConfig initialConfig = new UserConfig();
         User user = createTestUser("testuser");
@@ -434,7 +434,7 @@ class UserConfigWriterTest {
      * Tests loading from a pre-existing valid users file in the test resources.
      */
     @Test
-    void loadUsersFromValidTestResource() throws Exception {
+    void loadUsersFromValidTestResource() {
         // Given - Create a valid user config
         UserConfig validConfig = new UserConfig();
         
@@ -482,7 +482,7 @@ class UserConfigWriterTest {
      * Tests loading from an empty users file, which should create an empty map but not null.
      */
     @Test
-    void loadUsersFromEmptyUsersResource() throws Exception {
+    void loadUsersFromEmptyUsersResource() {
         // Given - Empty config is already set up in setUp()
         
         // When
@@ -499,7 +499,7 @@ class UserConfigWriterTest {
      * We'll simulate this by throwing an exception from our test class.
      */
     @Test
-    void loadUsersFromMalformedJsonShouldCreateNewConfig() throws Exception {
+    void loadUsersFromMalformedJsonShouldCreateNewConfig() {
         // Given - create a custom test implementation that throws the exception
         TestUserConfigWriter exceptionWriter = new TestUserConfigWriter(gson, tempDir) {
             @Override
@@ -523,7 +523,7 @@ class UserConfigWriterTest {
      * Tests loading from a file with null users map.
      */
     @Test
-    void loadUsersFromNullUsersField() throws Exception {
+    void loadUsersFromNullUsersField() {
         // Given - create a config with null users map
         UserConfig nullUsersConfig = new UserConfig();
         nullUsersConfig.setUsers(null);
@@ -556,7 +556,7 @@ class UserConfigWriterTest {
      * still works and defaults are applied correctly.
      */
     @Test
-    void loadUsersWithMissingFields() throws Exception {
+    void loadUsersWithMissingFields() {
         // Given - Create a config with missing fields
         UserConfig missingFieldsConfig = new UserConfig();
         
@@ -609,7 +609,7 @@ class UserConfigWriterTest {
      * This test simulates a file system issue by setting our test flag.
      */
     @Test
-    void saveUserWhenFileIsNotWritable() throws Exception {
+    void saveUserWhenFileIsNotWritable() {
         // Given
         userConfigWriter.setSimulateWriteFailure(true);
         User user = createTestUser("readonlyuser");
@@ -628,7 +628,7 @@ class UserConfigWriterTest {
      * Tests sequential user registration - simpler and more reliable than concurrent test.
      */
     @Test
-    void sequentialUserRegistrations() throws Exception {
+    void sequentialUserRegistrations() {
         // Given - Ensure we start with an empty config
         userConfigWriter.setUserConfig(new UserConfig());
 
@@ -676,7 +676,7 @@ class UserConfigWriterTest {
                 .email(username + "@example.com")
                 .displayName("Test " + username)
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .build();
     }
 

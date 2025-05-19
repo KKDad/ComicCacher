@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -120,7 +121,7 @@ class PreferenceControllerBasicTest {
         
         UserPreference preference = UserPreference.builder()
                 .username("testuser")
-                .favoriteComics(new ArrayList<>(Arrays.asList(456)))
+                .favoriteComics(new ArrayList<>(List.of(456)))
                 .lastReadDates(new HashMap<>())
                 .displaySettings(new HashMap<>())
                 .build();

@@ -100,7 +100,14 @@ public class ComicCacher {
      */
     private boolean cacheSingleComic(IComicsBootstrap dcc) {
         try {
-            return cacheComic(dcc);
+            ComicItem comic = ComicItem.builder()
+                    .id(dcc.stripName().hashCode())
+                    .name(dcc.stripName())
+                    .source(dcc.getSource())
+                    .sourceIdentifier(dcc.getSourceIdentifier())
+                    .build();
+            
+            return cacheSingle(comic);
         } catch (Exception e) {
             log.error("Failed to cache {} : {}", dcc.stripName(), e.getMessage(), e);
             return false;
@@ -116,7 +123,14 @@ public class ComicCacher {
      */
     public boolean cacheSingle(boolean result, IComicsBootstrap dcc) {
         try {
-            cacheComic(dcc);
+            ComicItem comic = ComicItem.builder()
+                    .id(dcc.stripName().hashCode())
+                    .name(dcc.stripName())
+                    .source(dcc.getSource())
+                    .sourceIdentifier(dcc.getSourceIdentifier())
+                    .build();
+                    
+            cacheSingle(comic);
         } catch (Exception e) {
             log.error(String.format("Failed to cache %s : %s", dcc.stripName(), e.getMessage()), e);
             result = false;
@@ -254,67 +268,4 @@ public class ComicCacher {
         log.debug("Storage size for comic {}: {} bytes", comicName, storageSize);
     }
 
-    /**
-     * Legacy method to support transition to new facade pattern
-     * This method will be deprecated in future versions
-     */
-    private boolean cacheComic(IComicsBootstrap dcc) {
-        if (log.isInfoEnabled()) {
-            log.info("***********************************************************************************************");
-            log.info("Processing: {}", dcc.stripName());
-            log.info("***********************************************************************************************");
-        }
-
-        // Only search back 7 days unless we are refilling
-        LocalDate startDate = dcc.startDate();
-        if (startDate.equals(LocalDate.of(2019, 4, 1))) {
-            startDate = LocalDate.now().minusDays(7);
-        }
-
-        LocalDate endDate = LocalDate.now();
-        LocalDate currentDate = startDate;
-        
-        boolean result = true;
-        while (currentDate.isBefore(endDate) || currentDate.isEqual(endDate)) {
-            // Create download request
-            ComicDownloadRequest request = ComicDownloadRequest.builder()
-                    .comicId(dcc.stripName().hashCode())
-                    .comicName(dcc.stripName())
-                    .source(dcc.getSource())
-                    .sourceIdentifier(dcc.getSourceIdentifier())
-                    .date(currentDate)
-                    .build();
-            
-            // Download the comic
-            ComicDownloadResult downloadResult = downloaderFacade.downloadComic(request);
-            
-            if (downloadResult.isSuccessful()) {
-                // Save the comic to storage
-                boolean savedSuccessfully = storageFacade.saveComicStrip(
-                        request.getComicId(),
-                        request.getComicName(),
-                        request.getDate(),
-                        downloadResult.getImageData()
-                );
-                
-                if (!savedSuccessfully) {
-                    log.error("Failed to save comic {} for date {} to storage", 
-                            request.getComicName(), request.getDate());
-                    result = false;
-                }
-            } else {
-                log.error("Failed to download comic {} for date {}: {}", 
-                        request.getComicName(), request.getDate(), downloadResult.getErrorMessage());
-                result = false;
-            }
-            
-            // Move to next date
-            currentDate = currentDate.plusDays(1);
-        }
-        
-        // Update metadata in ComicItem
-        updateComicItemMetadata(dcc.stripName(), dcc.stripName().hashCode(), endDate);
-        
-        return result;
-    }
 }

@@ -2,6 +2,7 @@ package org.stapledon.api.dto.comic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 
@@ -141,14 +142,14 @@ class ComicStorageMetricsTest {
         ComicStorageMetrics metrics = new ComicStorageMetrics();
         
         // Default values should be null or 0
-        assertEquals(null, metrics.getComicName());
+        assertNull(metrics.getComicName());
         assertEquals(0, metrics.getStorageBytes());
         assertEquals(0, metrics.getImageCount());
         assertEquals(0.0, metrics.getAverageImageSize());
-        assertEquals(null, metrics.getMostRecentAccess());
+        assertNull(metrics.getMostRecentAccess());
         assertEquals(0, metrics.getAccessCount());
         assertEquals(0.0, metrics.getHitRatio());
-        assertEquals(null, metrics.getStorageByYear());
+        assertNull(metrics.getStorageByYear());
         assertEquals(0, metrics.getDownloadTime());
     }
 }

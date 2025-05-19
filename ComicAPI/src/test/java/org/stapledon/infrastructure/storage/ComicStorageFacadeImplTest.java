@@ -1,15 +1,13 @@
 package org.stapledon.infrastructure.storage;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Mockito;
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.comic.ImageDto;
-import org.stapledon.common.util.ImageUtils;
-import org.stapledon.events.CacheMissEvent;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.File;
@@ -20,12 +18,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for ComicStorageFacadeImpl
@@ -63,7 +55,7 @@ class ComicStorageFacadeImplTest {
         mockImageUtils();
     }
     
-    private void mockImageUtils() throws IOException {
+    private void mockImageUtils() {
         // This approach allows us to test without real image parsing
         // In a real test, we would need to have a test utility that replaces ImageUtils
         // or refactor the code to avoid static dependencies

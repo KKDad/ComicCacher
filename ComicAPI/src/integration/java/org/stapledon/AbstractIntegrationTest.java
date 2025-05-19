@@ -1,5 +1,10 @@
 package org.stapledon;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,15 +18,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.stapledon.infrastructure.config.IntegrationTestConfig;
-import org.stapledon.infrastructure.config.IntegrationTestInitializer;
-import org.stapledon.infrastructure.config.TestIntegrationConfiguration;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.api.dto.auth.AuthRequest;
 import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.api.dto.comic.ImageDto;
 import org.stapledon.api.dto.preference.UserPreference;
+import org.stapledon.infrastructure.config.IntegrationTestInitializer;
+import org.stapledon.infrastructure.config.TestIntegrationConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,11 +35,6 @@ import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 /**
  * Base class for all integration tests
@@ -268,10 +267,8 @@ public abstract class AbstractIntegrationTest {
      *
      * @param jsonResponse API response JSON string
      * @return Extracted list of comics
-     * @throws JsonProcessingException If JSON parsing fails
-     * @throws IOException If reading fails
      */
-    protected List<ComicItem> extractComicList(String jsonResponse) throws JsonProcessingException, IOException {
+    protected List<ComicItem> extractComicList(String jsonResponse) {
         try {
             return objectMapper.readValue(
                 objectMapper.readTree(jsonResponse).path("data").toString(),
@@ -303,10 +300,8 @@ public abstract class AbstractIntegrationTest {
      *
      * @param jsonResponse API response JSON string
      * @return Extracted image dto
-     * @throws JsonProcessingException If JSON parsing fails
-     * @throws IOException If reading fails
      */
-    protected ImageDto extractImageDto(String jsonResponse) throws JsonProcessingException, IOException {
+    protected ImageDto extractImageDto(String jsonResponse) {
         try {
             if (jsonResponse == null || jsonResponse.isEmpty()) {
                 log.warn("Empty JSON response when extracting image DTO");

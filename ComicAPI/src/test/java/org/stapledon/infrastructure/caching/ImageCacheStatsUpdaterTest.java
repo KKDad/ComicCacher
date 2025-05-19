@@ -1,15 +1,23 @@
 package org.stapledon.infrastructure.caching;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stapledon.infrastructure.caching.CacheUtilsTest;
-import org.stapledon.infrastructure.config.JsonConfigWriter;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.infrastructure.config.JsonConfigWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,13 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 class ImageCacheStatsUpdaterTest {
 
@@ -35,8 +36,6 @@ class ImageCacheStatsUpdaterTest {
 
     private ImageCacheStatsUpdater cacheStatsUpdater;
     private File cacheRoot;
-    private File comicDir1;
-    private File comicDir2;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -49,7 +48,7 @@ class ImageCacheStatsUpdaterTest {
         cacheRoot = tempDir.toFile();
 
         // Create comic directory 1 with years and images
-        comicDir1 = new File(cacheRoot, "CalvinAndHobbes");
+        File comicDir1 = new File(cacheRoot, "CalvinAndHobbes");
         comicDir1.mkdir();
 
         File year2010 = new File(comicDir1, "2010");
@@ -62,7 +61,7 @@ class ImageCacheStatsUpdaterTest {
         createDummyImage(year2011, "2011-06-15.png", 1024 * 12);
 
         // Create comic directory 2 with years and images
-        comicDir2 = new File(cacheRoot, "Garfield");
+        File comicDir2 = new File(cacheRoot, "Garfield");
         comicDir2.mkdir();
 
         File year2020 = new File(comicDir2, "2020");

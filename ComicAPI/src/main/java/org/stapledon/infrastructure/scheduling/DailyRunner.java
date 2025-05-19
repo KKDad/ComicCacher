@@ -68,7 +68,7 @@ public class DailyRunner implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (dailyRunnerProperties.isEnabled()) {
             // Immediately run the caching if it hasn't run today
             if (taskExecutionTracker.canRunToday(TASK_NAME)) {

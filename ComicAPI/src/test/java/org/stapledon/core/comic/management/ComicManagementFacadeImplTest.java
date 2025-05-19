@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,8 +69,6 @@ class ComicManagementFacadeImplTest {
     private KingComicsBootStrap kingComicsBootstrap;
     
     private ComicManagementFacadeImpl facade;
-    private ComicConfig comicConfig;
-    private Bootstrap bootstrap;
     private ComicItem testComic;
     private final byte[] testImageData = "test image data".getBytes();
     
@@ -92,13 +89,13 @@ class ComicManagementFacadeImplTest {
                 .build();
         
         // Create test comic config
-        comicConfig = new ComicConfig();
+        ComicConfig comicConfig = new ComicConfig();
         Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
         items.put(testComic.getId(), testComic);
         comicConfig.setItems(items);
         
         // Create test bootstrap
-        bootstrap = new Bootstrap();
+        Bootstrap bootstrap = new Bootstrap();
         bootstrap.setDailyComics(new ArrayList<>());
         bootstrap.setKingComics(new ArrayList<>());
         bootstrap.getDailyComics().add(goComicsBootstrap);

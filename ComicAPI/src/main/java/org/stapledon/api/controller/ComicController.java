@@ -22,7 +22,6 @@ import org.stapledon.core.comic.model.ComicCachingException;
 import org.stapledon.core.comic.model.ComicImageNotFoundException;
 import org.stapledon.core.comic.model.ComicNotFoundException;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -60,7 +59,7 @@ public class ComicController {
         
         // Ensure the comic ID in the path matches the comic ID in the request body
         if (comicItem.getId() != comicId) {
-            ComicItem updatedItem = ComicItem.builder()
+            comicItem = ComicItem.builder()
                     .id(comicId)
                     .name(comicItem.getName())
                     .description(comicItem.getDescription())
@@ -72,7 +71,6 @@ public class ComicController {
                     .source(comicItem.getSource())
                     .sourceIdentifier(comicItem.getSourceIdentifier())
                     .build();
-            comicItem = updatedItem;
         }
         
         return comicManagementFacade.createComic(comicItem)
@@ -105,7 +103,7 @@ public class ComicController {
      *****************************************************************************************************************/
 
     @GetMapping("/comics/{comic}/avatar")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic) throws IOException {
+    public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic) {
         var comicId = Integer.parseInt(comic);
         return comicManagementFacade.getAvatar(comicId)
                 .map(imageDto -> ResponseEntity.ok()
@@ -116,7 +114,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/strips/first")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic) throws IOException {
+    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic) {
         var comicId = Integer.parseInt(comic);
         return comicManagementFacade.getComicStrip(comicId, Direction.FORWARD)
                 .map(imageDto -> ResponseEntity.ok()
@@ -127,7 +125,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/next/{date}")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
+    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic, @PathVariable String date) {
         var comicId = Integer.parseInt(comic);
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, from)
@@ -139,7 +137,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/previous/{date}")
-    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
+    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic, @PathVariable String date) {
         var comicId = Integer.parseInt(comic);
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD, from)
@@ -151,7 +149,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/strips/last")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic) throws IOException {
+    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic) {
         var comicId = Integer.parseInt(comic);
         return comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD)
                 .map(imageDto -> ResponseEntity.ok()

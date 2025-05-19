@@ -135,7 +135,7 @@ class JwtTokenUtilTest {
                 .email(username + "@example.com")
                 .displayName("Test " + username)
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
     }

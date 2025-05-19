@@ -1,18 +1,18 @@
 package org.stapledon.infrastructure.caching;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.api.dto.comic.ComicItem;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the access tracking features of CacheUtils
@@ -23,21 +23,19 @@ class CacheUtilsAccessTrackingTest {
     Path tempDir;
 
     private CacheUtils cacheUtils;
-    private File cacheRoot;
     private ComicItem testComic1;
     private ComicItem testComic2;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         // Create cache directory structure
-        cacheRoot = tempDir.toFile();
+        File cacheRoot = tempDir.toFile();
         
-        // Initialize CacheUtils with temp directory
-        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath());
+        // Set up mock facade
+        MockComicStorageFacade mockStorageFacade = new MockComicStorageFacade();
         
-        // Create comic directories with structure
-        setupTestComic("DilbertTest", "2023", LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 5));
-        setupTestComic("CalvinTest", "2022", LocalDate.of(2022, 6, 1), LocalDate.of(2022, 6, 10));
+        // Initialize CacheUtils with temp directory and mock facade
+        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath(), mockStorageFacade);
         
         // Create comic items for testing
         testComic1 = ComicItem.builder()
@@ -53,28 +51,25 @@ class CacheUtilsAccessTrackingTest {
                 .newest(LocalDate.of(2022, 6, 10))
                 .oldest(LocalDate.of(2022, 6, 1))
                 .build();
-    }
-    
-    /**
-     * Creates a test comic directory with daily comic files
-     */
-    private void setupTestComic(String comicName, String year, LocalDate start, LocalDate end) throws IOException {
-        // Create comic directory
-        File comicDir = new File(cacheRoot, comicName);
-        comicDir.mkdir();
+                
+        // Set up mock data
+        mockStorageFacade.setupComic(
+                testComic1.getId(),
+                testComic1.getName(),
+                LocalDate.of(2023, 1, 1),
+                LocalDate.of(2023, 1, 5),
+                LocalDate.of(2023, 1, 2), 
+                LocalDate.of(2023, 1, 3),
+                LocalDate.of(2023, 1, 4)
+        );
         
-        // Create year directory
-        File yearDir = new File(comicDir, year);
-        yearDir.mkdir();
-        
-        // Create daily comic files
-        LocalDate current = start;
-        while (!current.isAfter(end)) {
-            String fileName = String.format("%s-%02d-%02d.png", current.getYear(), current.getMonthValue(), current.getDayOfMonth());
-            File comicFile = new File(yearDir, fileName);
-            Files.writeString(comicFile.toPath(), "Test comic content");
-            current = current.plusDays(1);
-        }
+        mockStorageFacade.setupComic(
+                testComic2.getId(),
+                testComic2.getName(),
+                LocalDate.of(2022, 6, 1),
+                LocalDate.of(2022, 6, 10),
+                LocalDate.of(2022, 6, 5)
+        );
     }
 
     @Test
@@ -124,10 +119,6 @@ class CacheUtilsAccessTrackingTest {
     
     @Test
     void findNext_shouldTrackAccess() {
-        // The findNext implementation calls findNewest first, so let's reset the counters
-        // by creating a fresh instance
-        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath());
-
         // Act - find next comic
         LocalDate firstDate = LocalDate.of(2023, 1, 1);
         cacheUtils.findNext(testComic1, firstDate);
@@ -137,22 +128,17 @@ class CacheUtilsAccessTrackingTest {
 
         // Verify access was tracked
         assertTrue(accessCounts.containsKey("DilbertTest"));
-        // Adjusted assertion - findNext calls findNewest internally which also counts as an access
-        assertEquals(2, accessCounts.get("DilbertTest").intValue());
+        assertEquals(1, accessCounts.get("DilbertTest").intValue());
 
         // Verify hit ratio tracking
         Map<String, Double> hitRatios = cacheUtils.getHitRatios();
         assertTrue(hitRatios.containsKey("DilbertTest"));
-        // Both accesses are hits
+        // Access is a hit
         assertEquals(1.0, hitRatios.get("DilbertTest"), 0.001);
     }
 
     @Test
     void findPrevious_shouldTrackAccess() {
-        // The findPrevious implementation calls findOldest first, so let's reset the counters
-        // by creating a fresh instance
-        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath());
-
         // Act - find previous comic
         LocalDate lastDate = LocalDate.of(2022, 6, 10);
         cacheUtils.findPrevious(testComic2, lastDate);
@@ -162,26 +148,23 @@ class CacheUtilsAccessTrackingTest {
 
         // Verify access was tracked
         assertTrue(accessCounts.containsKey("CalvinTest"));
-        // Adjusted assertion - findPrevious calls findOldest internally which also counts as an access
-        assertEquals(2, accessCounts.get("CalvinTest").intValue());
+        assertEquals(1, accessCounts.get("CalvinTest").intValue());
     }
 
     @Test
     void unsuccessfulFind_shouldTrackAsMiss() {
-        // The findNext implementation calls findNewest first (a hit) then the actual
-        // find next is a miss, so let's create a new instance
-        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath());
-
-        // Act - find next comic with date beyond what's available
+        // Configure mock to return empty for a specific date
         LocalDate beyondAvailable = LocalDate.of(2023, 12, 31);
+        
+        // Act - find next comic with date beyond what's available
         cacheUtils.findNext(testComic1, beyondAvailable);
 
         // Assert
         Map<String, Double> hitRatios = cacheUtils.getHitRatios();
 
-        // Verify it was tracked correctly - 1 hit, 1 miss = 0.5 ratio
+        // Verify it was tracked correctly as a miss (0.0 ratio)
         assertTrue(hitRatios.containsKey("DilbertTest"));
-        assertEquals(0.5, hitRatios.get("DilbertTest"), 0.001);
+        assertEquals(0.0, hitRatios.get("DilbertTest"), 0.001);
     }
     
     @Test

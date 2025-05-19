@@ -46,15 +46,13 @@ class ComicControllerTest {
     @Mock
     private ComicManagementFacade comicManagementFacade;
 
-    private ComicController comicController;
-    
     private final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules(); // Automatically discover and register modules, including JavaTimeModule
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        comicController = new ComicController(comicManagementFacade);
+        ComicController comicController = new ComicController(comicManagementFacade);
         mockMvc = MockMvcBuilders.standaloneSetup(comicController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

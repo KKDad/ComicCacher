@@ -48,7 +48,6 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     private final ComicStorageFacade storageFacade;
     private final ConfigurationFacade configFacade;
     private final ComicDownloaderFacade downloaderFacade;
-    private final StartupReconcilerProperties reconcilerProperties;
     private final TaskExecutionTracker taskExecutionTracker;
     
     // Thread-safe collection for comics
@@ -64,7 +63,6 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
         this.storageFacade = storageFacade;
         this.configFacade = configFacade;
         this.downloaderFacade = downloaderFacade;
-        this.reconcilerProperties = reconcilerProperties;
         this.taskExecutionTracker = taskExecutionTracker;
         
         // Register as listener for cache miss events

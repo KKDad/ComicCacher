@@ -1,20 +1,16 @@
 package org.stapledon.infrastructure.caching;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.io.Files;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.common.util.Direction;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -27,8 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Utility class for comic cache operations.
- * This class now delegates most storage operations to ComicStorageFacade
- * while maintaining backward compatibility and access tracking.
+ * This class delegates storage operations to ComicStorageFacade
+ * while providing access tracking for metrics and performance monitoring.
  */
 @Slf4j
 @Component
@@ -45,13 +41,6 @@ public class CacheUtils {
     private final ConcurrentHashMap<String, AtomicInteger> cacheHits = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, AtomicInteger> cacheMisses = new ConcurrentHashMap<>();
 
-    /**
-     * Constructor for testing and backward compatibility
-     */
-    public CacheUtils(@Qualifier("cacheLocation") String cacheHome) {
-        this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
-        this.storageFacade = null; // Will use legacy behavior
-    }
 
     /**
      * Primary constructor with StorageFacade dependency
@@ -61,14 +50,6 @@ public class CacheUtils {
         this.storageFacade = Objects.requireNonNull(storageFacade, "storageFacade must be specified");
     }
 
-    private File getComicHome(ComicItem comic) {
-        String comicNameParsed = comic.getName().replace(" ", "");
-        var path = String.format(COMBINE_PATH, this.cacheHome, comicNameParsed);
-        var file = new File(path);
-        if (!file.exists())
-            throw CacheException.directoryNotFound(comic.getName(), path);
-        return file;
-    }
 
     /**
      * Track access to a comic
@@ -142,23 +123,16 @@ public class CacheUtils {
 
     public File findOldest(ComicItem comic) {
         var timer = Stopwatch.createStarted();
-        File result;
+        File result = null;
         
-        if (storageFacade != null) {
-            // Use the facade if available
-            Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(comic.getId(), comic.getName());
-            if (oldestDate.isPresent()) {
-                LocalDate date = oldestDate.get();
-                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                result = new File(String.format("%s/%s/%s/%s.png", 
-                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-            } else {
-                result = null;
-            }
-        } else {
-            // Legacy behavior
-            result = this.findFirst(comic, Direction.FORWARD);
+        // Use the facade
+        Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(comic.getId(), comic.getName());
+        if (oldestDate.isPresent()) {
+            LocalDate date = oldestDate.get();
+            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            result = new File(String.format("%s/%s/%s/%s.png", 
+                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
         
         timer.stop();
@@ -168,23 +142,16 @@ public class CacheUtils {
 
     public File findNewest(ComicItem comic) {
         var timer = Stopwatch.createStarted();
-        File result;
+        File result = null;
         
-        if (storageFacade != null) {
-            // Use the facade if available
-            Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(comic.getId(), comic.getName());
-            if (newestDate.isPresent()) {
-                LocalDate date = newestDate.get();
-                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                result = new File(String.format("%s/%s/%s/%s.png", 
-                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-            } else {
-                result = null;
-            }
-        } else {
-            // Legacy behavior
-            result = this.findFirst(comic, Direction.BACKWARD);
+        // Use the facade
+        Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(comic.getId(), comic.getName());
+        if (newestDate.isPresent()) {
+            LocalDate date = newestDate.get();
+            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            result = new File(String.format("%s/%s/%s/%s.png", 
+                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
         
         timer.stop();
@@ -192,73 +159,26 @@ public class CacheUtils {
         return result;
     }
 
-    public File findFirst(ComicItem comic, Direction which) {
-        var timer = Stopwatch.createStarted();
-        var root = getComicHome(comic);
-
-        // Comics are stored by year, find the smallest year folder, excluding and directory called @eaDir
-        String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory() && !name.equals("@eaDir"));
-        if (yearFolders == null || yearFolders.length == 0)
-            return null;
-        Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
-
-        // Comics are stored with filename that is sortable.
-        var folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(), which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
-        String[] cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() && !name.equals("@eaDir"));
-        if (cachedStrips == null || cachedStrips.length == 0)
-            return null;
-        Arrays.sort(cachedStrips, String::compareTo);
-
-        timer.stop();
-        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
-            log.info(String.format("findFirst took: %s for %s, Direction=%s", timer.toString(), comic.getName(), which));
-
-        return new File(String.format(COMBINE_PATH, folder.getAbsolutePath(), which == Direction.FORWARD ? cachedStrips[0] : cachedStrips[cachedStrips.length - 1]));
-    }
 
     public File findNext(ComicItem comic, LocalDate from) {
         var timer = Stopwatch.createStarted();
         File resultFile = null;
         boolean found = false;
         
-        if (storageFacade != null) {
-            // Use the facade if available
-            Optional<LocalDate> nextDate = storageFacade.getNextDateWithComic(comic.getId(), comic.getName(), from);
-            if (nextDate.isPresent()) {
-                LocalDate date = nextDate.get();
-                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                resultFile = new File(String.format("%s/%s/%s/%s.png", 
-                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-                found = true;
-            }
-        } else {
-            // Legacy behavior
-            var root = getComicHome(comic);
-
-            var findFirstResult = findNewest(comic);
-            if (findFirstResult == null)
-                return null;
-
-            var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            LocalDate nextCandidate = from.plusDays(1);
-
-            while (from.isBefore(limit)) {
-                var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-                if (folder.exists()) {
-                    found = true;
-                    resultFile = folder;
-                    break;
-                } else {
-                    log.info("folder={} does not exist", folder);
-                }
-                nextCandidate = nextCandidate.plusDays(1);
-            }
+        // Use the facade
+        Optional<LocalDate> nextDate = storageFacade.getNextDateWithComic(comic.getId(), comic.getName(), from);
+        if (nextDate.isPresent()) {
+            LocalDate date = nextDate.get();
+            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            resultFile = new File(String.format("%s/%s/%s/%s.png", 
+                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            found = true;
         }
 
         timer.stop();
         if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
-            log.info(String.format("findNext took: %s for %s", timer.toString(), comic.getName()));
+            log.info(String.format("findNext took: %s for %s", timer, comic.getName()));
 
         trackAccess(comic.getName(), found, timer.elapsed(TimeUnit.MILLISECONDS));
         return resultFile;
@@ -269,44 +189,20 @@ public class CacheUtils {
         File resultFile = null;
         boolean found = false;
         
-        if (storageFacade != null) {
-            // Use the facade if available
-            Optional<LocalDate> prevDate = storageFacade.getPreviousDateWithComic(comic.getId(), comic.getName(), from);
-            if (prevDate.isPresent()) {
-                LocalDate date = prevDate.get();
-                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                resultFile = new File(String.format("%s/%s/%s/%s.png", 
-                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-                found = true;
-            }
-        } else {
-            // Legacy behavior
-            var root = getComicHome(comic);
-
-            var findFirstResult = findOldest(comic);
-            if (findFirstResult == null)
-                return null;
-
-            var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            LocalDate nextCandidate = from.minusDays(1);
-
-            while (from.isAfter(limit)) {
-                var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-                if (folder.exists()) {
-                    found = true;
-                    resultFile = folder;
-                    break;
-                } else {
-                    log.info("folder={} does not exist", folder);
-                }
-                nextCandidate = nextCandidate.minusDays(1);
-            }
+        // Use the facade
+        Optional<LocalDate> prevDate = storageFacade.getPreviousDateWithComic(comic.getId(), comic.getName(), from);
+        if (prevDate.isPresent()) {
+            LocalDate date = prevDate.get();
+            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            resultFile = new File(String.format("%s/%s/%s/%s.png", 
+                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            found = true;
         }
 
         timer.stop();
         if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
-            log.info(String.format("findPrevious took: %s for %s", timer.toString(), comic.getName()));
+            log.info(String.format("findPrevious took: %s for %s", timer, comic.getName()));
 
         trackAccess(comic.getName(), found, timer.elapsed(TimeUnit.MILLISECONDS));
         return resultFile;
