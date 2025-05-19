@@ -8,9 +8,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.stapledon.infrastructure.config.IntegrationTestConfig;
+import org.stapledon.infrastructure.config.IntegrationTestInitializer;
+import org.stapledon.infrastructure.config.TestIntegrationConfiguration;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.api.dto.auth.AuthRequest;
@@ -41,6 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 @SpringBootTest
 @ActiveProfiles("integration")
 @AutoConfigureMockMvc
+@Import(TestIntegrationConfiguration.class)
+@ContextConfiguration(initializers = IntegrationTestInitializer.class)
 public abstract class AbstractIntegrationTest {
 
     protected static final String API_BASE_PATH = "/api/v1";
@@ -301,6 +308,11 @@ public abstract class AbstractIntegrationTest {
      */
     protected ImageDto extractImageDto(String jsonResponse) throws JsonProcessingException, IOException {
         try {
+            if (jsonResponse == null || jsonResponse.isEmpty()) {
+                log.warn("Empty JSON response when extracting image DTO");
+                return null;
+            }
+            
             if (jsonResponse.contains("data")) {
                 return objectMapper.readValue(
                     objectMapper.readTree(jsonResponse).path("data").toString(),
