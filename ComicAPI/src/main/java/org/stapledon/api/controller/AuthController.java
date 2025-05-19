@@ -65,7 +65,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@RequestBody String refreshToken) {
         log.info("Token refresh request");
         
-        return authService.refreshToken(refreshToken)
+        // Remove quotes if present (fixes issue with direct string body)
+        String token = refreshToken;
+        if (token.startsWith("\"") && token.endsWith("\"")) {
+            token = token.substring(1, token.length() - 1);
+        }
+        
+        return authService.refreshToken(token)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Invalid refresh token"));
     }
