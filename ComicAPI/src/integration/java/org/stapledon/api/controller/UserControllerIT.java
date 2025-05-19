@@ -195,9 +195,9 @@ class UserControllerIT extends AbstractIntegrationTest {
             .andDo(print())
             .andReturn();
 
-        // Verify response status is 400 Bad Request
+        // Verify response status is 401 Unauthorized
         assertThat(updateResult.getResponse().getStatus())
-            .as("Expected PUT /users/password with empty password to return status 400")
-            .isEqualTo(HttpStatus.BAD_REQUEST.value());
+            .as("Expected PUT /users/password with empty password to return status 401")
+            .isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 }

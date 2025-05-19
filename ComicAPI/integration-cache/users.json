@@ -2,27 +2,180 @@
   "users": {
     "testuser": {
       "username": "testuser",
-      "passwordHash": "$2a$10$rXMPE3.nB4HjXn8HFj.1xuTOLI8YmCFHYXPEm7kQXndXDfOFYEbcG",
-      "email": "testuser@example.com",
-      "displayName": "John Doe",
-      "created": "2025-05-19T11:24:09.080574",
+      "passwordHash": "$2a$10$wQa2ptnXzSub9xgPIFs4xOQOmfkGIGToulAD4/0PkZORkZlT3L5Oi",
+      "email": "updated_testuser@example.com",
+      "displayName": "Updated Display Name",
+      "created": "2025-05-19T11:38:26.026286",
+      "lastLogin": "2025-05-19T12:50:08.512064",
       "roles": [
         "USER"
       ],
       "userToken": "550e8400-e29b-41d4-a716-446655440000"
     },
-    "adminuser": {
-      "username": "adminuser",
-      "passwordHash": "$2a$10$Cj29YcWrcSwIBJVpCmJ8Ou4I0DYSJXvbDg5Hkh7u7YQL4Kcq2OCZO",
-      "email": "admin@example.com",
-      "displayName": "Admin User",
-      "created": "2022-12-01T10:00:00",
-      "lastLogin": "2023-01-15T09:15:30",
+    "test_user_1747671064600": {
+      "username": "test_user_1747671064600",
+      "passwordHash": "$2a$10$Wn.xCJ8hou8pjCYpwZMiDOuUg..2S.t8bS3lVsQoNAHFUsgsePPua",
+      "email": "test_user_1747671064600@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:11:04.68001",
       "roles": [
-        "USER",
-        "ADMIN"
+        "USER"
       ],
-      "userToken": "1d7f5d5c-5e6b-4f0b-a9b5-1d3ae23cfaa8"
-    }    
+      "userToken": "db1c04e8-1537-4b88-80a0-54fe9ea5c677"
+    },
+    "test_user_1747671180122": {
+      "username": "test_user_1747671180122",
+      "passwordHash": "$2a$10$.6ByESH0MAuN0Xd5iwxgPujt5sAFiK1xQ26fvclp7OZ07yZXeOzs6",
+      "email": "test_user_1747671180122@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:13:00.198128",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "a99e3213-5b91-4ab3-a47d-fc6cbd092e5f"
+    },
+    "test_user_1747671284905": {
+      "username": "test_user_1747671284905",
+      "passwordHash": "$2a$10$pmfx3YOI2KjIJb9t19fYI.yNGGtRolid8CjYQ3OdKdvh90LZ/PXWK",
+      "email": "test_user_1747671284905@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:14:44.98398",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "75899066-481c-4746-81f7-e6c2f01fd635"
+    },
+    "test_user_1747671403679": {
+      "username": "test_user_1747671403679",
+      "passwordHash": "$2a$10$R5nVz95XdzqXvtt23oqBAejEm.thtud8/qgDuB9i9Rkj2HaSssZTq",
+      "email": "test_user_1747671403679@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:16:43.757163",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "1fda1294-c299-4c69-888e-99008f84a9ac"
+    },
+    "test_user_1747671868030": {
+      "username": "test_user_1747671868030",
+      "passwordHash": "$2a$10$JfdUNbrjnNNVWvbNKZSc/Ovf2I3KW45mPqoosEQm2dcGUdijf9fnG",
+      "email": "test_user_1747671868030@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:24:28.11172",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "432d274b-b5fb-4758-ae5b-19b6809036e8"
+    },
+    "test_user_1747672181916": {
+      "username": "test_user_1747672181916",
+      "passwordHash": "$2a$10$8tMeaMDYtrngK1rvBH6XO.JlAhsgguDhp1oFJBJWgQKVuz2qxqFWe",
+      "email": "test_user_1747672181916@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:29:42.000585",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "beedcf4d-0261-4b5c-98aa-5869952eb302"
+    },
+    "test_user_1747672194497": {
+      "username": "test_user_1747672194497",
+      "passwordHash": "$2a$10$7cIMyW0aQzZx6i/mpda.4.qMtBgLBUxfEV2RHwNOMGcmTKF92xIJW",
+      "email": "test_user_1747672194497@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:29:54.57414",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "d45d5f22-3a84-4e39-ba68-fa60b1e0726e"
+    },
+    "test_user_1747672697885": {
+      "username": "test_user_1747672697885",
+      "passwordHash": "$2a$10$oCCE1Jzz2.hHym7OIaYcqOL7YdnsL3QL3RKBVCgJCdmDbJT26OFkm",
+      "email": "test_user_1747672697885@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:38:17.962071",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "0f1ba8e5-b5f0-42c4-a53a-537377d6c261"
+    },
+    "test_user_1747672973994": {
+      "username": "test_user_1747672973994",
+      "passwordHash": "$2a$10$z4K71aZD9HDnpCNTPUoxSuLl2n07fTK0Fc/61.03lgQ9mn8F0B2oO",
+      "email": "test_user_1747672973994@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:42:54.070336",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "fb121248-8aec-483f-9e9e-966574bf949f"
+    },
+    "test_user_1747672999476": {
+      "username": "test_user_1747672999476",
+      "passwordHash": "$2a$10$tEJEZ4ZiwT/klGAi006nZ.S1FHIh/lLKK8cnD.HqlQX9yo4b19HCK",
+      "email": "test_user_1747672999476@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:43:19.552547",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "0268071a-e123-4684-9a9f-ec96d032c282"
+    },
+    "test_user_1747673023347": {
+      "username": "test_user_1747673023347",
+      "passwordHash": "$2a$10$bUnnq2kSc/7JGX/qJQcQH.fAEJ/vqUz5H4aJ2dU6auKZ3zNztr04O",
+      "email": "test_user_1747673023347@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:43:43.428236",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "74468878-22f2-4abe-866c-78448474e8ef"
+    },
+    "test_user_1747673047977": {
+      "username": "test_user_1747673047977",
+      "passwordHash": "$2a$10$DUtowA7jj6Ls/LoHA8PvE.stbdWeTur1s7D3BLHoZlOBDYZlQE5GO",
+      "email": "test_user_1747673047977@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:44:08.053325",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "c3cbf278-db1c-44fc-ade8-79975be87eb1"
+    },
+    "test_user_1747673342124": {
+      "username": "test_user_1747673342124",
+      "passwordHash": "$2a$10$3HsxbY432N7zbl3KyWwNouP5PXHenvPIJ3WXLjIpg3PLaX2/PdKnW",
+      "email": "test_user_1747673342124@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:49:02.201431",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "f1131dba-fa85-48fd-a831-29441e4f6ea6"
+    },
+    "test_user_1747673366685": {
+      "username": "test_user_1747673366685",
+      "passwordHash": "$2a$10$Fuf2xcaY09cR1DbcGdgPG.TLC/NfhFd.kjRA7TDFcgeduRlaI9o/O",
+      "email": "test_user_1747673366685@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:49:26.760771",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "25e90dc5-2a84-4c33-916e-533aa9e12c43"
+    },
+    "test_user_1747673414146": {
+      "username": "test_user_1747673414146",
+      "passwordHash": "$2a$10$TrElg12WREeChsF1Zy80Te/peY1nYLbk1ayFVUC6eIF6H3zcvp9lC",
+      "email": "test_user_1747673414146@example.com",
+      "displayName": "Test User",
+      "created": "2025-05-19T12:50:14.222822",
+      "roles": [
+        "USER"
+      ],
+      "userToken": "96022d3b-f7db-445f-a80d-5835b63fbae0"
+    }
   }
 }
