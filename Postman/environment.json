@@ -1,0 +1,54 @@
+{
+  "id": "comic-cacher-env",
+  "name": "ComicCacher Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8888",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "username",
+      "value": "testuser",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "testComicId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "secondTestComicId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "createdComicId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testDate",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    }
+  ]
+}

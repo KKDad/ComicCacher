@@ -1,4 +1,4 @@
- {
+{
     "info": {
       "name": "ComicCacher API",
       "description": "A collection for testing the ComicCacher API endpoints",
@@ -13,7 +13,7 @@
     ],
     "item": [
       {
-        "name": "Setup",
+        "name": "1. Setup",
         "item": [
           {
             "name": "Register User",
@@ -225,7 +225,7 @@
         "description": "Authentication endpoints to register, login, and manage tokens"
       },
       {
-        "name": "Comics",
+        "name": "2. Comics",
         "item": [
           {
             "name": "Get All Comics",
@@ -247,10 +247,12 @@
                     "if (jsonData.data && jsonData.data.length > 0) {",
                     "    // Save the first comic ID for subsequent tests",
                     "    pm.environment.set(\"testComicId\", jsonData.data[0].id);",
+                    "    console.log(\"Set testComicId to: \" + jsonData.data[0].id);",
                     "    ",
                     "    // If there's a second comic, save it as well",
                     "    if (jsonData.data.length > 1) {",
                     "        pm.environment.set(\"secondTestComicId\", jsonData.data[1].id);",
+                    "        console.log(\"Set secondTestComicId to: \" + jsonData.data[1].id);",
                     "    }",
                     "}"
                   ],
@@ -272,56 +274,6 @@
                 "path": ["api", "v1", "comics"]
               },
               "description": "Returns a list of all available comics in the system"
-            },
-            "response": []
-          },
-          {
-            "name": "Create Comic",
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "pm.test(\"Status code is 201\", function () {",
-                    "    pm.response.to.have.status(201);",
-                    "});",
-                    "",
-                    "pm.test(\"Response has the required fields\", function () {",
-                    "    var jsonData = pm.response.json();",
-                    "    pm.expect(jsonData.data).to.have.property('id');",
-                    "    pm.expect(jsonData.data).to.have.property('name');",
-                    "    pm.expect(jsonData.data).to.have.property('description');",
-                    "    pm.expect(jsonData.data).to.have.property('source');",
-                    "    pm.expect(jsonData.data).to.have.property('sourceIdentifier');",
-                    "});",
-                    "",
-                    "var jsonData = pm.response.json();",
-                    "if (jsonData.data && jsonData.data.id) {",
-                    "    pm.environment.set(\"createdComicId\", jsonData.data.id);",
-                    "}"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ],
-            "request": {
-              "method": "POST",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"name\": \"Test Comic\",\n  \"description\": \"A comic strip created for testing\",\n  \"source\": \"gocomics\",\n  \"sourceIdentifier\": \"testcomic\",\n  \"author\": \"Test Author\",\n  \"startDate\": \"2023-01-01\"\n}"
-              },
-              "url": {
-                "raw": "{{baseUrl}}/api/v1/comics/999",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "v1", "comics", "999"]
-              },
-              "description": "Creates a new comic with the specified ID"
             },
             "response": []
           },
@@ -367,6 +319,61 @@
             "response": []
           },
           {
+            "name": "Create Comic",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 201\", function () {",
+                    "    pm.response.to.have.status(201);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has the required fields\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.have.property('id');",
+                    "    pm.expect(jsonData.data).to.have.property('name');",
+                    "    pm.expect(jsonData.data).to.have.property('description');",
+                    "    pm.expect(jsonData.data).to.have.property('source');",
+                    "    pm.expect(jsonData.data).to.have.property('sourceIdentifier');",
+                    "});",
+                    "",
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.data && jsonData.data.id) {",
+                    "    pm.environment.set(\"createdComicId\", jsonData.data.id);",
+                    "    console.log(\"Set createdComicId to: \" + jsonData.data.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"name\": \"Test Comic\",\n  \"description\": \"A comic strip created for testing\",\n  \"source\": \"gocomics\",\n  \"sourceIdentifier\": \"testcomic\",\n  \"author\": \"Test Author\",\n  \"startDate\": \"2023-01-01\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/999",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "999"]
+              },
+              "description": "Creates a new comic with the specified ID"
+            },
+            "response": []
+          },
+          {
             "name": "Update Comic Details",
             "event": [
               {
@@ -392,6 +399,10 @@
                 {
                   "key": "Content-Type",
                   "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
                 }
               ],
               "body": {
@@ -443,256 +454,15 @@
               "description": "Tests retrieving a comic with an invalid ID"
             },
             "response": []
-          },
+          }
+        ],
+        "description": "Basic comic management endpoints"
+      },
+      {
+        "name": "3. Comic Images",
+        "item": [
           {
-            "name": "Comic Images",
-            "item": [
-              {
-                "name": "Get Comic Avatar",
-                "event": [
-                  {
-                    "listen": "test",
-                    "script": {
-                      "exec": [
-                        "pm.test(\"Status code is 200\", function () {",
-                        "    pm.response.to.have.status(200);",
-                        "});",
-                        "",
-                        "pm.test(\"Response has the required fields\", function () {",
-                        "    var jsonData = pm.response.json();",
-                        "    pm.expect(jsonData).to.have.property('comicId');",
-                        "    pm.expect(jsonData).to.have.property('imageData');",
-                        "    pm.expect(jsonData).to.have.property('contentType');",
-                        "});"
-                      ],
-                      "type": "text/javascript"
-                    }
-                  }
-                ],
-                "request": {
-                  "method": "GET",
-                  "header": [
-                    {
-                      "key": "Accept",
-                      "value": "application/json"
-                    }
-                  ],
-                  "url": {
-                    "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/avatar",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "v1", "comics", "{{testComicId}}", "avatar"]
-                  },
-                  "description": "Returns the avatar image for a comic"
-                },
-                "response": []
-              },
-              {
-                "name": "Get First Comic Strip",
-                "event": [
-                  {
-                    "listen": "test",
-                    "script": {
-                      "exec": [
-                        "pm.test(\"Status code is 200\", function () {",
-                        "    pm.response.to.have.status(200);",
-                        "});",
-                        "",
-                        "pm.test(\"Response has the required fields\", function () {",
-                        "    var jsonData = pm.response.json();",
-                        "    pm.expect(jsonData).to.have.property('comicId');",
-                        "    pm.expect(jsonData).to.have.property('imageDate');",
-                        "    pm.expect(jsonData).to.have.property('imageData');",
-                        "    pm.expect(jsonData).to.have.property('contentType');",
-                        "});",
-                        "",
-                        "var jsonData = pm.response.json();",
-                        "if (jsonData && jsonData.imageDate) {",
-                        "    pm.environment.set(\"testDate\", jsonData.imageDate);",
-                        "}"
-                      ],
-                      "type": "text/javascript"
-                    }
-                  }
-                ],
-                "request": {
-                  "method": "GET",
-                  "header": [
-                    {
-                      "key": "Accept",
-                      "value": "application/json"
-                    }
-                  ],
-                  "url": {
-                    "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/strips/first",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "v1", "comics", "{{testComicId}}", "strips", "first"]
-                  },
-                  "description": "Returns the first available comic strip for a comic"
-                },
-                "response": []
-              },
-              {
-                "name": "Get Last Comic Strip",
-                "event": [
-                  {
-                    "listen": "test",
-                    "script": {
-                      "exec": [
-                        "pm.test(\"Status code is 200\", function () {",
-                        "    pm.response.to.have.status(200);",
-                        "});",
-                        "",
-                        "pm.test(\"Response has the required fields\", function () {",
-                        "    var jsonData = pm.response.json();",
-                        "    pm.expect(jsonData).to.have.property('comicId');",
-                        "    pm.expect(jsonData).to.have.property('imageDate');",
-                        "    pm.expect(jsonData).to.have.property('imageData');",
-                        "    pm.expect(jsonData).to.have.property('contentType');",
-                        "});"
-                      ],
-                      "type": "text/javascript"
-                    }
-                  }
-                ],
-                "request": {
-                  "method": "GET",
-                  "header": [
-                    {
-                      "key": "Accept",
-                      "value": "application/json"
-                    }
-                  ],
-                  "url": {
-                    "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/strips/last",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "v1", "comics", "{{testComicId}}", "strips", "last"]
-                  },
-                  "description": "Returns the most recent comic strip for a comic"
-                },
-                "response": []
-              },
-              {
-                "name": "Get Next Comic Strip",
-                "event": [
-                  {
-                    "listen": "test",
-                    "script": {
-                      "exec": [
-                        "pm.test(\"Status code is 200\", function () {",
-                        "    pm.response.to.have.status(200);",
-                        "});",
-                        "",
-                        "pm.test(\"Response has the required fields\", function () {",
-                        "    var jsonData = pm.response.json();",
-                        "    pm.expect(jsonData).to.have.property('comicId');",
-                        "    pm.expect(jsonData).to.have.property('imageDate');",
-                        "    pm.expect(jsonData).to.have.property('imageData');",
-                        "    pm.expect(jsonData).to.have.property('contentType');",
-                        "});"
-                      ],
-                      "type": "text/javascript"
-                    }
-                  }
-                ],
-                "request": {
-                  "method": "GET",
-                  "header": [
-                    {
-                      "key": "Accept",
-                      "value": "application/json"
-                    }
-                  ],
-                  "url": {
-                    "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/next/{{testDate}}",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "v1", "comics", "{{testComicId}}", "next", "{{testDate}}"]
-                  },
-                  "description": "Returns the next comic strip after the specified date"
-                },
-                "response": []
-              },
-              {
-                "name": "Get Previous Comic Strip",
-                "event": [
-                  {
-                    "listen": "test",
-                    "script": {
-                      "exec": [
-                        "pm.test(\"Status code is 200\", function () {",
-                        "    pm.response.to.have.status(200);",
-                        "});",
-                        "",
-                        "pm.test(\"Response has the required fields\", function () {",
-                        "    var jsonData = pm.response.json();",
-                        "    pm.expect(jsonData).to.have.property('comicId');",
-                        "    pm.expect(jsonData).to.have.property('imageDate');",
-                        "    pm.expect(jsonData).to.have.property('imageData');",
-                        "    pm.expect(jsonData).to.have.property('contentType');",
-                        "});"
-                      ],
-                      "type": "text/javascript"
-                    }
-                  }
-                ],
-                "request": {
-                  "method": "GET",
-                  "header": [
-                    {
-                      "key": "Accept",
-                      "value": "application/json"
-                    }
-                  ],
-                  "url": {
-                    "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/previous/{{testDate}}",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "v1", "comics", "{{testComicId}}", "previous", "{{testDate}}"]
-                  },
-                  "description": "Returns the previous comic strip before the specified date"
-                },
-                "response": []
-              },
-              {
-                "name": "Invalid Date Format",
-                "event": [
-                  {
-                    "listen": "test",
-                    "script": {
-                      "exec": [
-                        "pm.test(\"Status code is 400\", function () {",
-                        "    pm.response.to.have.status(400);",
-                        "});",
-                        "",
-                        "pm.test(\"Response indicates invalid date format\", function () {",
-                        "    var jsonData = pm.response.json();",
-                        "    pm.expect(jsonData.message).to.include(\"invalid\");",
-                        "});"
-                      ],
-                      "type": "text/javascript"
-                    }
-                  }
-                ],
-                "request": {
-                  "method": "GET",
-                  "header": [
-                    {
-                      "key": "Accept",
-                      "value": "application/json"
-                    }
-                  ],
-                  "url": {
-                    "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/next/invalid-date",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "v1", "comics", "{{testComicId}}", "next", "invalid-date"]
-                  },
-                  "description": "Tests retrieving a comic strip with an invalid date format"
-                },
-                "response": []
-              }
-            ],
-            "description": "Endpoints for retrieving comic images"
-          },
-          {
-            "name": "Delete Comic",
+            "name": "Get Comic Avatar",
             "event": [
               {
                 "listen": "test",
@@ -700,38 +470,13 @@
                   "exec": [
                     "pm.test(\"Status code is 200\", function () {",
                     "    pm.response.to.have.status(200);",
-                    "});"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ],
-            "request": {
-              "method": "DELETE",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "v1", "comics", "{{createdComicId}}"]
-              },
-              "description": "Deletes a comic and all associated images"
-            },
-            "response": []
-          },
-          {
-            "name": "Verify Deletion",
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "pm.test(\"Status code is 404\", function () {",
-                    "    pm.response.to.have.status(404);",
                     "});",
                     "",
-                    "pm.test(\"Response indicates comic not found\", function () {",
+                    "pm.test(\"Response has the required fields\", function () {",
                     "    var jsonData = pm.response.json();",
-                    "    pm.expect(jsonData.message).to.include(\"not found\");",
+                    "    pm.expect(jsonData).to.have.property('comicId');",
+                    "    pm.expect(jsonData).to.have.property('imageData');",
+                    "    pm.expect(jsonData).to.have.property('contentType');",
                     "});"
                   ],
                   "type": "text/javascript"
@@ -747,19 +492,222 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
+                "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/avatar",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "v1", "comics", "{{createdComicId}}"]
+                "path": ["api", "v1", "comics", "{{testComicId}}", "avatar"]
               },
-              "description": "Verifies that the deleted comic no longer exists"
+              "description": "Returns the avatar image for a comic"
+            },
+            "response": []
+          },
+          {
+            "name": "Get First Comic Strip",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has the required fields\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.have.property('comicId');",
+                    "    pm.expect(jsonData).to.have.property('imageDate');",
+                    "    pm.expect(jsonData).to.have.property('imageData');",
+                    "    pm.expect(jsonData).to.have.property('contentType');",
+                    "});",
+                    "",
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData && jsonData.imageDate) {",
+                    "    pm.environment.set(\"testDate\", jsonData.imageDate);",
+                    "    console.log(\"Set testDate to: \" + jsonData.imageDate);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/strips/first",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{testComicId}}", "strips", "first"]
+              },
+              "description": "Returns the first available comic strip for a comic"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Last Comic Strip",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has the required fields\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.have.property('comicId');",
+                    "    pm.expect(jsonData).to.have.property('imageDate');",
+                    "    pm.expect(jsonData).to.have.property('imageData');",
+                    "    pm.expect(jsonData).to.have.property('contentType');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/strips/last",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{testComicId}}", "strips", "last"]
+              },
+              "description": "Returns the most recent comic strip for a comic"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Next Comic Strip",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has the required fields\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.have.property('comicId');",
+                    "    pm.expect(jsonData).to.have.property('imageDate');",
+                    "    pm.expect(jsonData).to.have.property('imageData');",
+                    "    pm.expect(jsonData).to.have.property('contentType');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/next/{{testDate}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{testComicId}}", "next", "{{testDate}}"]
+              },
+              "description": "Returns the next comic strip after the specified date"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Previous Comic Strip",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has the required fields\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.have.property('comicId');",
+                    "    pm.expect(jsonData).to.have.property('imageDate');",
+                    "    pm.expect(jsonData).to.have.property('imageData');",
+                    "    pm.expect(jsonData).to.have.property('contentType');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/previous/{{testDate}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{testComicId}}", "previous", "{{testDate}}"]
+              },
+              "description": "Returns the previous comic strip before the specified date"
+            },
+            "response": []
+          },
+          {
+            "name": "Invalid Date Format",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 400\", function () {",
+                    "    pm.response.to.have.status(400);",
+                    "});",
+                    "",
+                    "pm.test(\"Response indicates invalid date format\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.message).to.include(\"invalid\");",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{testComicId}}/next/invalid-date",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{testComicId}}", "next", "invalid-date"]
+              },
+              "description": "Tests retrieving a comic strip with an invalid date format"
             },
             "response": []
           }
         ],
-        "description": "Endpoints for retrieving and managing comics"
+        "description": "Endpoints for retrieving comic images"
       },
       {
-        "name": "User Management",
+        "name": "4. User Management",
         "item": [
           {
             "name": "Get User Profile",
@@ -985,7 +933,7 @@
         "description": "Endpoints for managing user profiles and settings"
       },
       {
-        "name": "Preferences",
+        "name": "5. Preferences",
         "item": [
           {
             "name": "Get User Preferences",
@@ -1044,7 +992,7 @@
                     "",
                     "pm.test(\"Response indicates comic added to favorites\", function () {",
                     "    var jsonData = pm.response.json();",
-                    "    var comicIdStr = pm.variables.get(\"testComicId\");",
+                    "    var comicIdStr = pm.environment.get(\"testComicId\");",
                     "    var comicId = parseInt(comicIdStr, 10);",
                     "    pm.expect(jsonData.data.favoriteComics).to.include(comicId);",
                     "});"
@@ -1083,7 +1031,7 @@
                     "",
                     "pm.test(\"Response shows updated last read date\", function () {",
                     "    var jsonData = pm.response.json();",
-                    "    var comicIdStr = pm.variables.get(\"testComicId\");",
+                    "    var comicIdStr = pm.environment.get(\"testComicId\");",
                     "    pm.expect(jsonData.data.lastReadDates).to.have.property(comicIdStr);",
                     "    pm.expect(jsonData.data.lastReadDates[comicIdStr]).to.equal(\"2023-05-01\");",
                     "});"
@@ -1178,7 +1126,7 @@
                     "",
                     "pm.test(\"Response indicates comic removed from favorites\", function () {",
                     "    var jsonData = pm.response.json();",
-                    "    var comicIdStr = pm.variables.get(\"testComicId\");",
+                    "    var comicIdStr = pm.environment.get(\"testComicId\");",
                     "    var comicId = parseInt(comicIdStr, 10);",
                     "    var found = false;",
                     "    if (jsonData.data.favoriteComics) {",
@@ -1291,7 +1239,7 @@
         "description": "Endpoints for managing user preferences, including favorite comics and display settings"
       },
       {
-        "name": "Updates",
+        "name": "6. Updates and Metrics",
         "item": [
           {
             "name": "Update All Comics",
@@ -1310,7 +1258,12 @@
             ],
             "request": {
               "method": "GET",
-              "header": [],
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
               "url": {
                 "raw": "{{baseUrl}}/api/v1/update",
                 "host": ["{{baseUrl}}"],
@@ -1337,7 +1290,12 @@
             ],
             "request": {
               "method": "GET",
-              "header": [],
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
               "url": {
                 "raw": "{{baseUrl}}/api/v1/update/{{testComicId}}",
                 "host": ["{{baseUrl}}"],
@@ -1347,39 +1305,6 @@
             },
             "response": []
           },
-          {
-            "name": "Invalid Comic ID",
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "pm.test(\"Status code is 404\", function () {",
-                    "    pm.response.to.have.status(404);",
-                    "});"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ],
-            "request": {
-              "method": "GET",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/v1/update/9999999",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "v1", "update", "9999999"]
-              },
-              "description": "Tests updating a non-existent comic"
-            },
-            "response": []
-          }
-        ],
-        "description": "Endpoints for triggering comic updates"
-      },
-      {
-        "name": "Metrics",
-        "item": [
           {
             "name": "Get Storage Metrics",
             "event": [
@@ -1407,6 +1332,10 @@
             "request": {
               "method": "GET",
               "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                },
                 {
                   "key": "Accept",
                   "value": "application/json"
@@ -1445,6 +1374,10 @@
               "method": "GET",
               "header": [
                 {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                },
+                {
                   "key": "Accept",
                   "value": "application/json"
                 }
@@ -1482,6 +1415,10 @@
               "method": "GET",
               "header": [
                 {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                },
+                {
                   "key": "Accept",
                   "value": "application/json"
                 }
@@ -1494,25 +1431,59 @@
               "description": "Gets combined storage and access metrics for all comics"
             },
             "response": []
-          },
+          }
+        ],
+        "description": "Endpoints for triggering comic updates and retrieving metrics"
+      },
+      {
+        "name": "7. Cleanup",
+        "item": [
           {
-            "name": "Refresh Storage Metrics",
+            "name": "Delete Created Comic",
             "event": [
               {
                 "listen": "test",
                 "script": {
                   "exec": [
-                    "pm.test(\"Status code is 200\", function () {",
-                    "    pm.response.to.have.status(200);",
+                    "pm.test(\"Status code is 200 or 204\", function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{createdComicId}}"]
+              },
+              "description": "Deletes the comic that was created during testing"
+            },
+            "response": []
+          },
+          {
+            "name": "Verify Deletion",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 404\", function () {",
+                    "    pm.response.to.have.status(404);",
                     "});",
                     "",
-                    "pm.test(\"Response has the required fields\", function () {",
+                    "pm.test(\"Response indicates comic not found\", function () {",
                     "    var jsonData = pm.response.json();",
-                    "    pm.expect(jsonData.data).to.have.property('totalComics');",
-                    "    pm.expect(jsonData.data).to.have.property('totalImages');",
-                    "    pm.expect(jsonData.data).to.have.property('totalStorageBytes');",
-                    "    pm.expect(jsonData.data).to.have.property('averageImageSize');",
-                    "    pm.expect(jsonData.data).to.have.property('comicMetrics');",
+                    "    pm.expect(jsonData.message).to.include(\"not found\");",
                     "});"
                   ],
                   "type": "text/javascript"
@@ -1528,19 +1499,19 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/v1/metrics/storage/refresh",
+                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "v1", "metrics", "storage", "refresh"]
+                "path": ["api", "v1", "comics", "{{createdComicId}}"]
               },
-              "description": "Forces an update of the storage metrics"
+              "description": "Verifies that the deleted comic no longer exists"
             },
             "response": []
           }
         ],
-        "description": "Endpoints for retrieving metrics about comic storage and access patterns"
+        "description": "Endpoints for cleaning up test data"
       },
       {
-        "name": "Health",
+        "name": "8. Health Check",
         "item": [
           {
             "name": "Get Basic Health Status",
@@ -1640,14 +1611,55 @@
         "listen": "prerequest",
         "script": {
           "type": "text/javascript",
-          "exec": [""]
+          "exec": [
+            "// This script will run before every request",
+            "console.log('Running pre-request script...');",
+            "",
+            "// Check if required auth variables are set",
+            "if (pm.request.headers.has('Authorization') && !pm.environment.get('token')) {",
+            "    console.warn('WARNING: This request requires authentication, but no token is set in the environment.');",
+            "}",
+            "",
+            "// Check if required path variables are set",
+            "const url = pm.request.url.toString();",
+            "if (url.includes('{{testComicId}}') && !pm.environment.get('testComicId')) {",
+            "    console.warn('WARNING: This request requires testComicId, but it is not set in the environment.');",
+            "}",
+            "",
+            "if (url.includes('{{createdComicId}}') && !pm.environment.get('createdComicId')) {",
+            "    console.warn('WARNING: This request requires createdComicId, but it is not set in the environment.');",
+            "}",
+            "",
+            "if (url.includes('{{testDate}}') && !pm.environment.get('testDate')) {",
+            "    console.warn('WARNING: This request requires testDate, but it is not set in the environment.');",
+            "}"
+          ]
         }
       },
       {
         "listen": "test",
         "script": {
           "type": "text/javascript",
-          "exec": [""]
+          "exec": [
+            "// This script will run after every request",
+            "console.log('Running post-request script...');",
+            "",
+            "// Log response status",
+            "console.log('Response status: ' + pm.response.code);",
+            "",
+            "// Capture timing information",
+            "if (pm.response.responseTime) {",
+            "    console.log('Response time: ' + pm.response.responseTime + ' ms');",
+            "}",
+            "",
+            "// Log any errors",
+            "if (pm.response.code >= 400) {",
+            "    console.error('Error in request: ' + pm.response.code + ' ' + pm.response.status);",
+            "    if (pm.response.json && pm.response.json().message) {",
+            "        console.error('Error message: ' + pm.response.json().message);",
+            "    }",
+            "}"
+          ]
         }
       }
     ]
