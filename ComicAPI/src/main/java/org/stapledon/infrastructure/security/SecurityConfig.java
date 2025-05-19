@@ -31,45 +31,31 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     /**
-     * Main security filter chain used for both production and tests
-     * Configuration adjusts based on active profile
+     * Main security filter chain used for all environments
+     * Configures standard JWT-based authentication for REST endpoints
+     * Authentication required for all endpoints except specified public ones
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // Common configuration for all environments
+        // Standard security configuration for all environments
         http.csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .exceptionHandling(exceptionHandling ->
+                exceptionHandling.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth ->
+                auth.requestMatchers("/api/v1/auth/**").permitAll()
+                    .requestMatchers("/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/api/v1/comics/*/strips/**", "/api/v1/comics/*/avatar").permitAll()
+                    .requestMatchers("/api/v1/comics").permitAll()
+                    .requestMatchers("/api/v1/comics/*").permitAll()
+                    .requestMatchers("/api/v1/health").permitAll()
+                    .anyRequest().authenticated()
+            );
 
-        // Check if we're in test environment via system property or environment property
-        String activeProfile = System.getProperty("spring.profiles.active", "");
-        if (activeProfile.isEmpty()) {
-            activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
-        }
-        boolean isTestEnvironment = activeProfile != null &&
-            (activeProfile.contains("test") || activeProfile.contains("integration"));
-
-        if (isTestEnvironment) {
-            // Simplified configuration for tests - allow all requests
-            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        } else {
-            // Production configuration with standard security
-            http.exceptionHandling(exceptionHandling ->
-                    exceptionHandling.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-                .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth ->
-                    auth.requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/v1/comics/*/strips/**", "/api/v1/comics/*/avatar").permitAll()
-                        .requestMatchers("/api/v1/comics").permitAll()
-                        .requestMatchers("/api/v1/comics/*").permitAll()
-                        .requestMatchers("/api/v1/health").permitAll()
-                        .anyRequest().authenticated()
-                );
-
-            // Add JWT filter for production only
-            http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
-        }
+        // Add JWT filter for all environments
+        http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

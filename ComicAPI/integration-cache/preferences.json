@@ -1,0 +1,58 @@
+{
+  "preferences": {
+    "550e8400-e29b-41d4-a716-446655440000": {
+      "username": "testuser",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "1d7f5d5c-5e6b-4f0b-a9b5-1d3ae23cfaa8": {
+      "username": "adminuser",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "jwt_test_user_1747667260201": {
+      "username": "jwt_test_user_1747667260201",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "jwt_test_user_1747667336977": {
+      "username": "jwt_test_user_1747667336977",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "jwt_test_user_1747667739099": {
+      "username": "jwt_test_user_1747667739099",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "jwt_test_user_1747667998350": {
+      "username": "jwt_test_user_1747667998350",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "jwt_test_user_1747668028473": {
+      "username": "jwt_test_user_1747668028473",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "jwt_test_user_1747668090332": {
+      "username": "jwt_test_user_1747668090332",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "jwt_test_user_1747668253138": {
+      "username": "jwt_test_user_1747668253138",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    }
+  }
+}

@@ -39,6 +39,12 @@ public class PreferenceController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<UserPreference>> getPreferences(@AuthenticationPrincipal UserDetails userDetails) {
+        log.debug("Authentication status: userDetails is {}", userDetails != null ? "present" : "null");
+        if (userDetails == null) {
+            log.warn("Attempt to access preferences without authentication");
+            throw new AuthenticationException("Authentication required");
+        }
+        
         log.info("Getting preferences for user: {}", userDetails.getUsername());
         
         return preferenceService.getPreference(userDetails.getUsername())
@@ -57,6 +63,11 @@ public class PreferenceController {
     public ResponseEntity<ApiResponse<UserPreference>> addFavorite(
             @AuthenticationPrincipal UserDetails userDetails, 
             @PathVariable int comicId) {
+        if (userDetails == null) {
+            log.warn("Attempt to modify favorites without authentication");
+            throw new AuthenticationException("Authentication required");
+        }
+            
         log.info("Adding comic {} to favorites for user: {}", comicId, userDetails.getUsername());
         
         return preferenceService.addFavorite(userDetails.getUsername(), comicId)
@@ -75,6 +86,11 @@ public class PreferenceController {
     public ResponseEntity<ApiResponse<UserPreference>> removeFavorite(
             @AuthenticationPrincipal UserDetails userDetails, 
             @PathVariable int comicId) {
+        if (userDetails == null) {
+            log.warn("Attempt to modify favorites without authentication");
+            throw new AuthenticationException("Authentication required");
+        }
+            
         log.info("Removing comic {} from favorites for user: {}", comicId, userDetails.getUsername());
         
         return preferenceService.removeFavorite(userDetails.getUsername(), comicId)
@@ -95,6 +111,11 @@ public class PreferenceController {
             @AuthenticationPrincipal UserDetails userDetails, 
             @PathVariable int comicId,
             @RequestBody Map<String, String> dateData) {
+        if (userDetails == null) {
+            log.warn("Attempt to update last read date without authentication");
+            throw new AuthenticationException("Authentication required");
+        }
+            
         log.info("Updating last read date for comic {} for user: {}", comicId, userDetails.getUsername());
         
         String dateStr = dateData.get("date");
@@ -121,6 +142,11 @@ public class PreferenceController {
     public ResponseEntity<ApiResponse<UserPreference>> updateDisplaySettings(
             @AuthenticationPrincipal UserDetails userDetails, 
             @RequestBody HashMap<String, Object> settings) {
+        if (userDetails == null) {
+            log.warn("Attempt to update display settings without authentication");
+            throw new AuthenticationException("Authentication required");
+        }
+            
         log.info("Updating display settings for user: {}", userDetails.getUsername());
         
         return preferenceService.updateDisplaySettings(userDetails.getUsername(), settings)

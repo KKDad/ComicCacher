@@ -122,12 +122,13 @@ public class JwtTokenUtil {
      * Extract roles from token
      *
      * @param token JWT token
-     * @return List of roles
+     * @return List of roles (empty list if no roles found)
      */
     @SuppressWarnings("unchecked")
     public java.util.List<String> extractRoles(String token) {
         final Claims claims = extractAllClaims(token);
-        return (java.util.List<String>) claims.get("roles");
+        Object roles = claims.get("roles");
+        return roles != null ? (java.util.List<String>) roles : java.util.Collections.emptyList();
     }
 
     /**

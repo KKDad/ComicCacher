@@ -1,0 +1,22 @@
+{
+  "preferences": {
+    "550e8400-e29b-41d4-a716-446655440000": {
+      "userToken": "550e8400-e29b-41d4-a716-446655440000",
+      "username": "testuser",
+      "favorites": [1, 2],
+      "dailyEmail": true,
+      "theme": "dark",
+      "emailFrequency": "daily",
+      "lastUpdated": "2023-01-15T09:15:30"
+    },
+    "1d7f5d5c-5e6b-4f0b-a9b5-1d3ae23cfaa8": {
+      "userToken": "1d7f5d5c-5e6b-4f0b-a9b5-1d3ae23cfaa8",
+      "username": "adminuser",
+      "favorites": [1, 2, 3],
+      "dailyEmail": false,
+      "theme": "light",
+      "emailFrequency": "weekly",
+      "lastUpdated": "2023-01-20T14:30:00"
+    }
+  }
+}

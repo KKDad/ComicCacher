@@ -6,7 +6,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
@@ -19,304 +21,250 @@ import java.util.Map;
 
 class PreferenceControllerIT extends AbstractIntegrationTest {
 
+    private static final String API_BASE_PATH = "/api/v1";
+    private static final String PREFERENCES_PATH = API_BASE_PATH + "/preferences";
+
     @Test
+    @DisplayName("Should retrieve user preferences when authenticated")
     void getPreferencesTest() throws Exception {
-        try {
-            // Create a test user and authenticate
-            String token = authenticateUser("pref_test_user");
+        // Create a test user and authenticate
+        String token = authenticateUser(TEST_USER);
+        
+        // Verify authentication succeeded
+        assertThat(token)
+            .as("Authentication should succeed for test user")
+            .isNotNull();
+        
+        // Get user preferences
+        MvcResult result = mockMvc.perform(get(PREFERENCES_PATH)
+                .header("Authorization", "Bearer " + token))
+            .andDo(print())
+            .andReturn();
             
-            if (token == null) {
-                System.out.println("WARNING: Authentication failed, skipping test");
-                return;
-            }
+        // Verify response status is 200 OK
+        assertThat(result.getResponse().getStatus())
+            .as("Expected GET /preferences to return status 200")
+            .isEqualTo(HttpStatus.OK.value());
+        
+        // Verify response contains data field
+        String responseContent = result.getResponse().getContentAsString();
+        assertThat(responseContent)
+            .as("Response should contain 'data' field")
+            .contains("data");
+        
+        // Verify preferences can be parsed
+        UserPreference preferences = extractFromResponse(responseContent, "data", UserPreference.class);
+        assertThat(preferences)
+            .as("Response should contain valid preference data")
+            .isNotNull();
             
-            System.out.println("Token for preferences test: " + token);
-            
-            // Get user preferences
-            MvcResult result = mockMvc.perform(get("/api/v1/preferences")
-                    .header("Authorization", "Bearer " + token))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Get preferences response status: " + result.getResponse().getStatus());
-            System.out.println("Get preferences response: " + result.getResponse().getContentAsString());
-            
-            // For test environments, we can be more relaxed with expectations
-            // Just acknowledge the test ran and returned some status
-            System.out.println("Test ran successfully");
-            
-            // Just acknowledge that we got a response, no specific validation needed
-            // This makes the test more robust against different API implementations
-            System.out.println("Response received, test completed");
-            // Do not validate response content to make test more resilient
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify username in preferences matches test user
+        assertThat(preferences.getUsername())
+            .as("Preferences should contain correct username")
+            .isEqualTo(TEST_USER);
     }
 
     @Test
+    @DisplayName("Should reject preference request when not authenticated")
     void getPreferencesUnauthenticatedTest() throws Exception {
-        try {
-            // Call without authentication
-            MvcResult result = mockMvc.perform(get("/api/v1/preferences"))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Unauthenticated preferences response status: " + result.getResponse().getStatus());
-            System.out.println("Unauthenticated preferences response: " + result.getResponse().getContentAsString());
+        // Call without authentication
+        MvcResult result = mockMvc.perform(get(PREFERENCES_PATH))
+            .andDo(print())
+            .andReturn();
             
-            // API should reject unauthenticated requests, but status code may vary in test environment
-            assertThat(result.getResponse().getStatus()).isIn(401, 403, 404, 500, 400);
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify response status is 401 Unauthorized
+        assertThat(result.getResponse().getStatus())
+            .as("Expected GET /preferences without authentication to return status 401")
+            .isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
+    @DisplayName("Should allow adding and removing comic from favorites")
     void addAndRemoveFavoriteTest() throws Exception {
-        try {
-            // Create a test user and authenticate
-            String token = authenticateUser("fav_test_user");
+        // Create a test user and authenticate
+        String token = authenticateUser(TEST_USER);
+        
+        // Verify authentication succeeded
+        assertThat(token)
+            .as("Authentication should succeed for test user")
+            .isNotNull();
+        
+        // Use test comic ID from constants
+        int comicId = TEST_COMIC_ID;
+        
+        // First remove the comic from favorites if it's there
+        mockMvc.perform(delete(PREFERENCES_PATH + "/comics/{comicId}/favorite", comicId)
+                .header("Authorization", "Bearer " + token))
+            .andReturn();
+        
+        // Add the comic to favorites
+        MvcResult addResult = mockMvc.perform(post(PREFERENCES_PATH + "/comics/{comicId}/favorite", comicId)
+                .header("Authorization", "Bearer " + token))
+            .andDo(print())
+            .andReturn();
             
-            if (token == null) {
-                System.out.println("WARNING: Authentication failed, skipping test");
-                return;
-            }
+        // Verify response status is 200 OK
+        assertThat(addResult.getResponse().getStatus())
+            .as("Expected POST /preferences/comics/{comicId}/favorite to return status 200")
+            .isEqualTo(HttpStatus.OK.value());
+        
+        // Verify the comic is now in favorites
+        UserPreference prefs = extractFromResponse(addResult.getResponse().getContentAsString(), "data", UserPreference.class);
+        assertThat(prefs)
+            .as("Response should contain valid preference data")
+            .isNotNull();
+        assertThat(prefs.getFavoriteComics())
+            .as("Favorites should include the added comic ID")
+            .contains(comicId);
+        
+        // Remove the comic from favorites
+        MvcResult removeResult = mockMvc.perform(delete(PREFERENCES_PATH + "/comics/{comicId}/favorite", comicId)
+                .header("Authorization", "Bearer " + token))
+            .andDo(print())
+            .andReturn();
             
-            // Get a comic ID for testing
-            int comicId = getFirstComicId();
-            if (comicId == -1) {
-                // Skip test if no comics found
-                System.out.println("No comics available, skipping test");
-                return;
-            }
-            
-            System.out.println("Testing with comic ID: " + comicId);
-            
-            // First remove the comic from favorites if it's there
-            MvcResult removeInitialResult = mockMvc.perform(delete("/api/v1/preferences/comics/{comicId}/favorite", comicId)
-                    .header("Authorization", "Bearer " + token))
-                .andReturn();
-                
-            System.out.println("Initial remove favorite response status: " + removeInitialResult.getResponse().getStatus());
-            
-            // Skip test if initial remove failed
-            if (removeInitialResult.getResponse().getStatus() != 200) {
-                System.out.println("WARNING: Initial favorite removal failed, skipping test");
-                return;
-            }
-            
-            // Add the comic to favorites
-            MvcResult addResult = mockMvc.perform(post("/api/v1/preferences/comics/{comicId}/favorite", comicId)
-                    .header("Authorization", "Bearer " + token))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Add favorite response status: " + addResult.getResponse().getStatus());
-            System.out.println("Add favorite response: " + addResult.getResponse().getContentAsString());
-            
-            // Skip further test if add failed
-            if (addResult.getResponse().getStatus() != 200) {
-                System.out.println("WARNING: Add favorite failed, skipping remaining test steps");
-                return;
-            }
-            
-            // Verify the comic is now in favorites
-            UserPreference prefs = null;
-            try {
-                prefs = extractUserPreference(addResult.getResponse().getContentAsString());
-                assertThat(prefs.getFavoriteComics()).contains(comicId);
-            } catch (Exception e) {
-                System.out.println("Error extracting preferences after add: " + e.getMessage());
-            }
-            
-            // Remove the comic from favorites
-            MvcResult removeResult = mockMvc.perform(delete("/api/v1/preferences/comics/{comicId}/favorite", comicId)
-                    .header("Authorization", "Bearer " + token))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Remove favorite response status: " + removeResult.getResponse().getStatus());
-            System.out.println("Remove favorite response: " + removeResult.getResponse().getContentAsString());
-            
-            // Verify the comic is no longer in favorites
-            try {
-                prefs = extractUserPreference(removeResult.getResponse().getContentAsString());
-                assertThat(prefs.getFavoriteComics()).doesNotContain(comicId);
-            } catch (Exception e) {
-                System.out.println("Error extracting preferences after remove: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify response status is 200 OK
+        assertThat(removeResult.getResponse().getStatus())
+            .as("Expected DELETE /preferences/comics/{comicId}/favorite to return status 200")
+            .isEqualTo(HttpStatus.OK.value());
+        
+        // Verify the comic is no longer in favorites
+        prefs = extractFromResponse(removeResult.getResponse().getContentAsString(), "data", UserPreference.class);
+        assertThat(prefs)
+            .as("Response should contain valid preference data")
+            .isNotNull();
+        assertThat(prefs.getFavoriteComics())
+            .as("Favorites should not include the removed comic ID")
+            .doesNotContain(comicId);
     }
 
     @Test
+    @DisplayName("Should update last read date for a comic")
     void updateLastReadTest() throws Exception {
-        try {
-            // Create a test user and authenticate
-            String token = authenticateUser("lastread_test_user");
+        // Create a test user and authenticate
+        String token = authenticateUser(TEST_USER);
+        
+        // Verify authentication succeeded
+        assertThat(token)
+            .as("Authentication should succeed for test user")
+            .isNotNull();
+        
+        // Use test comic ID from constants
+        int comicId = TEST_COMIC_ID;
+        
+        // Set a last read date
+        LocalDate today = LocalDate.now();
+        Map<String, String> dateData = new HashMap<>();
+        dateData.put("date", today.format(DateTimeFormatter.ISO_DATE));
+        
+        // Update last read date
+        MvcResult updateResult = mockMvc.perform(post(PREFERENCES_PATH + "/comics/{comicId}/lastread", comicId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dateData)))
+            .andDo(print())
+            .andReturn();
             
-            if (token == null) {
-                System.out.println("WARNING: Authentication failed, skipping test");
-                return;
-            }
-            
-            // Get a comic ID for testing
-            int comicId = getFirstComicId();
-            if (comicId == -1) {
-                // Skip test if no comics found
-                System.out.println("No comics available, skipping test");
-                return;
-            }
-            
-            System.out.println("Testing with comic ID: " + comicId);
-            
-            // Set a last read date
-            LocalDate today = LocalDate.now();
-            Map<String, String> dateData = new HashMap<>();
-            dateData.put("date", today.format(DateTimeFormatter.ISO_DATE));
-            
-            System.out.println("Setting last read date: " + dateData.get("date"));
-            
-            MvcResult updateResult = mockMvc.perform(post("/api/v1/preferences/comics/{comicId}/lastread", comicId)
-                    .header("Authorization", "Bearer " + token)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(dateData)))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Update last read response status: " + updateResult.getResponse().getStatus());
-            System.out.println("Update last read response: " + updateResult.getResponse().getContentAsString());
-            
-            // Skip verification if update failed
-            if (updateResult.getResponse().getStatus() != 200) {
-                System.out.println("WARNING: Last read update failed, skipping verification");
-                return;
-            }
-            
-            // Verify the last read date was updated
-            try {
-                UserPreference prefs = extractUserPreference(updateResult.getResponse().getContentAsString());
-                assertThat(prefs.getLastReadDates()).containsKey(comicId);
-                LocalDate storedDate = prefs.getLastReadDates().get(comicId);
-                assertThat(storedDate).isEqualTo(today);
-                System.out.println("Stored last read date: " + storedDate);
-            } catch (Exception e) {
-                System.out.println("Error verifying last read date: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify response status is 200 OK
+        assertThat(updateResult.getResponse().getStatus())
+            .as("Expected POST /preferences/comics/{comicId}/lastread to return status 200")
+            .isEqualTo(HttpStatus.OK.value());
+        
+        // Verify the last read date was updated
+        UserPreference prefs = extractFromResponse(updateResult.getResponse().getContentAsString(), "data", UserPreference.class);
+        assertThat(prefs)
+            .as("Response should contain valid preference data")
+            .isNotNull();
+        assertThat(prefs.getLastReadDates())
+            .as("Last read dates should contain updated comic")
+            .containsKey(comicId);
+        LocalDate storedDate = prefs.getLastReadDates().get(comicId);
+        assertThat(storedDate)
+            .as("Stored last read date should match the date we set")
+            .isEqualTo(today);
     }
 
     @Test
+    @DisplayName("Should update display settings")
     void updateDisplaySettingsTest() throws Exception {
-        try {
-            // Create a test user and authenticate
-            String token = authenticateUser("settings_test_user");
+        // Create a test user and authenticate
+        String token = authenticateUser(TEST_USER);
+        
+        // Verify authentication succeeded
+        assertThat(token)
+            .as("Authentication should succeed for test user")
+            .isNotNull();
+        
+        // Create display settings
+        HashMap<String, Object> settings = new HashMap<>();
+        settings.put("theme", "dark");
+        settings.put("fontSize", 16);
+        settings.put("showTutorial", false);
+        
+        // Update display settings
+        MvcResult updateResult = mockMvc.perform(post(PREFERENCES_PATH + "/display-settings")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(settings)))
+            .andDo(print())
+            .andReturn();
             
-            if (token == null) {
-                System.out.println("WARNING: Authentication failed, skipping test");
-                return;
-            }
-            
-            // Create display settings
-            HashMap<String, Object> settings = new HashMap<>();
-            settings.put("theme", "dark");
-            settings.put("fontSize", 16);
-            settings.put("showTutorial", false);
-            
-            System.out.println("Updating display settings: " + objectMapper.writeValueAsString(settings));
-            
-            MvcResult updateResult = mockMvc.perform(post("/api/v1/preferences/display-settings")
-                    .header("Authorization", "Bearer " + token)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(settings)))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Update display settings response status: " + updateResult.getResponse().getStatus());
-            System.out.println("Update display settings response: " + updateResult.getResponse().getContentAsString());
-            
-            // Skip verification if update failed
-            if (updateResult.getResponse().getStatus() != 200) {
-                System.out.println("WARNING: Display settings update failed, skipping verification");
-                return;
-            }
-            
-            // Verify the display settings were updated
-            try {
-                UserPreference prefs = extractUserPreference(updateResult.getResponse().getContentAsString());
-                
-                assertThat(prefs.getDisplaySettings()).containsKey("theme");
-                assertThat(prefs.getDisplaySettings().get("theme")).isEqualTo("dark");
-                assertThat(prefs.getDisplaySettings()).containsKey("fontSize");
-                assertThat(prefs.getDisplaySettings()).containsKey("showTutorial");
-                assertThat(prefs.getDisplaySettings().get("showTutorial")).isEqualTo(false);
-            } catch (Exception e) {
-                System.out.println("Error verifying display settings: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify response status is 200 OK
+        assertThat(updateResult.getResponse().getStatus())
+            .as("Expected POST /preferences/display-settings to return status 200")
+            .isEqualTo(HttpStatus.OK.value());
+        
+        // Verify the display settings were updated
+        UserPreference prefs = extractFromResponse(updateResult.getResponse().getContentAsString(), "data", UserPreference.class);
+        assertThat(prefs)
+            .as("Response should contain valid preference data")
+            .isNotNull();
+        assertThat(prefs.getDisplaySettings())
+            .as("Display settings should contain theme")
+            .containsKey("theme");
+        assertThat(prefs.getDisplaySettings().get("theme"))
+            .as("Theme should be dark")
+            .isEqualTo("dark");
+        assertThat(prefs.getDisplaySettings())
+            .as("Display settings should contain fontSize")
+            .containsKey("fontSize");
+        assertThat(prefs.getDisplaySettings())
+            .as("Display settings should contain showTutorial")
+            .containsKey("showTutorial");
+        assertThat(prefs.getDisplaySettings().get("showTutorial"))
+            .as("showTutorial should be false")
+            .isEqualTo(false);
     }
 
     @Test
+    @DisplayName("Should reject invalid date format when updating last read date")
     void updateLastReadWithInvalidDateFormatTest() throws Exception {
-        try {
-            // Create a test user and authenticate
-            String token = authenticateUser("invalid_date_test_user");
+        // Create a test user and authenticate
+        String token = authenticateUser(TEST_USER);
+        
+        // Verify authentication succeeded
+        assertThat(token)
+            .as("Authentication should succeed for test user")
+            .isNotNull();
+        
+        // Use test comic ID from constants
+        int comicId = TEST_COMIC_ID;
+        
+        // Set an invalid date format
+        Map<String, String> dateData = new HashMap<>();
+        dateData.put("date", "not-a-date");
+        
+        // Attempt to update with invalid date
+        MvcResult result = mockMvc.perform(post(PREFERENCES_PATH + "/comics/{comicId}/lastread", comicId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dateData)))
+            .andDo(print())
+            .andReturn();
             
-            if (token == null) {
-                System.out.println("WARNING: Authentication failed, skipping test");
-                return;
-            }
-            
-            // Get a comic ID for testing
-            int comicId = getFirstComicId();
-            if (comicId == -1) {
-                // Skip test if no comics found
-                System.out.println("No comics available, skipping test");
-                return;
-            }
-            
-            System.out.println("Testing with comic ID: " + comicId);
-            
-            // Set an invalid date format
-            Map<String, String> dateData = new HashMap<>();
-            dateData.put("date", "not-a-date");
-            
-            System.out.println("Setting invalid date format: " + dateData.get("date"));
-            
-            MvcResult result = mockMvc.perform(post("/api/v1/preferences/comics/{comicId}/lastread", comicId)
-                    .header("Authorization", "Bearer " + token)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(dateData)))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Update with invalid date response status: " + result.getResponse().getStatus());
-            System.out.println("Update with invalid date response: " + result.getResponse().getContentAsString());
-            
-            // API should reject invalid date format with 400, but other error codes are acceptable in test environment
-            assertThat(result.getResponse().getStatus()).isIn(400, 404, 500, 200);
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify response status is 400 Bad Request
+        assertThat(result.getResponse().getStatus())
+            .as("Expected POST /preferences/comics/{comicId}/lastread with invalid date to return status 400")
+            .isEqualTo(HttpStatus.BAD_REQUEST.value());
     }
-
-    // Removed duplicate methods that are now in AbstractIntegrationTest
 }
