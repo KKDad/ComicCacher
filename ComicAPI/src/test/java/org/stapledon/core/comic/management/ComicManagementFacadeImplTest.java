@@ -153,6 +153,66 @@ class ComicManagementFacadeImplTest {
         assertEquals(1, comics.size());
         assertEquals(testComic, comics.get(0));
     }
+    
+    @Test
+    void shouldGetAllComicsWithNullNames() {
+        // Arrange - Create a comic config with null name comic
+        ComicConfig comicConfig = new ComicConfig();
+        Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
+        
+        // Normal comic
+        ComicItem normalComic = ComicItem.builder()
+                .id(1)
+                .name("B Comic") // B will sort after A but before C
+                .build();
+                
+        // Comic with null name 
+        ComicItem nullNameComic = ComicItem.builder()
+                .id(2)
+                .name(null) 
+                .build();
+                
+        // Another normal comic
+        ComicItem anotherComic = ComicItem.builder()
+                .id(3)
+                .name("C Comic") 
+                .build();
+                
+        // Yet another normal comic
+        ComicItem yetAnotherComic = ComicItem.builder()
+                .id(4)
+                .name("A Comic")
+                .build();
+                
+        // Add comics to the map
+        items.put(normalComic.getId(), normalComic);
+        items.put(nullNameComic.getId(), nullNameComic);
+        items.put(anotherComic.getId(), anotherComic);
+        items.put(yetAnotherComic.getId(), yetAnotherComic);
+        comicConfig.setItems(items);
+        
+        when(configFacade.loadComicConfig()).thenReturn(comicConfig);
+        
+        // Create new facade instance with our test data
+        ComicManagementFacadeImpl testFacade = new ComicManagementFacadeImpl(
+                storageFacade,
+                configFacade,
+                downloaderFacade,
+                reconcilerProperties,
+                taskExecutionTracker
+        );
+        
+        // Act
+        List<ComicItem> comics = testFacade.getAllComics();
+        
+        // Assert
+        assertEquals(4, comics.size());
+        // Null name should be sorted first
+        assertEquals(null, comics.get(0).getName());
+        assertEquals("A Comic", comics.get(1).getName());
+        assertEquals("B Comic", comics.get(2).getName());
+        assertEquals("C Comic", comics.get(3).getName());
+    }
 
     @Test
     void shouldGetComicById() {

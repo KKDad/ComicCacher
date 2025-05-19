@@ -55,6 +55,11 @@ public class ComicController {
     @PostMapping("/comics/{comic}")
     public ResponseEntity<ApiResponse<ComicItem>> createComicDetails(@RequestBody ComicItem comicItem, @PathVariable(name = "comic") Integer comicId) {
         
+        // Validate comic name is not null
+        if (comicItem.getName() == null) {
+            throw new IllegalArgumentException("Comic name cannot be null");
+        }
+        
         // Ensure the comic ID in the path matches the comic ID in the request body
         if (comicItem.getId() != comicId) {
             comicItem = ComicItem.builder()
@@ -78,6 +83,11 @@ public class ComicController {
 
     @PatchMapping("/comics/{comic}")
     public ResponseEntity<ApiResponse<ComicItem>> updateComicDetails(@PathVariable(name = "comic") Integer comicId, @RequestBody ComicItem comicItem) {
+        // Validate comic name is not null
+        if (comicItem.getName() == null) {
+            throw new IllegalArgumentException("Comic name cannot be null");
+        }
+        
         return comicManagementFacade.updateComic(comicId, comicItem)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new ComicCachingException("Unable to update ComicItem"));

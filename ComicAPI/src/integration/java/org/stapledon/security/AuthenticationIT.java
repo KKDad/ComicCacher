@@ -1,17 +1,18 @@
 package org.stapledon.security;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.api.dto.user.UserRegistrationDto;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration tests for authentication features

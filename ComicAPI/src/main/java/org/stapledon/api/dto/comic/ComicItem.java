@@ -33,7 +33,7 @@ public class ComicItem implements Comparable<ComicItem> {
         if (o == null || getClass() != o.getClass()) return false;
         var comicItem = (ComicItem) o;
         return getId() == comicItem.getId() &&
-               getName().equals(comicItem.getName());
+                getName().equals(comicItem.getName());
     }
 
     @Override
@@ -43,9 +43,12 @@ public class ComicItem implements Comparable<ComicItem> {
 
     @Override
     public int compareTo(ComicItem other) {
-        return this.getName().compareTo(other.getName());
+        if (this.name == null && other.name == null) return 0;
+        if (this.name == null) return -1;
+        if (other.name == null) return 1;
+        return this.name.compareTo(other.name);
     }
-    
+
     /**
      * Checks if this comic has an avatar available.
      *
@@ -54,7 +57,7 @@ public class ComicItem implements Comparable<ComicItem> {
     public boolean isAvatarAvailable() {
         return avatarAvailable != null && avatarAvailable;
     }
-    
+
     /**
      * Checks if this comic is enabled.
      *

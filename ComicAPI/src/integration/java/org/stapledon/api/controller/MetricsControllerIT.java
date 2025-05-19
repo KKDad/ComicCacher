@@ -1,12 +1,12 @@
 package org.stapledon.api.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 class MetricsControllerIT extends AbstractIntegrationTest {
 

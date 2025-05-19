@@ -99,6 +99,15 @@ public class GlobalExceptionHandler {
         log.warn("Type mismatch exception: {}", message);
         return ResponseBuilder.error(HttpStatus.BAD_REQUEST, message);
     }
+    
+    /**
+     * Handle IllegalArgumentException
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
+        log.warn("Invalid argument: {}", ex.getMessage());
+        return ResponseBuilder.error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 
     /**
      * Handle all other exceptions

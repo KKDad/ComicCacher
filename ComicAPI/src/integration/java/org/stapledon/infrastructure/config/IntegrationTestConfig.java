@@ -6,6 +6,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -28,10 +29,10 @@ import org.stapledon.events.CacheMissEvent;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
-import java.io.InputStream;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

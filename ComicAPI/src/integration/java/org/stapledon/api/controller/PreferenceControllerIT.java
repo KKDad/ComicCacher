@@ -1,27 +1,21 @@
 package org.stapledon.api.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import java.io.IOException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.StapledonAccountGivens;
-import org.stapledon.api.dto.auth.AuthRequest;
-import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.api.dto.preference.UserPreference;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 class PreferenceControllerIT extends AbstractIntegrationTest {
 

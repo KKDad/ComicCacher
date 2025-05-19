@@ -20,7 +20,6 @@ import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

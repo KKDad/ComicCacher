@@ -1,26 +1,13 @@
 package org.stapledon.infrastructure.config;
 
-import com.google.gson.Gson;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.api.dto.preference.PreferenceConfig;
-import org.stapledon.api.dto.user.UserConfig;
-import org.stapledon.common.util.Bootstrap;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Initializer for integration tests that sets up test properties and

@@ -1,20 +1,21 @@
 package org.stapledon.api.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.StapledonAccountGivens;
 import org.stapledon.api.dto.user.User;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration tests for the UserController

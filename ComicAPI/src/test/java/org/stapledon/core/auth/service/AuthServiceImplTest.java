@@ -27,7 +27,6 @@ import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

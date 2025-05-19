@@ -1,21 +1,23 @@
 package org.stapledon.infrastructure.security;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.stapledon.infrastructure.config.properties.JwtProperties;
 import org.stapledon.api.dto.auth.JwtTokenDto;
 import org.stapledon.api.dto.user.User;
+import org.stapledon.infrastructure.config.properties.JwtProperties;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class JwtTokenUtilTest {
 
