@@ -162,6 +162,19 @@ The API documentation is automatically generated using the OpenAPI Specification
 - **Generated Files**: OpenAPI JSON files are generated in the `docs/` directory during the build process
 - **Custom Generator**: Run `./gradlew :ComicAPI:updateApiDocs` to manually update the documentation
 
+### Detailed Endpoint Documentation
+
+Detailed documentation for all API endpoints is available in the `docs/` directory:
+
+- [API Endpoints Overview](docs/api-endpoints.md) - Main index of all available endpoints
+- [Comics Endpoints](docs/comics-endpoints.md) - Documentation for comic retrieval and management
+- [Authentication Endpoints](docs/auth-endpoints.md) - User registration, login, and token management
+- [Health Endpoint](docs/health-endpoint.md) - Application health status information
+- [Metrics Endpoints](docs/metrics-endpoints.md) - Storage and access statistics
+- [Preferences Endpoints](docs/preferences-endpoints.md) - User preferences management
+- [Update Endpoints](docs/update-endpoints.md) - Comic update and retrieval
+- [User Endpoints](docs/user-endpoints.md) - User profile management
+
 ## Resources
 
 - **Material Design Principles**: https://material.io/design/components/cards.html#usage
