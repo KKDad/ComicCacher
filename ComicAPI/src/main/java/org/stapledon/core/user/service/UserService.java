@@ -48,4 +48,6 @@ public interface UserService {
      * @return The updated user if successful, empty otherwise
      */
     Optional<User> updatePassword(String username, String newPassword);
+
+    boolean existsByUsername(String username);
 }

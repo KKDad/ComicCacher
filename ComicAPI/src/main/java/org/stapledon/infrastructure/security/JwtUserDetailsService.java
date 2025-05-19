@@ -28,7 +28,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList());
+                .toList();
         
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),

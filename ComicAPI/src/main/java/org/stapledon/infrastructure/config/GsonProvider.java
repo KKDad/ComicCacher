@@ -2,6 +2,11 @@ package org.stapledon.infrastructure.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -11,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,7 +30,28 @@ public class GsonProvider {
                 .setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .registerTypeAdapter(IComicsBootstrap.class, new IComicsBootstrapDeserializer())
                 .create();
+    }
+    
+    /**
+     * Custom deserializer for IComicsBootstrap interface
+     * Determines the concrete implementation based on fields in the JSON
+     */
+    static class IComicsBootstrapDeserializer implements JsonDeserializer<IComicsBootstrap> {
+        @Override
+        public IComicsBootstrap deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+            
+            // Determine which implementation to use based on fields present
+            if (jsonObject.has("website")) {
+                // If it has a website field, it's a KingComicsBootStrap
+                return context.deserialize(json, KingComicsBootStrap.class);
+            } else {
+                // Otherwise, assume it's a GoComicsBootstrap
+                return context.deserialize(json, GoComicsBootstrap.class);
+            }
+        }
     }
 
     static class LocalDateAdapter extends TypeAdapter<LocalDate> {

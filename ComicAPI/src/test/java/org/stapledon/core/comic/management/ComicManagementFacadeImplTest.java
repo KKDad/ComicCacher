@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,8 +69,6 @@ class ComicManagementFacadeImplTest {
     private KingComicsBootStrap kingComicsBootstrap;
     
     private ComicManagementFacadeImpl facade;
-    private ComicConfig comicConfig;
-    private Bootstrap bootstrap;
     private ComicItem testComic;
     private final byte[] testImageData = "test image data".getBytes();
     
@@ -92,13 +89,13 @@ class ComicManagementFacadeImplTest {
                 .build();
         
         // Create test comic config
-        comicConfig = new ComicConfig();
+        ComicConfig comicConfig = new ComicConfig();
         Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
         items.put(testComic.getId(), testComic);
         comicConfig.setItems(items);
         
         // Create test bootstrap
-        bootstrap = new Bootstrap();
+        Bootstrap bootstrap = new Bootstrap();
         bootstrap.setDailyComics(new ArrayList<>());
         bootstrap.setKingComics(new ArrayList<>());
         bootstrap.getDailyComics().add(goComicsBootstrap);
@@ -156,6 +153,66 @@ class ComicManagementFacadeImplTest {
         assertEquals(1, comics.size());
         assertEquals(testComic, comics.get(0));
     }
+    
+    @Test
+    void shouldGetAllComicsWithNullNames() {
+        // Arrange - Create a comic config with null name comic
+        ComicConfig comicConfig = new ComicConfig();
+        Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
+        
+        // Normal comic
+        ComicItem normalComic = ComicItem.builder()
+                .id(1)
+                .name("B Comic") // B will sort after A but before C
+                .build();
+                
+        // Comic with null name 
+        ComicItem nullNameComic = ComicItem.builder()
+                .id(2)
+                .name(null) 
+                .build();
+                
+        // Another normal comic
+        ComicItem anotherComic = ComicItem.builder()
+                .id(3)
+                .name("C Comic") 
+                .build();
+                
+        // Yet another normal comic
+        ComicItem yetAnotherComic = ComicItem.builder()
+                .id(4)
+                .name("A Comic")
+                .build();
+                
+        // Add comics to the map
+        items.put(normalComic.getId(), normalComic);
+        items.put(nullNameComic.getId(), nullNameComic);
+        items.put(anotherComic.getId(), anotherComic);
+        items.put(yetAnotherComic.getId(), yetAnotherComic);
+        comicConfig.setItems(items);
+        
+        when(configFacade.loadComicConfig()).thenReturn(comicConfig);
+        
+        // Create new facade instance with our test data
+        ComicManagementFacadeImpl testFacade = new ComicManagementFacadeImpl(
+                storageFacade,
+                configFacade,
+                downloaderFacade,
+                reconcilerProperties,
+                taskExecutionTracker
+        );
+        
+        // Act
+        List<ComicItem> comics = testFacade.getAllComics();
+        
+        // Assert
+        assertEquals(4, comics.size());
+        // Null name should be sorted first
+        assertEquals(null, comics.get(0).getName());
+        assertEquals("A Comic", comics.get(1).getName());
+        assertEquals("B Comic", comics.get(2).getName());
+        assertEquals("C Comic", comics.get(3).getName());
+    }
 
     @Test
     void shouldGetComicById() {
@@ -184,6 +241,46 @@ class ComicManagementFacadeImplTest {
         // Assert
         assertTrue(comic.isPresent());
         assertEquals(testComic, comic.get());
+    }
+    
+    @Test
+    void shouldReturnEmptyWhenComicNameIsNull() {
+        // Act
+        Optional<ComicItem> comic = facade.getComicByName(null);
+        
+        // Assert
+        assertFalse(comic.isPresent());
+    }
+    
+    @Test
+    void shouldHandleComicItemWithNullName() {
+        // Arrange - create comic with null name
+        ComicItem nullNameComic = ComicItem.builder()
+                .id(123)
+                .name(null)
+                .build();
+        
+        // Add to comic config
+        ComicConfig comicConfig = new ComicConfig();
+        Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
+        items.put(nullNameComic.getId(), nullNameComic);
+        comicConfig.setItems(items);
+        
+        when(configFacade.loadComicConfig()).thenReturn(comicConfig);
+        
+        // Create new facade with our null-name comic
+        ComicManagementFacadeImpl nullNameFacade = new ComicManagementFacadeImpl(
+                storageFacade,
+                configFacade,
+                downloaderFacade,
+                reconcilerProperties,
+                taskExecutionTracker
+        );
+        
+        // Act and Assert - this shouldn't throw an NPE
+        assertEquals(1, nullNameFacade.getAllComics().size());
+        assertEquals(nullNameComic, nullNameFacade.getComic(123).get());
+        assertEquals(0, nullNameFacade.getComicByName("AnyName").stream().count());
     }
 
     @Test

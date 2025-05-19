@@ -26,13 +26,11 @@ class UpdateControllerTest {
     
     @Mock
     private ComicManagementFacade comicManagementFacade;
-    
-    private UpdateController updateController;
-    
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        updateController = new UpdateController(comicManagementFacade);
+        UpdateController updateController = new UpdateController(comicManagementFacade);
         mockMvc = MockMvcBuilders.standaloneSetup(updateController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

@@ -1,6 +1,7 @@
 package org.stapledon.infrastructure.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,18 +10,18 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.stapledon.core.auth.service.AuthService;
+import org.stapledon.core.comic.downloader.ComicCacher;
 import org.stapledon.core.comic.service.ComicsService;
-import org.stapledon.infrastructure.scheduling.DailyRunner;
-import org.stapledon.core.preference.service.PreferenceService;
-import org.stapledon.infrastructure.scheduling.StartupReconciler;
 import org.stapledon.core.comic.service.UpdateService;
+import org.stapledon.core.preference.service.PreferenceService;
 import org.stapledon.core.user.service.UserService;
 import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.infrastructure.config.properties.DailyRunnerProperties;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
-import org.stapledon.core.comic.downloader.ComicCacher;
+import org.stapledon.infrastructure.scheduling.DailyRunner;
+import org.stapledon.infrastructure.scheduling.StartupReconciler;
 import org.stapledon.infrastructure.security.JwtAuthenticationEntryPoint;
 import org.stapledon.infrastructure.security.JwtTokenFilter;
 import org.stapledon.infrastructure.security.JwtTokenUtil;

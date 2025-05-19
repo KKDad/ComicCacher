@@ -46,4 +46,9 @@ public class UserServiceImpl implements UserService {
         log.info("Updating password for user: {}", username);
         return userConfigWriter.updatePassword(username, newPassword);
     }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        return userConfigWriter.existsByUsername(username);
+    }
 }

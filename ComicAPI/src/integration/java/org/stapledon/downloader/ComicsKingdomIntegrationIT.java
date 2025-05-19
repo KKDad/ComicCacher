@@ -1,5 +1,7 @@
 package org.stapledon.downloader;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -13,8 +15,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ComicsKingdomIntegrationIT {
 

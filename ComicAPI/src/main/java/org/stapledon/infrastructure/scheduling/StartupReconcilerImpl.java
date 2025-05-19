@@ -35,7 +35,7 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (startupReconcilerProperties.isEnabled()) {
             // Delegate loading comics to the facade
             comicManagementFacade.refreshComicList();

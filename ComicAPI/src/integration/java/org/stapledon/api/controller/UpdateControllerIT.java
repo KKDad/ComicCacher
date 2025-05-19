@@ -1,95 +1,115 @@
 package org.stapledon.api.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import java.io.IOException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.api.dto.comic.ComicItem;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import org.stapledon.StapledonAccountGivens;
 
 class UpdateControllerIT extends AbstractIntegrationTest {
 
+    private static final String API_BASE_PATH = "/api/v1";
+    private static final String UPDATE_PATH = API_BASE_PATH + "/update";
+    private String authToken;
+    
+    @BeforeEach
+    void setUp() {
+        // Use direct JWT token generation instead of authentication
+        StapledonAccountGivens.GivenAccountContext context = StapledonAccountGivens.GivenAccountContext.builder()
+                .username("testuser")
+                .build();
+                
+        authToken = context.authenticate();
+        assertThat(authToken)
+            .as("Token generation should succeed")
+            .isNotNull();
+    }
+
     @Test
     @Tag("slow") // This test might be slow as it updates all comics
+    @DisplayName("Should update all comics")
     void updateAllComicsTest() throws Exception {
-        try {
-            MvcResult result = mockMvc.perform(get("/api/v1/update"))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Update all comics response status: " + result.getResponse().getStatus());
-            System.out.println("Update all comics response: " + result.getResponse().getContentAsString());
+        // Execute request to update all comics with auth token
+        MockHttpServletRequestBuilder request = get(UPDATE_PATH)
+            .header("Authorization", "Bearer " + authToken);
             
-            // For test environments, we can be more relaxed with expectations
-            // This endpoint might return different status codes in test environment
-            System.out.println("Test ran successfully, status code: " + result.getResponse().getStatus());
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        MvcResult result = mockMvc.perform(request)
+            .andDo(print())
+            .andReturn();
+            
+        // Verify response status is 200 OK
+        assertThat(result.getResponse().getStatus())
+            .as("Expected GET /update to return status 200")
+            .isEqualTo(HttpStatus.OK.value());
+        
+        // Verify response contains data
+        String responseContent = result.getResponse().getContentAsString();
+        assertThat(responseContent)
+            .as("Response should contain 'data' field")
+            .contains("data");
+        
+        // Verify response contains message about updating comics
+        assertThat(responseContent)
+            .as("Response should contain message about updating comics")
+            .contains("update");
     }
     
     @Test
+    @DisplayName("Should update a specific comic")
     void updateSpecificComicTest() throws Exception {
-        try {
-            // Get a comic ID for testing
-            int comicId = getFirstComicId();
-            if (comicId == -1) {
-                // Skip test if no comics found
-                System.out.println("No comics available, skipping test");
-                return;
-            }
+        // Use test comic ID from constants
+        int comicId = TEST_COMIC_ID;
+        
+        // Execute request to update specific comic with auth token
+        MockHttpServletRequestBuilder request = get(UPDATE_PATH + "/{comicId}", comicId)
+            .header("Authorization", "Bearer " + authToken);
             
-            System.out.println("Updating comic with ID: " + comicId);
+        MvcResult result = mockMvc.perform(request)
+            .andDo(print())
+            .andReturn();
             
-            MvcResult result = mockMvc.perform(get("/api/v1/update/{comicId}", comicId))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Update specific comic response status: " + result.getResponse().getStatus());
-            System.out.println("Update specific comic response: " + result.getResponse().getContentAsString());
-            
-            // For test environments, we can be more relaxed with expectations
-            // This endpoint might return different status codes in test environment
-            System.out.println("Test ran successfully, status code: " + result.getResponse().getStatus());
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify response status is 200 OK
+        assertThat(result.getResponse().getStatus())
+            .as("Expected GET /update/{comicId} to return status 200")
+            .isEqualTo(HttpStatus.OK.value());
+        
+        // Verify response contains data
+        String responseContent = result.getResponse().getContentAsString();
+        assertThat(responseContent)
+            .as("Response should contain 'data' field")
+            .contains("data");
+        
+        // Verify response contains message about updating the specific comic
+        assertThat(responseContent)
+            .as("Response should contain message about updating specific comic")
+            .contains("update");
     }
     
     @Test
+    @DisplayName("Should return 404 for non-existent comic")
     void updateNonExistentComicTest() throws Exception {
-        try {
-            int nonExistentId = 999999;
-            System.out.println("Testing with non-existent comic ID: " + nonExistentId);
+        // Use a comic ID that doesn't exist
+        int nonExistentId = 999999;
+        
+        // Execute request to update non-existent comic with auth token
+        MockHttpServletRequestBuilder request = get(UPDATE_PATH + "/{comicId}", nonExistentId)
+            .header("Authorization", "Bearer " + authToken);
             
-            MvcResult result = mockMvc.perform(get("/api/v1/update/{comicId}", nonExistentId))
-                .andDo(print())
-                .andReturn();
-                
-            System.out.println("Update non-existent comic response status: " + result.getResponse().getStatus());
-            System.out.println("Update non-existent comic response: " + result.getResponse().getContentAsString());
+        MvcResult result = mockMvc.perform(request)
+            .andDo(print())
+            .andReturn();
             
-            // API should return 404 for non-existent resources
-            assertThat(result.getResponse().getStatus()).isEqualTo(404);
-        } catch (Exception e) {
-            System.out.println("Test exception: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        // Verify response status is 404 Not Found
+        assertThat(result.getResponse().getStatus())
+            .as("Expected GET /update/{comicId} with non-existent ID to return status 404")
+            .isEqualTo(HttpStatus.NOT_FOUND.value());
     }
-    
-    // Removed duplicate methods that are now in AbstractIntegrationTest
 }

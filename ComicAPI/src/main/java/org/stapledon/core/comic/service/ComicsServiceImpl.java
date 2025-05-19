@@ -6,7 +6,6 @@ import org.stapledon.api.dto.comic.ImageDto;
 import org.stapledon.common.util.Direction;
 import org.stapledon.core.comic.management.ComicManagementFacade;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -71,13 +70,13 @@ public class ComicsServiceImpl implements ComicsService {
      * @return 200 with the image or 404 with no response body if not found
      */
     @Override
-    public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which) throws IOException {
+    public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which) {
         log.info("Retrieving comic strip for comicId={}, Direction={}", comicId, which);
         return comicManagementFacade.getComicStrip(comicId, which);
     }
 
     @Override
-    public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) throws IOException {
+    public Optional<ImageDto> retrieveComicStrip(int comicId, Direction which, LocalDate from) {
         log.info("Retrieving comic strip for comicId={}, Direction={}, from={}", comicId, which, from);
         return comicManagementFacade.getComicStrip(comicId, which, from);
     }
@@ -89,7 +88,7 @@ public class ComicsServiceImpl implements ComicsService {
      * @return Optional containing the avatar image, empty if not found
      */
     @Override
-    public Optional<ImageDto> retrieveAvatar(int comicId) throws IOException {
+    public Optional<ImageDto> retrieveAvatar(int comicId) {
         return comicManagementFacade.getAvatar(comicId);
     }
 }

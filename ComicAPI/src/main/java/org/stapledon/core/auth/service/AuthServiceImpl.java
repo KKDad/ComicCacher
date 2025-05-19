@@ -29,6 +29,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Optional<AuthResponse> register(UserRegistrationDto registrationDto) {
         log.info("Registering new user: {}", registrationDto.getUsername());
+        if (userService.existsByUsername(registrationDto.getUsername())) {
+            throw new AuthenticationException("Username already exists");
+        }
         
         Optional<User> userOpt = userService.registerUser(registrationDto);
         

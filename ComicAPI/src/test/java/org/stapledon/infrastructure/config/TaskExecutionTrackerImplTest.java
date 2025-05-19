@@ -1,33 +1,37 @@
 package org.stapledon.infrastructure.config;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.infrastructure.scheduling.DailyRunner;
-import org.stapledon.infrastructure.scheduling.StartupReconcilerImpl;
+import org.stapledon.core.comic.downloader.ComicCacher;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.infrastructure.config.properties.DailyRunnerProperties;
-import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
-import org.stapledon.core.comic.downloader.ComicCacher;
-import org.stapledon.api.dto.comic.ComicConfig;
+import org.stapledon.infrastructure.scheduling.DailyRunner;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TaskExecutionTrackerImplTest {
@@ -162,7 +166,7 @@ class TaskExecutionTrackerImplTest {
     }
     
     @Test
-    void verifyStartupReconcilerUsesTrackerCorrectly() throws Exception {
+    void verifyStartupReconcilerUsesTrackerCorrectly() {
         // Skip this test as it requires more complex setup
         // The functionality is covered by the integration tests
     }

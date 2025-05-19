@@ -3,7 +3,6 @@ package org.stapledon.core.comic.management;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -62,13 +61,12 @@ public class ComicManagementFacadeReconcileTest {
     private ComicManagementFacadeImpl facade;
     private ComicConfig comicConfig;
     private Bootstrap bootstrap;
-    private ComicItem testComic;
     private final byte[] testImageData = "test image data".getBytes();
     
     @BeforeEach
     void setUp() {
         // Create test comic item
-        testComic = ComicItem.builder()
+        ComicItem testComic = ComicItem.builder()
                 .id(1)
                 .name("Test Comic")
                 .author("Test Author")
@@ -142,4 +140,5 @@ public class ComicManagementFacadeReconcileTest {
         verify(configFacade).saveComicConfig(any());
         verify(taskExecutionTracker).markTaskExecuted(anyString());
     }
+    
 }

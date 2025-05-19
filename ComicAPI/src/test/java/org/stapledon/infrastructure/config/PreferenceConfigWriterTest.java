@@ -1,28 +1,26 @@
 package org.stapledon.infrastructure.config;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
+import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class PreferenceConfigWriterTest {
 
@@ -31,7 +29,7 @@ class PreferenceConfigWriterTest {
     
     // Test subclass that avoids facade issues
     private static class TestPreferenceConfigWriter extends PreferenceConfigWriter {
-        private PreferenceConfig inMemoryConfig;
+        private final PreferenceConfig inMemoryConfig;
         
         public TestPreferenceConfigWriter(Gson gson) {
             super(gson, new CacheProperties(), null);
@@ -110,25 +108,23 @@ class PreferenceConfigWriterTest {
     }
 
     private TestPreferenceConfigWriter preferenceConfigWriter;
-    private Gson gson;
-    private File preferencesFile;
 
     @BeforeEach
     void setUp() {
         // Setup Gson with adapters for LocalDate
-        gson = new GsonBuilder()
+        Gson gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .create();
 
         // Create temp file for preferences
-        preferencesFile = tempDir.resolve("preferences.json").toFile();
+        File preferencesFile = tempDir.resolve("preferences.json").toFile();
 
         // Create the test writer
         preferenceConfigWriter = new TestPreferenceConfigWriter(gson);
     }
 
     @Test
-    void loadPreferencesShouldCreateEmptyConfigWhenFileDoesNotExist() throws Exception {
+    void loadPreferencesShouldCreateEmptyConfigWhenFileDoesNotExist() {
         // When
         PreferenceConfig result = preferenceConfigWriter.loadPreferences();
 
@@ -139,7 +135,7 @@ class PreferenceConfigWriterTest {
     }
 
     @Test
-    void loadPreferencesShouldLoadExistingPreferencesFromFile() throws Exception {
+    void loadPreferencesShouldLoadExistingPreferencesFromFile() {
         // Given 
         UserPreference preference = createTestPreference("testuser");
         preferenceConfigWriter.savePreference(preference);

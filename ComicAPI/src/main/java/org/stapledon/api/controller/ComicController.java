@@ -22,7 +22,6 @@ import org.stapledon.core.comic.model.ComicCachingException;
 import org.stapledon.core.comic.model.ComicImageNotFoundException;
 import org.stapledon.core.comic.model.ComicNotFoundException;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -47,20 +46,23 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}")
-    public ResponseEntity<ApiResponse<ComicItem>> retrieveComicDetails(@PathVariable String comic) {
-        var comicId = Integer.parseInt(comic);
+    public ResponseEntity<ApiResponse<ComicItem>> retrieveComicDetails(@PathVariable(name = "comic") Integer comicId) {
         return comicManagementFacade.getComic(comicId)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new ComicNotFoundException(comicId));
     }
 
     @PostMapping("/comics/{comic}")
-    public ResponseEntity<ApiResponse<ComicItem>> createComicDetails(@RequestBody ComicItem comicItem, @PathVariable String comic) {
-        var comicId = Integer.parseInt(comic);
+    public ResponseEntity<ApiResponse<ComicItem>> createComicDetails(@RequestBody ComicItem comicItem, @PathVariable(name = "comic") Integer comicId) {
+        
+        // Validate comic name is not null
+        if (comicItem.getName() == null) {
+            throw new IllegalArgumentException("Comic name cannot be null");
+        }
         
         // Ensure the comic ID in the path matches the comic ID in the request body
         if (comicItem.getId() != comicId) {
-            ComicItem updatedItem = ComicItem.builder()
+            comicItem = ComicItem.builder()
                     .id(comicId)
                     .name(comicItem.getName())
                     .description(comicItem.getDescription())
@@ -72,7 +74,6 @@ public class ComicController {
                     .source(comicItem.getSource())
                     .sourceIdentifier(comicItem.getSourceIdentifier())
                     .build();
-            comicItem = updatedItem;
         }
         
         return comicManagementFacade.createComic(comicItem)
@@ -81,16 +82,19 @@ public class ComicController {
     }
 
     @PatchMapping("/comics/{comic}")
-    public ResponseEntity<ApiResponse<ComicItem>> updateComicDetails(@PathVariable String comic, @RequestBody ComicItem comicItem) {
-        var comicId = Integer.parseInt(comic);
+    public ResponseEntity<ApiResponse<ComicItem>> updateComicDetails(@PathVariable(name = "comic") Integer comicId, @RequestBody ComicItem comicItem) {
+        // Validate comic name is not null
+        if (comicItem.getName() == null) {
+            throw new IllegalArgumentException("Comic name cannot be null");
+        }
+        
         return comicManagementFacade.updateComic(comicId, comicItem)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new ComicCachingException("Unable to update ComicItem"));
     }
 
     @DeleteMapping("/comics/{comic}")
-    public ResponseEntity<Void> deleteComicDetails(@PathVariable String comic) {
-        var comicId = Integer.parseInt(comic);
+    public ResponseEntity<Void> deleteComicDetails(@PathVariable(name = "comic") Integer comicId) {
         boolean result = comicManagementFacade.deleteComic(comicId);
 
         if (result) {
@@ -105,8 +109,7 @@ public class ComicController {
      *****************************************************************************************************************/
 
     @GetMapping("/comics/{comic}/avatar")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable String comic) throws IOException {
-        var comicId = Integer.parseInt(comic);
+    public @ResponseBody ResponseEntity<ImageDto> retrieveAvatar(@PathVariable(name = "comic") Integer comicId) {
         return comicManagementFacade.getAvatar(comicId)
                 .map(imageDto -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -116,8 +119,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/strips/first")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable String comic) throws IOException {
-        var comicId = Integer.parseInt(comic);
+    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable(name = "comic") Integer comicId) {
         return comicManagementFacade.getComicStrip(comicId, Direction.FORWARD)
                 .map(imageDto -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -127,8 +129,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/next/{date}")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
-        var comicId = Integer.parseInt(comic);
+    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, from)
                 .map(imageDto -> ResponseEntity.ok()
@@ -139,8 +140,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/previous/{date}")
-    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable String comic, @PathVariable String date) throws IOException {
-        var comicId = Integer.parseInt(comic);
+    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD, from)
                 .map(imageDto -> ResponseEntity.ok()
@@ -151,8 +151,7 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/strips/last")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable String comic) throws IOException {
-        var comicId = Integer.parseInt(comic);
+    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable(name = "comic") Integer comicId) {
         return comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD)
                 .map(imageDto -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)

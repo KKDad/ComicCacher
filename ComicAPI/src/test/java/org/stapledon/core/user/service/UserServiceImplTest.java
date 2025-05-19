@@ -15,7 +15,7 @@ import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.infrastructure.config.UserConfigWriter;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -130,7 +130,7 @@ class UserServiceImplTest {
                 .email(username + "@example.com")
                 .displayName("Test " + username)
                 .created(LocalDateTime.now())
-                .roles(Arrays.asList("USER"))
+                .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
     }

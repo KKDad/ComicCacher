@@ -1,0 +1,28 @@
+{
+  "preferences": {
+    "550e8400-e29b-41d4-a716-446655440000": {
+      "username": "testuser",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "1d7f5d5c-5e6b-4f0b-a9b5-1d3ae23cfaa8": {
+      "username": "adminuser",
+      "favoriteComics": [],
+      "lastReadDates": {},
+      "displaySettings": {}
+    },
+    "testuser": {
+      "username": "testuser",
+      "favoriteComics": [],
+      "lastReadDates": {
+        "1": "2025-05-19"
+      },
+      "displaySettings": {
+        "showTutorial": false,
+        "theme": "dark",
+        "fontSize": 16
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 package org.stapledon.downloader;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Comparator;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class GoComicsIntegrationIT {
     private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationIT.class);
@@ -53,7 +53,7 @@ class GoComicsIntegrationIT {
     @Test
     void ensureCacheTest() {
         File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
-        LOG.info("Expecting to get file: " + expectedFile.toString());
+        LOG.info("Expecting to get file: " + expectedFile);
         assertThat(expectedFile).doesNotExist();
 
         IDailyComic subject = getSubject("Adam at Home");

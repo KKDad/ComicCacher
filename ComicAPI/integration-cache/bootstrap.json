@@ -1,0 +1,24 @@
+{
+  "cacheDirectory": "./integration-cache/images",
+  "dailyComics": [
+    {
+      "name": "Test Comic",
+      "startDate": {
+        "year": 2023,
+        "month": 1,
+        "day": 1
+      }
+    }
+  ],
+  "kingComics": [
+    {
+      "name": "Another Test Comic",
+      "website": "https://www.comicskingdom.com/test-comic/",
+      "startDate": {
+        "year": 2023,
+        "month": 2,
+        "day": 15
+      }
+    }
+  ]
+}

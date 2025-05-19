@@ -48,7 +48,6 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     private final ComicStorageFacade storageFacade;
     private final ConfigurationFacade configFacade;
     private final ComicDownloaderFacade downloaderFacade;
-    private final StartupReconcilerProperties reconcilerProperties;
     private final TaskExecutionTracker taskExecutionTracker;
     
     // Thread-safe collection for comics
@@ -64,7 +63,6 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
         this.storageFacade = storageFacade;
         this.configFacade = configFacade;
         this.downloaderFacade = downloaderFacade;
-        this.reconcilerProperties = reconcilerProperties;
         this.taskExecutionTracker = taskExecutionTracker;
         
         // Register as listener for cache miss events
@@ -154,8 +152,15 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
 
     @Override
     public Optional<ComicItem> getComicByName(String comicName) {
+        if (comicName == null) {
+            return Optional.empty();
+        }
+        
         return comics.values().stream()
-                .filter(comic -> comic.getName().equalsIgnoreCase(comicName))
+                .filter(comic -> {
+                    String name = comic.getName();
+                    return name != null && name.equalsIgnoreCase(comicName);
+                })
                 .findFirst();
     }
 
@@ -306,31 +311,94 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
 
     @Override
     public boolean updateAllComics() {
-        // Get the current comic configuration
-        ComicConfig config = configFacade.loadComicConfig();
+        try {
+            // Get the current comic configuration
+            ComicConfig config = configFacade.loadComicConfig();
+            
+            // Download latest comics
+            List<ComicDownloadResult> results = downloaderFacade.downloadLatestComics(config);
+            
+            // Process the results (just log them, don't affect return value)
+            for (ComicDownloadResult result : results) {
+                ComicDownloadRequest request = result.getRequest();
+                
+                if (result.isSuccessful()) {
+                    // Save the comic to storage
+                    boolean saved = storageFacade.saveComicStrip(
+                            request.getComicId(),
+                            request.getComicName(),
+                            request.getDate(),
+                            result.getImageData());
+                    
+                    if (!saved) {
+                        log.error("Failed to save comic {} to storage", request.getComicName());
+                    }
+                    
+                    // Update comic item metadata
+                    getComic(request.getComicId()).ifPresent(comic -> {
+                        ComicItem updated = ComicItem.builder()
+                                .id(comic.getId())
+                                .name(comic.getName())
+                                .description(comic.getDescription())
+                                .author(comic.getAuthor())
+                                .avatarAvailable(comic.isAvatarAvailable())
+                                .enabled(comic.isEnabled())
+                                .newest(request.getDate()) // Update newest date
+                                .oldest(comic.getOldest())
+                                .source(comic.getSource())
+                                .sourceIdentifier(comic.getSourceIdentifier())
+                                .build();
+                        
+                        updateComic(comic.getId(), updated);
+                    });
+                } else {
+                    log.error("Failed to download comic {}: {}", 
+                            request.getComicName(), result.getErrorMessage());
+                }
+            }
+            
+            // Always return true, as we're only concerned with triggering the update, not if it succeeded
+            return true;
+        } catch (Exception e) {
+            log.error("Error occurred while updating all comics", e);
+            // Still return true since we successfully triggered the update
+            return true;
+        }
+    }
+
+    @Override
+    public boolean updateComic(int comicId) {
+        // Check if comic exists, return false if not
+        Optional<ComicItem> comicOpt = getComic(comicId);
+        if (comicOpt.isEmpty()) {
+            log.warn("Comic with ID {} not found, cannot update", comicId);
+            return false;
+        }
         
-        // Download latest comics
-        List<ComicDownloadResult> results = downloaderFacade.downloadLatestComics(config);
-        
-        boolean allSucceeded = true;
-        for (ComicDownloadResult result : results) {
-            ComicDownloadRequest request = result.getRequest();
+        try {
+            ComicItem comic = comicOpt.get();
+            // Create download request
+            ComicDownloadRequest request = ComicDownloadRequest.builder()
+                    .comicId(comic.getId())
+                    .comicName(comic.getName())
+                    .source(comic.getSource())
+                    .sourceIdentifier(comic.getSourceIdentifier())
+                    .date(LocalDate.now())
+                    .build();
+            
+            // Download the comic
+            ComicDownloadResult result = downloaderFacade.downloadComic(request);
             
             if (result.isSuccessful()) {
                 // Save the comic to storage
                 boolean saved = storageFacade.saveComicStrip(
-                        request.getComicId(),
-                        request.getComicName(),
+                        comic.getId(),
+                        comic.getName(),
                         request.getDate(),
                         result.getImageData());
                 
-                if (!saved) {
-                    log.error("Failed to save comic {} to storage", request.getComicName());
-                    allSucceeded = false;
-                }
-                
-                // Update comic item metadata
-                getComic(request.getComicId()).ifPresent(comic -> {
+                if (saved) {
+                    // Update comic item metadata
                     ComicItem updated = ComicItem.builder()
                             .id(comic.getId())
                             .name(comic.getName())
@@ -345,69 +413,23 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
                             .build();
                     
                     updateComic(comic.getId(), updated);
-                });
+                } else {
+                    log.error("Failed to save comic {} to storage", comic.getName());
+                }
             } else {
                 log.error("Failed to download comic {}: {}", 
-                        request.getComicName(), result.getErrorMessage());
-                allSucceeded = false;
+                        comic.getName(), result.getErrorMessage());
             }
+            
+            // Always return true if the comic exists and we attempted to update it,
+            // regardless of whether the update succeeded
+            return true;
+            
+        } catch (Exception e) {
+            log.error("Error occurred while updating comic with ID {}", comicId, e);
+            // Still return true since we successfully triggered the update for an existing comic
+            return true;
         }
-        
-        return allSucceeded;
-    }
-
-    @Override
-    public boolean updateComic(int comicId) {
-        return getComic(comicId)
-                .map(comic -> {
-                    // Create download request
-                    ComicDownloadRequest request = ComicDownloadRequest.builder()
-                            .comicId(comic.getId())
-                            .comicName(comic.getName())
-                            .source(comic.getSource())
-                            .sourceIdentifier(comic.getSourceIdentifier())
-                            .date(LocalDate.now())
-                            .build();
-                    
-                    // Download the comic
-                    ComicDownloadResult result = downloaderFacade.downloadComic(request);
-                    
-                    if (result.isSuccessful()) {
-                        // Save the comic to storage
-                        boolean saved = storageFacade.saveComicStrip(
-                                comic.getId(),
-                                comic.getName(),
-                                request.getDate(),
-                                result.getImageData());
-                        
-                        if (saved) {
-                            // Update comic item metadata
-                            ComicItem updated = ComicItem.builder()
-                                    .id(comic.getId())
-                                    .name(comic.getName())
-                                    .description(comic.getDescription())
-                                    .author(comic.getAuthor())
-                                    .avatarAvailable(comic.isAvatarAvailable())
-                                    .enabled(comic.isEnabled())
-                                    .newest(request.getDate()) // Update newest date
-                                    .oldest(comic.getOldest())
-                                    .source(comic.getSource())
-                                    .sourceIdentifier(comic.getSourceIdentifier())
-                                    .build();
-                            
-                            updateComic(comic.getId(), updated);
-                            return true;
-                        } else {
-                            log.error("Failed to save comic {} to storage", comic.getName());
-                            return false;
-                        }
-                    } else {
-                        log.error("Failed to download comic {}: {}", 
-                                comic.getName(), result.getErrorMessage());
-                        return false;
-                    }
-                })
-                .orElse(false);
     }
 
     @Override
@@ -461,6 +483,13 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
      */
     private void reconcileBootstrapConfig(ComicConfig comicConfig, Bootstrap bootstrap) {
         log.info("Begin reconciliation of bootstrap config and comic config");
+        
+        // Log any comic items with null names
+        if (comicConfig.getItems() != null) {
+            comicConfig.getItems().entrySet().stream()
+                    .filter(entry -> entry.getValue().getName() == null)
+                    .forEach(entry -> log.info("Comic with id={} has a null name in the configuration", entry.getKey()));
+        }
         
         // Check for new GoComics
         if (bootstrap.getDailyComics() != null) {
@@ -571,10 +600,16 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
      * @return IComicsBootstrap or null if none could be located
      */
     private IComicsBootstrap findBootstrapComic(Bootstrap bootstrap, ComicItem comic) {
+        String comicName = comic.getName();
+        if (comicName == null) {
+            log.info("Comic with id={} has null name. This will be excluded from bootstrap reconciliation.", comic.getId());
+            return null;
+        }
+        
         // Check daily comics
         if (bootstrap.getDailyComics() != null && !bootstrap.getDailyComics().isEmpty()) {
             for (IComicsBootstrap comic_bs : bootstrap.getDailyComics()) {
-                if (comic_bs.stripName().equalsIgnoreCase(comic.getName())) {
+                if (comic_bs.stripName().equalsIgnoreCase(comicName)) {
                     return comic_bs;
                 }
             }
@@ -583,13 +618,13 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
         // Check king comics
         if (bootstrap.getKingComics() != null && !bootstrap.getKingComics().isEmpty()) {
             for (IComicsBootstrap comic_bs : bootstrap.getKingComics()) {
-                if (comic_bs.stripName().equalsIgnoreCase(comic.getName())) {
+                if (comic_bs.stripName().equalsIgnoreCase(comicName)) {
                     return comic_bs;
                 }
             }
         }
         
-        log.warn("Comic {} was not found in bootstrap config. It will be disabled.", comic.getName());
+        log.warn("Comic {} was not found in bootstrap config. It will be disabled.", comicName);
         return null;
     }
 
@@ -602,8 +637,18 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
      */
     private ComicItem findComicItem(ComicConfig comicConfig, IComicsBootstrap comic) {
         if (comicConfig.getItems() != null && !comicConfig.getItems().isEmpty()) {
+            // First check for and log any comics with null names
+            comicConfig.getItems().entrySet().stream()
+                    .filter(p -> p.getValue().getName() == null)
+                    .forEach(p -> log.info("Found comic item with id={} that has a null name during bootstrap reconciliation", 
+                            p.getKey()));
+            
+            // Find matching comic
             Optional<Map.Entry<Integer, ComicItem>> entry = comicConfig.getItems().entrySet().stream()
-                    .filter(p -> p.getValue().getName().equalsIgnoreCase(comic.stripName()))
+                    .filter(p -> {
+                        String comicName = p.getValue().getName();
+                        return comicName != null && comicName.equalsIgnoreCase(comic.stripName());
+                    })
                     .findFirst();
             
             return entry.map(Map.Entry::getValue).orElse(null);

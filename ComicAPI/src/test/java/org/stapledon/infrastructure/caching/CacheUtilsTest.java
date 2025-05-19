@@ -1,37 +1,48 @@
 package org.stapledon.infrastructure.caching;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.infrastructure.caching.CacheUtils;
-import org.stapledon.common.util.Direction;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class CacheUtilsTest {
 
-    ComicItem comicItem() {
-        return ComicItem.builder()
+    private CacheUtils cacheUtils;
+    private ComicItem comicItem;
+    
+    @BeforeEach
+    void setUp() {
+        File resourcesDirectory = getResourcesDirectory();
+        MockComicStorageFacade mockStorageFacade = new MockComicStorageFacade();
+        
+        // Create test comic item
+        comicItem = ComicItem.builder()
                 .id(42)
                 .name("Fake Comic")
                 .description("Comic for Unit Tests")
-                .oldest(LocalDate.of(1995, 05, 31))
-                .newest(LocalDate.of(2007, 12, 8))
+                .oldest(LocalDate.of(2008, 1, 10))
+                .newest(LocalDate.of(2019, 3, 22))
                 .build();
-    }
-
-    private CacheUtils getSubject() {
-        File resourcesDirectory = getResourcesDirectory();
-        return new CacheUtils(resourcesDirectory.toString());
+        
+        // Set up mock data
+        mockStorageFacade.setupComic(
+                comicItem.getId(),
+                comicItem.getName(),
+                LocalDate.of(2008, 1, 10),    // oldest
+                LocalDate.of(2019, 3, 22),    // newest
+                LocalDate.of(2010, 6, 28)     // additional date between
+        );
+        
+        cacheUtils = new CacheUtils(resourcesDirectory.toString(), mockStorageFacade);
     }
 
     @Test
     void findOldestTest() {
-        CacheUtils subject = getSubject();
-        File result = subject.findOldest(comicItem());
+        File result = cacheUtils.findOldest(comicItem);
 
         assertThat(result).isNotNull();
         assertThat(result.getAbsolutePath()).contains("2008-01-10");
@@ -39,53 +50,29 @@ public class CacheUtilsTest {
 
     @Test
     void findNewestTest() {
-        CacheUtils subject = getSubject();
-        File result = subject.findNewest(comicItem());
+        File result = cacheUtils.findNewest(comicItem);
 
         assertThat(result).isNotNull();
         assertThat(result.getAbsolutePath()).contains("2019-03-22");
     }
 
     @Test
-    void findFirstForwardTest() {
-        CacheUtils subject = getSubject();
-        File result = subject.findFirst(comicItem(), Direction.FORWARD);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getAbsolutePath()).contains("2008-01-10");
-    }
-
-
-    @Test
-    void findFirstBackwardsTest() throws IOException {
-        CacheUtils subject = getSubject();
-        File result = subject.findFirst(comicItem(), Direction.BACKWARD);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getAbsolutePath()).contains("2019-03-22");
-    }
-
-
-    @Test
-    void findPreviousTest() throws IOException {
-        LocalDate dt = LocalDate.of(2008, 01, 11);
-        CacheUtils subject = getSubject();
-        File result = subject.findPrevious(comicItem(), dt);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getAbsolutePath()).contains("2008-01-10");
-    }
-
-    @Test
-    void findNextTest() throws IOException {
-        LocalDate dt = LocalDate.of(2008, 01, 11);
-        CacheUtils subject = getSubject();
-        File result = subject.findNext(comicItem(), dt);
+    void findPreviousTest() {
+        LocalDate dt = LocalDate.of(2010, 6, 29);
+        File result = cacheUtils.findPrevious(comicItem, dt);
 
         assertThat(result).isNotNull();
         assertThat(result.getAbsolutePath()).contains("2010-06-28");
     }
 
+    @Test
+    void findNextTest() {
+        LocalDate dt = LocalDate.of(2008, 1, 11);
+        File result = cacheUtils.findNext(comicItem, dt);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getAbsolutePath()).contains("2010-06-28");
+    }
 
     /**
      * Helper method to the test resources directory

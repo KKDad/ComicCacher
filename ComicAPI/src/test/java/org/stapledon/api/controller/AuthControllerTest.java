@@ -32,16 +32,14 @@ class AuthControllerTest {
     
     @Mock
     private AuthService authService;
-    
-    private AuthController authController;
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules();
     
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        authController = new AuthController(authService);
+        AuthController authController = new AuthController(authService);
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -143,5 +141,31 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized());
         
         verify(authService).login(any(AuthRequest.class));
+    }
+    
+    @Test
+    void refreshTokenShouldHandleQuotedToken() throws Exception {
+        // Given - a token with quotes (simulating direct string body)
+        String refreshToken = "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciJ9.signature\"";
+        String unquotedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciJ9.signature";
+        
+        AuthResponse authResponse = AuthResponse.builder()
+                .token("newJwtToken")
+                .refreshToken("newRefreshToken")
+                .username("testuser")
+                .displayName("Test User")
+                .build();
+        
+        // Service should receive the unquoted token
+        when(authService.refreshToken(unquotedToken))
+                .thenReturn(Optional.of(authResponse));
+
+        // When & Then
+        mockMvc.perform(post("/api/v1/auth/refresh-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshToken))
+                .andExpect(status().isOk());
+        
+        verify(authService).refreshToken(unquotedToken);
     }
 }

@@ -1,6 +1,9 @@
 package org.stapledon.infrastructure.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.gson.Gson;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -10,7 +13,6 @@ import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
-import org.stapledon.common.util.Bootstrap;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.File;
@@ -23,8 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * Unit tests for ConfigurationFacadeImpl
  */
@@ -33,8 +33,6 @@ class ConfigurationFacadeImplTest {
     @TempDir
     Path tempDir;
 
-    private CacheProperties cacheProperties;
-    
     private ConfigurationFacadeImpl configFacade;
     private File configRoot;
     
@@ -123,7 +121,7 @@ class ConfigurationFacadeImplTest {
         configRoot = tempDir.toFile();
         
         // Create real cache properties
-        cacheProperties = new CacheProperties();
+        CacheProperties cacheProperties = new CacheProperties();
         cacheProperties.setLocation(configRoot.getAbsolutePath());
         cacheProperties.setConfig(COMIC_CONFIG_NAME);
         cacheProperties.setUsersConfig(USER_CONFIG_NAME);
