@@ -1,8 +1,7 @@
 package org.stapledon.infrastructure.config;
 
 import com.google.gson.Gson;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +9,9 @@ import org.stapledon.common.util.Bootstrap;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j

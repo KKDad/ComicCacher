@@ -1,19 +1,19 @@
 package org.stapledon.api.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.stapledon.api.dto.comic.ImageCacheStats;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
-import org.stapledon.api.dto.comic.ComicStorageMetrics;
-import org.stapledon.api.dto.comic.ImageCacheStats;
 import org.stapledon.infrastructure.caching.CacheUtils;
+import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Controller for accessing cache metrics and statistics.

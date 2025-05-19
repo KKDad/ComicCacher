@@ -1,29 +1,32 @@
 package org.stapledon.infrastructure.config;
 
 import com.google.gson.Gson;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
+import org.stapledon.infrastructure.config.properties.CacheProperties;
 
-import java.io.*;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Configuration writer for user preference-related data.
+ * This implementation now delegates to ConfigurationFacade for most operations.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PreferenceConfigWriter {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
-
     private final CacheProperties cacheProperties;
+    private final ConfigurationFacade configurationFacade;
 
     private PreferenceConfig preferenceConfig;
 
@@ -39,12 +42,8 @@ public class PreferenceConfigWriter {
             preferenceConfig.getPreferences().put(preference.getUsername(), preference);
             log.info("Saving preferences for user: {}", preference.getUsername());
 
-            Writer writer = new FileWriter(Paths.get(cacheProperties.getLocation(), cacheProperties.getPreferencesConfig()).toFile());
-            gson.toJson(preferenceConfig, writer);
-            writer.flush();
-            writer.close();
-            return true;
-        } catch (IOException e) {
+            return configurationFacade.savePreferenceConfig(preferenceConfig);
+        } catch (Exception e) {
             log.error("Failed to save preferences: {}", e.getMessage(), e);
             return false;
         }
@@ -73,7 +72,7 @@ public class PreferenceConfigWriter {
             savePreference(newPreference);
             
             return Optional.of(newPreference);
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             log.error("Failed to get preferences: {}", e.getMessage(), e);
             return Optional.empty();
         }
@@ -192,22 +191,18 @@ public class PreferenceConfigWriter {
      * 
      * @return PreferenceConfig containing user preferences
      */
-    public PreferenceConfig loadPreferences() throws FileNotFoundException {
+    public PreferenceConfig loadPreferences() {
         if (preferenceConfig != null && preferenceConfig.getPreferences() != null && !preferenceConfig.getPreferences().isEmpty()) {
             return preferenceConfig;
         }
 
-        var preferencesFile = Paths.get(cacheProperties.getLocation(), cacheProperties.getPreferencesConfig()).toFile();
-        if (preferencesFile.exists()) {
-            InputStream inputStream = new FileInputStream(preferencesFile);
-            Reader reader = new InputStreamReader(inputStream);
-
-            preferenceConfig = gson.fromJson(reader, PreferenceConfig.class);
-            log.info("Loaded {} user preferences from {}", preferenceConfig.getPreferences().size(), preferencesFile);
-        } else {
-            log.warn("{} does not exist, creating", preferencesFile);
+        try {
+            preferenceConfig = configurationFacade.loadPreferenceConfig();
+            return preferenceConfig;
+        } catch (Exception e) {
+            log.error("Error reading preferences: {}", e.getMessage(), e);
             preferenceConfig = new PreferenceConfig();
+            return preferenceConfig;
         }
-        return preferenceConfig;
     }
 }

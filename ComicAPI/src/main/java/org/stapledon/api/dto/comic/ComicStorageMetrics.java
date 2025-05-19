@@ -1,13 +1,13 @@
 package org.stapledon.api.dto.comic;
 
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Map;
 
 /**
  * Stores detailed metrics about a comic's storage usage and access patterns.

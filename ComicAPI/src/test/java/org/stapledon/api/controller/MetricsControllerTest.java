@@ -1,5 +1,13 @@
 package org.stapledon.api.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -7,19 +15,15 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.stapledon.api.model.ApiResponse;
-import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.api.model.ApiResponse;
 import org.stapledon.infrastructure.caching.CacheUtils;
+import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for the MetricsController

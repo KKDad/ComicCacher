@@ -2,11 +2,11 @@ package org.stapledon.api.dto.user;
 
 import org.springframework.stereotype.Component;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

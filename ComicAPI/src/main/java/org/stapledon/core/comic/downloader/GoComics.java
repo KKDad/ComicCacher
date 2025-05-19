@@ -1,19 +1,17 @@
 package org.stapledon.core.comic.downloader;
 
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.jsoup.select.Selector;
 import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.infrastructure.web.WebInspector;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GoComics extends DailyComic {

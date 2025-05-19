@@ -1,22 +1,24 @@
 package org.stapledon.api.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.stapledon.api.controller.AuthController;
-import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.dto.auth.AuthRequest;
 import org.stapledon.api.dto.auth.AuthResponse;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.api.model.ApiResponse;
 import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.auth.service.AuthService;
 
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * Basic unit test for AuthController without using Spring context

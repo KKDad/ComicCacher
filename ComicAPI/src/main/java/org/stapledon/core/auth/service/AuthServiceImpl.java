@@ -1,7 +1,5 @@
 package org.stapledon.core.auth.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -15,6 +13,9 @@ import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
 
 import java.util.Optional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service

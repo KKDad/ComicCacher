@@ -1,12 +1,20 @@
 package org.stapledon.infrastructure.config;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.api.dto.comic.ComicConfig;
 import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,11 +24,13 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@ExtendWith(MockitoExtension.class)
 class JsonConfigWriterTest {
     private static final Logger LOG = LoggerFactory.getLogger(JsonConfigWriterTest.class);
     private Path path;
+    
+    @Mock
+    private ConfigurationFacade configurationFacade;
 
     @BeforeEach
     void setup() throws IOException {
@@ -52,12 +62,18 @@ class JsonConfigWriterTest {
         CacheProperties cacheProperties = new CacheProperties();
         cacheProperties.setLocation(path.toString());
         cacheProperties.setConfig(String.format("%s.json", uuid));
-        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), cacheProperties);
+        
+        // Mock the configuration facade behavior
+        ComicConfig comicConfig = new ComicConfig();
+        when(configurationFacade.loadComicConfig()).thenReturn(comicConfig);
+        when(configurationFacade.saveComicConfig(any(ComicConfig.class))).thenReturn(true);
+        
+        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), cacheProperties, configurationFacade);
         subject.save(item);
 
         // Assert
-        File f = new File(fileName);
-        assertThat(f).exists().isNotEmpty();
+        verify(configurationFacade).loadComicConfig();
+        verify(configurationFacade).saveComicConfig(any(ComicConfig.class));
     }
 
 
@@ -68,6 +84,10 @@ class JsonConfigWriterTest {
                 .description("Comic for Unit Tests")
                 .oldest(LocalDate.of(1995, 05, 31))
                 .newest(LocalDate.of(2007, 12, 8))
+                .source("gocomics")
+                .sourceIdentifier("testcomic")
+                .enabled(true)
+                .avatarAvailable(false)
                 .build();
     }
 }

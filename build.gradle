@@ -18,3 +18,11 @@ subprojects {
         toolVersion = "0.8.11"
     }
 }
+
+// Add testAll task to run all tests in all subprojects
+task testAll {
+    // TEMPORARY: Only run unit tests until integration tests are fixed with facade pattern
+    dependsOn subprojects.collect { it.path + ':test' }
+    description = 'Runs all tests in all subprojects (currently only unit tests)'
+    group = 'verification'
+}

@@ -1,6 +1,5 @@
 package org.stapledon.api.exception;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,6 +15,8 @@ import org.stapledon.core.comic.model.ComicCachingException;
 import org.stapledon.core.comic.model.ComicImageNotFoundException;
 import org.stapledon.core.comic.model.ComicNotFoundException;
 import org.stapledon.infrastructure.caching.CacheException;
+
+import lombok.extern.slf4j.Slf4j;
 
 
 /**

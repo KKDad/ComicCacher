@@ -1,20 +1,22 @@
 package org.stapledon.core.preference.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.infrastructure.config.PreferenceConfigWriter;
 import org.stapledon.api.dto.preference.UserPreference;
+import org.stapledon.infrastructure.config.PreferenceConfigWriter;
 
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PreferenceServiceImplTest {

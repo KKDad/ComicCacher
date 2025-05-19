@@ -1,14 +1,17 @@
 package org.stapledon.infrastructure.config;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.stapledon.infrastructure.caching.CacheUtils;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -16,6 +19,7 @@ import java.nio.file.Paths;
 public class CacheConfiguration {
 
     private final CacheProperties cacheProperties;
+    private final ComicStorageFacade storageFacade;
 
     @Bean(name = "cacheLocation")
     public String cacheLocation() {
@@ -32,6 +36,13 @@ public class CacheConfiguration {
         
         log.warn("Serving from {}", normalizedPath);
         return normalizedPath;
+    }
+    
+    @Bean
+    @Primary
+    public CacheUtils cacheUtils() {
+        // Create the enhanced version that delegates to the storage facade
+        return new CacheUtils(cacheLocation(), storageFacade);
     }
     
     /**

@@ -1,13 +1,14 @@
 package org.stapledon.core.user.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.stapledon.infrastructure.config.UserConfigWriter;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.infrastructure.config.UserConfigWriter;
 
 import java.util.Optional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service

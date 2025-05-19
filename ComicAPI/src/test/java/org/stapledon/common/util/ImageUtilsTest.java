@@ -1,15 +1,15 @@
 package org.stapledon.common.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
-import org.stapledon.infrastructure.caching.CacheUtilsTest;
 import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.infrastructure.caching.CacheUtilsTest;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 
 class ImageUtilsTest {

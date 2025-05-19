@@ -1,7 +1,7 @@
 package org.stapledon.core.comic.downloader;
 
 import com.google.common.base.Preconditions;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ComicsKingdom extends DailyComic {

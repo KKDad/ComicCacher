@@ -1,37 +1,34 @@
 package org.stapledon.core.comic.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.core.comic.downloader.ComicCacher;
-import org.stapledon.api.dto.comic.ComicItem;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import org.stapledon.core.comic.management.ComicManagementFacade;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateServiceImplTest {
 
     @Mock
-    private ComicCacher comicCacher;
+    private ComicManagementFacade comicManagementFacade;
 
     @InjectMocks
     UpdateServiceImpl subject;
 
     @Test
     void updateAll() {
-        when(comicCacher.cacheAll()).thenReturn(true);
+        when(comicManagementFacade.updateAllComics()).thenReturn(true);
         assertThat(subject.updateAll()).isTrue();
     }
 
     @Test
     void updateComic() {
-        ComicsServiceImpl.getComics().add(ComicItem.builder().id(42).build());
-
-        when(comicCacher.cacheSingle(any())).thenReturn(true);
+        when(comicManagementFacade.updateComic(42)).thenReturn(true);
+        when(comicManagementFacade.updateComic(50)).thenReturn(false);
 
         assertThat(subject.updateComic(42)).isTrue();
         assertThat(subject.updateComic(50)).isFalse();

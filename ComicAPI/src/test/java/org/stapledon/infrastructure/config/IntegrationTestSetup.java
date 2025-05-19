@@ -6,11 +6,12 @@ import org.springframework.context.annotation.Primary;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import jakarta.annotation.PostConstruct;
 
 /**
  * Configuration for setting up integration tests.

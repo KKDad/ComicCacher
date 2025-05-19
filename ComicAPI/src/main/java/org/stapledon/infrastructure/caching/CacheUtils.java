@@ -2,11 +2,12 @@ package org.stapledon.infrastructure.caching;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.io.Files;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.common.util.Direction;
+import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -17,16 +18,25 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Utility class for comic cache operations.
+ * This class now delegates most storage operations to ComicStorageFacade
+ * while maintaining backward compatibility and access tracking.
+ */
 @Slf4j
 @Component
 public class CacheUtils {
     private static final int WARNING_TIME_MS = 100;
     public static final String COMBINE_PATH = "%s/%s";
     private final String cacheHome;
+    private final ComicStorageFacade storageFacade;
 
     // Access tracking metrics
     private final ConcurrentHashMap<String, AtomicInteger> accessCounters = new ConcurrentHashMap<>();
@@ -35,9 +45,20 @@ public class CacheUtils {
     private final ConcurrentHashMap<String, AtomicInteger> cacheHits = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, AtomicInteger> cacheMisses = new ConcurrentHashMap<>();
 
+    /**
+     * Constructor for testing and backward compatibility
+     */
     public CacheUtils(@Qualifier("cacheLocation") String cacheHome) {
-        Objects.requireNonNull(cacheHome, "cacheHome must be specified");
-        this.cacheHome = cacheHome;
+        this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
+        this.storageFacade = null; // Will use legacy behavior
+    }
+
+    /**
+     * Primary constructor with StorageFacade dependency
+     */
+    public CacheUtils(@Qualifier("cacheLocation") String cacheHome, ComicStorageFacade storageFacade) {
+        this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
+        this.storageFacade = Objects.requireNonNull(storageFacade, "storageFacade must be specified");
     }
 
     private File getComicHome(ComicItem comic) {
@@ -121,7 +142,25 @@ public class CacheUtils {
 
     public File findOldest(ComicItem comic) {
         var timer = Stopwatch.createStarted();
-        File result = this.findFirst(comic, Direction.FORWARD);
+        File result;
+        
+        if (storageFacade != null) {
+            // Use the facade if available
+            Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(comic.getId(), comic.getName());
+            if (oldestDate.isPresent()) {
+                LocalDate date = oldestDate.get();
+                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                result = new File(String.format("%s/%s/%s/%s.png", 
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            } else {
+                result = null;
+            }
+        } else {
+            // Legacy behavior
+            result = this.findFirst(comic, Direction.FORWARD);
+        }
+        
         timer.stop();
         trackAccess(comic.getName(), result != null, timer.elapsed(TimeUnit.MILLISECONDS));
         return result;
@@ -129,7 +168,25 @@ public class CacheUtils {
 
     public File findNewest(ComicItem comic) {
         var timer = Stopwatch.createStarted();
-        File result = this.findFirst(comic, Direction.BACKWARD);
+        File result;
+        
+        if (storageFacade != null) {
+            // Use the facade if available
+            Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(comic.getId(), comic.getName());
+            if (newestDate.isPresent()) {
+                LocalDate date = newestDate.get();
+                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                result = new File(String.format("%s/%s/%s/%s.png", 
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            } else {
+                result = null;
+            }
+        } else {
+            // Legacy behavior
+            result = this.findFirst(comic, Direction.BACKWARD);
+        }
+        
         timer.stop();
         trackAccess(comic.getName(), result != null, timer.elapsed(TimeUnit.MILLISECONDS));
         return result;
@@ -161,27 +218,42 @@ public class CacheUtils {
 
     public File findNext(ComicItem comic, LocalDate from) {
         var timer = Stopwatch.createStarted();
-        var root = getComicHome(comic);
-
-        var findFirstResult = findNewest(comic);
-        if (findFirstResult == null)
-            return null;
-
-        var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        LocalDate nextCandidate = from.plusDays(1);
-        boolean found = false;
         File resultFile = null;
-
-        while (from.isBefore(limit)) {
-            var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-            if (folder.exists()) {
+        boolean found = false;
+        
+        if (storageFacade != null) {
+            // Use the facade if available
+            Optional<LocalDate> nextDate = storageFacade.getNextDateWithComic(comic.getId(), comic.getName(), from);
+            if (nextDate.isPresent()) {
+                LocalDate date = nextDate.get();
+                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                resultFile = new File(String.format("%s/%s/%s/%s.png", 
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
                 found = true;
-                resultFile = folder;
-                break;
-            } else {
-                log.info("folder={} does not exist", folder);
             }
-            nextCandidate = nextCandidate.plusDays(1);
+        } else {
+            // Legacy behavior
+            var root = getComicHome(comic);
+
+            var findFirstResult = findNewest(comic);
+            if (findFirstResult == null)
+                return null;
+
+            var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate nextCandidate = from.plusDays(1);
+
+            while (from.isBefore(limit)) {
+                var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
+                if (folder.exists()) {
+                    found = true;
+                    resultFile = folder;
+                    break;
+                } else {
+                    log.info("folder={} does not exist", folder);
+                }
+                nextCandidate = nextCandidate.plusDays(1);
+            }
         }
 
         timer.stop();
@@ -194,27 +266,42 @@ public class CacheUtils {
 
     public File findPrevious(ComicItem comic, LocalDate from) {
         var timer = Stopwatch.createStarted();
-        var root = getComicHome(comic);
-
-        var findFirstResult = findOldest(comic);
-        if (findFirstResult == null)
-            return null;
-
-        var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        LocalDate nextCandidate = from.minusDays(1);
-        boolean found = false;
         File resultFile = null;
-
-        while (from.isAfter(limit)) {
-            var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
-            if (folder.exists()) {
+        boolean found = false;
+        
+        if (storageFacade != null) {
+            // Use the facade if available
+            Optional<LocalDate> prevDate = storageFacade.getPreviousDateWithComic(comic.getId(), comic.getName(), from);
+            if (prevDate.isPresent()) {
+                LocalDate date = prevDate.get();
+                String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+                String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                resultFile = new File(String.format("%s/%s/%s/%s.png", 
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
                 found = true;
-                resultFile = folder;
-                break;
-            } else {
-                log.info("folder={} does not exist", folder);
             }
-            nextCandidate = nextCandidate.minusDays(1);
+        } else {
+            // Legacy behavior
+            var root = getComicHome(comic);
+
+            var findFirstResult = findOldest(comic);
+            if (findFirstResult == null)
+                return null;
+
+            var limit = LocalDate.parse(Files.getNameWithoutExtension(findFirstResult.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate nextCandidate = from.minusDays(1);
+
+            while (from.isAfter(limit)) {
+                var folder = new File(String.format("%s/%s.png", root.getAbsolutePath(), nextCandidate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd"))));
+                if (folder.exists()) {
+                    found = true;
+                    resultFile = folder;
+                    break;
+                } else {
+                    log.info("folder={} does not exist", folder);
+                }
+                nextCandidate = nextCandidate.minusDays(1);
+            }
         }
 
         timer.stop();
