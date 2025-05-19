@@ -1,13 +1,10 @@
 package org.stapledon.infrastructure.scheduling;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
+import org.stapledon.core.comic.downloader.ComicCacher;
 import org.stapledon.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.infrastructure.config.properties.DailyRunnerProperties;
-import org.stapledon.core.comic.downloader.ComicCacher;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -17,6 +14,9 @@ import java.time.ZonedDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class ensures that all comics are fetched once a day.

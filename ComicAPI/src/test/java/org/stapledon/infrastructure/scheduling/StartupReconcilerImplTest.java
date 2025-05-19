@@ -5,12 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.infrastructure.config.JsonConfigWriter;
-import org.stapledon.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
-import org.stapledon.core.comic.downloader.ComicCacher;
 import org.stapledon.api.dto.comic.ComicConfig;
 import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.core.comic.management.ComicManagementFacade;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -27,19 +25,13 @@ class StartupReconcilerImplTest {
     private StartupReconcilerProperties properties;
 
     @Mock
-    private JsonConfigWriter jsonConfigWriter;
-
-    @Mock
-    private ComicCacher comicCacher;
-
-    @Mock
-    private TaskExecutionTracker taskExecutionTracker;
+    private ComicManagementFacade comicManagementFacade;
 
     private StartupReconcilerImpl startupReconciler;
 
     @BeforeEach
     void setUp() {
-        startupReconciler = new StartupReconcilerImpl(properties, jsonConfigWriter, comicCacher, taskExecutionTracker);
+        startupReconciler = new StartupReconcilerImpl(properties, comicManagementFacade);
     }
 
     @Test
@@ -47,7 +39,6 @@ class StartupReconcilerImplTest {
         // Given
         when(properties.isEnabled()).thenReturn(true);
         when(properties.getScheduleTime()).thenReturn("06:00:00");
-        when(jsonConfigWriter.loadComics()).thenReturn(new ComicConfig());
 
         // When
         startupReconciler.run();
@@ -55,7 +46,8 @@ class StartupReconcilerImplTest {
         // Then
         verify(properties).isEnabled();
         verify(properties).getScheduleTime();
-        verify(jsonConfigWriter).loadComics();
+        verify(comicManagementFacade).refreshComicList();
+        verify(comicManagementFacade).scheduleReconciliation("06:00:00");
     }
 
     @Test
@@ -68,77 +60,45 @@ class StartupReconcilerImplTest {
 
         // Then
         verify(properties).isEnabled();
-        verifyNoMoreInteractions(jsonConfigWriter, comicCacher, taskExecutionTracker);
+        verifyNoMoreInteractions(comicManagementFacade);
     }
 
     @Test
-    void reconcileShouldRunReconciliationWhenNotRunToday() throws IOException {
+    void reconcileShouldDelegateToFacade() throws IOException {
         // Given
-        ComicConfig comicConfig = new ComicConfig();
-        comicConfig.setItems(new HashMap<>());
-
-        when(jsonConfigWriter.loadComics()).thenReturn(comicConfig);
-        when(taskExecutionTracker.canRunToday("StartupReconciler")).thenReturn(true);
-        when(comicCacher.bootstrapConfig()).thenReturn(mock(org.stapledon.common.util.Bootstrap.class));
+        when(comicManagementFacade.reconcileWithBootstrap()).thenReturn(true);
 
         // When
         boolean result = startupReconciler.reconcile();
 
         // Then
         assertTrue(result);
-        verify(taskExecutionTracker).canRunToday("StartupReconciler");
-        verify(comicCacher).bootstrapConfig();
-        verify(taskExecutionTracker).markTaskExecuted("StartupReconciler");
+        verify(comicManagementFacade).reconcileWithBootstrap();
     }
 
     @Test
-    void reconcileShouldSkipReconciliationWhenAlreadyRunToday() throws IOException {
+    void reconcileShouldHandleFailure() throws IOException {
         // Given
-        ComicConfig comicConfig = new ComicConfig();
-        comicConfig.setItems(new HashMap<>());
-
-        when(jsonConfigWriter.loadComics()).thenReturn(comicConfig);
-        when(taskExecutionTracker.canRunToday("StartupReconciler")).thenReturn(false);
-        when(taskExecutionTracker.getLastExecutionDate("StartupReconciler")).thenReturn(LocalDate.now());
+        when(comicManagementFacade.reconcileWithBootstrap()).thenReturn(false);
 
         // When
         boolean result = startupReconciler.reconcile();
 
         // Then
-        assertTrue(result);
-        verify(taskExecutionTracker).canRunToday("StartupReconciler");
-        verify(taskExecutionTracker).getLastExecutionDate("StartupReconciler");
-        verify(comicCacher, never()).bootstrapConfig();
-        verify(taskExecutionTracker, never()).markTaskExecuted("StartupReconciler");
+        assertFalse(result);
+        verify(comicManagementFacade).reconcileWithBootstrap();
     }
 
     @Test
-    void scheduleReconciliationShouldSetUpScheduler() {
+    void scheduleReconciliationShouldDelegateToFacade() {
         // Given
         when(properties.getScheduleTime()).thenReturn("06:00:00");
-        when(taskExecutionTracker.canRunToday("StartupReconciler")).thenReturn(true);
 
         // When
         startupReconciler.scheduleReconciliation();
 
         // Then
         verify(properties).getScheduleTime();
-        verify(taskExecutionTracker).canRunToday("StartupReconciler");
-    }
-
-    @Test
-    void scheduleReconciliationShouldAdjustForAlreadyRunToday() {
-        // Given
-        when(properties.getScheduleTime()).thenReturn("06:00:00");
-        when(taskExecutionTracker.canRunToday("StartupReconciler")).thenReturn(false);
-        when(taskExecutionTracker.getLastExecutionDate("StartupReconciler")).thenReturn(LocalDate.now());
-
-        // When
-        startupReconciler.scheduleReconciliation();
-
-        // Then
-        verify(properties).getScheduleTime();
-        verify(taskExecutionTracker).canRunToday("StartupReconciler");
-        verify(taskExecutionTracker).getLastExecutionDate("StartupReconciler");
+        verify(comicManagementFacade).scheduleReconciliation("06:00:00");
     }
 }

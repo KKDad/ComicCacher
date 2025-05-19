@@ -1,6 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.core.comic.downloader.ComicsKingdom;
 import org.stapledon.core.comic.downloader.IDailyComic;
@@ -8,6 +7,8 @@ import org.stapledon.infrastructure.web.WebInspector;
 import org.stapledon.infrastructure.web.WebInspectorImpl;
 
 import java.time.LocalDate;
+
+import lombok.Getter;
 
 @Getter
 public class KingComicsBootStrap implements IComicsBootstrap {

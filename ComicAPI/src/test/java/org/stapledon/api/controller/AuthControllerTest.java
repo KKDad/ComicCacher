@@ -1,6 +1,13 @@
 package org.stapledon.api.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -8,19 +15,13 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.stapledon.api.exception.GlobalExceptionHandler;
-import org.stapledon.core.auth.service.AuthService;
 import org.stapledon.api.dto.auth.AuthRequest;
 import org.stapledon.api.dto.auth.AuthResponse;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.api.exception.GlobalExceptionHandler;
+import org.stapledon.core.auth.service.AuthService;
 
 import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Standalone tests for AuthController that don't rely on Spring context

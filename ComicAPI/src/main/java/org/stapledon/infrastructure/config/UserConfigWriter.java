@@ -3,24 +3,26 @@ package org.stapledon.infrastructure.config;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.infrastructure.config.properties.CacheProperties;
 
-import java.io.*;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Configuration writer for user-related data.
+ * This implementation now delegates to ConfigurationFacade for most operations.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class UserConfigWriter {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
+    private final ConfigurationFacade configurationFacade;
 
     private UserConfig userConfig;
 
@@ -51,20 +54,8 @@ public class UserConfigWriter {
             userConfig.getUsers().put(user.getUsername(), user);
             log.info("Saving user: {}", user.getUsername());
 
-            // Ensure parent directory exists
-            File parentDir = Paths.get(cacheProperties.getLocation()).toFile();
-            if (!parentDir.exists() && !parentDir.mkdirs()) {
-                log.error("Failed to create directory: {}", parentDir);
-                return false;
-            }
-
-            // Save to file with try-with-resources for proper resource management
-            File usersFile = Paths.get(cacheProperties.getLocation(), cacheProperties.getUsersConfig()).toFile();
-            try (Writer writer = new FileWriter(usersFile)) {
-                gson.toJson(userConfig, writer);
-                writer.flush();
-                return true;
-            }
+            // Save to file using the configuration facade
+            return configurationFacade.saveUserConfig(userConfig);
         } catch (Exception e) {
             log.error("Failed to save user: {}", e.getMessage(), e);
             return false;
@@ -298,48 +289,22 @@ public class UserConfigWriter {
      * Load users from the users.json file
      *
      * @return UserConfig containing users
-     * @throws FileNotFoundException if the file cannot be found and cannot be created
      * @throws JsonParseException if the file is malformed JSON (for testing purposes)
      */
-    public UserConfig loadUsers() throws FileNotFoundException, JsonParseException {
+    public UserConfig loadUsers() throws JsonParseException {
         // Return cached config if already loaded and valid
         if (userConfig != null && userConfig.getUsers() != null) {
             return userConfig;
         }
 
-        var usersFile = Paths.get(cacheProperties.getLocation(), cacheProperties.getUsersConfig()).toFile();
-
-        // Create new empty config if file doesn't exist
-        if (!usersFile.exists()) {
-            log.warn("{} does not exist, creating new empty configuration", usersFile);
-            userConfig = new UserConfig();
+        try {
+            userConfig = configurationFacade.loadUserConfig();
             return userConfig;
-        }
-
-        // File exists, try to read it
-        try (InputStream inputStream = new FileInputStream(usersFile);
-             Reader reader = new InputStreamReader(inputStream)) {
-
-            userConfig = gson.fromJson(reader, UserConfig.class);
-
-            // Handle null config or null users map
-            if (userConfig == null) {
-                log.warn("Null UserConfig from {}, creating new configuration", usersFile);
-                userConfig = new UserConfig();
-            } else if (userConfig.getUsers() == null) {
-                log.warn("Null users map in UserConfig from {}, initializing empty map", usersFile);
-                userConfig.setUsers(new java.util.concurrent.ConcurrentHashMap<>());
-            }
-
-            log.info("Loaded {} users from {}", userConfig.getUsers().size(), usersFile);
-            return userConfig;
-
         } catch (JsonParseException e) {
-            log.error("Malformed JSON in {}: {}", usersFile, e.getMessage());
             // For integration testing, propagate the original exception
             throw e;
-        } catch (IOException e) {
-            log.error("Error reading {}: {}", usersFile, e.getMessage());
+        } catch (Exception e) {
+            log.error("Error reading user configuration: {}", e.getMessage(), e);
             userConfig = new UserConfig();
             return userConfig;
         }

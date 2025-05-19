@@ -1,14 +1,15 @@
 package org.stapledon.core.preference.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.stapledon.infrastructure.config.PreferenceConfigWriter;
 import org.stapledon.api.dto.preference.UserPreference;
+import org.stapledon.infrastructure.config.PreferenceConfigWriter;
 
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Optional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service

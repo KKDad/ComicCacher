@@ -1,9 +1,10 @@
 package org.stapledon.infrastructure.web;
 
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Methods for debugging new site retrievals

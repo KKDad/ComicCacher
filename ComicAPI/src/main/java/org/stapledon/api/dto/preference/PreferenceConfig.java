@@ -1,10 +1,10 @@
 package org.stapledon.api.dto.preference;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

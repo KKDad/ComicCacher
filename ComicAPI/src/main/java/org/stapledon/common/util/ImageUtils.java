@@ -3,7 +3,6 @@ package org.stapledon.common.util;
 import org.springframework.http.MediaType;
 import org.stapledon.api.dto.comic.ImageDto;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -14,6 +13,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
+
+import javax.imageio.ImageIO;
 
 public class ImageUtils {
 

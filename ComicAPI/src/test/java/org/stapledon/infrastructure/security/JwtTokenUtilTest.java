@@ -19,7 +19,6 @@ import static org.mockito.Mockito.*;
 
 class JwtTokenUtilTest {
 
-    private JwtProperties jwtProperties;
     private UserDetails userDetails;
 
     private JwtTokenUtil jwtTokenUtil;
@@ -27,7 +26,7 @@ class JwtTokenUtilTest {
     @BeforeEach
     void setUp() {
         // Setup mock properties
-        jwtProperties = mock(JwtProperties.class);
+        JwtProperties jwtProperties = mock(JwtProperties.class);
         when(jwtProperties.getSecret()).thenReturn("testSecretKeyWithAtLeast32Characters0123456789");
         when(jwtProperties.getExpiration()).thenReturn(900000L); // 15 minutes
         when(jwtProperties.getRefreshExpiration()).thenReturn(86400000L); // 24 hours

@@ -1,9 +1,13 @@
 package org.stapledon.api.dto.comic;
 
-import lombok.*;
-
 import java.time.LocalDate;
 import java.util.Objects;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 
 @AllArgsConstructor
@@ -20,6 +24,8 @@ public class ComicItem implements Comparable<ComicItem> {
     Boolean enabled;
     String description;
     Boolean avatarAvailable;
+    String source;
+    String sourceIdentifier;
 
     @Override
     public boolean equals(Object o) {
@@ -38,5 +44,23 @@ public class ComicItem implements Comparable<ComicItem> {
     @Override
     public int compareTo(ComicItem other) {
         return this.getName().compareTo(other.getName());
+    }
+    
+    /**
+     * Checks if this comic has an avatar available.
+     *
+     * @return true if avatar is available, false otherwise
+     */
+    public boolean isAvatarAvailable() {
+        return avatarAvailable != null && avatarAvailable;
+    }
+    
+    /**
+     * Checks if this comic is enabled.
+     *
+     * @return true if enabled, false otherwise
+     */
+    public boolean isEnabled() {
+        return enabled != null && enabled;
     }
 }

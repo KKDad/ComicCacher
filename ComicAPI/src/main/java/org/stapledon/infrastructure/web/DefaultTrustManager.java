@@ -1,7 +1,8 @@
 package org.stapledon.infrastructure.web;
 
-import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;
+
+import javax.net.ssl.X509TrustManager;
 
 public class DefaultTrustManager implements X509TrustManager {
 

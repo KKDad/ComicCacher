@@ -1,11 +1,10 @@
 package org.stapledon.infrastructure.caching;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.infrastructure.config.JsonConfigWriter;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.infrastructure.config.JsonConfigWriter;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -13,6 +12,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component

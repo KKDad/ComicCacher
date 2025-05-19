@@ -10,7 +10,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.infrastructure.scheduling.DailyRunner;
 import org.stapledon.infrastructure.scheduling.StartupReconcilerImpl;
-import org.stapledon.core.comic.service.ComicsServiceImpl;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.infrastructure.config.properties.DailyRunnerProperties;
 import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
@@ -41,8 +40,6 @@ class TaskExecutionTrackerImplTest {
     @Mock
     private CacheProperties cacheProperties;
     
-    @Mock
-    private ComicsServiceImpl comicsService;
     
     private Gson gson;
     
@@ -69,8 +66,7 @@ class TaskExecutionTrackerImplTest {
     
     @AfterEach
     void tearDown() {
-        // Clear static comics list
-        ComicsServiceImpl.getComics().clear();
+        // No static state to clean up
     }
     
     @Test

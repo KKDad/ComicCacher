@@ -1,23 +1,30 @@
 package org.stapledon.core.comic.downloader;
 
 import com.google.common.base.Preconditions;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.stapledon.infrastructure.caching.ICachable;
 import org.stapledon.core.comic.model.ComicCachingException;
+import org.stapledon.infrastructure.caching.ICachable;
 import org.stapledon.infrastructure.web.WebInspector;
 import org.stapledon.infrastructure.web.WebInspectorImpl;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for all ComicCachers.

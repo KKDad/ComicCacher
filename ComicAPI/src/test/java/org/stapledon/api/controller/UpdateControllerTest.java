@@ -1,5 +1,13 @@
 package org.stapledon.api.controller;
 
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -7,12 +15,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.stapledon.api.exception.GlobalExceptionHandler;
-import org.stapledon.core.comic.service.UpdateService;
-
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.stapledon.core.comic.management.ComicManagementFacade;
 
 /**
  * Standalone tests for UpdateController that don't rely on Spring context
@@ -22,14 +25,14 @@ class UpdateControllerTest {
     private MockMvc mockMvc;
     
     @Mock
-    private UpdateService updateService;
+    private ComicManagementFacade comicManagementFacade;
     
     private UpdateController updateController;
     
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        updateController = new UpdateController(updateService);
+        updateController = new UpdateController(comicManagementFacade);
         mockMvc = MockMvcBuilders.standaloneSetup(updateController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -38,52 +41,52 @@ class UpdateControllerTest {
     @Test
     void updateAll() throws Exception {
         // Given
-        when(updateService.updateAll()).thenReturn(true);
+        when(comicManagementFacade.updateAllComics()).thenReturn(true);
         
         // When & Then
         this.mockMvc.perform(get("/api/v1/update"))
                 .andDo(print())
                 .andExpect(status().isOk());
         
-        verify(updateService, times(1)).updateAll();
+        verify(comicManagementFacade, times(1)).updateAllComics();
     }
     
     @Test
     void updateSpecific() throws Exception {
         // Given
-        when(updateService.updateComic(42)).thenReturn(true);
+        when(comicManagementFacade.updateComic(42)).thenReturn(true);
         
         // When & Then
         this.mockMvc.perform(get("/api/v1/update/42"))
                 .andDo(print())
                 .andExpect(status().isOk());
         
-        verify(updateService, times(1)).updateComic(anyInt());
+        verify(comicManagementFacade, times(1)).updateComic(anyInt());
     }
     
     @Test
     void updateAllFailure() throws Exception {
         // Given
-        when(updateService.updateAll()).thenReturn(false);
+        when(comicManagementFacade.updateAllComics()).thenReturn(false);
 
         // When & Then
         this.mockMvc.perform(get("/api/v1/update"))
                 .andDo(print())
                 .andExpect(status().isNotFound());
 
-        verify(updateService, times(1)).updateAll();
+        verify(comicManagementFacade, times(1)).updateAllComics();
     }
 
     @Test
     void updateSpecificFailure() throws Exception {
         // Given
-        when(updateService.updateComic(42)).thenReturn(false);
+        when(comicManagementFacade.updateComic(42)).thenReturn(false);
 
         // When & Then
         this.mockMvc.perform(get("/api/v1/update/42"))
                 .andDo(print())
                 .andExpect(status().isNotFound());
 
-        verify(updateService, times(1)).updateComic(anyInt());
+        verify(comicManagementFacade, times(1)).updateComic(anyInt());
     }
 }

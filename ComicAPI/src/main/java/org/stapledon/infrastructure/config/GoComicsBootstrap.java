@@ -1,9 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.core.comic.downloader.GoComics;
 import org.stapledon.core.comic.downloader.IDailyComic;
@@ -11,6 +7,11 @@ import org.stapledon.infrastructure.web.WebInspector;
 import org.stapledon.infrastructure.web.WebInspectorImpl;
 
 import java.time.LocalDate;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Builder
 @Getter
