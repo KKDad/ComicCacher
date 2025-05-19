@@ -182,6 +182,46 @@ class ComicManagementFacadeImplTest {
         assertTrue(comic.isPresent());
         assertEquals(testComic, comic.get());
     }
+    
+    @Test
+    void shouldReturnEmptyWhenComicNameIsNull() {
+        // Act
+        Optional<ComicItem> comic = facade.getComicByName(null);
+        
+        // Assert
+        assertFalse(comic.isPresent());
+    }
+    
+    @Test
+    void shouldHandleComicItemWithNullName() {
+        // Arrange - create comic with null name
+        ComicItem nullNameComic = ComicItem.builder()
+                .id(123)
+                .name(null)
+                .build();
+        
+        // Add to comic config
+        ComicConfig comicConfig = new ComicConfig();
+        Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
+        items.put(nullNameComic.getId(), nullNameComic);
+        comicConfig.setItems(items);
+        
+        when(configFacade.loadComicConfig()).thenReturn(comicConfig);
+        
+        // Create new facade with our null-name comic
+        ComicManagementFacadeImpl nullNameFacade = new ComicManagementFacadeImpl(
+                storageFacade,
+                configFacade,
+                downloaderFacade,
+                reconcilerProperties,
+                taskExecutionTracker
+        );
+        
+        // Act and Assert - this shouldn't throw an NPE
+        assertEquals(1, nullNameFacade.getAllComics().size());
+        assertEquals(nullNameComic, nullNameFacade.getComic(123).get());
+        assertEquals(0, nullNameFacade.getComicByName("AnyName").stream().count());
+    }
 
     @Test
     void shouldCreateComic() {

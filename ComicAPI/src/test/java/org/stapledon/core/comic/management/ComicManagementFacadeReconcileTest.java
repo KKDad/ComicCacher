@@ -140,4 +140,5 @@ public class ComicManagementFacadeReconcileTest {
         verify(configFacade).saveComicConfig(any());
         verify(taskExecutionTracker).markTaskExecuted(anyString());
     }
+    
 }

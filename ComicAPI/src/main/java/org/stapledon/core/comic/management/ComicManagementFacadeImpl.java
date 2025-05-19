@@ -152,8 +152,15 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
 
     @Override
     public Optional<ComicItem> getComicByName(String comicName) {
+        if (comicName == null) {
+            return Optional.empty();
+        }
+        
         return comics.values().stream()
-                .filter(comic -> comic.getName().equalsIgnoreCase(comicName))
+                .filter(comic -> {
+                    String name = comic.getName();
+                    return name != null && name.equalsIgnoreCase(comicName);
+                })
                 .findFirst();
     }
 
@@ -460,6 +467,13 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     private void reconcileBootstrapConfig(ComicConfig comicConfig, Bootstrap bootstrap) {
         log.info("Begin reconciliation of bootstrap config and comic config");
         
+        // Log any comic items with null names
+        if (comicConfig.getItems() != null) {
+            comicConfig.getItems().entrySet().stream()
+                    .filter(entry -> entry.getValue().getName() == null)
+                    .forEach(entry -> log.info("Comic with id={} has a null name in the configuration", entry.getKey()));
+        }
+        
         // Check for new GoComics
         if (bootstrap.getDailyComics() != null) {
             for (IComicsBootstrap daily : bootstrap.getDailyComics()) {
@@ -569,10 +583,16 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
      * @return IComicsBootstrap or null if none could be located
      */
     private IComicsBootstrap findBootstrapComic(Bootstrap bootstrap, ComicItem comic) {
+        String comicName = comic.getName();
+        if (comicName == null) {
+            log.info("Comic with id={} has null name. This will be excluded from bootstrap reconciliation.", comic.getId());
+            return null;
+        }
+        
         // Check daily comics
         if (bootstrap.getDailyComics() != null && !bootstrap.getDailyComics().isEmpty()) {
             for (IComicsBootstrap comic_bs : bootstrap.getDailyComics()) {
-                if (comic_bs.stripName().equalsIgnoreCase(comic.getName())) {
+                if (comic_bs.stripName().equalsIgnoreCase(comicName)) {
                     return comic_bs;
                 }
             }
@@ -581,13 +601,13 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
         // Check king comics
         if (bootstrap.getKingComics() != null && !bootstrap.getKingComics().isEmpty()) {
             for (IComicsBootstrap comic_bs : bootstrap.getKingComics()) {
-                if (comic_bs.stripName().equalsIgnoreCase(comic.getName())) {
+                if (comic_bs.stripName().equalsIgnoreCase(comicName)) {
                     return comic_bs;
                 }
             }
         }
         
-        log.warn("Comic {} was not found in bootstrap config. It will be disabled.", comic.getName());
+        log.warn("Comic {} was not found in bootstrap config. It will be disabled.", comicName);
         return null;
     }
 
@@ -600,8 +620,18 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
      */
     private ComicItem findComicItem(ComicConfig comicConfig, IComicsBootstrap comic) {
         if (comicConfig.getItems() != null && !comicConfig.getItems().isEmpty()) {
+            // First check for and log any comics with null names
+            comicConfig.getItems().entrySet().stream()
+                    .filter(p -> p.getValue().getName() == null)
+                    .forEach(p -> log.info("Found comic item with id={} that has a null name during bootstrap reconciliation", 
+                            p.getKey()));
+            
+            // Find matching comic
             Optional<Map.Entry<Integer, ComicItem>> entry = comicConfig.getItems().entrySet().stream()
-                    .filter(p -> p.getValue().getName().equalsIgnoreCase(comic.stripName()))
+                    .filter(p -> {
+                        String comicName = p.getValue().getName();
+                        return comicName != null && comicName.equalsIgnoreCase(comic.stripName());
+                    })
                     .findFirst();
             
             return entry.map(Map.Entry::getValue).orElse(null);
