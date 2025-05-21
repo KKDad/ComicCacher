@@ -49,6 +49,12 @@
       "value": "",
       "type": "default",
       "enabled": true
+    },
+    {
+      "key": "retrievalRecordId",
+      "value": "",
+      "type": "default",
+      "enabled": true
     }
   ]
 }

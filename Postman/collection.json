@@ -1436,17 +1436,274 @@
         "description": "Endpoints for triggering comic updates and retrieving metrics"
       },
       {
-        "name": "7. Cleanup",
+        "name": "7. Retrieval Status",
         "item": [
           {
-            "name": "Delete Created Comic",
+            "name": "Get All Retrieval Records",
             "event": [
               {
                 "listen": "test",
                 "script": {
                   "exec": [
-                    "pm.test(\"Status code is 200 or 204\", function () {",
-                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response contains retrieval records array\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.be.an('array');",
+                    "});",
+                    "",
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.data && jsonData.data.length > 0) {",
+                    "    // Save the first record ID for subsequent tests",
+                    "    pm.environment.set(\"retrievalRecordId\", jsonData.data[0].id);",
+                    "    console.log(\"Set retrievalRecordId to: \" + jsonData.data[0].id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/retrieval-status",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "retrieval-status"]
+              },
+              "description": "Returns all retrieval records from the last 7 days"
+            },
+            "response": []
+          },
+          {
+            "name": "Filter Retrieval Records",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response contains filtered retrieval records\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.be.an('array');",
+                    "    ",
+                    "    // If records exist, verify they match the filter",
+                    "    if (jsonData.data.length > 0) {",
+                    "        var comicName = pm.variables.get(\"testComicId\");",
+                    "        // Check if all records match the comic name",
+                    "        jsonData.data.forEach(function(record) {",
+                    "            pm.expect(record.comicName).to.equal(comicName);",
+                    "        });",
+                    "    }",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/retrieval-status?comicName={{testComicId}}&status=SUCCESS&limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "retrieval-status"],
+                "query": [
+                  {
+                    "key": "comicName",
+                    "value": "{{testComicId}}"
+                  },
+                  {
+                    "key": "status",
+                    "value": "SUCCESS"
+                  },
+                  {
+                    "key": "limit",
+                    "value": "10"
+                  }
+                ]
+              },
+              "description": "Returns filtered retrieval records based on comic name, status, and limit"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Retrieval Record by ID",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has the required fields\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.have.property('id');",
+                    "    pm.expect(jsonData.data).to.have.property('comicName');",
+                    "    pm.expect(jsonData.data).to.have.property('status');",
+                    "    pm.expect(jsonData.data).to.have.property('retrievalDate');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/retrieval-status/{{retrievalRecordId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "retrieval-status", "{{retrievalRecordId}}"]
+              },
+              "description": "Returns a specific retrieval record by ID"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Retrieval Records for Comic",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response contains retrieval records for specific comic\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.be.an('array');",
+                    "    ",
+                    "    // If records exist, verify they match the comic name",
+                    "    if (jsonData.data.length > 0) {",
+                    "        var comicName = pm.variables.get(\"testComicId\");",
+                    "        jsonData.data.forEach(function(record) {",
+                    "            pm.expect(record.comicName).to.equal(comicName);",
+                    "        });",
+                    "    }",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/retrieval-status/comics/{{testComicId}}?limit=20",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "retrieval-status", "comics", "{{testComicId}}"],
+                "query": [
+                  {
+                    "key": "limit",
+                    "value": "20"
+                  }
+                ]
+              },
+              "description": "Returns retrieval records for a specific comic"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Retrieval Summary",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response contains summary data\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.be.an('object');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/retrieval-status/summary",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "retrieval-status", "summary"]
+              },
+              "description": "Returns summary statistics for all retrieval operations"
+            },
+            "response": []
+          },
+          {
+            "name": "Delete Retrieval Record",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response indicates successful deletion\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.include(\"deleted successfully\");",
                     "});"
                   ],
                   "type": "text/javascript"
@@ -1462,16 +1719,59 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
+                "raw": "{{baseUrl}}/api/v1/retrieval-status/{{retrievalRecordId}}",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "v1", "comics", "{{createdComicId}}"]
+                "path": ["api", "v1", "retrieval-status", "{{retrievalRecordId}}"]
               },
-              "description": "Deletes the comic that was created during testing"
+              "description": "Deletes a specific retrieval record by ID"
             },
             "response": []
           },
           {
-            "name": "Verify Deletion",
+            "name": "Purge Old Records",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response indicates successful purge\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.data).to.include(\"Purged\");",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/retrieval-status?daysToKeep=7",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "retrieval-status"],
+                "query": [
+                  {
+                    "key": "daysToKeep",
+                    "value": "7"
+                  }
+                ]
+              },
+              "description": "Purges retrieval records older than a specified number of days"
+            },
+            "response": []
+          },
+          {
+            "name": "Invalid Record ID",
             "event": [
               {
                 "listen": "test",
@@ -1481,7 +1781,7 @@
                     "    pm.response.to.have.status(404);",
                     "});",
                     "",
-                    "pm.test(\"Response indicates comic not found\", function () {",
+                    "pm.test(\"Response indicates record not found\", function () {",
                     "    var jsonData = pm.response.json();",
                     "    pm.expect(jsonData.message).to.include(\"not found\");",
                     "});"
@@ -1496,19 +1796,23 @@
                 {
                   "key": "Accept",
                   "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
+                "raw": "{{baseUrl}}/api/v1/retrieval-status/invalid-id-9999999",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "v1", "comics", "{{createdComicId}}"]
+                "path": ["api", "v1", "retrieval-status", "invalid-id-9999999"]
               },
-              "description": "Verifies that the deleted comic no longer exists"
+              "description": "Tests retrieving a record with an invalid ID"
             },
             "response": []
           }
         ],
-        "description": "Endpoints for cleaning up test data"
+        "description": "Endpoints for managing comic retrieval status records"
       },
       {
         "name": "8. Health Check",
@@ -1604,6 +1908,81 @@
           }
         ],
         "description": "Endpoints for checking application health and status"
+      },
+      {
+        "name": "9. Cleanup",
+        "item": [
+          {
+            "name": "Delete Created Comic",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200 or 204\", function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{createdComicId}}"]
+              },
+              "description": "Deletes the comic that was created during testing"
+            },
+            "response": []
+          },
+          {
+            "name": "Verify Deletion",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 404\", function () {",
+                    "    pm.response.to.have.status(404);",
+                    "});",
+                    "",
+                    "pm.test(\"Response indicates comic not found\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.message).to.include(\"not found\");",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/comics/{{createdComicId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "comics", "{{createdComicId}}"]
+              },
+              "description": "Verifies that the deleted comic no longer exists"
+            },
+            "response": []
+          }
+        ],
+        "description": "Endpoints for cleaning up test data"
       }
     ],
     "event": [
@@ -1632,6 +2011,10 @@
             "",
             "if (url.includes('{{testDate}}') && !pm.environment.get('testDate')) {",
             "    console.warn('WARNING: This request requires testDate, but it is not set in the environment.');",
+            "}",
+            "",
+            "if (url.includes('{{retrievalRecordId}}') && !pm.environment.get('retrievalRecordId')) {",
+            "    console.warn('WARNING: This request requires retrievalRecordId, but it is not set in the environment.');",
             "}"
           ]
         }
