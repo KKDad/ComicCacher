@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.api.dto.comic.ComicConfig;
 import org.stapledon.api.dto.comic.ComicItem;
@@ -39,7 +40,7 @@ class ComicDownloaderFacadeImplTest {
 
     @BeforeEach
     void setUp() {
-        facade = new ComicDownloaderFacadeImpl();
+        facade = new ComicDownloaderFacadeImpl(Mockito.mock(org.stapledon.core.comic.service.RetrievalStatusService.class));
         
         // Remove unnecessary stubbing - the getSource() method isn't used in the implementation
         // when(goComicsStrategy.getSource()).thenReturn("gocomics");

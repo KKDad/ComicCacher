@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.api.dto.comic.ComicConfig;
 import org.stapledon.api.dto.comic.ComicItem;
@@ -98,7 +99,8 @@ public class ComicManagementFacadeReconcileTest {
                 configFacade,
                 downloaderFacade,
                 reconcilerProperties,
-                taskExecutionTracker
+                taskExecutionTracker,
+                Mockito.mock(org.stapledon.core.comic.service.RetrievalStatusService.class)
         );
     }
     

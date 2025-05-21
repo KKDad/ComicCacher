@@ -3,10 +3,13 @@ package org.stapledon.core.comic.management;
 import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.api.dto.comic.ImageDto;
 import org.stapledon.common.util.Direction;
+import org.stapledon.core.comic.dto.ComicRetrievalRecord;
+import org.stapledon.core.comic.dto.ComicRetrievalStatus;
 import org.stapledon.events.CacheMissEvent;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -139,4 +142,34 @@ public interface ComicManagementFacade {
      * Gets the oldest date with a comic strip for the specified comic.
      */
     Optional<LocalDate> getOldestDateWithComic(int comicId);
+    
+    /**
+     * Gets retrieval records for a specific comic
+     */
+    List<ComicRetrievalRecord> getRetrievalRecords(String comicName, int limit);
+    
+    /**
+     * Gets retrieval records for a specific comic on a specific date
+     */
+    List<ComicRetrievalRecord> getRetrievalRecordsForDate(String comicName, LocalDate date);
+    
+    /**
+     * Gets filtered retrieval records
+     */
+    List<ComicRetrievalRecord> getFilteredRetrievalRecords(
+            String comicName, 
+            ComicRetrievalStatus status, 
+            LocalDate fromDate, 
+            LocalDate toDate, 
+            int limit);
+    
+    /**
+     * Gets retrieval summary statistics
+     */
+    Map<String, Object> getRetrievalSummary(LocalDate fromDate, LocalDate toDate);
+    
+    /**
+     * Purges old retrieval records
+     */
+    int purgeOldRetrievalRecords(int daysToKeep);
 }
