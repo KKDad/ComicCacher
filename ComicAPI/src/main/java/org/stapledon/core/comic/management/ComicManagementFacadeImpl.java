@@ -9,6 +9,9 @@ import org.stapledon.common.util.Direction;
 import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
 import org.stapledon.core.comic.dto.ComicDownloadRequest;
 import org.stapledon.core.comic.dto.ComicDownloadResult;
+import org.stapledon.core.comic.dto.ComicRetrievalRecord;
+import org.stapledon.core.comic.dto.ComicRetrievalStatus;
+import org.stapledon.core.comic.service.RetrievalStatusService;
 import org.stapledon.events.CacheMissEvent;
 import org.stapledon.infrastructure.config.ConfigurationFacade;
 import org.stapledon.infrastructure.config.IComicsBootstrap;
@@ -49,6 +52,7 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     private final ConfigurationFacade configFacade;
     private final ComicDownloaderFacade downloaderFacade;
     private final TaskExecutionTracker taskExecutionTracker;
+    private final RetrievalStatusService retrievalStatusService;
     
     // Thread-safe collection for comics
     private final Map<Integer, ComicItem> comics = new ConcurrentHashMap<>();
@@ -59,11 +63,13 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
             ConfigurationFacade configFacade,
             ComicDownloaderFacade downloaderFacade,
             StartupReconcilerProperties reconcilerProperties,
-            TaskExecutionTracker taskExecutionTracker) {
+            TaskExecutionTracker taskExecutionTracker,
+            RetrievalStatusService retrievalStatusService) {
         this.storageFacade = storageFacade;
         this.configFacade = configFacade;
         this.downloaderFacade = downloaderFacade;
         this.taskExecutionTracker = taskExecutionTracker;
+        this.retrievalStatusService = retrievalStatusService;
         
         // Register as listener for cache miss events
         storageFacade.addCacheMissListener(this::handleCacheMiss);
@@ -749,5 +755,35 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     public Optional<LocalDate> getOldestDateWithComic(int comicId) {
         return getComic(comicId)
                 .flatMap(comic -> storageFacade.getOldestDateWithComic(comicId, comic.getName()));
+    }
+
+    @Override
+    public List<ComicRetrievalRecord> getRetrievalRecords(String comicName, int limit) {
+        return retrievalStatusService.getRetrievalRecords(comicName, null, null, null, limit);
+    }
+    
+    @Override
+    public List<ComicRetrievalRecord> getRetrievalRecordsForDate(String comicName, LocalDate date) {
+        return retrievalStatusService.getRetrievalRecords(comicName, null, date, date, 100);
+    }
+    
+    @Override
+    public List<ComicRetrievalRecord> getFilteredRetrievalRecords(
+            String comicName, 
+            ComicRetrievalStatus status, 
+            LocalDate fromDate, 
+            LocalDate toDate, 
+            int limit) {
+        return retrievalStatusService.getRetrievalRecords(comicName, status, fromDate, toDate, limit);
+    }
+    
+    @Override
+    public Map<String, Object> getRetrievalSummary(LocalDate fromDate, LocalDate toDate) {
+        return retrievalStatusService.getRetrievalSummary(fromDate, toDate);
+    }
+    
+    @Override
+    public int purgeOldRetrievalRecords(int daysToKeep) {
+        return retrievalStatusService.purgeOldRecords(daysToKeep);
     }
 }

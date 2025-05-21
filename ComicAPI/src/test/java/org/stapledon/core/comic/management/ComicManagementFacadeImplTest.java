@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.api.dto.comic.ComicConfig;
 import org.stapledon.api.dto.comic.ComicItem;
@@ -110,7 +111,8 @@ class ComicManagementFacadeImplTest {
                 configFacade,
                 downloaderFacade,
                 reconcilerProperties,
-                taskExecutionTracker
+                taskExecutionTracker,
+                Mockito.mock(org.stapledon.core.comic.service.RetrievalStatusService.class)
         );
     }
 
@@ -199,7 +201,8 @@ class ComicManagementFacadeImplTest {
                 configFacade,
                 downloaderFacade,
                 reconcilerProperties,
-                taskExecutionTracker
+                taskExecutionTracker,
+                Mockito.mock(org.stapledon.core.comic.service.RetrievalStatusService.class)
         );
         
         // Act
@@ -274,7 +277,8 @@ class ComicManagementFacadeImplTest {
                 configFacade,
                 downloaderFacade,
                 reconcilerProperties,
-                taskExecutionTracker
+                taskExecutionTracker,
+                Mockito.mock(org.stapledon.core.comic.service.RetrievalStatusService.class)
         );
         
         // Act and Assert - this shouldn't throw an NPE
