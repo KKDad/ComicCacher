@@ -16,15 +16,16 @@ When deployed, replace `localhost:8080` with your server's address.
 
 The ComicCacher API is organized into the following endpoint groups:
 
-| Endpoint Group  | Base Path             | Description                                                |
-|-----------------|----------------------|-----------------------------------------------------------|
-| Comics          | /api/v1/comics        | Access and manage comic strips and metadata                |
-| Authentication  | /api/v1/auth          | User registration, authentication, and token management    |
-| Health          | /api/v1/health        | System health and status information                       |
-| Metrics         | /api/v1/metrics       | Storage and access statistics for comics                   |
-| Preferences     | /api/v1/preferences   | User preferences for comics and display settings           |
-| Updates         | /api/v1/update        | Trigger comic updates and downloads                        |
-| Users           | /api/v1/users         | User profile and account management                        |
+| Endpoint Group     | Base Path                | Description                                                |
+|--------------------|--------------------------|-----------------------------------------------------------|
+| Comics             | /api/v1/comics           | Access and manage comic strips and metadata               |
+| Authentication     | /api/v1/auth             | User registration, authentication, and token management   |
+| Health             | /api/v1/health           | System health and status information                      |
+| Metrics            | /api/v1/metrics          | Storage and access statistics for comics                  |
+| Preferences        | /api/v1/preferences      | User preferences for comics and display settings          |
+| Retrieval Status   | /api/v1/retrieval-status | Comic retrieval operation monitoring and status records   |
+| Updates            | /api/v1/update           | Trigger comic updates and downloads                       |
+| Users              | /api/v1/users            | User profile and account management                       |
 
 ## Detailed Documentation
 
@@ -35,6 +36,7 @@ For detailed information about each endpoint group, refer to the specific docume
 - [Health Endpoint](health-endpoint.md): Check system health and status
 - [Metrics Endpoints](metrics-endpoints.md): View storage and access statistics
 - [Preferences Endpoints](preferences-endpoints.md): Manage user preferences
+- [Retrieval Status Endpoints](retrieval-status-endpoints.md): Monitor comic retrieval operations and status records
 - [Update Endpoints](update-endpoints.md): Trigger comic updates
 - [User Endpoints](user-endpoints.md): Manage user profiles and settings
 

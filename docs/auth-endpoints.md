@@ -27,8 +27,7 @@ Registers a new user in the system.
   "username": "newuser",
   "password": "securepassword123",
   "email": "user@example.com",
-  "firstName": "John",
-  "lastName": "Doe"
+  "displayName": "John Doe"
 }
 ```
 
@@ -42,15 +41,8 @@ Registers a new user in the system.
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "expiresIn": 3600,
-    "user": {
-      "id": 1,
-      "username": "newuser",
-      "email": "user@example.com",
-      "firstName": "John",
-      "lastName": "Doe",
-      "roles": ["USER"]
-    }
+    "username": "newuser",
+    "displayName": "John Doe"
   }
 }
 ```
@@ -82,15 +74,8 @@ Authenticates a user and provides access tokens.
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "expiresIn": 3600,
-    "user": {
-      "id": 2,
-      "username": "existinguser",
-      "email": "existing@example.com",
-      "firstName": "Jane",
-      "lastName": "Smith",
-      "roles": ["USER"]
-    }
+    "username": "existinguser",
+    "displayName": "Jane Smith"
   }
 }
 ```
@@ -106,9 +91,7 @@ Refreshes an existing authentication token.
 #### Request Body
 
 ```json
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 #### Response Format
@@ -121,15 +104,8 @@ Refreshes an existing authentication token.
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "expiresIn": 3600,
-    "user": {
-      "id": 2,
-      "username": "existinguser",
-      "email": "existing@example.com",
-      "firstName": "Jane",
-      "lastName": "Smith",
-      "roles": ["USER"]
-    }
+    "username": "existinguser",
+    "displayName": "Jane Smith"
   }
 }
 ```

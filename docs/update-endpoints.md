@@ -28,11 +28,16 @@ GET /api/v1/update
 
 Triggers an update for all configured comics, downloading the latest strips.
 
-#### Response
+#### Response Format
 
-The endpoint returns an HTTP 200 OK status code with no response body if the update was successful. 
-
-If the update process fails, an HTTP 404 Not Found status code is returned.
+```json
+{
+  "timestamp": "2023-05-01T10:15:30",
+  "status": 200,
+  "message": "Comics update initiated successfully",
+  "data": "Update initiated for all comics"
+}
+```
 
 ### Update Specific Comic
 
@@ -48,17 +53,29 @@ Triggers an update for a specific comic, downloading the latest strip.
 |-----------|---------|----------|---------------------------------------|
 | comicId   | Integer | Yes      | The numeric ID of the comic to update |
 
-#### Response
+#### Response Format
 
-The endpoint returns an HTTP 200 OK status code with no response body if the update was successful.
-
-If the comic is not found or the update process fails, an HTTP 404 Not Found status code is returned.
+```json
+{
+  "timestamp": "2023-05-01T10:15:30",
+  "status": 200,
+  "message": "Comic update initiated successfully",
+  "data": "Update initiated for comic ID: 1"
+}
+```
 
 ## Error Responses
 
-### Comic Not Found (404)
+### Update Failed (404)
 
-If the comic ID provided does not exist, a 404 Not Found status code is returned with an empty response body.
+```json
+{
+  "timestamp": "2023-05-01T10:15:30",
+  "status": 404,
+  "message": "Comic not found",
+  "data": null
+}
+```
 
 ### Unauthorized (401)
 

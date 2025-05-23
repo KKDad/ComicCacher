@@ -31,18 +31,26 @@ Returns a list of all available comics in the system.
     {
       "id": 1,
       "name": "Dilbert",
+      "author": "Scott Adams",
       "description": "A comic strip about office politics",
       "source": "gocomics",
       "sourceIdentifier": "dilbert",
-      "startDate": "1989-04-16"
+      "oldest": "1989-04-16",
+      "newest": "2023-05-01",
+      "enabled": true,
+      "avatarAvailable": true
     },
     {
       "id": 2,
       "name": "Calvin and Hobbes",
+      "author": "Bill Watterson",
       "description": "A comic strip about a boy and his tiger",
       "source": "gocomics",
       "sourceIdentifier": "calvinandhobbes",
-      "startDate": "1985-11-18"
+      "oldest": "1985-11-18",
+      "newest": "1995-12-31",
+      "enabled": true,
+      "avatarAvailable": true
     }
   ]
 }
@@ -72,10 +80,14 @@ Returns details about a specific comic.
   "data": {
     "id": 1,
     "name": "Dilbert",
+    "author": "Scott Adams",
     "description": "A comic strip about office politics",
     "source": "gocomics",
     "sourceIdentifier": "dilbert",
-    "startDate": "1989-04-16"
+    "oldest": "1989-04-16",
+    "newest": "2023-05-01",
+    "enabled": true,
+    "avatarAvailable": true
   }
 }
 ```
@@ -99,10 +111,11 @@ Creates a new comic with the specified ID.
 ```json
 {
   "name": "Dilbert",
+  "author": "Scott Adams",
   "description": "A comic strip about office politics",
   "source": "gocomics",
   "sourceIdentifier": "dilbert",
-  "startDate": "1989-04-16"
+  "enabled": true
 }
 ```
 
@@ -116,10 +129,14 @@ Creates a new comic with the specified ID.
   "data": {
     "id": 1,
     "name": "Dilbert",
+    "author": "Scott Adams",
     "description": "A comic strip about office politics",
     "source": "gocomics",
     "sourceIdentifier": "dilbert",
-    "startDate": "1989-04-16"
+    "oldest": null,
+    "newest": null,
+    "enabled": true,
+    "avatarAvailable": false
   }
 }
 ```
@@ -207,15 +224,11 @@ Returns the avatar image for a comic.
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": {
-    "comicId": 1,
-    "imageDate": null,
-    "imageData": "base64encodedimagedata",
-    "contentType": "image/png"
-  }
+  "mimeType": "image/png",
+  "imageData": "base64encodedimagedata",
+  "height": 200,
+  "width": 200,
+  "imageDate": null
 }
 ```
 
@@ -237,15 +250,11 @@ Returns the first available comic strip for a comic.
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": {
-    "comicId": 1,
-    "imageDate": "1989-04-16",
-    "imageData": "base64encodedimagedata",
-    "contentType": "image/gif"
-  }
+  "mimeType": "image/gif",
+  "imageData": "base64encodedimagedata",
+  "height": 300,
+  "width": 600,
+  "imageDate": "1989-04-16"
 }
 ```
 
@@ -268,15 +277,11 @@ Returns the next comic strip after the specified date.
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": {
-    "comicId": 1,
-    "imageDate": "1989-04-17",
-    "imageData": "base64encodedimagedata",
-    "contentType": "image/gif"
-  }
+  "mimeType": "image/gif",
+  "imageData": "base64encodedimagedata",
+  "height": 300,
+  "width": 600,
+  "imageDate": "1989-04-17"
 }
 ```
 
@@ -299,15 +304,11 @@ Returns the previous comic strip before the specified date.
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": {
-    "comicId": 1,
-    "imageDate": "1989-04-15",
-    "imageData": "base64encodedimagedata",
-    "contentType": "image/gif"
-  }
+  "mimeType": "image/gif",
+  "imageData": "base64encodedimagedata",
+  "height": 300,
+  "width": 600,
+  "imageDate": "1989-04-15"
 }
 ```
 
@@ -329,15 +330,11 @@ Returns the most recent comic strip for a comic.
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": {
-    "comicId": 1,
-    "imageDate": "2023-05-01",
-    "imageData": "base64encodedimagedata",
-    "contentType": "image/gif"
-  }
+  "mimeType": "image/gif",
+  "imageData": "base64encodedimagedata",
+  "height": 300,
+  "width": 600,
+  "imageDate": "2023-05-01"
 }
 ```
 

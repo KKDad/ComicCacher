@@ -36,14 +36,14 @@ Retrieves the profile information for the authenticated user.
   "status": 200,
   "message": "Success",
   "data": {
-    "id": 1,
     "username": "johndoe",
+    "passwordHash": null,
     "email": "john.doe@example.com",
-    "firstName": "John",
-    "lastName": "Doe",
-    "createdAt": "2023-01-15T08:30:45",
+    "displayName": "John Doe",
+    "created": "2023-01-15T08:30:45",
     "lastLogin": "2023-05-01T09:20:15",
-    "roles": ["USER"]
+    "roles": ["USER"],
+    "userToken": "550e8400-e29b-41d4-a716-446655440000"
   }
 }
 ```
@@ -60,9 +60,9 @@ Updates the profile information for the authenticated user.
 
 ```json
 {
+  "username": "johndoe",
   "email": "new.email@example.com",
-  "firstName": "Johnny",
-  "lastName": "Doe"
+  "displayName": "Johnny Doe"
 }
 ```
 
@@ -74,14 +74,14 @@ Updates the profile information for the authenticated user.
   "status": 200,
   "message": "Profile updated successfully",
   "data": {
-    "id": 1,
     "username": "johndoe",
+    "passwordHash": null,
     "email": "new.email@example.com",
-    "firstName": "Johnny",
-    "lastName": "Doe",
-    "createdAt": "2023-01-15T08:30:45",
+    "displayName": "Johnny Doe",
+    "created": "2023-01-15T08:30:45",
     "lastLogin": "2023-05-01T09:20:15",
-    "roles": ["USER"]
+    "roles": ["USER"],
+    "userToken": "550e8400-e29b-41d4-a716-446655440000"
   }
 }
 ```
@@ -98,7 +98,6 @@ Updates the password for the authenticated user.
 
 ```json
 {
-  "currentPassword": "oldPassword123",
   "newPassword": "newSecurePassword456"
 }
 ```
@@ -111,7 +110,7 @@ Updates the password for the authenticated user.
   "status": 200,
   "message": "Password updated successfully",
   "data": {
-    "status": "success"
+    "message": "Password updated successfully"
   }
 }
 ```

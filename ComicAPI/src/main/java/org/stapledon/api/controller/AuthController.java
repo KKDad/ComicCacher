@@ -83,7 +83,7 @@ public class AuthController {
      * @return true if token is valid
      */
     @PostMapping("/validate-token")
-    public ResponseEntity<ApiResponse<Boolean>> validateToken(@RequestHeader("Authorization") String bearerToken) {
+    public ResponseEntity<ApiResponse<Boolean>> validateToken(@RequestHeader(value = "Authorization", required = false) String bearerToken) {
         log.info("Token validation request");
         
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {

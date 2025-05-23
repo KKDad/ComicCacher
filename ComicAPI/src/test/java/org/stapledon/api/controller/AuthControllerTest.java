@@ -1,10 +1,12 @@
 package org.stapledon.api.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -167,5 +169,67 @@ class AuthControllerTest {
                 .andExpect(status().isOk());
         
         verify(authService).refreshToken(unquotedToken);
+    }
+    
+    @Test
+    void validateTokenShouldReturnTrueForValidToken() throws Exception {
+        // Given
+        String validToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciJ9.signature";
+        
+        when(authService.validateToken(validToken))
+                .thenReturn(true);
+
+        // When & Then
+        mockMvc.perform(post("/api/v1/auth/validate-token")
+                .header("Authorization", "Bearer " + validToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(true));
+        
+        verify(authService).validateToken(validToken);
+    }
+    
+    @Test
+    void validateTokenShouldReturnFalseForInvalidToken() throws Exception {
+        // Given
+        String invalidToken = "invalid.token.here";
+        
+        when(authService.validateToken(invalidToken))
+                .thenReturn(false);
+
+        // When & Then
+        mockMvc.perform(post("/api/v1/auth/validate-token")
+                .header("Authorization", "Bearer " + invalidToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(false));
+        
+        verify(authService).validateToken(invalidToken);
+    }
+    
+    @Test
+    void validateTokenShouldReturnFalseWhenNoAuthorizationHeader() throws Exception {
+        // Given - no authorization header
+        
+        // When & Then
+        mockMvc.perform(post("/api/v1/auth/validate-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(false));
+        
+        // Verify service is not called when no token provided
+        verify(authService, never()).validateToken(any());
+    }
+    
+    @Test
+    void validateTokenShouldReturnFalseWhenAuthorizationHeaderIsInvalid() throws Exception {
+        // Given
+        String invalidAuthHeader = "InvalidBearer token";
+        
+        // When & Then
+        mockMvc.perform(post("/api/v1/auth/validate-token")
+                .header("Authorization", invalidAuthHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(false));
+        
+        // Verify service is not called when header format is invalid
+        verify(authService, never()).validateToken(any());
     }
 }
