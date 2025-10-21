@@ -3,14 +3,9 @@
     "1": {
       "id": 1,
       "name": "Test Comic",
-      "author": "Test Author",
-      "oldest": "2023-01-01",
-      "newest": "2024-05-19",
-      "enabled": true,
-      "description": "A comic for integration testing",
-      "avatarAvailable": true,
-      "source": "gocomics",
-      "sourceIdentifier": "testcomic"
+      "enabled": false,
+      "description": "Updated Test Description 1748006806581",
+      "avatarAvailable": false
     },
     "2": {
       "id": 2,
@@ -23,6 +18,13 @@
       "avatarAvailable": true,
       "source": "comicskingdom",
       "sourceIdentifier": "anothertestcomic"
+    },
+    "1330554193": {
+      "id": 1330554193,
+      "name": "Calvin and Hobbes",
+      "oldest": "2025-05-23",
+      "newest": "2025-05-23",
+      "enabled": true
     }
   }
 }
