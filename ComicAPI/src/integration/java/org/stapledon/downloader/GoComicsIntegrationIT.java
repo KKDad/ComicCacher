@@ -44,38 +44,41 @@ class GoComicsIntegrationIT {
     private GoComics getSubject(String name) {
         GoComics gc = new GoComics(null);
         gc.setComic(name);
-        gc.setDate(LocalDate.of(2019, 1, 1));
+        gc.setDate(LocalDate.now().minusDays(1)); // Use a relative date
         gc.setCacheRoot(path.toString());
 
         return gc;
     }
 
     @Test
-    void ensureCacheTest() {
-        File expectedFile = new File(path.toString() + "/AdamAtHome/2019/2019-01-01.png");
+    void ensureCacheTest() throws Exception {
+        LocalDate testDate = LocalDate.now().minusDays(1);
+        String year = String.valueOf(testDate.getYear());
+        String dateString = testDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        File expectedFile = new File(path.toString() + "/AdamAtHome/" + year + "/" + dateString + ".png");
         LOG.info("Expecting to get file: " + expectedFile);
         assertThat(expectedFile).doesNotExist();
 
-        IDailyComic subject = getSubject("Adam at Home");
-
-        // Act
-        boolean result = subject.ensureCache();
+        try (IDailyComic subject = getSubject("Adam at Home")) {
+            // Act
+            boolean result = subject.ensureCache();
 
         // Assert
         assertThat(result).isTrue();
         assertThat(expectedFile).exists();
-    }
+        }
+    } // Added missing closing brace for ensureCacheTest()
 
     @Test
     void advanceTest() {
         // Arrange
-        GoComics subject = getSubject("Adam at Home");
+        try (GoComics subject = getSubject("Adam at Home")) {
+            // Act
+            LocalDate result = subject.advance();
 
-        // Act
-        LocalDate result = subject.advance();
-
-        // Assert
-        assertThat(result).isEqualTo(LocalDate.of(2019, 1, 2));
+            // Assert
+            assertThat(result).isEqualTo(LocalDate.now());
+        }
     }
 
 
@@ -96,11 +99,10 @@ class GoComicsIntegrationIT {
             })
     void getComicDetailsTest(String name) {
         // Arrange
-        GoComics subject = getSubject(name);
-
-        // Act
-        ComicItem item = new ComicItem();
-        subject.updateComicMetadata(item);
+        try (GoComics subject = getSubject(name)) {
+            // Act
+            ComicItem item = new ComicItem();
+            subject.updateComicMetadata(item);
 
         // Assert that we get basic metadata regardless of website changes
         assertThat(item.getDescription()).isNotNull();
@@ -112,6 +114,7 @@ class GoComicsIntegrationIT {
 
         // Make sure author starts with "By " as expected by other parts of the app
         assertThat(item.getAuthor()).startsWith("By ");
+        }
     }
 
     /**
@@ -122,29 +125,32 @@ class GoComicsIntegrationIT {
     @Test
     void shouldHandleSpecificComics() {
         // Adam at Home by Rob Harrell
-        GoComics subject = getSubject("Adam at Home");
-        ComicItem item = new ComicItem();
-        subject.updateComicMetadata(item);
+        try (GoComics subject = getSubject("Adam at Home")) {
+            ComicItem item = new ComicItem();
+            subject.updateComicMetadata(item);
 
-        // Verify we get some kind of metadata
-        assertThat(item.getDescription()).isNotEmpty();
-        assertThat(item.getAuthor()).isNotEmpty();
+            // Verify we get some kind of metadata
+            assertThat(item.getDescription()).isNotEmpty();
+            assertThat(item.getAuthor()).isNotEmpty();
+        }
 
         // Reset with a different comic
-        subject = getSubject("Garfield");
-        item = new ComicItem();
-        subject.updateComicMetadata(item);
+        try (GoComics subject = getSubject("Garfield")) {
+            ComicItem item = new ComicItem();
+            subject.updateComicMetadata(item);
 
-        // Should mention Jim Davis somewhere in the author line
-        assertThat(item.getAuthor()).contains("By ");
+            // Should mention Jim Davis somewhere in the author line
+            assertThat(item.getAuthor()).contains("By ");
+        }
 
         // One more popular comic
-        subject = getSubject("Peanuts");
-        item = new ComicItem();
-        subject.updateComicMetadata(item);
+        try (GoComics subject = getSubject("Peanuts")) {
+            ComicItem item = new ComicItem();
+            subject.updateComicMetadata(item);
 
-        // Should have author and description
-        assertThat(item.getAuthor()).isNotEmpty();
-        assertThat(item.getDescription()).isNotEmpty();
+            // Should have author and description
+            assertThat(item.getAuthor()).isNotEmpty();
+            assertThat(item.getDescription()).isNotEmpty();
+        }
     }
 }

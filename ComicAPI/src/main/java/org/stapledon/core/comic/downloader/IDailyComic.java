@@ -7,7 +7,7 @@ import java.time.LocalDate;
 /**
  * Interface that all Daily Comic retrievers must implement
  */
-public interface IDailyComic {
+public interface IDailyComic extends AutoCloseable {
     /**
      * Set the date for the retrieval
      *

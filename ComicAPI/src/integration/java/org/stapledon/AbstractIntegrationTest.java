@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +16,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.api.dto.auth.AuthRequest;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.stream.Stream;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -32,32 +39,78 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public abstract class AbstractIntegrationTest {
 
-    // Create integration cache directory and initial JSON files if they don't exist
-    static {
+    @BeforeAll
+    static void setup() {
         try {
-            java.nio.file.Path integrationCacheDir = java.nio.file.Paths.get("./integration-cache");
-            if (!java.nio.file.Files.exists(integrationCacheDir)) {
-                log.info("Creating integration cache directory: {}", integrationCacheDir);
-                java.nio.file.Files.createDirectories(integrationCacheDir);
-                
-                // Create empty JSON files if not exists
-                createEmptyJsonFile(integrationCacheDir.resolve("comics.json"));
-                createEmptyJsonFile(integrationCacheDir.resolve("users.json"));
-                createEmptyJsonFile(integrationCacheDir.resolve("preferences.json"));
-                createEmptyJsonFile(integrationCacheDir.resolve("bootstrap.json"));
-                
-                // Create test comic directory
-                java.nio.file.Path testComicDir = integrationCacheDir.resolve("TestComic");
+            Path integrationCacheDir = Paths.get("./integration-cache");
+            if (java.nio.file.Files.exists(integrationCacheDir)) {
+                try (Stream<Path> walk = Files.walk(integrationCacheDir)) {
+                    walk.sorted(java.util.Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+                }
+            }
+
+            log.info("Creating integration cache directory: {}", integrationCacheDir);
+            Files.createDirectories(integrationCacheDir);
+
+            // Create comics.json
+            String comicsJson = """
+            {
+              "items": {
+                "1": {
+                  "id": 1,
+                  "name": "Test Comic",
+                  "author": "Test Author",
+                  "oldest": "2023-01-01",
+                  "newest": "2024-05-19",
+                  "enabled": true,
+                  "description": "A comic for integration testing",
+                  "avatarAvailable": true,
+                  "source": "gocomics",
+                  "sourceIdentifier": "testcomic"
+                },
+                "2": {
+                  "id": 2,
+                  "name": "Another Test Comic",
+                  "author": "Another Test Author",
+                  "oldest": "2023-02-15",
+                  "newest": "2024-05-18",
+                  "enabled": true,
+                  "description": "Another comic for integration testing",
+                  "avatarAvailable": true,
+                  "source": "comicskingdom",
+                  "sourceIdentifier": "anothertestcomic"
+                }
+              }
+            }""";
+            try {
+                Files.writeString(integrationCacheDir.resolve("comics.json"), comicsJson);
+            } catch (IOException e) {
+                log.error("Failed to write comics.json: {}", e.getMessage(), e);
+            }
+
+            // Create empty users.json and preferences.json
+            createEmptyJsonFile(integrationCacheDir.resolve("users.json"));
+            createEmptyJsonFile(integrationCacheDir.resolve("preferences.json"));
+            createEmptyJsonFile(integrationCacheDir.resolve("bootstrap.json"));
+
+            // Create test comic directory and avatar
+            Path testComicDir = integrationCacheDir.resolve("TestComic");
+            try {
                 java.nio.file.Files.createDirectories(testComicDir);
+                java.nio.file.Files.write(testComicDir.resolve("avatar.png"), java.util.Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); // dummy avatar
                 java.nio.file.Files.createDirectories(testComicDir.resolve("2023"));
                 java.nio.file.Files.createDirectories(testComicDir.resolve("2024"));
+            } catch (java.io.IOException e) {
+                log.error("Failed to create test comic directory or avatar: {}", e.getMessage(), e);
             }
         } catch (java.io.IOException e) {
             log.error("Failed to create integration test directories: {}", e.getMessage(), e);
         }
     }
-    
-    private static void createEmptyJsonFile(java.nio.file.Path path) throws java.io.IOException {
+
+    private static void createEmptyJsonFile(Path path) throws java.io.IOException {
         if (!java.nio.file.Files.exists(path)) {
             log.info("Creating empty JSON file: {}", path);
             java.nio.file.Files.write(path, "{}".getBytes());

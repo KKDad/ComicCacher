@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,22 +37,32 @@ public class ComicsKingdom extends DailyComic {
     }
 
     @Override
-    protected Elements pickImages(Elements media) {
-        var elements = new Elements();
-        for (Element src : media) {
-            if (src.tagName().equals("meta") && src.attr("property").contains("og:image"))
-                elements.add(src);
-        }
-        webInspector.dumpMedia(elements);
-        // We get back 2-3 images. The 2nd image is the hi-res version - we'll select it.
-        if (elements.size() > 1) {
-            var e = new Elements();
-            e.add(elements.get(1));
-            return e;
+    protected Optional<String> extractComicImage(String comicUrl) {
+        try {
+            Document doc = Jsoup.connect(comicUrl)
+                    .userAgent(USER_AGENT)
+                    .header("DNT", "1")
+                    .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
+                    .timeout(TIMEOUT)
+                    .get();
 
+            // ComicsKingdom often uses a meta tag for the image
+            Elements metaTags = doc.select("meta[property=og:image]");
+            if (!metaTags.isEmpty()) {
+                // We get back 2-3 images. The 2nd image is the hi-res version - we'll select it.
+                if (metaTags.size() > 1) {
+                    return Optional.ofNullable(metaTags.get(1).attr("content"));
+                }
+                return Optional.ofNullable(metaTags.first().attr("content"));
+            }
+            return Optional.empty();
+        } catch (IOException e) {
+            log.error("Error extracting comic image for {}: {}", comicUrl, e.getMessage());
+            return Optional.empty();
         }
-        return elements;
     }
+
+
 
     /**
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
@@ -65,6 +76,10 @@ public class ComicsKingdom extends DailyComic {
     }
 
     @Override
+    public void close() {
+        // No WebDriver to close for ComicsKingdom
+    }
+
     public void updateComicMetadata(ComicItem comicItem) {
         try {
             var url = String.format(ABOUT_SITE_STRING, this.comicName.replace(' ', '-'));
@@ -90,7 +105,7 @@ public class ComicsKingdom extends DailyComic {
                 if (featureAvatars == null)
                     log.error("Unable to determine site avatar");
                 else {
-                    cacheImage(featureAvatars, avatarCached.getAbsolutePath());
+                    cacheImage(featureAvatars.attr("abs:src"), avatarCached.getAbsolutePath());
                     log.trace("Avatar has been cached ");
                 }
             }

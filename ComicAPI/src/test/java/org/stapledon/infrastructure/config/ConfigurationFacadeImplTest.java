@@ -140,7 +140,7 @@ class ConfigurationFacadeImplTest {
         String path = configFacade.getConfigPath("test.json");
         
         // Assert
-        assertThat(path).isEqualTo(configRoot.getAbsolutePath() + "/test.json");
+        assertThat(path).isEqualTo(configRoot.getAbsolutePath() + File.separator + "test.json");
     }
     
     @Test

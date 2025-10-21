@@ -73,7 +73,10 @@ dependencies {
 	implementation "com.google.guava:guava:${guavaVersion}"
 	implementation "org.jsoup:jsoup:${jsoupVersion}"
 
-	
+	// Selenium dependencies
+	implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
+	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
+
 	// Spring Boot starters - use managed versions
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -102,6 +105,7 @@ dependencies {
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+
 }
 
 tasks.withType(Test) {
@@ -109,11 +113,11 @@ tasks.withType(Test) {
 	systemProperty 'spring.profiles.active', 'test'
 }
 
-bootRun  {
-	main = "org.stapledon.ComicApiApplication"
-	
-	// Allow command-line arguments to override system properties
-	// This ensures bootRun will respect spring.profiles.active when specified via --args
+bootRun {
+    mainClass = "org.stapledon.ComicApiApplication"
+
+    // Allow command-line arguments to override system properties
+    // This ensures bootRun will respect spring.profiles.active when specified via --args
 	if (project.hasProperty('args')) {
 		args project.args.split(',')
 	} else {

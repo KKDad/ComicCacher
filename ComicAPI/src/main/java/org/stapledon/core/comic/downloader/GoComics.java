@@ -13,10 +13,81 @@ import java.time.format.DateTimeFormatter;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import java.time.Duration;
+import java.util.Random;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import java.time.Duration;
+import java.util.Random;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 @Slf4j
-public class GoComics extends DailyComic {
+public class GoComics extends DailyComic implements AutoCloseable {
+
+    private WebDriver driver;
+    private Random random = new Random();
+    private List<String> userAgents = Arrays.asList(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/108.0.1462.46 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/108.0"
+    );
+
+    private String getRandomUserAgent() {
+        return userAgents.get(random.nextInt(userAgents.size()));
+    }
+
+    private void initializeWebDriver() {
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        // options.addArguments("--headless"); // Removed for full browser
+        options.addArguments("--disable-gpu");
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--user-agent=" + getRandomUserAgent());
+        options.setExperimentalOption("excludeSwitches", Arrays.asList("enable-automation"));
+        options.setExperimentalOption("useAutomationExtension", false);
+
+        driver = new ChromeDriver(options);
+    }
+
+    private void quitWebDriver() {
+        if (driver != null) {
+            driver.quit();
+            driver = null;
+        }
+    }
+
+    @Override
+    public void close() {
+        quitWebDriver();
+    }
+
     public GoComics(WebInspector inspector) {
         super(inspector, "[src]");
+        initializeWebDriver(); // Initialize WebDriver in constructor
     }
 
 
@@ -64,12 +135,16 @@ public class GoComics extends DailyComic {
             String url = this.generateSiteURL();
             log.info("Getting comic metadata from {}", url);
 
-            Document doc = Jsoup.connect(url)
-                    .userAgent(USER_AGENT)
-                    .header("DNT", "1")
-                    .header("Accept", "text/html,application/xhtml+xml,application/xml")
-                    .timeout(TIMEOUT)
-                    .get();
+            driver.get(url);
+
+            // Add random delay to simulate human behavior
+            Thread.sleep(random.nextInt(2000) + 1000); // 1-3 seconds delay
+
+            // Execute JavaScript to spoof navigator.webdriver
+            ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
+
+            // Get the page source after JavaScript execution
+            Document doc = Jsoup.parse(driver.getPageSource());
 
             // Set default values in case extraction fails
             comicItem.setDescription("A comic strip published on GoComics");
@@ -89,7 +164,8 @@ public class GoComics extends DailyComic {
                 // Try to find badge image in HTML using different potential CSS classes
                 Element badgeImage = doc.select("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]").first();
                 if (badgeImage != null) {
-                    comicItem.setAvatarAvailable(cacheImage(badgeImage, avatarCached.getAbsolutePath()));
+                    // Use the new cacheImage method that accepts a URL string
+                    comicItem.setAvatarAvailable(cacheImage(badgeImage.attr("abs:src"), avatarCached.getAbsolutePath()));
                     log.trace("Avatar has been cached");
                 }
             }
@@ -212,81 +288,42 @@ public class GoComics extends DailyComic {
         return "Creator of " + formattedName;
     }
 
-    /**
-     * Determines which links represent the comic image that we should cache
-     *
-     * @param media list of image links to choose from
-     */
     @Override
-    protected Elements pickImages(Elements media) {
-        var elements = new Elements();
+    protected Optional<String> extractComicImage(String comicUrl) {
+        try {
+            driver.get(comicUrl);
 
-        // First try: Look for images from either the old or new domain patterns
-        for (Element src : media) {
-            if (src.tagName().equals("img") &&
-                (src.attr("abs:src").contains("assets.amuniversal.com") ||
-                 src.attr("abs:src").contains("featureassets.gocomics.com"))) {
-                elements.add(src);
-            }
-        }
+            // Add random delay to simulate human behavior
+            Thread.sleep(random.nextInt(2000) + 1000); // 1-3 seconds delay
 
-        // Second try: Look for images with certain classes or in specific containers
-        if (elements.isEmpty()) {
-            for (Element src : media) {
-                if (src.tagName().equals("img")) {
-                    // Check for images in containers with specific class names
-                    if (src.parent() != null &&
-                        (src.parent().className().contains("comic") ||
-                         src.parent().className().contains("ShowComicViewer"))) {
-                        elements.add(src);
-                    }
-                    // Check for images that are large enough to likely be the comic
-                    else if (src.hasAttr("width") && src.hasAttr("height")) {
-                        try {
-                            int width = Integer.parseInt(src.attr("width"));
-                            int height = Integer.parseInt(src.attr("height"));
-                            if (width > 400 && height > 200) {
-                                elements.add(src);
-                            }
-                        } catch (NumberFormatException ignored) {
-                            // If we can't parse the dimensions, just ignore this element
-                        }
-                    }
-                }
-            }
-        }
+            // Execute JavaScript to spoof navigator.webdriver
+            ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
 
-        log.debug("Found {} potential comic images", elements.size());
-        webInspector.dumpMedia(elements);
+            // Wait for the comic image to be present
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("img.img-fluid.item-comic-image, img.comic-image, div.comic__image img")));
 
-        // If we have multiple images, try to find the highest resolution one
-        if (elements.size() > 1) {
-            // Try to find the image with the largest dimensions
-            Element largest = elements.first();
-            int maxSize = 0;
+            // Extract image URL
+            List<org.openqa.selenium.WebElement> imgElements = driver.findElements(By.cssSelector("img.img-fluid.item-comic-image, img.comic-image, div.comic__image img"));
 
-            for (Element img : elements) {
-                try {
-                    if (img.hasAttr("width") && img.hasAttr("height")) {
-                        int width = Integer.parseInt(img.attr("width"));
-                        int height = Integer.parseInt(img.attr("height"));
-                        int size = width * height;
-
-                        if (size > maxSize) {
-                            maxSize = size;
-                            largest = img;
-                        }
-                    }
-                } catch (NumberFormatException ignored) {
-                    // Continue to next element if we can't parse dimensions
-                }
+            if (!imgElements.isEmpty()) {
+                return Optional.ofNullable(imgElements.get(0).getAttribute("src"));
             }
 
-            var e = new Elements();
-            e.add(largest);
-            return e;
-        }
+            // Fallback to meta tag if direct image not found
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("meta[property=og:image]")));
+            List<org.openqa.selenium.WebElement> metaTags = driver.findElements(By.cssSelector("meta[property=og:image]"));
 
-        return elements;
+            if (!metaTags.isEmpty()) {
+                return Optional.ofNullable(metaTags.get(0).getAttribute("content"));
+            }
+
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error extracting comic image using WebDriver: {}", e.getMessage(), e);
+            return Optional.empty();
+        }
     }
+
+
 }

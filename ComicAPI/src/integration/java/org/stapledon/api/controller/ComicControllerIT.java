@@ -32,22 +32,22 @@ class ComicControllerIT extends AbstractIntegrationTest {
 
     private static final String API_BASE_PATH = "/api/v1";
     private static final String COMICS_PATH = API_BASE_PATH + "/comics";
-
-    static {
-        // Create necessary directories for test
-        try {
-            Path basePath = Paths.get("/tmp/comicapi-integration-test/cache");
-            if (!Files.exists(basePath)) {
-                Files.createDirectories(basePath);
-            }
-
-            // Create subdirectories for comics
-            Files.createDirectories(Paths.get("/tmp/comicapi-integration-test/cache", "TestComic"));
-            Files.createDirectories(Paths.get("/tmp/comicapi-integration-test/cache", "TestComic", "2025"));
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create test directories", e);
-        }
-    }
+//
+//    static {
+//        // Create necessary directories for test
+//        try {
+//            Path basePath = Paths.get("/tmp/comicapi-integration-test/cache");
+//            if (!Files.exists(basePath)) {
+//                Files.createDirectories(basePath);
+//            }
+//
+//            // Create subdirectories for comics
+//            Files.createDirectories(Paths.get("/tmp/comicapi-integration-test/cache", "TestComic"));
+//            Files.createDirectories(Paths.get("/tmp/comicapi-integration-test/cache", "TestComic", "2025"));
+//        } catch (IOException e) {
+//            throw new RuntimeException("Failed to create test directories", e);
+//        }
+//    }
 
 
     @Test

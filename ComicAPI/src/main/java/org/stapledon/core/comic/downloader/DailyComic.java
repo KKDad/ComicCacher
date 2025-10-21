@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,6 +45,8 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     LocalDate currentDate;
 
     protected abstract String generateSiteURL();
+
+    protected abstract Optional<String> extractComicImage(String comicUrl);
 
 
     DailyComic(WebInspector inspector, String elementSelector) {
@@ -81,19 +84,15 @@ public abstract class DailyComic implements IDailyComic, ICachable {
      * @param destinationFile    - Fully qualified name of the file to save
      * @return True if successful
      */
-    boolean cacheImage(Element sourceImageElement, String destinationFile) throws IOException {
-        Preconditions.checkNotNull(sourceImageElement, "sourceImageElement cannot be null");
+    boolean cacheImage(String imageUrl, String destinationFile) throws IOException {
+        Preconditions.checkNotNull(imageUrl, "imageUrl cannot be null");
         Preconditions.checkNotNull(destinationFile, "destinationFile cannot be null");
 
         // Always ensure that the destination directory exists before continuing
         ensureCacheDirectory();
 
         try {
-            URL urlImage = switch (sourceImageElement.tagName()) {
-                case "src", "img" -> new URL(sourceImageElement.attr(WebInspectorImpl.ABS_SRC));
-                case "meta" -> new URL(sourceImageElement.attr(WebInspectorImpl.CONTENT));
-                default -> throw new UnsupportedOperationException("Unsupported tag: " + sourceImageElement.tagName());
-            };
+            URL urlImage = new URL(imageUrl);
 
             log.info("Downloading Image from: {}", urlImage);
 
@@ -134,23 +133,13 @@ public abstract class DailyComic implements IDailyComic, ICachable {
             String url = this.generateSiteURL();
             log.debug("Fetching {}", url);
 
-            Document doc = Jsoup.connect(url)
-                    .userAgent(USER_AGENT)
-                    .header("DNT", "1")
-                    .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
-                    .timeout(TIMEOUT)
-                    .get();
-            Elements media = doc.select(elementSelector);
+            Optional<String> imageUrl = extractComicImage(url);
 
-            Elements image = this.pickImages(media);
-            if (image == null || image.isEmpty()) {
-                log.error("No images was selected from the media");
-                log.error("Site:             {}", url);
-                log.error("Element Selector: {}", elementSelector);
-                webInspector.dumpMedia(media);
+            if (imageUrl.isEmpty()) {
+                log.error("No comic image found for {}", url);
                 return false;
             }
-            return cacheImage(image.first(), f.getAbsolutePath());
+            return cacheImage(imageUrl.get(), f.getAbsolutePath());
 
         } catch (IOException ioe) {
             log.error("Failed to cache comic {}: {}", getComic(), ioe.getMessage());
@@ -158,7 +147,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
         }
     }
 
-    protected abstract Elements pickImages(Elements media);
+
 
     private String generateCachedName() {
         ensureCacheDirectory();
