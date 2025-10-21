@@ -26,7 +26,7 @@ public class ComicJobExecutionListener implements JobExecutionListener {
         log.info("Job ID: {}", jobExecution.getId());
         log.info("Job Parameters: {}", jobExecution.getJobParameters());
         log.info("Start Time: {}", jobExecution.getStartTime());
-        log.info("==========================================")
+        log.info("==========================================");
     }
 
     @Override
