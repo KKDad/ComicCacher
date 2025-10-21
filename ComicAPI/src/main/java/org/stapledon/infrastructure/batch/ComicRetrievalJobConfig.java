@@ -116,16 +116,13 @@ public class ComicRetrievalJobConfig {
      */
     @Bean
     public ItemWriter<ComicDownloadResult> comicResultWriter() {
-        return new ItemWriter<ComicDownloadResult>() {
-            @Override
-            public void write(List<? extends ComicDownloadResult> results) throws Exception {
-                for (ComicDownloadResult result : results) {
-                    if (result.isSuccessful()) {
-                        log.info("Successfully processed: {}", result.getRequest().getComicName());
-                    } else {
-                        log.error("Failed to process: {} - {}", 
-                            result.getRequest().getComicName(), result.getErrorMessage());
-                    }
+        return chunk -> {
+            for (ComicDownloadResult result : chunk.getItems()) {
+                if (result.isSuccessful()) {
+                    log.info("Successfully processed: {}", result.getRequest().getComicName());
+                } else {
+                    log.error("Failed to process: {} - {}",
+                        result.getRequest().getComicName(), result.getErrorMessage());
                 }
             }
         };
@@ -144,7 +141,7 @@ public class ComicRetrievalJobConfig {
      */
     private List<ComicDownloadRequest> createComicRequests() {
         LocalDate targetDate = LocalDate.now();
-        ComicConfig config = configurationFacade.getComicConfig();
+        ComicConfig config = configurationFacade.loadComicConfig();
         
         return config.getComics().stream()
                 .map(comic -> ComicDownloadRequest.builder()

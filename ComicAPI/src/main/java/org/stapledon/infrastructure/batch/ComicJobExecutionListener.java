@@ -25,16 +25,15 @@ public class ComicJobExecutionListener implements JobExecutionListener {
         log.info("Starting Comic Retrieval Job: {}", jobExecution.getJobInstance().getJobName());
         log.info("Job ID: {}", jobExecution.getId());
         log.info("Job Parameters: {}", jobExecution.getJobParameters());
-        log.info("Start Time: {}", LocalDateTime.ofInstant(
-            jobExecution.getStartTime().toInstant(), ZoneId.systemDefault()));
-        log.info("==========================================");
+        log.info("Start Time: {}", jobExecution.getStartTime());
+        log.info("==========================================")
     }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
         Duration duration = Duration.between(
-            jobExecution.getStartTime().toInstant(),
-            jobExecution.getEndTime().toInstant()
+            jobExecution.getStartTime(),
+            jobExecution.getEndTime()
         );
 
         log.info("==========================================");
@@ -44,10 +43,8 @@ public class ComicJobExecutionListener implements JobExecutionListener {
         log.info("Exit Code: {}", jobExecution.getExitStatus().getExitCode());
         log.info("Exit Description: {}", jobExecution.getExitStatus().getExitDescription());
         log.info("Duration: {} seconds", duration.getSeconds());
-        log.info("Start Time: {}", LocalDateTime.ofInstant(
-            jobExecution.getStartTime().toInstant(), ZoneId.systemDefault()));
-        log.info("End Time: {}", LocalDateTime.ofInstant(
-            jobExecution.getEndTime().toInstant(), ZoneId.systemDefault()));
+        log.info("Start Time: {}", jobExecution.getStartTime());
+        log.info("End Time: {}", jobExecution.getEndTime());
 
         // Log step execution details
         for (StepExecution stepExecution : jobExecution.getStepExecutions()) {
@@ -66,9 +63,9 @@ public class ComicJobExecutionListener implements JobExecutionListener {
 
     private void logStepDetails(StepExecution stepExecution) {
         Duration stepDuration = Duration.between(
-            stepExecution.getStartTime().toInstant(),
-            stepExecution.getEndTime() != null ? stepExecution.getEndTime().toInstant() : 
-                java.time.Instant.now()
+            stepExecution.getStartTime(),
+            stepExecution.getEndTime() != null ? stepExecution.getEndTime() :
+                LocalDateTime.now()
         );
 
         log.info("--- Step Details ---");

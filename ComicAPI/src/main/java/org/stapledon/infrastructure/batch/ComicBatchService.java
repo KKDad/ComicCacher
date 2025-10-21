@@ -124,8 +124,7 @@ public class ComicBatchService implements CommandLineRunner {
                 .flatMap(instance -> jobExplorer.getJobExecutions(instance).stream())
                 .filter(execution -> {
                     if (execution.getStartTime() == null) return false;
-                    LocalDate executionDate = execution.getStartTime().toInstant()
-                            .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                    LocalDate executionDate = execution.getStartTime().toLocalDate();
                     return !executionDate.isBefore(startDate) && !executionDate.isAfter(endDate);
                 })
                 .sorted((e1, e2) -> e2.getStartTime().compareTo(e1.getStartTime()))
@@ -170,7 +169,7 @@ public class ComicBatchService implements CommandLineRunner {
         double avgDurationMinutes = executions.stream()
                 .filter(e -> e.getStartTime() != null && e.getEndTime() != null)
                 .mapToLong(e -> java.time.Duration.between(
-                    e.getStartTime().toInstant(), e.getEndTime().toInstant()).toMinutes())
+                    e.getStartTime(), e.getEndTime()).toMinutes())
                 .average()
                 .orElse(0.0);
         

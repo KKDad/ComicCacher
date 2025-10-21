@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.stapledon.api.model.ApiResponse;
@@ -117,7 +118,7 @@ public class BatchJobController {
             
             return ResponseBuilder.ok(result, "Job triggered successfully");
         } catch (Exception e) {
-            return ResponseBuilder.error(500, "Failed to trigger job: " + e.getMessage());
+            return ResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to trigger job: " + e.getMessage());
         }
     }
 
@@ -132,17 +133,15 @@ public class BatchJobController {
         map.put("exitCode", execution.getExitStatus().getExitCode());
         
         if (execution.getStartTime() != null) {
-            map.put("startTime", LocalDateTime.ofInstant(
-                execution.getStartTime().toInstant(), ZoneId.systemDefault()));
+            map.put("startTime", execution.getStartTime());
         }
-        
+
         if (execution.getEndTime() != null) {
-            map.put("endTime", LocalDateTime.ofInstant(
-                execution.getEndTime().toInstant(), ZoneId.systemDefault()));
-            
+            map.put("endTime", execution.getEndTime());
+
             long durationSeconds = java.time.Duration.between(
-                execution.getStartTime().toInstant(),
-                execution.getEndTime().toInstant()
+                execution.getStartTime(),
+                execution.getEndTime()
             ).getSeconds();
             map.put("durationSeconds", durationSeconds);
         }
@@ -189,13 +188,11 @@ public class BatchJobController {
         map.put("rollbackCount", stepExecution.getRollbackCount());
         
         if (stepExecution.getStartTime() != null) {
-            map.put("startTime", LocalDateTime.ofInstant(
-                stepExecution.getStartTime().toInstant(), ZoneId.systemDefault()));
+            map.put("startTime", stepExecution.getStartTime());
         }
-        
+
         if (stepExecution.getEndTime() != null) {
-            map.put("endTime", LocalDateTime.ofInstant(
-                stepExecution.getEndTime().toInstant(), ZoneId.systemDefault()));
+            map.put("endTime", stepExecution.getEndTime());
         }
         
         return map;
