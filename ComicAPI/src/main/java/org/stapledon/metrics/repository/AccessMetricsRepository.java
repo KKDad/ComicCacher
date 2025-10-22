@@ -3,7 +3,6 @@ package org.stapledon.metrics.repository;
 import com.google.gson.Gson;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
@@ -23,9 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Repository for access metrics persistence.
  * Loads and saves access metrics to access-metrics.json in the cache directory.
+ * Configured as a bean in MetricsConfiguration when metrics are enabled.
  */
 @Slf4j
-@Component
 public class AccessMetricsRepository {
 
     private final Gson gson;

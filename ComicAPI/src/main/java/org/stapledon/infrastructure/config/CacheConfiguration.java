@@ -2,11 +2,7 @@ package org.stapledon.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
-import org.stapledon.metrics.repository.AccessMetricsRepository;
-import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -14,14 +10,16 @@ import java.nio.file.Paths;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Configuration for cache directory setup.
+ * Note: Metrics-related beans have been moved to MetricsConfiguration.
+ */
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class CacheConfiguration {
 
     private final CacheProperties cacheProperties;
-    private final ComicStorageFacade storageFacade;
-    private final AccessMetricsRepository accessMetricsRepository;
 
     @Bean(name = "cacheLocation")
     public String cacheLocation() {
@@ -39,14 +37,7 @@ public class CacheConfiguration {
         log.warn("Serving from {}", normalizedPath);
         return normalizedPath;
     }
-    
-    @Bean
-    @Primary
-    public AccessMetricsCollector accessMetricsCollector() {
-        // Create the collector that delegates to the storage facade and metrics repository
-        return new AccessMetricsCollector(cacheLocation(), storageFacade, accessMetricsRepository);
-    }
-    
+
     /**
      * Normalizes a path for the current OS to prevent issues like "C:/" on non-Windows systems
      */

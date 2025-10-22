@@ -1,7 +1,6 @@
 package org.stapledon.metrics.collector;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
 import org.stapledon.infrastructure.config.JsonConfigWriter;
@@ -18,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Collector for storage metrics.
  * Scans the cache directory and computes storage utilization statistics.
+ * Configured as a bean in MetricsConfiguration when metrics are enabled.
  */
 @Slf4j
-@Component
 public class StorageMetricsCollector {
     private final JsonConfigWriter statsUpdater;
     private final String cacheDirectory;

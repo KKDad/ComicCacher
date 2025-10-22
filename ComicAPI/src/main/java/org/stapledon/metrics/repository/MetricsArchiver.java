@@ -3,7 +3,6 @@ package org.stapledon.metrics.repository;
 import com.google.gson.Gson;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
@@ -26,9 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Service for archiving daily metrics snapshots.
  * Saves historical snapshots to metrics-history/ directory and cleans up old archives.
+ * Configured as a bean in MetricsConfiguration when metrics are enabled.
  */
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class MetricsArchiver {
 
