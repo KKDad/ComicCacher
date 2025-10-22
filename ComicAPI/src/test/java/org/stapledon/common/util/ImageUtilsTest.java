@@ -16,7 +16,7 @@ class ImageUtilsTest {
 
     @Test
     void getImageDtoAvatar() throws IOException {
-        Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
+        Path path = Paths.get(AccessMetricsCollectorTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
         assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");
@@ -27,7 +27,7 @@ class ImageUtilsTest {
 
     @Test
     void getImageDtoStrip() throws IOException {
-        Path path = Paths.get(CacheUtilsTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
+        Path path = Paths.get(AccessMetricsCollectorTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
         assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");

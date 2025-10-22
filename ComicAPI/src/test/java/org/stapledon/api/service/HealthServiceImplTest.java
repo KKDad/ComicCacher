@@ -83,11 +83,11 @@ class HealthServiceImplTest {
         Map<String, Double> hitRatios = new HashMap<>();
         hitRatios.put("Comic1", 0.8);
         hitRatios.put("Comic2", 0.9);
-        
-        when(mockCacheUtils.getAccessCounts()).thenReturn(accessCounts);
-        when(mockCacheUtils.getLastAccessTimes()).thenReturn(lastAccessTimes);
-        when(mockCacheUtils.getAverageAccessTimes()).thenReturn(avgAccessTimes);
-        when(mockCacheUtils.getHitRatios()).thenReturn(hitRatios);
+
+        when(mockAccessMetricsCollector.getAccessCounts()).thenReturn(accessCounts);
+        when(mockAccessMetricsCollector.getLastAccessTimes()).thenReturn(lastAccessTimes);
+        when(mockAccessMetricsCollector.getAverageAccessTimes()).thenReturn(avgAccessTimes);
+        when(mockAccessMetricsCollector.getHitRatios()).thenReturn(hitRatios);
     }
     
     @Test

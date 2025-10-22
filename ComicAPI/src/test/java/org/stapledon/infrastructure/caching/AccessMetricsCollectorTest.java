@@ -46,7 +46,7 @@ public class AccessMetricsCollectorTest {
 
     @Test
     void findOldestTest() {
-        File result = cacheUtils.findOldest(comicItem);
+        File result = accessMetricsCollector.findOldest(comicItem);
 
         assertThat(result).isNotNull();
         assertThat(result.getAbsolutePath()).contains("2008-01-10");
@@ -54,7 +54,7 @@ public class AccessMetricsCollectorTest {
 
     @Test
     void findNewestTest() {
-        File result = cacheUtils.findNewest(comicItem);
+        File result = accessMetricsCollector.findNewest(comicItem);
 
         assertThat(result).isNotNull();
         assertThat(result.getAbsolutePath()).contains("2019-03-22");
@@ -63,7 +63,7 @@ public class AccessMetricsCollectorTest {
     @Test
     void findPreviousTest() {
         LocalDate dt = LocalDate.of(2010, 6, 29);
-        File result = cacheUtils.findPrevious(comicItem, dt);
+        File result = accessMetricsCollector.findPrevious(comicItem, dt);
 
         assertThat(result).isNotNull();
         assertThat(result.getAbsolutePath()).contains("2010-06-28");
@@ -72,7 +72,7 @@ public class AccessMetricsCollectorTest {
     @Test
     void findNextTest() {
         LocalDate dt = LocalDate.of(2008, 1, 11);
-        File result = cacheUtils.findNext(comicItem, dt);
+        File result = accessMetricsCollector.findNext(comicItem, dt);
 
         assertThat(result).isNotNull();
         assertThat(result.getAbsolutePath()).contains("2010-06-28");

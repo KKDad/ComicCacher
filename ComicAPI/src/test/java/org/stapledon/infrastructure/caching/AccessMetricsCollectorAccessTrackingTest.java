@@ -79,28 +79,28 @@ class AccessMetricsCollectorAccessTrackingTest {
     @Test
     void findOldest_shouldTrackAccess() {
         // Act - find oldest comic for Dilbert
-        cacheUtils.findOldest(testComic1);
-        
+        accessMetricsCollector.findOldest(testComic1);
+
         // Assert
-        Map<String, Integer> accessCounts = cacheUtils.getAccessCounts();
-        
+        Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
+
         // Verify access was tracked
         assertTrue(accessCounts.containsKey("DilbertTest"));
         assertEquals(1, accessCounts.get("DilbertTest").intValue());
-        
+
         // Verify last access time was recorded
-        Map<String, String> lastAccessTimes = cacheUtils.getLastAccessTimes();
+        Map<String, String> lastAccessTimes = accessMetricsCollector.getLastAccessTimes();
         assertTrue(lastAccessTimes.containsKey("DilbertTest"));
         assertNotNull(lastAccessTimes.get("DilbertTest"));
     }
-    
+
     @Test
     void findNewest_shouldTrackAccess() {
         // Act - find newest comic for Calvin
-        cacheUtils.findNewest(testComic2);
-        
+        accessMetricsCollector.findNewest(testComic2);
+
         // Assert
-        Map<String, Integer> accessCounts = cacheUtils.getAccessCounts();
+        Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
         
         // Verify access was tracked
         assertTrue(accessCounts.containsKey("CalvinTest"));
@@ -110,12 +110,12 @@ class AccessMetricsCollectorAccessTrackingTest {
     @Test
     void multipleFindCalls_shouldIncrementAccessCount() {
         // Act - multiple find calls for same comic
-        cacheUtils.findOldest(testComic1);
-        cacheUtils.findNewest(testComic1);
-        cacheUtils.findOldest(testComic1);
-        
+        accessMetricsCollector.findOldest(testComic1);
+        accessMetricsCollector.findNewest(testComic1);
+        accessMetricsCollector.findOldest(testComic1);
+
         // Assert
-        Map<String, Integer> accessCounts = cacheUtils.getAccessCounts();
+        Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
         
         // Verify access count is correct
         assertEquals(3, accessCounts.get("DilbertTest").intValue());
@@ -125,17 +125,17 @@ class AccessMetricsCollectorAccessTrackingTest {
     void findNext_shouldTrackAccess() {
         // Act - find next comic
         LocalDate firstDate = LocalDate.of(2023, 1, 1);
-        cacheUtils.findNext(testComic1, firstDate);
+        accessMetricsCollector.findNext(testComic1, firstDate);
 
         // Assert
-        Map<String, Integer> accessCounts = cacheUtils.getAccessCounts();
+        Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
 
         // Verify access was tracked
         assertTrue(accessCounts.containsKey("DilbertTest"));
         assertEquals(1, accessCounts.get("DilbertTest").intValue());
 
         // Verify hit ratio tracking
-        Map<String, Double> hitRatios = cacheUtils.getHitRatios();
+        Map<String, Double> hitRatios = accessMetricsCollector.getHitRatios();
         assertTrue(hitRatios.containsKey("DilbertTest"));
         // Access is a hit
         assertEquals(1.0, hitRatios.get("DilbertTest"), 0.001);
@@ -145,10 +145,10 @@ class AccessMetricsCollectorAccessTrackingTest {
     void findPrevious_shouldTrackAccess() {
         // Act - find previous comic
         LocalDate lastDate = LocalDate.of(2022, 6, 10);
-        cacheUtils.findPrevious(testComic2, lastDate);
+        accessMetricsCollector.findPrevious(testComic2, lastDate);
 
         // Assert
-        Map<String, Integer> accessCounts = cacheUtils.getAccessCounts();
+        Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
 
         // Verify access was tracked
         assertTrue(accessCounts.containsKey("CalvinTest"));
@@ -159,12 +159,12 @@ class AccessMetricsCollectorAccessTrackingTest {
     void unsuccessfulFind_shouldTrackAsMiss() {
         // Configure mock to return empty for a specific date
         LocalDate beyondAvailable = LocalDate.of(2023, 12, 31);
-        
+
         // Act - find next comic with date beyond what's available
-        cacheUtils.findNext(testComic1, beyondAvailable);
+        accessMetricsCollector.findNext(testComic1, beyondAvailable);
 
         // Assert
-        Map<String, Double> hitRatios = cacheUtils.getHitRatios();
+        Map<String, Double> hitRatios = accessMetricsCollector.getHitRatios();
 
         // Verify it was tracked correctly as a miss (0.0 ratio)
         assertTrue(hitRatios.containsKey("DilbertTest"));
@@ -174,13 +174,13 @@ class AccessMetricsCollectorAccessTrackingTest {
     @Test
     void accessTracking_shouldMaintainSeparateStatsPerComic() {
         // Act - find for both comics
-        cacheUtils.findOldest(testComic1);
-        cacheUtils.findNewest(testComic1);
-        
-        cacheUtils.findOldest(testComic2);
-        
+        accessMetricsCollector.findOldest(testComic1);
+        accessMetricsCollector.findNewest(testComic1);
+
+        accessMetricsCollector.findOldest(testComic2);
+
         // Assert
-        Map<String, Integer> accessCounts = cacheUtils.getAccessCounts();
+        Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
         
         // Verify each comic has separate counters
         assertEquals(2, accessCounts.get("DilbertTest").intValue());
@@ -190,11 +190,11 @@ class AccessMetricsCollectorAccessTrackingTest {
     @Test
     void averageAccessTimes_shouldBeTracked() {
         // Act
-        cacheUtils.findOldest(testComic1);
-        cacheUtils.findNewest(testComic1);
-        
+        accessMetricsCollector.findOldest(testComic1);
+        accessMetricsCollector.findNewest(testComic1);
+
         // Assert
-        Map<String, Double> avgTimes = cacheUtils.getAverageAccessTimes();
+        Map<String, Double> avgTimes = accessMetricsCollector.getAverageAccessTimes();
         
         // Verify average time is tracked
         assertTrue(avgTimes.containsKey("DilbertTest"));
