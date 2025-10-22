@@ -10,7 +10,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.stapledon.infrastructure.config.properties.DailyRunnerProperties;
+import org.stapledon.common.config.properties.DailyRunnerProperties;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

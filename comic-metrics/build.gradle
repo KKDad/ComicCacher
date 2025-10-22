@@ -33,9 +33,6 @@ dependencies {
 	// comic-common dependency for shared types
 	implementation project(':comic-common')
 
-	// ComicAPI for infrastructure (temporary - TODO: extract to separate module)
-	implementation project(':ComicAPI')
-
 	// Gson for JSON serialization
 	implementation "com.google.code.gson:gson:${gsonVersion}"
 

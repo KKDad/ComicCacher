@@ -2,7 +2,7 @@ package org.stapledon.engine.downloader;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.WebInspector;
 
 import java.util.Optional;
 

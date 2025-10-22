@@ -23,6 +23,7 @@ ext {
 	lombokVersion = '1.18.42'
 	gsonVersion = '2.11.0'
 	guavaVersion = '33.5.0-jre'
+	jsoupVersion = '1.21.2'
 }
 
 repositories {
@@ -35,6 +36,9 @@ dependencies {
 
 	// Guava for utilities
 	api "com.google.guava:guava:${guavaVersion}"
+
+	// Jsoup for HTML parsing (WebInspector)
+	api "org.jsoup:jsoup:${jsoupVersion}"
 
 	// Spring Boot for configuration properties
 	api 'org.springframework.boot:spring-boot-starter'

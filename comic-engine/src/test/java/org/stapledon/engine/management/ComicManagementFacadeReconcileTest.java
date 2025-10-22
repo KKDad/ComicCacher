@@ -23,8 +23,8 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.infrastructure.config.ConfigurationFacade;
 import org.stapledon.infrastructure.config.GoComicsBootstrap;
 import org.stapledon.infrastructure.config.KingComicsBootStrap;
-import org.stapledon.infrastructure.config.TaskExecutionTracker;
-import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
+import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
+import org.stapledon.common.config.properties.StartupReconcilerProperties;
 import org.stapledon.common.service.ComicStorageFacade;
 
 import java.time.LocalDate;

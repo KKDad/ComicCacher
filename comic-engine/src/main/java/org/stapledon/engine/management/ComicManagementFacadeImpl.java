@@ -14,8 +14,8 @@ import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.core.comic.service.RetrievalStatusService;
 import org.stapledon.infrastructure.config.ConfigurationFacade;
 import org.stapledon.infrastructure.config.IComicsBootstrap;
-import org.stapledon.infrastructure.config.TaskExecutionTracker;
-import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
+import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
+import org.stapledon.common.config.properties.StartupReconcilerProperties;
 import org.stapledon.common.service.ComicStorageFacade;
 
 import java.time.Duration;

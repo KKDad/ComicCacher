@@ -3,7 +3,7 @@ package org.stapledon.metrics.collector;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
-import org.stapledon.infrastructure.config.JsonConfigWriter;
+import org.stapledon.common.infrastructure.config.StatsWriter;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -21,12 +21,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class StorageMetricsCollector {
-    private final JsonConfigWriter statsUpdater;
+    private final StatsWriter statsUpdater;
     private final String cacheDirectory;
 
     private ImageCacheStats cacheStats;
 
-    public StorageMetricsCollector(@Qualifier("cacheLocation") String targetDirectory, JsonConfigWriter statsUpdater) {
+    public StorageMetricsCollector(@Qualifier("cacheLocation") String targetDirectory, StatsWriter statsUpdater) {
         this.cacheDirectory = targetDirectory;
         this.statsUpdater = statsUpdater;
     }

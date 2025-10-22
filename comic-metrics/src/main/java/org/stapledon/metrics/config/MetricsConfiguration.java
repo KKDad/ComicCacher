@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.stapledon.infrastructure.config.JsonConfigWriter;
+import org.stapledon.common.infrastructure.config.StatsWriter;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
@@ -79,9 +79,9 @@ public class MetricsConfiguration {
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
     public StorageMetricsCollector storageMetricsCollector(
             @Qualifier("cacheLocation") String cacheLocation,
-            JsonConfigWriter jsonConfigWriter) {
+            StatsWriter statsWriter) {
         log.debug("Creating StorageMetricsCollector");
-        return new StorageMetricsCollector(cacheLocation, jsonConfigWriter);
+        return new StorageMetricsCollector(cacheLocation, statsWriter);
     }
 
     /**

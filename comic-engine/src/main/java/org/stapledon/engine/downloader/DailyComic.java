@@ -7,9 +7,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.stapledon.core.comic.model.ComicCachingException;
-import org.stapledon.infrastructure.caching.ICachable;
-import org.stapledon.infrastructure.web.WebInspector;
-import org.stapledon.infrastructure.web.WebInspectorImpl;
+import org.stapledon.common.infrastructure.caching.ICachable;
+import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.WebInspectorImpl;
 
 import java.io.File;
 import java.io.FileNotFoundException;

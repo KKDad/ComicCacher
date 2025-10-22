@@ -6,7 +6,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.WebInspector;
 
 import java.io.InputStream;
 import java.net.URL;

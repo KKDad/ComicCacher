@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
-import org.stapledon.infrastructure.config.JsonConfigWriter;
+import org.stapledon.common.infrastructure.config.StatsWriter;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 
 import java.io.File;
@@ -33,7 +33,7 @@ class StorageMetricsCollectorTest {
     Path tempDir;
 
     @Mock
-    JsonConfigWriter mockStatsUpdater;
+    StatsWriter mockStatsUpdater;
 
     private StorageMetricsCollector cacheStatsUpdater;
     private File cacheRoot;
