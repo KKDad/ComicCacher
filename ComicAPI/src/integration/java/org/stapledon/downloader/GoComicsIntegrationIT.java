@@ -67,7 +67,7 @@ class GoComicsIntegrationIT {
         assertThat(result).isTrue();
         assertThat(expectedFile).exists();
         }
-    } // Added missing closing brace for ensureCacheTest()
+    }
 
     @Test
     void advanceTest() {

@@ -1,6 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
@@ -12,10 +11,10 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Configuration for Spring Batch processing.
- * Uses in-memory job repository for simplicity - can be changed to database later.
+ * Note: @EnableBatchProcessing is not used in Spring Boot 3.x as it disables auto-configuration.
+ * Spring Boot will automatically configure batch processing when spring-boot-starter-batch is present.
  */
 @Configuration
-@EnableBatchProcessing
 @RequiredArgsConstructor
 public class BatchConfiguration {
 

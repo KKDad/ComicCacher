@@ -59,6 +59,11 @@ public class GoComics extends DailyComic implements AutoCloseable {
     }
 
     private void initializeWebDriver() {
+        if (driver != null) {
+            return; // Already initialized
+        }
+
+        log.debug("Initializing WebDriver for GoComics downloader");
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         // options.addArguments("--headless"); // Removed for full browser
@@ -71,6 +76,15 @@ public class GoComics extends DailyComic implements AutoCloseable {
         options.setExperimentalOption("useAutomationExtension", false);
 
         driver = new ChromeDriver(options);
+    }
+
+    /**
+     * Ensures WebDriver is initialized before use (lazy initialization)
+     */
+    private void ensureWebDriverInitialized() {
+        if (driver == null) {
+            initializeWebDriver();
+        }
     }
 
     private void quitWebDriver() {
@@ -87,7 +101,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
 
     public GoComics(WebInspector inspector) {
         super(inspector, "[src]");
-        initializeWebDriver(); // Initialize WebDriver in constructor
+        // WebDriver initialization moved to lazy init - only create when actually needed
     }
 
 
@@ -132,6 +146,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
      */
     public void updateComicMetadata(ComicItem comicItem) {
         try {
+            ensureWebDriverInitialized();
+
             String url = this.generateSiteURL();
             log.info("Getting comic metadata from {}", url);
 
@@ -291,6 +307,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
     @Override
     protected Optional<String> extractComicImage(String comicUrl) {
         try {
+            ensureWebDriverInitialized();
+
             driver.get(comicUrl);
 
             // Add random delay to simulate human behavior

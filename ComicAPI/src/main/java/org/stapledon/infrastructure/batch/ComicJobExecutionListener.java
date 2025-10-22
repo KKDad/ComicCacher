@@ -3,11 +3,9 @@ package org.stapledon.infrastructure.batch;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.StepExecution;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
  * and metrics for comic retrieval batch jobs.
  */
 @Slf4j
-@Component
 public class ComicJobExecutionListener implements JobExecutionListener {
 
     @Override
