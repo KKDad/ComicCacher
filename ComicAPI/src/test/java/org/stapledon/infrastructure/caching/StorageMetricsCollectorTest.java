@@ -26,7 +26,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 
-class ImageCacheStatsUpdaterTest {
+class StorageMetricsCollectorTest {
 
     @TempDir
     Path tempDir;

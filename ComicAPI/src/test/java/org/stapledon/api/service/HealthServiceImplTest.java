@@ -12,8 +12,8 @@ import org.mockito.MockitoAnnotations;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
 import org.stapledon.api.dto.health.HealthStatus;
-import org.stapledon.infrastructure.caching.CacheUtils;
-import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
+import org.stapledon.metrics.collector.AccessMetricsCollector;
+import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.infrastructure.config.BuildVersion;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 

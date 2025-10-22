@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
+import org.stapledon.metrics.repository.AccessMetricsRepository;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Tests for the access tracking features of CacheUtils
  */
-class CacheUtilsAccessTrackingTest {
+class AccessMetricsCollectorAccessTrackingTest {
 
     @TempDir
     Path tempDir;

@@ -6,12 +6,12 @@ import static org.mockito.Mockito.mock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
+import org.stapledon.metrics.repository.AccessMetricsRepository;
 
 import java.io.File;
 import java.time.LocalDate;
 
-public class CacheUtilsTest {
+public class AccessMetricsCollectorTest {
 
     private CacheUtils cacheUtils;
     private ComicItem comicItem;

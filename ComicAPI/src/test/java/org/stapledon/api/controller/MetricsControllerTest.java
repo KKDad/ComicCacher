@@ -17,13 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
-import org.stapledon.api.dto.metrics.AccessMetricsData;
-import org.stapledon.api.dto.metrics.CombinedMetricsData;
+import org.stapledon.metrics.dto.AccessMetricsData;
+import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.api.model.ApiResponse;
-import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
-import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
-import org.stapledon.infrastructure.metrics.CombinedMetricsRepository;
-import org.stapledon.infrastructure.metrics.MetricsUpdateService;
+import org.stapledon.metrics.service.MetricsService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,20 +28,12 @@ import java.util.Map;
 
 /**
  * Tests for the MetricsController
+ * Updated to use MetricsService facade
  */
 class MetricsControllerTest {
 
     @Mock
-    private ImageCacheStatsUpdater mockCacheStatsUpdater;
-
-    @Mock
-    private AccessMetricsRepository mockAccessMetricsRepository;
-
-    @Mock
-    private CombinedMetricsRepository mockCombinedMetricsRepository;
-
-    @Mock
-    private MetricsUpdateService mockMetricsUpdateService;
+    private MetricsService mockMetricsService;
 
     @InjectMocks
     private MetricsController metricsController;
@@ -58,7 +47,7 @@ class MetricsControllerTest {
     void getStorageMetrics_shouldReturnCacheStats() {
         // Arrange
         ImageCacheStats mockStats = createMockImageCacheStats();
-        when(mockCacheStatsUpdater.cacheStats()).thenReturn(mockStats);
+        when(mockMetricsService.getStorageMetrics()).thenReturn(mockStats);
 
         // Act
         ResponseEntity<ApiResponse<ImageCacheStats>> response = metricsController.getStorageMetrics();
@@ -69,15 +58,15 @@ class MetricsControllerTest {
         assertNotNull(response.getBody().getData());
         assertEquals(mockStats, response.getBody().getData());
 
-        // Verify CacheStatsUpdater was called
-        verify(mockCacheStatsUpdater).cacheStats();
+        // Verify MetricsService was called
+        verify(mockMetricsService).getStorageMetrics();
     }
 
     @Test
     void getAccessMetrics_shouldReturnAccessMetrics() {
         // Arrange
         AccessMetricsData mockAccessData = createMockAccessMetricsData();
-        when(mockAccessMetricsRepository.get()).thenReturn(mockAccessData);
+        when(mockMetricsService.getAccessMetrics()).thenReturn(mockAccessData);
 
         // Act
         ResponseEntity<ApiResponse<AccessMetricsData>> response = metricsController.getAccessMetrics();
@@ -88,15 +77,15 @@ class MetricsControllerTest {
         assertNotNull(response.getBody().getData());
         assertEquals(mockAccessData, response.getBody().getData());
 
-        // Verify repository was called
-        verify(mockAccessMetricsRepository).get();
+        // Verify service was called
+        verify(mockMetricsService).getAccessMetrics();
     }
 
     @Test
     void getCombinedMetrics_shouldReturnCombinedMetrics() {
         // Arrange
         CombinedMetricsData mockCombinedData = createMockCombinedMetricsData();
-        when(mockCombinedMetricsRepository.get()).thenReturn(mockCombinedData);
+        when(mockMetricsService.getCombinedMetrics()).thenReturn(mockCombinedData);
 
         // Act
         ResponseEntity<ApiResponse<CombinedMetricsData>> response = metricsController.getCombinedMetrics();
@@ -107,16 +96,15 @@ class MetricsControllerTest {
         assertNotNull(response.getBody().getData());
         assertEquals(mockCombinedData, response.getBody().getData());
 
-        // Verify repository was called
-        verify(mockCombinedMetricsRepository).get();
+        // Verify service was called
+        verify(mockMetricsService).getCombinedMetrics();
     }
 
     @Test
     void refreshStorageMetrics_shouldUpdateStatsBeforeReturning() {
         // Arrange
         ImageCacheStats mockStats = createMockImageCacheStats();
-        when(mockCacheStatsUpdater.cacheStats()).thenReturn(mockStats);
-        when(mockCacheStatsUpdater.updateStats()).thenReturn(true);
+        when(mockMetricsService.refreshStorageMetrics()).thenReturn(mockStats);
 
         // Act
         ResponseEntity<ApiResponse<ImageCacheStats>> response = metricsController.refreshStorageMetrics();
@@ -125,9 +113,8 @@ class MetricsControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
 
-        // Verify update was called first, then stats were fetched
-        verify(mockCacheStatsUpdater).updateStats();
-        verify(mockCacheStatsUpdater).cacheStats();
+        // Verify refresh was called
+        verify(mockMetricsService).refreshStorageMetrics();
     }
 
     @Test
@@ -142,7 +129,7 @@ class MetricsControllerTest {
         assertEquals("All metrics refreshed successfully", response.getBody().getData());
 
         // Verify service method was called
-        verify(mockMetricsUpdateService).forceRefreshAll();
+        verify(mockMetricsService).refreshAllMetrics();
     }
 
     /**
