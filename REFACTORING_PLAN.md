@@ -1,12 +1,13 @@
 # ComicAPI Modularization - Refactoring Plan
 
-## Status: Phase 4 - comic-common Module (✅ COMPLETED)
+## Status: Phase 5a - Infrastructure Extraction (✅ COMPLETED)
 
 Last Updated: 2025-10-22
 Phase 1 Completed: 2025-10-22
 Phase 2 Completed: 2025-10-22
 Phase 3 Completed: 2025-10-22
 Phase 4 Completed: 2025-10-22
+Phase 5a Completed: 2025-10-22
 
 ---
 
@@ -375,29 +376,98 @@ comic-common (base)
 
 ## Phase 5: Refactor ComicAPI to Use Modules
 
-**Status:** 🔴 Not Started
-**Estimated Duration:** 2-3 hours
+**Status:** 🟡 In Progress (Phase 5a Complete)
+**Started:** 2025-10-22
+**Estimated Duration:** 4-5 hours (split into 5a and 5b)
 
-### Objectives
-- Remove duplicated code from ComicAPI
-- Update ComicAPI to use extracted modules
-- Verify all functionality preserved
-- Clean up imports and dependencies
+### Phase 5a: Extract Infrastructure to comic-common ✅ COMPLETED
+
+**Objectives Achieved:**
+- [x] Extract shared infrastructure classes to comic-common
+- [x] Remove comic-metrics dependency on ComicAPI
+- [x] Update comic-engine to use common infrastructure
+- [x] Enable modules to build independently
+
+### Tasks Completed
+
+#### 5a.1 Extract Infrastructure Interfaces ✅
+- [x] WebInspector interface → `common.infrastructure.web`
+- [x] ICachable interface → `common.infrastructure.caching`
+- [x] TaskExecutionTracker interface → `common.infrastructure.config`
+- [x] StatsWriter interface (new) → `common.infrastructure.config`
+
+#### 5a.2 Extract Infrastructure Implementations ✅
+- [x] WebInspectorImpl → `common.infrastructure.web`
+- [x] DefaultTrustManager → `common.infrastructure.web`
+- [x] TaskExecutionTrackerImpl → `common.infrastructure.config`
+- [x] JsonStatsWriter (new) → `common.infrastructure.config`
+
+#### 5a.3 Extract Configuration Properties ✅
+- [x] DailyRunnerProperties → `common.config.properties`
+- [x] StartupReconcilerProperties → `common.config.properties`
+
+#### 5a.4 Update Dependencies ✅
+- [x] comic-common: Added jsoup dependency
+- [x] comic-metrics: Removed ComicAPI dependency!
+- [x] comic-engine: Updated to use common infrastructure (still needs ComicAPI for ConfigurationFacade)
+- [x] Fixed all imports across modules
+
+#### 5a.5 Verification ✅
+- [x] comic-common builds successfully
+- [x] comic-metrics: 17 tests pass (NO ComicAPI dependency!)
+- [x] comic-engine: 4 tests pass
+- [x] All modules compile
+
+**Commits:**
+- `88b8f5f` - Phase 5a.1-5a.2: Extract infrastructure to comic-common
+- `6d6ed1b` - Phase 5a complete: Extract infrastructure to comic-common
+
+**Module Structure After Phase 5a:**
+```
+comic-common (base)
+  ├─ DTOs (11 files)
+  ├─ Config (CacheProperties + 2 properties)
+  ├─ Interfaces (ComicStorageFacade, RetrievalStatusRepository)
+  └─ Infrastructure (WebInspector, TaskExecutionTracker, StatsWriter, etc.)
+       ↑
+       ├─── comic-metrics (NO ComicAPI dependency! ✨)
+       ├─── comic-engine (temp ComicAPI dep for ConfigurationFacade)
+       └─── ComicAPI (REST API + Auth + Scheduling)
+```
+
+---
+
+### Phase 5b: Remove Duplicate Code from ComicAPI 🔴 NOT STARTED
+
+**Objectives:**
+- [ ] Add comic-metrics and comic-engine dependencies to ComicAPI
+- [ ] Remove duplicated metrics code from ComicAPI
+- [ ] Remove duplicated engine code from ComicAPI
+- [ ] Update ComicAPI imports to use module classes
+- [ ] Verify all tests pass
 
 ### Tasks
 
-#### 5.1 Add Module Dependencies
+#### 5b.1 Add Module Dependencies
 - [ ] Add comic-metrics dependency to ComicAPI
 - [ ] Add comic-engine dependency to ComicAPI
 - [ ] Verify modules are available
 
-#### 5.2 Remove Duplicated Code
-- [ ] Remove metrics code from ComicAPI (already in comic-metrics)
-- [ ] Remove engine code from ComicAPI (already in comic-engine)
-- [ ] Keep only API, auth, user, preference, scheduling code
-- [ ] Update imports to use module classes
+#### 5b.2 Remove Duplicated Code
+- [ ] Remove `org.stapledon.metrics.*` (15 files - now in comic-metrics)
+- [ ] Remove `org.stapledon.core.comic.downloader.*` (13 files - now in comic-engine)
+- [ ] Remove `org.stapledon.core.comic.management.*` (2 files - now in comic-engine)
+- [ ] Remove `org.stapledon.infrastructure.batch.*` (4 files - now in comic-engine)
+- [ ] Remove `org.stapledon.infrastructure.storage.*` (2 files - keep JsonRetrievalStatusRepository)
+- [ ] Keep API-specific code (controllers, auth, user, preferences, scheduling)
 
-#### 5.3 Verification
+#### 5b.3 Update Imports
+- [ ] Update controllers to import from comic-metrics/comic-engine
+- [ ] Update DailyRunner to use engine module classes
+- [ ] Update StartupReconciler to use engine module classes
+- [ ] Update all tests (unit + integration)
+
+#### 5b.4 Verification
 - [ ] All ComicAPI tests pass
 - [ ] Integration tests pass
 - [ ] No compilation errors
@@ -650,7 +720,7 @@ Each phase is committed and tagged independently:
 ---
 
 Last Updated: 2025-10-22
-Status: Phase 4 Complete - Ready for Phase 5
+Status: Phase 5a Complete - Ready for Phase 5b
 
 ## Important Notes
 
