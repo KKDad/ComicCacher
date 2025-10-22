@@ -16,7 +16,7 @@ import org.stapledon.core.comic.service.UpdateService;
 import org.stapledon.core.preference.service.PreferenceService;
 import org.stapledon.core.user.service.UserService;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 import org.stapledon.infrastructure.config.properties.DailyRunnerProperties;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;

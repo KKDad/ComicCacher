@@ -1,7 +1,7 @@
 package org.stapledon.infrastructure.caching;
 
 import org.stapledon.common.dto.ImageDto;
-import org.stapledon.infrastructure.storage.ComicStorageFacade;
+import org.stapledon.common.service.ComicStorageFacade;
 
 import java.io.File;
 import java.time.LocalDate;

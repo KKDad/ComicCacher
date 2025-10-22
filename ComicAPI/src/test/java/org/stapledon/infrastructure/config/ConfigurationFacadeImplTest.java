@@ -13,7 +13,7 @@ import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.io.FileWriter;

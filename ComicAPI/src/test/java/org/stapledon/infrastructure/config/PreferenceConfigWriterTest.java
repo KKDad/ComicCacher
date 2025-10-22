@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.nio.file.Path;
