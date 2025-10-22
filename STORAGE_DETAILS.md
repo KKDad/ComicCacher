@@ -2,16 +2,34 @@
 
 This document outlines the JSON files used for data storage in the ComicCacher application. The application primarily uses JSON files for configuration and persistence.
 
+## Architecture Notes
+
+### Version 1.2.0 Changes
+
+**Repository Pattern Introduction:**
+- **Repository Interfaces**: Define data access contracts (`ComicRepository`, `UserRepository`, `PreferenceRepository`)
+- **JSON Implementations**: Current implementations use JSON files (`JsonComicRepository`, `JsonUserRepository`, `JsonPreferenceRepository`)
+- **Future Flexibility**: Repository pattern allows easy migration to databases or other storage mechanisms
+
+**On-Demand Downloads Removed:**
+- Removed `CacheMissEvent` system that automatically downloaded comics when cache misses occurred
+- All comic downloads now happen through:
+  - Scheduled batch jobs (DailyRunner at 7 AM)
+  - Manual API calls (UpdateController endpoints)
+- Comics are served only from cached JSON files and filesystem cache
+- Simplifies architecture and makes behavior more predictable
+
 ## Overview of Storage Files
 
-| File Name | Purpose | Location | Read/Written By |
-|-----------|---------|----------|----------------|
-| ComicCacher.json | Bootstrap configuration for comics | /ComicAPI/src/main/resources/ | CacherConfigLoader |
-| comics.json | Comic metadata and cache state | ./comics.json (configurable) | JsonConfigWriter |
-| users.json | User accounts and authentication | ./users.json (configurable) | UserConfigWriter |
-| preferences.json | User favorites and settings | ./preferences.json (configurable) | PreferenceConfigWriter |
-| task-executions.json | Scheduled task tracking | Cache directory | TaskExecutionTrackerImpl |
-| stats.db | Comic image cache statistics | Inside comic image directories | ImageCacheStatsUpdater |
+| File Name | Purpose | Location | Repository / Access Layer |
+|-----------|---------|----------|---------------------------|
+| ComicCacher.json | Bootstrap configuration for comics | /ComicAPI/src/main/resources/ | CacherConfigLoader (direct) |
+| comics.json | Comic metadata and cache state | ./comics.json (configurable) | ComicRepository → JsonComicRepository → ConfigurationFacade |
+| users.json | User accounts and authentication | ./users.json (configurable) | UserRepository → JsonUserRepository → UserConfigWriter |
+| preferences.json | User favorites and settings | ./preferences.json (configurable) | PreferenceRepository → JsonPreferenceRepository → PreferenceConfigWriter |
+| task-executions.json | Scheduled task tracking | Cache directory | TaskExecutionTrackerImpl (direct) |
+| stats.db | Comic image cache statistics | Inside comic image directories | ImageCacheStatsUpdater (direct) |
+| retrieval-status.json | Comic download attempt tracking | Cache directory | RetrievalStatusService → JsonRetrievalStatusRepository |
 | openapi.json | API documentation | /docs/ | Generated during build |
 
 ## Detailed Schema Information
@@ -74,12 +92,17 @@ Stores information about available comics and their metadata.
 }
 ```
 
-**Purpose:** 
-- `items`: Map of comic items keyed by name hash
+**Purpose:**
+- `items`: Map of comic items keyed by comic ID (hash of name)
 - Each comic contains metadata including date range and enabled status
 - Tracks which comics are available in the cache
 
 **Location:** Configured via `comics.cache.config` property (defaults to ./comics.json)
+
+**Access Pattern:**
+- Read/Write through `ComicRepository` interface
+- Implementation: `JsonComicRepository` delegates to `ConfigurationFacade`
+- Services use repository interfaces, not direct file access
 
 ### 3. users.json
 
@@ -112,6 +135,11 @@ Stores user account information and authentication data.
 
 **Validation:** Username and password hash are required fields
 
+**Access Pattern:**
+- Read/Write through `UserRepository` interface
+- Implementation: `JsonUserRepository` delegates to `UserConfigWriter`
+- Authentication logic encapsulated in repository layer
+
 ### 4. preferences.json
 
 Stores user preferences, favorite comics, and reading history.
@@ -141,6 +169,11 @@ Stores user preferences, favorite comics, and reading history.
 - `displaySettings`: User-specific display configuration
 
 **Location:** Configured via `comics.cache.preferencesConfig` property (defaults to ./preferences.json)
+
+**Access Pattern:**
+- Read/Write through `PreferenceRepository` interface
+- Implementation: `JsonPreferenceRepository` delegates to `PreferenceConfigWriter`
+- Convenience methods for favorites and reading history
 
 ### 5. task-executions.json
 
