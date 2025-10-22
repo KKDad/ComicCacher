@@ -8,7 +8,7 @@ import org.stapledon.api.dto.comic.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.infrastructure.caching.CacheUtils;
-import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
+import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.config.MetricsProperties;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.CombinedMetricsRepository;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MetricsUpdateService {
 
     private final CacheUtils cacheUtils;
-    private final ImageCacheStatsUpdater storageMetricsUpdater;
+    private final StorageMetricsCollector storageMetricsUpdater;
     private final AccessMetricsRepository accessMetricsRepository;
     private final CombinedMetricsRepository combinedMetricsRepository;
     private final MetricsProperties metricsProperties;

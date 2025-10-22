@@ -8,7 +8,7 @@ import org.stapledon.api.dto.health.ComponentHealth;
 import org.stapledon.api.dto.health.HealthStatus;
 import org.stapledon.api.dto.health.SystemResources;
 import org.stapledon.infrastructure.caching.CacheUtils;
-import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
+import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.infrastructure.config.BuildVersion;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HealthServiceImpl implements HealthService {
 
     private final BuildVersion buildVersion;
-    private final ImageCacheStatsUpdater cacheStatsUpdater;
+    private final StorageMetricsCollector cacheStatsUpdater;
     private final CacheUtils cacheUtils;
     private final CacheProperties cacheProperties;
     

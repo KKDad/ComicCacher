@@ -9,7 +9,7 @@ import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
+import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.CombinedMetricsRepository;
 import org.stapledon.metrics.service.MetricsUpdateService;
@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/metrics")
 @RequiredArgsConstructor
 public class MetricsController {
-    private final ImageCacheStatsUpdater cacheStatsUpdater;
+    private final StorageMetricsCollector cacheStatsUpdater;
     private final AccessMetricsRepository accessMetricsRepository;
     private final CombinedMetricsRepository combinedMetricsRepository;
     private final MetricsUpdateService metricsUpdateService;
