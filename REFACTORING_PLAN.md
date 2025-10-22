@@ -282,38 +282,172 @@ Successfully created multi-module Gradle structure:
 
 **Key Achievement:** Established clean module boundaries with pragmatic handling of shared dependencies. Both new modules can be built, tested, and potentially deployed independently.
 
-**Next Step:** Phase 4 will refactor ComicAPI to use the extracted modules (or skip to Phase 6 to create comic-common and resolve code duplication)
+**Next Step:** Phase 4 will create comic-common module to resolve circular dependencies, then Phase 5 will refactor ComicAPI to use the extracted modules
 
 ---
 
-## Phase 4: Refactor API Module
+## Phase 4: Create comic-common Module
+
+**Status:** 🔴 Not Started
+**Estimated Duration:** 3-4 hours
+
+### Objectives
+- Create shared `comic-common` module with base types
+- Extract DTOs, config classes, and interfaces used by multiple modules
+- Resolve circular dependency issues from Phase 3
+- Enable clean module dependencies without duplication
+
+### Tasks
+
+#### 4.1 Create Module Structure
+- [ ] Create `comic-common/` directory and `build.gradle`
+- [ ] Update `settings.gradle` to include comic-common
+- [ ] Create package structure: `org.stapledon.common`
+- [ ] Configure minimal dependencies (Lombok, Spring Boot basics)
+
+#### 4.2 Extract Shared DTOs
+- [ ] Move `api.dto.comic.*` → `common.dto.*`
+  - ComicItem, ImageCacheStats, ComicStorageMetrics
+  - RetrievalStatusDTO, UpdateStatusDTO
+- [ ] Move `core.comic.dto.*` → `common.dto.*`
+- [ ] Move `core.comic.model.*` → `common.model.*`
+
+#### 4.3 Extract Shared Config
+- [ ] Move `CacheProperties` → `common.config.*`
+- [ ] Move `MetricsProperties` → `common.config.*`
+- [ ] Move other shared property classes
+
+#### 4.4 Extract Shared Interfaces
+- [ ] Move `ComicStorageFacade` → `common.service.*`
+- [ ] Move `RetrievalStatusRepository` → `common.repository.*`
+- [ ] Move other shared service interfaces
+
+#### 4.5 Update Module Dependencies
+- [ ] comic-common: Configure as base module (minimal deps)
+- [ ] comic-metrics: Remove ComicAPI dep, add comic-common
+- [ ] comic-engine: Remove ComicAPI dep, add comic-common
+- [ ] ComicAPI: Add comic-common dependency
+- [ ] Fix all imports across all modules
+
+#### 4.6 Verification
+- [ ] All modules build independently
+- [ ] All tests pass in all modules
+- [ ] No circular dependencies
+- [ ] Clean dependency graph established
+
+### Verification Criteria
+- ✅ comic-common module builds independently
+- ✅ comic-metrics depends only on comic-common
+- ✅ comic-engine depends only on comic-common
+- ✅ No circular dependencies
+- ✅ All tests passing across all modules
+
+---
+
+## Phase 5: Refactor ComicAPI to Use Modules
+
+**Status:** 🔴 Not Started
+**Estimated Duration:** 2-3 hours
+
+### Objectives
+- Remove duplicated code from ComicAPI
+- Update ComicAPI to use extracted modules
+- Verify all functionality preserved
+- Clean up imports and dependencies
+
+### Tasks
+
+#### 5.1 Add Module Dependencies
+- [ ] Add comic-metrics dependency to ComicAPI
+- [ ] Add comic-engine dependency to ComicAPI
+- [ ] Verify modules are available
+
+#### 5.2 Remove Duplicated Code
+- [ ] Remove metrics code from ComicAPI (already in comic-metrics)
+- [ ] Remove engine code from ComicAPI (already in comic-engine)
+- [ ] Keep only API, auth, user, preference, scheduling code
+- [ ] Update imports to use module classes
+
+#### 5.3 Verification
+- [ ] All ComicAPI tests pass
+- [ ] Integration tests pass
+- [ ] No compilation errors
+- [ ] Full build successful
+
+### Verification Criteria
+- ✅ ComicAPI uses comic-metrics module
+- ✅ ComicAPI uses comic-engine module
+- ✅ No code duplication
+- ✅ All tests passing
+
+---
+
+## Phase 6: Clean Up & Verification
+
+**Status:** 🔴 Not Started
+**Estimated Duration:** 1-2 hours
+
+### Objectives
+- Final cleanup of any remaining duplication
+- Verify clean module boundaries
+- Performance testing
+- Documentation updates
+
+### Tasks
+
+#### 6.1 Final Cleanup
+- [ ] Remove any remaining duplicated code
+- [ ] Clean up unused imports
+- [ ] Verify no dead code
+- [ ] Update package documentation
+
+#### 6.2 Verification
+- [ ] Full build passes: `./gradlew build`
+- [ ] All unit tests pass
+- [ ] All integration tests pass
+- [ ] Performance regression testing
+
+#### 6.3 Documentation
+- [ ] Update module READMEs
+- [ ] Update architecture documentation
+- [ ] Document dependency graph
+- [ ] Update CLAUDE.md
+
+### Verification Criteria
+- ✅ Clean module boundaries
+- ✅ No duplication
+- ✅ All tests passing
+- ✅ Documentation complete
+
+---
+
+## Phase 7: Refactor API Controllers (Deferred from original Phase 4)
 
 **Status:** 🔴 Not Started
 **Estimated Duration:** 2-3 days
 
 ### Objectives
-- Restructure API layer to use engine module
+- Restructure API layer controllers
 - Clean up auth/user coupling
-- Remove redundant orchestration layer
+- Remove redundant orchestration layers
 - Simplify controller dependencies
 
 ### Tasks
 
-#### 4.1 Update Controllers
-- [ ] Refactor `ComicController` to use `ComicEngineService`
+#### 7.1 Update Controllers
+- [ ] Refactor `ComicController` to use engine services directly
 - [ ] Refactor `UpdateController`
 - [ ] Refactor `RetrievalStatusController`
 - [ ] Remove `ComicManagementFacadeImpl` (if redundant)
 - [ ] Update tests
 
-#### 4.2 Clean Up Auth/User Layer
-- [ ] Implement `JsonUserRepository`
+#### 7.2 Clean Up Auth/User Layer
 - [ ] Update `JwtUserDetailsService` to use repository
 - [ ] Refactor `UserConfigWriter`
 - [ ] Clean up coupling to JSON files
 - [ ] Update auth tests
 
-#### 4.3 Simplify Orchestration
+#### 7.3 Simplify Orchestration
 - [ ] Remove redundant facade layers
 - [ ] Direct controller → service calls
 - [ ] Update dependency injection
@@ -327,32 +461,32 @@ Successfully created multi-module Gradle structure:
 
 ---
 
-## Phase 5: Scheduling & Batch Jobs
+## Phase 8: Scheduling & Batch Jobs (Deferred from original Phase 5)
 
 **Status:** 🔴 Not Started
 **Estimated Duration:** 2 days
 
 ### Objectives
-- Move scheduling to API layer
-- Create batch job service in engine
+- Refactor scheduling components
+- Clean up batch job dependencies
+- Ensure scheduling uses modules correctly
 - Add manual trigger endpoints
-- Clean separation of concerns
 
 ### Tasks
 
-#### 5.1 Refactor Scheduling
-- [ ] Move `DailyRunner` to API layer
-- [ ] Move `StartupReconciler` to API layer
-- [ ] Update to call `ComicEngineService` methods
+#### 8.1 Refactor Scheduling
+- [ ] Review `DailyRunner` dependencies
+- [ ] Review `StartupReconciler` dependencies
+- [ ] Update to call engine module methods
 - [ ] Extract scheduling configuration
 
-#### 5.2 Create Batch Service
-- [ ] Create `BatchJobService` in engine module
-- [ ] Implement batch operations
+#### 8.2 Batch Job Cleanup
+- [ ] Review `BatchJobController` dependencies
+- [ ] Ensure batch jobs use engine module
 - [ ] Add progress tracking
 - [ ] Update tests
 
-#### 5.3 Manual Triggers
+#### 8.3 Manual Triggers
 - [ ] Keep `UpdateController` for manual updates
 - [ ] Add batch job status endpoints
 - [ ] Document API endpoints
@@ -365,48 +499,7 @@ Successfully created multi-module Gradle structure:
 
 ---
 
-## Phase 6: Configuration & Properties
-
-**Status:** 🔴 Not Started
-**Estimated Duration:** 2 days
-
-### Objectives
-- Create shared `comic-common` module
-- Consolidate configuration management
-- Add file locking for concurrent writes
-- Clean up JSON persistence
-
-### Tasks
-
-#### 6.1 Create Common Module
-- [ ] Create `comic-common/` directory
-- [ ] Create `comic-common/build.gradle`
-- [ ] Move shared DTOs
-- [ ] Move common utilities
-- [ ] Move configuration properties
-
-#### 6.2 Consolidate Configuration
-- [ ] Create `ComicConfigPersistence`
-- [ ] Create `UserConfigPersistence`
-- [ ] Create `PreferenceConfigPersistence`
-- [ ] Add file locking mechanism
-- [ ] Update all modules to use common
-
-#### 6.3 Clean Up JSON Writers
-- [ ] One writer per concern
-- [ ] Remove duplication
-- [ ] Add concurrent write protection
-- [ ] Update tests
-
-### Verification Criteria
-- ✅ Common module builds independently
-- ✅ No configuration regressions
-- ✅ File locking prevents corruption
-- ✅ All configuration tests pass
-
----
-
-## Phase 7: Integration & Documentation
+## Phase 9: Integration & Documentation (Deferred from original Phase 7)
 
 **Status:** 🔴 Not Started
 **Estimated Duration:** 1-2 days
@@ -479,10 +572,12 @@ Each phase is committed and tagged independently:
 - `refactor-phase-2`: Metrics package reorganization (12 commits, all tests passing)
 - `refactor-phase-3-partial`: Multi-module structure - comic-metrics created (in progress)
 - `refactor-phase-3-complete`: Multi-module structure - both metrics and engine modules
-- `refactor-phase-4`: API module refactored
-- `refactor-phase-5`: Scheduling refactored
-- `refactor-phase-6`: Configuration consolidated (removes code duplication via comic-common)
-- `refactor-phase-7`: Integration complete
+- `refactor-phase-4`: comic-common module created (resolves circular dependencies)
+- `refactor-phase-5`: ComicAPI refactored to use modules (code duplication removed)
+- `refactor-phase-6`: Final cleanup and verification
+- `refactor-phase-7`: API controllers refactored
+- `refactor-phase-8`: Scheduling refactored
+- `refactor-phase-9`: Integration complete
 
 ---
 
