@@ -52,7 +52,7 @@ ext {
     lombokVersion = '1.18.42'
     gsonVersion = '2.11.0'
     guavaVersion = '33.4.6-jre'
-    jsoupVersion = '1.18.1'
+    jsoupVersion = '1.21.2'
 }
 
 // Import BOMs for consistent dependency versions
