@@ -3,7 +3,7 @@ package org.stapledon.infrastructure.metrics;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.stapledon.api.dto.metrics.CombinedMetricsData;
+import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.infrastructure.config.properties.MetricsProperties;
 
 import java.time.LocalDate;

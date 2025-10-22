@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.api.dto.metrics.AccessMetricsData;
+import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.FileReader;

@@ -1,4 +1,4 @@
-package org.stapledon.api.dto.metrics;
+package org.stapledon.metrics.dto;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;

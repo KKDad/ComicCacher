@@ -5,7 +5,7 @@ import com.google.common.base.Stopwatch;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.metrics.AccessMetricsData;
+import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
