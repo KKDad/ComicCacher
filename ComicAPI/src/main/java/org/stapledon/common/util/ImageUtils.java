@@ -1,7 +1,7 @@
 package org.stapledon.common.util;
 
 import org.springframework.http.MediaType;
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ImageDto;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;

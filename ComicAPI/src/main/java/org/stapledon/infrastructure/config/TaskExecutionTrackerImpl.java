@@ -5,7 +5,7 @@ import com.google.gson.reflect.TypeToken;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.FileReader;
 import java.io.FileWriter;

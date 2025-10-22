@@ -12,8 +12,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicItem;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.File;

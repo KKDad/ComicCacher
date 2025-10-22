@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

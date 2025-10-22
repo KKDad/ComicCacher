@@ -1,8 +1,8 @@
 package org.stapledon.core.comic.service;
 
 import org.springframework.stereotype.Service;
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
 import org.stapledon.core.comic.management.ComicManagementFacade;
 

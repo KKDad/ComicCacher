@@ -1,6 +1,6 @@
 package org.stapledon.infrastructure.config;
 
-import org.stapledon.api.dto.comic.ComicConfig;
+import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.common.util.Bootstrap;

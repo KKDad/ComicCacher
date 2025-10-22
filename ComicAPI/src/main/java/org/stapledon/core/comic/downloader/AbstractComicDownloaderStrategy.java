@@ -1,7 +1,7 @@
 package org.stapledon.core.comic.downloader;
 
-import org.stapledon.core.comic.dto.ComicDownloadRequest;
-import org.stapledon.core.comic.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.infrastructure.web.WebInspector;
 
 import java.util.Optional;

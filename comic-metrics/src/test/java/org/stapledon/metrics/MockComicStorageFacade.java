@@ -1,6 +1,6 @@
 package org.stapledon.metrics;
 
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;

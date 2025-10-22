@@ -15,8 +15,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stapledon.api.dto.comic.ComicStorageMetrics;
-import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.common.dto.ComicStorageMetrics;
+import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.infrastructure.config.JsonConfigWriter;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 

@@ -4,10 +4,10 @@ import com.google.gson.Gson;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.comic.ImageCacheStats;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ImageCacheStats;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.FileWriter;
 import java.io.IOException;

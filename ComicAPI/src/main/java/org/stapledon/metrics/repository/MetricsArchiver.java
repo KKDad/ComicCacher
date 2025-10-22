@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.metrics.dto.CombinedMetricsData;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.FileWriter;
 import java.io.IOException;

@@ -1,22 +1,22 @@
 package org.stapledon.engine.management;
 
 import org.springframework.stereotype.Component;
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Bootstrap;
 import org.stapledon.common.util.Direction;
 import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
-import org.stapledon.core.comic.dto.ComicDownloadRequest;
-import org.stapledon.core.comic.dto.ComicDownloadResult;
-import org.stapledon.core.comic.dto.ComicRetrievalRecord;
-import org.stapledon.core.comic.dto.ComicRetrievalStatus;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.core.comic.service.RetrievalStatusService;
 import org.stapledon.infrastructure.config.ConfigurationFacade;
 import org.stapledon.infrastructure.config.IComicsBootstrap;
 import org.stapledon.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
-import org.stapledon.infrastructure.storage.ComicStorageFacade;
+import org.stapledon.common.service.ComicStorageFacade;
 
 import java.time.Duration;
 import java.time.LocalDate;

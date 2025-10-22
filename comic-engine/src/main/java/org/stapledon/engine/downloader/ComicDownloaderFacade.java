@@ -1,8 +1,8 @@
 package org.stapledon.engine.downloader;
 
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.core.comic.dto.ComicDownloadRequest;
-import org.stapledon.core.comic.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
 
 import java.time.LocalDate;
 import java.util.List;

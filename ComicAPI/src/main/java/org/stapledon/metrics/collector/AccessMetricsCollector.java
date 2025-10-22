@@ -4,10 +4,10 @@ import com.google.common.base.Stopwatch;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.common.dto.ComicItem;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
-import org.stapledon.infrastructure.storage.ComicStorageFacade;
+import org.stapledon.common.service.ComicStorageFacade;
 
 import java.io.File;
 import java.time.LocalDate;

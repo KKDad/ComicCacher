@@ -1,7 +1,7 @@
 package org.stapledon.infrastructure.repository;
 
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicItem;
 
 import java.util.List;
 import java.util.Optional;

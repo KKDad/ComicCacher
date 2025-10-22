@@ -1,7 +1,7 @@
 package org.stapledon.api.service;
 
 import org.springframework.stereotype.Service;
-import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.api.dto.health.BuildInfo;
 import org.stapledon.api.dto.health.CacheStatus;
 import org.stapledon.api.dto.health.ComponentHealth;
@@ -10,7 +10,7 @@ import org.stapledon.api.dto.health.SystemResources;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.infrastructure.config.BuildVersion;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;

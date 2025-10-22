@@ -1,7 +1,7 @@
 package org.stapledon.metrics.service;
 
 import org.springframework.stereotype.Service;
-import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.collector.StorageMetricsCollector;

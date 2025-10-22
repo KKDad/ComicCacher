@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.common.dto.ComicItem;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 

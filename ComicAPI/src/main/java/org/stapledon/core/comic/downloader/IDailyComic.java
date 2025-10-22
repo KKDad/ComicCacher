@@ -1,6 +1,6 @@
 package org.stapledon.core.comic.downloader;
 
-import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.common.dto.ComicItem;
 
 import java.time.LocalDate;
 

@@ -15,10 +15,10 @@ import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.stapledon.api.dto.comic.ComicConfig;
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.core.comic.dto.ComicDownloadRequest;
-import org.stapledon.core.comic.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
 import org.stapledon.infrastructure.config.ConfigurationFacade;
 

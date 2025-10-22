@@ -6,11 +6,11 @@ import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
-import org.stapledon.core.comic.dto.ComicRetrievalRecord;
-import org.stapledon.core.comic.dto.ComicRetrievalRecordStorage;
-import org.stapledon.core.comic.dto.ComicRetrievalStatus;
-import org.stapledon.core.comic.service.RetrievalStatusRepository;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalRecordStorage;
+import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.repository.RetrievalStatusRepository;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.io.FileReader;

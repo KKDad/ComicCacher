@@ -1,6 +1,6 @@
 package org.stapledon.infrastructure.storage;
 
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ImageDto;
 
 import java.io.File;
 import java.time.LocalDate;

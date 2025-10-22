@@ -1,10 +1,10 @@
 package org.stapledon.engine.management;
 
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
-import org.stapledon.core.comic.dto.ComicRetrievalRecord;
-import org.stapledon.core.comic.dto.ComicRetrievalStatus;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
 
 import java.time.LocalDate;
 import java.util.List;

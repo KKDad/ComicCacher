@@ -1,8 +1,8 @@
 package org.stapledon.metrics.collector;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.stapledon.api.dto.comic.ComicStorageMetrics;
-import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.common.dto.ComicStorageMetrics;
+import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.infrastructure.config.JsonConfigWriter;
 
 import java.io.File;

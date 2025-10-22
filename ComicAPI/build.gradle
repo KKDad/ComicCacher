@@ -68,6 +68,9 @@ repositories {
 }
 
 dependencies {
+	// Module dependencies
+	implementation project(':comic-common')
+
 	// Core dependencies
 	implementation "com.google.code.gson:gson:${gsonVersion}"
 	implementation "com.google.guava:guava:${guavaVersion}"

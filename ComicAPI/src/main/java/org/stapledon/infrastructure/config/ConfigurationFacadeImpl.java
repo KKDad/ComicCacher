@@ -5,11 +5,11 @@ import com.google.gson.JsonParseException;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.api.dto.comic.ComicConfig;
+import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.common.util.Bootstrap;
-import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.io.FileInputStream;
