@@ -1,4 +1,4 @@
-package org.stapledon.infrastructure.metrics;
+package org.stapledon.metrics.service;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;

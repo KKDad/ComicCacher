@@ -12,7 +12,7 @@ import org.stapledon.api.model.ResponseBuilder;
 import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.CombinedMetricsRepository;
-import org.stapledon.infrastructure.metrics.MetricsUpdateService;
+import org.stapledon.metrics.service.MetricsUpdateService;
 
 import java.util.HashMap;
 import java.util.Map;
