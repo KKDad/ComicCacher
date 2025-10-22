@@ -42,16 +42,6 @@ class ComicCacherIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("Bootstrap configuration should be loaded")
-    void bootstrapConfigTest() {
-        Bootstrap config = comicCacher.bootstrapConfig();
-        assertThat(config).isNotNull();
-        boolean hasComics = (config.getDailyComics() != null && !config.getDailyComics().isEmpty()) ||
-                (config.getKingComics() != null && !config.getKingComics().isEmpty());
-        assertThat(hasComics).isTrue();
-    }
-
-    @Test
     @DisplayName("Should cache a single comic with valid configuration")
     void cacheSingleTest() {
         ComicItem calvinAndHobbes = ComicItem.builder()

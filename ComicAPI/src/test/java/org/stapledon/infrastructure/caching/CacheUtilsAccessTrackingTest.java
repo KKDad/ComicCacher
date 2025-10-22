@@ -3,11 +3,13 @@ package org.stapledon.infrastructure.caching;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -30,13 +32,14 @@ class CacheUtilsAccessTrackingTest {
     void setUp() {
         // Create cache directory structure
         File cacheRoot = tempDir.toFile();
-        
+
         // Set up mock facade
         MockComicStorageFacade mockStorageFacade = new MockComicStorageFacade();
-        
-        // Initialize CacheUtils with temp directory and mock facade
-        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath(), mockStorageFacade);
-        
+        AccessMetricsRepository mockAccessMetricsRepository = mock(AccessMetricsRepository.class);
+
+        // Initialize CacheUtils with temp directory, mock facade, and mock metrics repository
+        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath(), mockStorageFacade, mockAccessMetricsRepository);
+
         // Create comic items for testing
         testComic1 = ComicItem.builder()
                 .id(1)
@@ -44,7 +47,7 @@ class CacheUtilsAccessTrackingTest {
                 .newest(LocalDate.of(2023, 1, 5))
                 .oldest(LocalDate.of(2023, 1, 1))
                 .build();
-                
+
         testComic2 = ComicItem.builder()
                 .id(2)
                 .name("CalvinTest")

@@ -1,10 +1,12 @@
 package org.stapledon.infrastructure.caching;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -13,12 +15,13 @@ public class CacheUtilsTest {
 
     private CacheUtils cacheUtils;
     private ComicItem comicItem;
-    
+
     @BeforeEach
     void setUp() {
         File resourcesDirectory = getResourcesDirectory();
         MockComicStorageFacade mockStorageFacade = new MockComicStorageFacade();
-        
+        AccessMetricsRepository mockAccessMetricsRepository = mock(AccessMetricsRepository.class);
+
         // Create test comic item
         comicItem = ComicItem.builder()
                 .id(42)
@@ -27,7 +30,7 @@ public class CacheUtilsTest {
                 .oldest(LocalDate.of(2008, 1, 10))
                 .newest(LocalDate.of(2019, 3, 22))
                 .build();
-        
+
         // Set up mock data
         mockStorageFacade.setupComic(
                 comicItem.getId(),
@@ -36,8 +39,8 @@ public class CacheUtilsTest {
                 LocalDate.of(2019, 3, 22),    // newest
                 LocalDate.of(2010, 6, 28)     // additional date between
         );
-        
-        cacheUtils = new CacheUtils(resourcesDirectory.toString(), mockStorageFacade);
+
+        cacheUtils = new CacheUtils(resourcesDirectory.toString(), mockStorageFacade, mockAccessMetricsRepository);
     }
 
     @Test

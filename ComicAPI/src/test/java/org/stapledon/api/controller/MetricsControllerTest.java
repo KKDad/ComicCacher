@@ -17,9 +17,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.api.dto.metrics.AccessMetricsData;
+import org.stapledon.api.dto.metrics.CombinedMetricsData;
 import org.stapledon.api.model.ApiResponse;
-import org.stapledon.infrastructure.caching.CacheUtils;
 import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
+import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
+import org.stapledon.infrastructure.metrics.CombinedMetricsRepository;
+import org.stapledon.infrastructure.metrics.MetricsUpdateService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +38,13 @@ class MetricsControllerTest {
     private ImageCacheStatsUpdater mockCacheStatsUpdater;
 
     @Mock
-    private CacheUtils mockCacheUtils;
+    private AccessMetricsRepository mockAccessMetricsRepository;
+
+    @Mock
+    private CombinedMetricsRepository mockCombinedMetricsRepository;
+
+    @Mock
+    private MetricsUpdateService mockMetricsUpdateService;
 
     @InjectMocks
     private MetricsController metricsController;
@@ -66,91 +76,39 @@ class MetricsControllerTest {
     @Test
     void getAccessMetrics_shouldReturnAccessMetrics() {
         // Arrange
-        Map<String, Integer> mockAccessCounts = new HashMap<>();
-        mockAccessCounts.put("Comic1", 10);
-        mockAccessCounts.put("Comic2", 5);
-
-        Map<String, String> mockLastAccessTimes = new HashMap<>();
-        mockLastAccessTimes.put("Comic1", "2023-05-01T10:15:30");
-        mockLastAccessTimes.put("Comic2", "2023-05-02T11:20:45");
-
-        Map<String, Double> mockAvgAccessTimes = new HashMap<>();
-        mockAvgAccessTimes.put("Comic1", 15.5);
-        mockAvgAccessTimes.put("Comic2", 8.2);
-
-        Map<String, Double> mockHitRatios = new HashMap<>();
-        mockHitRatios.put("Comic1", 0.8);
-        mockHitRatios.put("Comic2", 0.9);
-
-        when(mockCacheUtils.getAccessCounts()).thenReturn(mockAccessCounts);
-        when(mockCacheUtils.getLastAccessTimes()).thenReturn(mockLastAccessTimes);
-        when(mockCacheUtils.getAverageAccessTimes()).thenReturn(mockAvgAccessTimes);
-        when(mockCacheUtils.getHitRatios()).thenReturn(mockHitRatios);
+        AccessMetricsData mockAccessData = createMockAccessMetricsData();
+        when(mockAccessMetricsRepository.get()).thenReturn(mockAccessData);
 
         // Act
-        ResponseEntity<ApiResponse<Map<String, AccessMetricsDto>>> response = metricsController.getAccessMetrics();
+        ResponseEntity<ApiResponse<AccessMetricsData>> response = metricsController.getAccessMetrics();
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertNotNull(response.getBody().getData());
+        assertEquals(mockAccessData, response.getBody().getData());
 
-        // Verify the metrics for Comic1
-        Map<String, AccessMetricsDto> accessMetrics = response.getBody().getData();
-        assertTrue(accessMetrics.containsKey("Comic1"));
-
-        // Verify CacheUtils methods were called
-        verify(mockCacheUtils).getAccessCounts();
-        verify(mockCacheUtils).getLastAccessTimes();
-        verify(mockCacheUtils).getAverageAccessTimes();
-        verify(mockCacheUtils).getHitRatios();
+        // Verify repository was called
+        verify(mockAccessMetricsRepository).get();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void getCombinedMetrics_shouldCombineStorageAndAccessMetrics() {
+    void getCombinedMetrics_shouldReturnCombinedMetrics() {
         // Arrange
-        // Setup storage metrics
-        ImageCacheStats mockStats = createMockImageCacheStats();
-        when(mockCacheStatsUpdater.cacheStats()).thenReturn(mockStats);
-
-        // Setup access metrics (simplified to avoid duplication)
-        Map<String, Integer> mockAccessCounts = new HashMap<>();
-        mockAccessCounts.put("Comic1", 10);
-        mockAccessCounts.put("Comic2", 5);
-        mockAccessCounts.put("Comic3", 3); // Comic not in storage metrics
-
-        when(mockCacheUtils.getAccessCounts()).thenReturn(mockAccessCounts);
-        when(mockCacheUtils.getLastAccessTimes()).thenReturn(new HashMap<>());
-        when(mockCacheUtils.getAverageAccessTimes()).thenReturn(new HashMap<>());
-        when(mockCacheUtils.getHitRatios()).thenReturn(new HashMap<>());
-
-        // Create a mock response that would be returned by getAccessMetrics
-        ApiResponse<Map<String, AccessMetricsDto>> mockApiResponse = new ApiResponse<>();
-        Map<String, AccessMetricsDto> accessMetricsMap = new HashMap<>();
-        accessMetricsMap.put("Comic1", AccessMetricsDto.builder().comicName("Comic1").build());
-        accessMetricsMap.put("Comic2", AccessMetricsDto.builder().comicName("Comic2").build());
-        accessMetricsMap.put("Comic3", AccessMetricsDto.builder().comicName("Comic3").build());
-        mockApiResponse.setData(accessMetricsMap);
-        ResponseEntity<ApiResponse<Map<String, AccessMetricsDto>>> mockResponse =
-                ResponseEntity.ok(mockApiResponse);
-
-        // Use spy to return a predetermined response from getAccessMetrics
-        MetricsController spyController = spy(metricsController);
-        doReturn(mockResponse).when(spyController).getAccessMetrics();
+        CombinedMetricsData mockCombinedData = createMockCombinedMetricsData();
+        when(mockCombinedMetricsRepository.get()).thenReturn(mockCombinedData);
 
         // Act
-        ResponseEntity<ApiResponse<Map<String, CombinedMetricsDto>>> response =
-                spyController.getCombinedMetrics();
+        ResponseEntity<ApiResponse<CombinedMetricsData>> response = metricsController.getCombinedMetrics();
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertNotNull(response.getBody().getData());
+        assertEquals(mockCombinedData, response.getBody().getData());
 
-        // Verify that storage metrics and access metrics were fetched
-        verify(mockCacheStatsUpdater).cacheStats();
-        verify(spyController).getAccessMetrics();
+        // Verify repository was called
+        verify(mockCombinedMetricsRepository).get();
     }
 
     @Test
@@ -170,6 +128,21 @@ class MetricsControllerTest {
         // Verify update was called first, then stats were fetched
         verify(mockCacheStatsUpdater).updateStats();
         verify(mockCacheStatsUpdater).cacheStats();
+    }
+
+    @Test
+    void refreshAllMetrics_shouldTriggerForceRefresh() {
+        // Act
+        ResponseEntity<ApiResponse<String>> response = metricsController.refreshAllMetrics();
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertNotNull(response.getBody().getData());
+        assertEquals("All metrics refreshed successfully", response.getBody().getData());
+
+        // Verify service method was called
+        verify(mockMetricsUpdateService).forceRefreshAll();
     }
 
     /**
@@ -202,6 +175,80 @@ class MetricsControllerTest {
                 .years(List.of("2022", "2023"))
                 .totalStorageBytes(1024 * 1024 * 15)
                 .perComicMetrics(perComicMetrics)
+                .build();
+    }
+
+    /**
+     * Creates a mock AccessMetricsData object with test data
+     */
+    private AccessMetricsData createMockAccessMetricsData() {
+        Map<String, AccessMetricsData.ComicAccessMetrics> comicMetrics = new HashMap<>();
+
+        // Add Comic1 access metrics
+        AccessMetricsData.ComicAccessMetrics comic1Metrics = AccessMetricsData.ComicAccessMetrics.builder()
+                .comicName("Comic1")
+                .accessCount(10)
+                .lastAccess("2023-05-01T10:15:30")
+                .totalAccessTimeMs(155)
+                .cacheHits(8)
+                .cacheMisses(2)
+                .build();
+        comicMetrics.put("Comic1", comic1Metrics);
+
+        // Add Comic2 access metrics
+        AccessMetricsData.ComicAccessMetrics comic2Metrics = AccessMetricsData.ComicAccessMetrics.builder()
+                .comicName("Comic2")
+                .accessCount(5)
+                .lastAccess("2023-05-02T11:20:45")
+                .totalAccessTimeMs(41)
+                .cacheHits(4)
+                .cacheMisses(1)
+                .build();
+        comicMetrics.put("Comic2", comic2Metrics);
+
+        return AccessMetricsData.builder()
+                .comicMetrics(comicMetrics)
+                .build();
+    }
+
+    /**
+     * Creates a mock CombinedMetricsData object with test data
+     */
+    private CombinedMetricsData createMockCombinedMetricsData() {
+        Map<String, CombinedMetricsData.ComicCombinedMetrics> comics = new HashMap<>();
+
+        // Add Comic1 combined metrics
+        CombinedMetricsData.ComicCombinedMetrics comic1Metrics = CombinedMetricsData.ComicCombinedMetrics.builder()
+                .comicName("Comic1")
+                .storageBytes(1024 * 1024 * 10)
+                .imageCount(100)
+                .averageImageSize(102400)
+                .accessCount(10)
+                .lastAccess("2023-05-01T10:15:30")
+                .averageAccessTime(15.5)
+                .hitRatio(0.8)
+                .cacheHits(8)
+                .cacheMisses(2)
+                .build();
+        comics.put("Comic1", comic1Metrics);
+
+        // Add Comic2 combined metrics
+        CombinedMetricsData.ComicCombinedMetrics comic2Metrics = CombinedMetricsData.ComicCombinedMetrics.builder()
+                .comicName("Comic2")
+                .storageBytes(1024 * 1024 * 5)
+                .imageCount(50)
+                .averageImageSize(102400)
+                .accessCount(5)
+                .lastAccess("2023-05-02T11:20:45")
+                .averageAccessTime(8.2)
+                .hitRatio(0.8)
+                .cacheHits(4)
+                .cacheMisses(1)
+                .build();
+        comics.put("Comic2", comic2Metrics);
+
+        return CombinedMetricsData.builder()
+                .comics(comics)
                 .build();
     }
 }

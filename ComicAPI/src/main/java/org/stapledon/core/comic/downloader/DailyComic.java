@@ -103,7 +103,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
                 while ((n = in.read(buffer)) != -1) {
                     os.write(buffer, 0, n);
                 }
-                log.trace("Image saved");
+                log.trace("Image saved to: {}", destinationFile);
                 return true;
             }
         } catch (FileNotFoundException e) {

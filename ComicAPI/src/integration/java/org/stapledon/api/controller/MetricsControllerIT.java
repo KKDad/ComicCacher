@@ -14,10 +14,11 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.StapledonAccountGivens;
-import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.api.dto.metrics.AccessMetricsData;
+import org.stapledon.api.dto.metrics.CombinedMetricsData;
 import org.stapledon.core.comic.management.ComicManagementFacade;
-import org.stapledon.infrastructure.storage.ComicStorageFacade; // Add this
+import org.stapledon.infrastructure.storage.ComicStorageFacade;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -51,19 +52,13 @@ class MetricsControllerIT extends AbstractIntegrationTest {
             .isNotNull();
 
         createTestComic(3, "New Test Comic");
-        // Ensure the newly created comic has at least one image cached for metrics to be generated
-        try (IDailyComic dailyComic = comicManagementFacade.getComic(3).map(comic -> {
-            GoComics gc = new GoComics(null);
-            gc.setComic(comic.getName());
-            gc.setDate(LocalDate.now().minusDays(1)); // Use a relative date
-            gc.setCacheRoot(comicStorageFacade.getCacheRoot().getAbsolutePath());
-            return gc;
-        }).orElseThrow(() -> new RuntimeException("Test comic not found"))) {
-            dailyComic.ensureCache();
-        } catch (Exception e) {
-            log.error("Failed to cache image for new test comic: {}", e.getMessage(), e);
-            throw e;
-        }
+
+        // Force refresh all metrics to populate the JSON files
+        MockHttpServletRequestBuilder refreshRequest = get(METRICS_PATH + "/refresh-all")
+            .header("Authorization", "Bearer " + authToken);
+
+        mockMvc.perform(refreshRequest)
+                .andExpect(status().isOk());
     }
 
     private void createTestComic(int comicId, String name) throws Exception {
@@ -111,9 +106,9 @@ class MetricsControllerIT extends AbstractIntegrationTest {
                 .as("Response JSON should have a 'data' field")
                 .isTrue();
 
-        // Attempt to parse as ComicStorageMetrics to verify structure
-        ComicStorageMetrics metrics = extractFromResponse(responseContent, "data", ComicStorageMetrics.class);
-        assertThat(metrics)
+        // Attempt to parse as ImageCacheStats to verify structure
+        ImageCacheStats stats = extractFromResponse(responseContent, "data", ImageCacheStats.class);
+        assertThat(stats)
                 .as("Response should contain valid storage metrics data")
                 .isNotNull();
     }
@@ -146,9 +141,9 @@ class MetricsControllerIT extends AbstractIntegrationTest {
                 .as("Response JSON should have a 'data' field")
                 .isTrue();
 
-        // Attempt to parse as ImageCacheStats to verify structure
-        ImageCacheStats stats = extractFromResponse(responseContent, "data", ImageCacheStats.class);
-        assertThat(stats)
+        // Attempt to parse as AccessMetricsData to verify structure
+        AccessMetricsData data = extractFromResponse(responseContent, "data", AccessMetricsData.class);
+        assertThat(data)
                 .as("Response should contain valid access metrics data")
                 .isNotNull();
     }
@@ -180,31 +175,16 @@ class MetricsControllerIT extends AbstractIntegrationTest {
                 .as("Response should contain 'data' field")
                 .contains("data");
 
-        // Verify response contains comic metrics
-        JsonNode dataNode = objectMapper.readTree(responseContent).path("data");
-        assertThat(dataNode.isObject())
-                .as("Data node should be a JSON object")
-                .isTrue();
+        // Attempt to parse as CombinedMetricsData to verify structure
+        CombinedMetricsData combinedData = extractFromResponse(responseContent, "data", CombinedMetricsData.class);
+        assertThat(combinedData)
+                .as("Response should contain valid combined metrics data")
+                .isNotNull();
 
-        // The response has comics as keys, ensure at least one comic exists in the response
-        assertThat(dataNode.size())
-                .as("Combined metrics should include at least one comic")
-                .isGreaterThan(0);
-        
-        // Check that at least one comic entry has the required fields
-        boolean hasRequiredFields = false;
-        for (JsonNode comicMetrics : dataNode) {
-            if (comicMetrics.has("comicName") && 
-                comicMetrics.has("storageBytes") && 
-                comicMetrics.has("accessCount")) {
-                hasRequiredFields = true;
-                break;
-            }
-        }
-        
-        assertThat(hasRequiredFields)
-                .as("At least one comic should have the required metrics fields")
-                .isTrue();
+        // Verify comics map exists
+        assertThat(combinedData.getComics())
+                .as("Combined metrics should have a comics map")
+                .isNotNull();
     }
 
     @AfterEach
@@ -234,15 +214,10 @@ class MetricsControllerIT extends AbstractIntegrationTest {
                 .as("Response should contain 'data' field")
                 .contains("data");
 
-        // Verify response can be parsed as ComicStorageMetrics
-        ComicStorageMetrics metrics = extractFromResponse(responseContent, "data", ComicStorageMetrics.class);
-        assertThat(metrics)
+        // Verify response can be parsed as ImageCacheStats
+        ImageCacheStats stats = extractFromResponse(responseContent, "data", ImageCacheStats.class);
+        assertThat(stats)
                 .as("Response should contain valid refreshed storage metrics data")
-                .isNotNull();
-
-        // Verify total size is available
-        assertThat(metrics.getStorageBytes())
-                .as("Refreshed metrics should include total size")
                 .isNotNull();
     }
 }

@@ -5,6 +5,8 @@ import com.google.common.base.Stopwatch;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.api.dto.metrics.AccessMetricsData;
+import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
@@ -25,16 +27,18 @@ import lombok.extern.slf4j.Slf4j;
  * Utility class for comic cache operations.
  * This class delegates storage operations to ComicStorageFacade
  * while providing access tracking for metrics and performance monitoring.
+ *
+ * Note: This class is configured as a @Bean in CacheConfiguration, not as @Component
  */
 @Slf4j
-@Component
 public class CacheUtils {
     private static final int WARNING_TIME_MS = 100;
     public static final String COMBINE_PATH = "%s/%s";
     private final String cacheHome;
     private final ComicStorageFacade storageFacade;
+    private final AccessMetricsRepository accessMetricsRepository;
 
-    // Access tracking metrics
+    // Access tracking metrics (in-memory for performance)
     private final ConcurrentHashMap<String, AtomicInteger> accessCounters = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> lastAccessTime = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> totalAccessTime = new ConcurrentHashMap<>();
@@ -43,11 +47,73 @@ public class CacheUtils {
 
 
     /**
-     * Primary constructor with StorageFacade dependency
+     * Primary constructor with StorageFacade and AccessMetricsRepository dependencies
      */
-    public CacheUtils(@Qualifier("cacheLocation") String cacheHome, ComicStorageFacade storageFacade) {
+    public CacheUtils(@Qualifier("cacheLocation") String cacheHome,
+                      ComicStorageFacade storageFacade,
+                      AccessMetricsRepository accessMetricsRepository) {
         this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
         this.storageFacade = Objects.requireNonNull(storageFacade, "storageFacade must be specified");
+        this.accessMetricsRepository = Objects.requireNonNull(accessMetricsRepository,
+                                                              "accessMetricsRepository must be specified");
+    }
+
+    /**
+     * Initialize by loading persisted access metrics from disk
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        loadAccessMetrics();
+    }
+
+    /**
+     * Persist access metrics to disk on shutdown
+     */
+    @jakarta.annotation.PreDestroy
+    public void shutdown() {
+        log.info("Shutting down CacheUtils, persisting access metrics");
+        persistAccessMetrics();
+    }
+
+    /**
+     * Load access metrics from persistent storage into in-memory maps
+     */
+    private void loadAccessMetrics() {
+        AccessMetricsData data = accessMetricsRepository.get();
+        if (data != null && data.getComicMetrics() != null) {
+            data.getComicMetrics().forEach((comicName, metrics) -> {
+                accessCounters.put(comicName, new AtomicInteger(metrics.getAccessCount()));
+                lastAccessTime.put(comicName, metrics.getLastAccess());
+                totalAccessTime.put(comicName, metrics.getTotalAccessTimeMs());
+                cacheHits.put(comicName, new AtomicInteger(metrics.getCacheHits()));
+                cacheMisses.put(comicName, new AtomicInteger(metrics.getCacheMisses()));
+            });
+            log.info("Loaded access metrics for {} comics from persistent storage",
+                     data.getComicMetrics().size());
+        }
+    }
+
+    /**
+     * Persist current in-memory access metrics to disk
+     */
+    public void persistAccessMetrics() {
+        AccessMetricsData data = AccessMetricsData.builder().build();
+
+        Map<String, AccessMetricsData.ComicAccessMetrics> comicMetrics = new HashMap<>();
+        accessCounters.forEach((comicName, count) -> {
+            AccessMetricsData.ComicAccessMetrics metrics = AccessMetricsData.ComicAccessMetrics.builder()
+                    .comicName(comicName)
+                    .accessCount(count.get())
+                    .lastAccess(lastAccessTime.getOrDefault(comicName, ""))
+                    .totalAccessTimeMs(totalAccessTime.getOrDefault(comicName, 0L))
+                    .cacheHits(cacheHits.getOrDefault(comicName, new AtomicInteger(0)).get())
+                    .cacheMisses(cacheMisses.getOrDefault(comicName, new AtomicInteger(0)).get())
+                    .build();
+            comicMetrics.put(comicName, metrics);
+        });
+
+        data.setComicMetrics(comicMetrics);
+        accessMetricsRepository.save(data);
     }
 
 

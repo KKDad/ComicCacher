@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.stapledon.infrastructure.caching.CacheUtils;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
+import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
@@ -20,6 +21,7 @@ public class CacheConfiguration {
 
     private final CacheProperties cacheProperties;
     private final ComicStorageFacade storageFacade;
+    private final AccessMetricsRepository accessMetricsRepository;
 
     @Bean(name = "cacheLocation")
     public String cacheLocation() {
@@ -41,8 +43,8 @@ public class CacheConfiguration {
     @Bean
     @Primary
     public CacheUtils cacheUtils() {
-        // Create the enhanced version that delegates to the storage facade
-        return new CacheUtils(cacheLocation(), storageFacade);
+        // Create the enhanced version that delegates to the storage facade and metrics repository
+        return new CacheUtils(cacheLocation(), storageFacade, accessMetricsRepository);
     }
     
     /**
