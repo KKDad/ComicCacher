@@ -133,14 +133,7 @@ class ComicStorageFacadeImplTest {
         assertThat(Files.readAllBytes(expectedFile.toPath())).isEqualTo(avatarData);
     }
     
-    @Test
-    void getComicStrip_shouldFireCacheMissEventWhenNotExists() {
-        // Skip this test for now until we have proper mocking for ImageUtils
-        // We would need to:
-        // 1. Refactor the code to avoid static calls
-        // 2. Or create a test utility that allows us to mock static methods properly
-        // 3. Or use a tool like Mockito's mockStatic (Java 11+)
-    }
+    // Test removed - on-demand downloads via CacheMissEvent no longer supported
     
     @Test
     void getNextDateWithComic_shouldReturnNextAvailableDate() {

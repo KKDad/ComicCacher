@@ -1,7 +1,6 @@
 package org.stapledon.infrastructure.caching;
 
 import org.stapledon.api.dto.comic.ImageDto;
-import org.stapledon.events.CacheMissEvent;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
@@ -11,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -22,7 +20,6 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     private final Map<String, LocalDate> oldestDates = new HashMap<>();
     private final Map<String, LocalDate> newestDates = new HashMap<>();
     private final Map<String, Map<LocalDate, byte[]>> comicStrips = new HashMap<>();
-    private final List<Consumer<CacheMissEvent>> cacheMissListeners = new ArrayList<>();
     
     /**
      * Set up comic data for testing
@@ -200,14 +197,11 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     public Optional<ImageDto> getComicStrip(int comicId, String comicName, LocalDate date) {
         String key = getComicKey(comicId, comicName);
         Map<LocalDate, byte[]> strips = comicStrips.get(key);
-        
+
         if (strips == null || !strips.containsKey(date)) {
-            // Notify cache miss listeners with a new event
-            // Placeholder for cache miss notification - we would need to see the actual CacheMissEvent structure
-            // to properly create one here
             return Optional.empty();
         }
-        
+
         // Return a dummy comic strip
         ImageDto imageDto = ImageDto.builder()
                 .mimeType("image/png")
@@ -217,10 +211,5 @@ public class MockComicStorageFacade implements ComicStorageFacade {
                 .imageDate(date)
                 .build();
         return Optional.of(imageDto);
-    }
-    
-    @Override
-    public void addCacheMissListener(Consumer<CacheMissEvent> listener) {
-        cacheMissListeners.add(listener);
     }
 }

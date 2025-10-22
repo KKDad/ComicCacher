@@ -5,13 +5,11 @@ import org.stapledon.api.dto.comic.ImageDto;
 import org.stapledon.common.util.Direction;
 import org.stapledon.core.comic.dto.ComicRetrievalRecord;
 import org.stapledon.core.comic.dto.ComicRetrievalStatus;
-import org.stapledon.events.CacheMissEvent;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Facade for managing comic operations. This is the highest-level facade in the application,
@@ -19,13 +17,7 @@ import java.util.function.Consumer;
  * It consolidates functionality from ComicsService, UpdateService, and StartupReconciler interfaces.
  */
 public interface ComicManagementFacade {
-    
-    /**
-     * Registers a handler for cache miss events.
-     * When a comic is not found in the cache, the handler will be notified.
-     */
-    void registerCacheMissHandler(Consumer<CacheMissEvent> handler);
-    
+
     /**
      * Gets a list of all available comics.
      */

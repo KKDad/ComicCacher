@@ -26,7 +26,6 @@ import org.stapledon.common.util.Direction;
 import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
 import org.stapledon.core.comic.dto.ComicDownloadRequest;
 import org.stapledon.core.comic.dto.ComicDownloadResult;
-import org.stapledon.events.CacheMissEvent;
 import org.stapledon.infrastructure.config.ConfigurationFacade;
 import org.stapledon.infrastructure.config.GoComicsBootstrap;
 import org.stapledon.infrastructure.config.KingComicsBootStrap;
@@ -40,28 +39,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 @ExtendWith(MockitoExtension.class)
 class ComicManagementFacadeImplTest {
 
     @Mock
     private ComicStorageFacade storageFacade;
-    
+
     @Mock
     private ConfigurationFacade configFacade;
-    
+
     @Mock
     private ComicDownloaderFacade downloaderFacade;
-    
+
     @Mock
     private StartupReconcilerProperties reconcilerProperties;
-    
+
     @Mock
     private TaskExecutionTracker taskExecutionTracker;
-    
-    @Mock
-    private Consumer<CacheMissEvent> cacheMissListener;
     
     @Mock
     private GoComicsBootstrap goComicsBootstrap;
@@ -116,35 +111,7 @@ class ComicManagementFacadeImplTest {
         );
     }
 
-    @Test
-    void shouldRegisterCacheMissHandler() {
-        // Arrange
-        ArgumentCaptor<Consumer<CacheMissEvent>> consumerCaptor = ArgumentCaptor.forClass(Consumer.class);
-        verify(storageFacade).addCacheMissListener(consumerCaptor.capture());
-        Consumer<CacheMissEvent> capturedListener = consumerCaptor.getValue();
-        
-        // Act
-        facade.registerCacheMissHandler(cacheMissListener);
-        
-        // Create a cache miss event
-        CacheMissEvent event = new CacheMissEvent(1, "Test Comic", LocalDate.now());
-        
-        // Mock the downloader response
-        ComicDownloadResult downloadResult = ComicDownloadResult.builder()
-                .request(ComicDownloadRequest.builder().build())
-                .successful(true)
-                .imageData(testImageData)
-                .build();
-        when(downloaderFacade.downloadComic(any())).thenReturn(downloadResult);
-        
-        // Trigger the cache miss listener
-        capturedListener.accept(event);
-        
-        // Assert
-        verify(cacheMissListener).accept(event);
-        verify(downloaderFacade).downloadComic(any());
-        verify(storageFacade).saveComicStrip(eq(1), eq("Test Comic"), any(), eq(testImageData));
-    }
+    // Test removed - on-demand downloads via CacheMissEvent no longer supported
 
     @Test
     void shouldGetAllComics() {

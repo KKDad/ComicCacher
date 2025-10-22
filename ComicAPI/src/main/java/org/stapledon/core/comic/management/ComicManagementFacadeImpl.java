@@ -12,7 +12,6 @@ import org.stapledon.core.comic.dto.ComicDownloadResult;
 import org.stapledon.core.comic.dto.ComicRetrievalRecord;
 import org.stapledon.core.comic.dto.ComicRetrievalStatus;
 import org.stapledon.core.comic.service.RetrievalStatusService;
-import org.stapledon.events.CacheMissEvent;
 import org.stapledon.infrastructure.config.ConfigurationFacade;
 import org.stapledon.infrastructure.config.IComicsBootstrap;
 import org.stapledon.infrastructure.config.TaskExecutionTracker;
@@ -34,7 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,17 +45,16 @@ import lombok.extern.slf4j.Slf4j;
 public class ComicManagementFacadeImpl implements ComicManagementFacade {
 
     private static final String TASK_NAME = "ComicReconciliation";
-    
+
     private final ComicStorageFacade storageFacade;
     private final ConfigurationFacade configFacade;
     private final ComicDownloaderFacade downloaderFacade;
     private final TaskExecutionTracker taskExecutionTracker;
     private final RetrievalStatusService retrievalStatusService;
-    
+
     // Thread-safe collection for comics
     private final Map<Integer, ComicItem> comics = new ConcurrentHashMap<>();
-    private final List<Consumer<CacheMissEvent>> cacheMissListeners = new ArrayList<>();
-    
+
     public ComicManagementFacadeImpl(
             ComicStorageFacade storageFacade,
             ConfigurationFacade configFacade,
@@ -70,78 +67,16 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
         this.downloaderFacade = downloaderFacade;
         this.taskExecutionTracker = taskExecutionTracker;
         this.retrievalStatusService = retrievalStatusService;
-        
-        // Register as listener for cache miss events
-        storageFacade.addCacheMissListener(this::handleCacheMiss);
-        
+
         // Load comics from configuration
         refreshComicList();
-        
+
         // Schedule reconciliation if enabled
         if (reconcilerProperties.isEnabled()) {
             scheduleReconciliation(reconcilerProperties.getScheduleTime());
         } else {
             log.warn("Scheduled reconciliation is disabled");
         }
-    }
-
-    /**
-     * Handles cache miss events by attempting to download the missing comic.
-     */
-    private void handleCacheMiss(CacheMissEvent event) {
-        log.debug("Handling cache miss for comic id={}, name={}, date={}", 
-                event.getComicId(), event.getComicName(), event.getDate());
-        
-        // Notify any registered listeners
-        notifyCacheMissListeners(event);
-        
-        // Only download if we can find the comic
-        ComicItem comic = comics.get(event.getComicId());
-        if (comic != null) {
-            // Create download request
-            ComicDownloadRequest request = ComicDownloadRequest.builder()
-                    .comicId(event.getComicId())
-                    .comicName(event.getComicName())
-                    .source(comic.getSource())
-                    .sourceIdentifier(comic.getSourceIdentifier())
-                    .date(event.getDate())
-                    .build();
-            
-            // Download the comic
-            ComicDownloadResult result = downloaderFacade.downloadComic(request);
-            
-            // Save the comic if download was successful
-            if (result.isSuccessful()) {
-                storageFacade.saveComicStrip(
-                        event.getComicId(),
-                        event.getComicName(),
-                        event.getDate(),
-                        result.getImageData());
-            } else {
-                log.error("Failed to download comic {} for date {}: {}", 
-                        event.getComicName(), event.getDate(), result.getErrorMessage());
-            }
-        } else {
-            log.warn("Cannot handle cache miss - comic id={} not found", event.getComicId());
-        }
-    }
-    
-    /**
-     * Notifies all registered cache miss listeners about the event.
-     */
-    private void notifyCacheMissListeners(CacheMissEvent event) {
-        for (Consumer<CacheMissEvent> listener : cacheMissListeners) {
-            try {
-                listener.accept(event);
-            } catch (Exception e) {
-                log.error("Error notifying cache miss listener: {}", e.getMessage(), e);
-            }
-        }
-    }
-
-    @Override
-    public void registerCacheMissHandler(Consumer<CacheMissEvent> handler) {
-        cacheMissListeners.add(handler);
     }
 
     @Override

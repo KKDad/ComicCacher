@@ -7,7 +7,6 @@ import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.api.dto.comic.ImageDto;
 import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.ImageUtils;
-import org.stapledon.events.CacheMissEvent;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.File;
@@ -21,8 +20,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -36,25 +33,12 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class ComicStorageFacadeImpl implements ComicStorageFacade {
-    
+
     private static final String COMBINE_PATH = "%s/%s";
     private static final int WARNING_TIME_MS = 100;
     private static final String AVATAR_FILE = "avatar.png";
-    
+
     private final CacheProperties cacheProperties;
-    
-    // Event handling for cache misses
-    private final List<Consumer<CacheMissEvent>> cacheMissListeners = new CopyOnWriteArrayList<>();
-    
-    @Override
-    public void addCacheMissListener(Consumer<CacheMissEvent> listener) {
-        cacheMissListeners.add(listener);
-    }
-    
-    private void fireCacheMissEvent(int comicId, String comicName, LocalDate date) {
-        CacheMissEvent event = new CacheMissEvent(comicId, comicName, date);
-        cacheMissListeners.forEach(listener -> listener.accept(event));
-    }
     
     /**
      * Gets a directory name for a comic - uses the comic name if available, 
@@ -128,19 +112,17 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
     @Override
     public Optional<ImageDto> getComicStrip(int comicId, String comicName, LocalDate date) {
         Objects.requireNonNull(date, "date cannot be null");
-        
-        // First check if the image exists in cache
+
+        // Check if the image exists in cache
         if (!comicStripExists(comicId, comicName, date)) {
-            // Notify listeners of cache miss
-            fireCacheMissEvent(comicId, comicName, date);
             return Optional.empty();
         }
-        
+
         String comicNameParsed = getComicNameParsed(comicId, comicName);
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().getAbsolutePath(), comicNameParsed, yearPath, filename));
-        
+
         try {
             return Optional.of(ImageUtils.getImageDto(file));
         } catch (IOException e) {

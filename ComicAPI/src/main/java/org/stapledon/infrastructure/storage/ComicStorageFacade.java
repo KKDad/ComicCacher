@@ -1,13 +1,11 @@
 package org.stapledon.infrastructure.storage;
 
 import org.stapledon.api.dto.comic.ImageDto;
-import org.stapledon.events.CacheMissEvent;
 
 import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Facade interface for all comic storage related operations.
@@ -15,9 +13,6 @@ import java.util.function.Consumer;
  * creating a clean separation between storage concerns and business logic.
  */
 public interface ComicStorageFacade {
-    // Event subscription
-    void addCacheMissListener(Consumer<CacheMissEvent> listener);
-    
     // Basic file operations
     boolean saveComicStrip(int comicId, String comicName, LocalDate date, byte[] imageData);
     boolean saveAvatar(int comicId, String comicName, byte[] imageData);
