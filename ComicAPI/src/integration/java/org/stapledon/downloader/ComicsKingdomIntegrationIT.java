@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.common.dto.ComicItem;
 import org.stapledon.core.comic.downloader.ComicsKingdom;
 import org.stapledon.core.comic.downloader.IDailyComic;
 

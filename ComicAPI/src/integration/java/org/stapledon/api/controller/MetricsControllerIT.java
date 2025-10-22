@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.StapledonAccountGivens;
-import org.stapledon.api.dto.comic.ImageCacheStats;
+import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.core.comic.management.ComicManagementFacade;
@@ -22,7 +22,7 @@ import org.stapledon.infrastructure.storage.ComicStorageFacade;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.stapledon.api.dto.comic.ComicItem;
+import org.stapledon.common.dto.ComicItem;
 import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

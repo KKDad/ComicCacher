@@ -16,8 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ImageDto;
 
 import java.io.IOException;
 import java.nio.file.Files;

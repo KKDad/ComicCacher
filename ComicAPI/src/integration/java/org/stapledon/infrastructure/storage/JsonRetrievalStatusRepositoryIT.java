@@ -7,8 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.core.comic.dto.ComicRetrievalRecord;
-import org.stapledon.core.comic.dto.ComicRetrievalStatus;
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.core.comic.service.RetrievalStatusRepository;
 
 import java.io.File;
@@ -21,12 +22,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("integration")
 class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
-    
+
     @Autowired
     private RetrievalStatusRepository repository;
-    
+
     @Autowired
-    private org.stapledon.infrastructure.config.properties.CacheProperties cacheProperties;
+    private CacheProperties cacheProperties;
     
     private File storageFile;
     private ComicRetrievalRecord testRecord;

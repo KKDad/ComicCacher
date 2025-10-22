@@ -7,8 +7,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.api.dto.comic.ComicItem;
-import org.stapledon.api.dto.comic.ImageDto;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
 import org.stapledon.core.comic.management.ComicManagementFacade;
 

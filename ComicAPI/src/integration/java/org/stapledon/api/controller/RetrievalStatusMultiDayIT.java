@@ -9,8 +9,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.core.comic.dto.ComicRetrievalRecord;
-import org.stapledon.core.comic.dto.ComicRetrievalStatus;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.core.comic.service.RetrievalStatusRepository;
 import org.stapledon.core.comic.service.RetrievalStatusService;
 
