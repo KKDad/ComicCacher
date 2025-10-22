@@ -1,4 +1,4 @@
-package org.stapledon.infrastructure.metrics;
+package org.stapledon.metrics.repository;
 
 import com.google.gson.Gson;
 

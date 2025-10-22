@@ -10,6 +10,8 @@ import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.infrastructure.caching.CacheUtils;
 import org.stapledon.infrastructure.caching.ImageCacheStatsUpdater;
 import org.stapledon.infrastructure.config.properties.MetricsProperties;
+import org.stapledon.metrics.repository.AccessMetricsRepository;
+import org.stapledon.metrics.repository.CombinedMetricsRepository;
 
 import java.util.HashMap;
 import java.util.Map;

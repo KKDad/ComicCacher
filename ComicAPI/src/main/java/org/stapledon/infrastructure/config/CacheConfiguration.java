@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.stapledon.infrastructure.caching.CacheUtils;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
-import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
+import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;

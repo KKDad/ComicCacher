@@ -1,10 +1,10 @@
-package org.stapledon.infrastructure.metrics;
+package org.stapledon.metrics.repository;
 
 import com.google.gson.Gson;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.metrics.dto.CombinedMetricsData;
+import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 
 import java.io.FileReader;
@@ -21,28 +21,28 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Repository for combined metrics persistence.
- * Loads and saves combined metrics to combined-metrics.json in the cache directory.
+ * Repository for access metrics persistence.
+ * Loads and saves access metrics to access-metrics.json in the cache directory.
  */
 @Slf4j
 @Component
-public class CombinedMetricsRepository {
+public class AccessMetricsRepository {
 
     private final Gson gson;
     private final CacheProperties cacheProperties;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private CombinedMetricsData cachedMetrics;
+    private AccessMetricsData cachedMetrics;
 
-    private static final String COMBINED_METRICS_FILE = "combined-metrics.json";
+    private static final String ACCESS_METRICS_FILE = "access-metrics.json";
 
-    public CombinedMetricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties) {
+    public AccessMetricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties) {
         this.gson = gson;
         this.cacheProperties = cacheProperties;
     }
 
     /**
-     * Initialize by loading existing combined metrics.
+     * Initialize by loading existing access metrics.
      */
     @jakarta.annotation.PostConstruct
     public void init() {
@@ -50,12 +50,12 @@ public class CombinedMetricsRepository {
     }
 
     /**
-     * Get the current combined metrics.
+     * Get the current access metrics.
      * Returns cached metrics if available, otherwise loads from disk.
      *
-     * @return Combined metrics data
+     * @return Access metrics data
      */
-    public CombinedMetricsData get() {
+    public AccessMetricsData get() {
         lock.readLock().lock();
         try {
             if (cachedMetrics == null) {
@@ -70,31 +70,31 @@ public class CombinedMetricsRepository {
     }
 
     /**
-     * Load combined metrics from the JSON file.
+     * Load access metrics from the JSON file.
      */
     public void load() {
         lock.writeLock().lock();
         try {
-            Path filePath = Paths.get(cacheProperties.getLocation(), COMBINED_METRICS_FILE);
+            Path filePath = Paths.get(cacheProperties.getLocation(), ACCESS_METRICS_FILE);
 
             if (Files.exists(filePath)) {
                 try (Reader reader = new FileReader(filePath.toFile())) {
-                    CombinedMetricsData loadedData = gson.fromJson(reader, CombinedMetricsData.class);
+                    AccessMetricsData loadedData = gson.fromJson(reader, AccessMetricsData.class);
 
                     if (loadedData != null) {
                         cachedMetrics = loadedData;
-                        log.info("Loaded combined metrics for {} comics from {}",
-                            cachedMetrics.getComics().size(), COMBINED_METRICS_FILE);
+                        log.info("Loaded access metrics for {} comics from {}",
+                            cachedMetrics.getComicMetrics().size(), ACCESS_METRICS_FILE);
                     } else {
                         cachedMetrics = createEmpty();
-                        log.info("Combined metrics file was empty, initialized new metrics");
+                        log.info("Access metrics file was empty, initialized new metrics");
                     }
                 } catch (Exception e) {
-                    log.error("Failed to load combined metrics, initializing empty", e);
+                    log.error("Failed to load access metrics, initializing empty", e);
                     cachedMetrics = createEmpty();
                 }
             } else {
-                log.info("Combined metrics file does not exist yet, will be created on first save");
+                log.info("Access metrics file does not exist yet, will be created on first save");
                 cachedMetrics = createEmpty();
             }
         } finally {
@@ -103,12 +103,12 @@ public class CombinedMetricsRepository {
     }
 
     /**
-     * Save combined metrics to the JSON file.
+     * Save access metrics to the JSON file.
      *
-     * @param metrics Combined metrics to save
+     * @param metrics Access metrics to save
      * @return true if successful, false otherwise
      */
-    public boolean save(CombinedMetricsData metrics) {
+    public boolean save(AccessMetricsData metrics) {
         lock.writeLock().lock();
         try {
             // Update timestamp
@@ -119,17 +119,17 @@ public class CombinedMetricsRepository {
                 Files.createDirectories(directory);
             }
 
-            Path filePath = directory.resolve(COMBINED_METRICS_FILE);
+            Path filePath = directory.resolve(ACCESS_METRICS_FILE);
 
             try (Writer writer = new FileWriter(filePath.toFile())) {
                 gson.toJson(metrics, writer);
                 writer.flush();
                 cachedMetrics = metrics;
-                log.debug("Saved combined metrics for {} comics", metrics.getComics().size());
+                log.debug("Saved access metrics for {} comics", metrics.getComicMetrics().size());
                 return true;
             }
         } catch (IOException e) {
-            log.error("Failed to save combined metrics", e);
+            log.error("Failed to save access metrics", e);
             return false;
         } finally {
             lock.writeLock().unlock();
@@ -137,12 +137,12 @@ public class CombinedMetricsRepository {
     }
 
     /**
-     * Create an empty CombinedMetricsData object
+     * Create an empty AccessMetricsData object
      *
-     * @return Empty combined metrics
+     * @return Empty access metrics
      */
-    private CombinedMetricsData createEmpty() {
-        return CombinedMetricsData.builder()
+    private AccessMetricsData createEmpty() {
+        return AccessMetricsData.builder()
                 .lastUpdated(LocalDateTime.now())
                 .build();
     }

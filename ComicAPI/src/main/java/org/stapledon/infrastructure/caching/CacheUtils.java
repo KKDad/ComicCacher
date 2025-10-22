@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.metrics.dto.AccessMetricsData;
-import org.stapledon.infrastructure.metrics.AccessMetricsRepository;
+import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 
 import java.io.File;
