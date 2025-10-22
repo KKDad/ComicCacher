@@ -317,25 +317,60 @@ public class GoComics extends DailyComic implements AutoCloseable {
             // Execute JavaScript to spoof navigator.webdriver
             ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
 
-            // Wait for the comic image to be present
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("img.img-fluid.item-comic-image, img.comic-image, div.comic__image img")));
+            // === DIAGNOSTIC LOGGING: Inspect the actual rendered DOM ===
+            JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
 
-            // Extract image URL
-            List<org.openqa.selenium.WebElement> imgElements = driver.findElements(By.cssSelector("img.img-fluid.item-comic-image, img.comic-image, div.comic__image img"));
+            // Get page title to confirm we're on the right page
+            String pageTitle = (String) jsExecutor.executeScript("return document.title;");
+            log.info("Page title: {}", pageTitle);
+
+            // Get body HTML (first 2000 chars to avoid overwhelming logs)
+            String bodyHtml = (String) jsExecutor.executeScript("return document.body.innerHTML.substring(0, 2000);");
+            log.debug("Body HTML (first 2000 chars): {}", bodyHtml);
+
+            // Get all img tags with their attributes
+            Object imgResult = jsExecutor.executeScript(
+                "var imgs = document.querySelectorAll('img');" +
+                "var result = [];" +
+                "for(var i = 0; i < imgs.length; i++) {" +
+                "  result.push({" +
+                "    src: imgs[i].src," +
+                "    className: imgs[i].className," +
+                "    id: imgs[i].id," +
+                "    alt: imgs[i].alt" +
+                "  });" +
+                "}" +
+                "return JSON.stringify(result);"
+            );
+            log.info("All img tags found: {}", imgResult);
+
+            // Get all meta tags
+            Object metaResult = jsExecutor.executeScript(
+                "var metas = document.querySelectorAll('meta[property], meta[name]');" +
+                "var result = [];" +
+                "for(var i = 0; i < metas.length; i++) {" +
+                "  result.push({" +
+                "    property: metas[i].getAttribute('property')," +
+                "    name: metas[i].getAttribute('name')," +
+                "    content: metas[i].content" +
+                "  });" +
+                "}" +
+                "return JSON.stringify(result);"
+            );
+            log.info("All meta tags found: {}", metaResult);
+
+            // Extract comic image using CSS selector for current GoComics structure
+            List<org.openqa.selenium.WebElement> imgElements = driver.findElements(By.cssSelector("img[class*='Comic_comic__image']"));
 
             if (!imgElements.isEmpty()) {
-                return Optional.ofNullable(imgElements.get(0).getAttribute("src"));
+                String src = imgElements.get(0).getAttribute("src");
+                if (src != null && !src.isEmpty()) {
+                    log.info("Found comic image: {}", src);
+                    return Optional.of(src);
+                }
             }
 
-            // Fallback to meta tag if direct image not found
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("meta[property=og:image]")));
-            List<org.openqa.selenium.WebElement> metaTags = driver.findElements(By.cssSelector("meta[property=og:image]"));
-
-            if (!metaTags.isEmpty()) {
-                return Optional.ofNullable(metaTags.get(0).getAttribute("content"));
-            }
-
+            log.warn("No comic image found");
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error extracting comic image using WebDriver: {}", e.getMessage(), e);
