@@ -9,13 +9,7 @@ import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.metrics.collector.StorageMetricsCollector;
-import org.stapledon.metrics.repository.AccessMetricsRepository;
-import org.stapledon.metrics.repository.CombinedMetricsRepository;
-import org.stapledon.metrics.service.MetricsUpdateService;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.stapledon.metrics.service.MetricsService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,15 +17,15 @@ import lombok.RequiredArgsConstructor;
  * Controller for accessing cache metrics and statistics.
  * Provides endpoints for storage utilization and access patterns.
  * All metrics are served from pre-computed JSON files for optimal performance.
+ *
+ * This controller now delegates all operations to MetricsService,
+ * which handles conditional behavior when metrics are disabled.
  */
 @RestController
 @RequestMapping("/api/v1/metrics")
 @RequiredArgsConstructor
 public class MetricsController {
-    private final StorageMetricsCollector cacheStatsUpdater;
-    private final AccessMetricsRepository accessMetricsRepository;
-    private final CombinedMetricsRepository combinedMetricsRepository;
-    private final MetricsUpdateService metricsUpdateService;
+    private final MetricsService metricsService;
 
     /**
      * Get storage metrics for all comics.
@@ -41,7 +35,7 @@ public class MetricsController {
      */
     @GetMapping("/storage")
     public ResponseEntity<ApiResponse<ImageCacheStats>> getStorageMetrics() {
-        ImageCacheStats stats = cacheStatsUpdater.cacheStats();
+        ImageCacheStats stats = metricsService.getStorageMetrics();
         return ResponseBuilder.ok(stats);
     }
 
@@ -53,7 +47,7 @@ public class MetricsController {
      */
     @GetMapping("/access")
     public ResponseEntity<ApiResponse<AccessMetricsData>> getAccessMetrics() {
-        AccessMetricsData metrics = accessMetricsRepository.get();
+        AccessMetricsData metrics = metricsService.getAccessMetrics();
         return ResponseBuilder.ok(metrics);
     }
 
@@ -65,7 +59,7 @@ public class MetricsController {
      */
     @GetMapping("/combined")
     public ResponseEntity<ApiResponse<CombinedMetricsData>> getCombinedMetrics() {
-        CombinedMetricsData metrics = combinedMetricsRepository.get();
+        CombinedMetricsData metrics = metricsService.getCombinedMetrics();
         return ResponseBuilder.ok(metrics);
     }
 
@@ -77,8 +71,8 @@ public class MetricsController {
      */
     @GetMapping("/storage/refresh")
     public ResponseEntity<ApiResponse<ImageCacheStats>> refreshStorageMetrics() {
-        cacheStatsUpdater.updateStats();
-        return getStorageMetrics();
+        ImageCacheStats stats = metricsService.refreshStorageMetrics();
+        return ResponseBuilder.ok(stats);
     }
 
     /**
@@ -89,7 +83,7 @@ public class MetricsController {
      */
     @GetMapping("/refresh-all")
     public ResponseEntity<ApiResponse<String>> refreshAllMetrics() {
-        metricsUpdateService.forceRefreshAll();
+        metricsService.refreshAllMetrics();
         return ResponseBuilder.ok("All metrics refreshed successfully");
     }
 }
