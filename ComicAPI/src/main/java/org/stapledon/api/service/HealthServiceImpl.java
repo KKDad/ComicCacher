@@ -7,7 +7,7 @@ import org.stapledon.api.dto.health.CacheStatus;
 import org.stapledon.api.dto.health.ComponentHealth;
 import org.stapledon.api.dto.health.HealthStatus;
 import org.stapledon.api.dto.health.SystemResources;
-import org.stapledon.infrastructure.caching.CacheUtils;
+import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.infrastructure.config.BuildVersion;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
@@ -32,7 +32,7 @@ public class HealthServiceImpl implements HealthService {
 
     private final BuildVersion buildVersion;
     private final StorageMetricsCollector cacheStatsUpdater;
-    private final CacheUtils cacheUtils;
+    private final AccessMetricsCollector accessMetricsCollector;
     private final CacheProperties cacheProperties;
     
     private final long startTime = System.currentTimeMillis();

@@ -3,7 +3,7 @@ package org.stapledon.infrastructure.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.stapledon.infrastructure.caching.CacheUtils;
+import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.infrastructure.config.properties.CacheProperties;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
@@ -42,9 +42,9 @@ public class CacheConfiguration {
     
     @Bean
     @Primary
-    public CacheUtils cacheUtils() {
-        // Create the enhanced version that delegates to the storage facade and metrics repository
-        return new CacheUtils(cacheLocation(), storageFacade, accessMetricsRepository);
+    public AccessMetricsCollector accessMetricsCollector() {
+        // Create the collector that delegates to the storage facade and metrics repository
+        return new AccessMetricsCollector(cacheLocation(), storageFacade, accessMetricsRepository);
     }
     
     /**

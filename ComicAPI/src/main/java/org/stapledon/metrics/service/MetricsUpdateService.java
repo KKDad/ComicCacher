@@ -7,7 +7,7 @@ import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
-import org.stapledon.infrastructure.caching.CacheUtils;
+import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.config.MetricsProperties;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MetricsUpdateService {
 
-    private final CacheUtils cacheUtils;
+    private final AccessMetricsCollector accessMetricsCollector;
     private final StorageMetricsCollector storageMetricsUpdater;
     private final AccessMetricsRepository accessMetricsRepository;
     private final CombinedMetricsRepository combinedMetricsRepository;
@@ -45,7 +45,7 @@ public class MetricsUpdateService {
             log.debug("Starting scheduled metrics update");
 
             // Step 1: Persist current access metrics from in-memory state
-            cacheUtils.persistAccessMetrics();
+            accessMetricsCollector.persistAccessMetrics();
 
             // Step 2: Rebuild combined metrics
             rebuildCombinedMetrics();
@@ -68,7 +68,7 @@ public class MetricsUpdateService {
             storageMetricsUpdater.updateStats();
 
             // Persist current access metrics
-            cacheUtils.persistAccessMetrics();
+            accessMetricsCollector.persistAccessMetrics();
 
             // Rebuild combined metrics
             rebuildCombinedMetrics();

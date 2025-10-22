@@ -1,4 +1,4 @@
-package org.stapledon.infrastructure.caching;
+package org.stapledon.metrics.collector;
 
 import com.google.common.base.Stopwatch;
 
@@ -24,14 +24,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Utility class for comic cache operations.
+ * Collector for access metrics and comic cache operations.
  * This class delegates storage operations to ComicStorageFacade
- * while providing access tracking for metrics and performance monitoring.
+ * while tracking access patterns for metrics and performance monitoring.
  *
  * Note: This class is configured as a @Bean in CacheConfiguration, not as @Component
  */
 @Slf4j
-public class CacheUtils {
+public class AccessMetricsCollector {
     private static final int WARNING_TIME_MS = 100;
     public static final String COMBINE_PATH = "%s/%s";
     private final String cacheHome;
@@ -49,9 +49,9 @@ public class CacheUtils {
     /**
      * Primary constructor with StorageFacade and AccessMetricsRepository dependencies
      */
-    public CacheUtils(@Qualifier("cacheLocation") String cacheHome,
-                      ComicStorageFacade storageFacade,
-                      AccessMetricsRepository accessMetricsRepository) {
+    public AccessMetricsCollector(@Qualifier("cacheLocation") String cacheHome,
+                                  ComicStorageFacade storageFacade,
+                                  AccessMetricsRepository accessMetricsRepository) {
         this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
         this.storageFacade = Objects.requireNonNull(storageFacade, "storageFacade must be specified");
         this.accessMetricsRepository = Objects.requireNonNull(accessMetricsRepository,
