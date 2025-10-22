@@ -15,8 +15,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.StapledonAccountGivens;
 import org.stapledon.api.dto.comic.ImageCacheStats;
-import org.stapledon.api.dto.metrics.AccessMetricsData;
-import org.stapledon.api.dto.metrics.CombinedMetricsData;
+import org.stapledon.metrics.dto.AccessMetricsData;
+import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.core.comic.management.ComicManagementFacade;
 import org.stapledon.infrastructure.storage.ComicStorageFacade;
 import org.junit.jupiter.api.AfterEach;
