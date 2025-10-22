@@ -34,9 +34,6 @@ dependencies {
 	// comic-common dependency for shared types
 	implementation project(':comic-common')
 
-	// ComicAPI dependency (temporary - for ConfigurationFacade, IComicsBootstrap)
-	implementation project(':ComicAPI')
-
 	// Core dependencies
 	implementation "com.google.code.gson:gson:${gsonVersion}"
 	implementation "com.google.guava:guava:${guavaVersion}"

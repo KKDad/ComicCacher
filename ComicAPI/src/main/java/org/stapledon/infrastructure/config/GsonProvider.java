@@ -14,6 +14,7 @@ import com.google.gson.stream.JsonWriter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.stapledon.common.config.IComicsBootstrap;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

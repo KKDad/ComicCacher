@@ -3,7 +3,7 @@ package org.stapledon.infrastructure.repository;
 import org.springframework.stereotype.Repository;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.infrastructure.config.ConfigurationFacade;
+import org.stapledon.infrastructure.config.ApplicationConfigurationFacade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,14 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * JSON file-based implementation of ComicRepository.
- * Delegates to ConfigurationFacade for actual file I/O operations.
+ * Delegates to ApplicationConfigurationFacade for actual file I/O operations.
  */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
 public class JsonComicRepository implements ComicRepository {
 
-    private final ConfigurationFacade configurationFacade;
+    private final ApplicationConfigurationFacade configurationFacade;
 
     @Override
     public ComicConfig loadComicConfig() {

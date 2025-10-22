@@ -1,6 +1,5 @@
 package org.stapledon.common.util;
 
-import org.springframework.http.MediaType;
 import org.stapledon.common.dto.ImageDto;
 
 import java.awt.image.BufferedImage;
@@ -35,7 +34,7 @@ public class ImageUtils {
         try (InputStream is = new ByteArrayInputStream(media)) {
             BufferedImage bi = ImageIO.read(is);
             imageDto = ImageDto.builder()
-                    .mimeType(MediaType.IMAGE_PNG.toString())
+                    .mimeType("image/png")
                     .imageData(Base64.getEncoder().withoutPadding().encodeToString(media))
                     .height(bi.getHeight())
                     .width(bi.getWidth())

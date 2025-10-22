@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Configuration writer for user-related data.
- * This implementation now delegates to ConfigurationFacade for most operations.
+ * This implementation now delegates to ApplicationConfigurationFacade for most operations.
  */
 @Slf4j
 @Component
@@ -30,7 +30,7 @@ public class UserConfigWriter {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
-    private final ConfigurationFacade configurationFacade;
+    private final ApplicationConfigurationFacade configurationFacade;
 
     private UserConfig userConfig;
 

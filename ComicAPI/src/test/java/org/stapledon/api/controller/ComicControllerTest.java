@@ -29,7 +29,7 @@ import org.stapledon.api.exception.GlobalExceptionHandler;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.service.TestUtil;
 import org.stapledon.common.util.Direction;
-import org.stapledon.core.comic.management.ComicManagementFacade;
+import org.stapledon.engine.management.ComicManagementFacade;
 import org.stapledon.infrastructure.config.GsonProvider;
 
 import java.time.LocalDate;

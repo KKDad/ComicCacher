@@ -1,4 +1,4 @@
-package org.stapledon.core.comic.model;
+package org.stapledon.common.model;
 
 /**
  * Exception thrown when there is an error caching a comic

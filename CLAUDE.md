@@ -6,28 +6,73 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ComicCacher is a web comic downloader and viewer application with two main components:
+ComicCacher is a web comic downloader and viewer application with a **modular multi-module architecture**:
 
-1. **ComicAPI** - Java Spring Boot backend service that:
-   - Downloads and caches web comics from sites like GoComics and ComicsKingdom
-   - Exposes a REST API for accessing cached comics
-   - Includes a daily runner to refresh comics
-   - Maintains a cache of comic images with cleanup after 7 days
+### Backend Modules (Java/Spring Boot)
 
-2. **ComicViewer** - Angular frontend that:
+1. **comic-common** - Shared foundation module:
+   - Common DTOs (ComicItem, ComicConfig, ComicRetrievalRecord, etc.)
+   - Service interfaces (ComicConfigurationService, RetrievalStatusService)
+   - Configuration classes (IComicsBootstrap, CacheProperties)
+   - Utilities (Bootstrap, Direction, ImageUtils)
+   - Infrastructure (TaskExecutionTracker, WebInspector)
+
+2. **comic-metrics** - Independent metrics collection module:
+   - Metric collectors (CacheMetricsCollector, StorageMetricsCollector)
+   - Stats writers (JsonStatsWriter, ConsoleStatsWriter)
+   - Pluggable metrics outputs
+   - **Depends only on:** comic-common
+
+3. **comic-engine** - Independent download/storage engine:
+   - Comic downloaders (GoComics, ComicsKingdom, ComicCacher)
+   - Management facade (ComicManagementFacade)
+   - Storage facade (ComicStorageFacade)
+   - Spring Batch jobs for scheduled downloads
+   - **Depends only on:** comic-common
+
+4. **ComicAPI** - REST API orchestration layer:
+   - REST controllers (ComicController, UpdateController, BatchJobController)
+   - Services (ComicsService, UpdateService)
+   - Repositories (ComicRepository, UserRepository, PreferenceRepository)
+   - Infrastructure (Scheduling, Security, Configuration)
+   - **Depends on:** comic-common, comic-metrics, comic-engine
+
+### Frontend
+
+5. **ComicViewer** - Angular frontend that:
    - Displays cached comics in a user-friendly interface
    - Uses Angular Material for UI components
    - Supports infinite virtual scrolling for comic viewing
 
+### Architecture Diagram
+
+```
+comic-common (shared DTOs, config, services)
+     ↑
+     ├─── comic-metrics (independent)
+     ├─── comic-engine (independent)
+     │         ↑
+     └─── ComicAPI (orchestrates)
+              ↓
+         ComicViewer (Angular)
+```
+
 ## Build Commands
 
-### ComicAPI (Spring Boot)
+### Backend Modules (Gradle Multi-Module)
 
 ```bash
-# Build the project
+# Build all modules
+./gradlew clean build
+
+# Build specific modules
+./gradlew :comic-common:build
+./gradlew :comic-metrics:build
+./gradlew :comic-engine:build
 ./gradlew :ComicAPI:build
 
 # Run tests
+./gradlew :comic-engine:test
 ./gradlew :ComicAPI:test
 
 # Run integration tests
@@ -65,21 +110,47 @@ npm run buildProd
 ./build-docker.sh
 ```
 
-## Architecture
+## Module Architecture Details
+
+### comic-common
+- **Purpose:** Shared foundation for all modules
+- **Key Interfaces:**
+  - `ComicConfigurationService` - Configuration loading/saving
+  - `RetrievalStatusService` - Comic retrieval tracking
+  - `IComicsBootstrap` - Bootstrap configuration
+- **DTOs:** ComicItem, ComicConfig, ComicRetrievalRecord, ImageDto, etc.
+- **No external module dependencies**
+
+### comic-metrics
+- **Purpose:** Independent metrics collection and reporting
+- **Key Classes:**
+  - `CacheMetricsCollector` - Collects cache statistics
+  - `StorageMetricsCollector` - Collects storage statistics
+  - `StatsWriter` interface with JSON/Console implementations
+- **Depends on:** comic-common only
+
+### comic-engine
+- **Purpose:** Independent comic download and storage engine
+- **Key Components:**
+  - **Downloaders:** `GoComics` and `ComicsKingdom` implement `IDailyComic`
+  - **Facades:** `ComicManagementFacade`, `ComicDownloaderFacade`, `ComicStorageFacade`
+  - **Batch Jobs:** Spring Batch integration for scheduled downloads
+  - `ComicCacher` - Main entry point for comic caching operations
+- **Depends on:** comic-common only
+- **Can be used standalone** in other applications
 
 ### ComicAPI
-
-- **Downloaders**: `GoComics` and `ComicsKingdom` classes implement the `IDailyComic` interface, handling comic strip fetching from different sources.
-- **Caching**: Downloaded images are stored using the `ComicCacher` with stats tracking via `ImageCacheStatsUpdater`.
-- **Services**: 
-  - `ComicsService` provides access to cached comics
-  - `UpdateService` handles comic updates
-  - `DailyRunner` performs scheduled updates
-  - `StartupReconciler` performs daily reconciliation on a configurable schedule (default 6:00 AM)
-- **Controllers**: REST endpoints exposed via `ComicController` and `UpdateController`
+- **Purpose:** REST API orchestration and user management
+- **Key Components:**
+  - **Controllers:** REST endpoints (`ComicController`, `UpdateController`, `BatchJobController`)
+  - **Services:** `ComicsService`, `UpdateService`
+  - **Repositories:** `ComicRepository`, `UserRepository`, `PreferenceRepository`
+  - **Scheduling:** `DailyRunner`, `StartupReconciler` (daily reconciliation at 6:00 AM)
+  - **Security:** Authentication and authorization
+  - **Configuration:** `ApplicationConfigurationFacade` (extends `ComicConfigurationService`)
+- **Depends on:** comic-common, comic-metrics, comic-engine
 
 ### ComicViewer
-
 - Follows Angular component architecture with Material Design
 - Key components:
   - `ComicPage` - Main display for comics

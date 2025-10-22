@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ConfigurationFacadeImpl implements ConfigurationFacade {
+public class ConfigurationFacadeImpl implements ApplicationConfigurationFacade {
     
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;

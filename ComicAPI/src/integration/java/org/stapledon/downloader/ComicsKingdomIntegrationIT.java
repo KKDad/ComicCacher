@@ -6,8 +6,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.core.comic.downloader.ComicsKingdom;
-import org.stapledon.core.comic.downloader.IDailyComic;
+import org.stapledon.engine.downloader.ComicsKingdom;
+import org.stapledon.engine.downloader.IDailyComic;
 
 import java.io.File;
 import java.nio.file.Files;

@@ -40,7 +40,7 @@ class ComicDownloaderFacadeImplTest {
 
     @BeforeEach
     void setUp() {
-        facade = new ComicDownloaderFacadeImpl(Mockito.mock(org.stapledon.core.comic.service.RetrievalStatusService.class));
+        facade = new ComicDownloaderFacadeImpl(Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
         
         // Remove unnecessary stubbing - the getSource() method isn't used in the implementation
         // when(goComicsStrategy.getSource()).thenReturn("gocomics");

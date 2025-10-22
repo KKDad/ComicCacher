@@ -8,7 +8,7 @@ import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
-import org.stapledon.core.comic.service.RetrievalStatusService;
+import org.stapledon.common.service.RetrievalStatusService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

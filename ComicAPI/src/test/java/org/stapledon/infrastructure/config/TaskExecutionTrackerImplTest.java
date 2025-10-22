@@ -21,10 +21,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.core.comic.downloader.ComicCacher;
+import org.stapledon.engine.downloader.ComicCacher;
 import org.stapledon.common.config.CacheProperties;
-import org.stapledon.infrastructure.config.properties.DailyRunnerProperties;
+import org.stapledon.common.config.properties.DailyRunnerProperties;
 import org.stapledon.infrastructure.scheduling.DailyRunner;
+import org.stapledon.common.infrastructure.config.TaskExecutionTrackerImpl;
+import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
 
 import java.io.IOException;
 import java.nio.file.Files;

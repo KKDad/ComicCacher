@@ -10,8 +10,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.core.comic.downloader.GoComics;
-import org.stapledon.core.comic.downloader.IDailyComic;
+import org.stapledon.engine.downloader.GoComics;
+import org.stapledon.engine.downloader.IDailyComic;
 
 import java.io.File;
 import java.nio.file.Files;

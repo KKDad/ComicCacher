@@ -3,6 +3,7 @@ package org.stapledon.core.comic.service;
 import org.springframework.stereotype.Service;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.LocalDate;
 import java.util.HashMap;

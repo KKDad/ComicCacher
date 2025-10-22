@@ -2,7 +2,7 @@ package org.stapledon.common.util;
 
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.infrastructure.config.IComicsBootstrap;
+import org.stapledon.common.config.IComicsBootstrap;
 
 import java.util.ArrayList;
 import java.util.List;

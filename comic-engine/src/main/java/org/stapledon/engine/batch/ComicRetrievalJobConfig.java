@@ -19,8 +19,8 @@ import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
-import org.stapledon.infrastructure.config.ConfigurationFacade;
+import org.stapledon.engine.downloader.ComicDownloaderFacade;
+import org.stapledon.common.service.ComicConfigurationService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ComicRetrievalJobConfig {
 
-    private final ConfigurationFacade configurationFacade;
+    private final ComicConfigurationService configurationFacade;
     private final ComicDownloaderFacade comicDownloaderFacade;
 
     /**

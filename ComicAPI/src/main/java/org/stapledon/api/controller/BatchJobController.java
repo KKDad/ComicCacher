@@ -12,8 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.infrastructure.batch.ComicBatchService;
-import org.stapledon.infrastructure.batch.ComicJobSummary;
+import org.stapledon.engine.batch.ComicBatchService;
+import org.stapledon.engine.batch.ComicJobSummary;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

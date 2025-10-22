@@ -17,12 +17,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.util.Bootstrap;
-import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.downloader.ComicDownloaderFacade;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.infrastructure.config.ConfigurationFacade;
-import org.stapledon.infrastructure.config.GoComicsBootstrap;
-import org.stapledon.infrastructure.config.KingComicsBootStrap;
+import org.stapledon.common.service.ComicConfigurationService;
+import org.stapledon.common.config.IComicsBootstrap;
+
 import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.common.config.properties.StartupReconcilerProperties;
 import org.stapledon.common.service.ComicStorageFacade;
@@ -42,7 +42,7 @@ public class ComicManagementFacadeReconcileTest {
     private ComicStorageFacade storageFacade;
     
     @Mock
-    private ConfigurationFacade configFacade;
+    private ComicConfigurationService configFacade;
     
     @Mock
     private ComicDownloaderFacade downloaderFacade;
@@ -54,10 +54,10 @@ public class ComicManagementFacadeReconcileTest {
     private TaskExecutionTracker taskExecutionTracker;
     
     @Mock
-    private GoComicsBootstrap goComicsBootstrap;
+    private IComicsBootstrap goComicsBootstrap;
     
     @Mock
-    private KingComicsBootStrap kingComicsBootstrap;
+    private IComicsBootstrap kingComicsBootstrap;
     
     private ComicManagementFacadeImpl facade;
     private ComicConfig comicConfig;
@@ -100,7 +100,7 @@ public class ComicManagementFacadeReconcileTest {
                 downloaderFacade,
                 reconcilerProperties,
                 taskExecutionTracker,
-                Mockito.mock(org.stapledon.core.comic.service.RetrievalStatusService.class)
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );
     }
     

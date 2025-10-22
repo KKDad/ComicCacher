@@ -30,7 +30,7 @@ class JsonConfigWriterTest {
     private Path path;
     
     @Mock
-    private ConfigurationFacade configurationFacade;
+    private ApplicationConfigurationFacade configurationFacade;
 
     @BeforeEach
     void setup() throws IOException {

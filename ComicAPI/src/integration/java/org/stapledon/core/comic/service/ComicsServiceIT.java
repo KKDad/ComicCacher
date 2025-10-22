@@ -10,7 +10,7 @@ import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
-import org.stapledon.core.comic.management.ComicManagementFacade;
+import org.stapledon.engine.management.ComicManagementFacade;
 
 import java.time.LocalDate;
 import java.util.List;

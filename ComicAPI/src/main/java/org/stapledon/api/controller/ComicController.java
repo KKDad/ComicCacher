@@ -17,10 +17,10 @@ import org.stapledon.common.dto.ImageDto;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
 import org.stapledon.common.util.Direction;
-import org.stapledon.core.comic.management.ComicManagementFacade;
-import org.stapledon.core.comic.model.ComicCachingException;
-import org.stapledon.core.comic.model.ComicImageNotFoundException;
-import org.stapledon.core.comic.model.ComicNotFoundException;
+import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.common.model.ComicCachingException;
+import org.stapledon.common.model.ComicImageNotFoundException;
+import org.stapledon.common.model.ComicNotFoundException;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

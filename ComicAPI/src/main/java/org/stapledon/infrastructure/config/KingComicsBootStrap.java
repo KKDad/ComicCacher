@@ -1,10 +1,11 @@
 package org.stapledon.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.stapledon.core.comic.downloader.ComicsKingdom;
-import org.stapledon.core.comic.downloader.IDailyComic;
-import org.stapledon.infrastructure.web.WebInspector;
-import org.stapledon.infrastructure.web.WebInspectorImpl;
+import org.stapledon.common.config.IComicsBootstrap;
+import org.stapledon.engine.downloader.ComicsKingdom;
+import org.stapledon.engine.downloader.IDailyComic;
+import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.WebInspectorImpl;
 
 import java.time.LocalDate;
 
@@ -36,5 +37,15 @@ public class KingComicsBootStrap implements IComicsBootstrap {
     @Override
     public IDailyComic getDownloader() {
         return new ComicsKingdom(webInspector != null ? webInspector : new WebInspectorImpl(), this.getWebsite());
+    }
+
+    @Override
+    public String getSource() {
+        return "comicskingdom";
+    }
+
+    @Override
+    public String getSourceIdentifier() {
+        return stripName().replace(" ", "-").toLowerCase();
     }
 }

@@ -1,4 +1,4 @@
-package org.stapledon.core.comic.service;
+package org.stapledon.common.service;
 
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;

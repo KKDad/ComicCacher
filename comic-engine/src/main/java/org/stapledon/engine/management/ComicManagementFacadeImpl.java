@@ -6,14 +6,14 @@ import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Bootstrap;
 import org.stapledon.common.util.Direction;
-import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.downloader.ComicDownloaderFacade;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
-import org.stapledon.core.comic.service.RetrievalStatusService;
-import org.stapledon.infrastructure.config.ConfigurationFacade;
-import org.stapledon.infrastructure.config.IComicsBootstrap;
+import org.stapledon.common.service.RetrievalStatusService;
+import org.stapledon.common.service.ComicConfigurationService;
+import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.common.config.properties.StartupReconcilerProperties;
 import org.stapledon.common.service.ComicStorageFacade;
@@ -47,7 +47,7 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     private static final String TASK_NAME = "ComicReconciliation";
 
     private final ComicStorageFacade storageFacade;
-    private final ConfigurationFacade configFacade;
+    private final ComicConfigurationService configFacade;
     private final ComicDownloaderFacade downloaderFacade;
     private final TaskExecutionTracker taskExecutionTracker;
     private final RetrievalStatusService retrievalStatusService;
@@ -57,7 +57,7 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
 
     public ComicManagementFacadeImpl(
             ComicStorageFacade storageFacade,
-            ConfigurationFacade configFacade,
+            ComicConfigurationService configFacade,
             ComicDownloaderFacade downloaderFacade,
             StartupReconcilerProperties reconcilerProperties,
             TaskExecutionTracker taskExecutionTracker,

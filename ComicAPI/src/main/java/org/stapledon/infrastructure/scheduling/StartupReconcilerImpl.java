@@ -2,8 +2,8 @@ package org.stapledon.infrastructure.scheduling;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
-import org.stapledon.core.comic.management.ComicManagementFacade;
-import org.stapledon.infrastructure.config.properties.StartupReconcilerProperties;
+import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.common.config.properties.StartupReconcilerProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

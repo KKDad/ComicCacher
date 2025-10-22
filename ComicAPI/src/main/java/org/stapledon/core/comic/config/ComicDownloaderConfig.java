@@ -1,10 +1,10 @@
 package org.stapledon.core.comic.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.stapledon.core.comic.downloader.ComicDownloaderFacade;
-import org.stapledon.core.comic.downloader.ComicDownloaderStrategy;
-import org.stapledon.core.comic.downloader.ComicsKingdomDownloaderStrategy;
-import org.stapledon.core.comic.downloader.GoComicsDownloaderStrategy;
+import org.stapledon.engine.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.downloader.ComicDownloaderStrategy;
+import org.stapledon.engine.downloader.ComicsKingdomDownloaderStrategy;
+import org.stapledon.engine.downloader.GoComicsDownloaderStrategy;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

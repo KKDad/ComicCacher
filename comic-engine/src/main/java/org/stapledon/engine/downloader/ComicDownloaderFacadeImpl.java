@@ -7,7 +7,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
-import org.stapledon.core.comic.service.RetrievalStatusService;
+import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.Duration;
 import java.time.LocalDate;

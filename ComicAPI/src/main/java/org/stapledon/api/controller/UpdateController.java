@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.core.comic.management.ComicManagementFacade;
+import org.stapledon.engine.management.ComicManagementFacade;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

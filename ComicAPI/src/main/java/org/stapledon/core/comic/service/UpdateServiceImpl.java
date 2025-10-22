@@ -1,7 +1,7 @@
 package org.stapledon.core.comic.service;
 
 import org.springframework.stereotype.Service;
-import org.stapledon.core.comic.management.ComicManagementFacade;
+import org.stapledon.engine.management.ComicManagementFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

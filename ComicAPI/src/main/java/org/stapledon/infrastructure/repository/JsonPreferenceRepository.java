@@ -3,7 +3,7 @@ package org.stapledon.infrastructure.repository;
 import org.springframework.stereotype.Repository;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
-import org.stapledon.infrastructure.config.ConfigurationFacade;
+import org.stapledon.infrastructure.config.ApplicationConfigurationFacade;
 import org.stapledon.infrastructure.config.PreferenceConfigWriter;
 
 import java.time.LocalDate;
@@ -16,14 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * JSON file-based implementation of PreferenceRepository.
- * Delegates to ConfigurationFacade and PreferenceConfigWriter for file I/O operations.
+ * Delegates to ApplicationConfigurationFacade and PreferenceConfigWriter for file I/O operations.
  */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
 public class JsonPreferenceRepository implements PreferenceRepository {
 
-    private final ConfigurationFacade configurationFacade;
+    private final ApplicationConfigurationFacade configurationFacade;
     private final PreferenceConfigWriter preferenceConfigWriter;
 
     @Override

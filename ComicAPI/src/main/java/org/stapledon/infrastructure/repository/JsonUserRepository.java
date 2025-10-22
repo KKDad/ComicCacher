@@ -4,7 +4,7 @@ import org.springframework.stereotype.Repository;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
-import org.stapledon.infrastructure.config.ConfigurationFacade;
+import org.stapledon.infrastructure.config.ApplicationConfigurationFacade;
 import org.stapledon.infrastructure.config.UserConfigWriter;
 
 import java.util.ArrayList;
@@ -16,14 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * JSON file-based implementation of UserRepository.
- * Delegates to ConfigurationFacade and UserConfigWriter for file I/O and authentication operations.
+ * Delegates to ApplicationConfigurationFacade and UserConfigWriter for file I/O and authentication operations.
  */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
 public class JsonUserRepository implements UserRepository {
 
-    private final ConfigurationFacade configurationFacade;
+    private final ApplicationConfigurationFacade configurationFacade;
     private final UserConfigWriter userConfigWriter;
 
     @Override

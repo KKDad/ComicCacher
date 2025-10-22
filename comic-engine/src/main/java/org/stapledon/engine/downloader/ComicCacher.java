@@ -3,8 +3,8 @@ package org.stapledon.engine.downloader;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.util.Bootstrap;
-import org.stapledon.core.comic.management.ComicManagementFacade;
-import org.stapledon.infrastructure.config.IComicsBootstrap;
+import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.infrastructure.web.DefaultTrustManager;
 
 import java.security.KeyManagementException;
