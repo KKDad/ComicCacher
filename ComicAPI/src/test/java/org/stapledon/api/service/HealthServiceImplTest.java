@@ -33,10 +33,10 @@ class HealthServiceImplTest {
     private BuildVersion mockBuildVersion;
 
     @Mock
-    private ImageCacheStatsUpdater mockCacheStatsUpdater;
+    private StorageMetricsCollector mockCacheStatsUpdater;
 
     @Mock
-    private CacheUtils mockCacheUtils;
+    private AccessMetricsCollector mockAccessMetricsCollector;
 
     @Mock
     private CacheProperties mockCacheProperties;

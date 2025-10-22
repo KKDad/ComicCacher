@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.stapledon.api.dto.comic.ImageDto;
-import org.stapledon.infrastructure.caching.CacheUtilsTest;
+import org.stapledon.infrastructure.caching.AccessMetricsCollectorTest;
 
 import java.io.IOException;
 import java.nio.file.Path;

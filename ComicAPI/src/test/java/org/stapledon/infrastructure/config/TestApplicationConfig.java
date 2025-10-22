@@ -165,7 +165,7 @@ public class TestApplicationConfig {
 
     @Bean
     @Primary
-    public ImageCacheStatsUpdater imageCacheStatsUpdater() {
-        return Mockito.mock(ImageCacheStatsUpdater.class);
+    public StorageMetricsCollector storageMetricsCollector() {
+        return Mockito.mock(StorageMetricsCollector.class);
     }
 }

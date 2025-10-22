@@ -7,13 +7,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
+import org.stapledon.metrics.collector.AccessMetricsCollector;
 
 import java.io.File;
 import java.time.LocalDate;
 
 public class AccessMetricsCollectorTest {
 
-    private CacheUtils cacheUtils;
+    private AccessMetricsCollector accessMetricsCollector;
     private ComicItem comicItem;
 
     @BeforeEach
@@ -40,7 +41,7 @@ public class AccessMetricsCollectorTest {
                 LocalDate.of(2010, 6, 28)     // additional date between
         );
 
-        cacheUtils = new CacheUtils(resourcesDirectory.toString(), mockStorageFacade, mockAccessMetricsRepository);
+        accessMetricsCollector = new AccessMetricsCollector(resourcesDirectory.toString(), mockStorageFacade, mockAccessMetricsRepository);
     }
 
     @Test

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.api.dto.comic.ComicItem;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
+import org.stapledon.metrics.collector.AccessMetricsCollector;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -24,7 +25,7 @@ class AccessMetricsCollectorAccessTrackingTest {
     @TempDir
     Path tempDir;
 
-    private CacheUtils cacheUtils;
+    private AccessMetricsCollector accessMetricsCollector;
     private ComicItem testComic1;
     private ComicItem testComic2;
 
@@ -38,7 +39,7 @@ class AccessMetricsCollectorAccessTrackingTest {
         AccessMetricsRepository mockAccessMetricsRepository = mock(AccessMetricsRepository.class);
 
         // Initialize CacheUtils with temp directory, mock facade, and mock metrics repository
-        cacheUtils = new CacheUtils(cacheRoot.getAbsolutePath(), mockStorageFacade, mockAccessMetricsRepository);
+        accessMetricsCollector = new AccessMetricsCollector(cacheRoot.getAbsolutePath(), mockStorageFacade, mockAccessMetricsRepository);
 
         // Create comic items for testing
         testComic1 = ComicItem.builder()

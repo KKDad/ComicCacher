@@ -18,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 import org.stapledon.api.dto.comic.ComicStorageMetrics;
 import org.stapledon.api.dto.comic.ImageCacheStats;
 import org.stapledon.infrastructure.config.JsonConfigWriter;
+import org.stapledon.metrics.collector.StorageMetricsCollector;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +35,7 @@ class StorageMetricsCollectorTest {
     @Mock
     JsonConfigWriter mockStatsUpdater;
 
-    private ImageCacheStatsUpdater cacheStatsUpdater;
+    private StorageMetricsCollector cacheStatsUpdater;
     private File cacheRoot;
 
     @BeforeEach
@@ -70,7 +71,7 @@ class StorageMetricsCollectorTest {
         createDummyImage(year2020, "2020-12-31.png", 1024 * 25);
 
         // Initialize the cache stats updater
-        cacheStatsUpdater = new ImageCacheStatsUpdater(cacheRoot.getAbsolutePath(), mockStatsUpdater);
+        cacheStatsUpdater = new StorageMetricsCollector(cacheRoot.getAbsolutePath(), mockStatsUpdater);
     }
 
     private void createDummyImage(File directory, String fileName, int size) throws IOException {
