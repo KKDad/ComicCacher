@@ -1,3 +1,4 @@
 rootProject.name = 'TheComicProcessor'
 include 'comic-metrics'
+include 'comic-engine'
 include 'ComicAPI'
