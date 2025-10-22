@@ -1,9 +1,11 @@
 # ComicAPI Modularization - Refactoring Plan
 
-## Status: Phase 1 - Foundation & Cleanup (✅ COMPLETED)
+## Status: Phase 3 - Multi-Module Structure (🟡 IN PROGRESS)
 
 Last Updated: 2025-10-22
-Completed: 2025-10-22
+Phase 1 Completed: 2025-10-22
+Phase 2 Completed: 2025-10-22
+Phase 3 Started: 2025-10-22
 
 ---
 
@@ -110,99 +112,149 @@ Phase 1 successfully completed all objectives:
 
 ---
 
-## Phase 2: Extract Metrics Module
+## Phase 2: Reorganize Metrics Package Structure
 
-**Status:** 🔴 Not Started
-**Estimated Duration:** 2-3 days
+**Status:** ✅ COMPLETED
+**Started:** 2025-10-22
+**Completed:** 2025-10-22
+**Duration:** ~4 hours
 
-### Objectives
-- Create new Gradle submodule: `comic-metrics`
-- Move all metrics-related code to new module
-- Define pluggable metrics output interface
-- Make metrics scheduling optional
+### Objectives Achieved
+- [x] Reorganized metrics code into clean package structure
+- [x] Renamed classes to follow consistent naming patterns
+- [x] Created MetricsService facade interface
+- [x] Implemented conditional metrics with NoOpMetricsService
+- [x] All tests passing after reorganization
 
-### Tasks
+### Tasks Completed
 
-#### 2.1 Create Metrics Module Structure
-- [ ] Create `comic-metrics/` directory
-- [ ] Create `comic-metrics/build.gradle`
-- [ ] Set up module dependencies
-- [ ] Create package structure
+#### 2.1-2.7 Package Reorganization ✅
+- [x] Created `org.stapledon.metrics` package structure
+- [x] Moved DTOs to `metrics.dto` package
+- [x] Moved repositories to `metrics.repository` package
+- [x] Moved services to `metrics.service` package
+- [x] Created `metrics.config` with MetricsConfiguration
+- [x] Renamed `ImageCacheStatsUpdater` → `StorageMetricsCollector`
+- [x] Renamed `CacheUtils` → `AccessMetricsCollector`
 
-#### 2.2 Move Metrics Components
-- [ ] Move `ImageCacheStatsUpdater`
-- [ ] Move `CacheUtils`
-- [ ] Move `MetricsUpdateService`
-- [ ] Move `MetricsController`
-- [ ] Move all metrics DTOs
-- [ ] Move all metrics repositories
+#### 2.8-2.12 Service Layer & Testing ✅
+- [x] Created `MetricsService` facade interface
+- [x] Implemented `MetricsServiceImpl` with all operations
+- [x] Implemented `NoOpMetricsService` for disabled state
+- [x] Updated `MetricsController` to use new service
+- [x] Fixed all test compilation errors
+- [x] All tests passing (17 metrics tests + integration tests)
 
-#### 2.3 Define Metrics Interfaces
-- [ ] Create `MetricsCollector` interface
-- [ ] Implement `JsonMetricsCollector`
-- [ ] Create `MetricsProvider` interface
-- [ ] Document metrics plugin architecture
-
-#### 2.4 Configuration & Properties
-- [ ] Add metrics enable/disable property
-- [ ] Make scheduling optional
-- [ ] Update configuration files
-- [ ] Update tests
+**Commits:**
+- `57f021f` - Phase 2.1: Create metrics package structure and move DTOs
+- `72395d5` - Phase 2.2: Move repository files to metrics.repository package
+- `40d264f` - Phase 2.3: Move service files to metrics.service package
+- `db566d0` - Phase 2.4: Move MetricsProperties to metrics.config package
+- `58282e5` - Phase 2.5a: Rename ImageCacheStatsUpdater → StorageMetricsCollector
+- `0cc98f9` - Phase 2.5b: Rename CacheUtils → AccessMetricsCollector
+- `9737ba4` - Phase 2.6: Create MetricsService facade
+- `6e5edd8` - Phase 2.7: Create MetricsConfiguration with conditional beans
+- `3200140` - Phase 2.8: Update MetricsController to use MetricsService
+- `14d0577` - Phase 2.9: Update tests for renamed metrics classes
+- `851d6ff` - Phase 2.10: Fix test compilation errors (partial)
+- `b93cca9` - Phase 2.11: Fix test method implementations for renamed classes
+- `3734df8` - Phase 2.12: Fix MetricsControllerIT import paths
 
 ### Verification Criteria
-- ✅ Metrics module builds independently
-- ✅ Metrics can be disabled via properties
-- ✅ JSON output unchanged when enabled
-- ✅ All metrics tests pass
+- ✅ All code organized in `org.stapledon.metrics` package
+- ✅ Consistent naming patterns across collectors and services
+- ✅ MetricsService facade provides clean public API
+- ✅ Conditional metrics work (can be disabled via config)
+- ✅ All tests passing (no regressions)
+
+### Summary
+
+Phase 2 successfully reorganized metrics code:
+1. Created clean package structure under `org.stapledon.metrics`
+2. Established consistent naming patterns for collectors and services
+3. Implemented facade pattern with MetricsService interface
+4. Added conditional behavior via NoOpMetricsService
+5. All tests passing, ready for module extraction
+
+**Next Step:** Begin Phase 3 - Create Multi-Module Structure
 
 ---
 
-## Phase 3: Extract Comic Engine Module
+## Phase 3: Create Multi-Module Structure
 
-**Status:** 🔴 Not Started
-**Estimated Duration:** 3-4 days
+**Status:** 🟡 IN PROGRESS
+**Started:** 2025-10-22
+**Estimated Duration:** 1-2 days
 
 ### Objectives
-- Create new Gradle submodule: `comic-engine`
-- Move download, cache, and storage components
-- Define clean public API
-- Ensure engine can be used standalone
+- Create separate Gradle modules for metrics and engine
+- Establish clean module boundaries
+- Enable independent module builds and testing
+- Handle circular dependency challenges pragmatically
 
 ### Tasks
 
-#### 3.1 Create Engine Module Structure
-- [ ] Create `comic-engine/` directory
-- [ ] Create `comic-engine/build.gradle`
-- [ ] Set up module dependencies
-- [ ] Create package structure
+#### 3.1 Create comic-metrics Module ✅ COMPLETED
+- [x] Created `comic-metrics/` directory and `build.gradle`
+- [x] Copied metrics code from `org.stapledon.metrics` package
+- [x] Moved metrics tests and test resources (17 tests)
+- [x] Fixed package declarations and imports
+- [x] All tests passing in comic-metrics module
+- [x] Module builds independently
 
-#### 3.2 Move Engine Components
-- [ ] Move all downloader strategies
-- [ ] Move `ComicDownloaderFacade`
-- [ ] Move `ComicStorageFacade`
-- [ ] Move `ComicCacher`
-- [ ] Move caching infrastructure
-- [ ] Move `RetrievalStatusService`
-- [ ] Move `TaskExecutionTracker`
+**Commits:**
+- `1598ff8` - Phase 3.1a: Create comic-metrics Gradle module
+- `c3329a9` - Phase 3.1b: Resolved circular dependency for comic-metrics
 
-#### 3.3 Define Public API
-- [ ] Create `ComicEngineService` interface
-- [ ] Create `ComicStorageService` interface
-- [ ] Create `ComicDownloadService` interface
-- [ ] Implement service facades
-- [ ] Document public API
+**Key Decision - Circular Dependency Handling:**
 
-#### 3.4 Configuration & Properties
-- [ ] Move `CacheProperties`
-- [ ] Move bootstrap classes
-- [ ] Update configuration loading
-- [ ] Update tests
+During extraction, discovered that `comic-metrics` depends on shared types from `ComicAPI`:
+- DTOs: `ImageCacheStats`, `ComicItem`, `ComicStorageMetrics`
+- Config: `CacheProperties`, `JsonConfigWriter`
+- Infrastructure: `ComicStorageFacade`
+
+**Attempted Solution:** Add `comic-metrics → ComicAPI` dependency
+**Problem:** Created circular dependency (`ComicAPI → comic-metrics → ComicAPI`)
+
+**Chosen Approach:** Temporary code duplication
+- `comic-metrics` module: Standalone with copied metrics code
+- `ComicAPI`: Retains original metrics code (no circular dependency)
+- Both modules build and test independently
+- **Future Resolution:** Phase 6 will extract shared types to `comic-common` module
+
+**Rationale:**
+- Pragmatic and incremental (avoid "big bang" refactoring)
+- Allows immediate benefit (independent metrics module builds)
+- Minimal risk (both code paths tested)
+- Clear migration path (Phase 6 cleanup)
+
+#### 3.2 Create comic-engine Module 🔴 NOT STARTED
+- [ ] Create `comic-engine/` directory and `build.gradle`
+- [ ] Copy engine code (downloaders, storage, caching, batch)
+- [ ] Move engine tests and resources
+- [ ] Fix dependencies (will use same approach as metrics)
+- [ ] Verify all tests pass
+
+**Components to extract:**
+- `core.comic.downloader.*` (downloaders and strategies)
+- `core.comic.management.*` (ComicManagementFacade)
+- `infrastructure.storage.*` (ComicStorageFacade)
+- `infrastructure.caching.*` (caching infrastructure)
+- `infrastructure.batch.*` (batch job infrastructure)
+
+#### 3.3 Verification & Documentation 🔴 NOT STARTED
+- [ ] Both modules build independently: `./gradlew :comic-metrics:build :comic-engine:build`
+- [ ] ComicAPI builds and all tests pass
+- [ ] Update REFACTORING_PLAN.md with progress
+- [ ] Document module structure in README
 
 ### Verification Criteria
-- ✅ Engine module builds independently
-- ✅ Engine can be used without API layer
-- ✅ All engine tests pass
-- ✅ Download and caching work correctly
+- ✅ comic-metrics module builds independently (DONE)
+- ✅ comic-metrics tests pass (17/17) (DONE)
+- ⏳ comic-engine module builds independently
+- ⏳ comic-engine tests pass
+- ⏳ ComicAPI builds and all tests pass
+- ⏳ No functional regressions
 
 ---
 
@@ -395,12 +447,13 @@ Each phase is committed and tagged independently:
 
 ## Git Tags
 
-- `refactor-phase-1`: Foundation & Cleanup complete
-- `refactor-phase-2`: Metrics module extracted
-- `refactor-phase-3`: Engine module extracted
+- `refactor-phase-1`: Foundation & Cleanup complete (all commits on `refactor-phase-1-foundation` branch)
+- `refactor-phase-2`: Metrics package reorganization (12 commits, all tests passing)
+- `refactor-phase-3-partial`: Multi-module structure - comic-metrics created (in progress)
+- `refactor-phase-3-complete`: Multi-module structure - both metrics and engine modules
 - `refactor-phase-4`: API module refactored
 - `refactor-phase-5`: Scheduling refactored
-- `refactor-phase-6`: Configuration consolidated
+- `refactor-phase-6`: Configuration consolidated (removes code duplication via comic-common)
 - `refactor-phase-7`: Integration complete
 
 ---
@@ -414,6 +467,12 @@ Each phase is committed and tagged independently:
 3. **Remove On-Demand Downloads**: Simplifies architecture, serves only from JSON
 4. **Incremental Approach**: 7 phases with testing between each
 5. **Common Module**: Shared code reduces duplication across modules
+6. **Temporary Code Duplication (Phase 3)**: During module extraction, keep code in both original location and new module to avoid circular dependencies. This pragmatic approach:
+   - Allows independent module builds immediately
+   - Avoids "big bang" refactoring risk
+   - Maintains all tests passing throughout
+   - Will be resolved in Phase 6 when `comic-common` extracts shared types
+7. **Phase 2 Before Phase 3**: Reorganized package structure within monolith before creating modules. This made module extraction cleaner and easier to verify.
 
 ### Open Questions
 
@@ -439,4 +498,28 @@ Each phase is committed and tagged independently:
 ---
 
 Last Updated: 2025-10-22
-Status: Phase 1 In Progress
+Status: Phase 3 In Progress
+
+## Important Notes
+
+### Circular Dependency Resolution Strategy
+
+**Challenge:** During Phase 3 module extraction, we discovered that new modules depend on shared types still in ComicAPI (DTOs, config classes, infrastructure interfaces). Adding module dependencies created circular references.
+
+**Current Approach (Phase 3):**
+- Modules contain copies of extracted code
+- ComicAPI retains original code (no circular dependency)
+- Both code paths tested and working
+- All builds pass independently
+
+**Future Resolution (Phase 6):**
+- Extract shared types to `comic-common` module
+- Update all modules to depend on `comic-common`
+- Remove duplicated code from modules
+- Final clean architecture with proper dependencies
+
+This incremental approach prioritizes:
+1. **Safety**: All tests pass at every step
+2. **Progress**: Modules can be built and tested immediately
+3. **Reversibility**: Easy to roll back if needed
+4. **Clarity**: Clear path to final architecture
