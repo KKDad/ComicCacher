@@ -1,13 +1,7 @@
 .bg {
-  background: rgb(250,232,196);
-  background: linear-gradient(180deg, rgba(250,232,196,1) 0%, rgba(255,217,127,1) 100%);
+  background: transparent; /* Allow body gradient to show through */
   width: 100%;
-  overflow: hidden; 
-
-  /* Center and scale the image nicely */
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  overflow: hidden;
 }
 
 .box {    
