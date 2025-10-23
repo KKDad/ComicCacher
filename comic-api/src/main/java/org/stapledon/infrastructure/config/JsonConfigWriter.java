@@ -94,7 +94,7 @@ public class JsonConfigWriter {
      */
     public boolean save(ImageCacheStats ic, String targetDirectory) {
         try {
-            Writer writer = new FileWriter(targetDirectory + "/stats.db");
+            Writer writer = new FileWriter(targetDirectory + "/stats.json");
             gson.toJson(ic, writer);
             writer.flush();
             writer.close();

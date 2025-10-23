@@ -6,8 +6,10 @@ import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.ComicStorageFacade;
+import org.stapledon.common.service.ImageAnalysisService;
 import org.stapledon.common.service.ImageValidationService;
 import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.ImageUtils;
@@ -45,6 +47,8 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
 
     private final CacheProperties cacheProperties;
     private final ImageValidationService imageValidationService;
+    private final ImageAnalysisService imageAnalysisService;
+    private final ImageMetadataRepository imageMetadataRepository;
     
     /**
      * Gets a directory name for a comic - uses the comic name if available, 
@@ -97,6 +101,25 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
 
         try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(imageData);
+
+            // After successfully saving the image, analyze and save metadata
+            try {
+                ImageMetadata metadata = imageAnalysisService.analyzeImage(
+                        imageData, file.getAbsolutePath(), validation, null);
+                boolean saved = imageMetadataRepository.saveMetadata(metadata);
+                if (saved) {
+                    log.debug("Saved metadata for comic strip: {}", file.getAbsolutePath());
+                } else {
+                    // Metadata was invalid or failed to save
+                    log.error("Failed to save metadata for comic strip {} on {}: metadata validation failed or incomplete",
+                            comicName, date);
+                }
+            } catch (Exception e) {
+                // Log but don't fail the save operation if metadata capture fails
+                log.error("Exception while capturing metadata for comic strip {} on {}: {}",
+                        comicName, date, e.getMessage(), e);
+            }
+
             return true;
         } catch (IOException e) {
             log.error("Failed to save comic strip for {} on {}: {}", comicName, date, e.getMessage());

@@ -4,9 +4,11 @@ import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicErrorRecord;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.service.ErrorTrackingService;
 import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.Duration;
@@ -32,6 +34,7 @@ public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {
 
     private final Map<String, ComicDownloaderStrategy> downloaderStrategies = new ConcurrentHashMap<>();
     private final RetrievalStatusService retrievalStatusService;
+    private final ErrorTrackingService errorTrackingService;
 
     /**
      * {@inheritDoc}
@@ -179,7 +182,7 @@ public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {
     
     private void recordSuccess(ComicDownloadRequest request, LocalDateTime startTime, long imageSize) {
         long durationMs = Duration.between(startTime, LocalDateTime.now()).toMillis();
-        
+
         ComicRetrievalRecord record = ComicRetrievalRecord.success(
                 request.getComicName(),
                 request.getDate(),
@@ -187,19 +190,22 @@ public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {
                 durationMs,
                 imageSize
         );
-        
+
         retrievalStatusService.recordRetrievalResult(record);
+
+        // Clear error history on successful download
+        errorTrackingService.clearErrors(request.getComicName());
     }
     
     private void recordFailure(
-            ComicDownloadRequest request, 
-            ComicRetrievalStatus status, 
-            String errorMessage, 
-            LocalDateTime startTime, 
+            ComicDownloadRequest request,
+            ComicRetrievalStatus status,
+            String errorMessage,
+            LocalDateTime startTime,
             Integer httpStatusCode) {
-        
+
         long durationMs = Duration.between(startTime, LocalDateTime.now()).toMillis();
-        
+
         ComicRetrievalRecord record = ComicRetrievalRecord.failure(
                 request.getComicName(),
                 request.getDate(),
@@ -209,7 +215,11 @@ public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {
                 durationMs,
                 httpStatusCode
         );
-        
+
         retrievalStatusService.recordRetrievalResult(record);
+
+        // Record error for tracking last N errors per comic
+        ComicErrorRecord errorRecord = ComicErrorRecord.fromRetrievalRecord(record);
+        errorTrackingService.recordError(errorRecord);
     }
 }

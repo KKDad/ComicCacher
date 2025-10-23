@@ -2,6 +2,7 @@ package org.stapledon.engine.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ImageFormat;
+import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.ImageValidationService;
 
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +39,12 @@ class ComicStorageFacadeImplTest {
 
     @Mock
     private ImageValidationService imageValidationService;
+
+    @Mock
+    private org.stapledon.common.service.ImageAnalysisService imageAnalysisService;
+
+    @Mock
+    private ImageMetadataRepository imageMetadataRepository;
 
     private ComicStorageFacadeImpl storageFacade;
     private File cacheRoot;
@@ -59,7 +68,15 @@ class ComicStorageFacadeImplTest {
         when(imageValidationService.validateWithMinDimensions(any(byte[].class), any(int.class), any(int.class)))
                 .thenReturn(ImageValidationResult.success(ImageFormat.PNG, 100, 100, 1000));
 
-        storageFacade = new ComicStorageFacadeImpl(cacheProperties, imageValidationService);
+        // Mock image analysis to return a test metadata
+        when(imageAnalysisService.analyzeImage(any(byte[].class), anyString(), any(), any()))
+                .thenReturn(createTestMetadata());
+
+        // Mock metadata repository to return true
+        when(imageMetadataRepository.saveMetadata(any())).thenReturn(true);
+
+        storageFacade = new ComicStorageFacadeImpl(cacheProperties, imageValidationService,
+                imageAnalysisService, imageMetadataRepository);
 
         // Create test directory structure
         createTestDirectoryStructure();
@@ -237,11 +254,25 @@ class ComicStorageFacadeImplTest {
     void deleteComic_shouldRemoveAllComicFiles() {
         // Act
         boolean result = storageFacade.deleteComic(COMIC_ID, COMIC_NAME);
-        
+
         // Assert
         assertThat(result).isTrue();
-        
+
         File comicDir = new File(cacheRoot, COMIC_NAME_PARSED);
         assertThat(comicDir).doesNotExist();
+    }
+
+    private ImageMetadata createTestMetadata() {
+        return ImageMetadata.builder()
+                .filePath("/test/path.png")
+                .format(ImageFormat.PNG)
+                .width(100)
+                .height(100)
+                .sizeInBytes(1000)
+                .colorMode(ImageMetadata.ColorMode.COLOR)
+                .samplePercentage(5.0)
+                .captureTimestamp(LocalDateTime.now())
+                .sourceUrl(null)
+                .build();
     }
 }

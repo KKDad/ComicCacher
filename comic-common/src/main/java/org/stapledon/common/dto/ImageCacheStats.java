@@ -24,4 +24,8 @@ public class ImageCacheStats {
     // New fields for enhanced metrics
     private long totalStorageBytes;
     private Map<String, ComicStorageMetrics> perComicMetrics;
+
+    // Year-based aggregated metrics
+    private Map<String, Integer> imageCountByYear;
+    private Map<String, Long> storageBytesByYear;
 }

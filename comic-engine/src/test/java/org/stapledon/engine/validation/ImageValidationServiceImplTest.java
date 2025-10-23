@@ -90,6 +90,30 @@ class ImageValidationServiceImplTest {
     }
 
     @Test
+    void testValidTiffImage() throws IOException {
+        byte[] imageData = createTestImage(500, 400, "TIFF");
+
+        ImageValidationResult result = imageValidationService.validate(imageData);
+
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.getFormat()).isEqualTo(ImageFormat.TIFF);
+        assertThat(result.getWidth()).isEqualTo(500);
+        assertThat(result.getHeight()).isEqualTo(400);
+    }
+
+    @Test
+    void testValidBmpImage() throws IOException {
+        byte[] imageData = createTestImage(320, 240, "BMP");
+
+        ImageValidationResult result = imageValidationService.validate(imageData);
+
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.getFormat()).isEqualTo(ImageFormat.BMP);
+        assertThat(result.getWidth()).isEqualTo(320);
+        assertThat(result.getHeight()).isEqualTo(240);
+    }
+
+    @Test
     void testSmallValidImage() throws IOException {
         // Test minimum viable image (1x1 pixel)
         byte[] imageData = createTestImage(1, 1, "PNG");

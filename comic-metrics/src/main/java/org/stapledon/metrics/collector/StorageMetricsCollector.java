@@ -75,6 +75,34 @@ public class StorageMetricsCollector {
             var years = Arrays.asList(yearFolders);
             Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
 
+            // Aggregate year-based statistics across all comics
+            Map<String, Integer> imageCountByYear = new HashMap<>();
+            Map<String, Long> storageBytesByYear = new HashMap<>();
+
+            for (ComicStorageMetrics metrics : perComicMetrics.values()) {
+                if (metrics.getStorageByYear() != null) {
+                    metrics.getStorageByYear().forEach((year, bytes) -> {
+                        storageBytesByYear.merge(year, bytes, Long::sum);
+                    });
+                }
+            }
+
+            // Calculate image counts per year by scanning each year directory
+            for (String year : years) {
+                int yearImageCount = 0;
+                for (File comicDir : comicDirs) {
+                    File yearDir = new File(comicDir, year);
+                    if (yearDir.exists() && yearDir.isDirectory()) {
+                        File[] images = yearDir.listFiles(file ->
+                                file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
+                        if (images != null) {
+                            yearImageCount += images.length;
+                        }
+                    }
+                }
+                imageCountByYear.put(year, yearImageCount);
+            }
+
             cacheStats = ImageCacheStats.builder()
                     .years(years)
                     // Find the first image in the first year. This is the oldest image available
@@ -83,6 +111,8 @@ public class StorageMetricsCollector {
                     .newestImage(expand(yearFolders[yearFolders.length - 1], lastImage(String.format("%s/%s", comicDirs[0].getAbsolutePath(), yearFolders[yearFolders.length - 1]))))
                     .totalStorageBytes(totalStorageBytes)
                     .perComicMetrics(perComicMetrics)
+                    .imageCountByYear(imageCountByYear)
+                    .storageBytesByYear(storageBytesByYear)
                     .build();
         }
 

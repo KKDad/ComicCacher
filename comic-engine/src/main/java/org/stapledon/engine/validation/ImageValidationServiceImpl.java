@@ -127,6 +127,8 @@ public class ImageValidationServiceImpl implements ImageValidationService {
                     case "PNG" -> ImageFormat.PNG;
                     case "JPEG", "JPG" -> ImageFormat.JPEG;
                     case "GIF" -> ImageFormat.GIF;
+                    case "TIFF", "TIF" -> ImageFormat.TIFF;
+                    case "BMP" -> ImageFormat.BMP;
                     case "WEBP" -> ImageFormat.WEBP;
                     default -> {
                         log.warn("Unknown image format detected: {}", formatName);
