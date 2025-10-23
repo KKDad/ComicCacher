@@ -1,6 +1,7 @@
 package org.stapledon.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.infrastructure.web.WebInspector;
 import org.stapledon.common.infrastructure.web.WebInspectorImpl;
@@ -25,6 +26,9 @@ public class GoComicsBootstrap implements IComicsBootstrap {
     @Autowired
     private WebInspector webInspector;
 
+    @Autowired
+    private CacheProperties cacheProperties;
+
     @Override
     public String stripName() {
         return this.name;
@@ -37,7 +41,10 @@ public class GoComicsBootstrap implements IComicsBootstrap {
 
     @Override
     public IDailyComic getDownloader() {
-        return new GoComics(webInspector != null ? webInspector : new WebInspectorImpl());
+        return new GoComics(
+            webInspector != null ? webInspector : new WebInspectorImpl(),
+            cacheProperties
+        );
     }
 
     @Override

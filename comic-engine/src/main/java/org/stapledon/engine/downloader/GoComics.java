@@ -9,6 +9,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.infrastructure.web.WebInspector;
 
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GoComics extends DailyComic implements AutoCloseable {
 
     private WebDriver driver;
+    private final CacheProperties cacheProperties;
     private final Random random = new Random();
     private final List<String> userAgents = Arrays.asList(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
@@ -48,7 +50,15 @@ public class GoComics extends DailyComic implements AutoCloseable {
         log.debug("Initializing WebDriver for GoComics downloader");
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
-        // options.addArguments("--headless"); // Removed for full browser
+
+        // Configure headless mode based on application properties
+        if (cacheProperties.isChromeHeadless()) {
+            log.debug("Running Chrome in headless mode");
+            options.addArguments("--headless");
+        } else {
+            log.debug("Running Chrome with GUI (headed mode)");
+        }
+
         options.addArguments("--disable-gpu");
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--no-sandbox");
@@ -81,8 +91,9 @@ public class GoComics extends DailyComic implements AutoCloseable {
         quitWebDriver();
     }
 
-    public GoComics(WebInspector inspector) {
+    public GoComics(WebInspector inspector, CacheProperties cacheProperties) {
         super(inspector, "[src]");
+        this.cacheProperties = cacheProperties;
         // WebDriver initialization moved to lazy init - only create when actually needed
     }
 

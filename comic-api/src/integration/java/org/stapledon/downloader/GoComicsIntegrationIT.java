@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.engine.downloader.GoComics;
 import org.stapledon.engine.downloader.IDailyComic;
@@ -22,11 +23,16 @@ import java.util.Comparator;
 class GoComicsIntegrationIT {
     private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationIT.class);
     private static Path path;
+    private static CacheProperties cacheProperties;
 
     @BeforeAll
     static void setUp() throws Exception {
         path = Files.createTempDirectory("GoComicsTest");
         LOG.info("Using TempDirectory: " + path.toString());
+
+        // Create CacheProperties for tests with headless=true
+        cacheProperties = new CacheProperties();
+        cacheProperties.setChromeHeadless(true);
     }
 
     @AfterAll
@@ -42,7 +48,7 @@ class GoComicsIntegrationIT {
     }
 
     private GoComics getSubject(String name) {
-        GoComics gc = new GoComics(null);
+        GoComics gc = new GoComics(null, cacheProperties);
         gc.setComic(name);
         gc.setDate(LocalDate.now().minusDays(1)); // Use a relative date
         gc.setCacheRoot(path.toString());

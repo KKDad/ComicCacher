@@ -20,4 +20,10 @@ public class CacheProperties {
     private String usersConfig;
 
     private String preferencesConfig;
+
+    /**
+     * Whether to run Chrome in headless mode (without GUI).
+     * Default is true for better performance and CI/CD compatibility.
+     */
+    private boolean chromeHeadless = true;
 }
