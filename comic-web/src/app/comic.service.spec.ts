@@ -53,8 +53,8 @@ describe('ComicService', () => {
         oldest: '2020-01-01',
         newest: '2020-12-31',
         description: 'Test description',
-        strip: null,
-        avatar: null
+        strip: '',
+        avatar: ''
       };
 
       service.getComic(123).subscribe(comic => {
@@ -319,7 +319,7 @@ describe('ComicService', () => {
         imageData: 'base64-encoded-data',
         height: 100,
         width: 100,
-        imageDate: null
+        imageDate: '2025-10-23'
       };
 
       service.getAvatar(123).subscribe(image => {
@@ -390,8 +390,8 @@ describe('ComicService', () => {
   describe('refresh', () => {
     it('should fetch comics and update the signal', () => {
       const mockComics: Comic[] = [
-        { id: 1, name: 'Comic 1', author: 'Author 1', description: 'Desc 1', oldest: '2020-01-01', newest: '2020-12-31', strip: null, avatar: null },
-        { id: 2, name: 'Comic 2', author: 'Author 2', description: 'Desc 2', oldest: '2020-01-01', newest: '2020-12-31', strip: null, avatar: null }
+        { id: 1, name: 'Comic 1', author: 'Author 1', description: 'Desc 1', oldest: '2020-01-01', newest: '2020-12-31', strip: '', avatar: '' },
+        { id: 2, name: 'Comic 2', author: 'Author 2', description: 'Desc 2', oldest: '2020-01-01', newest: '2020-12-31', strip: '', avatar: '' }
       ];
 
       // We can test the real refresh method on our mock service

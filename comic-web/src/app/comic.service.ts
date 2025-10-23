@@ -89,7 +89,7 @@ export class ComicService {
   /**
    * Get next comic strip for a given comic and current date
    */
-  getNext(id: number, current: String): Observable<ImageDto> {
+  getNext(id: number, current: string): Observable<ImageDto> {
     if (id === 0) {
       return EMPTY;
     }
@@ -103,7 +103,7 @@ export class ComicService {
   /**
    * Get previous comic strip for a given comic and current date
    */
-  getPrev(id: number, current: String): Observable<ImageDto> {
+  getPrev(id: number, current: string): Observable<ImageDto> {
     if (id === 0) {
       return EMPTY;
     }

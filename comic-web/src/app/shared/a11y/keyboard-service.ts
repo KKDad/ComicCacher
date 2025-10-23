@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {filter, fromEvent, Observable} from 'rxjs';
+import {filter, fromEvent, Observable, Subscription} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 export type KeyCombo = {
@@ -56,11 +56,11 @@ export class KeyboardService {
       ].includes(event.key)),
       map(event => {
         switch (event.key) {
-          case 'ArrowUp': return 'up';
-          case 'ArrowDown': return 'down';
-          case 'ArrowLeft': return 'left';
-          case 'ArrowRight': return 'right';
-          default: return null;
+          case 'ArrowUp': return 'up' as const;
+          case 'ArrowDown': return 'down' as const;
+          case 'ArrowLeft': return 'left' as const;
+          case 'ArrowRight': return 'right' as const;
+          default: return 'up' as const; // Fallback (should never happen due to filter)
         }
       })
     );
@@ -96,25 +96,30 @@ export class KeyboardService {
    * @param onPrev Function to call when previous is requested
    * @param onNext Function to call when next is requested
    * @param onLast Function to call when last is requested
+   * @returns Subscription that should be unsubscribed when no longer needed
    */
   registerComicNavigationShortcuts(
     onFirst: () => void,
     onPrev: () => void,
     onNext: () => void,
     onLast: () => void
-  ): void {
+  ): Subscription {
+    const subscription = new Subscription();
+
     // First comic: Home key
-    this.listenForKeyCombo({ key: 'Home' }).subscribe(() => onFirst());
-    
+    subscription.add(this.listenForKeyCombo({ key: 'Home' }).subscribe(() => onFirst()));
+
     // Previous comic: Left arrow or PageUp
-    this.listenForKeyCombo({ key: 'ArrowLeft' }).subscribe(() => onPrev());
-    this.listenForKeyCombo({ key: 'PageUp' }).subscribe(() => onPrev());
-    
+    subscription.add(this.listenForKeyCombo({ key: 'ArrowLeft' }).subscribe(() => onPrev()));
+    subscription.add(this.listenForKeyCombo({ key: 'PageUp' }).subscribe(() => onPrev()));
+
     // Next comic: Right arrow or PageDown
-    this.listenForKeyCombo({ key: 'ArrowRight' }).subscribe(() => onNext());
-    this.listenForKeyCombo({ key: 'PageDown' }).subscribe(() => onNext());
-    
+    subscription.add(this.listenForKeyCombo({ key: 'ArrowRight' }).subscribe(() => onNext()));
+    subscription.add(this.listenForKeyCombo({ key: 'PageDown' }).subscribe(() => onNext()));
+
     // Last comic: End key
-    this.listenForKeyCombo({ key: 'End' }).subscribe(() => onLast());
+    subscription.add(this.listenForKeyCombo({ key: 'End' }).subscribe(() => onLast()));
+
+    return subscription;
   }
 }

@@ -1,8 +1,8 @@
 <div class="bg">
     <div class="box" [class.navbar-hidden]="!showNavbar">
-        <container 
+        <app-container
             [sections]="sections"
             (scrollinfo)="handleNavbarEvent($event)">
-        </container>
+        </app-container>
     </div>
 </div>

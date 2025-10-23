@@ -23,7 +23,7 @@
     [minBufferPx]="500"
     [maxBufferPx]="1000">
     <div *cdkVirtualFor="let section of sections; trackBy: trackByComicId" class="comic-item">
-      <section [content]="section"></section>
+      <app-section [content]="section"></app-section>
     </div>
 
     <!-- Empty state when no comics are available -->

@@ -7,7 +7,7 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
  */
 
 @Component({
-  selector: 'section',
+  selector: 'app-section',
   template: '<div>Mock Section Component</div>',
   standalone: true
 })
@@ -15,18 +15,18 @@ export class SectionStubComponent {
   @Input() comicId: number;
   @Input() comicName: string;
   @Input() comicDescription: string;
-  @Output() error = new EventEmitter<string>();
+  @Output() sectionError = new EventEmitter<string>();
 }
 
 @Component({
-  selector: 'loading-indicator',
+  selector: 'app-loading-indicator',
   template: '<div class="loading">Loading...</div>',
   standalone: true
 })
 export class LoadingIndicatorStubComponent {}
 
 @Component({
-  selector: 'error-display',
+  selector: 'app-error-display',
   template: '<div class="error">{{error}}</div>',
   standalone: true
 })

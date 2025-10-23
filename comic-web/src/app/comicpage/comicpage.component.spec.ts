@@ -24,7 +24,7 @@ class MockComicService {
 // Mock ContainerComponent
 @Component({
   // Use the same selector as the actual component
-  selector: 'container',
+  selector: 'app-container',
   template: '<div>Mock Container</div>',
   standalone: true
 })
@@ -59,7 +59,7 @@ describe('ComicpageComponent', () => {
   });
 
   it('should contain a container component', () => {
-    expectExists(fixture, 'container', 'Container component should be displayed');
+    expectExists(fixture, 'app-container', 'Container component should be displayed');
   });
 
   it('should update showNavbar when handleNavbarEvent is called with Hide', () => {

@@ -160,7 +160,7 @@ describe('SectionComponent', () => {
     comicServiceSpy.getLatest.and.returnValue(of(largeImage));
     component.onNavigateLast();
 
-    expect(component.width).toBe(component.max_width);
+    expect(component.width).toBe(900); // MAX_IMAGE_WIDTH constant
     expect(component.height).toBe(675); // (900 / 1200) * 900
   });
 

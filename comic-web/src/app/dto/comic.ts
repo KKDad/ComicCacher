@@ -1,13 +1,14 @@
+/**
+ * Represents a comic series with its metadata and current strip
+ */
 export class Comic {
   id: number;
   name: string;
   author: string;
   oldest: string;
   newest: string;
-  enabled?: any;
-
+  enabled?: boolean;
   description: string;
-
-  strip: any;
-  avatar: any;
+  strip: string;
+  avatar: string;
 }

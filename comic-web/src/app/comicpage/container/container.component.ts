@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, signal} from '@angular/core';
+import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output, signal} from '@angular/core';
 
 import {Comic} from '../../dto/comic';
 import {ComicService} from '../../comic.service';
@@ -14,7 +14,7 @@ export enum NavBarOption {
 }
 
 @Component({
-    selector: 'container',
+    selector: 'app-container',
     templateUrl: 'container.component.html',
     styleUrls: ['container.component.css'],
     standalone: true,
@@ -26,7 +26,7 @@ export enum NavBarOption {
         ErrorDisplayComponent
     ]
 })
-export class ContainerComponent implements OnInit {
+export class ContainerComponent implements OnInit, AfterViewInit {
     @Input() sections: Comic[];
     @Output() scrollinfo = new EventEmitter<NavBarOption>();
 
@@ -34,6 +34,9 @@ export class ContainerComponent implements OnInit {
     loading = signal(false);
     error = signal<string | null>(null);
     lastOffset: number;
+
+    /** Approximate height of a comic card for virtual scrolling */
+    private readonly COMIC_CARD_HEIGHT = 550;
 
     constructor(private scrollDispatcher: ScrollDispatcher, private comicService: ComicService) { }
 
@@ -51,8 +54,6 @@ export class ContainerComponent implements OnInit {
                 this.loading.set(false);
             }
         });
-
-        this.refreshComics();
     }
 
     refreshComics() {
@@ -75,7 +76,11 @@ export class ContainerComponent implements OnInit {
     }
 
     ngAfterViewInit(): void {
-        this.scrollDispatcher.scrolled(10).subscribe((data: CdkScrollable) => { this.onWindowScroll(data); });
+        this.scrollDispatcher.scrolled(10).subscribe((data: CdkScrollable | void) => {
+            if (data) {
+                this.onWindowScroll(data);
+            }
+        });
     }
 
     private onWindowScroll(data: CdkScrollable) {
@@ -89,14 +94,20 @@ export class ContainerComponent implements OnInit {
         this.lastOffset = scrollTop;
       }
 
-      // Dynamic item size function for virtualization
-      itemSizeFn = (index: number) => {
-        // Use a more appropriate sizing approach based on content
-        // This is just a starting point that can be refined
-        return 550; // Approximate height of a comic card
+      /**
+       * Dynamic item size function for virtualization
+       * Returns the height of each comic card in the virtual scroll viewport
+       */
+      itemSizeFn = (index: number): number => {
+        return this.COMIC_CARD_HEIGHT;
       };
 
-      // Track comics by their ID for better performance
+      /**
+       * Track comics by their ID for better performance in virtual scrolling
+       * @param index The index of the item in the list
+       * @param comic The comic item to track
+       * @returns The comic ID or index if ID is not available
+       */
       trackByComicId(index: number, comic: Comic): number {
         return comic?.id || index;
       }
