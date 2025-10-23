@@ -89,6 +89,7 @@
   overflow-x: hidden;
   min-height: calc(100vh - 80px);
   transition: margin-top 0.3s ease;
+  background: transparent; /* Ensure body gradient shows through */
 }
 
 /* Responsive styles */
