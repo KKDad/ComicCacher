@@ -1,0 +1,77 @@
+name: Angular CI
+
+on:
+  push:
+    branches: [ "master", "update-web" ]
+    paths:
+      - 'comic-web/**'
+      - '.github/workflows/angular.yml'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - 'comic-web/**'
+      - '.github/workflows/angular.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: comic-web
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: comic-web/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linting
+      run: npm run lint
+
+    - name: Run tests
+      run: npm run test:headless
+
+    - name: Build production
+      run: npm run buildProd
+
+    - name: Check bundle size
+      run: |
+        MAIN_SIZE=$(stat -c%s "dist/comic-web/main-*.js" 2>/dev/null || stat -f%z "dist/comic-web/main-"*.js)
+        MAIN_SIZE_KB=$((MAIN_SIZE / 1024))
+        echo "Main bundle size: ${MAIN_SIZE_KB}KB"
+        if [ $MAIN_SIZE_KB -gt 600 ]; then
+          echo "::warning::Main bundle size (${MAIN_SIZE_KB}KB) exceeds 600KB"
+        fi
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: angular-build
+        path: comic-web/dist/comic-web
+        retention-days: 7
+
+    - name: Upload test coverage
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-coverage
+        path: comic-web/coverage
+        retention-days: 7
+        if-no-files-found: ignore
