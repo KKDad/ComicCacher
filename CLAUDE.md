@@ -152,12 +152,70 @@ npm run buildProd
 - **Depends on:** comic-common, comic-metrics, comic-engine
 
 ### comic-web
+- **Technology Stack:** Angular 19.2, TypeScript 5.8, Node.js 22 LTS
 - Follows Angular component architecture with Material Design
 - Key components:
   - `ComicPage` - Main display for comics
   - `Container` - Handles comic layout and organization
   - `Section` - Displays individual comics
   - `Refresh` - Triggers comic cache updates
+
+#### comic-web Best Practices
+
+**TypeScript & Code Quality:**
+- Use primitive types (`string`, `number`, `boolean`) instead of object wrappers (`String`, `Number`, `Boolean`)
+- Avoid `any` types - always use proper TypeScript types for type safety
+- Enable TypeScript strict mode flags (strictNullChecks, strictFunctionTypes, etc.)
+- Add JSDoc comments to all public methods and classes
+- Use `readonly` for properties that shouldn't change after initialization
+- Extract magic numbers to named constants with descriptive names
+- Follow camelCase naming convention (not snake_case)
+- Use semantic class names in templates (e.g., `comic-card` not `example-card`)
+
+**Angular Patterns:**
+- Use standalone components (no NgModules required in Angular 19+)
+- Use signals for reactive state management
+- Implement `OnDestroy` and unsubscribe from all subscriptions to prevent memory leaks
+- Use `inject()` function for dependency injection in class fields
+- Add explicit return types to all public methods
+- Remove empty lifecycle methods (`ngOnInit()` with no implementation)
+- Use Angular CDK virtual scrolling for large lists
+- Follow Angular style guide for component selectors (use `app-` prefix)
+
+**Testing:**
+- All tests must pass before merging (strict enforcement)
+- Use `createStandaloneComponentFixture()` helper for test setup
+- Mock services with `jasmine.createSpyObj()` and provide return values
+- Use testing utilities (`getText`, `expectExists`, `click`) for cleaner tests
+- Install jasmine.clock() BEFORE calling methods that use setTimeout
+- Test both success and error paths for async operations
+- Update test expectations when fixing component behavior (don't just make tests pass)
+- Run `npm run lint` and `npm run test:headless` before committing
+
+**Subscription Management:**
+- Always return `Subscription` from methods that create subscriptions
+- Store subscriptions in a `Subscription` object and unsubscribe in `ngOnDestroy()`
+- Use `takeUntil()` or `takeUntilDestroyed()` for automatic cleanup
+- Avoid creating orphaned subscriptions that never get cleaned up
+
+**Performance:**
+- Use `trackBy` functions in `*ngFor` loops for better performance
+- Implement virtual scrolling for large lists (CDK `cdk-virtual-scroll-viewport`)
+- Use `OnPush` change detection strategy where appropriate
+- Lazy load routes and modules when possible
+
+**Node.js & NPM:**
+- Use `.nvmrc` file to specify Node.js version for team consistency
+- Create `.npmrc` in project root if using public registry (avoids corporate proxy issues)
+- Use `npm ci` in CI/CD pipelines (faster, more reliable than `npm install`)
+- Keep `package-lock.json` in version control
+- Update dependencies regularly but test thoroughly after upgrades
+
+**Git Commits:**
+- NEVER add `Co-Authored-By` lines to commit messages
+- Keep commit messages concise and descriptive
+- Run all tests before committing
+- Use conventional commit format when appropriate
 
 ## Testing
 
