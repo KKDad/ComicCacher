@@ -20,7 +20,6 @@
             "tsConfig": "src/tsconfig.app.json",
             "inlineStyleLanguage": "css",
             "assets": [
-              "src/favicon.ico",
               "src/favicon.svg",
               "src/manifest.json",
               "src/assets"
@@ -115,7 +114,6 @@
             ],
             "scripts": [],
             "assets": [
-              "src/favicon.ico",
               "src/favicon.svg",
               "src/manifest.json",
               "src/assets"
