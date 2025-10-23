@@ -242,6 +242,44 @@ helm upgrade comics comics
 4. Build Docker images if needed
 5. Deploy to test environment
 
+## Version Management
+
+When incrementing the build version, you must update **all** of the following files to maintain consistency:
+
+### Files to Update:
+
+1. **comic-api/build.gradle** - Update the `version` property
+   ```gradle
+   version = '2.1.35'
+   ```
+
+2. **comic-api/Dockerfile** - Update both the COPY and ENTRYPOINT lines
+   ```dockerfile
+   COPY build/libs/comic-api-2.1.35.jar /
+   ENTRYPOINT [ "java", "-jar", "/comic-api-2.1.35.jar" ]
+   ```
+
+3. **comic-web/package.json** - Update the `version` property
+   ```json
+   "version": "2.1.35"
+   ```
+
+### Verification:
+
+After updating all version references, verify the changes:
+```bash
+# Check all version references (excluding node_modules and .git)
+grep -r "VERSION_NUMBER" --include="*.gradle" --include="Dockerfile" --include="package.json" --exclude-dir=node_modules --exclude-dir=.git .
+```
+
+### Docker Build Scripts:
+
+The docker build scripts (`comic-api/build-docker.sh` and `comic-web/build-docker.sh`) accept the version tag as a command-line argument, so they do not need to be updated when the version changes:
+```bash
+./comic-api/build-docker.sh 2.1.35
+./comic-web/build-docker.sh 2.1.35
+```
+
 ## Common Tasks
 
 - **Adding a new comic source:** Implement a new class extending `DailyComic` in `comic-engine/downloader/` with site-specific parsing logic
