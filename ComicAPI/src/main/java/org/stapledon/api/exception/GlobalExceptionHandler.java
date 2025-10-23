@@ -15,7 +15,7 @@ import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.common.model.ComicCachingException;
 import org.stapledon.common.model.ComicImageNotFoundException;
 import org.stapledon.common.model.ComicNotFoundException;
-import org.stapledon.infrastructure.caching.CacheException;
+import org.stapledon.engine.caching.CacheException;
 
 import java.time.format.DateTimeParseException;
 

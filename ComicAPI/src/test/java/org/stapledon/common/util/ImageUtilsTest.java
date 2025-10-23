@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.stapledon.common.dto.ImageDto;
-import org.stapledon.infrastructure.caching.AccessMetricsCollectorTest;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,9 +14,18 @@ import java.time.LocalDate;
 
 class ImageUtilsTest {
 
+    private static File getResourcesDirectory() {
+        File resourcesDirectory = new File("src/test/resources");
+        if (!resourcesDirectory.exists()) {
+            resourcesDirectory = new File("ComicAPI/src/test/resources");
+        }
+        assertThat(resourcesDirectory).exists();
+        return resourcesDirectory;
+    }
+
     @Test
     void getImageDtoAvatar() throws IOException {
-        Path path = Paths.get(AccessMetricsCollectorTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
+        Path path = Paths.get(getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
         assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");
@@ -27,7 +36,7 @@ class ImageUtilsTest {
 
     @Test
     void getImageDtoStrip() throws IOException {
-        Path path = Paths.get(AccessMetricsCollectorTest.getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
+        Path path = Paths.get(getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
         assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");
