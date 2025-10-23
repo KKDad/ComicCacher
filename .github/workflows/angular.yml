@@ -52,7 +52,8 @@ jobs:
 
     - name: Check bundle size
       run: |
-        MAIN_SIZE=$(stat -c%s "dist/comic-web/main-*.js" 2>/dev/null || stat -f%z "dist/comic-web/main-"*.js)
+        MAIN_FILE=$(ls dist/comic-web/main-*.js)
+        MAIN_SIZE=$(stat -c %s "$MAIN_FILE")
         MAIN_SIZE_KB=$((MAIN_SIZE / 1024))
         echo "Main bundle size: ${MAIN_SIZE_KB}KB"
         if [ $MAIN_SIZE_KB -gt 600 ]; then
