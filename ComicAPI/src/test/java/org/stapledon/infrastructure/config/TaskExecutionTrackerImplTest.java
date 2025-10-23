@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.engine.downloader.ComicCacher;
+import org.stapledon.engine.management.ComicManagementFacade;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.config.properties.DailyRunnerProperties;
 import org.stapledon.infrastructure.scheduling.DailyRunner;
@@ -136,35 +136,36 @@ class TaskExecutionTrackerImplTest {
     void verifyDailyRunnerUsesTrackerCorrectly() throws Exception {
         // Create mocks
         DailyRunnerProperties properties = mock(DailyRunnerProperties.class);
-        ComicCacher comicCacher = mock(ComicCacher.class);
+        ComicManagementFacade comicManagementFacade = mock(ComicManagementFacade.class);
         TaskExecutionTracker tracker = mock(TaskExecutionTracker.class);
-        
+
         // Set up mocks
         when(properties.isEnabled()).thenReturn(true);
         when(tracker.canRunToday("DailyComicCacher")).thenReturn(true);
-        
+        when(comicManagementFacade.updateAllComics()).thenReturn(true);
+
         // Create daily runner
-        DailyRunner dailyRunner = new DailyRunner(properties, comicCacher, tracker);
-        
+        DailyRunner dailyRunner = new DailyRunner(properties, comicManagementFacade, tracker);
+
         // Run it
         dailyRunner.run(new String[0]);
-        
+
         // Verify interactions
-        verify(comicCacher, times(1)).cacheAll();
+        verify(comicManagementFacade, times(1)).updateAllComics();
         verify(tracker, times(1)).markTaskExecuted("DailyComicCacher");
-        
+
         // Now test with already run
-        reset(properties, comicCacher, tracker);
-        
+        reset(properties, comicManagementFacade, tracker);
+
         when(properties.isEnabled()).thenReturn(true);
         when(tracker.canRunToday("DailyComicCacher")).thenReturn(false);
         when(tracker.getLastExecutionDate("DailyComicCacher")).thenReturn(LocalDate.now());
-        
+
         // Run again
         dailyRunner.run(new String[0]);
-        
-        // Verify cacheAll NOT called
-        verify(comicCacher, never()).cacheAll();
+
+        // Verify updateAllComics NOT called
+        verify(comicManagementFacade, never()).updateAllComics();
     }
     
     @Test

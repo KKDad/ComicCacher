@@ -2,7 +2,7 @@ package org.stapledon.infrastructure.scheduling;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
-import org.stapledon.engine.downloader.ComicCacher;
+import org.stapledon.engine.management.ComicManagementFacade;
 import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.common.config.properties.DailyRunnerProperties;
 
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DailyRunner implements CommandLineRunner {
 
     private final DailyRunnerProperties dailyRunnerProperties;
-    private final ComicCacher comicCacher;
+    private final ComicManagementFacade comicManagementFacade;
     private final TaskExecutionTracker taskExecutionTracker;
     
     private static final String TASK_NAME = "DailyComicCacher";
@@ -59,9 +59,9 @@ public class DailyRunner implements CommandLineRunner {
 
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(
-                new RunComicCacher(comicCacher, taskExecutionTracker), 
+                new RunComicCacher(comicManagementFacade, taskExecutionTracker),
                 initialDelay,
-                24 * 60 * 60L, 
+                24 * 60 * 60L,
                 TimeUnit.SECONDS);
         log.info("Daily update configured, Initial delay is {}", 
                 (initialDelay > 60) ? String.format("%d minutes", initialDelay/60) : " < 1 minute");
@@ -73,10 +73,10 @@ public class DailyRunner implements CommandLineRunner {
             // Immediately run the caching if it hasn't run today
             if (taskExecutionTracker.canRunToday(TASK_NAME)) {
                 log.info("Daily caching has not run today, executing immediately");
-                comicCacher.cacheAll();
+                comicManagementFacade.updateAllComics();
                 taskExecutionTracker.markTaskExecuted(TASK_NAME);
             } else {
-                log.info("Daily caching already ran today ({}), skipping immediate execution", 
+                log.info("Daily caching already ran today ({}), skipping immediate execution",
                          taskExecutionTracker.getLastExecutionDate(TASK_NAME));
             }
             
@@ -90,7 +90,7 @@ public class DailyRunner implements CommandLineRunner {
     @RequiredArgsConstructor
     private static class RunComicCacher implements Runnable {
 
-        private final ComicCacher comicCacher;
+        private final ComicManagementFacade comicManagementFacade;
         private final TaskExecutionTracker taskExecutionTracker;
 
         @Override
@@ -98,7 +98,7 @@ public class DailyRunner implements CommandLineRunner {
             // Only run if it hasn't run today
             if (taskExecutionTracker.canRunToday(TASK_NAME)) {
                 log.info("Running scheduled daily comic caching");
-                comicCacher.cacheAll();
+                comicManagementFacade.updateAllComics();
                 taskExecutionTracker.markTaskExecuted(TASK_NAME);
             } else {
                 log.info("Scheduled daily comic caching already ran today, skipping");
