@@ -21,6 +21,8 @@
             "inlineStyleLanguage": "css",
             "assets": [
               "src/favicon.ico",
+              "src/favicon.svg",
+              "src/manifest.json",
               "src/assets"
             ],
             "styles": [
@@ -114,6 +116,8 @@
             "scripts": [],
             "assets": [
               "src/favicon.ico",
+              "src/favicon.svg",
+              "src/manifest.json",
               "src/assets"
             ]
           }
