@@ -11,10 +11,10 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.common.model.ComicCachingException;
 import org.stapledon.common.model.ComicImageNotFoundException;
 import org.stapledon.common.model.ComicNotFoundException;
+import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.engine.caching.CacheException;
 
 import java.time.format.DateTimeParseException;

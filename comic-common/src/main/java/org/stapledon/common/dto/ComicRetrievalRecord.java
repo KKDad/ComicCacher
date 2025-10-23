@@ -1,9 +1,9 @@
 package org.stapledon.common.dto;
 
+import java.time.LocalDate;
+
 import lombok.Builder;
 import lombok.Data;
-
-import java.time.LocalDate;
 
 /**
  * Records information about a comic retrieval attempt.

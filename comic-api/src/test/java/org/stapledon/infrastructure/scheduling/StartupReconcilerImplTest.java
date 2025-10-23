@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.engine.management.ComicManagementFacade;
 import org.stapledon.common.config.properties.StartupReconcilerProperties;
+import org.stapledon.engine.management.ComicManagementFacade;
 
 @ExtendWith(MockitoExtension.class)
 class StartupReconcilerImplTest {

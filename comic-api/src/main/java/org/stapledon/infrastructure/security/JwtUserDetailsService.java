@@ -9,7 +9,6 @@ import org.stapledon.api.dto.user.User;
 import org.stapledon.infrastructure.repository.UserRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

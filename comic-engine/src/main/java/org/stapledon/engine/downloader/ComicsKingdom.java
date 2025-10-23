@@ -65,10 +65,10 @@ public class ComicsKingdom extends DailyComic {
 
 
     /**
-     * Determines when the latest published image it. Some comics are only available on the web a couple days or
+     * Determines when the latest published image is. Some comics are only available on the web a couple days or
      * a week after they were published in print.
      *
-     * @return Mst recent date we can get a api for
+     * @return Most recent date we can get an image for
      */
     @Override
     public LocalDate getLastStripOn() {
@@ -77,7 +77,6 @@ public class ComicsKingdom extends DailyComic {
 
     @Override
     public void close() {
-        // No WebDriver to close for ComicsKingdom
     }
 
     public void updateComicMetadata(ComicItem comicItem) {
@@ -106,7 +105,7 @@ public class ComicsKingdom extends DailyComic {
                     log.error("Unable to determine site avatar");
                 else {
                     cacheImage(featureAvatars.attr("abs:src"), avatarCached.getAbsolutePath());
-                    log.trace("Avatar has been cached ");
+                    log.trace("Avatar has been cached");
                 }
             }
 

@@ -39,7 +39,7 @@ ComicCacher is a web comic downloader and viewer application with a **modular mu
 
 ### Frontend
 
-5. **ComicViewer** - Angular frontend that:
+5. **comic-web** - Angular frontend that:
    - Displays cached comics in a user-friendly interface
    - Uses Angular Material for UI components
    - Supports infinite virtual scrolling for comic viewing
@@ -54,7 +54,7 @@ comic-common (shared DTOs, config, services)
      │         ↑
      └─── comic-api (orchestrates)
               ↓
-         ComicViewer (Angular)
+         comic-web (Angular)
 ```
 
 ## Build Commands
@@ -85,11 +85,11 @@ comic-common (shared DTOs, config, services)
 ./comic-api/build-docker.sh <TAG>
 ```
 
-### ComicViewer (Angular)
+### comic-web (Angular)
 
 ```bash
-# Navigate to ComicViewer directory
-cd ComicViewer
+# Navigate to comic-web directory
+cd comic-web
 
 # Install dependencies
 npm install
@@ -151,7 +151,7 @@ npm run buildProd
   - **Configuration:** `ApplicationConfigurationFacade` (extends `ComicConfigurationService`)
 - **Depends on:** comic-common, comic-metrics, comic-engine
 
-### ComicViewer
+### comic-web
 - Follows Angular component architecture with Material Design
 - Key components:
   - `ComicPage` - Main display for comics
@@ -162,11 +162,11 @@ npm run buildProd
 ## Testing
 
 - comic-api uses JUnit 5 for unit and integration tests
-- ComicViewer uses Karma/Jasmine for Angular component testing
+- comic-web uses Karma/Jasmine for Angular component testing
 
 ## Docker and Deployment
 
-Both comic-api and ComicViewer can be built as Docker containers and deployed to Kubernetes:
+Both comic-api and comic-web can be built as Docker containers and deployed to Kubernetes:
 
 ```bash
 # Build and push API Docker image
@@ -187,7 +187,7 @@ helm upgrade comics comics
 ## Common Tasks
 
 - **Adding a new comic source:** Implement a new class extending `DailyComic` in `comic-engine/downloader/` with site-specific parsing logic
-- **Modifying comic display:** Update the Angular components in `ComicViewer/src/app/`
+- **Modifying comic display:** Update the Angular components in `comic-web/src/app/`
 - **Updating caching behavior:** Check `ComicManagementFacade` and `ComicStorageFacade` in comic-engine
 - **Adding new metrics:** Implement collectors in `comic-metrics/collector/` and configure output in `MetricsConfiguration`
 - **Modifying API endpoints:** Update controllers in `comic-api/src/main/java/org/stapledon/api/controller/`

@@ -2,9 +2,9 @@ package org.stapledon.infrastructure.scheduling;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
-import org.stapledon.engine.management.ComicManagementFacade;
-import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.common.config.properties.DailyRunnerProperties;
+import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
+import org.stapledon.engine.management.ComicManagementFacade;
 
 import java.time.Duration;
 import java.time.LocalDate;

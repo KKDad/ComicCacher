@@ -9,8 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
+import org.stapledon.metrics.repository.AccessMetricsRepository;
 
 import java.io.File;
 import java.nio.file.Path;

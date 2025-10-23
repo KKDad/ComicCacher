@@ -3,8 +3,8 @@ package org.stapledon.metrics.repository;
 import com.google.gson.Gson;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.metrics.dto.CombinedMetricsData;
 
 import java.io.FileWriter;
 import java.io.IOException;

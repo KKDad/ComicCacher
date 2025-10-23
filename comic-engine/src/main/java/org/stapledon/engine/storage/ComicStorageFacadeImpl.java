@@ -3,12 +3,12 @@ package org.stapledon.engine.storage;
 import com.google.common.io.Files;
 
 import org.springframework.stereotype.Component;
+import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.ImageUtils;
-import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.io.FileOutputStream;

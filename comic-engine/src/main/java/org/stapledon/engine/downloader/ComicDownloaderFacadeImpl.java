@@ -2,9 +2,9 @@ package org.stapledon.engine.downloader;
 
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.service.RetrievalStatusService;

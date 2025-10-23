@@ -3,8 +3,8 @@ package org.stapledon.metrics.service;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.config.MetricsProperties;
+import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.repository.CombinedMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
 

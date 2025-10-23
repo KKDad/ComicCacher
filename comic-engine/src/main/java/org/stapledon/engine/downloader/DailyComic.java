@@ -68,9 +68,10 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     }
 
     /**
-     * Get the path full path where this comic has been cached. Include any augmentation
+     * Get the full path where this comic has been cached.
+     * The path includes the cache root directory and the parsed comic name.
      *
-     * @return Path
+     * @return Full path to the comic cache location
      */
     public String cacheLocation() {
         return String.format("%s/%s", cacheDirectory, comicNameParsed);
@@ -151,7 +152,6 @@ public abstract class DailyComic implements IDailyComic, ICachable {
 
     private String generateCachedName() {
         ensureCacheDirectory();
-        // TODO: Autodetect image type. Perhaps https://stackoverflow.com/questions/12531797/how-to-get-an-image-type-without-knowing-its-file-extension?
         var extension = "png";
         return String.format("%s/%s.%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
     }
@@ -192,9 +192,9 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     }
 
     /**
-     * Set the GoComic that to caching
+     * Set the comic to be cached
      *
-     * @param comicName Name of the api to process
+     * @param comicName Name of the comic to process
      * @return this
      */
     @Override

@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.stapledon.api.dto.health.HealthStatus;
+import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
-import org.stapledon.api.dto.health.HealthStatus;
+import org.stapledon.infrastructure.config.BuildVersion;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
-import org.stapledon.infrastructure.config.BuildVersion;
-import org.stapledon.common.config.CacheProperties;
 
 import java.io.IOException;
 import java.nio.file.Files;

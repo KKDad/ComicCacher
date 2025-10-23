@@ -3,13 +3,12 @@ package org.stapledon.metrics.service;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
-import org.stapledon.metrics.dto.AccessMetricsData;
-import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.config.MetricsProperties;
+import org.stapledon.metrics.dto.AccessMetricsData;
+import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.CombinedMetricsRepository;
 

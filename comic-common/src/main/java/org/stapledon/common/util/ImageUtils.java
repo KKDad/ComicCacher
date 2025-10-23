@@ -42,7 +42,7 @@ public class ImageUtils {
             imageDto.setImageDate(LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         } catch (DateTimeParseException dte) {
-            // Ignore if we don't have a date
+            // No action needed - imageDate will remain null
         }
         return imageDto;
     }

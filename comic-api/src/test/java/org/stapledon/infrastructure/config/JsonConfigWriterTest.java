@@ -12,9 +12,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.io.IOException;

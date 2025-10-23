@@ -83,14 +83,14 @@ The API provides several endpoints for monitoring cache performance:
 - `/api/v1/metrics/combined` - Comprehensive view of storage and access metrics
 - `/api/v1/metrics/storage/refresh` - Force refresh of storage metrics
 
-### ComicViewer
+### comic-web
 
-The ComicViewer is an Angular-based frontend that provides a user-friendly interface for browsing cached comics.
+The comic-web is an Angular-based frontend that provides a user-friendly interface for browsing cached comics.
 
 #### Local Development
 ```bash
-# Navigate to ComicViewer directory
-cd ComicViewer
+# Navigate to comic-web directory
+cd comic-web
 
 # Install dependencies
 npm install
@@ -108,10 +108,10 @@ npm run buildProd
 #### Docker Deployment
 ```bash
 # Build Docker image
-cd ComicViewer
+cd comic-web
 ./build-docker.sh
-docker tag kkdad/comic-viewer:latest registry.local613.local:5000/kkdad/comic-viewer:1.0.0
-docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
+docker tag kkdad/comic-web:latest registry.local613.local:5000/kkdad/comic-web:1.0.0
+docker push registry.local613.local:5000/kkdad/comic-web:1.0.0
 ```
 
 #### Features
@@ -131,7 +131,7 @@ docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
 - **Test Coverage**: JaCoCo with separate unit and integration test reporting
 - **Containerization**: Docker
 
-### Frontend (ComicViewer)
+### Frontend (comic-web)
 - **Framework**: Angular with Material Design components
 - **Build Tool**: Angular CLI
 - **Testing**: Karma, Jasmine

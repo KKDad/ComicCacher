@@ -18,9 +18,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicItem;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -41,11 +41,6 @@ class ComicDownloaderFacadeImplTest {
     @BeforeEach
     void setUp() {
         facade = new ComicDownloaderFacadeImpl(Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
-        
-        // Remove unnecessary stubbing - the getSource() method isn't used in the implementation
-        // when(goComicsStrategy.getSource()).thenReturn("gocomics");
-        // when(comicsKingdomStrategy.getSource()).thenReturn("comicskingdom");
-
         facade.registerDownloaderStrategy("gocomics", goComicsStrategy);
         facade.registerDownloaderStrategy("comicskingdom", comicsKingdomStrategy);
     }

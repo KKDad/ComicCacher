@@ -1,8 +1,8 @@
 package org.stapledon.infrastructure.config;
 
-import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.user.UserConfig;
+import org.stapledon.common.service.ComicConfigurationService;
 
 /**
  * Full configuration facade including user and preference config.

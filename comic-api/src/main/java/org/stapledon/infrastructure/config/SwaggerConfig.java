@@ -14,9 +14,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(final ViewControllerRegistry registry) {
         registry.addRedirectViewController("/", "/swagger-ui.html");
-        // use setStatusCode(HttpStatus.XYZ) for any custom status code if required, e.g. MOVED_PERMANENTLY
         registry.addRedirectViewController("/swagger-ui", "/swagger-ui/index.html");
-        // any other alias
     }
 
     @Bean

@@ -9,14 +9,11 @@ import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.infrastructure.config.UserConfigWriter;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Collections;
-import java.util.UUID;
-import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
