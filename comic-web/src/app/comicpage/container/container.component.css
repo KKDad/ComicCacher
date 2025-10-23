@@ -18,6 +18,15 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
   padding: 0 10px;
+
+  /* Hide scrollbar for cleaner glassmorphism look */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari, and Opera */
+.comic-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .comic-item {
