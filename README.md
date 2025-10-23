@@ -67,11 +67,11 @@ helm upgrade comics comics
 
 ## API & Docs
 
-Live API (my personal instance):
-- Web App: https://comics.gilbert.ca
-- Swagger UI: https://comics.gilbert.ca/swagger-ui/index.html
-- REST API: https://comics.gilbert.ca/api/v1/comics
-- Metrics: https://comics.gilbert.ca/api/v1/metrics
+When running locally:
+- Web App: http://localhost:4200
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- REST API: http://localhost:8080/api/v1/comics
+- Metrics: http://localhost:8080/api/v1/metrics
 
 Full endpoint documentation in the [docs/](docs/) directory.
 
