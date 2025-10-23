@@ -11,7 +11,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.stapledon.core.auth.service.AuthService;
 import org.stapledon.engine.downloader.ComicCacher;
-import org.stapledon.core.comic.service.ComicsService;
 import org.stapledon.core.comic.service.UpdateService;
 import org.stapledon.core.preference.service.PreferenceService;
 import org.stapledon.core.user.service.UserService;
@@ -71,12 +70,6 @@ public class TestApplicationConfig {
     }
 
     // Mock service beans for tests
-
-    @Bean
-    @Primary
-    public ComicsService comicsService() {
-        return Mockito.mock(ComicsService.class);
-    }
 
     @Bean
     @Primary

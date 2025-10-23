@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.stapledon.api.dto.user.User;
-import org.stapledon.infrastructure.config.UserConfigWriter;
+import org.stapledon.infrastructure.repository.UserRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,11 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class JwtUserDetailsService implements UserDetailsService {
 
-    private final UserConfigWriter userConfigWriter;
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userConfigWriter.getUser(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
         
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
