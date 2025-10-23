@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**IMPORTANT: When working with ComicAPI code, always follow the coding standards in [ComicAPI/CLAUDE_MEMORY.md](./ComicAPI/CLAUDE_MEMORY.md). These standards override any conflicting global standards.**
+**IMPORTANT: When working with comic-api code, always follow the coding standards in [comic-api/CLAUDE_MEMORY.md](./comic-api/CLAUDE_MEMORY.md). These standards override any conflicting global standards.**
 
 ## Project Overview
 
@@ -30,7 +30,7 @@ ComicCacher is a web comic downloader and viewer application with a **modular mu
    - Spring Batch jobs for scheduled downloads
    - **Depends only on:** comic-common
 
-4. **ComicAPI** - REST API orchestration layer:
+4. **comic-api** - REST API orchestration layer:
    - REST controllers (ComicController, UpdateController, BatchJobController)
    - Services (ComicsService, UpdateService)
    - Repositories (ComicRepository, UserRepository, PreferenceRepository)
@@ -52,7 +52,7 @@ comic-common (shared DTOs, config, services)
      ├─── comic-metrics (independent)
      ├─── comic-engine (independent)
      │         ↑
-     └─── ComicAPI (orchestrates)
+     └─── comic-api (orchestrates)
               ↓
          ComicViewer (Angular)
 ```
@@ -69,20 +69,20 @@ comic-common (shared DTOs, config, services)
 ./gradlew :comic-common:build
 ./gradlew :comic-metrics:build
 ./gradlew :comic-engine:build
-./gradlew :ComicAPI:build
+./gradlew :comic-api:build
 
 # Run tests
 ./gradlew :comic-engine:test
-./gradlew :ComicAPI:test
+./gradlew :comic-api:test
 
 # Run integration tests
-./gradlew :ComicAPI:integrationTest
+./gradlew :comic-api:integrationTest
 
 # Run the application locally
-./gradlew :ComicAPI:bootRun
+./gradlew :comic-api:bootRun
 
 # Build Docker image
-./ComicAPI/build-docker.sh <TAG>
+./comic-api/build-docker.sh <TAG>
 ```
 
 ### ComicViewer (Angular)
@@ -139,7 +139,7 @@ npm run buildProd
 - **Depends on:** comic-common only
 - **Can be used standalone** in other applications
 
-### ComicAPI
+### comic-api
 - **Purpose:** REST API orchestration and user management
 - **Key Components:**
   - **Controllers:** REST endpoints (`ComicController`, `UpdateController`, `BatchJobController`)
@@ -161,16 +161,16 @@ npm run buildProd
 
 ## Testing
 
-- ComicAPI uses JUnit 5 for unit and integration tests
+- comic-api uses JUnit 5 for unit and integration tests
 - ComicViewer uses Karma/Jasmine for Angular component testing
 
 ## Docker and Deployment
 
-Both ComicAPI and ComicViewer can be built as Docker containers and deployed to Kubernetes:
+Both comic-api and ComicViewer can be built as Docker containers and deployed to Kubernetes:
 
 ```bash
 # Build and push API Docker image
-./ComicAPI/build-docker.sh <VERSION_TAG>
+./comic-api/build-docker.sh <VERSION_TAG>
 
 # Deploy to Kubernetes with Helm
 helm upgrade comics comics
@@ -190,4 +190,4 @@ helm upgrade comics comics
 - **Modifying comic display:** Update the Angular components in `ComicViewer/src/app/`
 - **Updating caching behavior:** Check `ComicManagementFacade` and `ComicStorageFacade` in comic-engine
 - **Adding new metrics:** Implement collectors in `comic-metrics/collector/` and configure output in `MetricsConfiguration`
-- **Modifying API endpoints:** Update controllers in `ComicAPI/src/main/java/org/stapledon/api/controller/`
+- **Modifying API endpoints:** Update controllers in `comic-api/src/main/java/org/stapledon/api/controller/`

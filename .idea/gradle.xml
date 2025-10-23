@@ -9,7 +9,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/ComicAPI" />
+            <option value="$PROJECT_DIR$/comic-api" />
             <option value="$PROJECT_DIR$/comic-common" />
             <option value="$PROJECT_DIR$/comic-engine" />
             <option value="$PROJECT_DIR$/comic-metrics" />
