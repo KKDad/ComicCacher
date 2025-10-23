@@ -9,18 +9,16 @@
   <!-- Background circle -->
   <circle cx="50" cy="50" r="48" fill="url(#comicGradient)"/>
 
-  <!-- Comic book pages (stylized) -->
-  <rect x="25" y="20" width="50" height="60" rx="2" fill="#FFFFFF" opacity="0.95"/>
-  <rect x="30" y="25" width="40" height="50" rx="2" fill="#F8FAFB" opacity="0.9"/>
+  <!-- Comic book pages (stylized) - slightly tilted for visual interest -->
+  <rect x="22" y="18" width="54" height="64" rx="3" fill="#FFFFFF" opacity="0.95" transform="rotate(-2 50 50)"/>
+  <rect x="26" y="22" width="46" height="56" rx="2" fill="#F8FAFB" opacity="0.95" transform="rotate(-2 50 50)"/>
 
-  <!-- Comic panels -->
-  <rect x="33" y="28" width="34" height="12" rx="1" fill="#5B9BD5" opacity="0.3"/>
-  <rect x="33" y="42" width="16" height="15" rx="1" fill="#5B9BD5" opacity="0.3"/>
-  <rect x="51" y="42" width="16" height="15" rx="1" fill="#5B9BD5" opacity="0.3"/>
-  <rect x="33" y="59" width="34" height="12" rx="1" fill="#5B9BD5" opacity="0.3"/>
+  <!-- Comic panels grid -->
+  <rect x="30" y="26" width="38" height="16" rx="1" fill="#FFFFFF" opacity="0.8" transform="rotate(-2 50 50)"/>
+  <rect x="30" y="44" width="18" height="18" rx="1" fill="#FFFFFF" opacity="0.8" transform="rotate(-2 50 50)"/>
+  <rect x="50" y="44" width="18" height="18" rx="1" fill="#FFFFFF" opacity="0.8" transform="rotate(-2 50 50)"/>
+  <rect x="30" y="64" width="38" height="10" rx="1" fill="#FFFFFF" opacity="0.8" transform="rotate(-2 50 50)"/>
 
-  <!-- Speech bubble accent -->
-  <circle cx="70" cy="35" r="8" fill="#FFB6C1" opacity="0.9"/>
-  <polygon points="70,41 68,45 72,43" fill="#FFB6C1" opacity="0.9"/>
-  <text x="70" y="38" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#FFFFFF">!</text>
+  <!-- Letter "C" for Comics -->
+  <text x="50" y="58" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#FFFFFF" opacity="0.9">C</text>
 </svg>
