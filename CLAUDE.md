@@ -143,10 +143,11 @@ npm run buildProd
 - **Purpose:** REST API orchestration and user management
 - **Key Components:**
   - **Controllers:** REST endpoints (`ComicController`, `UpdateController`, `BatchJobController`)
-  - **Services:** `ComicsService`, `UpdateService`
+    - Controllers call engine/common services directly (no redundant service layer)
+  - **Services:** `UpdateService`, `RetrievalStatusServiceImpl`, `AuthService`, `UserService`, `PreferenceService`
   - **Repositories:** `ComicRepository`, `UserRepository`, `PreferenceRepository`
-  - **Scheduling:** `DailyRunner`, `StartupReconciler` (daily reconciliation at 6:00 AM)
-  - **Security:** Authentication and authorization
+  - **Scheduling:** `DailyRunner` (daily caching at 7:00 AM), `StartupReconciler` (reconciliation at 6:00 AM)
+  - **Security:** JWT-based authentication and authorization
   - **Configuration:** `ApplicationConfigurationFacade` (extends `ComicConfigurationService`)
 - **Depends on:** comic-common, comic-metrics, comic-engine
 
@@ -185,6 +186,8 @@ helm upgrade comics comics
 
 ## Common Tasks
 
-- Adding a new comic source: Implement a new class extending `DailyComic` with site-specific parsing logic
-- Modifying comic display: Update the Angular components in ComicViewer/src/app
-- Updating caching behavior: Check `CacheConfiguration` and `CacheUtils` classes
+- **Adding a new comic source:** Implement a new class extending `DailyComic` in `comic-engine/downloader/` with site-specific parsing logic
+- **Modifying comic display:** Update the Angular components in `ComicViewer/src/app/`
+- **Updating caching behavior:** Check `ComicManagementFacade` and `ComicStorageFacade` in comic-engine
+- **Adding new metrics:** Implement collectors in `comic-metrics/collector/` and configure output in `MetricsConfiguration`
+- **Modifying API endpoints:** Update controllers in `ComicAPI/src/main/java/org/stapledon/api/controller/`
