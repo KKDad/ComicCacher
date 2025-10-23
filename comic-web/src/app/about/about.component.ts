@@ -1,8 +1,11 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {Router} from '@angular/router';
 import {MatCardModule} from '@angular/material/card';
 import {MatButtonModule} from '@angular/material/button';
 
+/**
+ * About page component displaying application information
+ */
 @Component({
   selector: 'app-about',
   templateUrl: './about.component.html',
@@ -13,14 +16,14 @@ import {MatButtonModule} from '@angular/material/button';
     MatButtonModule
   ]
 })
-export class AboutComponent implements OnInit {
+export class AboutComponent {
 
   constructor(private router: Router) { }
 
-  ngOnInit() {
-  }
-
-  onNavigateHome() {
+  /**
+   * Navigate back to the home page
+   */
+  onNavigateHome(): void {
     this.router.navigateByUrl('/');
   }
 

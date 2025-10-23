@@ -4,6 +4,9 @@ import {CommonModule} from '@angular/common';
 import {Comic} from '../dto/comic';
 import {ComicService} from '../comic.service';
 
+/**
+ * Main comic page component that displays the comic container
+ */
 @Component({
   selector: 'app-comicpage',
   templateUrl: './comicpage.component.html',
@@ -20,7 +23,7 @@ export class ComicpageComponent implements OnInit {
 
   constructor(private comicService: ComicService) { }
 
-  ngOnInit() {
+  ngOnInit(): void {
     // Subscribe to comics data from service
     this.comicService.getComics().subscribe(comics => {
       this.sections = comics;
@@ -29,6 +32,7 @@ export class ComicpageComponent implements OnInit {
 
   /**
    * Handle navbar visibility events from container component
+   * @param option Show or Hide navbar option
    */
   handleNavbarEvent(option: NavBarOption): void {
     this.showNavbar = option === NavBarOption.Show;

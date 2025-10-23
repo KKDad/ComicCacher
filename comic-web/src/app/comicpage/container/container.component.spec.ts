@@ -94,8 +94,7 @@ describe('ContainerComponent', () => {
   it('should load comics on init', () => {
     expect(comicServiceSpy.getComics).toHaveBeenCalled();
     expect(component.sections).toEqual(mockComics);
-    // Note: loading is true because ngOnInit calls refreshComics() after getComics()
-    expect(component.loading()).toBeTrue();
+    expect(component.loading()).toBeFalse();
   });
 
   it('should show loading indicator when loading', () => {
@@ -209,10 +208,7 @@ describe('ContainerComponent - Error Handling', () => {
   });
 
   it('should handle errors when loading comics', () => {
-    // Note: After ngOnInit, even though getComics() errors and sets the error,
-    // refreshComics() is then called which resets error to null (line 60 of component).
-    // So error will be null, and loading will be true from refreshComics().
-    expect(component.error()).toBeNull();
-    expect(component.loading()).toBeTrue();
+    expect(component.error()).toContain('Failed to load comics');
+    expect(component.loading()).toBeFalse();
   });
 });

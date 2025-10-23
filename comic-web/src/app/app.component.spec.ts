@@ -24,11 +24,6 @@ describe('AppComponent', () => {
 
     component = fixture.componentInstance;
     fixture.detectChanges();
-
-    // Ensure ngAfterViewInit has been called to set up the subscription
-    if (component.ngAfterViewInit) {
-      component.ngAfterViewInit();
-    }
   });
 
   it('should create the app', () => {

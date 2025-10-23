@@ -35,6 +35,9 @@ export class ContainerComponent implements OnInit, AfterViewInit {
     error = signal<string | null>(null);
     lastOffset: number;
 
+    /** Approximate height of a comic card for virtual scrolling */
+    private readonly COMIC_CARD_HEIGHT = 550;
+
     constructor(private scrollDispatcher: ScrollDispatcher, private comicService: ComicService) { }
 
     ngOnInit() {
@@ -51,8 +54,6 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                 this.loading.set(false);
             }
         });
-
-        this.refreshComics();
     }
 
     refreshComics() {
@@ -93,14 +94,20 @@ export class ContainerComponent implements OnInit, AfterViewInit {
         this.lastOffset = scrollTop;
       }
 
-      // Dynamic item size function for virtualization
-      itemSizeFn = (index: number) => {
-        // Use a more appropriate sizing approach based on content
-        // This is just a starting point that can be refined
-        return 550; // Approximate height of a comic card
+      /**
+       * Dynamic item size function for virtualization
+       * Returns the height of each comic card in the virtual scroll viewport
+       */
+      itemSizeFn = (index: number): number => {
+        return this.COMIC_CARD_HEIGHT;
       };
 
-      // Track comics by their ID for better performance
+      /**
+       * Track comics by their ID for better performance in virtual scrolling
+       * @param index The index of the item in the list
+       * @param comic The comic item to track
+       * @returns The comic ID or index if ID is not available
+       */
       trackByComicId(index: number, comic: Comic): number {
         return comic?.id || index;
       }

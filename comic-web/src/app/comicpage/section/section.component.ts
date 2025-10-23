@@ -33,7 +33,8 @@ export class SectionComponent implements OnInit, OnDestroy {
     private stateService = inject(ComicStateService);
     private keyboardService = inject(KeyboardService);
 
-    max_width = 900;
+    /** Maximum width for comic images in pixels */
+    private readonly MAX_IMAGE_WIDTH = 900;
 
     width: number;
     height: number;
@@ -73,15 +74,13 @@ export class SectionComponent implements OnInit, OnDestroy {
      * Register keyboard shortcuts for comic navigation
      */
     private registerKeyboardShortcuts(): void {
-        // Only register shortcuts if this is the focused component
-        this.subscriptions.add(
-            this.keyboardService.registerComicNavigationShortcuts(
-                () => this.onNavigateFirst(),
-                () => this.onPrev(),
-                () => this.onNext(),
-                () => this.onNavigateLast()
-            )
+        const shortcuts = this.keyboardService.registerComicNavigationShortcuts(
+            () => this.onNavigateFirst(),
+            () => this.onPrev(),
+            () => this.onNext(),
+            () => this.onNavigateLast()
         );
+        this.subscriptions.add(shortcuts);
     }
 
     getAvatarImage() {
@@ -196,10 +195,10 @@ export class SectionComponent implements OnInit, OnDestroy {
         try {
             this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
 
-            if (imagedto.width > this.max_width) {
-                this.width = this.max_width;
-                const scale_factor = imagedto.width.valueOf() / this.max_width;
-                this.height = imagedto.height.valueOf() / scale_factor;
+            if (imagedto.width > this.MAX_IMAGE_WIDTH) {
+                this.width = this.MAX_IMAGE_WIDTH;
+                const scaleFactor = imagedto.width.valueOf() / this.MAX_IMAGE_WIDTH;
+                this.height = imagedto.height.valueOf() / scaleFactor;
             } else {
                 this.width = imagedto.width.valueOf();
                 this.height = imagedto.height.valueOf();
