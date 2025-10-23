@@ -13,7 +13,7 @@ import {KeyboardService} from '../../shared/a11y/keyboard-service';
 import {Subscription} from 'rxjs';
 
 @Component({
-    selector: 'section',
+    selector: 'app-section',
     templateUrl: 'section.component.html',
     styleUrls: ['section.component.css'],
     standalone: true,

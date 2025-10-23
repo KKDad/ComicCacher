@@ -3,5 +3,5 @@ export class ImageDto {
     imageData: string;
     height: number;
     width: number;
-    imageDate: String;
+    imageDate: string;
 }

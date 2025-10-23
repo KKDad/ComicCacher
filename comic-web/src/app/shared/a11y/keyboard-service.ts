@@ -56,11 +56,11 @@ export class KeyboardService {
       ].includes(event.key)),
       map(event => {
         switch (event.key) {
-          case 'ArrowUp': return 'up';
-          case 'ArrowDown': return 'down';
-          case 'ArrowLeft': return 'left';
-          case 'ArrowRight': return 'right';
-          default: return null;
+          case 'ArrowUp': return 'up' as const;
+          case 'ArrowDown': return 'down' as const;
+          case 'ArrowLeft': return 'left' as const;
+          case 'ArrowRight': return 'right' as const;
+          default: return 'up' as const; // Fallback (should never happen due to filter)
         }
       })
     );

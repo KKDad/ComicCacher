@@ -24,7 +24,7 @@ class MockComicService {
 // Mock ContainerComponent
 @Component({
   // Use the same selector as the actual component
-  selector: 'container',
+  selector: 'app-container',
   template: '<div>Mock Container</div>',
   standalone: true
 })

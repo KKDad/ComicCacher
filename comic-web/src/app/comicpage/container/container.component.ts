@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, signal} from '@angular/core';
+import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output, signal} from '@angular/core';
 
 import {Comic} from '../../dto/comic';
 import {ComicService} from '../../comic.service';
@@ -14,7 +14,7 @@ export enum NavBarOption {
 }
 
 @Component({
-    selector: 'container',
+    selector: 'app-container',
     templateUrl: 'container.component.html',
     styleUrls: ['container.component.css'],
     standalone: true,
@@ -26,7 +26,7 @@ export enum NavBarOption {
         ErrorDisplayComponent
     ]
 })
-export class ContainerComponent implements OnInit {
+export class ContainerComponent implements OnInit, AfterViewInit {
     @Input() sections: Comic[];
     @Output() scrollinfo = new EventEmitter<NavBarOption>();
 
@@ -75,7 +75,11 @@ export class ContainerComponent implements OnInit {
     }
 
     ngAfterViewInit(): void {
-        this.scrollDispatcher.scrolled(10).subscribe((data: CdkScrollable) => { this.onWindowScroll(data); });
+        this.scrollDispatcher.scrolled(10).subscribe((data: CdkScrollable | void) => {
+            if (data) {
+                this.onWindowScroll(data);
+            }
+        });
     }
 
     private onWindowScroll(data: CdkScrollable) {

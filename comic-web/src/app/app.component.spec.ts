@@ -13,8 +13,7 @@ describe('AppComponent', () => {
   beforeEach(() => {
     // Create a mock for the ContainerComponent with EventEmitter
     const scrollInfoEmitter = new EventEmitter<NavBarOption>();
-    containerComponentMock = jasmine.createSpyObj('ContainerComponent', []) as any;
-    containerComponentMock.scrollinfo = scrollInfoEmitter;
+    containerComponentMock = jasmine.createSpyObj('ContainerComponent', [], { scrollinfo: scrollInfoEmitter }) as any;
 
     // Create the fixture
     fixture = createStandaloneComponentFixture(

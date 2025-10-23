@@ -319,7 +319,7 @@ describe('ComicService', () => {
         imageData: 'base64-encoded-data',
         height: 100,
         width: 100,
-        imageDate: null
+        imageDate: '2025-10-23'
       };
 
       service.getAvatar(123).subscribe(image => {
