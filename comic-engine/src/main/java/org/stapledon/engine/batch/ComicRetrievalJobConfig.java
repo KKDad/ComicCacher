@@ -139,8 +139,9 @@ public class ComicRetrievalJobConfig {
     private List<ComicDownloadRequest> createComicRequests() {
         LocalDate targetDate = LocalDate.now();
         ComicConfig config = configurationFacade.loadComicConfig();
-        
+
         return config.getComics().stream()
+                .filter(comic -> comic.getSource() != null && !comic.getSource().isEmpty())
                 .map(comic -> ComicDownloadRequest.builder()
                         .comicId(comic.getId())
                         .comicName(comic.getName())

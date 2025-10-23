@@ -39,7 +39,15 @@ public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {
     @Override
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
         LocalDateTime startTime = LocalDateTime.now();
-        
+
+        // Validate request has a source
+        if (request.getSource() == null || request.getSource().isEmpty()) {
+            String errorMsg = String.format("Comic '%s' has null or empty source", request.getComicName());
+            log.error(errorMsg);
+            recordFailure(request, ComicRetrievalStatus.UNKNOWN_ERROR, errorMsg, startTime, null);
+            return ComicDownloadResult.failure(request, errorMsg);
+        }
+
         // Attempt to find the appropriate strategy
         ComicDownloaderStrategy strategy = downloaderStrategies.get(request.getSource());
         if (strategy == null) {
@@ -107,13 +115,19 @@ public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {
     @Override
     public List<ComicDownloadResult> downloadComicsForDate(ComicConfig config, LocalDate date) {
         List<ComicDownloadResult> results = new ArrayList<>();
-        
+
         if (config == null || config.getComics() == null) {
             log.warn("Comic configuration is null or empty");
             return results;
         }
 
         for (ComicItem comic : config.getComics()) {
+            // Skip comics with null or empty source
+            if (comic.getSource() == null || comic.getSource().isEmpty()) {
+                log.warn("Skipping comic '{}' - has null or empty source", comic.getName());
+                continue;
+            }
+
             ComicDownloadRequest request = ComicDownloadRequest.builder()
                     .comicId(comic.getId())
                     .comicName(comic.getName())
@@ -121,15 +135,15 @@ public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {
                     .sourceIdentifier(comic.getSourceIdentifier())
                     .date(date)
                     .build();
-            
+
             ComicDownloadResult result = downloadComic(request);
             results.add(result);
-            
+
             if (!result.isSuccessful()) {
                 log.warn("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
             }
         }
-        
+
         return results;
     }
 
