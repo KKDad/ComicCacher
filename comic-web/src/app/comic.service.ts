@@ -34,12 +34,30 @@ export class ComicService {
     this.http.get<{data: Comic[]}>('api/v1/comics').pipe(
       // Handle errors globally
       catchError(error => {
-        console.error('Error fetching comics', error);
+        console.error('Error fetching comics from API:', error);
+        if (error.status) {
+          console.error(`HTTP ${error.status}: ${error.statusText}`);
+        }
         return of({data: []});
       }),
       // Share the same response with multiple subscribers
       shareReplay(1)
     ).subscribe(response => {
+      // Defensive check: ensure response has data property
+      if (!response || !response.data) {
+        console.error('Invalid API response structure:', response);
+        this.comicsSignal.set([]);
+        return;
+      }
+
+      // Defensive check: ensure data is an array
+      if (!Array.isArray(response.data)) {
+        console.error('API response.data is not an array:', response.data);
+        this.comicsSignal.set([]);
+        return;
+      }
+
+      console.log(`Comic service: loaded ${response.data.length} comics from API`);
       this.comicsSignal.set(response.data);
     });
   }

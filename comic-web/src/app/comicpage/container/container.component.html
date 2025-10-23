@@ -27,7 +27,7 @@
     </div>
 
     <!-- Empty state when no comics are available -->
-    <div *ngIf="!sections || sections.length === 0" class="no-comics-message">
+    <div *ngIf="isComicsEmpty()" class="no-comics-message">
       <h3>No comics available</h3>
       <p>Check your connection and try refreshing the page.</p>
     </div>
