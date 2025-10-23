@@ -1,0 +1,71 @@
+plugins {
+	id "io.spring.dependency-management" version '1.1.7'
+	id "java"
+}
+
+group = 'kkdad'
+version = '1.2.0-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+// Define common dependency versions
+ext {
+	lombokVersion = '1.18.42'
+	gsonVersion = '2.11.0'
+	guavaVersion = '33.5.0-jre'
+	jsoupVersion = '1.21.2'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// comic-common dependency for shared types
+	implementation project(':comic-common')
+
+	// Core dependencies
+	implementation "com.google.code.gson:gson:${gsonVersion}"
+	implementation "com.google.guava:guava:${guavaVersion}"
+	implementation "org.jsoup:jsoup:${jsoupVersion}"
+
+	// Selenium for web scraping
+	implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
+	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
+
+	// Spring Boot for dependency injection and configuration
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+	// Lombok
+	compileOnly "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+	// Test dependencies
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.batch:spring-batch-test'
+}
+
+// Spring Boot dependency management (without the plugin)
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.5"
+	}
+}
+
+tasks.withType(Test) {
+	useJUnitPlatform()
+}

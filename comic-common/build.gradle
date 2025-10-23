@@ -1,0 +1,65 @@
+plugins {
+	id "io.spring.dependency-management" version '1.1.7'
+	id "java-library"
+}
+
+group = 'kkdad'
+version = '1.2.0-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+// Define common dependency versions
+ext {
+	lombokVersion = '1.18.42'
+	gsonVersion = '2.11.0'
+	guavaVersion = '33.5.0-jre'
+	jsoupVersion = '1.21.2'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Gson for JSON serialization (used in DTOs)
+	api "com.google.code.gson:gson:${gsonVersion}"
+
+	// Guava for utilities
+	api "com.google.guava:guava:${guavaVersion}"
+
+	// Jsoup for HTML parsing (WebInspector)
+	api "org.jsoup:jsoup:${jsoupVersion}"
+
+	// Spring Boot for configuration properties
+	api 'org.springframework.boot:spring-boot-starter'
+
+	// Lombok
+	compileOnly "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+	// Test dependencies
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+// Spring Boot dependency management (without the plugin)
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.5"
+	}
+}
+
+tasks.withType(Test) {
+	useJUnitPlatform()
+}

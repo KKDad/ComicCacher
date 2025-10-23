@@ -1,8 +1,8 @@
 # Project Overview
 
-This project, "The Comic Processor," is a webcomic scroller that consists of a Java-based backend (ComicAPI) and an Angular-based frontend (ComicViewer). The backend is responsible for caching comics from sources like GoComics and ComicsKingdom, while the frontend provides a user interface for browsing the cached comics.
+This project, "The Comic Processor," is a webcomic scroller that consists of a Java-based backend (comic-api) and an Angular-based frontend (comic-web). The backend is responsible for caching comics from sources like GoComics and ComicsKingdom, while the frontend provides a user interface for browsing the cached comics.
 
-## Backend (ComicAPI)
+## Backend (comic-api)
 
 The backend is a Spring Boot application written in Java 21. It exposes a REST API for comic retrieval and management, with OpenAPI 3.0 documentation. The project is built using Gradle and includes support for unit and integration tests with JaCoCo for code coverage.
 
@@ -13,7 +13,7 @@ The backend is a Spring Boot application written in Java 21. It exposes a REST A
 - **API Documentation:** OpenAPI 3.0 with springdoc-openapi-starter-webmvc-ui
 - **Testing:** JUnit 5, Spring Test, JaCoCo
 
-## Frontend (ComicViewer)
+## Frontend (comic-web)
 
 The frontend is an Angular application that uses Angular Material for its UI components. It provides features like infinite virtual scrolling and automatic comic refresh. The project is built using the Angular CLI and includes support for testing with Karma and Jasmine.
 
@@ -24,46 +24,46 @@ The frontend is an Angular application that uses Angular Material for its UI com
 
 # Building and Running
 
-## Backend (ComicAPI)
+## Backend (comic-api)
 
 ### Local Development
 ```bash
 # Build the project
-./gradlew :ComicAPI:build
+./gradlew :comic-api:build
 
 # Run tests
-./gradlew :ComicAPI:test
+./gradlew :comic-api:test
 
 # Run integration tests
-./gradlew :ComicAPI:integrationTest
+./gradlew :comic-api:integrationTest
 
 # Generate test coverage reports
-./gradlew :ComicAPI:jacocoTestReport         # Unit test coverage only
-./gradlew :ComicAPI:jacocoIntegrationTestReport   # Integration test coverage only
-./gradlew :ComicAPI:jacocoAllReport          # Combined coverage report
+./gradlew :comic-api:jacocoTestReport         # Unit test coverage only
+./gradlew :comic-api:jacocoIntegrationTestReport   # Integration test coverage only
+./gradlew :comic-api:jacocoAllReport          # Combined coverage report
 
 # Generate API documentation
-./gradlew :ComicAPI:updateApiDocs
+./gradlew :comic-api:updateApiDocs
 
 # Run the application locally
-./gradlew :ComicAPI:bootRun
+./gradlew :comic-api:bootRun
 ```
 
 ### Docker Deployment
 ```bash
 # Build the project
-./gradlew :ComicAPI:build
+./gradlew :comic-api:build
 
 # Build the Docker image
-./ComicAPI/build-docker.sh <version>
+./comic-api/build-docker.sh <version>
 ```
 
-## Frontend (ComicViewer)
+## Frontend (comic-web)
 
 ### Local Development
 ```bash
-# Navigate to ComicViewer directory
-cd ComicViewer
+# Navigate to comic-web directory
+cd comic-web
 
 # Install dependencies
 npm install
@@ -80,8 +80,8 @@ npm run buildProd
 
 ### Docker Deployment
 ```bash
-# Navigate to ComicViewer directory
-cd ComicViewer
+# Navigate to comic-web directory
+cd comic-web
 
 # Build Docker image
 ./build-docker.sh
@@ -89,14 +89,14 @@ cd ComicViewer
 
 # Development Conventions
 
-## Backend (ComicAPI)
+## Backend (comic-api)
 
 *   The project follows standard Java and Spring Boot conventions.
 *   Unit and integration tests are located in `src/test/java` and `src/integration/java` respectively.
 *   JaCoCo is used for code coverage, and reports can be generated using the `jacocoTestReport`, `jacocoIntegrationTestReport`, and `jacocoAllReport` Gradle tasks.
 *   API documentation is generated using the `springdoc-openapi-gradle-plugin` and can be updated by running the `updateApiDocs` Gradle task.
 
-## Frontend (ComicViewer)
+## Frontend (comic-web)
 
 *   The project follows standard Angular conventions.
 *   Tests are written using Karma and Jasmine and can be run with the `ng test` command.

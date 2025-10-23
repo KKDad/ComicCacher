@@ -1,0 +1,29 @@
+package org.stapledon.infrastructure.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+
+@Configuration
+public class SwaggerConfig implements WebMvcConfigurer {
+    @Override
+    public void addViewControllers(final ViewControllerRegistry registry) {
+        registry.addRedirectViewController("/", "/swagger-ui.html");
+        registry.addRedirectViewController("/swagger-ui", "/swagger-ui/index.html");
+    }
+
+    @Bean
+    public OpenAPI comicCacherOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Comic Cacher API")
+                        .description("Web comic downloader and viewer application")
+                        .version("1.2.0")
+                        .license(new License().name("MIT License")));
+    }
+}

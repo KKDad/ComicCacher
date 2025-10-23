@@ -37,31 +37,31 @@ it yourself, go ahead.
 #### Local Development
 ```bash
 # Build the project
-./gradlew :ComicAPI:build
+./gradlew :comic-api:build
 
 # Run tests
-./gradlew :ComicAPI:test
+./gradlew :comic-api:test
 
 # Run integration tests
-./gradlew :ComicAPI:integrationTest
+./gradlew :comic-api:integrationTest
 
 # Generate test coverage reports
-./gradlew :ComicAPI:jacocoTestReport         # Unit test coverage only
-./gradlew :ComicAPI:jacocoIntegrationTestReport   # Integration test coverage only
-./gradlew :ComicAPI:jacocoAllReport          # Combined coverage report
+./gradlew :comic-api:jacocoTestReport         # Unit test coverage only
+./gradlew :comic-api:jacocoIntegrationTestReport   # Integration test coverage only
+./gradlew :comic-api:jacocoAllReport          # Combined coverage report
 
 # Generate API documentation
-./gradlew :ComicAPI:updateApiDocs
+./gradlew :comic-api:updateApiDocs
 
 # Run the application locally
-./gradlew :ComicAPI:bootRun
+./gradlew :comic-api:bootRun
 ```
 
 #### Docker Deployment
 To build and launch the Comic API, build the docker container, tag and push the image, then run a helm upgrade
 ```bash
-./gradlew :ComicAPI:build
-./ComicAPI/build-docker.sh 2.1.0
+./gradlew :comic-api:build
+./comic-api/build-docker.sh 2.1.0
 docker images
 docker tag kkdad/comic-api:2.1.0 registry.local613.local:5000/kkdad/comic-api:2.1.0
 docker push registry.local613.local:5000/kkdad/comic-api:2.1.0
@@ -83,14 +83,14 @@ The API provides several endpoints for monitoring cache performance:
 - `/api/v1/metrics/combined` - Comprehensive view of storage and access metrics
 - `/api/v1/metrics/storage/refresh` - Force refresh of storage metrics
 
-### ComicViewer
+### comic-web
 
-The ComicViewer is an Angular-based frontend that provides a user-friendly interface for browsing cached comics.
+The comic-web is an Angular-based frontend that provides a user-friendly interface for browsing cached comics.
 
 #### Local Development
 ```bash
-# Navigate to ComicViewer directory
-cd ComicViewer
+# Navigate to comic-web directory
+cd comic-web
 
 # Install dependencies
 npm install
@@ -108,10 +108,10 @@ npm run buildProd
 #### Docker Deployment
 ```bash
 # Build Docker image
-cd ComicViewer
+cd comic-web
 ./build-docker.sh
-docker tag kkdad/comic-viewer:latest registry.local613.local:5000/kkdad/comic-viewer:1.0.0
-docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
+docker tag kkdad/comic-web:latest registry.local613.local:5000/kkdad/comic-web:1.0.0
+docker push registry.local613.local:5000/kkdad/comic-web:1.0.0
 ```
 
 #### Features
@@ -122,7 +122,7 @@ docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
 
 ## Technology Stack
 
-### Backend (ComicAPI)
+### Backend (comic-api)
 - **Framework**: Spring Boot 3.4.5
 - **Language**: Java 21
 - **API Documentation**: OpenAPI 3.0 with springdoc-openapi-starter-webmvc-ui
@@ -131,7 +131,7 @@ docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
 - **Test Coverage**: JaCoCo with separate unit and integration test reporting
 - **Containerization**: Docker
 
-### Frontend (ComicViewer)
+### Frontend (comic-web)
 - **Framework**: Angular with Material Design components
 - **Build Tool**: Angular CLI
 - **Testing**: Karma, Jasmine
@@ -145,14 +145,14 @@ docker push registry.local613.local:5000/kkdad/comic-viewer:1.0.0
 
 The project uses JaCoCo for test coverage reporting. Coverage reports are generated automatically when running tests:
 
-- **Unit Test Coverage**: `./gradlew :ComicAPI:jacocoTestReport`
-- **Integration Test Coverage**: `./gradlew :ComicAPI:jacocoIntegrationTestReport`
-- **Combined Coverage**: `./gradlew :ComicAPI:jacocoAllReport`
+- **Unit Test Coverage**: `./gradlew :comic-api:jacocoTestReport`
+- **Integration Test Coverage**: `./gradlew :comic-api:jacocoIntegrationTestReport`
+- **Combined Coverage**: `./gradlew :comic-api:jacocoAllReport`
 
 Coverage reports are generated in HTML and XML formats in the following locations:
-- Unit Tests: `ComicAPI/build/reports/jacoco/test/html/index.html`
-- Integration Tests: `ComicAPI/build/reports/jacoco/jacocoIntegrationTestReport/html/index.html`
-- Combined: `ComicAPI/build/reports/jacoco/jacocoAllReport/html/index.html`
+- Unit Tests: `comic-api/build/reports/jacoco/test/html/index.html`
+- Integration Tests: `comic-api/build/reports/jacoco/jacocoIntegrationTestReport/html/index.html`
+- Combined: `comic-api/build/reports/jacoco/jacocoAllReport/html/index.html`
 
 ## API Documentation
 
@@ -160,7 +160,7 @@ The API documentation is automatically generated using the OpenAPI Specification
 
 - **Local Development**: When running locally, access the Swagger UI at `http://localhost:8080/swagger-ui/index.html`
 - **Generated Files**: OpenAPI JSON files are generated in the `docs/` directory during the build process
-- **Custom Generator**: Run `./gradlew :ComicAPI:updateApiDocs` to manually update the documentation
+- **Custom Generator**: Run `./gradlew :comic-api:updateApiDocs` to manually update the documentation
 
 ### Detailed Endpoint Documentation
 

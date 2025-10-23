@@ -1,0 +1,232 @@
+plugins {
+	id "com.coditory.integration-test" version '2.2.5'
+	id "io.spring.dependency-management" version '1.1.7'
+	id "org.springframework.boot" version '3.4.5'
+	id "java"
+	id "jacoco"
+	id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+}
+
+// Integration test configuration
+integrationTest {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    systemProperty 'spring.profiles.active', 'integration'
+}
+
+group = 'kkdad'
+version = '1.2.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+	integrationTestImplementation {
+	    extendsFrom implementation
+	}
+	integrationTestCompileOnly {
+	    extendsFrom compileOnly
+	}
+	integrationTestAnnotationProcessor {
+	    extendsFrom annotationProcessor
+	}
+	integrationTestRuntimeOnly {
+	    extendsFrom runtimeOnly
+	}
+	// Prevent version conflicts
+	all*.exclude group: 'com.vaadin.external.google', module: 'android-json'
+	all*.exclude group: 'commons-logging', module: 'commons-logging'
+}
+
+// Define common dependency versions to prevent conflicts
+ext {
+    jjwtVersion = '0.11.5'
+    lombokVersion = '1.18.42'
+    gsonVersion = '2.11.0'
+    guavaVersion = '33.5.0-jre'
+    jsoupVersion = '1.21.2'
+}
+
+// Import BOMs for consistent dependency versions
+dependencyManagement {
+    imports {
+        // Use Jackson BOM to ensure consistent Jackson library versions
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.20.0"
+    }
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Module dependencies
+	implementation project(':comic-common')
+	implementation project(':comic-metrics')
+	implementation project(':comic-engine')
+
+	// Core dependencies
+	implementation "com.google.code.gson:gson:${gsonVersion}"
+	implementation "com.google.guava:guava:${guavaVersion}"
+	implementation "org.jsoup:jsoup:${jsoupVersion}"
+
+	// Selenium dependencies
+	implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
+	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
+
+	// Spring Boot starters - use managed versions
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+	// JDBC and H2 database for Spring Batch job repository (use Spring Boot managed versions)
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	runtimeOnly 'com.h2database:h2'
+
+	// OpenAPI documentation
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+
+	// JWT dependencies - use consistent versions
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+	
+	// Other dependencies
+	implementation 'org.mindrot:jbcrypt:0.4'
+
+	// Lombok
+	compileOnly "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+	// Annotation processors
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	// Test dependencies
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+
+}
+
+tasks.withType(Test) {
+	useJUnitPlatform()
+	systemProperty 'spring.profiles.active', 'test'
+}
+
+bootRun {
+    mainClass = "org.stapledon.ComicApiApplication"
+
+    // Allow command-line arguments to override system properties
+    // This ensures bootRun will respect spring.profiles.active when specified via --args
+	if (project.hasProperty('args')) {
+		args project.args.split(',')
+	} else {
+		systemProperty('spring.profiles.active', 'production')
+	}
+}
+
+springBoot {
+	buildInfo()
+}
+
+// JaCoCo configuration
+test {
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    // Add coverage verification rules
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                "org/stapledon/config/properties/**", // Configuration classes
+                "**/dto/**",                           // Data transport objects
+                "**/*Exception.class"                  // Exception classes
+            ])
+        }))
+    }
+}
+
+// Integration test coverage
+task jacocoIntegrationTestReport(type: JacocoReport) {
+    dependsOn integrationTest
+    executionData fileTree(project.buildDir).include("/jacoco/integrationTest.exec")
+    sourceSets sourceSets.main
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+integrationTest {
+    finalizedBy jacocoIntegrationTestReport
+}
+
+// Combined coverage report
+task jacocoAllReport(type: JacocoReport) {
+    dependsOn test, integrationTest
+    executionData fileTree(project.buildDir).include("/jacoco/*.exec")
+    sourceSets sourceSets.main
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// OpenAPI documentation configuration
+openApi {
+    apiDocsUrl.set("http://localhost:8888/v3/api-docs")
+    outputDir.set(file("${project.buildDir}"))
+    outputFileName.set("openapi.json")
+    waitTimeInSeconds.set(30)
+    
+    // Configure the Spring Boot application to use the 'apidocs' profile
+    // This will disable comic caching during API docs generation
+    customBootRun {
+        args = ["--spring.profiles.active=apidocs"]
+    }
+}
+
+// The API docs generation is temporarily disabled in the build process
+// to prevent build failures. Use the updateApiDocs task manually when needed.
+
+// Manual API docs generation task
+tasks.register("updateApiDocs") {
+    doLast {
+        logger.lifecycle("Generating OpenAPI docs manually using script...")
+        exec {
+            workingDir project.projectDir
+            commandLine "./generate-openapi-docs.sh"
+        }
+    }
+}
+
+// Task to run the application with apidocs profile for manual testing
+tasks.register('bootRunApiDocs') {
+    dependsOn 'classes'
+    group = 'application'
+    description = 'Runs the Spring Boot application with the apidocs profile (caching disabled)'
+    
+    doLast {
+        exec {
+            workingDir project.projectDir
+            commandLine "${project.getRootDir().getAbsolutePath()}/gradlew", "bootRun", "--args=--spring.profiles.active=apidocs"
+        }
+    }
+}
