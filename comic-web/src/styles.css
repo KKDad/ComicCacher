@@ -72,9 +72,15 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  background: var(--background-gradient);
+  background: var(--background-gradient) !important;
   color: var(--text-color);
   overflow: hidden;
+}
+
+/* Ensure body has the gradient background */
+body {
+  background-color: #F8FAFB !important;
+  background-image: linear-gradient(180deg, #F8FAFB 0%, #EDF4F8 100%) !important;
 }
 
 /* Accessibility */
