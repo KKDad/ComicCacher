@@ -18,23 +18,25 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: var(--spacing-lg);
     }
-    
+
     .overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(255, 255, 255, 0.7);
+      background: var(--glass-background);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       z-index: 10;
     }
-    
+
     .loading-text {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #555;
+      margin-top: var(--spacing-sm);
+      font-size: var(--font-size-md);
+      color: var(--text-secondary-color);
     }
   `]
 })

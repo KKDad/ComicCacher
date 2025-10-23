@@ -10,7 +10,6 @@ import {MatButtonModule} from '@angular/material/button';
 @Component({
   selector: 'app-refresh',
   templateUrl: './refresh.component.html',
-  styleUrls: ['./refresh.component.css'],
   standalone: true,
   imports: [
     CommonModule,
