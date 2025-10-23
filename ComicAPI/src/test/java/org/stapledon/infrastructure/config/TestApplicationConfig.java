@@ -25,7 +25,7 @@ import org.stapledon.infrastructure.security.JwtAuthenticationEntryPoint;
 import org.stapledon.infrastructure.security.JwtTokenFilter;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
-import org.stapledon.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.WebInspector;
 
 /**
  * Central configuration class for test beans

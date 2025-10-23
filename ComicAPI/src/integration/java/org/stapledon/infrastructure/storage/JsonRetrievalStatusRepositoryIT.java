@@ -10,7 +10,7 @@ import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
-import org.stapledon.core.comic.service.RetrievalStatusRepository;
+import org.stapledon.common.repository.RetrievalStatusRepository;
 
 import java.io.File;
 import java.time.LocalDate;

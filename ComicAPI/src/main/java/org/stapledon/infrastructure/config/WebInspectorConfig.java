@@ -2,8 +2,8 @@ package org.stapledon.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.stapledon.infrastructure.web.WebInspector;
-import org.stapledon.infrastructure.web.WebInspectorImpl;
+import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.WebInspectorImpl;
 
 /**
  * Configuration for WebInspector dependency

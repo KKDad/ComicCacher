@@ -18,7 +18,7 @@ import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.engine.management.ComicManagementFacade;
-import org.stapledon.engine.storage.ComicStorageFacade;
+import org.stapledon.common.service.ComicStorageFacade;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 

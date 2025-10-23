@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
-import org.stapledon.core.comic.service.RetrievalStatusRepository;
+import org.stapledon.common.repository.RetrievalStatusRepository;
 import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.LocalDate;

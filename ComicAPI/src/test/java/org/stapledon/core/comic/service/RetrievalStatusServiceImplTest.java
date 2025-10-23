@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.repository.RetrievalStatusRepository;
 
 import java.time.LocalDate;
 import java.util.Arrays;
