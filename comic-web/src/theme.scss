@@ -1,0 +1,29 @@
+// Light & Airy Theme - Custom CSS overrides for Angular Material
+// Using CSS variables instead of SCSS to avoid build complexity
+
+// Custom Material component overrides for glassmorphism
+.mat-mdc-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.mat-mdc-button, .mat-mdc-raised-button {
+  border-radius: 12px !important;
+  font-weight: 500 !important;
+  transition: all 300ms ease !important;
+}
+
+.mat-mdc-raised-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(91, 155, 213, 0.2) !important;
+}
+
+.mat-mdc-card-title {
+  color: #2C3E50 !important;
+  font-weight: 600 !important;
+}
+
+.mat-mdc-card-subtitle {
+  color: #7F8C97 !important;
+}
