@@ -6,7 +6,9 @@ import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.ComicStorageFacade;
+import org.stapledon.common.service.ImageValidationService;
 import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.ImageUtils;
 
@@ -38,8 +40,11 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
     private static final String COMBINE_PATH = "%s/%s";
     private static final int WARNING_TIME_MS = 100;
     private static final String AVATAR_FILE = "avatar.png";
+    private static final int MIN_COMIC_WIDTH = 100;
+    private static final int MIN_COMIC_HEIGHT = 50;
 
     private final CacheProperties cacheProperties;
+    private final ImageValidationService imageValidationService;
     
     /**
      * Gets a directory name for a comic - uses the comic name if available, 
@@ -61,9 +66,23 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
         // Only validate the essential parameters
         Objects.requireNonNull(date, "date cannot be null");
         Objects.requireNonNull(imageData, "imageData cannot be null");
-        
+
+        // Validate image before saving
+        ImageValidationResult validation = imageValidationService.validateWithMinDimensions(
+                imageData, MIN_COMIC_WIDTH, MIN_COMIC_HEIGHT);
+
+        if (!validation.isValid()) {
+            log.error("Refusing to save invalid comic strip for {} on {}: {}",
+                     comicName, date, validation.getErrorMessage());
+            return false;
+        }
+
+        log.debug("Saving validated {} image for {} on {}: {}x{}",
+                 validation.getFormat(), comicName, date,
+                 validation.getWidth(), validation.getHeight());
+
         String comicNameParsed = getComicNameParsed(comicId, comicName);
-        
+
         // Create directory structure if it doesn't exist
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         File directory = new File(String.format("%s/%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed, yearPath));
@@ -71,11 +90,11 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
             log.error("Failed to create directory: {}", directory.getAbsolutePath());
             return false;
         }
-        
+
         // Create the file
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         File file = new File(String.format("%s/%s.png", directory.getAbsolutePath(), filename));
-        
+
         try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(imageData);
             return true;
@@ -88,19 +107,31 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
     @Override
     public boolean saveAvatar(int comicId, String comicName, byte[] imageData) {
         Objects.requireNonNull(imageData, "imageData cannot be null");
-        
+
+        // Validate avatar image
+        ImageValidationResult validation = imageValidationService.validate(imageData);
+        if (!validation.isValid()) {
+            log.error("Refusing to save invalid avatar for {}: {}",
+                     comicName, validation.getErrorMessage());
+            return false;
+        }
+
+        log.debug("Saving validated {} avatar for {}: {}x{}",
+                 validation.getFormat(), comicName,
+                 validation.getWidth(), validation.getHeight());
+
         String comicNameParsed = getComicNameParsed(comicId, comicName);
-        
+
         // Create directory structure if it doesn't exist
         File directory = new File(String.format("%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed));
         if (!directory.exists() && !directory.mkdirs()) {
             log.error("Failed to create directory: {}", directory.getAbsolutePath());
             return false;
         }
-        
+
         // Create the file
         File file = new File(String.format("%s/%s", directory.getAbsolutePath(), AVATAR_FILE));
-        
+
         try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(imageData);
             return true;

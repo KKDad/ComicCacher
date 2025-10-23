@@ -280,6 +280,48 @@ The docker build scripts (`comic-api/build-docker.sh` and `comic-web/build-docke
 ./comic-web/build-docker.sh 2.1.35
 ```
 
+## Image Validation Architecture
+
+The application includes a comprehensive image validation service to ensure only well-formed images are saved to the cache.
+
+### Components
+
+**comic-common** (shared interfaces and DTOs):
+- `ImageFormat` enum - Supported formats (PNG, JPEG, GIF, WEBP, UNKNOWN)
+- `ImageValidationResult` DTO - Validation results with format, dimensions, size, and error details
+- `ImageValidationService` interface - Service contract for validation
+
+**comic-engine** (implementation):
+- `ImageValidationServiceImpl` - Validates images using standard Java ImageIO
+  - Checks for null/empty data
+  - Validates file size (max 10MB)
+  - Verifies image can be decoded
+  - Validates dimensions > 0
+  - Determines format (PNG, JPEG, GIF, WEBP)
+
+### Integration Points
+
+1. **AbstractComicDownloaderStrategy** - Validates all downloaded comic strips and avatars before returning
+2. **ComicStorageFacadeImpl** - Validates images before saving to disk with minimum dimension requirements (100x50 for comic strips)
+
+### Key Features
+
+- **Format Detection**: Automatically identifies PNG, JPEG, GIF, and WEBP (if TwelveMonkeys plugin present)
+- **Corruption Detection**: Rejects truncated, corrupted, or invalid image data
+- **Error Page Detection**: Prevents HTML error pages from being saved as images
+- **Dimension Validation**: Ensures comic strips meet minimum size requirements
+- **Size Limits**: Rejects images over 10MB
+- **Fail Fast**: Issues detected immediately at download, before disk I/O
+
+### WebP Support (Optional)
+
+To add WebP support, include TwelveMonkeys ImageIO WebP plugin in `comic-engine/build.gradle`:
+```gradle
+implementation 'com.twelvemonkeys.imageio:imageio-webp:3.12.0'
+```
+
+The plugin is auto-discovered by Java's ImageIO service provider mechanism. No code changes required.
+
 ## Common Tasks
 
 - **Adding a new comic source:** Implement a new class extending `DailyComic` in `comic-engine/downloader/` with site-specific parsing logic
@@ -287,3 +329,4 @@ The docker build scripts (`comic-api/build-docker.sh` and `comic-web/build-docke
 - **Updating caching behavior:** Check `ComicManagementFacade` and `ComicStorageFacade` in comic-engine
 - **Adding new metrics:** Implement collectors in `comic-metrics/collector/` and configure output in `MetricsConfiguration`
 - **Modifying API endpoints:** Update controllers in `comic-api/src/main/java/org/stapledon/api/controller/`
+- **Adjusting image validation:** Modify `ImageValidationServiceImpl` in comic-engine/validation/ or minimum dimension constants in `ComicStorageFacadeImpl`

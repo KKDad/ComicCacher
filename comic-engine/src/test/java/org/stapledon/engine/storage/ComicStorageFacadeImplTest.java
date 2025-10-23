@@ -1,6 +1,7 @@
 package org.stapledon.engine.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,9 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ImageFormat;
+import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.service.ImageValidationService;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +34,9 @@ class ComicStorageFacadeImplTest {
     @Mock
     private CacheProperties cacheProperties;
 
+    @Mock
+    private ImageValidationService imageValidationService;
+
     private ComicStorageFacadeImpl storageFacade;
     private File cacheRoot;
     private static final int COMIC_ID = 42;
@@ -41,16 +48,22 @@ class ComicStorageFacadeImplTest {
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-        
+
         // Setup temp cache directory
         cacheRoot = tempDir.toFile();
         when(cacheProperties.getLocation()).thenReturn(cacheRoot.getAbsolutePath());
-        
-        storageFacade = new ComicStorageFacadeImpl(cacheProperties);
-        
+
+        // Mock image validation to always pass
+        when(imageValidationService.validate(any(byte[].class)))
+                .thenReturn(ImageValidationResult.success(ImageFormat.PNG, 100, 100, 1000));
+        when(imageValidationService.validateWithMinDimensions(any(byte[].class), any(int.class), any(int.class)))
+                .thenReturn(ImageValidationResult.success(ImageFormat.PNG, 100, 100, 1000));
+
+        storageFacade = new ComicStorageFacadeImpl(cacheProperties, imageValidationService);
+
         // Create test directory structure
         createTestDirectoryStructure();
-        
+
         // Mock ImageUtils.getImageDto
         mockImageUtils();
     }

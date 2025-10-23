@@ -7,6 +7,7 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.service.ImageValidationService;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -31,9 +32,11 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
      * Creates a new Comics Kingdom downloader strategy.
      *
      * @param webInspector The web inspector to use for HTTP requests
+     * @param imageValidationService The service for validating downloaded images
      */
-    public ComicsKingdomDownloaderStrategy(WebInspector webInspector) {
-        super(SOURCE_IDENTIFIER, webInspector);
+    public ComicsKingdomDownloaderStrategy(WebInspector webInspector,
+                                          ImageValidationService imageValidationService) {
+        super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
     }
 
     /**
