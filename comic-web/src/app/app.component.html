@@ -1,17 +1,17 @@
 <div class="topnav" [class.collapsed]="isNavCollapsed">
+  <div class="nav-side">
+    <a mat-button href="https://github.com/KKDad/ComicCacher" target="_blank" rel="noopener noreferrer">
+      Project
+    </a>
+    <a mat-button href="docs/index.html" target="_blank" rel="noopener noreferrer">
+      API
+    </a>
+  </div>
+
   <h1 class="txt title outline">Daily Comics</h1>
-  <div class="wrapper">
-    <div class="c1">
-      <a mat-button href="https://github.com/KKDad/ComicCacher" target="_blank" rel="noopener noreferrer">
-        Project
-      </a>
-      <a mat-button href="docs/index.html" target="_blank" rel="noopener noreferrer">
-        API
-      </a>
-    </div>
-    <div class="c2">
-      <button mat-button [routerLink]="['/about']">About</button>
-    </div>
+
+  <div class="nav-side">
+    <button mat-button [routerLink]="['/about']">About</button>
   </div>
 </div>
 

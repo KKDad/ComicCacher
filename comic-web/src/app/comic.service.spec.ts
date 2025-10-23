@@ -63,7 +63,7 @@ describe('ComicService', () => {
 
       const req = httpMock.expectOne('api/v1/comics/123');
       expect(req.request.method).toBe('GET');
-      req.flush(mockComic);
+      req.flush({data: mockComic});
     });
 
     it('should use default id if id is 0', () => {

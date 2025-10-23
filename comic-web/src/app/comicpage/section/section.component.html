@@ -8,10 +8,19 @@
     role="region">
     
     <mat-card-header>
-        <img 
-            mat-card-avatar 
-            [src]="getAvatarImage()" 
-            [attr.alt]="content.name + ' icon'" /> 
+        <img
+            *ngIf="getAvatarUrl() && !avatarLoadFailed()"
+            mat-card-avatar
+            [src]="getAvatarImage()"
+            (error)="onAvatarError()"
+            [attr.alt]="content.name + ' icon'" />
+        <div
+            *ngIf="!getAvatarUrl() || avatarLoadFailed()"
+            mat-card-avatar
+            class="avatar-placeholder"
+            [attr.aria-label]="content.name + ' - no avatar available'">
+            <span class="avatar-initial">{{content.name.charAt(0)}}</span>
+        </div>
         <mat-card-title [id]="'comic-title-' + content.id">{{content.name}}</mat-card-title>
         <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
     </mat-card-header>
@@ -40,14 +49,19 @@
                 <p class="pubdate" [attr.aria-live]="'polite'">Published on: {{imageDate}}</p>
                 <figure>
                     <img
-                        *ngIf="content.strip"
+                        *ngIf="getStripUrl() && !stripLoadFailed()"
                         [src]="getComicImage()"
-                        [height]="height"
-                        [width]="width"
+                        (error)="onStripError()"
                         [alt]="content.name + ' comic strip published on ' + imageDate"
                         class="comic-image"
                         aria-describedby="comic-desc"
                         role="img" />
+                    <div
+                        *ngIf="!getStripUrl() || stripLoadFailed()"
+                        class="strip-error-message"
+                        role="alert">
+                        <p>Comic strip image not available</p>
+                    </div>
                     <figcaption id="comic-desc" class="visually-hidden">{{content.name}} by {{content.author}}, published on {{imageDate}}</figcaption>
                 </figure>
             </ng-container>

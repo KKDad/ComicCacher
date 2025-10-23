@@ -42,8 +42,8 @@ describe('AppComponent', () => {
   it('should include navigation links', () => {
     expectExists(fixture, 'a[href="https://github.com/KKDad/ComicCacher"]', 'Project link should exist');
     expectExists(fixture, 'a[href="docs/index.html"]', 'API link should exist');
-    // Check for About button by finding button with routerLink directive in .c2 wrapper
-    const aboutButton = fixture.nativeElement.querySelector('.c2 button');
+    // Check for About button by finding button with routerLink directive in .nav-side wrapper
+    const aboutButton = fixture.nativeElement.querySelector('.nav-side button');
     expect(aboutButton).withContext('About button should exist').toBeTruthy();
   });
 

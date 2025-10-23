@@ -32,34 +32,35 @@ import {MatIconModule} from '@angular/material/icon';
   `,
   styles: [`
     .error-container {
-      margin: 10px 0;
+      margin: var(--spacing-sm) 0;
       max-width: 100%;
     }
-    
+
     .error-card {
-      background-color: #fff8f8;
-      border-left: 4px solid #f44336;
+      background: rgba(255, 182, 193, 0.1);
+      border-left: 4px solid var(--accent-color);
+      border-radius: var(--border-radius-md);
     }
-    
+
     .error-content {
       display: flex;
       align-items: center;
     }
-    
+
     .error-message {
-      margin-left: 10px;
+      margin-left: var(--spacing-sm);
       flex-grow: 1;
-      color: #444;
+      color: var(--text-color);
     }
-    
+
     .dismissible {
       position: relative;
     }
-    
+
     .dismiss-button {
       position: absolute;
-      top: 5px;
-      right: 5px;
+      top: var(--spacing-xs);
+      right: var(--spacing-xs);
     }
   `]
 })

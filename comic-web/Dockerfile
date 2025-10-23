@@ -10,7 +10,7 @@ RUN npm run build --omit=dev
 
 # -- Stage 2
 FROM eclipse-temurin:11-jre-alpine
-COPY --from=build-step /app/dist/comic-web /static_content
+COPY --from=build-step /app/dist/comic-web/browser /static_content
 
 ENV VERSION=9.4.49.v20220914
 RUN apk add --update bash wget tar && rm -rf /var/cache/apk/*

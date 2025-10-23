@@ -1,0 +1,11 @@
+{
+  "name": "Daily Comics Viewer",
+  "short_name": "Comics",
+  "description": "Daily comics cacher that amalgamates different daily comics from multiple sources into a single ad-free page",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFB",
+  "theme_color": "#5B9BD5",
+  "orientation": "portrait-primary",
+  "icons": []
+}

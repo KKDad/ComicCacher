@@ -1,35 +1,69 @@
 /* Globals styles for the application */
 
-/* Variables */
+/* Modern Light & Airy Theme with Glassmorphism */
 :root {
-  --primary-color: #3f51b5;
-  --accent-color: #ff4081;
-  --background-color: #f5f5f5;
-  --card-color: #ffffff;
-  --text-color: #333333;
-  --text-secondary-color: #757575;
+  /* Primary - Soft Sky Blues */
+  --primary-color: #5B9BD5;
+  --primary-light: #A8D0F0;
+  --primary-dark: #3A7CB5;
+  --primary-gradient: linear-gradient(135deg, #5B9BD5 0%, #7BAEE0 100%);
 
+  /* Accent - Subtle Pastels */
+  --accent-color: #FFB6C1;
+  --accent-secondary: #B4E7CE;
+  --accent-gradient: linear-gradient(135deg, #FFB6C1 0%, #FFD4DB 100%);
+
+  /* Backgrounds - Light & Airy */
+  --background-color: #F8FAFB;
+  --background-gradient: linear-gradient(180deg, #F8FAFB 0%, #EDF4F8 100%);
+  --surface-color: rgba(255, 255, 255, 0.7);
+  --card-color: rgba(255, 255, 255, 0.85);
+
+  /* Text Colors */
+  --text-color: #2C3E50;
+  --text-secondary-color: #7F8C97;
+  --text-light: #A8B4C0;
+
+  /* Glassmorphism Effects */
+  --glass-background: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-blur: 20px;
+  --glass-shadow: 0 8px 32px rgba(91, 155, 213, 0.15);
+  --glass-shadow-hover: 0 12px 48px rgba(91, 155, 213, 0.25);
+
+  /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 16px;
+  /* Border Radius - More Rounded for Modern Look */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+  --border-radius-xl: 24px;
 
-  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --box-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* Shadows - Soft and Colorful */
+  --box-shadow: 0 4px 16px rgba(91, 155, 213, 0.1);
+  --box-shadow-hover: 0 8px 24px rgba(91, 155, 213, 0.2);
+  --box-shadow-lifted: 0 12px 32px rgba(91, 155, 213, 0.15);
 
+  /* Responsive Breakpoints */
   --max-width-md: 768px;
   --max-width-lg: 1024px;
   --max-width-xl: 1280px;
 
+  /* Typography */
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-slow: 500ms ease;
 }
 
 /* Reset */
@@ -38,7 +72,7 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  background-color: var(--background-color);
+  background: var(--background-gradient);
   color: var(--text-color);
   overflow: hidden;
 }
@@ -49,32 +83,8 @@ html, body {
   outline-offset: 2px;
 }
 
-/* Responsive container */
-.container {
-  width: 100%;
-  max-width: var(--max-width-xl);
-  margin: 0 auto;
-  padding: 0 var(--spacing-md);
-  box-sizing: border-box;
-}
-
-@media (max-width: 1280px) {
-  .container {
-    max-width: var(--max-width-lg);
-  }
-}
-
-@media (max-width: 1024px) {
-  .container {
-    max-width: var(--max-width-md);
-  }
-}
-
+/* Responsive spacing adjustments */
 @media (max-width: 768px) {
-  .container {
-    padding: 0 var(--spacing-sm);
-  }
-
   :root {
     --spacing-md: 12px;
     --spacing-lg: 18px;
@@ -82,7 +92,7 @@ html, body {
   }
 }
 
-/* Utility classes */
+/* Accessibility utility class */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -93,26 +103,6 @@ html, body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.mb-sm {
-  margin-bottom: var(--spacing-sm);
-}
-
-.mb-md {
-  margin-bottom: var(--spacing-md);
-}
-
-.mt-md {
-  margin-top: var(--spacing-md);
-}
-
-.p-md {
-  padding: var(--spacing-md);
 }
 
 /* Responsive images */

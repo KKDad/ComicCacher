@@ -33,17 +33,14 @@ export class SectionComponent implements OnInit, OnDestroy {
     private stateService = inject(ComicStateService);
     private keyboardService = inject(KeyboardService);
 
-    /** Maximum width for comic images in pixels */
-    private readonly MAX_IMAGE_WIDTH = 900;
-
-    width: number;
-    height: number;
     imageDate: string;
 
     // UI state signals
     loading = signal(false);
     error = signal<string | null>(null);
     focusVisible = signal(false);
+    avatarLoadFailed = signal(false);
+    stripLoadFailed = signal(false);
 
     // Keep track of subscriptions for cleanup
     private subscriptions = new Subscription();
@@ -83,12 +80,60 @@ export class SectionComponent implements OnInit, OnDestroy {
         this.subscriptions.add(shortcuts);
     }
 
-    getAvatarImage() {
-        return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.avatar);
+    /**
+     * Get the avatar URL, handling Python 'None' string literals
+     */
+    getAvatarUrl(): string | null {
+        const avatar = this.content?.avatar;
+        // Handle Python None as string, null, undefined, or empty string
+        if (!avatar || avatar === 'None' || avatar === 'null' || avatar === 'undefined') {
+            return null;
+        }
+        return avatar;
     }
 
+    /**
+     * Get the strip URL, handling Python 'None' string literals
+     */
+    getStripUrl(): string | null {
+        const strip = this.content?.strip;
+        // Handle Python None as string, null, undefined, or empty string
+        if (!strip || strip === 'None' || strip === 'null' || strip === 'undefined') {
+            return null;
+        }
+        return strip;
+    }
+
+    /**
+     * Get sanitized avatar image for template binding
+     */
+    getAvatarImage() {
+        const url = this.getAvatarUrl();
+        return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+    }
+
+    /**
+     * Get sanitized comic strip image for template binding
+     */
     getComicImage() {
-        return this.sanitizer.bypassSecurityTrustResourceUrl(this.content.strip);
+        const url = this.getStripUrl();
+        return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+    }
+
+    /**
+     * Handle avatar image load errors
+     */
+    onAvatarError(): void {
+        this.avatarLoadFailed.set(true);
+        console.warn(`Failed to load avatar for comic: ${this.content?.name}`);
+    }
+
+    /**
+     * Handle comic strip image load errors
+     */
+    onStripError(): void {
+        this.stripLoadFailed.set(true);
+        console.warn(`Failed to load strip for comic: ${this.content?.name}`);
     }
 
     clearError() {
@@ -185,7 +230,9 @@ export class SectionComponent implements OnInit, OnDestroy {
         this.onNavigateLast();
     }
 
-    // Set the current strip with proper scaling
+    /**
+     * Set the current strip - CSS handles responsive sizing automatically
+     */
     private setStrip(imagedto: ImageDto) {
         if (!imagedto || !imagedto.imageData) {
             this.error.set('No image data available');
@@ -194,16 +241,6 @@ export class SectionComponent implements OnInit, OnDestroy {
 
         try {
             this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
-
-            if (imagedto.width > this.MAX_IMAGE_WIDTH) {
-                this.width = this.MAX_IMAGE_WIDTH;
-                const scaleFactor = imagedto.width.valueOf() / this.MAX_IMAGE_WIDTH;
-                this.height = imagedto.height.valueOf() / scaleFactor;
-            } else {
-                this.width = imagedto.width.valueOf();
-                this.height = imagedto.height.valueOf();
-            }
-
             this.imageDate = imagedto.imageDate.valueOf();
         } catch (err) {
             this.error.set('Error processing image data');

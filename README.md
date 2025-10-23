@@ -1,185 +1,80 @@
-# The Comic Processor
+# ComicCacher
 
-Webcomic scroller v2.0. Originally written back in 2013 in C# and .Net 3.0, this has since been re-imagined and rebuilt using modern stack:
-- Spring Boot 3.4.5, Java 21, Dockerized backend
-    - Read and cache comics with cleanup after 7 days
-    - Expose REST API with standardized response format
-    - OpenAPI 3.0 documentation with Swagger UI
-- Angular + Material Design, Dockerized Frontend
-- Hosted in a K8s environment
+![Comic Viewer Banner](assets/ComicViewer.png)
 
-There's no public-facing deployment of this service - I developed it for my own usage and for fun. If you'd like to use
-it yourself, go ahead.
+> Serving up daily laughs since 2013
 
-## Features
+A personal project to read my favorite daily comic strips without ads, pop-ups, or paywalls. Just comics.
 
-### Caching Comics
-- Daily comic strip download from GoComics and ComicsKingdom
-- Thread-safe image caching with automatic cleanup
-- Optimized resource management and error handling
-- Configurable cache location and retention policy
-- Comprehensive metrics for cache performance and storage usage
-- Per-comic storage and access analytics
-- Guaranteed once-daily execution tracking for startup procedures and downloads
-- Scheduled daily reconciliation of comic configuration at configurable times
+Originally written in C# and .NET 3.0 back in 2013, this has been rebuilt from the ground up with modern tech:
+- **Backend**: Spring Boot 3 + Java 21 API that downloads and caches comics daily
+- **Frontend**: Angular 19 + Material Design web app with glassmorphism UI
+- **Hosting**: Runs in my home K8s cluster
 
-### API Features
-- RESTful endpoints for comic retrieval and management
-- Standardized API responses with consistent formatting
-- Proper exception handling with informative error messages
-- Optional filtering by comic name, date, and other parameters
-- Metrics API for monitoring cache efficiency and usage patterns
+There's no public deployment - I built this for my own use and for fun. But if you'd like to run it yourself, go ahead!
 
-## Building and Running
+## What does it do?
 
-### Comic API
+- 📰 Downloads daily comic strips from GoComics and ComicsKingdom
+- 💾 Caches images locally with automatic 7-day cleanup
+- 🎨 Displays them in a clean, ad-free interface
+- 📱 Works great on mobile, tablet, and desktop
+- ⚡ Virtual scrolling for smooth browsing
+- 📊 Tracks metrics on cache performance and storage
 
-#### Local Development
+## Quick Start
+
+### Backend (comic-api)
+
 ```bash
-# Build the project
+# Build and run
 ./gradlew :comic-api:build
+./gradlew :comic-api:bootRun
 
 # Run tests
 ./gradlew :comic-api:test
-
-# Run integration tests
 ./gradlew :comic-api:integrationTest
 
-# Generate test coverage reports
-./gradlew :comic-api:jacocoTestReport         # Unit test coverage only
-./gradlew :comic-api:jacocoIntegrationTestReport   # Integration test coverage only
-./gradlew :comic-api:jacocoAllReport          # Combined coverage report
-
-# Generate API documentation
-./gradlew :comic-api:updateApiDocs
-
-# Run the application locally
-./gradlew :comic-api:bootRun
+# View API docs at http://localhost:8080/swagger-ui/index.html
 ```
 
-#### Docker Deployment
-To build and launch the Comic API, build the docker container, tag and push the image, then run a helm upgrade
-```bash
-./gradlew :comic-api:build
-./comic-api/build-docker.sh 2.1.0
-docker images
-docker tag kkdad/comic-api:2.1.0 registry.local613.local:5000/kkdad/comic-api:2.1.0
-docker push registry.local613.local:5000/kkdad/comic-api:2.1.0
+### Frontend (comic-web)
 
+```bash
+cd comic-web
+npm install
+npm start
+
+# Visit http://localhost:4200
+```
+
+## Deployment
+
+I deploy this to my home K8s cluster using Docker and Helm:
+
+```bash
+# Build backend
+./gradlew :comic-api:build
+./comic-api/build-docker.sh 2.1.35
+
+# Build frontend
+cd comic-web
+./build-docker.sh
+
+# Deploy with Helm
 helm upgrade comics comics
 ```
 
-#### API Documentation
-To view the API:
+## API & Docs
+
+Live API (my personal instance):
+- Web App: https://comics.gilbert.ca
 - Swagger UI: https://comics.gilbert.ca/swagger-ui/index.html
-- API Endpoint: https://comics.gilbert.ca/api/v1/comics
-- Metrics API: https://comics.gilbert.ca/api/v1/metrics
-- OpenAPI JSON: https://comics.gilbert.ca/v3/api-docs
+- REST API: https://comics.gilbert.ca/api/v1/comics
+- Metrics: https://comics.gilbert.ca/api/v1/metrics
 
-#### Metrics API Endpoints
-The API provides several endpoints for monitoring cache performance:
-- `/api/v1/metrics/storage` - Storage utilization by comic and year
-- `/api/v1/metrics/access` - Access patterns, hit ratios, and timing data
-- `/api/v1/metrics/combined` - Comprehensive view of storage and access metrics
-- `/api/v1/metrics/storage/refresh` - Force refresh of storage metrics
+Full endpoint documentation in the [docs/](docs/) directory.
 
-### comic-web
+## Development
 
-The comic-web is an Angular-based frontend that provides a user-friendly interface for browsing cached comics.
-
-#### Local Development
-```bash
-# Navigate to comic-web directory
-cd comic-web
-
-# Install dependencies
-npm install
-
-# Run development server (available at http://localhost:4200)
-ng serve
-
-# Run tests
-ng test
-
-# Build for production
-npm run buildProd
-```
-
-#### Docker Deployment
-```bash
-# Build Docker image
-cd comic-web
-./build-docker.sh
-docker tag kkdad/comic-web:latest registry.local613.local:5000/kkdad/comic-web:1.0.0
-docker push registry.local613.local:5000/kkdad/comic-web:1.0.0
-```
-
-#### Features
-- Material Design UI with responsive layout
-- Infinite virtual scrolling for efficient comic viewing
-- Automatic comic refresh with notification
-- Date-based navigation for viewing historical comics
-
-## Technology Stack
-
-### Backend (comic-api)
-- **Framework**: Spring Boot 3.4.5
-- **Language**: Java 21
-- **API Documentation**: OpenAPI 3.0 with springdoc-openapi-starter-webmvc-ui
-- **Build Tool**: Gradle 8.5
-- **Testing**: JUnit 5, Spring Test
-- **Test Coverage**: JaCoCo with separate unit and integration test reporting
-- **Containerization**: Docker
-
-### Frontend (comic-web)
-- **Framework**: Angular with Material Design components
-- **Build Tool**: Angular CLI
-- **Testing**: Karma, Jasmine
-- **Containerization**: Docker
-
-### Deployment
-- Kubernetes (K8s) with Helm charts
-- Automated builds with GitHub Actions
-
-## Code Quality and Test Coverage
-
-The project uses JaCoCo for test coverage reporting. Coverage reports are generated automatically when running tests:
-
-- **Unit Test Coverage**: `./gradlew :comic-api:jacocoTestReport`
-- **Integration Test Coverage**: `./gradlew :comic-api:jacocoIntegrationTestReport`
-- **Combined Coverage**: `./gradlew :comic-api:jacocoAllReport`
-
-Coverage reports are generated in HTML and XML formats in the following locations:
-- Unit Tests: `comic-api/build/reports/jacoco/test/html/index.html`
-- Integration Tests: `comic-api/build/reports/jacoco/jacocoIntegrationTestReport/html/index.html`
-- Combined: `comic-api/build/reports/jacoco/jacocoAllReport/html/index.html`
-
-## API Documentation
-
-The API documentation is automatically generated using the OpenAPI Specification (formerly known as Swagger):
-
-- **Local Development**: When running locally, access the Swagger UI at `http://localhost:8080/swagger-ui/index.html`
-- **Generated Files**: OpenAPI JSON files are generated in the `docs/` directory during the build process
-- **Custom Generator**: Run `./gradlew :comic-api:updateApiDocs` to manually update the documentation
-
-### Detailed Endpoint Documentation
-
-Detailed documentation for all API endpoints is available in the `docs/` directory:
-
-- [API Endpoints Overview](docs/api-endpoints.md) - Main index of all available endpoints
-- [Comics Endpoints](docs/comics-endpoints.md) - Documentation for comic retrieval and management
-- [Authentication Endpoints](docs/auth-endpoints.md) - User registration, login, and token management
-- [Health Endpoint](docs/health-endpoint.md) - Application health status information
-- [Metrics Endpoints](docs/metrics-endpoints.md) - Storage and access statistics
-- [Preferences Endpoints](docs/preferences-endpoints.md) - User preferences management
-- [Update Endpoints](docs/update-endpoints.md) - Comic update and retrieval
-- [User Endpoints](docs/user-endpoints.md) - User profile management
-
-## Resources
-
-- **Material Design Principles**: https://material.io/design/components/cards.html#usage
-- **Material Design in Angular**: https://material.angular.io/components/categories
-- **JSON to TypeScript Converter**: http://json2ts.com/
-- **Angular Virtual Scrolling**: https://material.angular.io/cdk/scrolling/overview
-- **JaCoCo Documentation**: https://www.eclemma.org/jacoco/
-- **OpenAPI/Swagger**: https://swagger.io/specification/
+For detailed architecture, build instructions, module structure, testing guidelines, and coding standards, see [CLAUDE.md](CLAUDE.md).

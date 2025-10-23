@@ -46,10 +46,21 @@ export class ContainerComponent implements OnInit, AfterViewInit {
 
         this.comicService.getComics().subscribe({
             next: (comics) => {
+                // Defensive check: ensure we received a valid array
+                if (!Array.isArray(comics)) {
+                    console.error('Invalid comics data received:', comics);
+                    this.error.set('Invalid data format received from server');
+                    this.sections = [];
+                    this.loading.set(false);
+                    return;
+                }
+
                 this.sections = comics;
                 this.loading.set(false);
+                console.log(`Successfully loaded ${comics.length} comics`);
             },
             error: (err) => {
+                console.error('Failed to load comics:', err);
                 this.error.set(`Failed to load comics: ${err.message}`);
                 this.loading.set(false);
             }
@@ -110,6 +121,15 @@ export class ContainerComponent implements OnInit, AfterViewInit {
        */
       trackByComicId(index: number, comic: Comic): number {
         return comic?.id || index;
+      }
+
+      /**
+       * Check if the comics list is empty or invalid
+       * Defensive check to handle invalid data structures
+       * @returns True if comics are not available or empty
+       */
+      isComicsEmpty(): boolean {
+        return !this.sections || !Array.isArray(this.sections) || this.sections.length === 0;
       }
 
 }
