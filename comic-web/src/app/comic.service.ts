@@ -1,6 +1,6 @@
 import {inject, Injectable, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {catchError, EMPTY, Observable, of, shareReplay, tap} from 'rxjs';
+import {catchError, EMPTY, map, Observable, of, shareReplay, tap} from 'rxjs';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {Comic} from './dto/comic';
 import {ImageDto} from './dto/image';
@@ -31,16 +31,16 @@ export class ComicService {
    * Refresh comics data from API
    */
   refresh(): void {
-    this.http.get<Comic[]>('api/v1/comics').pipe(
+    this.http.get<{data: Comic[]}>('api/v1/comics').pipe(
       // Handle errors globally
       catchError(error => {
         console.error('Error fetching comics', error);
-        return of([]);
+        return of({data: []});
       }),
       // Share the same response with multiple subscribers
       shareReplay(1)
-    ).subscribe(comicData => {
-      this.comicsSignal.set(comicData);
+    ).subscribe(response => {
+      this.comicsSignal.set(response.data);
     });
   }
 
@@ -53,7 +53,8 @@ export class ComicService {
     }
 
     const url = `api/v1/comics/${id}`;
-    return this.http.get<Comic>(url).pipe(
+    return this.http.get<{data: Comic}>(url).pipe(
+      map(response => response.data),
       catchError(this.handleError<Comic>(`getComic id=${id}`))
     );
   }
