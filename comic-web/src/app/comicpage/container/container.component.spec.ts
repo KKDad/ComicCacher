@@ -43,7 +43,11 @@ describe('ContainerComponent', () => {
 
   beforeEach(() => {
     comicServiceSpy = jasmine.createSpyObj('ComicService', ['getComics', 'refresh']);
-    scrollDispatcherSpy = jasmine.createSpyObj('ScrollDispatcher', ['scrolled']);
+    scrollDispatcherSpy = jasmine.createSpyObj('ScrollDispatcher', [
+      'scrolled',
+      'register',     // Required by CdkVirtualScrollViewport in Angular 19
+      'deregister'    // Required by CdkVirtualScrollViewport in Angular 19
+    ]);
     
     // Create a subject to emit scroll events
     scrollSubject = new Subject<CdkScrollable>();

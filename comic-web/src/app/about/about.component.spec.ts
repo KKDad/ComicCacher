@@ -29,7 +29,7 @@ describe('AboutComponent', () => {
     expectExists(fixture, 'mat-card', 'Card should be displayed');
     expect(getText(fixture, 'mat-card-content p:first-child'))
       .toContain('Daily comics is a web comics cacher');
-    expect(getText(fixture, 'mat-card-content p')).toContain('Angular 18');
+    expect(getText(fixture, 'mat-card-content p:nth-child(3)')).toContain('Angular 19');
   });
 
   it('should navigate home when button is clicked', () => {
