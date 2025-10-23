@@ -21,12 +21,22 @@ public enum ImageFormat {
     PNG,
 
     /**
-     * Unknown or unsupported format
+     * Tagged Image File Format
      */
-    UNKNOWN,
+    TIFF,
+
+    /**
+     * Bitmap Image File format
+     */
+    BMP,
 
     /**
      * WebP format (requires TwelveMonkeys ImageIO plugin)
      */
-    WEBP
+    WEBP,
+
+    /**
+     * Unknown or unsupported format
+     */
+    UNKNOWN
 }

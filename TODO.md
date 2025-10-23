@@ -6,6 +6,7 @@
 * See what's going on with Committed & Griswells
 * Add support for indexed comics (Xkcd, etc)
 * Document add/remove comic procedures
+* Add transcript capture and storage for comics that provide accessibility transcripts
 
 ## Notes
 

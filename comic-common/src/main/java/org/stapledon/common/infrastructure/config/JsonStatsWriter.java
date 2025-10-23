@@ -26,7 +26,7 @@ public class JsonStatsWriter implements StatsWriter {
     @Override
     public boolean save(ImageCacheStats stats, String targetDirectory) {
         try {
-            Writer writer = new FileWriter(targetDirectory + "/stats.db");
+            Writer writer = new FileWriter(targetDirectory + "/stats.json");
             gson.toJson(stats, writer);
             writer.flush();
             writer.close();

@@ -306,21 +306,35 @@ The application includes a comprehensive image validation service to ensure only
 
 ### Key Features
 
-- **Format Detection**: Automatically identifies PNG, JPEG, GIF, and WEBP (if TwelveMonkeys plugin present)
+- **Format Detection**: Automatically identifies PNG, JPEG, GIF, TIFF, BMP, and WebP
 - **Corruption Detection**: Rejects truncated, corrupted, or invalid image data
 - **Error Page Detection**: Prevents HTML error pages from being saved as images
 - **Dimension Validation**: Ensures comic strips meet minimum size requirements
 - **Size Limits**: Rejects images over 10MB
 - **Fail Fast**: Issues detected immediately at download, before disk I/O
 
-### WebP Support (Optional)
+### Extended Image Format Support (TwelveMonkeys ImageIO)
 
-To add WebP support, include TwelveMonkeys ImageIO WebP plugin in `comic-engine/build.gradle`:
+The application includes TwelveMonkeys ImageIO library version 3.12.0 for enhanced image format support beyond standard Java ImageIO. This provides:
+
+**Supported Formats:**
+- Standard formats: PNG, JPEG, GIF, BMP
+- Extended formats: WebP, TIFF (via TwelveMonkeys)
+- Enhanced JPEG support with better compatibility
+
+**Integration:**
+- TwelveMonkeys plugins are auto-discovered by Java's ImageIO service provider mechanism
+- No code changes required to add support for new formats
+- All validation, analysis, and metadata features work seamlessly with all supported formats
+
+**Dependencies in `comic-engine/build.gradle`:**
 ```gradle
-implementation 'com.twelvemonkeys.imageio:imageio-webp:3.12.0'
+implementation "com.twelvemonkeys.imageio:imageio-core:3.12.0"
+implementation "com.twelvemonkeys.imageio:imageio-jpeg:3.12.0"
+implementation "com.twelvemonkeys.imageio:imageio-webp:3.12.0"
+implementation "com.twelvemonkeys.imageio:imageio-tiff:3.12.0"
+implementation "com.twelvemonkeys.imageio:imageio-bmp:3.12.0"
 ```
-
-The plugin is auto-discovered by Java's ImageIO service provider mechanism. No code changes required.
 
 ## Common Tasks
 

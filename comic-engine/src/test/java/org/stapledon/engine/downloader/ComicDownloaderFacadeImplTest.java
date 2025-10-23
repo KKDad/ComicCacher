@@ -40,7 +40,9 @@ class ComicDownloaderFacadeImplTest {
 
     @BeforeEach
     void setUp() {
-        facade = new ComicDownloaderFacadeImpl(Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+        facade = new ComicDownloaderFacadeImpl(
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class),
+                Mockito.mock(org.stapledon.common.service.ErrorTrackingService.class));
         facade.registerDownloaderStrategy("gocomics", goComicsStrategy);
         facade.registerDownloaderStrategy("comicskingdom", comicsKingdomStrategy);
     }

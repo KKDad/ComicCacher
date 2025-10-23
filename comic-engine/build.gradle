@@ -24,6 +24,7 @@ ext {
 	gsonVersion = '2.11.0'
 	guavaVersion = '33.5.0-jre'
 	jsoupVersion = '1.21.2'
+	twelvemonkeysVersion = '3.12.0'
 }
 
 repositories {
@@ -38,6 +39,13 @@ dependencies {
 	implementation "com.google.code.gson:gson:${gsonVersion}"
 	implementation "com.google.guava:guava:${guavaVersion}"
 	implementation "org.jsoup:jsoup:${jsoupVersion}"
+
+	// TwelveMonkeys ImageIO for enhanced image format support (WebP, TIFF, BMP, etc.)
+	implementation "com.twelvemonkeys.imageio:imageio-core:${twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-jpeg:${twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-webp:${twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-tiff:${twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-bmp:${twelvemonkeysVersion}"
 
 	// Selenium for web scraping
 	implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
