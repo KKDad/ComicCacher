@@ -39,17 +39,29 @@
 }
 
 .comic-image {
-  max-width: 100%;
+  width: 100%;
+  max-width: 900px;
   height: auto;
-  margin: 10px 0;
+  margin: 10px auto;
+  display: block;
   border-radius: var(--border-radius-md);
   box-shadow: 0 4px 12px rgba(91, 155, 213, 0.15);
   transition: transform var(--transition-normal);
+  object-fit: contain;
 }
 
 .comic-image:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
   box-shadow: 0 8px 20px rgba(91, 155, 213, 0.25);
+}
+
+/* Ensure figure centers the image */
+figure {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Focus styles for accessibility */

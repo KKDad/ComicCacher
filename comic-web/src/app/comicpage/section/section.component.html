@@ -51,8 +51,6 @@
                     <img
                         *ngIf="getStripUrl() && !stripLoadFailed()"
                         [src]="getComicImage()"
-                        [height]="height"
-                        [width]="width"
                         (error)="onStripError()"
                         [alt]="content.name + ' comic strip published on ' + imageDate"
                         class="comic-image"

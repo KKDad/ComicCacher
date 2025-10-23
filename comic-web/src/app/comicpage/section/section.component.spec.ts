@@ -148,7 +148,7 @@ describe('SectionComponent', () => {
     expect(component.loading()).toBeFalse();
   });
 
-  it('should correctly scale comics larger than max width', () => {
+  it('should set strip for large comics (CSS handles responsive sizing)', () => {
     const largeImage: ImageDto = {
       imageData: 'base64data',
       mimeType: 'image/png',
@@ -160,11 +160,12 @@ describe('SectionComponent', () => {
     comicServiceSpy.getLatest.and.returnValue(of(largeImage));
     component.onNavigateLast();
 
-    expect(component.width).toBe(900); // MAX_IMAGE_WIDTH constant
-    expect(component.height).toBe(675); // (900 / 1200) * 900
+    // Verify strip data URL is set correctly (CSS handles sizing)
+    expect(component.content.strip).toContain('data:image/png;base64,');
+    expect(component.imageDate).toBe('2023-05-09');
   });
 
-  it('should not scale comics smaller than max width', () => {
+  it('should set strip for smaller comics (CSS handles responsive sizing)', () => {
     const smallImage: ImageDto = {
       imageData: 'base64data',
       mimeType: 'image/png',
@@ -176,7 +177,8 @@ describe('SectionComponent', () => {
     comicServiceSpy.getLatest.and.returnValue(of(smallImage));
     component.onNavigateLast();
 
-    expect(component.width).toBe(800);
-    expect(component.height).toBe(600);
+    // Verify strip data URL is set correctly (CSS handles sizing)
+    expect(component.content.strip).toContain('data:image/png;base64,');
+    expect(component.imageDate).toBe('2023-05-09');
   });
 });

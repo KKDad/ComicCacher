@@ -33,11 +33,6 @@ export class SectionComponent implements OnInit, OnDestroy {
     private stateService = inject(ComicStateService);
     private keyboardService = inject(KeyboardService);
 
-    /** Maximum width for comic images in pixels */
-    private readonly MAX_IMAGE_WIDTH = 900;
-
-    width: number;
-    height: number;
     imageDate: string;
 
     // UI state signals
@@ -235,7 +230,9 @@ export class SectionComponent implements OnInit, OnDestroy {
         this.onNavigateLast();
     }
 
-    // Set the current strip with proper scaling
+    /**
+     * Set the current strip - CSS handles responsive sizing automatically
+     */
     private setStrip(imagedto: ImageDto) {
         if (!imagedto || !imagedto.imageData) {
             this.error.set('No image data available');
@@ -244,16 +241,6 @@ export class SectionComponent implements OnInit, OnDestroy {
 
         try {
             this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
-
-            if (imagedto.width > this.MAX_IMAGE_WIDTH) {
-                this.width = this.MAX_IMAGE_WIDTH;
-                const scaleFactor = imagedto.width.valueOf() / this.MAX_IMAGE_WIDTH;
-                this.height = imagedto.height.valueOf() / scaleFactor;
-            } else {
-                this.width = imagedto.width.valueOf();
-                this.height = imagedto.height.valueOf();
-            }
-
             this.imageDate = imagedto.imageDate.valueOf();
         } catch (err) {
             this.error.set('Error processing image data');
