@@ -158,7 +158,7 @@ def migrate_comics_file(input_path: str, output_path: str = None, dry_run: bool 
 
         # Report changes
         if changed:
-            change_report = f"✓ {comic_name}: {', '.join(changes_made)}"
+            change_report = f"[OK] {comic_name}: {', '.join(changes_made)}"
             print(change_report)
             stats["changes"].append(change_report)
         else:
@@ -194,7 +194,7 @@ def migrate_comics_file(input_path: str, output_path: str = None, dry_run: bool 
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-        print("✓ Migration completed successfully!")
+        print("[SUCCESS] Migration completed successfully!")
         return True
     else:
         print("\nDRY RUN - No files were modified")
