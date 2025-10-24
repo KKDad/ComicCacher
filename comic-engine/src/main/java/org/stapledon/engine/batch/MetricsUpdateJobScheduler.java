@@ -5,6 +5,7 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +31,24 @@ public class MetricsUpdateJobScheduler {
 
     @Qualifier("metricsUpdateJob")
     private final Job metricsUpdateJob;
+
+    @Value("${batch.metrics-update.fixed-delay}")
+    private long fixedDelay;
+
+    /**
+     * Log schedule information when the scheduler is initialized
+     */
+    @PostConstruct
+    public void logScheduleInfo() {
+        long minutes = fixedDelay / 60000;
+        long seconds = (fixedDelay % 60000) / 1000;
+        if (seconds > 0) {
+            log.info("MetricsUpdateJob scheduler initialized - Runs every {} minutes {} seconds after previous completion",
+                     minutes, seconds);
+        } else {
+            log.info("MetricsUpdateJob scheduler initialized - Runs every {} minutes after previous completion", minutes);
+        }
+    }
 
     /**
      * Scheduled execution of MetricsUpdateJob

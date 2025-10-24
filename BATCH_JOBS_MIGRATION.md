@@ -213,9 +213,42 @@ batch.record-purge.enabled=false
 7. **Monitoring**: JobLauncher allows manual triggering and monitoring
 8. **No Cluster Overhead**: Simple tasklet-based jobs for personal project
 
+## Schedule Visibility
+
+### Startup Logging
+All schedulers log their next execution time when the application starts:
+
+**Cron-based jobs:**
+```
+ComicDownloadJob scheduler initialized - Next scheduled run: 2025-10-24 06:00:00 (America/Toronto)
+ComicDownloadJob will also run immediately on startup if not yet executed today
+ComicReconciliationJob scheduler initialized - Next scheduled run: 2025-10-24 06:15:00 (America/Toronto)
+MetricsArchiveJob scheduler initialized - Next scheduled run: 2025-10-24 06:30:00 (America/Toronto)
+ImageMetadataBackfillJob scheduler initialized - Next scheduled run: 2025-10-24 06:30:00 (America/Toronto)
+RetrievalRecordPurgeJob scheduler initialized - Next scheduled run: 2025-10-24 06:45:00 (America/Toronto)
+```
+
+**Fixed-delay jobs:**
+```
+MetricsUpdateJob scheduler initialized - Runs every 5 minutes after previous completion
+```
+
+### Missed Execution Recovery
+
+**ComicDownloadJob** has special startup behavior:
+- Implements `CommandLineRunner` interface
+- On application startup, checks if job has run today
+- If not run today, executes immediately with trigger="STARTUP"
+- Prevents duplicate runs via `hasJobRunToday()` check
+- Scheduled execution at 6:00 AM also checks before running
+
+**Manual Triggering:**
+- All jobs can be manually triggered via API
+- ComicDownloadJob: `POST /api/v1/batch/jobs/trigger?targetDate=2025-10-24`
+- Other jobs: Call scheduler's public `run*Job()` method
+
 ## Future Enhancements
 
 - Add job failure notifications
 - Implement retry logic for failed jobs
-- Add job execution history API endpoints
 - Dashboard for monitoring job executions

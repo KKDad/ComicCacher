@@ -146,7 +146,9 @@ npm run buildProd
     - Controllers call engine/common services directly (no redundant service layer)
   - **Services:** `UpdateService`, `RetrievalStatusServiceImpl`, `AuthService`, `UserService`, `PreferenceService`
   - **Repositories:** `ComicRepository`, `UserRepository`, `PreferenceRepository`
-  - **Scheduling:** `DailyRunner` (daily caching at 7:00 AM), `StartupReconciler` (reconciliation at 6:00 AM)
+  - **Batch Jobs:** Spring Batch framework with 6 scheduled jobs (see BATCH_JOBS_MIGRATION.md)
+    - Jobs log next execution time on startup for visibility
+    - ComicDownloadJob auto-runs on startup if missed today (CommandLineRunner)
   - **Security:** JWT-based authentication and authorization
   - **Configuration:** `ApplicationConfigurationFacade` (extends `ComicConfigurationService`)
 - **Depends on:** comic-common, comic-metrics, comic-engine

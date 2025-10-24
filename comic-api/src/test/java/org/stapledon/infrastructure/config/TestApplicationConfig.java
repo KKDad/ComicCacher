@@ -11,7 +11,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.config.properties.DailyRunnerProperties;
-import org.stapledon.common.config.properties.StartupReconcilerProperties;
 import org.stapledon.common.infrastructure.web.WebInspector;
 import org.stapledon.core.auth.service.AuthService;
 import org.stapledon.core.comic.service.UpdateService;
@@ -116,12 +115,6 @@ public class TestApplicationConfig {
         properties.setUsersConfig("./test-users.json");
         properties.setPreferencesConfig("./test-preferences.json");
         return properties;
-    }
-
-    @Bean
-    @Primary
-    public StartupReconcilerProperties startupReconcilerProperties() {
-        return Mockito.mock(StartupReconcilerProperties.class);
     }
 
     @Bean
