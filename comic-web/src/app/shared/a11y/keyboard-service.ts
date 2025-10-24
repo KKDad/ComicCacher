@@ -91,14 +91,15 @@ export class KeyboardService {
   }
   
   /**
-   * Register global keyboard shortcuts for navigating comics
-   * @param onFirst Function to call when first is requested
-   * @param onPrev Function to call when previous is requested
-   * @param onNext Function to call when next is requested
-   * @param onLast Function to call when last is requested
+   * Register keyboard shortcuts for comic strip navigation (within a single comic)
+   * Uses arrow keys and Home/End only - PageUp/PageDown reserved for comic list scrolling
+   * @param onFirst Function to call when first strip is requested
+   * @param onPrev Function to call when previous strip is requested
+   * @param onNext Function to call when next strip is requested
+   * @param onLast Function to call when last strip is requested
    * @returns Subscription that should be unsubscribed when no longer needed
    */
-  registerComicNavigationShortcuts(
+  registerComicStripNavigationShortcuts(
     onFirst: () => void,
     onPrev: () => void,
     onNext: () => void,
@@ -106,20 +107,53 @@ export class KeyboardService {
   ): Subscription {
     const subscription = new Subscription();
 
-    // First comic: Home key
+    // First comic strip: Home key
     subscription.add(this.listenForKeyCombo({ key: 'Home' }).subscribe(() => onFirst()));
 
-    // Previous comic: Left arrow or PageUp
+    // Previous comic strip: Left arrow only
     subscription.add(this.listenForKeyCombo({ key: 'ArrowLeft' }).subscribe(() => onPrev()));
-    subscription.add(this.listenForKeyCombo({ key: 'PageUp' }).subscribe(() => onPrev()));
 
-    // Next comic: Right arrow or PageDown
+    // Next comic strip: Right arrow only
     subscription.add(this.listenForKeyCombo({ key: 'ArrowRight' }).subscribe(() => onNext()));
-    subscription.add(this.listenForKeyCombo({ key: 'PageDown' }).subscribe(() => onNext()));
 
-    // Last comic: End key
+    // Last comic strip: End key
     subscription.add(this.listenForKeyCombo({ key: 'End' }).subscribe(() => onLast()));
 
     return subscription;
+  }
+
+  /**
+   * Register keyboard shortcuts for scrolling the comic list viewport
+   * PageUp/PageDown scroll between different comics in the list
+   * @param onPageUp Function to call to scroll up by one comic
+   * @param onPageDown Function to call to scroll down by one comic
+   * @returns Subscription that should be unsubscribed when no longer needed
+   */
+  registerComicListScrollShortcuts(
+    onPageUp: () => void,
+    onPageDown: () => void
+  ): Subscription {
+    const subscription = new Subscription();
+
+    // Scroll up by one comic: PageUp
+    subscription.add(this.listenForKeyCombo({ key: 'PageUp' }).subscribe(() => onPageUp()));
+
+    // Scroll down by one comic: PageDown
+    subscription.add(this.listenForKeyCombo({ key: 'PageDown' }).subscribe(() => onPageDown()));
+
+    return subscription;
+  }
+
+  /**
+   * @deprecated Use registerComicStripNavigationShortcuts() for strip navigation
+   * or registerComicListScrollShortcuts() for list scrolling instead
+   */
+  registerComicNavigationShortcuts(
+    onFirst: () => void,
+    onPrev: () => void,
+    onNext: () => void,
+    onLast: () => void
+  ): Subscription {
+    return this.registerComicStripNavigationShortcuts(onFirst, onPrev, onNext, onLast);
   }
 }

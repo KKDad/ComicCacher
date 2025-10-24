@@ -49,6 +49,12 @@ export class SectionComponent implements OnInit, OnDestroy {
 
 
     ngOnInit() {
+        // Initialize imageDate to prevent undefined being passed to API
+        // Use the comic's newest date as the default starting point
+        if (this.content?.newest) {
+            this.imageDate = this.content.newest;
+        }
+
         this.loadAvatar();
         this.onNavigateLast();
 
@@ -68,10 +74,11 @@ export class SectionComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Register keyboard shortcuts for comic navigation
+     * Register keyboard shortcuts for comic strip navigation
+     * Arrow keys navigate between strips (dates), PageUp/PageDown scroll between comics
      */
     private registerKeyboardShortcuts(): void {
-        const shortcuts = this.keyboardService.registerComicNavigationShortcuts(
+        const shortcuts = this.keyboardService.registerComicStripNavigationShortcuts(
             () => this.onNavigateFirst(),
             () => this.onPrev(),
             () => this.onNext(),
@@ -174,6 +181,16 @@ export class SectionComponent implements OnInit, OnDestroy {
 
     // Navigate to previous comic strip
     onPrev() {
+        // Defensive check: ensure imageDate is initialized before API call
+        if (!this.imageDate) {
+            console.warn('imageDate not initialized, falling back to newest date');
+            this.imageDate = this.content?.newest || '';
+            if (!this.imageDate) {
+                this.error.set('Cannot navigate: comic date not available');
+                return;
+            }
+        }
+
         this.loading.set(true);
         this.clearError();
 
@@ -191,6 +208,16 @@ export class SectionComponent implements OnInit, OnDestroy {
 
     // Navigate to next comic strip
     onNext() {
+        // Defensive check: ensure imageDate is initialized before API call
+        if (!this.imageDate) {
+            console.warn('imageDate not initialized, falling back to newest date');
+            this.imageDate = this.content?.newest || '';
+            if (!this.imageDate) {
+                this.error.set('Cannot navigate: comic date not available');
+                return;
+            }
+        }
+
         this.loading.set(true);
         this.clearError();
 

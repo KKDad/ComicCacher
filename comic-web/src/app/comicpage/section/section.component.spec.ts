@@ -48,7 +48,7 @@ describe('SectionComponent', () => {
     ]);
 
     stateServiceSpy = jasmine.createSpyObj('ComicStateService', ['updateCurrentStrip']);
-    keyboardServiceSpy = jasmine.createSpyObj('KeyboardService', ['registerComicNavigationShortcuts']);
+    keyboardServiceSpy = jasmine.createSpyObj('KeyboardService', ['registerComicStripNavigationShortcuts']);
     sanitizerSpy = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustResourceUrl']);
 
     // Set up spy return values
