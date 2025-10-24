@@ -118,9 +118,9 @@ dependencies {
 
 }
 
-tasks.withType(Test) {
-	useJUnitPlatform()
-	systemProperty 'spring.profiles.active', 'test'
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
 }
 
 bootRun {
@@ -164,7 +164,7 @@ jacocoTestReport {
 }
 
 // Integration test coverage
-task jacocoIntegrationTestReport(type: JacocoReport) {
+tasks.register('jacocoIntegrationTestReport', JacocoReport) {
     dependsOn integrationTest
     executionData fileTree(project.buildDir).include("/jacoco/integrationTest.exec")
     sourceSets sourceSets.main
@@ -179,7 +179,7 @@ integrationTest {
 }
 
 // Combined coverage report
-task jacocoAllReport(type: JacocoReport) {
+tasks.register('jacocoAllReport', JacocoReport) {
     dependsOn test, integrationTest
     executionData fileTree(project.buildDir).include("/jacoco/*.exec")
     sourceSets sourceSets.main

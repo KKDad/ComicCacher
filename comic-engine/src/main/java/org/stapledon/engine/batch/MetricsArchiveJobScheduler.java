@@ -61,7 +61,7 @@ public class MetricsArchiveJobScheduler {
      * Scheduled execution of MetricsArchiveJob
      * Runs at 6:30 AM EST (America/Toronto timezone) every day
      */
-    @Scheduled(cron = "${batch.metrics-archive.cron}")
+    @Scheduled(cron = "${batch.metrics-archive.cron}", zone = "${batch.timezone}")
     public void runDailyMetricsArchive() {
         log.info("Starting scheduled metrics archive");
 

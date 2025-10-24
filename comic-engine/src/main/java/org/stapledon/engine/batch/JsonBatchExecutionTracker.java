@@ -1,12 +1,12 @@
 package org.stapledon.engine.batch;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
 
@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Exports Spring Batch job execution data to JSON file for monitoring and history tracking.
  * Implements JobExecutionListener to automatically export after each job completion.
+ * Uses gsonWithLocalDate bean for proper LocalDateTime serialization.
  */
 @Slf4j
 @Component
@@ -35,7 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 public class JsonBatchExecutionTracker implements JobExecutionListener {
 
     private final CacheProperties cacheProperties;
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    @Qualifier("gsonWithLocalDate")
+    private final Gson gson;
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
 

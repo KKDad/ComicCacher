@@ -100,7 +100,7 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
      * Scheduled execution of ComicDownloadJob
      * Runs at 6:00 AM EST (America/Toronto timezone) every day
      */
-    @Scheduled(cron = "${batch.comic-download.cron}")
+    @Scheduled(cron = "${batch.comic-download.cron}", zone = "${batch.timezone}")
     public void runDailyComicDownload() {
         if (!dailyRunnerProperties.isEnabled()) {
             log.info("Comic download job is disabled, skipping scheduled execution");

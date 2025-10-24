@@ -61,7 +61,7 @@ public class ComicReconciliationJobScheduler {
      * Scheduled execution of ComicReconciliationJob
      * Runs at 6:15 AM EST (America/Toronto timezone) every day
      */
-    @Scheduled(cron = "${batch.reconciliation.cron}")
+    @Scheduled(cron = "${batch.reconciliation.cron}", zone = "${batch.timezone}")
     public void runDailyReconciliation() {
         log.info("Starting scheduled comic reconciliation");
 

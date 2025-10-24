@@ -61,7 +61,7 @@ public class RetrievalRecordPurgeJobScheduler {
      * Scheduled execution of RetrievalRecordPurgeJob
      * Runs at 6:45 AM EST (America/Toronto timezone) every day
      */
-    @Scheduled(cron = "${batch.record-purge.cron}")
+    @Scheduled(cron = "${batch.record-purge.cron}", zone = "${batch.timezone}")
     public void runDailyRecordPurge() {
         log.info("Starting scheduled retrieval record purge");
 
