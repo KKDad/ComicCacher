@@ -97,7 +97,6 @@ public class ComicManagementFacadeReconcileTest {
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                reconcilerProperties,
                 taskExecutionTracker,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );

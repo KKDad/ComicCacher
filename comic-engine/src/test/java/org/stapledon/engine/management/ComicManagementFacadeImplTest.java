@@ -103,7 +103,6 @@ class ComicManagementFacadeImplTest {
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                reconcilerProperties,
                 taskExecutionTracker,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );
@@ -165,7 +164,6 @@ class ComicManagementFacadeImplTest {
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                reconcilerProperties,
                 taskExecutionTracker,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );
@@ -241,7 +239,6 @@ class ComicManagementFacadeImplTest {
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                reconcilerProperties,
                 taskExecutionTracker,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );
