@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "dailyrunner")
+@ConfigurationProperties(prefix = "batch.comic-download")
 public class DailyRunnerProperties {
     boolean enabled;
 }

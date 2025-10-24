@@ -11,12 +11,14 @@ import java.io.IOException;
 import java.io.Writer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * JSON implementation of StatsWriter for persisting statistics.
  */
 @Slf4j
+@ToString
 @Component
 @RequiredArgsConstructor
 public class JsonStatsWriter implements StatsWriter {

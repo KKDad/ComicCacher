@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * Note: This class is configured as a @Bean in CacheConfiguration, not as @Component
  */
 @Slf4j
+@ToString
 public class AccessMetricsCollector {
     private static final int WARNING_TIME_MS = 100;
     public static final String COMBINE_PATH = "%s/%s";

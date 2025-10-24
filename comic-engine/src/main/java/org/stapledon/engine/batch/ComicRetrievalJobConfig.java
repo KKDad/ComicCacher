@@ -11,8 +11,10 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -24,6 +26,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -31,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides comprehensive execution tracking, retry logic, and monitoring.
  */
 @Slf4j
+@ToString
 @Configuration
 @RequiredArgsConstructor
 public class ComicRetrievalJobConfig {
@@ -42,14 +46,16 @@ public class ComicRetrievalJobConfig {
      * Main job for daily comic retrieval
      */
     @Bean
-    public Job dailyComicRetrievalJob(
+    @Primary
+    public Job comicDownloadJob(
             JobRepository jobRepository,
-            Step comicRetrievalStep,
-            JobExecutionListener comicJobExecutionListener) {
-        
-        return new JobBuilder("dailyComicRetrievalJob", jobRepository)
+            @Qualifier("comicRetrievalStep") Step comicRetrievalStep,
+            JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+
+        return new JobBuilder("ComicDownloadJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(comicJobExecutionListener)
+                .listener(jsonBatchExecutionTracker)
+                .listener(new ComicJobExecutionListener())
                 .start(comicRetrievalStep)
                 .build();
     }
@@ -123,14 +129,6 @@ public class ComicRetrievalJobConfig {
                 }
             }
         };
-    }
-
-    /**
-     * Job execution listener for comprehensive logging and metrics
-     */
-    @Bean
-    public JobExecutionListener comicJobExecutionListener() {
-        return new ComicJobExecutionListener();
     }
 
     /**

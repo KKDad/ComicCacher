@@ -1,5 +1,10 @@
 package org.stapledon.engine.analysis;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -7,7 +12,6 @@ import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -15,7 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.*;
+import javax.imageio.ImageIO;
 
 class ImageAnalysisServiceImplTest {
 

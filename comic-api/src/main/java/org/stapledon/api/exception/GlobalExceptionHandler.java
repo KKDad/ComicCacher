@@ -19,6 +19,7 @@ import org.stapledon.engine.caching.CacheException;
 
 import java.time.format.DateTimeParseException;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * Global exception handler for the application
  */
 @Slf4j
+@ToString
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

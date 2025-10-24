@@ -18,6 +18,7 @@ import org.stapledon.metrics.service.MetricsService;
 import org.stapledon.metrics.service.MetricsServiceImpl;
 import org.stapledon.metrics.service.NoOpMetricsService;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * - Skips all collector and repository beans
  */
 @Slf4j
+@ToString
 @Configuration
 public class MetricsConfiguration {
 

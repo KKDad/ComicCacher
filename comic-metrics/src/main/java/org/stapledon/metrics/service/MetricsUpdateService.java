@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * Periodically persists access metrics and rebuilds combined metrics.
  */
 @Slf4j
+@ToString
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)

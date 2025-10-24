@@ -9,6 +9,7 @@ import org.stapledon.common.service.ImageValidationService;
 import java.util.Optional;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides common functionality and error handling for all downloaders.
  */
 @Slf4j
+@ToString
 public abstract class AbstractComicDownloaderStrategy implements ComicDownloaderStrategy {
 
     @Getter

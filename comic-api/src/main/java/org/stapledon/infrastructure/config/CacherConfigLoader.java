@@ -11,10 +11,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
+@ToString
 @Configuration
 @RequiredArgsConstructor
 public class CacherConfigLoader {

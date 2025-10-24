@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  * Configured as a bean in MetricsConfiguration when metrics are enabled.
  */
 @Slf4j
+@ToString
 public class CombinedMetricsRepository {
 
     private final Gson gson;

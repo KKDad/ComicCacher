@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
  * Example: 2023-01-15.png -> 2023-01-15.json
  */
 @Slf4j
+@ToString
 @Repository
 @RequiredArgsConstructor
 public class ImageMetadataRepository {

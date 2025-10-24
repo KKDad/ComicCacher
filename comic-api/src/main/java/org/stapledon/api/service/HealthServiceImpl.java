@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@ToString
 public class HealthServiceImpl implements HealthService {
 
     private final BuildVersion buildVersion;

@@ -22,9 +22,11 @@ import java.util.Optional;
 import java.util.Random;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@ToString
 public class GoComics extends DailyComic implements AutoCloseable {
 
     private WebDriver driver;

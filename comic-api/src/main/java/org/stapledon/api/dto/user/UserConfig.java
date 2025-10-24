@@ -5,16 +5,14 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@ToString
 @Component
 public class UserConfig {
-    public UserConfig() {
-        this.users = new ConcurrentHashMap<>();
-    }
-
-    private Map<String, User> users;
+    private Map<String, User> users = new ConcurrentHashMap<>();
 }

@@ -8,9 +8,11 @@ import java.io.IOException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@ToString
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 

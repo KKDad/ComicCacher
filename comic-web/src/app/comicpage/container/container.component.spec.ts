@@ -8,10 +8,10 @@ import {Comic} from '../../dto/comic';
 import {CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {
-  ErrorDisplayStubComponent,
-  LoadingIndicatorStubComponent,
-  SectionStubComponent,
-  VirtualScrollViewportStubComponent
+    ErrorDisplayStubComponent,
+    LoadingIndicatorStubComponent,
+    SectionStubComponent,
+    VirtualScrollViewportStubComponent
 } from '../../testing/stub-components';
 import {CommonModule} from '@angular/common';
 

@@ -1,6 +1,6 @@
 import {inject, Injectable, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {catchError, EMPTY, map, Observable, of, shareReplay, tap} from 'rxjs';
+import {catchError, EMPTY, map, Observable, of, shareReplay} from 'rxjs';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {Comic} from './dto/comic';
 import {ImageDto} from './dto/image';

@@ -19,8 +19,6 @@ import org.stapledon.core.preference.service.PreferenceService;
 import org.stapledon.core.user.service.UserService;
 import org.stapledon.engine.downloader.ComicCacher;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
-import org.stapledon.infrastructure.scheduling.DailyRunner;
-import org.stapledon.infrastructure.scheduling.StartupReconciler;
 import org.stapledon.infrastructure.security.JwtAuthenticationEntryPoint;
 import org.stapledon.infrastructure.security.JwtTokenFilter;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
@@ -75,18 +73,6 @@ public class TestApplicationConfig {
     @Primary
     public UpdateService updateService() {
         return Mockito.mock(UpdateService.class);
-    }
-
-    @Bean
-    @Primary
-    public StartupReconciler startupReconciler() {
-        return Mockito.mock(StartupReconciler.class);
-    }
-
-    @Bean
-    @Primary
-    public DailyRunner dailyRunner() {
-        return Mockito.mock(DailyRunner.class);
     }
 
     @Bean

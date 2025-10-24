@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  * Configured as a bean in MetricsConfiguration when metrics are enabled.
  */
 @Slf4j
+@ToString
 @RequiredArgsConstructor
 public class MetricsArchiver {
 

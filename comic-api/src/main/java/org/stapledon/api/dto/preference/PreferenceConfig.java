@@ -3,15 +3,18 @@ package org.stapledon.api.dto.preference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class PreferenceConfig {
-    public PreferenceConfig() {
-        this.preferences = new ConcurrentHashMap<>();
-    }
-
-    private Map<String, UserPreference> preferences;
+    @Builder.Default
+    private Map<String, UserPreference> preferences = new ConcurrentHashMap<>();
 }

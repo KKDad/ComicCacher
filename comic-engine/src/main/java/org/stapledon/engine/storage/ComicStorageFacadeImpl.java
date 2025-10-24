@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -35,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
  * related to comic storage.
  */
 @Slf4j
+@ToString
 @Component
 @RequiredArgsConstructor
 public class ComicStorageFacadeImpl implements ComicStorageFacade {

@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  * Coordinates comic downloading operations using registered downloader strategies.
  */
 @Slf4j
+@ToString
 @Component
 @RequiredArgsConstructor
 public class ComicDownloaderFacadeImpl implements ComicDownloaderFacade {

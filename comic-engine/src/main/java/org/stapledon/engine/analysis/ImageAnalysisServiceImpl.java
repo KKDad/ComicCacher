@@ -6,7 +6,6 @@ import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.ImageAnalysisService;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -14,6 +13,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Random;
 
+import javax.imageio.ImageIO;
+
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * Uses pixel sampling to determine if an image is grayscale or color.
  */
 @Slf4j
+@ToString
 @Service
 public class ImageAnalysisServiceImpl implements ImageAnalysisService {
     private final double samplePercentage;

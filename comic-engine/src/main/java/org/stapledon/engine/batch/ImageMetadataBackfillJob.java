@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  * Runs daily and processes images in batches to avoid overwhelming the system.
  */
 @Slf4j
+@ToString
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "comics.metrics.backfill.enabled", havingValue = "true", matchIfMissing = true)

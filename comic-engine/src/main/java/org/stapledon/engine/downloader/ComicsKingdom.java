@@ -15,9 +15,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@ToString
 public class ComicsKingdom extends DailyComic {
 
     private static final String ABOUT_SITE_STRING = "https://comicskingdom.com/%s/about";

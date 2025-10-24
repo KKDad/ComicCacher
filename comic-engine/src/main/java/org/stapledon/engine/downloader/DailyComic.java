@@ -2,14 +2,10 @@ package org.stapledon.engine.downloader;
 
 import com.google.common.base.Preconditions;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.stapledon.common.model.ComicCachingException;
 import org.stapledon.common.infrastructure.caching.ICachable;
 import org.stapledon.common.infrastructure.web.WebInspector;
 import org.stapledon.common.infrastructure.web.WebInspectorImpl;
+import org.stapledon.common.model.ComicCachingException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,12 +21,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for all ComicCachers.
  */
 @Slf4j
+@ToString
 public abstract class DailyComic implements IDailyComic, ICachable {
     static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36";
     static final int TIMEOUT = 5 * 1000;
