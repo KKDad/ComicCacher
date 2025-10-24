@@ -46,3 +46,4 @@ public class IntegrationTestConfig {
         return Mockito.mock(MetricsArchiveJobScheduler.class);
     }
 }
+
