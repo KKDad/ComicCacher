@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.stapledon.engine.batch.ComicDownloadJobScheduler;
 import org.stapledon.engine.batch.ComicReconciliationJobScheduler;
-import org.stapledon.engine.batch.ImageMetadataBackfillJobScheduler;
+import org.stapledon.engine.batch.ImageMetadataJobScheduler;
 import org.stapledon.engine.batch.MetricsArchiveJobScheduler;
 import org.stapledon.engine.batch.MetricsUpdateJobScheduler;
 import org.stapledon.engine.batch.RetrievalRecordPurgeJobScheduler;
@@ -50,12 +50,12 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * Mock ImageMetadataBackfillJobScheduler when batch jobs are disabled
+     * Mock ImageMetadataJobScheduler when batch jobs are disabled
      */
     @Bean
     @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "false")
-    public ImageMetadataBackfillJobScheduler imageMetadataBackfillJobScheduler() {
-        return Mockito.mock(ImageMetadataBackfillJobScheduler.class);
+    public ImageMetadataJobScheduler imageMetadataJobScheduler() {
+        return Mockito.mock(ImageMetadataJobScheduler.class);
     }
 
     /**

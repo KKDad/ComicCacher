@@ -15,7 +15,7 @@ import org.stapledon.engine.batch.RetrievalRecordPurgeJobScheduler;
  * Configuration for batch integration tests.
  * Provides mock beans for schedulers that are disabled in batch integration tests.
  *
- * Note: ImageMetadataBackfillJobScheduler is NOT mocked because it's enabled for testing.
+ * Note: ImageMetadataJobScheduler is NOT mocked because it's enabled for testing.
  */
 @Configuration
 @Profile("batch-integration")

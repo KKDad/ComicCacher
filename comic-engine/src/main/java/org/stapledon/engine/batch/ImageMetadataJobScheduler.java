@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
-public class ImageMetadataBackfillJobScheduler {
+public class ImageMetadataJobScheduler {
 
     private final JobLauncher jobLauncher;
 
@@ -49,7 +49,7 @@ public class ImageMetadataBackfillJobScheduler {
         try {
             CronExpression cron = CronExpression.parse(cronExpression);
             ZonedDateTime nextRun = cron.next(ZonedDateTime.now(ZoneId.of(timezone)));
-            log.info("ImageMetadataBackfillJob scheduler initialized - Next scheduled run: {} ({})",
+            log.info("ImageMetadataJob scheduler initialized - Next scheduled run: {} ({})",
                      nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                      nextRun.getZone());
         } catch (Exception e) {
@@ -66,7 +66,7 @@ public class ImageMetadataBackfillJobScheduler {
         log.info("Starting scheduled image metadata backfill");
 
         try {
-            runImageBackfillJob("SCHEDULED");
+            runImageMetadataJob("SCHEDULED");
         } catch (Exception e) {
             log.error("Failed to run scheduled image metadata backfill", e);
         }
@@ -75,7 +75,7 @@ public class ImageMetadataBackfillJobScheduler {
     /**
      * Manually run ImageMetadataBackfillJob
      */
-    public JobExecution runImageBackfillJob(String trigger) throws Exception {
+    public JobExecution runImageMetadataJob(String trigger) throws Exception {
         log.info("Launching ImageMetadataBackfillJob (triggered by: {})", trigger);
 
         JobParametersBuilder parametersBuilder = new JobParametersBuilder()
