@@ -8,7 +8,9 @@ import org.stapledon.common.infrastructure.web.WebInspectorImpl;
 import org.stapledon.engine.downloader.GoComics;
 import org.stapledon.engine.downloader.IDailyComic;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +24,9 @@ import lombok.NoArgsConstructor;
 public class GoComicsBootstrap implements IComicsBootstrap {
     String name;
     LocalDate startDate;
+    String sourceIdentifier; // Optional explicit override for URL slug
+    List<DayOfWeek> publicationDays; // Optional: days comic publishes (null/empty = daily)
+    Boolean active; // Optional: whether comic is actively publishing (null/true = active)
 
     @Autowired
     private WebInspector webInspector;
@@ -54,6 +59,20 @@ public class GoComicsBootstrap implements IComicsBootstrap {
 
     @Override
     public String getSourceIdentifier() {
+        // Use explicit sourceIdentifier if provided, otherwise auto-generate
+        if (sourceIdentifier != null && !sourceIdentifier.isEmpty()) {
+            return sourceIdentifier;
+        }
         return stripName().replace(" ", "").toLowerCase();
+    }
+
+    @Override
+    public List<DayOfWeek> getPublicationDays() {
+        return publicationDays;
+    }
+
+    @Override
+    public Boolean getActive() {
+        return active != null ? active : true;
     }
 }

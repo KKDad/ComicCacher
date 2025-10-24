@@ -21,7 +21,12 @@
             [attr.aria-label]="content.name + ' - no avatar available'">
             <span class="avatar-initial">{{content.name.charAt(0)}}</span>
         </div>
-        <mat-card-title [id]="'comic-title-' + content.id">{{content.name}}</mat-card-title>
+        <mat-card-title [id]="'comic-title-' + content.id">
+        {{content.name}}
+        @if (content.active === false) {
+          <span class="inactive-badge">(Inactive)</span>
+        }
+      </mat-card-title>
         <mat-card-subtitle>{{content.author}}</mat-card-subtitle>
     </mat-card-header>
 

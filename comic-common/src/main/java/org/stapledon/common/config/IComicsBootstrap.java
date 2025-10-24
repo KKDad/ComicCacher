@@ -1,6 +1,8 @@
 package org.stapledon.common.config;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Interface for comic bootstrap configurations.
@@ -45,4 +47,24 @@ public interface IComicsBootstrap {
      * @return The source-specific identifier
      */
     String getSourceIdentifier();
+
+    /**
+     * Gets the days of the week this comic publishes.
+     * If null or empty, the comic publishes daily.
+     *
+     * @return List of days this comic publishes, or null/empty for daily publication
+     */
+    default List<DayOfWeek> getPublicationDays() {
+        return null; // Default: publish daily
+    }
+
+    /**
+     * Gets whether this comic is actively publishing new strips.
+     * Inactive comics will not have new downloads attempted but remain visible in the UI.
+     *
+     * @return true if active (default), false if inactive/discontinued
+     */
+    default Boolean getActive() {
+        return true; // Default: active
+    }
 }

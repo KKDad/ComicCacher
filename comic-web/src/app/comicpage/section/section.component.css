@@ -124,3 +124,12 @@ figure {
     margin-top: 15px;
   }
 }
+
+/* Inactive badge styling */
+.inactive-badge {
+  font-size: 0.75em;
+  color: #757575;
+  font-weight: normal;
+  margin-left: 8px;
+  opacity: 0.8;
+}
