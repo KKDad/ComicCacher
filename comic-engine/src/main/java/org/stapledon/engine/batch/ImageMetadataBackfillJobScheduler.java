@@ -80,7 +80,7 @@ public class ImageMetadataBackfillJobScheduler {
 
         JobParametersBuilder parametersBuilder = new JobParametersBuilder()
                 .addString("trigger", trigger)
-                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")));
+                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
 
         JobExecution execution = jobLauncher.run(imageMetadataBackfillJob, parametersBuilder.toJobParameters());
 

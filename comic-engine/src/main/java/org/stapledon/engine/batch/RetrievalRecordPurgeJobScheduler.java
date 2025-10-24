@@ -80,7 +80,7 @@ public class RetrievalRecordPurgeJobScheduler {
 
         JobParametersBuilder parametersBuilder = new JobParametersBuilder()
                 .addString("trigger", trigger)
-                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")));
+                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
 
         JobExecution execution = jobLauncher.run(retrievalRecordPurgeJob, parametersBuilder.toJobParameters());
 

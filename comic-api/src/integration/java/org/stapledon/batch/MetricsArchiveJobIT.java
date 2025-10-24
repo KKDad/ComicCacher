@@ -49,8 +49,24 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @BeforeEach
-    void setupTestMetrics() {
+    void setupTestMetrics() throws Exception {
         log.info("Setting up test metrics for MetricsArchiveJob tests");
+
+        // Clean up any existing metrics-history directory from previous tests
+        Path historyDir = Paths.get(cacheProperties.getLocation(), "metrics-history");
+        if (Files.exists(historyDir)) {
+            log.info("Cleaning up existing metrics-history directory");
+            try (var walk = Files.walk(historyDir)) {
+                walk.sorted(java.util.Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (Exception e) {
+                            log.warn("Failed to delete {}: {}", path, e.getMessage());
+                        }
+                    });
+            }
+        }
 
         // Create test metrics data
         Map<String, ComicCombinedMetrics> comicsMap = new HashMap<>();
@@ -123,6 +139,10 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         assertEquals("TestComic1", comic1.getComicName(), "Comic name should match");
         assertEquals(10, comic1.getImageCount(), "TestComic1 image count should match");
         assertEquals(1024000L, comic1.getStorageBytes(), "TestComic1 size should match");
+
+        // Verify JsonBatchExecutionTracker recorded the execution
+        assertBatchExecutionTracked("MetricsArchiveJob");
+        assertBatchExecutionValid("MetricsArchiveJob", "COMPLETED", null); // Tasklet job, no item counts
 
         log.info("SUCCESS: Metrics archive created and validated at {}", expectedFile);
     }
@@ -197,6 +217,10 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
         // No archive file should be created
         assertFalse(Files.exists(expectedFile), "Archive file should not exist when no metrics");
+
+        // Verify JsonBatchExecutionTracker recorded the failure
+        assertBatchExecutionTracked("MetricsArchiveJob");
+        assertBatchExecutionValid("MetricsArchiveJob", "FAILED", null); // Failed job, no item counts
 
         log.info("SUCCESS: Job failed appropriately with empty metrics");
     }

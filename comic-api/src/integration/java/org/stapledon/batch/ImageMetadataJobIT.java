@@ -7,7 +7,7 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
-import org.stapledon.engine.batch.ImageMetadataJobScheduler;
+import org.stapledon.engine.batch.ImageMetadataBackfillJobScheduler;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired
-    private ImageMetadataJobScheduler imageMetadataJobScheduler;
+    private ImageMetadataBackfillJobScheduler imageMetadataJobScheduler;
 
     private File testImage1;
     private File testImage2;
@@ -65,7 +65,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         // Execute the job synchronously via scheduler interface method
         log.info("Executing ImageMetadataJob via scheduler");
-        JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+        JobExecution jobExecution = imageMetadataJobScheduler.runImageBackfillJob("TEST");
 
         // Assert job completed successfully
         assertNotNull(jobExecution, "JobExecution should not be null");
@@ -92,8 +92,8 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         assertEquals("COMPLETED", jobExecution.getExitStatus().getExitCode(), "Exit code should be COMPLETED");
 
         // Verify JsonBatchExecutionTracker recorded the execution
-        assertBatchExecutionTracked("ImageMetadataJob");
-        assertBatchExecutionValid("ImageMetadataJob", "COMPLETED", null); // Tasklet job, no item counts
+        assertBatchExecutionTracked("ImageMetadataBackfillJob");
+        assertBatchExecutionValid("ImageMetadataBackfillJob", "COMPLETED", null); // Tasklet job, no item counts
 
         log.info("SUCCESS: All 3 images have valid metadata and execution tracked");
     }
@@ -127,7 +127,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         assertMetadataNotExists(testImage2.getAbsolutePath());
 
         // Execute the job
-        JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+        JobExecution jobExecution = imageMetadataJobScheduler.runImageBackfillJob("TEST");
 
         // Assert job completed successfully
         assertNotNull(jobExecution, "JobExecution should not be null");
@@ -172,7 +172,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         assertMetadataNotExists(invalidImage.getAbsolutePath());
 
         // Execute the job
-        JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+        JobExecution jobExecution = imageMetadataJobScheduler.runImageBackfillJob("TEST");
 
         // Assert job completed successfully even with invalid images
         assertNotNull(jobExecution, "JobExecution should not be null");
@@ -206,7 +206,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         log.info("TEST: ImageMetadataJob format detection");
 
         // Execute the job
-        JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+        JobExecution jobExecution = imageMetadataJobScheduler.runImageBackfillJob("TEST");
         assertNotNull(jobExecution, "JobExecution should not be null");
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
             "Job should complete successfully");
@@ -247,7 +247,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         log.info("TEST: ImageMetadataJob idempotency");
 
         // Run job first time
-        JobExecution execution1 = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+        JobExecution execution1 = imageMetadataJobScheduler.runImageBackfillJob("TEST");
         assertNotNull(execution1, "First execution should not be null");
         assertEquals(BatchStatus.COMPLETED, execution1.getStatus(),
             "First execution should complete successfully");
@@ -261,7 +261,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         int firstHeight = metadataAfterFirst.getHeight();
 
         // Run job second time
-        JobExecution execution2 = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+        JobExecution execution2 = imageMetadataJobScheduler.runImageBackfillJob("TEST");
         assertNotNull(execution2, "Second execution should not be null");
         assertEquals(BatchStatus.COMPLETED, execution2.getStatus(),
             "Second execution should complete successfully");
