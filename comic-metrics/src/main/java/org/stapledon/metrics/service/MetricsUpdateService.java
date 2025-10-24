@@ -37,10 +37,9 @@ public class MetricsUpdateService {
     private final MetricsProperties metricsProperties;
 
     /**
-     * Scheduled task to persist access metrics and rebuild combined metrics.
-     * Runs every N seconds (configured via comics.metrics.persist-interval-seconds, default 5 minutes)
+     * Persist access metrics and rebuild combined metrics.
+     * Called by MetricsUpdateJob batch job (runs every 5 minutes).
      */
-    @Scheduled(fixedDelayString = "${comics.metrics.persist-interval-seconds:300}000")
     public void updateMetrics() {
         try {
             log.debug("Starting scheduled metrics update");

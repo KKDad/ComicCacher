@@ -30,10 +30,9 @@ public class MetricsArchiveService {
     private final MetricsProperties metricsProperties;
 
     /**
-     * Scheduled task to archive previous day's metrics.
-     * Runs daily at 3:00 AM (configurable via comics.metrics.archive-cron)
+     * Archive previous day's metrics.
+     * Called by MetricsArchiveJob batch job (scheduled at 6:30 AM EST).
      */
-    @Scheduled(cron = "${comics.metrics.archive-cron:0 0 3 * * ?}")
     public void archiveDailyMetrics() {
         try {
             log.info("Starting daily metrics archiving");
