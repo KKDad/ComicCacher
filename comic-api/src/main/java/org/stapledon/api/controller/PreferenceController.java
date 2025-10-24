@@ -21,9 +21,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@ToString
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/preferences")

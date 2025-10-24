@@ -11,6 +11,7 @@ import org.stapledon.metrics.repository.MetricsArchiver;
 import java.time.LocalDate;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  * Creates daily snapshots of combined metrics for historical analysis.
  */
 @Slf4j
+@ToString
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -28,10 +30,9 @@ public class MetricsArchiveService {
     private final MetricsProperties metricsProperties;
 
     /**
-     * Scheduled task to archive previous day's metrics.
-     * Runs daily at 3:00 AM (configurable via comics.metrics.archive-cron)
+     * Archive previous day's metrics.
+     * Called by MetricsArchiveJob batch job (scheduled at 6:30 AM EST).
      */
-    @Scheduled(cron = "${comics.metrics.archive-cron:0 0 3 * * ?}")
     public void archiveDailyMetrics() {
         try {
             log.info("Starting daily metrics archiving");

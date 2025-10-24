@@ -1,20 +1,19 @@
 package org.stapledon.engine.validation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageValidationResult;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
 import javax.imageio.ImageIO;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for ImageValidationServiceImpl.

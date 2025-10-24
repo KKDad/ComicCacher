@@ -23,6 +23,7 @@ import java.io.Writer;
 import java.nio.file.Paths;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * This facade handles loading and saving configuration data for comics, users, and preferences.
  */
 @Slf4j
+@ToString
 @Component
 @RequiredArgsConstructor
 public class ConfigurationFacadeImpl implements ApplicationConfigurationFacade {

@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { ComicStateService } from './comic-state.service';
-import { ComicService } from '../comic.service';
-import { of, throwError } from 'rxjs';
-import { Comic } from '../dto/comic';
-import { ImageDto } from '../dto/image';
+import {TestBed} from '@angular/core/testing';
+import {ComicStateService} from './comic-state.service';
+import {ComicService} from '../comic.service';
+import {of, throwError} from 'rxjs';
+import {Comic} from '../dto/comic';
+import {ImageDto} from '../dto/image';
 
 describe('ComicStateService', () => {
   let service: ComicStateService;

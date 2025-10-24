@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.engine.batch.ComicBatchService;
+import org.stapledon.engine.batch.ComicDownloadJobScheduler;
 import org.stapledon.engine.batch.ComicJobSummary;
 
 import java.time.LocalDate;
@@ -36,20 +36,20 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Batch Jobs", description = "Endpoints for monitoring comic retrieval batch jobs")
 public class BatchJobController {
 
-    private final ComicBatchService comicBatchService;
+    private final ComicDownloadJobScheduler comicDownloadJobScheduler;
 
     @GetMapping("/jobs/recent")
-    @Operation(summary = "Get recent job executions", 
+    @Operation(summary = "Get recent job executions",
                description = "Returns the most recent batch job executions with detailed status information")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRecentJobs(
             @Parameter(description = "Number of recent jobs to return")
             @RequestParam(defaultValue = "10") int count) {
-        
-        List<JobExecution> executions = comicBatchService.getRecentJobExecutions(count);
+
+        List<JobExecution> executions = comicDownloadJobScheduler.getRecentJobExecutions(count);
         List<Map<String, Object>> jobDetails = executions.stream()
                 .map(this::convertJobExecutionToMap)
                 .toList();
-        
+
         return ResponseBuilder.ok(jobDetails, "Retrieved recent job executions");
     }
 
@@ -59,15 +59,15 @@ public class BatchJobController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getJobsByDateRange(
             @Parameter(description = "Start date (inclusive)")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            
+
             @Parameter(description = "End date (inclusive)")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        
-        List<JobExecution> executions = comicBatchService.getJobExecutionsForDateRange(startDate, endDate);
+
+        List<JobExecution> executions = comicDownloadJobScheduler.getJobExecutionsForDateRange(startDate, endDate);
         List<Map<String, Object>> jobDetails = executions.stream()
                 .map(this::convertJobExecutionToMap)
                 .toList();
-        
+
         return ResponseBuilder.ok(jobDetails, "Retrieved job executions for date range");
     }
 
@@ -77,12 +77,12 @@ public class BatchJobController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getJobExecution(
             @Parameter(description = "Job execution ID")
             @PathVariable Long executionId) {
-        
-        JobExecution execution = comicBatchService.getJobExecution(executionId);
+
+        JobExecution execution = comicDownloadJobScheduler.getJobExecution(executionId);
         if (execution == null) {
             return ResponseEntity.notFound().build();
         }
-        
+
         Map<String, Object> jobDetails = convertJobExecutionToDetailedMap(execution);
         return ResponseBuilder.ok(jobDetails, "Retrieved job execution details");
     }
@@ -93,25 +93,25 @@ public class BatchJobController {
     public ResponseEntity<ApiResponse<ComicJobSummary>> getJobSummary(
             @Parameter(description = "Number of days to include in summary")
             @RequestParam(defaultValue = "7") int days) {
-        
-        ComicJobSummary summary = comicBatchService.getJobSummary(days);
+
+        ComicJobSummary summary = comicDownloadJobScheduler.getJobSummary(days);
         return ResponseBuilder.ok(summary, "Retrieved job execution summary");
     }
 
     @PostMapping("/jobs/trigger")
-    @Operation(summary = "Manually trigger comic retrieval job",
-               description = "Manually starts a comic retrieval job for the specified date")
+    @Operation(summary = "Manually trigger comic download job",
+               description = "Manually starts a comic download job for the specified date")
     public ResponseEntity<ApiResponse<Map<String, Object>>> triggerJob(
             @Parameter(description = "Target date for comic retrieval")
-            @RequestParam(defaultValue = "today") 
+            @RequestParam(defaultValue = "today")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate) {
-        
+
         if (targetDate == null) {
             targetDate = LocalDate.now();
         }
-        
+
         try {
-            JobExecution execution = comicBatchService.runComicRetrievalJob(targetDate, "MANUAL");
+            JobExecution execution = comicDownloadJobScheduler.runComicDownloadJob(targetDate, "MANUAL");
             Map<String, Object> result = Map.of(
                 "executionId", execution.getId(),
                 "status", execution.getStatus().toString(),

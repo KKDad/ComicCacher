@@ -13,6 +13,7 @@ import org.stapledon.metrics.repository.MetricsArchiver;
 import java.time.LocalDate;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  * Delegates to collectors and repositories to provide unified metrics access.
  */
 @Slf4j
+@ToString
 @Service
 @RequiredArgsConstructor
 public class MetricsServiceImpl implements MetricsService {

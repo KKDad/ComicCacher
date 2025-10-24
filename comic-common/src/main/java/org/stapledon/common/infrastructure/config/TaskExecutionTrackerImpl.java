@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * Ensures tasks only run once per day by tracking their last execution date.
  */
 @Slf4j
+@ToString
 @Component
 @RequiredArgsConstructor
 public class TaskExecutionTrackerImpl implements TaskExecutionTracker {

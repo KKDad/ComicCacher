@@ -8,6 +8,7 @@ import java.io.File;
 import java.nio.file.Paths;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
  * Note: Metrics-related beans have been moved to MetricsConfiguration.
  */
 @Slf4j
+@ToString
 @Configuration
 @RequiredArgsConstructor
 public class CacheConfiguration {

@@ -15,9 +15,11 @@ import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.auth.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@ToString
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")

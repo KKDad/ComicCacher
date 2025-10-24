@@ -4,6 +4,7 @@ import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
  * Returns empty/default values for all operations.
  */
 @Slf4j
+@ToString
 public class NoOpMetricsService implements MetricsService {
 
     public NoOpMetricsService() {

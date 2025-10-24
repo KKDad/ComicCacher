@@ -7,34 +7,70 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.stapledon.common.config.properties.DailyRunnerProperties;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service for managing comic retrieval batch jobs.
- * Replaces the old DailyRunner with Spring Batch for better tracking and observability.
- * Provides scheduling, manual execution, and monitoring capabilities.
+ * Scheduler for the ComicDownloadJob batch job.
+ * Handles scheduling, startup execution, and manual triggering of comic downloads.
+ * Provides monitoring capabilities and execution history.
  */
 @Slf4j
+@ToString
 @Service
 @RequiredArgsConstructor
-public class ComicBatchService implements CommandLineRunner {
+@ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
+public class ComicDownloadJobScheduler implements CommandLineRunner {
 
     private final JobLauncher jobLauncher;
-    private final Job dailyComicRetrievalJob;
+
+    @Qualifier("comicDownloadJob")
+    private final Job comicDownloadJob;
+
     private final JobExplorer jobExplorer;
     private final JobRepository jobRepository;
     private final DailyRunnerProperties dailyRunnerProperties;
+
+    @Value("${batch.comic-download.cron}")
+    private String cronExpression;
+
+    @Value("${batch.timezone:America/Toronto}")
+    private String timezone;
+
+    /**
+     * Log schedule information when the scheduler is initialized
+     */
+    @PostConstruct
+    public void logScheduleInfo() {
+        try {
+            CronExpression cron = CronExpression.parse(cronExpression);
+            ZonedDateTime nextRun = cron.next(ZonedDateTime.now(ZoneId.of(timezone)));
+            log.info("ComicDownloadJob scheduler initialized - Next scheduled run: {} ({})",
+                     nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                     nextRun.getZone());
+            log.info("ComicDownloadJob will also run immediately on startup if not yet executed today");
+        } catch (Exception e) {
+            log.warn("Could not parse cron expression '{}': {}", cronExpression, e.getMessage());
+        }
+    }
 
     /**
      * CommandLineRunner implementation - runs immediately when application starts
@@ -49,53 +85,53 @@ public class ComicBatchService implements CommandLineRunner {
 
         // Check if job already ran today
         if (hasJobRunToday()) {
-            log.info("Daily comic retrieval already ran today, skipping immediate execution");
+            log.info("ComicDownloadJob already ran today, skipping immediate execution");
         } else {
-            log.info("Daily comic retrieval has not run today, executing immediately");
+            log.info("ComicDownloadJob has not run today, executing immediately");
             try {
-                runComicRetrievalJob(LocalDate.now(), "STARTUP");
+                runComicDownloadJob(LocalDate.now(), "STARTUP");
             } catch (Exception e) {
-                log.error("Failed to run startup comic retrieval", e);
+                log.error("Failed to run startup comic download", e);
             }
         }
     }
 
     /**
-     * Scheduled execution of daily comic retrieval job
-     * Runs at 7:00 AM every day
+     * Scheduled execution of ComicDownloadJob
+     * Runs at 6:00 AM EST (America/Toronto timezone) every day
      */
-    @Scheduled(cron = "0 0 7 * * ?")
-    public void runDailyComicRetrieval() {
+    @Scheduled(cron = "${batch.comic-download.cron}")
+    public void runDailyComicDownload() {
         if (!dailyRunnerProperties.isEnabled()) {
-            log.info("Daily runner is disabled, skipping scheduled comic retrieval");
+            log.info("Comic download job is disabled, skipping scheduled execution");
             return;
         }
 
         // Check if job already ran today
         if (hasJobRunToday()) {
-            log.info("Daily comic retrieval already ran today, skipping");
+            log.info("ComicDownloadJob already ran today, skipping");
             return;
         }
 
         try {
-            runComicRetrievalJob(LocalDate.now(), "SCHEDULED");
+            runComicDownloadJob(LocalDate.now(), "SCHEDULED");
         } catch (Exception e) {
-            log.error("Failed to run scheduled daily comic retrieval", e);
+            log.error("Failed to run scheduled comic download", e);
         }
     }
 
     /**
-     * Manually run comic retrieval job for a specific date
+     * Manually run ComicDownloadJob for a specific date
      */
-    public JobExecution runComicRetrievalJob(LocalDate targetDate, String trigger) throws Exception {
-        log.info("Launching comic retrieval job for date: {} (triggered by: {})", targetDate, trigger);
+    public JobExecution runComicDownloadJob(LocalDate targetDate, String trigger) throws Exception {
+        log.info("Launching ComicDownloadJob for date: {} (triggered by: {})", targetDate, trigger);
 
         JobParametersBuilder parametersBuilder = new JobParametersBuilder()
                 .addString("targetDate", targetDate.toString())
                 .addString("trigger", trigger)
                 .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")));
 
-        JobExecution execution = jobLauncher.run(dailyComicRetrievalJob, parametersBuilder.toJobParameters());
+        JobExecution execution = jobLauncher.run(comicDownloadJob, parametersBuilder.toJobParameters());
         
         log.info("Job launched with execution ID: {}", execution.getId());
         return execution;
@@ -105,8 +141,8 @@ public class ComicBatchService implements CommandLineRunner {
      * Get recent job executions for monitoring
      */
     public List<JobExecution> getRecentJobExecutions(int count) {
-        List<JobInstance> jobInstances = jobExplorer.getJobInstances("dailyComicRetrievalJob", 0, count);
-        
+        List<JobInstance> jobInstances = jobExplorer.getJobInstances("ComicDownloadJob", 0, count);
+
         return jobInstances.stream()
                 .flatMap(instance -> jobExplorer.getJobExecutions(instance).stream())
                 .sorted((e1, e2) -> e2.getStartTime().compareTo(e1.getStartTime()))
@@ -118,7 +154,7 @@ public class ComicBatchService implements CommandLineRunner {
      * Get job executions for a specific date range
      */
     public List<JobExecution> getJobExecutionsForDateRange(LocalDate startDate, LocalDate endDate) {
-        List<JobInstance> jobInstances = jobExplorer.getJobInstances("dailyComicRetrievalJob", 0, 100);
+        List<JobInstance> jobInstances = jobExplorer.getJobInstances("ComicDownloadJob", 0, 100);
         
         return jobInstances.stream()
                 .flatMap(instance -> jobExplorer.getJobExecutions(instance).stream())

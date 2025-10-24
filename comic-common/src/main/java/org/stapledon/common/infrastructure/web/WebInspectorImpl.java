@@ -4,12 +4,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Methods for debugging new site retrievals
  */
 @Slf4j
+@ToString
 public class WebInspectorImpl implements WebInspector {
     public static final String ABS_SRC = "abs:src";
     public static final String CONTENT = "content";

@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
+@ToString
 public class BuildVersion {
 
     private Properties buildProps;

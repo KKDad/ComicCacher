@@ -13,12 +13,14 @@ import java.io.InputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Strategy implementation for downloading comics from GoComics.
  */
 @Slf4j
+@ToString
 @Component
 public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy {
 

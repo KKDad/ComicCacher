@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  * Configured as a bean in MetricsConfiguration when metrics are enabled.
  */
 @Slf4j
+@ToString
 public class StorageMetricsCollector {
     private final StatsWriter statsUpdater;
     private final String cacheDirectory;

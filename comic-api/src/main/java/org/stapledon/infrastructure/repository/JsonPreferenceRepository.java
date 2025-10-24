@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  * Delegates to ApplicationConfigurationFacade and PreferenceConfigWriter for file I/O operations.
  */
 @Slf4j
+@ToString
 @Repository
 @RequiredArgsConstructor
 public class JsonPreferenceRepository implements PreferenceRepository {

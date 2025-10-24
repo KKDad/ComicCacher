@@ -4,9 +4,11 @@ import org.springframework.stereotype.Service;
 import org.stapledon.engine.management.ComicManagementFacade;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@ToString
 @Service
 @RequiredArgsConstructor
 public class UpdateServiceImpl implements UpdateService {

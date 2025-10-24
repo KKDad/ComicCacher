@@ -2,7 +2,6 @@ package org.stapledon.engine.management;
 
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.IComicsBootstrap;
-import org.stapledon.common.config.properties.StartupReconcilerProperties;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
@@ -34,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
  * Acts as the central coordinator between all other facades in the application.
  */
 @Slf4j
+@ToString
 @Component
 public class ComicManagementFacadeImpl implements ComicManagementFacade {
 
@@ -59,7 +60,6 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
             ComicStorageFacade storageFacade,
             ComicConfigurationService configFacade,
             ComicDownloaderFacade downloaderFacade,
-            StartupReconcilerProperties reconcilerProperties,
             TaskExecutionTracker taskExecutionTracker,
             RetrievalStatusService retrievalStatusService) {
         this.storageFacade = storageFacade;
@@ -71,12 +71,9 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
         // Load comics from configuration
         refreshComicList();
 
-        // Schedule reconciliation if enabled
-        if (reconcilerProperties.isEnabled()) {
-            scheduleReconciliation(reconcilerProperties.getScheduleTime());
-        } else {
-            log.warn("Scheduled reconciliation is disabled");
-        }
+        // NOTE: Reconciliation scheduling is now handled by Spring Batch (ComicReconciliationJobScheduler)
+        // The old ScheduledExecutorService approach has been replaced with Spring Batch jobs
+        log.info("Comic configuration loaded. Reconciliation will be handled by Spring Batch scheduler.");
     }
 
     @Override

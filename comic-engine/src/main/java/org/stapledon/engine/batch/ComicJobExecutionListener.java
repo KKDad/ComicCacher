@@ -7,6 +7,7 @@ import org.springframework.batch.core.StepExecution;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
  * and metrics for comic retrieval batch jobs.
  */
 @Slf4j
+@ToString
 public class ComicJobExecutionListener implements JobExecutionListener {
 
     @Override

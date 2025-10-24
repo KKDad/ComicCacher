@@ -1,9 +1,18 @@
 package org.stapledon.engine.batch;
 
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
@@ -23,37 +32,65 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Scheduled job to backfill image metadata for existing images that don't have metadata files.
- * Runs daily and processes images in batches to avoid overwhelming the system.
+ * Spring Batch configuration for image metadata backfill job.
+ * Backfills metadata for existing images that don't have metadata files.
  */
 @Slf4j
-@Component
+@Configuration
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "comics.metrics.backfill.enabled", havingValue = "true", matchIfMissing = true)
-public class ImageMetadataBackfillJob {
+public class ImageMetadataBackfillJobConfig {
+
     private final CacheProperties cacheProperties;
     private final ImageValidationService imageValidationService;
     private final ImageAnalysisService imageAnalysisService;
     private final ImageMetadataRepository imageMetadataRepository;
 
-    @Value("${comics.metrics.backfill.batch-size:100}")
+    @Value("${batch.image-backfill.batch-size:100}")
     private int batchSize;
 
     /**
-     * Runs daily at 3:00 AM to backfill metadata for images without metadata files.
-     * Processes images in batches and exits gracefully if there's nothing to do.
+     * Job for backfilling image metadata
      */
-    @Scheduled(cron = "${comics.metrics.backfill.cron:0 0 3 * * ?}")
-    public void backfillImageMetadata() {
-        log.info("Starting image metadata backfill job");
-        long startTime = System.currentTimeMillis();
+    @Bean
+    public Job imageMetadataBackfillJob(
+            JobRepository jobRepository,
+            @Qualifier("imageBackfillStep") Step imageBackfillStep,
+            JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        try {
+        return new JobBuilder("ImageMetadataBackfillJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .listener(jsonBatchExecutionTracker)
+                .start(imageBackfillStep)
+                .build();
+    }
+
+    /**
+     * Step for performing image metadata backfill
+     */
+    @Bean
+    public Step imageBackfillStep(
+            JobRepository jobRepository,
+            PlatformTransactionManager transactionManager) {
+
+        return new StepBuilder("imageBackfillStep", jobRepository)
+                .tasklet(imageBackfillTasklet(), transactionManager)
+                .build();
+    }
+
+    /**
+     * Tasklet that performs the actual image metadata backfill
+     */
+    @Bean
+    public Tasklet imageBackfillTasklet() {
+        return (contribution, chunkContext) -> {
+            log.info("Starting image metadata backfill");
+
+            long startTime = System.currentTimeMillis();
             List<File> imagesToProcess = findImagesWithoutMetadata();
 
             if (imagesToProcess.isEmpty()) {
                 log.info("No images need metadata backfill. Job complete.");
-                return;
+                return RepeatStatus.FINISHED;
             }
 
             log.info("Found {} images without metadata. Processing in batches of {}",
@@ -83,18 +120,15 @@ public class ImageMetadataBackfillJob {
             }
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("Image metadata backfill job complete. Processed {} images in {}ms ({} successful, {} failed)",
+            log.info("Image metadata backfill complete. Processed {} images in {}ms ({} successful, {} failed)",
                     processed, duration, successful, failed);
 
-        } catch (Exception e) {
-            log.error("Image metadata backfill job failed: {}", e.getMessage(), e);
-        }
+            return RepeatStatus.FINISHED;
+        };
     }
 
     /**
      * Finds all image files in the cache directory that don't have associated metadata files.
-     *
-     * @return List of image files without metadata
      */
     private List<File> findImagesWithoutMetadata() throws IOException {
         List<File> imagesWithoutMetadata = new ArrayList<>();
@@ -133,8 +167,6 @@ public class ImageMetadataBackfillJob {
 
     /**
      * Backfills metadata for a single image file.
-     *
-     * @param imageFile The image file to process
      */
     private void backfillImageMetadata(File imageFile) throws IOException {
         // Read the image file
@@ -158,7 +190,6 @@ public class ImageMetadataBackfillJob {
             log.debug("Backfilled metadata for: {}", imageFile.getAbsolutePath());
         } else {
             // Metadata was invalid (UNKNOWN format, 0 dimensions, etc.)
-            // This allows the backfill job to try again on next run
             String error = String.format("Metadata validation failed for %s: format=%s, dimensions=%dx%d, size=%d",
                     imageFile.getName(), metadata.getFormat(), metadata.getWidth(),
                     metadata.getHeight(), metadata.getSizeInBytes());

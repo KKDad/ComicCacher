@@ -1,5 +1,5 @@
-import { TestBed } from '@angular/core/testing';
-import { KeyboardService } from './keyboard-service';
+import {TestBed} from '@angular/core/testing';
+import {KeyboardService} from './keyboard-service';
 
 describe('KeyboardService', () => {
   let service: KeyboardService;

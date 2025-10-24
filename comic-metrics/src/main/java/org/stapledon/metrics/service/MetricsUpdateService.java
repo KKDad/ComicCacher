@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * Periodically persists access metrics and rebuilds combined metrics.
  */
 @Slf4j
+@ToString
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -35,10 +37,9 @@ public class MetricsUpdateService {
     private final MetricsProperties metricsProperties;
 
     /**
-     * Scheduled task to persist access metrics and rebuild combined metrics.
-     * Runs every N seconds (configured via comics.metrics.persist-interval-seconds, default 5 minutes)
+     * Persist access metrics and rebuild combined metrics.
+     * Called by MetricsUpdateJob batch job (runs every 5 minutes).
      */
-    @Scheduled(fixedDelayString = "${comics.metrics.persist-interval-seconds:300}000")
     public void updateMetrics() {
         try {
             log.debug("Starting scheduled metrics update");

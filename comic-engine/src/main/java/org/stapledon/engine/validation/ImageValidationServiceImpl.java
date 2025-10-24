@@ -14,6 +14,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  * - Image format can be identified (PNG, JPEG, GIF, WEBP, etc.)
  */
 @Slf4j
+@ToString
 @Component
 public class ImageValidationServiceImpl implements ImageValidationService {
 

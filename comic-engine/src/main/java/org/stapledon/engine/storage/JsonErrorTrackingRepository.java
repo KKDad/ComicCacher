@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * Stores error records in last_errors.json in the cache root directory.
  */
 @Slf4j
+@ToString
 @Repository
 public class JsonErrorTrackingRepository implements ErrorTrackingService {
     private static final String STORAGE_FILE = "last_errors.json";

@@ -26,7 +26,6 @@ import org.stapledon.common.config.properties.DailyRunnerProperties;
 import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.common.infrastructure.config.TaskExecutionTrackerImpl;
 import org.stapledon.engine.management.ComicManagementFacade;
-import org.stapledon.infrastructure.scheduling.DailyRunner;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -132,41 +131,11 @@ class TaskExecutionTrackerImplTest {
         assertEquals(LocalDate.now(), newTracker.getLastExecutionDate(testTaskName));
     }
     
-    @Test
-    void verifyDailyRunnerUsesTrackerCorrectly() throws Exception {
-        // Create mocks
-        DailyRunnerProperties properties = mock(DailyRunnerProperties.class);
-        ComicManagementFacade comicManagementFacade = mock(ComicManagementFacade.class);
-        TaskExecutionTracker tracker = mock(TaskExecutionTracker.class);
-
-        // Set up mocks
-        when(properties.isEnabled()).thenReturn(true);
-        when(tracker.canRunToday("DailyComicCacher")).thenReturn(true);
-        when(comicManagementFacade.updateAllComics()).thenReturn(true);
-
-        // Create daily runner
-        DailyRunner dailyRunner = new DailyRunner(properties, comicManagementFacade, tracker);
-
-        // Run it
-        dailyRunner.run(new String[0]);
-
-        // Verify interactions
-        verify(comicManagementFacade, times(1)).updateAllComics();
-        verify(tracker, times(1)).markTaskExecuted("DailyComicCacher");
-
-        // Now test with already run
-        reset(properties, comicManagementFacade, tracker);
-
-        when(properties.isEnabled()).thenReturn(true);
-        when(tracker.canRunToday("DailyComicCacher")).thenReturn(false);
-        when(tracker.getLastExecutionDate("DailyComicCacher")).thenReturn(LocalDate.now());
-
-        // Run again
-        dailyRunner.run(new String[0]);
-
-        // Verify updateAllComics NOT called
-        verify(comicManagementFacade, never()).updateAllComics();
-    }
+    // Disabled: DailyRunner has been replaced by ComicDownloadJobScheduler (Spring Batch)
+    // @Test
+    // void verifyDailyRunnerUsesTrackerCorrectly() throws Exception {
+    //     // Test removed as DailyRunner is no longer used
+    // }
     
     @Test
     void verifyStartupReconcilerUsesTrackerCorrectly() {

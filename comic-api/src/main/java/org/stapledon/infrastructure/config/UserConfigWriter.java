@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * This implementation now delegates to ApplicationConfigurationFacade for most operations.
  */
 @Slf4j
+@ToString
 @Component
 @RequiredArgsConstructor
 public class UserConfigWriter {

@@ -8,6 +8,7 @@ import org.stapledon.engine.downloader.GoComicsDownloaderStrategy;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
  * with the downloader facade during application startup.
  */
 @Slf4j
+@ToString
 @Configuration
 @RequiredArgsConstructor
 public class ComicDownloaderConfig {
