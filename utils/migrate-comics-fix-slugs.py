@@ -117,7 +117,7 @@ def migrate_comics_file(input_path: str, output_path: str = None, dry_run: bool 
             old_id = source_id
             new_id = SLUG_FIXES[source_id]
             comic["sourceIdentifier"] = new_id
-            changes_made.append(f"sourceIdentifier: {old_id} → {new_id}")
+            changes_made.append(f"sourceIdentifier: {old_id} -> {new_id}")
             stats["slug_fixed"] += 1
             changed = True
 
@@ -128,13 +128,13 @@ def migrate_comics_file(input_path: str, output_path: str = None, dry_run: bool 
 
             if old_source != "gocomics":
                 comic["source"] = "gocomics"
-                changes_made.append(f"source: {old_source} → gocomics")
+                changes_made.append(f"source: {old_source} -> gocomics")
                 stats["moved_to_gocomics"] += 1
                 changed = True
 
             if source_id != new_source_id:
                 comic["sourceIdentifier"] = new_source_id
-                changes_made.append(f"sourceIdentifier: {source_id} → {new_source_id}")
+                changes_made.append(f"sourceIdentifier: {source_id} -> {new_source_id}")
                 if not changed:  # Don't double-count
                     stats["slug_fixed"] += 1
                 changed = True
@@ -143,7 +143,7 @@ def migrate_comics_file(input_path: str, output_path: str = None, dry_run: bool 
         if normalized_name in INACTIVE_COMICS:
             if comic.get("active") != False:
                 comic["active"] = False
-                changes_made.append("active: true → false (discontinued)")
+                changes_made.append("active: true -> false (discontinued)")
                 stats["marked_inactive"] += 1
                 changed = True
 
