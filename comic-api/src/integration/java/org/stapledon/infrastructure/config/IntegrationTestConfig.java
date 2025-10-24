@@ -7,7 +7,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.stapledon.engine.batch.ComicDownloadJobScheduler;
 import org.stapledon.engine.batch.ComicReconciliationJobScheduler;
+import org.stapledon.engine.batch.ImageMetadataBackfillJobScheduler;
 import org.stapledon.engine.batch.MetricsArchiveJobScheduler;
+import org.stapledon.engine.batch.MetricsUpdateJobScheduler;
+import org.stapledon.engine.batch.RetrievalRecordPurgeJobScheduler;
 
 /**
  * Configuration for integration tests.
@@ -44,6 +47,33 @@ public class IntegrationTestConfig {
     @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "false")
     public MetricsArchiveJobScheduler metricsArchiveJobScheduler() {
         return Mockito.mock(MetricsArchiveJobScheduler.class);
+    }
+
+    /**
+     * Mock ImageMetadataBackfillJobScheduler when batch jobs are disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "false")
+    public ImageMetadataBackfillJobScheduler imageMetadataBackfillJobScheduler() {
+        return Mockito.mock(ImageMetadataBackfillJobScheduler.class);
+    }
+
+    /**
+     * Mock MetricsUpdateJobScheduler when batch jobs are disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.metrics-update.enabled", havingValue = "false")
+    public MetricsUpdateJobScheduler metricsUpdateJobScheduler() {
+        return Mockito.mock(MetricsUpdateJobScheduler.class);
+    }
+
+    /**
+     * Mock RetrievalRecordPurgeJobScheduler when batch jobs are disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "false")
+    public RetrievalRecordPurgeJobScheduler retrievalRecordPurgeJobScheduler() {
+        return Mockito.mock(RetrievalRecordPurgeJobScheduler.class);
     }
 }
 
