@@ -1,4 +1,4 @@
-package org.stapledon.api.batch;
+package org.stapledon.engine.batch;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.metrics.service.MetricsArchiveService;
 
 import java.time.LocalDate;
