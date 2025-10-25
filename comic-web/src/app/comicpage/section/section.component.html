@@ -51,7 +51,11 @@
             </app-loading-indicator>
             
             <ng-container *ngIf="imageDate">
-                <p class="pubdate" [attr.aria-live]="'polite'">Published on: {{imageDate}}</p>
+                <!-- Show boundary message if present, otherwise show publication date -->
+                <p class="pubdate" [attr.aria-live]="'polite'" [class.boundary-message]="boundaryMessage()">
+                    <ng-container *ngIf="!boundaryMessage()">Published on: {{imageDate}}</ng-container>
+                    <ng-container *ngIf="boundaryMessage()">{{boundaryMessage()}}</ng-container>
+                </p>
                 <figure>
                     <img
                         *ngIf="getStripUrl() && !stripLoadFailed()"

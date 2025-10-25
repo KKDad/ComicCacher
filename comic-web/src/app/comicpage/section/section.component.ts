@@ -40,6 +40,7 @@ export class SectionComponent implements OnInit, OnDestroy {
     // UI state signals
     loading = signal(false);
     error = signal<string | null>(null);
+    boundaryMessage = signal<string | null>(null); // For AT_BEGINNING, AT_END messages
     focusVisible = signal(false);
     avatarLoadFailed = signal(false);
     stripLoadFailed = signal(false);
@@ -126,16 +127,27 @@ export class SectionComponent implements OnInit, OnDestroy {
 
     /**
      * Register keyboard shortcuts for comic strip navigation
-     * Arrow keys navigate between strips (dates), PageUp/PageDown scroll between comics
+     * Arrow keys navigate between strips (dates), but only when this comic is focused
+     * PageUp/PageDown scroll between comics (handled by container)
      */
     private registerKeyboardShortcuts(): void {
         const shortcuts = this.keyboardService.registerComicStripNavigationShortcuts(
-            () => this.onNavigateFirst(),
-            () => this.onPrev(),
-            () => this.onNext(),
-            () => this.onNavigateLast()
+            () => this.handleNavigationIfFocused(() => this.onNavigateFirst()),
+            () => this.handleNavigationIfFocused(() => this.onPrev()),
+            () => this.handleNavigationIfFocused(() => this.onNext()),
+            () => this.handleNavigationIfFocused(() => this.onNavigateLast())
         );
         this.subscriptions.add(shortcuts);
+    }
+
+    /**
+     * Execute navigation only if this comic section currently has focus
+     * This prevents all comics from responding to arrow keys simultaneously
+     */
+    private handleNavigationIfFocused(navigationFn: () => void): void {
+        if (this.focusVisible()) {
+            navigationFn();
+        }
     }
 
     /**
@@ -196,6 +208,7 @@ export class SectionComponent implements OnInit, OnDestroy {
 
     clearError() {
         this.error.set(null);
+        this.boundaryMessage.set(null);
     }
 
     // Load avatar image for comic
@@ -326,10 +339,12 @@ export class SectionComponent implements OnInit, OnDestroy {
 
     /**
      * Handle navigation boundary when no image is found
-     * Displays a helpful message based on the reason
+     * Boundary messages (AT_END, AT_BEGINNING) go to boundaryMessage signal
+     * Real errors (NO_COMICS_AVAILABLE, ERROR) go to error signal
      */
     private handleNavigationBoundary(result: ComicNavigationResult): void {
         let message = '';
+        let isBoundary = false;
 
         switch (result.reason) {
             case 'AT_END':
@@ -338,6 +353,7 @@ export class SectionComponent implements OnInit, OnDestroy {
                 } else {
                     message = 'No more comics available in this direction.';
                 }
+                isBoundary = true;
                 break;
             case 'AT_BEGINNING':
                 if (result.nearestNextDate) {
@@ -345,6 +361,7 @@ export class SectionComponent implements OnInit, OnDestroy {
                 } else {
                     message = 'No more comics available in this direction.';
                 }
+                isBoundary = true;
                 break;
             case 'NO_COMICS_AVAILABLE':
                 message = 'No comics available for this comic strip.';
@@ -355,7 +372,12 @@ export class SectionComponent implements OnInit, OnDestroy {
                 break;
         }
 
-        this.error.set(message);
+        // Boundary messages go to pubdate area, real errors go to error display
+        if (isBoundary) {
+            this.boundaryMessage.set(message);
+        } else {
+            this.error.set(message);
+        }
     }
 
     /**
@@ -370,6 +392,8 @@ export class SectionComponent implements OnInit, OnDestroy {
         try {
             this.content.strip = 'data:' + imagedto.mimeType + ';base64,' + imagedto.imageData;
             this.imageDate = imagedto.imageDate.valueOf();
+            // Clear boundary message on successful navigation
+            this.boundaryMessage.set(null);
         } catch (err) {
             this.error.set('Error processing image data');
             console.error('Error setting strip:', err);

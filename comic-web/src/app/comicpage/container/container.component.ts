@@ -156,8 +156,8 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       /**
-       * Scroll up by one comic card height (PageUp key)
-       * Moves viewport up to show the previous comic in the list
+       * Scroll up by one comic section (PageUp key)
+       * Intelligently snaps to the top of the previous comic card
        */
       private scrollUpByOneComic(): void {
         if (!this.viewport) {
@@ -165,13 +165,40 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         const currentOffset = this.viewport.measureScrollOffset();
-        const newOffset = Math.max(0, currentOffset - this.COMIC_CARD_HEIGHT);
-        this.viewport.scrollToOffset(newOffset, 'smooth');
+        const viewportElement = this.viewport.elementRef.nativeElement;
+        const comicElements = viewportElement.querySelectorAll('.comic-item');
+
+        if (comicElements.length === 0) {
+            return;
+        }
+
+        // Find the previous comic to scroll to
+        let targetOffset = 0;
+        let foundPrevious = false;
+
+        for (let i = comicElements.length - 1; i >= 0; i--) {
+            const element = comicElements[i] as HTMLElement;
+            const elementTop = element.offsetTop;
+
+            // Find a comic that starts above the current scroll position (with small threshold)
+            if (elementTop < currentOffset - 50) {
+                targetOffset = elementTop;
+                foundPrevious = true;
+                break;
+            }
+        }
+
+        // If no previous comic found, scroll to top
+        if (!foundPrevious) {
+            targetOffset = 0;
+        }
+
+        this.viewport.scrollToOffset(targetOffset, 'smooth');
       }
 
       /**
-       * Scroll down by one comic card height (PageDown key)
-       * Moves viewport down to show the next comic in the list
+       * Scroll down by one comic section (PageDown key)
+       * Intelligently snaps to the top of the next comic card
        */
       private scrollDownByOneComic(): void {
         if (!this.viewport) {
@@ -179,8 +206,31 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         const currentOffset = this.viewport.measureScrollOffset();
-        const newOffset = currentOffset + this.COMIC_CARD_HEIGHT;
-        this.viewport.scrollToOffset(newOffset, 'smooth');
+        const viewportElement = this.viewport.elementRef.nativeElement;
+        const comicElements = viewportElement.querySelectorAll('.comic-item');
+
+        if (comicElements.length === 0) {
+            return;
+        }
+
+        // Find the next comic to scroll to
+        let targetOffset = currentOffset + this.COMIC_CARD_HEIGHT; // Fallback
+        let foundNext = false;
+
+        for (let i = 0; i < comicElements.length; i++) {
+            const element = comicElements[i] as HTMLElement;
+            const elementTop = element.offsetTop;
+
+            // Find a comic that starts below the current scroll position (with small threshold)
+            if (elementTop > currentOffset + 50) {
+                targetOffset = elementTop;
+                foundNext = true;
+                break;
+            }
+        }
+
+        // If no next comic found, use fallback (scroll by fixed amount)
+        this.viewport.scrollToOffset(targetOffset, 'smooth');
       }
 
 }

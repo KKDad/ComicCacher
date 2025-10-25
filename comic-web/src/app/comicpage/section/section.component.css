@@ -30,6 +30,14 @@
   font-weight: 500;
 }
 
+/* Boundary message styling (AT_END, AT_BEGINNING) */
+.pubdate.boundary-message {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-style: italic;
+  text-align: center;
+}
+
 .comic-content-container {
   position: relative;
   min-height: 200px;
@@ -64,11 +72,16 @@ figure {
   align-items: center;
 }
 
-/* Focus styles for accessibility */
+/* Focus styles for accessibility - keyboard navigation */
 .mat-mdc-card.focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-  box-shadow: var(--glass-shadow-hover);
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
+  box-shadow: 0 8px 24px rgba(91, 155, 213, 0.35),
+              0 0 0 4px rgba(91, 155, 213, 0.1);
+  border-color: rgba(91, 155, 213, 0.6);
+  border-left: 4px solid var(--primary-color);
+  /* Subtle scale instead of translateY to differentiate from hover */
+  transform: scale(1.01);
 }
 
 /* Avatar placeholder styling */
