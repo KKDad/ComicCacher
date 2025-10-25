@@ -53,7 +53,7 @@ class ComicControllerTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        ComicController comicController = new ComicController(comicManagementFacade);
+        ComicController comicController = new ComicController(comicManagementFacade, Optional.empty());
         mockMvc = MockMvcBuilders.standaloneSetup(comicController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

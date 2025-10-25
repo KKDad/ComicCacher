@@ -22,10 +22,12 @@ import org.stapledon.common.model.ComicImageNotFoundException;
 import org.stapledon.common.model.ComicNotFoundException;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.infrastructure.caching.PredictiveCacheService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 public class ComicController {
 
     private final ComicManagementFacade comicManagementFacade;
+    private final Optional<PredictiveCacheService> predictiveCacheService;
 
     /*****************************************************************************************************************
      * Comic Strip Listing and Configuration
@@ -122,6 +125,13 @@ public class ComicController {
     @GetMapping("/comics/{comic}/strips/first")
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveFirstComicImage(@PathVariable(name = "comic") Integer comicId) {
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD);
+
+        // Trigger predictive lookahead if result found and cache service is available
+        if (result.isFound() && result.getCurrentDate() != null) {
+            predictiveCacheService.ifPresent(service ->
+                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.FORWARD));
+        }
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
@@ -132,6 +142,13 @@ public class ComicController {
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveNextComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, from);
+
+        // Trigger predictive lookahead if result found and cache service is available
+        if (result.isFound() && result.getCurrentDate() != null) {
+            predictiveCacheService.ifPresent(service ->
+                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.FORWARD));
+        }
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
@@ -142,6 +159,13 @@ public class ComicController {
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrievePreviousComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD, from);
+
+        // Trigger predictive lookahead if result found and cache service is available
+        if (result.isFound() && result.getCurrentDate() != null) {
+            predictiveCacheService.ifPresent(service ->
+                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.BACKWARD));
+        }
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
@@ -151,6 +175,13 @@ public class ComicController {
     @GetMapping("/comics/{comic}/strips/last")
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveLastComicImage(@PathVariable(name = "comic") Integer comicId) {
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD);
+
+        // Trigger predictive lookahead if result found and cache service is available
+        if (result.isFound() && result.getCurrentDate() != null) {
+            predictiveCacheService.ifPresent(service ->
+                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.BACKWARD));
+        }
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))

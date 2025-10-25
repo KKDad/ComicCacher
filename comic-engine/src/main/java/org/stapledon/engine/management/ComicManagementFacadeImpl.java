@@ -1,5 +1,6 @@
 package org.stapledon.engine.management;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.dto.ComicConfig;
@@ -78,6 +79,7 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     }
 
     @Override
+    @Cacheable(value = "comicMetadata", key = "'allComics'")
     public List<ComicItem> getAllComics() {
         List<ComicItem> result = new ArrayList<>(comics.values());
         Collections.sort(result);
@@ -85,6 +87,7 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     }
 
     @Override
+    @Cacheable(value = "comicMetadata", key = "'comic:' + #comicId")
     public Optional<ComicItem> getComic(int comicId) {
         return Optional.ofNullable(comics.get(comicId));
     }
@@ -210,6 +213,7 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     }
 
     @Override
+    @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #from + ':' + #direction")
     public ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from) {
         Optional<ComicItem> comicOpt = getComic(comicId);
         if (comicOpt.isEmpty()) {
