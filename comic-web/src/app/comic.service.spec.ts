@@ -107,13 +107,20 @@ describe('ComicService', () => {
         imageDate: '2020-12-31'
       };
 
-      service.getLatest(123).subscribe(image => {
-        expect(image).toEqual(mockImage);
+      const mockResult = {
+        found: true,
+        image: mockImage,
+        nearestPreviousDate: '2020-12-30',
+        nearestNextDate: null
+      };
+
+      service.getLatest(123).subscribe(result => {
+        expect(result).toEqual(mockResult);
       });
 
       const req = httpMock.expectOne('api/v1/comics/123/strips/last');
       expect(req.request.method).toBe('GET');
-      req.flush(mockImage);
+      req.flush(mockResult);
     });
 
     it('should return EMPTY if id is 0', () => {
@@ -145,13 +152,20 @@ describe('ComicService', () => {
         imageDate: '2020-01-01'
       };
 
-      service.getEarliest(123).subscribe(image => {
-        expect(image).toEqual(mockImage);
+      const mockResult = {
+        found: true,
+        image: mockImage,
+        nearestPreviousDate: null,
+        nearestNextDate: '2020-01-02'
+      };
+
+      service.getEarliest(123).subscribe(result => {
+        expect(result).toEqual(mockResult);
       });
 
       const req = httpMock.expectOne('api/v1/comics/123/strips/first');
       expect(req.request.method).toBe('GET');
-      req.flush(mockImage);
+      req.flush(mockResult);
     });
 
     it('should return EMPTY if id is 0', () => {
@@ -204,13 +218,20 @@ describe('ComicService', () => {
         imageDate: '2020-01-02'
       };
 
-      service.getNext(123, '2020-01-01').subscribe(image => {
-        expect(image).toEqual(mockImage);
+      const mockResult = {
+        found: true,
+        image: mockImage,
+        nearestPreviousDate: '2020-01-01',
+        nearestNextDate: '2020-01-03'
+      };
+
+      service.getNext(123, '2020-01-01').subscribe(result => {
+        expect(result).toEqual(mockResult);
       });
 
       const req = httpMock.expectOne('api/v1/comics/123/next/2020-01-01');
       expect(req.request.method).toBe('GET');
-      req.flush(mockImage);
+      req.flush(mockResult);
     });
 
     it('should return EMPTY if id is 0', () => {
@@ -263,13 +284,20 @@ describe('ComicService', () => {
         imageDate: '2020-01-01'
       };
 
-      service.getPrev(123, '2020-01-02').subscribe(image => {
-        expect(image).toEqual(mockImage);
+      const mockResult = {
+        found: true,
+        image: mockImage,
+        nearestPreviousDate: null,
+        nearestNextDate: '2020-01-02'
+      };
+
+      service.getPrev(123, '2020-01-02').subscribe(result => {
+        expect(result).toEqual(mockResult);
       });
 
       const req = httpMock.expectOne('api/v1/comics/123/previous/2020-01-02');
       expect(req.request.method).toBe('GET');
-      req.flush(mockImage);
+      req.flush(mockResult);
     });
 
     it('should return EMPTY if id is 0', () => {

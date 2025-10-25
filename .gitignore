@@ -171,5 +171,6 @@ gradle-app.setting
 
 # Runtime and temporary files
 **/test-cache/
-
 **/C:/**
+**/batch-integration-cache/**
+**/integration-cache/**/

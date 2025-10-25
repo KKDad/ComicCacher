@@ -2,6 +2,7 @@ package org.stapledon.engine.management;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -22,6 +23,7 @@ import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
 import org.stapledon.common.service.ComicConfigurationService;
@@ -316,16 +318,17 @@ class ComicManagementFacadeImplTest {
         // Arrange
         LocalDate oldestDate = LocalDate.now().minusDays(30);
         ImageDto imageDto = new ImageDto();
-        
+
         when(storageFacade.getOldestDateWithComic(1, "Test Comic")).thenReturn(Optional.of(oldestDate));
         when(storageFacade.getComicStrip(1, "Test Comic", oldestDate)).thenReturn(Optional.of(imageDto));
-        
+
         // Act
-        Optional<ImageDto> result = facade.getComicStrip(1, Direction.FORWARD);
-        
+        ComicNavigationResult result = facade.getComicStrip(1, Direction.FORWARD);
+
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(imageDto, result.get());
+        assertTrue(result.isFound());
+        assertNotNull(result.getImage());
+        assertEquals(imageDto, result.getImage());
     }
 
     @Test
@@ -333,16 +336,17 @@ class ComicManagementFacadeImplTest {
         // Arrange
         LocalDate newestDate = LocalDate.now();
         ImageDto imageDto = new ImageDto();
-        
+
         when(storageFacade.getNewestDateWithComic(1, "Test Comic")).thenReturn(Optional.of(newestDate));
         when(storageFacade.getComicStrip(1, "Test Comic", newestDate)).thenReturn(Optional.of(imageDto));
-        
+
         // Act
-        Optional<ImageDto> result = facade.getComicStrip(1, Direction.BACKWARD);
-        
+        ComicNavigationResult result = facade.getComicStrip(1, Direction.BACKWARD);
+
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(imageDto, result.get());
+        assertTrue(result.isFound());
+        assertNotNull(result.getImage());
+        assertEquals(imageDto, result.getImage());
     }
 
     @Test
@@ -351,16 +355,17 @@ class ComicManagementFacadeImplTest {
         LocalDate from = LocalDate.now().minusDays(15);
         LocalDate next = LocalDate.now().minusDays(14);
         ImageDto imageDto = new ImageDto();
-        
+
         when(storageFacade.getNextDateWithComic(1, "Test Comic", from)).thenReturn(Optional.of(next));
         when(storageFacade.getComicStrip(1, "Test Comic", next)).thenReturn(Optional.of(imageDto));
-        
+
         // Act
-        Optional<ImageDto> result = facade.getComicStrip(1, Direction.FORWARD, from);
-        
+        ComicNavigationResult result = facade.getComicStrip(1, Direction.FORWARD, from);
+
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(imageDto, result.get());
+        assertTrue(result.isFound());
+        assertNotNull(result.getImage());
+        assertEquals(imageDto, result.getImage());
     }
 
     @Test

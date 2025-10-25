@@ -22,6 +22,7 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.engine.downloader.ComicDownloaderFacade;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -136,10 +137,34 @@ public class ComicRetrievalJobConfig {
      */
     private List<ComicDownloadRequest> createComicRequests() {
         LocalDate targetDate = LocalDate.now();
+        DayOfWeek today = targetDate.getDayOfWeek();
         ComicConfig config = configurationFacade.loadComicConfig();
 
         return config.getComics().stream()
-                .filter(comic -> comic.getSource() != null && !comic.getSource().isEmpty())
+                .filter(comic -> {
+                    // Skip if no source
+                    if (comic.getSource() == null || comic.getSource().isEmpty()) {
+                        log.debug("Skipping {} - no source configured", comic.getName());
+                        return false;
+                    }
+
+                    // Skip inactive comics (discontinued/delisted)
+                    if (!comic.isActive()) {
+                        log.info("Skipping {} - comic is inactive/discontinued", comic.getName());
+                        return false;
+                    }
+
+                    // Skip if comic doesn't publish today
+                    if (comic.getPublicationDays() != null && !comic.getPublicationDays().isEmpty()) {
+                        if (!comic.getPublicationDays().contains(today)) {
+                            log.info("Skipping {} - not published on {} (publishes: {})",
+                                comic.getName(), today, comic.getPublicationDays());
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
                 .map(comic -> ComicDownloadRequest.builder()
                         .comicId(comic.getId())
                         .comicName(comic.getName())

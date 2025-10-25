@@ -61,7 +61,7 @@ public class ComicReconciliationJobScheduler {
      * Scheduled execution of ComicReconciliationJob
      * Runs at 6:15 AM EST (America/Toronto timezone) every day
      */
-    @Scheduled(cron = "${batch.reconciliation.cron}")
+    @Scheduled(cron = "${batch.reconciliation.cron}", zone = "${batch.timezone}")
     public void runDailyReconciliation() {
         log.info("Starting scheduled comic reconciliation");
 
@@ -80,7 +80,7 @@ public class ComicReconciliationJobScheduler {
 
         JobParametersBuilder parametersBuilder = new JobParametersBuilder()
                 .addString("trigger", trigger)
-                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")));
+                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
 
         JobExecution execution = jobLauncher.run(comicReconciliationJob, parametersBuilder.toJobParameters());
 

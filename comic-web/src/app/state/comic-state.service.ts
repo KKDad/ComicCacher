@@ -1,6 +1,7 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {Comic} from '../dto/comic';
 import {ImageDto} from '../dto/image';
+import {ComicNavigationResult} from '../dto/comic-navigation-result';
 import {ComicService} from '../comic.service';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {catchError, EMPTY, shareReplay, switchMap} from 'rxjs';
@@ -64,9 +65,11 @@ export class ComicStateService {
         return EMPTY;
       }),
       shareReplay(1)
-    ).subscribe(strip => {
-      if (strip) {
-        this.updateCurrentStrip(strip);
+    ).subscribe(result => {
+      if (result && result.found && result.image) {
+        this.updateCurrentStrip(result.image);
+      } else if (result && !result.found) {
+        this.setError(this.getNavigationErrorMessage(result));
       }
     });
   }
@@ -105,11 +108,15 @@ export class ComicStateService {
   navigateToFirst(): void {
     const id = this.selectedComicId();
     if (!id) return;
-    
+
     this.setLoading(true);
     this.comicService.getEarliest(id).subscribe({
-      next: (strip) => {
-        this.updateCurrentStrip(strip);
+      next: (result) => {
+        if (result.found && result.image) {
+          this.updateCurrentStrip(result.image);
+        } else {
+          this.setError(this.getNavigationErrorMessage(result));
+        }
         this.setLoading(false);
       },
       error: (err) => {
@@ -118,7 +125,7 @@ export class ComicStateService {
       }
     });
   }
-  
+
   /**
    * Navigate to the previous strip
    */
@@ -126,11 +133,15 @@ export class ComicStateService {
     const id = this.selectedComicId();
     const current = this.currentStrip();
     if (!id || !current || !current.imageDate) return;
-    
+
     this.setLoading(true);
     this.comicService.getPrev(id, current.imageDate).subscribe({
-      next: (strip) => {
-        this.updateCurrentStrip(strip);
+      next: (result) => {
+        if (result.found && result.image) {
+          this.updateCurrentStrip(result.image);
+        } else {
+          this.setError(this.getNavigationErrorMessage(result));
+        }
         this.setLoading(false);
       },
       error: (err) => {
@@ -139,7 +150,7 @@ export class ComicStateService {
       }
     });
   }
-  
+
   /**
    * Navigate to the next strip
    */
@@ -147,11 +158,15 @@ export class ComicStateService {
     const id = this.selectedComicId();
     const current = this.currentStrip();
     if (!id || !current || !current.imageDate) return;
-    
+
     this.setLoading(true);
     this.comicService.getNext(id, current.imageDate).subscribe({
-      next: (strip) => {
-        this.updateCurrentStrip(strip);
+      next: (result) => {
+        if (result.found && result.image) {
+          this.updateCurrentStrip(result.image);
+        } else {
+          this.setError(this.getNavigationErrorMessage(result));
+        }
         this.setLoading(false);
       },
       error: (err) => {
@@ -160,18 +175,22 @@ export class ComicStateService {
       }
     });
   }
-  
+
   /**
    * Navigate to the latest strip
    */
   navigateToLatest(): void {
     const id = this.selectedComicId();
     if (!id) return;
-    
+
     this.setLoading(true);
     this.comicService.getLatest(id).subscribe({
-      next: (strip) => {
-        this.updateCurrentStrip(strip);
+      next: (result) => {
+        if (result.found && result.image) {
+          this.updateCurrentStrip(result.image);
+        } else {
+          this.setError(this.getNavigationErrorMessage(result));
+        }
         this.setLoading(false);
       },
       error: (err) => {
@@ -216,5 +235,26 @@ export class ComicStateService {
       ...state,
       error
     }));
+  }
+
+  /**
+   * Generate a user-friendly error message from navigation result
+   */
+  private getNavigationErrorMessage(result: ComicNavigationResult): string {
+    switch (result.reason) {
+      case 'AT_END':
+        return result.nearestPreviousDate
+          ? `You're viewing the latest comic (${result.nearestPreviousDate}). Check back tomorrow!`
+          : 'No more comics available.';
+      case 'AT_BEGINNING':
+        return result.nearestNextDate
+          ? `You're viewing the oldest comic (${result.nearestNextDate}).`
+          : 'No more comics available.';
+      case 'NO_COMICS_AVAILABLE':
+        return 'No comics available for this comic strip.';
+      case 'ERROR':
+      default:
+        return 'Unable to load comic. Please try again.';
+    }
   }
 }

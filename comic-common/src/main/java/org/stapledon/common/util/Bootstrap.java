@@ -66,7 +66,9 @@ public class Bootstrap {
                 .sourceIdentifier(bootstrap.getSourceIdentifier())
                 .oldest(bootstrap.startDate())
                 .newest(bootstrap.startDate().plusDays(1)) // Default to day after start date
-                .enabled(true)
+                .enabled(true) // Always show in UI
+                .publicationDays(bootstrap.getPublicationDays())
+                .active(bootstrap.getActive())
                 .build();
     }
 }

@@ -11,4 +11,5 @@ export class Comic {
   description: string;
   strip: string;
   avatar: string;
+  active?: boolean; // Whether comic is actively publishing (false = inactive/discontinued)
 }

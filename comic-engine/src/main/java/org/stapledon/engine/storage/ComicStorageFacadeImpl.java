@@ -2,6 +2,7 @@ package org.stapledon.engine.storage;
 
 import com.google.common.io.Files;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
@@ -207,9 +208,10 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
     }
     
     @Override
+    @Cacheable(value = "navigationDates", key = "'next:' + #comicId + ':' + #fromDate")
     public Optional<LocalDate> getNextDateWithComic(int comicId, String comicName, LocalDate fromDate) {
         Objects.requireNonNull(fromDate, "fromDate cannot be null");
-        
+
         String comicNameParsed = getComicNameParsed(comicId, comicName);
         File root = new File(String.format("%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed));
         
@@ -242,9 +244,10 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
     }
     
     @Override
+    @Cacheable(value = "navigationDates", key = "'prev:' + #comicId + ':' + #fromDate")
     public Optional<LocalDate> getPreviousDateWithComic(int comicId, String comicName, LocalDate fromDate) {
         Objects.requireNonNull(fromDate, "fromDate cannot be null");
-        
+
         String comicNameParsed = getComicNameParsed(comicId, comicName);
         File root = new File(String.format("%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed));
         
@@ -277,9 +280,10 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
     }
     
     @Override
+    @Cacheable(value = "boundaryDates", key = "'newest:' + #comicId")
     public Optional<LocalDate> getNewestDateWithComic(int comicId, String comicName) {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
-        
+
         ComicItem comicItem = ComicItem.builder()
                 .id(comicId)
                 .name(comicNameParsed)
@@ -300,9 +304,10 @@ public class ComicStorageFacadeImpl implements ComicStorageFacade {
     }
     
     @Override
+    @Cacheable(value = "boundaryDates", key = "'oldest:' + #comicId")
     public Optional<LocalDate> getOldestDateWithComic(int comicId, String comicName) {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
-        
+
         ComicItem comicItem = ComicItem.builder()
                 .id(comicId)
                 .name(comicNameParsed)

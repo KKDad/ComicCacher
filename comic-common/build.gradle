@@ -34,6 +34,10 @@ dependencies {
 	// Gson for JSON serialization (used in DTOs)
 	api "com.google.code.gson:gson:${gsonVersion}"
 
+	// Jackson for JSON annotations (used in DTOs for Spring)
+	api 'com.fasterxml.jackson.core:jackson-databind'
+	api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
 	// Guava for utilities
 	api "com.google.guava:guava:${guavaVersion}"
 
@@ -60,6 +64,6 @@ dependencyManagement {
 	}
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
 	useJUnitPlatform()
 }

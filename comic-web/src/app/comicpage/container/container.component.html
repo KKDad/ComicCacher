@@ -20,8 +20,8 @@
   <cdk-virtual-scroll-viewport
     class="comic-viewport"
     [itemSize]="itemSizeFn"
-    [minBufferPx]="500"
-    [maxBufferPx]="1000">
+    [minBufferPx]="350"
+    [maxBufferPx]="800">
     <div *cdkVirtualFor="let section of sections; trackBy: trackByComicId" class="comic-item">
       <app-section [content]="section"></app-section>
     </div>

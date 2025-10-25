@@ -1,6 +1,8 @@
 package org.stapledon.common.dto;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +28,8 @@ public class ComicItem implements Comparable<ComicItem> {
     Boolean avatarAvailable;
     String source;
     String sourceIdentifier;
+    List<DayOfWeek> publicationDays; // Days comic publishes (null/empty = daily)
+    Boolean active; // Whether comic is actively publishing (true = active, false = inactive/discontinued)
 
     @Override
     public boolean equals(Object o) {
@@ -65,5 +69,14 @@ public class ComicItem implements Comparable<ComicItem> {
      */
     public boolean isEnabled() {
         return enabled != null && enabled;
+    }
+
+    /**
+     * Checks if this comic is actively publishing new strips.
+     *
+     * @return true if active, false if inactive/discontinued
+     */
+    public boolean isActive() {
+        return active == null || active;
     }
 }
