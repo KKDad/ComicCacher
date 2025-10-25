@@ -1,4 +1,4 @@
-import {Component, ElementRef, inject, Input, OnDestroy, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, ElementRef, inject, Input, OnDestroy, OnInit, signal} from '@angular/core';
 import {Comic} from '../../dto/comic';
 import {ComicService} from '../../comic.service';
 import {DomSanitizer} from '@angular/platform-browser';
@@ -23,7 +23,8 @@ import {Subscription} from 'rxjs';
         MatButtonModule,
         LoadingIndicatorComponent,
         ErrorDisplayComponent
-    ]
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SectionComponent implements OnInit, OnDestroy {
     @Input() content: Comic;
