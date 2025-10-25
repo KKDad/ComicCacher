@@ -45,20 +45,22 @@ export class SectionComponent implements OnInit, OnDestroy {
     // Keep track of subscriptions for cleanup
     private subscriptions = new Subscription();
 
+    // Track if images have been loaded
+    private imagesLoaded = false;
+
+    // IntersectionObserver for lazy loading
+    private intersectionObserver: IntersectionObserver | null = null;
+
     constructor(private element: ElementRef) {}
 
 
     ngOnInit() {
         // Initialize imageDate to prevent undefined being passed to API
-        // Use the comic's newest date as the default starting point
         if (this.content?.newest) {
             this.imageDate = this.content.newest;
         }
 
-        this.loadAvatar();
-        this.onNavigateLast();
-
-        // Set up keyboard shortcuts for navigation
+        this.setupLazyLoading();
         this.registerKeyboardShortcuts();
 
         // Listen for focus events
@@ -71,6 +73,53 @@ export class SectionComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy(): void {
         this.subscriptions.unsubscribe();
+
+        // Clean up IntersectionObserver
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+            this.intersectionObserver = null;
+        }
+    }
+
+    /**
+     * Set up lazy loading with IntersectionObserver
+     * Images are only loaded when the comic card enters the viewport
+     */
+    private setupLazyLoading(): void {
+        // Create IntersectionObserver with a threshold
+        // Load when 10% of the card is visible
+        const options = {
+            root: null, // Use viewport as root
+            rootMargin: '200px', // Start loading 200px before entering viewport
+            threshold: 0.1 // Trigger when 10% visible
+        };
+
+        this.intersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // Load images when card becomes visible
+                if (entry.isIntersecting && !this.imagesLoaded) {
+                    this.imagesLoaded = true;
+                    this.loadImagesLazily();
+
+                    // Stop observing once images are loaded
+                    if (this.intersectionObserver) {
+                        this.intersectionObserver.unobserve(entry.target);
+                    }
+                }
+            });
+        }, options);
+
+        // Observe this component's element
+        this.intersectionObserver.observe(this.element.nativeElement);
+    }
+
+    /**
+     * Load avatar and comic strip images lazily
+     * Called when the comic card becomes visible in the viewport
+     */
+    private loadImagesLazily(): void {
+        this.loadAvatar();
+        this.onNavigateLast();
     }
 
     /**

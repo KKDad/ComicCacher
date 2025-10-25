@@ -89,12 +89,33 @@ describe('SectionComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load avatar on init', () => {
-    expect(comicServiceSpy.getAvatar).toHaveBeenCalledWith(mockComic.id);
+  it('should load avatar when visible (lazy loading)', (done) => {
+    // Initially, avatar should NOT be loaded
+    expect(comicServiceSpy.getAvatar).not.toHaveBeenCalled();
+
+    // Manually trigger the lazy loading (simulating IntersectionObserver)
+    // Access private method via any type assertion
+    (component as any).loadImagesLazily();
+
+    // Now avatar should be loaded
+    setTimeout(() => {
+      expect(comicServiceSpy.getAvatar).toHaveBeenCalledWith(mockComic.id);
+      done();
+    }, 10);
   });
 
-  it('should load latest comic on init', () => {
-    expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(mockComic.id);
+  it('should load latest comic when visible (lazy loading)', (done) => {
+    // Initially, latest comic should NOT be loaded
+    expect(comicServiceSpy.getLatest).not.toHaveBeenCalled();
+
+    // Manually trigger the lazy loading (simulating IntersectionObserver)
+    (component as any).loadImagesLazily();
+
+    // Now latest comic should be loaded
+    setTimeout(() => {
+      expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(mockComic.id);
+      done();
+    }, 10);
   });
 
   it('should sanitize avatar image URL', () => {
