@@ -42,6 +42,13 @@ describe('ComicStateService', () => {
     width: 100
   };
 
+  const mockNavigationResult = {
+    found: true,
+    image: mockImageDto,
+    nearestPreviousDate: '2020-06-14',
+    nearestNextDate: '2020-06-16'
+  };
+
   beforeEach(() => {
     const spy = jasmine.createSpyObj('ComicService', [
       'getComics',
@@ -60,7 +67,7 @@ describe('ComicStateService', () => {
 
     comicServiceSpy = TestBed.inject(ComicService) as jasmine.SpyObj<ComicService>;
     comicServiceSpy.getComics.and.returnValue(of(mockComics));
-    comicServiceSpy.getLatest.and.returnValue(of(mockImageDto));
+    comicServiceSpy.getLatest.and.returnValue(of(mockNavigationResult));
 
     service = TestBed.inject(ComicStateService);
   });
@@ -161,7 +168,7 @@ describe('ComicStateService', () => {
 
   describe('navigateToFirst', () => {
     beforeEach(() => {
-      comicServiceSpy.getEarliest.and.returnValue(of(mockImageDto));
+      comicServiceSpy.getEarliest.and.returnValue(of(mockNavigationResult));
     });
 
     it('should navigate to the first strip', (done) => {
@@ -198,7 +205,7 @@ describe('ComicStateService', () => {
 
   describe('navigateToPrevious', () => {
     beforeEach(() => {
-      comicServiceSpy.getPrev.and.returnValue(of(mockImageDto));
+      comicServiceSpy.getPrev.and.returnValue(of(mockNavigationResult));
     });
 
     it('should navigate to the previous strip', (done) => {
@@ -242,7 +249,7 @@ describe('ComicStateService', () => {
 
   describe('navigateToNext', () => {
     beforeEach(() => {
-      comicServiceSpy.getNext.and.returnValue(of(mockImageDto));
+      comicServiceSpy.getNext.and.returnValue(of(mockNavigationResult));
     });
 
     it('should navigate to the next strip', (done) => {
@@ -286,7 +293,7 @@ describe('ComicStateService', () => {
 
   describe('navigateToLatest', () => {
     beforeEach(() => {
-      comicServiceSpy.getLatest.and.returnValue(of(mockImageDto));
+      comicServiceSpy.getLatest.and.returnValue(of(mockNavigationResult));
     });
 
     it('should navigate to the latest strip', (done) => {

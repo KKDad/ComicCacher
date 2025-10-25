@@ -9,6 +9,7 @@ import {createStandaloneComponentFixture} from '../../testing/testing-utils';
 import {ElementRef} from '@angular/core';
 import {Comic} from '../../dto/comic';
 import {ImageDto} from '../../dto/image';
+import {ComicNavigationResult} from '../../dto/comic-navigation-result';
 
 describe('SectionComponent', () => {
   let component: SectionComponent;
@@ -37,6 +38,14 @@ describe('SectionComponent', () => {
     imageDate: '2023-05-09'
   };
 
+  const mockNavigationResult: ComicNavigationResult = {
+    found: true,
+    image: mockImageDto,
+    nearestPreviousDate: '2023-05-08',
+    nearestNextDate: '2023-05-10',
+    currentDate: '2023-05-09'
+  };
+
   beforeEach(() => {
     // Create spies for all services
     comicServiceSpy = jasmine.createSpyObj('ComicService', [
@@ -53,10 +62,10 @@ describe('SectionComponent', () => {
 
     // Set up spy return values
     comicServiceSpy.getAvatar.and.returnValue(of(mockImageDto));
-    comicServiceSpy.getEarliest.and.returnValue(of(mockImageDto));
-    comicServiceSpy.getPrev.and.returnValue(of(mockImageDto));
-    comicServiceSpy.getNext.and.returnValue(of(mockImageDto));
-    comicServiceSpy.getLatest.and.returnValue(of(mockImageDto));
+    comicServiceSpy.getEarliest.and.returnValue(of(mockNavigationResult));
+    comicServiceSpy.getPrev.and.returnValue(of(mockNavigationResult));
+    comicServiceSpy.getNext.and.returnValue(of(mockNavigationResult));
+    comicServiceSpy.getLatest.and.returnValue(of(mockNavigationResult));
 
     sanitizerSpy.bypassSecurityTrustResourceUrl.and.returnValue('safe-url');
     // No return value needed for this method, it returns void
@@ -178,7 +187,14 @@ describe('SectionComponent', () => {
       imageDate: '2023-05-09'
     };
 
-    comicServiceSpy.getLatest.and.returnValue(of(largeImage));
+    const largeResult: ComicNavigationResult = {
+      found: true,
+      image: largeImage,
+      nearestPreviousDate: '2023-05-08',
+      nearestNextDate: null
+    };
+
+    comicServiceSpy.getLatest.and.returnValue(of(largeResult));
     component.onNavigateLast();
 
     // Verify strip data URL is set correctly (CSS handles sizing)
@@ -195,7 +211,14 @@ describe('SectionComponent', () => {
       imageDate: '2023-05-09'
     };
 
-    comicServiceSpy.getLatest.and.returnValue(of(smallImage));
+    const smallResult: ComicNavigationResult = {
+      found: true,
+      image: smallImage,
+      nearestPreviousDate: '2023-05-08',
+      nearestNextDate: null
+    };
+
+    comicServiceSpy.getLatest.and.returnValue(of(smallResult));
     component.onNavigateLast();
 
     // Verify strip data URL is set correctly (CSS handles sizing)

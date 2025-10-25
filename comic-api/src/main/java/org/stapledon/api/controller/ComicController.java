@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.model.ComicCachingException;
 import org.stapledon.common.model.ComicImageNotFoundException;
@@ -119,44 +120,40 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/strips/first")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveFirstComicImage(@PathVariable(name = "comic") Integer comicId) {
-        return comicManagementFacade.getComicStrip(comicId, Direction.FORWARD)
-                .map(imageDto -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
-                        .body(imageDto))
-                .orElseThrow(() -> new ComicImageNotFoundException("First comic strip for comic ID " + comicId + " could not be found"));
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveFirstComicImage(@PathVariable(name = "comic") Integer comicId) {
+        ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                .body(result);
     }
 
     @GetMapping("/comics/{comic}/next/{date}")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveNextComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveNextComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, from)
-                .map(imageDto -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
-                        .body(imageDto))
-                .orElseThrow(() -> new ComicImageNotFoundException(comicId, from));
+        ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, from);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                .body(result);
     }
 
     @GetMapping("/comics/{comic}/previous/{date}")
-    public @ResponseBody ResponseEntity<ImageDto> retrievePreviousComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrievePreviousComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD, from)
-                .map(imageDto -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
-                        .body(imageDto))
-                .orElseThrow(() -> new ComicImageNotFoundException(comicId, from));
+        ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD, from);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                .body(result);
     }
 
     @GetMapping("/comics/{comic}/strips/last")
-    public @ResponseBody ResponseEntity<ImageDto> retrieveLastComicImage(@PathVariable(name = "comic") Integer comicId) {
-        return comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD)
-                .map(imageDto -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
-                        .body(imageDto))
-                .orElseThrow(() -> new ComicImageNotFoundException("Last comic strip for comic ID " + comicId + " could not be found"));
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveLastComicImage(@PathVariable(name = "comic") Integer comicId) {
+        ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
+                .body(result);
     }
 }

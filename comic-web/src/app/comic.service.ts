@@ -4,6 +4,7 @@ import {catchError, EMPTY, map, Observable, of, shareReplay} from 'rxjs';
 import {toObservable} from '@angular/core/rxjs-interop';
 import {Comic} from './dto/comic';
 import {ImageDto} from './dto/image';
+import {ComicNavigationResult} from './dto/comic-navigation-result';
 
 @Injectable({ providedIn: 'root' })
 export class ComicService {
@@ -80,56 +81,56 @@ export class ComicService {
   /**
    * Get earliest comic strip for a given comic
    */
-  getEarliest(id: number): Observable<ImageDto> {
+  getEarliest(id: number): Observable<ComicNavigationResult> {
     if (id === 0) {
       return EMPTY;
     }
 
     const url = `api/v1/comics/${id}/strips/first`;
-    return this.http.get<ImageDto>(url).pipe(
-      catchError(this.handleError<ImageDto>(`getEarliest id=${id}`))
+    return this.http.get<ComicNavigationResult>(url).pipe(
+      catchError(this.handleError<ComicNavigationResult>(`getEarliest id=${id}`))
     );
   }
 
   /**
    * Get latest comic strip for a given comic
    */
-  getLatest(id: number): Observable<ImageDto> {
+  getLatest(id: number): Observable<ComicNavigationResult> {
     if (id === 0) {
       return EMPTY;
     }
 
     const url = `api/v1/comics/${id}/strips/last`;
-    return this.http.get<ImageDto>(url).pipe(
-      catchError(this.handleError<ImageDto>(`getLatest id=${id}`))
+    return this.http.get<ComicNavigationResult>(url).pipe(
+      catchError(this.handleError<ComicNavigationResult>(`getLatest id=${id}`))
     );
   }
 
   /**
    * Get next comic strip for a given comic and current date
    */
-  getNext(id: number, current: string): Observable<ImageDto> {
+  getNext(id: number, current: string): Observable<ComicNavigationResult> {
     if (id === 0) {
       return EMPTY;
     }
 
     const url = `api/v1/comics/${id}/next/${current}`;
-    return this.http.get<ImageDto>(url).pipe(
-      catchError(this.handleError<ImageDto>(`getNext id=${id}`))
+    return this.http.get<ComicNavigationResult>(url).pipe(
+      catchError(this.handleError<ComicNavigationResult>(`getNext id=${id}`))
     );
   }
 
   /**
    * Get previous comic strip for a given comic and current date
    */
-  getPrev(id: number, current: string): Observable<ImageDto> {
+  getPrev(id: number, current: string): Observable<ComicNavigationResult> {
     if (id === 0) {
       return EMPTY;
     }
 
     const url = `api/v1/comics/${id}/previous/${current}`;
-    return this.http.get<ImageDto>(url).pipe(
-      catchError(this.handleError<ImageDto>(`getPrev id=${id}`))
+    return this.http.get<ComicNavigationResult>(url).pipe(
+      catchError(this.handleError<ComicNavigationResult>(`getPrev id=${id}`))
     );
   }
 

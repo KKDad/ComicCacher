@@ -6,6 +6,7 @@ import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ImageDto;
@@ -166,61 +167,103 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     }
 
     @Override
-    public Optional<ImageDto> getComicStrip(int comicId, Direction direction) {
-        return getComic(comicId)
-                .flatMap(comic -> {
-                    try {
-                        // Get the date based on direction
-                        LocalDate date;
-                        if (direction == Direction.FORWARD) {
-                            Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(comicId, comic.getName());
-                            if (oldestDate.isEmpty()) {
-                                return Optional.empty();
-                            }
-                            date = oldestDate.get();
-                        } else {
-                            Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(comicId, comic.getName());
-                            if (newestDate.isEmpty()) {
-                                return Optional.empty();
-                            }
-                            date = newestDate.get();
-                        }
-                        
-                        // Get the image for the date
-                        return storageFacade.getComicStrip(comicId, comic.getName(), date);
-                    } catch (Exception e) {
-                        log.error("Error retrieving comic strip: {}", e.getMessage(), e);
-                        return Optional.empty();
-                    }
-                });
+    public ComicNavigationResult getComicStrip(int comicId, Direction direction) {
+        Optional<ComicItem> comicOpt = getComic(comicId);
+        if (comicOpt.isEmpty()) {
+            return ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", null, null, null);
+        }
+
+        ComicItem comic = comicOpt.get();
+
+        try {
+            // Get the date based on direction
+            LocalDate date;
+            if (direction == Direction.FORWARD) {
+                Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(comicId, comic.getName());
+                if (oldestDate.isEmpty()) {
+                    return ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", null, null, null);
+                }
+                date = oldestDate.get();
+            } else {
+                Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(comicId, comic.getName());
+                if (newestDate.isEmpty()) {
+                    return ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", null, null, null);
+                }
+                date = newestDate.get();
+            }
+
+            // Get the image for the date
+            Optional<ImageDto> imageOpt = storageFacade.getComicStrip(comicId, comic.getName(), date);
+            if (imageOpt.isEmpty()) {
+                return ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", date, null, null);
+            }
+
+            // Get boundary dates for navigation hints
+            LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), date).orElse(null);
+            LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comic.getName(), date).orElse(null);
+
+            return ComicNavigationResult.found(imageOpt.get(), nearestPrev, nearestNext);
+        } catch (Exception e) {
+            log.error("Error retrieving comic strip: {}", e.getMessage(), e);
+            return ComicNavigationResult.notFound("ERROR", null, null, null);
+        }
     }
 
     @Override
-    public Optional<ImageDto> getComicStrip(int comicId, Direction direction, LocalDate from) {
-        return getComic(comicId)
-                .flatMap(comic -> {
-                    try {
-                        // Get the next/previous date
-                        Optional<LocalDate> dateOpt;
-                        if (direction == Direction.FORWARD) {
-                            dateOpt = storageFacade.getNextDateWithComic(comicId, comic.getName(), from);
-                        } else {
-                            dateOpt = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), from);
-                        }
-                        
-                        if (dateOpt.isEmpty()) {
-                            log.debug("No comic found for {} in direction {} from {}", 
-                                    comic.getName(), direction, from);
-                            return Optional.empty();
-                        }
-                        
-                        // Get the image for the date
-                        return storageFacade.getComicStrip(comicId, comic.getName(), dateOpt.get());
-                    } catch (Exception e) {
-                        log.error("Error retrieving comic strip: {}", e.getMessage(), e);
-                        return Optional.empty();
-                    }
-                });
+    public ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from) {
+        Optional<ComicItem> comicOpt = getComic(comicId);
+        if (comicOpt.isEmpty()) {
+            return ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", from, null, null);
+        }
+
+        ComicItem comic = comicOpt.get();
+
+        try {
+            // Get the next/previous date
+            Optional<LocalDate> dateOpt;
+            if (direction == Direction.FORWARD) {
+                dateOpt = storageFacade.getNextDateWithComic(comicId, comic.getName(), from);
+            } else {
+                dateOpt = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), from);
+            }
+
+            if (dateOpt.isEmpty()) {
+                log.debug("No comic found for {} in direction {} from {}",
+                        comic.getName(), direction, from);
+
+                // Determine if we're at the beginning or end
+                String reason;
+                if (direction == Direction.FORWARD) {
+                    reason = "AT_END";
+                } else {
+                    reason = "AT_BEGINNING";
+                }
+
+                // Get the nearest dates for navigation hints
+                LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), from).orElse(null);
+                LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comic.getName(), from).orElse(null);
+
+                return ComicNavigationResult.notFound(reason, from, nearestPrev, nearestNext);
+            }
+
+            // Get the image for the found date
+            LocalDate targetDate = dateOpt.get();
+            Optional<ImageDto> imageOpt = storageFacade.getComicStrip(comicId, comic.getName(), targetDate);
+
+            if (imageOpt.isEmpty()) {
+                // Image date exists but image couldn't be loaded
+                return ComicNavigationResult.notFound("ERROR", targetDate, null, null);
+            }
+
+            // Get boundary dates for navigation hints
+            LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), targetDate).orElse(null);
+            LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comic.getName(), targetDate).orElse(null);
+
+            return ComicNavigationResult.found(imageOpt.get(), nearestPrev, nearestNext);
+        } catch (Exception e) {
+            log.error("Error retrieving comic strip: {}", e.getMessage(), e);
+            return ComicNavigationResult.notFound("ERROR", from, null, null);
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.stapledon.engine.management;
 
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ImageDto;
@@ -54,14 +55,16 @@ public interface ComicManagementFacade {
     /**
      * Gets a comic strip for the specified comic in the given direction.
      * Uses the most recent date available if no specific date is provided.
+     * Returns a ComicNavigationResult with image data if found, or boundary information if not.
      */
-    Optional<ImageDto> getComicStrip(int comicId, Direction direction);
-    
+    ComicNavigationResult getComicStrip(int comicId, Direction direction);
+
     /**
      * Gets a comic strip for the specified comic in the given direction,
      * starting from the specified date.
+     * Returns a ComicNavigationResult with image data if found, or boundary information if not.
      */
-    Optional<ImageDto> getComicStrip(int comicId, Direction direction, LocalDate from);
+    ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from);
     
     /**
      * Gets a comic strip for the specified comic on the exact date requested.

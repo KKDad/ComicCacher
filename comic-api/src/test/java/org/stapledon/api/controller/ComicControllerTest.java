@@ -27,6 +27,7 @@ import org.stapledon.api.exception.GlobalExceptionHandler;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.service.TestUtil;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.management.ComicManagementFacade;
@@ -211,7 +212,8 @@ class ComicControllerTest {
     @Test
     void retrieveFirstComicImage() throws Exception {
         var image = ImageDto.builder().build();
-        when(comicManagementFacade.getComicStrip(eq(42), any(Direction.class))).thenReturn(Optional.ofNullable(image));
+        var result = ComicNavigationResult.found(image, null, null);
+        when(comicManagementFacade.getComicStrip(eq(42), any(Direction.class))).thenReturn(result);
 
         this.mockMvc.perform(get("/api/v1/comics/42/strips/first"))
                 .andExpect(status().isOk())
@@ -223,7 +225,8 @@ class ComicControllerTest {
     @Test
     void retrieveNextComicImage() throws Exception {
         var image = ImageDto.builder().build();
-        when(comicManagementFacade.getComicStrip(eq(42), eq(Direction.FORWARD), any(LocalDate.class))).thenReturn(Optional.ofNullable(image));
+        var result = ComicNavigationResult.found(image, null, null);
+        when(comicManagementFacade.getComicStrip(eq(42), eq(Direction.FORWARD), any(LocalDate.class))).thenReturn(result);
 
         this.mockMvc.perform(get("/api/v1/comics/42/next/2022-01-01"))
                 .andExpect(status().isOk())
@@ -235,7 +238,8 @@ class ComicControllerTest {
     @Test
     void retrievePreviousComicImage() throws Exception {
         var image = ImageDto.builder().build();
-        when(comicManagementFacade.getComicStrip(eq(42), eq(Direction.BACKWARD), any(LocalDate.class))).thenReturn(Optional.ofNullable(image));
+        var result = ComicNavigationResult.found(image, null, null);
+        when(comicManagementFacade.getComicStrip(eq(42), eq(Direction.BACKWARD), any(LocalDate.class))).thenReturn(result);
 
         this.mockMvc.perform(get("/api/v1/comics/42/previous/2022-01-01"))
                 .andExpect(status().isOk())
@@ -247,11 +251,116 @@ class ComicControllerTest {
     @Test
     void retrieveLastComicImage() throws Exception {
         var image = ImageDto.builder().build();
-        when(comicManagementFacade.getComicStrip(eq(42), any(Direction.class))).thenReturn(Optional.ofNullable(image));
+        var result = ComicNavigationResult.found(image, null, null);
+        when(comicManagementFacade.getComicStrip(eq(42), any(Direction.class))).thenReturn(result);
 
         this.mockMvc.perform(get("/api/v1/comics/42/strips/last"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE));
+
+        verify(comicManagementFacade, times(1)).getComicStrip(eq(42), any(Direction.class));
+    }
+
+    @Test
+    void retrieveFirstComicImageWhenAtEnd() throws Exception {
+        var result = ComicNavigationResult.notFound("AT_END", LocalDate.of(2022, 1, 1),
+                LocalDate.of(2021, 12, 31), null);
+        when(comicManagementFacade.getComicStrip(eq(42), any(Direction.class))).thenReturn(result);
+
+        var mvcResult = this.mockMvc.perform(get("/api/v1/comics/42/strips/first"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        assertThat(responseBody).contains("\"found\":false");
+        assertThat(responseBody).contains("\"reason\":\"AT_END\"");
+        assertThat(responseBody).contains("\"nearestPreviousDate\":\"2021-12-31\"");
+
+        verify(comicManagementFacade, times(1)).getComicStrip(eq(42), any(Direction.class));
+    }
+
+    @Test
+    void retrieveNextComicImageWhenAtEnd() throws Exception {
+        var result = ComicNavigationResult.notFound("AT_END", LocalDate.of(2022, 1, 1),
+                LocalDate.of(2021, 12, 31), null);
+        when(comicManagementFacade.getComicStrip(eq(42), eq(Direction.FORWARD), any(LocalDate.class)))
+                .thenReturn(result);
+
+        var mvcResult = this.mockMvc.perform(get("/api/v1/comics/42/next/2022-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        assertThat(responseBody).contains("\"found\":false");
+        assertThat(responseBody).contains("\"reason\":\"AT_END\"");
+
+        verify(comicManagementFacade, times(1))
+                .getComicStrip(eq(42), eq(Direction.FORWARD), any(LocalDate.class));
+    }
+
+    @Test
+    void retrievePreviousComicImageWhenAtBeginning() throws Exception {
+        var result = ComicNavigationResult.notFound("AT_BEGINNING", LocalDate.of(2022, 1, 1),
+                null, LocalDate.of(2022, 1, 2));
+        when(comicManagementFacade.getComicStrip(eq(42), eq(Direction.BACKWARD), any(LocalDate.class)))
+                .thenReturn(result);
+
+        var mvcResult = this.mockMvc.perform(get("/api/v1/comics/42/previous/2022-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        assertThat(responseBody).contains("\"found\":false");
+        assertThat(responseBody).contains("\"reason\":\"AT_BEGINNING\"");
+        assertThat(responseBody).contains("\"nearestNextDate\":\"2022-01-02\"");
+
+        verify(comicManagementFacade, times(1))
+                .getComicStrip(eq(42), eq(Direction.BACKWARD), any(LocalDate.class));
+    }
+
+    @Test
+    void retrieveLastComicImageWhenNoComicsAvailable() throws Exception {
+        var result = ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", null, null, null);
+        when(comicManagementFacade.getComicStrip(eq(42), any(Direction.class))).thenReturn(result);
+
+        var mvcResult = this.mockMvc.perform(get("/api/v1/comics/42/strips/last"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        assertThat(responseBody).contains("\"found\":false");
+        assertThat(responseBody).contains("\"reason\":\"NO_COMICS_AVAILABLE\"");
+
+        verify(comicManagementFacade, times(1)).getComicStrip(eq(42), any(Direction.class));
+    }
+
+    @Test
+    void retrieveComicImageVerifyFoundTrueStructure() throws Exception {
+        var image = ImageDto.builder()
+                .imageDate(LocalDate.of(2022, 6, 15))
+                .imageData("base64data")
+                .mimeType("image/png")
+                .build();
+        var result = ComicNavigationResult.found(image,
+                LocalDate.of(2022, 6, 14),
+                LocalDate.of(2022, 6, 16));
+        when(comicManagementFacade.getComicStrip(eq(42), any(Direction.class))).thenReturn(result);
+
+        var mvcResult = this.mockMvc.perform(get("/api/v1/comics/42/strips/first"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        assertThat(responseBody).contains("\"found\":true");
+        assertThat(responseBody).contains("\"imageDate\":\"2022-06-15\"");
+        assertThat(responseBody).contains("\"nearestPreviousDate\":\"2022-06-14\"");
+        assertThat(responseBody).contains("\"nearestNextDate\":\"2022-06-16\"");
+        assertThat(responseBody).contains("\"currentDate\":\"2022-06-15\"");
 
         verify(comicManagementFacade, times(1)).getComicStrip(eq(42), any(Direction.class));
     }

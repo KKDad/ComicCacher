@@ -3,6 +3,7 @@ import {Comic} from '../../dto/comic';
 import {ComicService} from '../../comic.service';
 import {DomSanitizer} from '@angular/platform-browser';
 import {ImageDto} from '../../dto/image';
+import {ComicNavigationResult} from '../../dto/comic-navigation-result';
 import {MatCardModule} from '@angular/material/card';
 import {MatButtonModule} from '@angular/material/button';
 import {CommonModule} from '@angular/common';
@@ -218,8 +219,12 @@ export class SectionComponent implements OnInit, OnDestroy {
         this.clearError();
 
         this.comicService.getEarliest(this.content.id).subscribe({
-            next: (imagedto) => {
-                this.setStrip(imagedto);
+            next: (result) => {
+                if (result.found && result.image) {
+                    this.setStrip(result.image);
+                } else {
+                    this.handleNavigationBoundary(result);
+                }
                 this.loading.set(false);
             },
             error: (err) => {
@@ -245,8 +250,12 @@ export class SectionComponent implements OnInit, OnDestroy {
         this.clearError();
 
         this.comicService.getPrev(this.content.id, this.imageDate).subscribe({
-            next: (imagedto) => {
-                this.setStrip(imagedto);
+            next: (result) => {
+                if (result.found && result.image) {
+                    this.setStrip(result.image);
+                } else {
+                    this.handleNavigationBoundary(result);
+                }
                 this.loading.set(false);
             },
             error: (err) => {
@@ -272,8 +281,12 @@ export class SectionComponent implements OnInit, OnDestroy {
         this.clearError();
 
         this.comicService.getNext(this.content.id, this.imageDate).subscribe({
-            next: (imagedto) => {
-                this.setStrip(imagedto);
+            next: (result) => {
+                if (result.found && result.image) {
+                    this.setStrip(result.image);
+                } else {
+                    this.handleNavigationBoundary(result);
+                }
                 this.loading.set(false);
             },
             error: (err) => {
@@ -289,8 +302,12 @@ export class SectionComponent implements OnInit, OnDestroy {
         this.clearError();
 
         this.comicService.getLatest(this.content.id).subscribe({
-            next: (imagedto) => {
-                this.setStrip(imagedto);
+            next: (result) => {
+                if (result.found && result.image) {
+                    this.setStrip(result.image);
+                } else {
+                    this.handleNavigationBoundary(result);
+                }
                 this.loading.set(false);
             },
             error: (err) => {
@@ -305,6 +322,40 @@ export class SectionComponent implements OnInit, OnDestroy {
         // Determine which operation to retry based on context
         // For simplicity, we'll just retry the latest strip
         this.onNavigateLast();
+    }
+
+    /**
+     * Handle navigation boundary when no image is found
+     * Displays a helpful message based on the reason
+     */
+    private handleNavigationBoundary(result: ComicNavigationResult): void {
+        let message = '';
+
+        switch (result.reason) {
+            case 'AT_END':
+                if (result.nearestPreviousDate) {
+                    message = `You're viewing the latest comic (${result.nearestPreviousDate}). Check back tomorrow!`;
+                } else {
+                    message = 'No more comics available in this direction.';
+                }
+                break;
+            case 'AT_BEGINNING':
+                if (result.nearestNextDate) {
+                    message = `You're viewing the oldest comic (${result.nearestNextDate}).`;
+                } else {
+                    message = 'No more comics available in this direction.';
+                }
+                break;
+            case 'NO_COMICS_AVAILABLE':
+                message = 'No comics available for this comic strip.';
+                break;
+            case 'ERROR':
+            default:
+                message = 'Unable to load comic. Please try again.';
+                break;
+        }
+
+        this.error.set(message);
     }
 
     /**
