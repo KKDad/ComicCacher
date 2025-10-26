@@ -50,6 +50,7 @@ dependencies {
 	implementation "com.twelvemonkeys.imageio:imageio-tiff:${twelvemonkeysVersion}"
 	implementation "com.twelvemonkeys.imageio:imageio-bmp:${twelvemonkeysVersion}"
 
+
 	// Selenium for web scraping
 	implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
 	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
@@ -77,6 +78,6 @@ dependencyManagement {
 	}
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
 	useJUnitPlatform()
 }

@@ -11,7 +11,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.InspectorService;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -28,6 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @ToString
 public class GoComics extends DailyComic implements AutoCloseable {
+
+    private static final int HUMAN_BEHAVIOR_MIN_DELAY_MS = 1000;
+    private static final int HUMAN_BEHAVIOR_MAX_DELAY_MS = 3000;
 
     private WebDriver driver;
     private final CacheProperties cacheProperties;
@@ -93,7 +96,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
         quitWebDriver();
     }
 
-    public GoComics(WebInspector inspector, CacheProperties cacheProperties) {
+    public GoComics(InspectorService inspector, CacheProperties cacheProperties) {
         super(inspector, "[src]");
         this.cacheProperties = cacheProperties;
         // WebDriver initialization moved to lazy init - only create when actually needed
@@ -104,7 +107,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
      * Determines when the latest published image it. Some comics are only available on the web a couple days or
      * a week after they were published in print.
      *
-     * @return Mst recent date we can get a api for
+     * @return Most recent date we can get a comic for
      */
     public LocalDate getLastStripOn() {
         return LocalDate.now();
@@ -149,7 +152,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
             driver.get(url);
 
             // Add random delay to simulate human behavior
-            Thread.sleep(random.nextInt(2000) + 1000); // 1-3 seconds delay
+            int delayRange = HUMAN_BEHAVIOR_MAX_DELAY_MS - HUMAN_BEHAVIOR_MIN_DELAY_MS;
+            Thread.sleep(random.nextInt(delayRange) + HUMAN_BEHAVIOR_MIN_DELAY_MS);
 
             // Execute JavaScript to spoof navigator.webdriver
             ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
@@ -307,7 +311,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
             driver.get(comicUrl);
 
             // Add random delay to simulate human behavior
-            Thread.sleep(random.nextInt(2000) + 1000); // 1-3 seconds delay
+            int delayRange = HUMAN_BEHAVIOR_MAX_DELAY_MS - HUMAN_BEHAVIOR_MIN_DELAY_MS;
+            Thread.sleep(random.nextInt(delayRange) + HUMAN_BEHAVIOR_MIN_DELAY_MS);
 
             // Execute JavaScript to spoof navigator.webdriver
             ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");

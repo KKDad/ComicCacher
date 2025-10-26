@@ -61,7 +61,7 @@ public class RetrievalRecordPurgeJobScheduler {
      * Scheduled execution of RetrievalRecordPurgeJob
      * Runs at 6:45 AM EST (America/Toronto timezone) every day
      */
-    @Scheduled(cron = "${batch.record-purge.cron}")
+    @Scheduled(cron = "${batch.record-purge.cron}", zone = "${batch.timezone}")
     public void runDailyRecordPurge() {
         log.info("Starting scheduled retrieval record purge");
 
@@ -80,7 +80,7 @@ public class RetrievalRecordPurgeJobScheduler {
 
         JobParametersBuilder parametersBuilder = new JobParametersBuilder()
                 .addString("trigger", trigger)
-                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")));
+                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
 
         JobExecution execution = jobLauncher.run(retrievalRecordPurgeJob, parametersBuilder.toJobParameters());
 

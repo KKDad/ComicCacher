@@ -18,7 +18,7 @@ import javax.imageio.ImageIO;
 public class ImageUtils {
 
     private ImageUtils() {
-        // Sonar: No public constructor
+        // Utility class - prevent instantiation
     }
 
 
@@ -42,7 +42,7 @@ public class ImageUtils {
             imageDto.setImageDate(LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         } catch (DateTimeParseException dte) {
-            // No action needed - imageDate will remain null
+            // Ignore parse errors - filename may not be a valid date, imageDate remains null
         }
         return imageDto;
     }

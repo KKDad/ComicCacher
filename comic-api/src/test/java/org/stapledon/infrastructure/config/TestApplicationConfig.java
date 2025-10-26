@@ -11,12 +11,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.config.properties.DailyRunnerProperties;
-import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.core.auth.service.AuthService;
 import org.stapledon.core.comic.service.UpdateService;
 import org.stapledon.core.preference.service.PreferenceService;
 import org.stapledon.core.user.service.UserService;
-import org.stapledon.engine.downloader.ComicCacher;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 import org.stapledon.infrastructure.security.JwtAuthenticationEntryPoint;
 import org.stapledon.infrastructure.security.JwtTokenFilter;
@@ -125,14 +124,8 @@ public class TestApplicationConfig {
 
     @Bean
     @Primary
-    public WebInspector webInspector() {
-        return Mockito.mock(WebInspector.class);
-    }
-
-    @Bean
-    @Primary
-    public ComicCacher comicCacher() {
-        return Mockito.mock(ComicCacher.class);
+    public InspectorService webInspector() {
+        return Mockito.mock(InspectorService.class);
     }
 
     @Bean

@@ -1,13 +1,10 @@
-# ComicCacher TODO List
+# ComicCacher TODO
 
-## Feature Enhancements
+## Performance Improvements
 
-* Add support for weekly comics and flag Foxtrot as a weekly comic
-* See what's going on with Committed & Griswells
-* Add support for indexed comics (Xkcd, etc)
-* Document add/remove comic procedures
-* Add transcript capture and storage for comics that provide accessibility transcripts
-
-## Notes
-
-User Management & Authentication has been fully implemented with JWT-based authentication, user profiles, and preferences.
+### API Response Caching
+- Add HTTP caching headers to backend API endpoints (Cache-Control, ETag)
+- Target: Comic image endpoints (/api/v1/comics/{id}/avatar, /api/v1/comics/{id}/strip/*)
+- Expected benefit: Reduce redundant network requests, improve load times for repeat visits
+- Priority: Medium
+- Estimated effort: 2-4 hours

@@ -16,8 +16,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
-import org.stapledon.common.service.ImageAnalysisService;
-import org.stapledon.common.service.ImageValidationService;
+import org.stapledon.common.service.AnalysisService;
+import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
 import java.io.File;
@@ -41,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ImageMetadataBackfillJobConfig {
 
     private final CacheProperties cacheProperties;
-    private final ImageValidationService imageValidationService;
-    private final ImageAnalysisService imageAnalysisService;
+    private final ValidationService imageValidationService;
+    private final AnalysisService imageAnalysisService;
     private final ImageMetadataRepository imageMetadataRepository;
 
     @Value("${batch.image-backfill.batch-size:100}")

@@ -17,7 +17,7 @@ integrationTest {
 }
 
 group = 'kkdad'
-version = '2.1.36'
+version = '2.3.0'
 
 java {
     toolchain {
@@ -87,6 +87,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+	// Caffeine cache
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
 	// JDBC and H2 database for Spring Batch job repository (use Spring Boot managed versions)
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
@@ -118,9 +122,9 @@ dependencies {
 
 }
 
-tasks.withType(Test) {
-	useJUnitPlatform()
-	systemProperty 'spring.profiles.active', 'test'
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
 }
 
 bootRun {
@@ -164,7 +168,7 @@ jacocoTestReport {
 }
 
 // Integration test coverage
-task jacocoIntegrationTestReport(type: JacocoReport) {
+tasks.register('jacocoIntegrationTestReport', JacocoReport) {
     dependsOn integrationTest
     executionData fileTree(project.buildDir).include("/jacoco/integrationTest.exec")
     sourceSets sourceSets.main
@@ -179,7 +183,7 @@ integrationTest {
 }
 
 // Combined coverage report
-task jacocoAllReport(type: JacocoReport) {
+tasks.register('jacocoAllReport', JacocoReport) {
     dependsOn test, integrationTest
     executionData fileTree(project.buildDir).include("/jacoco/*.exec")
     sourceSets sourceSets.main

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -85,6 +86,76 @@ class GoComicsIntegrationIT {
             // Assert
             assertThat(result).isEqualTo(LocalDate.now());
         }
+    }
+
+    @Test
+    @Disabled("Integration test - run manually as needed")
+    void downloadAdamAtHomeFiveDaysAgo() throws Exception {
+        LocalDate testDate = LocalDate.of(2025, 10, 20);
+        String year = "2025";
+        String dateString = "2025-10-20";
+        File expectedFile = new File(path.toString() + "/AdamAtHome/" + year + "/" + dateString + ".png");
+        File homeFile = new File(System.getProperty("user.home") + "/adam-at-home-2025-10-20.png");
+        LOG.info("Downloading Adam@Home for October 20, 2025");
+        LOG.info("Expected file path: " + expectedFile.getAbsolutePath());
+
+        try (GoComics subject = getSubject("Adam at Home")) {
+            subject.setDate(testDate);
+
+            // Act
+            boolean result = subject.ensureCache();
+
+            // Assert
+            assertThat(result).isTrue();
+            assertThat(expectedFile).exists();
+
+            // Copy to home directory before cleanup
+            Files.copy(expectedFile.toPath(), homeFile.toPath(),
+                      java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            LOG.info("SUCCESS! Comic downloaded to: " + expectedFile.getAbsolutePath());
+            LOG.info("Comic copied to home directory: " + homeFile.getAbsolutePath());
+            LOG.info("You can verify at: https://www.gocomics.com/adamathome/2025/10/20");
+        }
+    }
+
+    @Test
+    @Disabled("Integration test - run manually as needed")
+    void downloadTenWeeklyComics() throws Exception {
+        LocalDate today = LocalDate.now();
+        LOG.info("=== Downloading 10 Adam@Home comics, one week apart ===");
+
+        for (int i = 0; i < 10; i++) {
+            // Go back in weeks: 1 week ago, 2 weeks ago, etc.
+            LocalDate testDate = today.minusWeeks(i + 1);
+            String year = String.valueOf(testDate.getYear());
+            String dateString = testDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+            File expectedFile = new File(path.toString() + "/AdamAtHome/" + year + "/" + dateString + ".png");
+            File homeFile = new File(System.getProperty("user.home") + "/adam-at-home-" + dateString + ".png");
+
+            LOG.info("Downloading comic {} of 10: {}", i + 1, dateString);
+
+            try (GoComics subject = getSubject("Adam at Home")) {
+                subject.setDate(testDate);
+
+                // Act
+                boolean result = subject.ensureCache();
+
+                // Assert
+                assertThat(result).isTrue();
+                assertThat(expectedFile).exists();
+
+                // Copy to home directory before cleanup
+                Files.copy(expectedFile.toPath(), homeFile.toPath(),
+                          java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                LOG.info("✓ Comic {} saved to: {}", i + 1, homeFile.getName());
+            }
+        }
+
+        LOG.info("=== All 10 comics downloaded successfully! ===");
+        LOG.info("Files saved to home directory with pattern: ~/adam-at-home-YYYY-MM-DD.png");
     }
 
 

@@ -261,28 +261,8 @@ describe('KeyboardService', () => {
       }, 10);
     });
 
-    it('should call onPrev when PageUp is pressed', (done) => {
-      const onFirst = jasmine.createSpy('onFirst');
-      const onPrev = jasmine.createSpy('onPrev');
-      const onNext = jasmine.createSpy('onNext');
-      const onLast = jasmine.createSpy('onLast');
-
-      const subscription = service.registerComicNavigationShortcuts(
-        onFirst,
-        onPrev,
-        onNext,
-        onLast
-      );
-
-      const event = new KeyboardEvent('keydown', { key: 'PageUp' });
-      document.dispatchEvent(event);
-
-      setTimeout(() => {
-        expect(onPrev).toHaveBeenCalled();
-        subscription.unsubscribe();
-        done();
-      }, 10);
-    });
+    // PageUp/PageDown are no longer part of registerComicNavigationShortcuts
+    // They are now in registerComicListScrollShortcuts for viewport scrolling
 
     it('should call onNext when ArrowRight is pressed', (done) => {
       const onFirst = jasmine.createSpy('onFirst');
@@ -307,28 +287,6 @@ describe('KeyboardService', () => {
       }, 10);
     });
 
-    it('should call onNext when PageDown is pressed', (done) => {
-      const onFirst = jasmine.createSpy('onFirst');
-      const onPrev = jasmine.createSpy('onPrev');
-      const onNext = jasmine.createSpy('onNext');
-      const onLast = jasmine.createSpy('onLast');
-
-      const subscription = service.registerComicNavigationShortcuts(
-        onFirst,
-        onPrev,
-        onNext,
-        onLast
-      );
-
-      const event = new KeyboardEvent('keydown', { key: 'PageDown' });
-      document.dispatchEvent(event);
-
-      setTimeout(() => {
-        expect(onNext).toHaveBeenCalled();
-        subscription.unsubscribe();
-        done();
-      }, 10);
-    });
 
     it('should call onLast when End key is pressed', (done) => {
       const onFirst = jasmine.createSpy('onFirst');
@@ -364,6 +322,60 @@ describe('KeyboardService', () => {
         onPrev,
         onNext,
         onLast
+      );
+
+      expect(subscription).toBeDefined();
+      expect(subscription.unsubscribe).toBeDefined();
+      subscription.unsubscribe();
+    });
+  });
+
+  describe('registerComicListScrollShortcuts', () => {
+    it('should call onPageUp when PageUp is pressed', (done) => {
+      const onPageUp = jasmine.createSpy('onPageUp');
+      const onPageDown = jasmine.createSpy('onPageDown');
+
+      const subscription = service.registerComicListScrollShortcuts(
+        onPageUp,
+        onPageDown
+      );
+
+      const event = new KeyboardEvent('keydown', { key: 'PageUp' });
+      document.dispatchEvent(event);
+
+      setTimeout(() => {
+        expect(onPageUp).toHaveBeenCalled();
+        subscription.unsubscribe();
+        done();
+      }, 10);
+    });
+
+    it('should call onPageDown when PageDown is pressed', (done) => {
+      const onPageUp = jasmine.createSpy('onPageUp');
+      const onPageDown = jasmine.createSpy('onPageDown');
+
+      const subscription = service.registerComicListScrollShortcuts(
+        onPageUp,
+        onPageDown
+      );
+
+      const event = new KeyboardEvent('keydown', { key: 'PageDown' });
+      document.dispatchEvent(event);
+
+      setTimeout(() => {
+        expect(onPageDown).toHaveBeenCalled();
+        subscription.unsubscribe();
+        done();
+      }, 10);
+    });
+
+    it('should return a subscription that can be unsubscribed', () => {
+      const onPageUp = jasmine.createSpy('onPageUp');
+      const onPageDown = jasmine.createSpy('onPageDown');
+
+      const subscription = service.registerComicListScrollShortcuts(
+        onPageUp,
+        onPageDown
       );
 
       expect(subscription).toBeDefined();

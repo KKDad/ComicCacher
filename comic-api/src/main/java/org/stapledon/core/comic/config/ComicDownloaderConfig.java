@@ -1,7 +1,7 @@
 package org.stapledon.core.comic.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.stapledon.engine.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.downloader.ComicDownloaderStrategy;
 import org.stapledon.engine.downloader.ComicsKingdomDownloaderStrategy;
 import org.stapledon.engine.downloader.GoComicsDownloaderStrategy;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ComicDownloaderConfig {
 
-    private final ComicDownloaderFacade downloaderFacade;
+    private final DownloaderFacade downloaderFacade;
     private final GoComicsDownloaderStrategy goComicsStrategy;
     private final ComicsKingdomDownloaderStrategy comicsKingdomStrategy;
 

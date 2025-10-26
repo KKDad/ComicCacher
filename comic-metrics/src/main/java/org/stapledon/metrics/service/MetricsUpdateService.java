@@ -150,7 +150,7 @@ public class MetricsUpdateService {
             // Save combined metrics
             combinedMetricsRepository.save(combinedData);
 
-            log.debug("Rebuilt combined metrics for {} comics", combinedMap.size());
+            log.info("Rebuilt combined metrics for {} comics", combinedMap.size());
         } catch (Exception e) {
             log.error("Failed to rebuild combined metrics", e);
         }

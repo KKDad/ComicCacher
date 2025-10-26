@@ -3,8 +3,8 @@ package org.stapledon.engine.downloader;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageValidationResult;
-import org.stapledon.common.infrastructure.web.WebInspector;
-import org.stapledon.common.service.ImageValidationService;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.service.ValidationService;
 
 import java.util.Optional;
 
@@ -22,8 +22,8 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
 
     @Getter
     private final String source;
-    protected final WebInspector webInspector;
-    protected final ImageValidationService imageValidationService;
+    protected final InspectorService webInspector;
+    protected final ValidationService imageValidationService;
 
     /**
      * Creates a new downloader strategy for the specified source.
@@ -33,8 +33,8 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
      * @param imageValidationService The service for validating downloaded images
      */
     protected AbstractComicDownloaderStrategy(String source,
-                                             WebInspector webInspector,
-                                             ImageValidationService imageValidationService) {
+                                             InspectorService webInspector,
+                                             ValidationService imageValidationService) {
         this.source = source;
         this.webInspector = webInspector;
         this.imageValidationService = imageValidationService;
@@ -46,7 +46,7 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     @Override
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
         try {
-            log.debug("Downloading comic {} for date {} from {}",
+            log.info("Downloading comic {} for date {} from {}",
                       request.getComicName(), request.getDate(), source);
 
             byte[] imageData = downloadComicImage(request);

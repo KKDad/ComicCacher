@@ -1,12 +1,14 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output, signal} from '@angular/core';
+import {AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, signal, ViewChild} from '@angular/core';
 
 import {Comic} from '../../dto/comic';
 import {ComicService} from '../../comic.service';
-import {CdkScrollable, ScrollDispatcher, ScrollingModule} from '@angular/cdk/scrolling';
+import {CdkScrollable, CdkVirtualScrollViewport, ScrollDispatcher, ScrollingModule} from '@angular/cdk/scrolling';
 import {CommonModule} from '@angular/common';
 import {SectionComponent} from '../section/section.component';
 import {LoadingIndicatorComponent} from '../../shared/ui/loading-indicator/loading-indicator.component';
 import {ErrorDisplayComponent} from '../../shared/ui/error-display/error-display.component';
+import {KeyboardService} from '../../shared/a11y/keyboard-service';
+import {Subscription} from 'rxjs';
 
 export enum NavBarOption {
     Hide,
@@ -26,19 +28,27 @@ export enum NavBarOption {
         ErrorDisplayComponent
     ]
 })
-export class ContainerComponent implements OnInit, AfterViewInit {
+export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input() sections: Comic[];
     @Output() scrollinfo = new EventEmitter<NavBarOption>();
+    @ViewChild(CdkVirtualScrollViewport) viewport: CdkVirtualScrollViewport;
 
     // UI state
     loading = signal(false);
     error = signal<string | null>(null);
     lastOffset: number;
 
+    // Keyboard shortcuts subscription
+    private keyboardSubscription: Subscription;
+
     /** Approximate height of a comic card for virtual scrolling */
     private readonly COMIC_CARD_HEIGHT = 550;
 
-    constructor(private scrollDispatcher: ScrollDispatcher, private comicService: ComicService) { }
+    constructor(
+        private scrollDispatcher: ScrollDispatcher,
+        private comicService: ComicService,
+        private keyboardService: KeyboardService
+    ) { }
 
     ngOnInit() {
         this.loading.set(true);
@@ -92,6 +102,19 @@ export class ContainerComponent implements OnInit, AfterViewInit {
                 this.onWindowScroll(data);
             }
         });
+
+        // Register PageUp/PageDown keyboard shortcuts for scrolling between comics
+        this.keyboardSubscription = this.keyboardService.registerComicListScrollShortcuts(
+            () => this.scrollUpByOneComic(),
+            () => this.scrollDownByOneComic()
+        );
+    }
+
+    ngOnDestroy(): void {
+        // Clean up keyboard shortcuts subscription
+        if (this.keyboardSubscription) {
+            this.keyboardSubscription.unsubscribe();
+        }
     }
 
     private onWindowScroll(data: CdkScrollable) {
@@ -130,6 +153,84 @@ export class ContainerComponent implements OnInit, AfterViewInit {
        */
       isComicsEmpty(): boolean {
         return !this.sections || !Array.isArray(this.sections) || this.sections.length === 0;
+      }
+
+      /**
+       * Scroll up by one comic section (PageUp key)
+       * Intelligently snaps to the top of the previous comic card
+       */
+      private scrollUpByOneComic(): void {
+        if (!this.viewport) {
+            return;
+        }
+
+        const currentOffset = this.viewport.measureScrollOffset();
+        const viewportElement = this.viewport.elementRef.nativeElement;
+        const comicElements = viewportElement.querySelectorAll('.comic-item');
+
+        if (comicElements.length === 0) {
+            return;
+        }
+
+        // Find the previous comic to scroll to
+        let targetOffset = 0;
+        let foundPrevious = false;
+
+        for (let i = comicElements.length - 1; i >= 0; i--) {
+            const element = comicElements[i] as HTMLElement;
+            const elementTop = element.offsetTop;
+
+            // Find a comic that starts above the current scroll position (with small threshold)
+            if (elementTop < currentOffset - 50) {
+                targetOffset = elementTop;
+                foundPrevious = true;
+                break;
+            }
+        }
+
+        // If no previous comic found, scroll to top
+        if (!foundPrevious) {
+            targetOffset = 0;
+        }
+
+        this.viewport.scrollToOffset(targetOffset, 'smooth');
+      }
+
+      /**
+       * Scroll down by one comic section (PageDown key)
+       * Intelligently snaps to the top of the next comic card
+       */
+      private scrollDownByOneComic(): void {
+        if (!this.viewport) {
+            return;
+        }
+
+        const currentOffset = this.viewport.measureScrollOffset();
+        const viewportElement = this.viewport.elementRef.nativeElement;
+        const comicElements = viewportElement.querySelectorAll('.comic-item');
+
+        if (comicElements.length === 0) {
+            return;
+        }
+
+        // Find the next comic to scroll to
+        let targetOffset = currentOffset + this.COMIC_CARD_HEIGHT; // Fallback
+        let foundNext = false;
+
+        for (let i = 0; i < comicElements.length; i++) {
+            const element = comicElements[i] as HTMLElement;
+            const elementTop = element.offsetTop;
+
+            // Find a comic that starts below the current scroll position (with small threshold)
+            if (elementTop > currentOffset + 50) {
+                targetOffset = elementTop;
+                foundNext = true;
+                break;
+            }
+        }
+
+        // If no next comic found, use fallback (scroll by fixed amount)
+        this.viewport.scrollToOffset(targetOffset, 'smooth');
       }
 
 }

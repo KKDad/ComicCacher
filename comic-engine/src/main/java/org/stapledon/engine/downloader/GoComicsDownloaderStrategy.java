@@ -6,8 +6,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.infrastructure.web.WebInspector;
-import org.stapledon.common.service.ImageValidationService;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.service.ValidationService;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -34,8 +34,8 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
      * @param webInspector The web inspector to use for HTTP requests
      * @param imageValidationService The service for validating downloaded images
      */
-    public GoComicsDownloaderStrategy(WebInspector webInspector,
-                                     ImageValidationService imageValidationService) {
+    public GoComicsDownloaderStrategy(InspectorService webInspector,
+                                     ValidationService imageValidationService) {
         super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
     }
 
@@ -53,23 +53,34 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
                 .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
                 .timeout(TIMEOUT)
                 .get();
-        
-        Elements media = doc.select("[src]");
-        Elements imageElements = pickImages(media);
-        
-        if (imageElements == null || imageElements.isEmpty()) {
-            log.error("No images were selected from the media");
-            log.error("Site: {}", url);
-            webInspector.dumpMedia(media);
+
+        // Extract image URL from Open Graph metadata
+        String imageUrl = extractImageFromOpenGraph(doc);
+
+        if (imageUrl == null) {
+            log.error("No Open Graph image found for URL: {}", url);
             return null;
         }
-        
-        Element imageElement = imageElements.first();
-        URL imageUrl = new URL(imageElement.attr("abs:src"));
-        
-        try (InputStream in = imageUrl.openStream()) {
+
+        log.debug("Found image via Open Graph metadata: {}", imageUrl);
+        URL imgUrl = new URL(imageUrl);
+        try (InputStream in = imgUrl.openStream()) {
             return in.readAllBytes();
         }
+    }
+
+    /**
+     * Extracts the comic image URL from Open Graph metadata tags.
+     *
+     * @param doc the parsed HTML document
+     * @return the image URL from og:image meta tag, or null if not found
+     */
+    private String extractImageFromOpenGraph(Document doc) {
+        Element ogImage = doc.selectFirst("meta[property=og:image]");
+        if (ogImage != null && ogImage.hasAttr("content")) {
+            return ogImage.attr("content");
+        }
+        return null;
     }
 
     /**
@@ -125,12 +136,36 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
     private Elements pickImages(Elements media) {
         var elements = new Elements();
 
-        // First try: Look for images from either the old or new domain patterns
+        // First try: Look for the main comic image using specific selectors
+        // GoComics uses a specific class or data attribute for the main strip
         for (Element src : media) {
-            if (src.tagName().equals("img") &&
-                (src.attr("abs:src").contains("assets.amuniversal.com") ||
-                 src.attr("abs:src").contains("featureassets.gocomics.com"))) {
-                elements.add(src);
+            if (src.tagName().equals("img")) {
+                // Check for main comic image indicators
+                Element parent = src.parent();
+                if (parent != null) {
+                    // Look for the picture element that contains the main strip
+                    if (parent.tagName().equals("picture") &&
+                        parent.parent() != null &&
+                        (parent.parent().className().contains("ComicImage") ||
+                         parent.parent().className().contains("comic__image") ||
+                         parent.parent().className().contains("item__image"))) {
+                        elements.add(src);
+                        break; // Found the main comic, stop looking
+                    }
+                }
+            }
+        }
+
+        // Second try: Look for the FIRST image from GoComics domains
+        // The main comic strip is typically the first one on the page
+        if (elements.isEmpty()) {
+            for (Element src : media) {
+                if (src.tagName().equals("img") &&
+                    (src.attr("abs:src").contains("assets.amuniversal.com") ||
+                     src.attr("abs:src").contains("featureassets.gocomics.com"))) {
+                    elements.add(src);
+                    break; // Take only the first matching image
+                }
             }
         }
 

@@ -47,18 +47,19 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
     void shouldHandleComicImageNotFoundException() throws Exception {
         // Use a comic ID that might exist but with a date that definitely won't have an image
         int comicId = TEST_COMIC_ID;
-        
+
         // When - request a non-existent image with a future date
         String nonExistentDate = "2099-12-31"; // Future date that doesn't exist
         MvcResult mvcResult = mockMvc.perform(get("/api/v1/comics/{id}/next/{date}", comicId, nonExistentDate)
                 .header("Authorization", "Bearer " + authToken))
                 .andDo(print())
-                .andExpect(status().isNotFound()) // This might return 404 Not Found
+                .andExpect(status().isOk()) // API now returns 200 with found=false instead of 404
                 .andReturn();
 
-        // Verify the status code only - response content may vary
-        int status = mvcResult.getResponse().getStatus();
-        assertTrue(status == 404, "Should return 404 Not Found status code");
+        // Verify the response indicates not found
+        String responseContent = mvcResult.getResponse().getContentAsString();
+        assertTrue(responseContent.contains("\"found\":false"),
+                "Response should indicate comic strip not found with found=false");
     }
 
     @Test

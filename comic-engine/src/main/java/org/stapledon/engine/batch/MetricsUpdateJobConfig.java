@@ -69,7 +69,7 @@ public class MetricsUpdateJobConfig {
             metricsUpdateService.updateMetrics();
             long duration = System.currentTimeMillis() - startTime;
 
-            log.debug("Metrics update completed in {}ms", duration);
+            log.info("Metrics update completed in {}ms", duration);
 
             return RepeatStatus.FINISHED;
         };

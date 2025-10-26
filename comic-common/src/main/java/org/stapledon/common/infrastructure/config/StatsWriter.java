@@ -8,11 +8,7 @@ import org.stapledon.common.dto.ImageCacheStats;
  */
 public interface StatsWriter {
     /**
-     * Save ImageCacheStats to the root of an image folder
-     *
-     * @param stats           Statistics to save
-     * @param targetDirectory Location to save them to
-     * @return True if successfully written
+     * Save ImageCacheStats to the root of an image folder.
      */
     boolean save(ImageCacheStats stats, String targetDirectory);
 }

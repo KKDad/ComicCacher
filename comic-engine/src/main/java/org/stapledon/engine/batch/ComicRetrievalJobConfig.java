@@ -16,11 +16,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.common.service.ComicConfigurationService;
-import org.stapledon.engine.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,8 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ComicRetrievalJobConfig {
 
-    private final ComicConfigurationService configurationFacade;
-    private final ComicDownloaderFacade comicDownloaderFacade;
+    private final ManagementFacade managementFacade;
 
     /**
      * Main job for daily comic retrieval
@@ -67,86 +63,65 @@ public class ComicRetrievalJobConfig {
     public Step comicRetrievalStep(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
-            ItemReader<ComicDownloadRequest> comicRequestReader,
-            ItemProcessor<ComicDownloadRequest, ComicDownloadResult> comicProcessor,
-            ItemWriter<ComicDownloadResult> comicResultWriter) {
+            ItemReader<LocalDate> dateReader,
+            ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor,
+            ItemWriter<List<ComicDownloadResult>> comicResultWriter) {
 
         return new StepBuilder("comicRetrievalStep", jobRepository)
-                .<ComicDownloadRequest, ComicDownloadResult>chunk(1, transactionManager)
-                .reader(comicRequestReader)
+                .<LocalDate, List<ComicDownloadResult>>chunk(1, transactionManager)
+                .reader(dateReader)
                 .processor(comicProcessor)
                 .writer(comicResultWriter)
-                .faultTolerant()
-                .skipLimit(10) // Skip up to 10 failed comics
-                .skip(Exception.class)
-                .retryLimit(3) // Retry up to 3 times per comic
-                .retry(Exception.class)
                 .build();
     }
 
     /**
-     * Reader that provides comic download requests
+     * Reader that provides the target date for comic downloads
      */
     @Bean
-    public ItemReader<ComicDownloadRequest> comicRequestReader() {
-        return new ListItemReader<>(createComicRequests());
+    public ItemReader<LocalDate> dateReader() {
+        return new ListItemReader<>(List.of(LocalDate.now()));
     }
 
     /**
-     * Processor that handles individual comic downloads
+     * Processor that handles downloading and saving comics for a date
      */
     @Bean
-    public ItemProcessor<ComicDownloadRequest, ComicDownloadResult> comicProcessor() {
-        return new ItemProcessor<ComicDownloadRequest, ComicDownloadResult>() {
-            @Override
-            public ComicDownloadResult process(ComicDownloadRequest request) throws Exception {
-                log.info("Processing comic: {} for date: {}", request.getComicName(), request.getDate());
-                
-                long startTime = System.currentTimeMillis();
-                ComicDownloadResult result = comicDownloaderFacade.downloadComic(request);
-                long duration = System.currentTimeMillis() - startTime;
-                
-                log.info("Completed comic: {} in {}ms, success: {}", 
-                    request.getComicName(), duration, result.isSuccessful());
-                
-                return result;
-            }
+    public ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor() {
+        return date -> {
+            log.info("Processing comics for date: {}", date);
+            long startTime = System.currentTimeMillis();
+
+            // Management facade handles download + save + metadata update
+            List<ComicDownloadResult> results = managementFacade.updateComicsForDate(date);
+
+            long duration = System.currentTimeMillis() - startTime;
+            long successCount = results.stream().filter(ComicDownloadResult::isSuccessful).count();
+            long failureCount = results.size() - successCount;
+
+            log.info("Completed processing {} comics in {}ms: {} successful, {} failed",
+                    results.size(), duration, successCount, failureCount);
+
+            return results;
         };
     }
 
     /**
-     * Writer that handles the results (mainly for logging and metrics)
+     * Writer that handles the results (logging summary)
      */
     @Bean
-    public ItemWriter<ComicDownloadResult> comicResultWriter() {
+    public ItemWriter<List<ComicDownloadResult>> comicResultWriter() {
         return chunk -> {
-            for (ComicDownloadResult result : chunk.getItems()) {
-                if (result.isSuccessful()) {
-                    log.info("Successfully processed: {}", result.getRequest().getComicName());
-                } else {
-                    log.error("Failed to process: {} - {}",
-                        result.getRequest().getComicName(), result.getErrorMessage());
+            for (List<ComicDownloadResult> results : chunk.getItems()) {
+                for (ComicDownloadResult result : results) {
+                    if (result.isSuccessful()) {
+                        log.debug("Successfully processed: {}", result.getRequest().getComicName());
+                    } else {
+                        log.error("Failed to process: {} - {}",
+                                result.getRequest().getComicName(), result.getErrorMessage());
+                    }
                 }
             }
         };
-    }
-
-    /**
-     * Create comic download requests for today's date
-     */
-    private List<ComicDownloadRequest> createComicRequests() {
-        LocalDate targetDate = LocalDate.now();
-        ComicConfig config = configurationFacade.loadComicConfig();
-
-        return config.getComics().stream()
-                .filter(comic -> comic.getSource() != null && !comic.getSource().isEmpty())
-                .map(comic -> ComicDownloadRequest.builder()
-                        .comicId(comic.getId())
-                        .comicName(comic.getName())
-                        .source(comic.getSource())
-                        .sourceIdentifier(comic.getSourceIdentifier())
-                        .date(targetDate)
-                        .build())
-                .toList();
     }
 }
