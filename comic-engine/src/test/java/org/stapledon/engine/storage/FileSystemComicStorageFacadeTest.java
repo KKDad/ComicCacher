@@ -11,9 +11,11 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
 
 import java.io.File;
@@ -39,6 +41,9 @@ class FileSystemComicStorageFacadeTest {
 
     @Mock
     private ValidationService imageValidationService;
+
+    @Mock
+    private DuplicateValidationService duplicateValidationService;
 
     @Mock
     private org.stapledon.common.service.AnalysisService imageAnalysisService;
@@ -75,8 +80,12 @@ class FileSystemComicStorageFacadeTest {
         // Mock metadata repository to return true
         when(imageMetadataRepository.saveMetadata(any())).thenReturn(true);
 
+        // Mock duplicate validation to always return unique
+        when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class), any(byte[].class)))
+                .thenReturn(DuplicateValidationResult.unique("test-hash"));
+
         storageFacade = new FileSystemComicStorageFacade(cacheProperties, imageValidationService,
-                imageAnalysisService, imageMetadataRepository);
+                duplicateValidationService, imageAnalysisService, imageMetadataRepository);
 
         // Create test directory structure
         createTestDirectoryStructure();
