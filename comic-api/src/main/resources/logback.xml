@@ -10,17 +10,19 @@
         </encoder>
     </appender>
 
-    <!-- File appender with EST timezone and aligned format
+    <!-- File appender with EST timezone and aligned format -->
+    <!--
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/comic-api.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, America/Toronto} %5level ${PID:- } --- [%15.15t] %-40.40logger{39} : %m%n%wEx</pattern>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, America/Toronto} %5level ${PID:- } [separator] [%15.15t] %-40.40logger{39} : %m%n%wEx</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/comic-api.%d{yyyy-MM-dd, America/Toronto}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
-    </appender> -->
+    </appender>
+    -->
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
