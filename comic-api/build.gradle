@@ -17,7 +17,7 @@ integrationTest {
 }
 
 group = 'kkdad'
-version = '2.1.36'
+version = '2.3.0'
 
 java {
     toolchain {
