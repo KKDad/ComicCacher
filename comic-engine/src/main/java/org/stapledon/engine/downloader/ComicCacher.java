@@ -45,7 +45,8 @@ public class ComicCacher {
             ctx.init(new KeyManager[0], new TrustManager[]{new DefaultTrustManager()}, new SecureRandom());
             SSLContext.setDefault(ctx);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            // Ignore - Powermock issue during unit tests?
+            // Ignore - SSL context initialization failure, application will use default context
+            log.debug("Failed to initialize custom SSL context: {}", e.getMessage());
         }
         log.info("BootStrapConfig - Loaded {} dailyComics comics, {} kingComics comics.", config.getDailyComics().size(), config.getKingComics().size());
     }

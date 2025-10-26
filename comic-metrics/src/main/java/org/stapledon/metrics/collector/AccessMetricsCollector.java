@@ -119,11 +119,9 @@ public class AccessMetricsCollector {
 
 
     /**
-     * Track access to a comic
+     * Track access to a comic.
      *
-     * @param comicName Name of the comic being accessed
-     * @param isHit Whether the access was a cache hit
-     * @param accessTime Time taken for the access in milliseconds
+     * @param accessTime time taken for the access in milliseconds
      */
     private void trackAccess(String comicName, boolean isHit, long accessTime) {
         accessCounters.computeIfAbsent(comicName, k -> new AtomicInteger(0)).incrementAndGet();

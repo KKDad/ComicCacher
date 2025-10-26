@@ -13,29 +13,20 @@ public interface AnalysisService {
     /**
      * Analyzes an image file and creates comprehensive metadata.
      *
-     * @param imageFile The image file to analyze
-     * @param validation The validation result from ValidationService
-     * @param sourceUrl The source URL from which the image was downloaded (optional)
-     * @return ImageMetadata containing all analyzed properties
+     * @param sourceUrl optional source URL from which the image was downloaded
      */
     ImageMetadata analyzeImage(File imageFile, ImageValidationResult validation, String sourceUrl);
 
     /**
      * Analyzes image data in memory and creates comprehensive metadata.
      *
-     * @param imageData The image data bytes
-     * @param filePath The path where the image will be/is stored
-     * @param validation The validation result from ValidationService
-     * @param sourceUrl The source URL from which the image was downloaded (optional)
-     * @return ImageMetadata containing all analyzed properties
+     * @param filePath path where the image will be/is stored
+     * @param sourceUrl optional source URL from which the image was downloaded
      */
     ImageMetadata analyzeImage(byte[] imageData, String filePath, ImageValidationResult validation, String sourceUrl);
 
     /**
      * Detects the color mode of an image by sampling pixels.
-     *
-     * @param imageData The image data bytes
-     * @return The detected color mode (GRAYSCALE, COLOR, or UNKNOWN)
      */
     ImageMetadata.ColorMode detectColorMode(byte[] imageData);
 }

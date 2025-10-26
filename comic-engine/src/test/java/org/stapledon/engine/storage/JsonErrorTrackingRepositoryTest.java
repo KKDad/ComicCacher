@@ -184,11 +184,19 @@ class JsonErrorTrackingRepositoryTest {
         repository.recordError(createTestError(comicName, "First error"));
 
         // Add small delay to ensure different timestamps
-        try { Thread.sleep(10); } catch (InterruptedException e) { }
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            // Ignore - test timing delay, not critical
+        }
 
         repository.recordError(createTestError(comicName, "Second error"));
 
-        try { Thread.sleep(10); } catch (InterruptedException e) { }
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            // Ignore - test timing delay, not critical
+        }
 
         repository.recordError(createTestError(comicName, "Third error"));
 

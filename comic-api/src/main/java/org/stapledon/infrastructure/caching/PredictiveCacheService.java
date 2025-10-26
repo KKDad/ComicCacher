@@ -30,10 +30,7 @@ public class PredictiveCacheService {
 
     /**
      * Asynchronously prefetches adjacent comics for improved navigation performance.
-     *
-     * @param comicId the ID of the comic being viewed
-     * @param currentDate the date of the comic currently being viewed
-     * @param direction the direction of navigation (FORWARD or BACKWARD)
+     * Warms the Caffeine cache with comics N±3 from the current position.
      */
     @Async
     public void prefetchAdjacentComics(int comicId, LocalDate currentDate, Direction direction) {

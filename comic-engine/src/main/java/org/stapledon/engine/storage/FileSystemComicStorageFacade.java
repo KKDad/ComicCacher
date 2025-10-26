@@ -47,6 +47,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     private static final String AVATAR_FILE = "avatar.png";
     private static final int MIN_COMIC_WIDTH = 100;
     private static final int MIN_COMIC_HEIGHT = 50;
+    private static final String EXCLUDED_SYNOLOGY_DIR = "@eaDir";
 
     private final CacheProperties cacheProperties;
     private final ValidationService imageValidationService;
@@ -389,7 +390,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         boolean success = true;
         
         for (File yearDir : yearDirs) {
-            if (yearDir.getName().equals("@eaDir")) {
+            if (yearDir.getName().equals(EXCLUDED_SYNOLOGY_DIR)) {
                 continue;
             }
             
@@ -447,7 +448,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             return new ArrayList<>();
         }
         
-        File[] yearDirs = comicRoot.listFiles(file -> file.isDirectory() && !file.getName().equals("@eaDir"));
+        File[] yearDirs = comicRoot.listFiles(file -> file.isDirectory() && !file.getName().equals(EXCLUDED_SYNOLOGY_DIR));
         if (yearDirs == null) {
             return new ArrayList<>();
         }
@@ -481,7 +482,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         for (File file : files) {
             if (file.isFile()) {
                 size += file.length();
-            } else if (file.isDirectory() && !file.getName().equals("@eaDir")) {
+            } else if (file.isDirectory() && !file.getName().equals(EXCLUDED_SYNOLOGY_DIR)) {
                 size += calculateDirectorySize(file);
             }
         }
@@ -511,8 +512,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             return null;
         }
         
-        // Comics are stored by year, find year folders, excluding any directory called @eaDir
-        String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory() && !name.equals("@eaDir"));
+        // Comics are stored by year, find year folders, excluding Synology metadata directory
+        String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory() && !name.equals(EXCLUDED_SYNOLOGY_DIR));
         if (yearFolders == null || yearFolders.length == 0) {
             return null;
         }
@@ -523,7 +524,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         File folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(),
                 which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
         
-        String[] cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() && !name.equals("@eaDir"));
+        String[] cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() && !name.equals(EXCLUDED_SYNOLOGY_DIR));
         if (cachedStrips == null || cachedStrips.length == 0) {
             return null;
         }

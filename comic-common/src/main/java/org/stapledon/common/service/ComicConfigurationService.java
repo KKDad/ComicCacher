@@ -38,23 +38,17 @@ public interface ComicConfigurationService {
     boolean saveBootstrapConfig(Bootstrap config);
 
     /**
-     * Gets the path for a configuration file
-     * @param configName The name of the configuration
-     * @return The path to the configuration file
+     * Gets the path for a configuration file.
      */
     String getConfigPath(String configName);
 
     /**
-     * Checks if a configuration file exists
-     * @param configName The name of the configuration
-     * @return true if the configuration exists
+     * Checks if a configuration file exists.
      */
     boolean configExists(String configName);
 
     /**
-     * Gets the File object for a configuration
-     * @param configName The name of the configuration
-     * @return The File object
+     * Gets the File object for a configuration.
      */
     File getConfigFile(String configName);
 }
