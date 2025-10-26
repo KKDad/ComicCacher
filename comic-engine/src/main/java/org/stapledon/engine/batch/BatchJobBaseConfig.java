@@ -67,6 +67,9 @@ public class BatchJobBaseConfig {
         /** Daily at 6:45 AM EST - Retrieval record purge */
         public static final String RECORD_PURGE = "0 45 6 * * ? " + BATCH_TIMEZONE;
 
+        /** Daily at 7:00 AM EST - Comic backfill */
+        public static final String COMIC_BACKFILL = "0 0 7 * * ? " + BATCH_TIMEZONE;
+
         private CronSchedules() {
             // Utility class
         }
@@ -93,6 +96,9 @@ public class BatchJobBaseConfig {
 
         public static final String RECORD_PURGE_ENABLED = "batch.record-purge.enabled";
         public static final String RECORD_PURGE_CRON = "batch.record-purge.cron";
+
+        public static final String COMIC_BACKFILL_ENABLED = "batch.comic-backfill.enabled";
+        public static final String COMIC_BACKFILL_CRON = "batch.comic-backfill.cron";
 
         private PropertyKeys() {
             // Utility class

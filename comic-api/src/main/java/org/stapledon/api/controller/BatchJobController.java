@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
+import org.stapledon.engine.batch.ComicBackfillJobScheduler;
 import org.stapledon.engine.batch.ComicDownloadJobScheduler;
 import org.stapledon.engine.batch.ComicJobSummary;
 
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 public class BatchJobController {
 
     private final ComicDownloadJobScheduler comicDownloadJobScheduler;
+    private final ComicBackfillJobScheduler comicBackfillJobScheduler;
 
     @GetMapping("/jobs/recent")
     @Operation(summary = "Get recent job executions",
@@ -117,10 +119,28 @@ public class BatchJobController {
                 "status", execution.getStatus().toString(),
                 "targetDate", targetDate.toString()
             );
-            
+
             return ResponseBuilder.ok(result, "Job triggered successfully");
         } catch (Exception e) {
             return ResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to trigger job: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/jobs/backfill/trigger")
+    @Operation(summary = "Manually trigger comic backfill job",
+               description = "Manually starts a comic backfill job to fill in missing comics for the configured target year")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> triggerBackfillJob() {
+        try {
+            JobExecution execution = comicBackfillJobScheduler.runJob("MANUAL");
+            Map<String, Object> result = Map.of(
+                "executionId", execution.getId(),
+                "status", execution.getStatus().toString(),
+                "jobName", "ComicBackfillJob"
+            );
+
+            return ResponseBuilder.ok(result, "Backfill job triggered successfully");
+        } catch (Exception e) {
+            return ResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to trigger backfill job: " + e.getMessage());
         }
     }
 
