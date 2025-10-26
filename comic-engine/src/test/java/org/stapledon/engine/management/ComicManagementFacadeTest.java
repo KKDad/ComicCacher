@@ -413,9 +413,13 @@ class ComicManagementFacadeTest {
                 .imageData(testImageData)
                 .build();
 
-        List<ComicDownloadResult> results = List.of(result);
+        // Mock: comic doesn't exist on disk yet
+        when(storageFacade.comicStripExists(anyInt(), anyString(), any())).thenReturn(false);
 
-        when(downloaderFacade.downloadComicsForDate(any(), any())).thenReturn(results);
+        // Mock: download succeeds
+        when(downloaderFacade.downloadComic(any())).thenReturn(result);
+
+        // Mock: save succeeds
         when(storageFacade.saveComicStrip(anyInt(), anyString(), any(), any())).thenReturn(true);
 
         // Act
@@ -423,7 +427,8 @@ class ComicManagementFacadeTest {
 
         // Assert
         assertTrue(updated);
-        verify(downloaderFacade).downloadComicsForDate(any(), any());
+        verify(storageFacade).comicStripExists(eq(1), eq("Test Comic"), any());
+        verify(downloaderFacade).downloadComic(any());
         verify(storageFacade).saveComicStrip(eq(1), eq("Test Comic"), any(), eq(testImageData));
         verify(configFacade).saveComicConfig(any());
     }

@@ -18,6 +18,7 @@ import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.downloader.DownloaderFacade;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -305,45 +306,85 @@ public class ComicManagementFacade implements ManagementFacade {
             // Get the current comic configuration
             ComicConfig config = configFacade.loadComicConfig();
 
-            // Download comics for the specified date
-            results = downloaderFacade.downloadComicsForDate(config, date);
+            if (config == null || config.getComics() == null) {
+                log.warn("Comic configuration is null or empty");
+                return results;
+            }
 
-            // Process the results - save to storage and update metadata
-            for (ComicDownloadResult result : results) {
-                ComicDownloadRequest request = result.getRequest();
+            DayOfWeek dayOfWeek = date.getDayOfWeek();
+
+            // Process each comic individually - check if exists before downloading
+            for (ComicItem comic : config.getComics()) {
+                // Skip comics with null or empty source
+                if (comic.getSource() == null || comic.getSource().isEmpty()) {
+                    log.warn("Skipping comic '{}' - has null or empty source", comic.getName());
+                    continue;
+                }
+
+                // Skip inactive comics (discontinued/delisted)
+                if (!comic.isActive()) {
+                    log.info("Skipping comic '{}' - comic is inactive/discontinued", comic.getName());
+                    continue;
+                }
+
+                // Skip if comic doesn't publish on this day
+                if (comic.getPublicationDays() != null && !comic.getPublicationDays().isEmpty()) {
+                    if (!comic.getPublicationDays().contains(dayOfWeek)) {
+                        log.info("Skipping comic '{}' - not published on {} (publishes: {})",
+                                comic.getName(), dayOfWeek, comic.getPublicationDays());
+                        continue;
+                    }
+                }
+
+                // Check if comic already exists on disk
+                if (storageFacade.comicStripExists(comic.getId(), comic.getName(), date)) {
+                    log.info("Skipping comic '{}' for {} - already cached", comic.getName(), date);
+                    continue;
+                }
+
+                // Comic doesn't exist - download it
+                ComicDownloadRequest request = ComicDownloadRequest.builder()
+                        .comicId(comic.getId())
+                        .comicName(comic.getName())
+                        .source(comic.getSource())
+                        .sourceIdentifier(comic.getSourceIdentifier())
+                        .date(date)
+                        .build();
+
+                ComicDownloadResult result = downloaderFacade.downloadComic(request);
+                results.add(result);
 
                 if (result.isSuccessful()) {
                     // Save the comic to storage
                     boolean saved = storageFacade.saveComicStrip(
-                            request.getComicId(),
-                            request.getComicName(),
-                            request.getDate(),
+                            comic.getId(),
+                            comic.getName(),
+                            date,
                             result.getImageData());
 
                     if (!saved) {
-                        log.error("Failed to save comic {} to storage", request.getComicName());
+                        log.error("Failed to save comic {} to storage", comic.getName());
+                        continue;
                     }
 
                     // Update comic item metadata
-                    getComic(request.getComicId()).ifPresent(comic -> {
-                        ComicItem updated = ComicItem.builder()
-                                .id(comic.getId())
-                                .name(comic.getName())
-                                .description(comic.getDescription())
-                                .author(comic.getAuthor())
-                                .avatarAvailable(comic.isAvatarAvailable())
-                                .enabled(comic.isEnabled())
-                                .newest(request.getDate()) // Update newest date
-                                .oldest(comic.getOldest())
-                                .source(comic.getSource())
-                                .sourceIdentifier(comic.getSourceIdentifier())
-                                .build();
+                    ComicItem updated = ComicItem.builder()
+                            .id(comic.getId())
+                            .name(comic.getName())
+                            .description(comic.getDescription())
+                            .author(comic.getAuthor())
+                            .avatarAvailable(comic.isAvatarAvailable())
+                            .enabled(comic.isEnabled())
+                            .newest(date) // Update newest date
+                            .oldest(comic.getOldest())
+                            .source(comic.getSource())
+                            .sourceIdentifier(comic.getSourceIdentifier())
+                            .build();
 
-                        updateComic(comic.getId(), updated);
-                    });
+                    updateComic(comic.getId(), updated);
                 } else {
                     log.error("Failed to download comic {}: {}",
-                            request.getComicName(), result.getErrorMessage());
+                            comic.getName(), result.getErrorMessage());
                 }
             }
         } catch (Exception e) {

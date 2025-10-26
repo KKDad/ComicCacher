@@ -1,16 +1,1 @@
-{
-  "users": {
-    "testuser": {
-      "username": "testuser",
-      "passwordHash": "$2a$10$eorAC7WxDFzV/BdOEeV5/.whVmWhba8WcvSUWU5FmVmW4Oy/BgmIi",
-      "email": "updated_testuser@example.com",
-      "displayName": "Updated Display Name",
-      "created": "2025-10-26T14:35:21.692109",
-      "lastLogin": "2025-10-26T14:35:25.881204",
-      "roles": [
-        "USER"
-      ],
-      "userToken": "019778fe-94b1-4295-b1bc-275a536c400f"
-    }
-  }
-}
+{}
