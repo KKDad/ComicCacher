@@ -1,6 +1,8 @@
 package org.stapledon.engine.management;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.dto.ComicConfig;
@@ -107,23 +109,25 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     }
 
     @Override
+    @CacheEvict(value = "comicMetadata", key = "'allComics'")
     public Optional<ComicItem> createComic(ComicItem comicItem) {
         // Don't create if already exists
         if (comics.containsKey(comicItem.getId())) {
             return Optional.empty();
         }
-        
+
         comics.put(comicItem.getId(), comicItem);
-        
+
         // Save to configuration
         ComicConfig config = configFacade.loadComicConfig();
         config.getItems().put(comicItem.getId(), comicItem);
         configFacade.saveComicConfig(config);
-        
+
         return Optional.of(comicItem);
     }
 
     @Override
+    @CacheEvict(value = "comicMetadata", key = "'comic:' + #comicId")
     public Optional<ComicItem> updateComic(int comicId, ComicItem comicItem) {
         // Ensure ID in comics matches the request ID
         if (comicItem.getId() != comicId) {
@@ -152,20 +156,26 @@ public class ComicManagementFacadeImpl implements ComicManagementFacade {
     }
 
     @Override
+    @Caching(evict = {
+        @CacheEvict(value = "comicMetadata", allEntries = true),
+        @CacheEvict(value = "comicNavigation", allEntries = true),
+        @CacheEvict(value = "boundaryDates", allEntries = true),
+        @CacheEvict(value = "navigationDates", allEntries = true)
+    })
     public boolean deleteComic(int comicId) {
         ComicItem removed = comics.remove(comicId);
-        
+
         if (removed != null) {
             // Also remove from storage and configuration
             storageFacade.deleteComic(comicId, removed.getName());
-            
+
             ComicConfig config = configFacade.loadComicConfig();
             config.getItems().remove(comicId);
             configFacade.saveComicConfig(config);
-            
+
             return true;
         }
-        
+
         return false;
     }
 
