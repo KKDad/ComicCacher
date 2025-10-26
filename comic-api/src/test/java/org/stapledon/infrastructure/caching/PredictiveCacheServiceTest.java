@@ -23,7 +23,7 @@ import org.stapledon.common.config.CaffeineCacheProperties;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 
 /**
  * Unit tests for PredictiveCacheService.
@@ -34,7 +34,7 @@ import org.stapledon.engine.management.ComicManagementFacade;
 class PredictiveCacheServiceTest {
 
     @Mock
-    private ComicManagementFacade comicManagementFacade;
+    private ManagementFacade comicManagementFacade;
 
     private CaffeineCacheProperties cacheProperties;
     private PredictiveCacheService service;

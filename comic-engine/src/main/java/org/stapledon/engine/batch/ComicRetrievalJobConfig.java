@@ -20,7 +20,7 @@ import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.service.ComicConfigurationService;
-import org.stapledon.engine.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.downloader.DownloaderFacade;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ComicRetrievalJobConfig {
 
     private final ComicConfigurationService configurationFacade;
-    private final ComicDownloaderFacade comicDownloaderFacade;
+    private final DownloaderFacade comicDownloaderFacade;
 
     /**
      * Main job for daily comic retrieval

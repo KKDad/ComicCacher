@@ -13,7 +13,7 @@ import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicConfigurationService;
-import org.stapledon.engine.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.downloader.DownloaderFacade;
 
 import java.lang.reflect.Method;
 import java.time.DayOfWeek;
@@ -32,7 +32,7 @@ class ComicRetrievalJobConfigTest {
     private ComicConfigurationService configurationService;
 
     @Mock
-    private ComicDownloaderFacade downloaderFacade;
+    private DownloaderFacade downloaderFacade;
 
     private ComicRetrievalJobConfig jobConfig;
 

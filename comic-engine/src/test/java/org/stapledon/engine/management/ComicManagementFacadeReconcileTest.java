@@ -19,11 +19,11 @@ import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.infrastructure.config.TaskExecutionTracker;
+import org.stapledon.common.infrastructure.config.ExecutionTracker;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.util.Bootstrap;
-import org.stapledon.engine.downloader.ComicDownloaderFacade;
+import org.stapledon.engine.downloader.DownloaderFacade;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -43,10 +43,10 @@ public class ComicManagementFacadeReconcileTest {
     private ComicConfigurationService configFacade;
     
     @Mock
-    private ComicDownloaderFacade downloaderFacade;
+    private DownloaderFacade downloaderFacade;
 
     @Mock
-    private TaskExecutionTracker taskExecutionTracker;
+    private ExecutionTracker taskExecutionTracker;
     
     @Mock
     private IComicsBootstrap goComicsBootstrap;
@@ -54,7 +54,7 @@ public class ComicManagementFacadeReconcileTest {
     @Mock
     private IComicsBootstrap kingComicsBootstrap;
     
-    private ComicManagementFacadeImpl facade;
+    private ComicManagementFacade facade;
     private ComicConfig comicConfig;
     private Bootstrap bootstrap;
     private final byte[] testImageData = "test image data".getBytes();
@@ -89,7 +89,7 @@ public class ComicManagementFacadeReconcileTest {
         bootstrap.getKingComics().add(kingComicsBootstrap);
         
         // Initialize facade
-        facade = new ComicManagementFacadeImpl(
+        facade = new ComicManagementFacade(
                 storageFacade,
                 configFacade,
                 downloaderFacade,

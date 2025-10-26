@@ -30,7 +30,7 @@ import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.infrastructure.config.GsonProvider;
 
 import java.time.LocalDate;
@@ -45,7 +45,7 @@ class ComicControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private ComicManagementFacade comicManagementFacade;
+    private ManagementFacade comicManagementFacade;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules(); // Automatically discover and register modules, including JavaTimeModule

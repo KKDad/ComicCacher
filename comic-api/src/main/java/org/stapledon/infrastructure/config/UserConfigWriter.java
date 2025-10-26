@@ -32,7 +32,7 @@ public class UserConfigWriter {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
-    private final ApplicationConfigurationFacade configurationFacade;
+    private final ConfigurationFacade configurationFacade;
 
     private UserConfig userConfig;
 

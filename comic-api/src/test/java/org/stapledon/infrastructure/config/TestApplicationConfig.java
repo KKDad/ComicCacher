@@ -11,7 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.config.properties.DailyRunnerProperties;
-import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.core.auth.service.AuthService;
 import org.stapledon.core.comic.service.UpdateService;
 import org.stapledon.core.preference.service.PreferenceService;
@@ -125,8 +125,8 @@ public class TestApplicationConfig {
 
     @Bean
     @Primary
-    public WebInspector webInspector() {
-        return Mockito.mock(WebInspector.class);
+    public InspectorService webInspector() {
+        return Mockito.mock(InspectorService.class);
     }
 
     @Bean

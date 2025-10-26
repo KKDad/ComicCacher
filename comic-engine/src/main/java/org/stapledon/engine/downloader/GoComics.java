@@ -11,7 +11,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.infrastructure.web.WebInspector;
+import org.stapledon.common.infrastructure.web.InspectorService;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -93,7 +93,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
         quitWebDriver();
     }
 
-    public GoComics(WebInspector inspector, CacheProperties cacheProperties) {
+    public GoComics(InspectorService inspector, CacheProperties cacheProperties) {
         super(inspector, "[src]");
         this.cacheProperties = cacheProperties;
         // WebDriver initialization moved to lazy init - only create when actually needed

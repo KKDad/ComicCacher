@@ -1,0 +1,29 @@
+package org.stapledon.core.comic.service;
+
+import org.springframework.stereotype.Service;
+import org.stapledon.engine.management.ManagementFacade;
+
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@ToString
+@Service
+@RequiredArgsConstructor
+public class ComicUpdateService implements UpdateService {
+
+    private final ManagementFacade comicManagementFacade;
+    
+    @Override
+    public boolean updateAll() {
+        log.info("Updating all comics");
+        return comicManagementFacade.updateAllComics();
+    }
+
+    @Override
+    public boolean updateComic(int comicId) {
+        log.info("Updating comic with id={}", comicId);
+        return comicManagementFacade.updateComic(comicId);
+    }
+}

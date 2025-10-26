@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping({"/api/v1"})
 @Tag(name = "Update Comics", description = "Update and Cache individual or all configured comics")
 public class UpdateController {
-    private final ComicManagementFacade comicManagementFacade;
+    private final ManagementFacade comicManagementFacade;
 
     @GetMapping(path = "/update")
     @ResponseStatus(code = HttpStatus.OK)

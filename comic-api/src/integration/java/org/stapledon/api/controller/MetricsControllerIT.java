@@ -22,7 +22,7 @@ import org.stapledon.StapledonAccountGivens;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.common.service.ComicStorageFacade;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
@@ -33,7 +33,7 @@ class MetricsControllerIT extends AbstractIntegrationTest {
     private String authToken;
 
     @Autowired
-    private ComicManagementFacade comicManagementFacade;
+    private ManagementFacade comicManagementFacade;
 
     @Autowired
     private ComicStorageFacade comicStorageFacade;

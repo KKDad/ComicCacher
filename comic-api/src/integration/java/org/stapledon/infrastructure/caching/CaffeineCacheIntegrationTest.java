@@ -16,7 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.util.Direction;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.infrastructure.config.CaffeineCacheConfiguration;
 
 /**
@@ -31,7 +31,7 @@ class CaffeineCacheIntegrationTest {
     private CacheManager cacheManager;
 
     @Autowired
-    private ComicManagementFacade comicManagementFacade;
+    private ManagementFacade comicManagementFacade;
 
     @Test
     void testCacheManagerIsConfigured() {

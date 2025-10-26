@@ -21,7 +21,7 @@ import org.stapledon.common.model.ComicCachingException;
 import org.stapledon.common.model.ComicImageNotFoundException;
 import org.stapledon.common.model.ComicNotFoundException;
 import org.stapledon.common.util.Direction;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.infrastructure.caching.PredictiveCacheService;
 
 import java.time.LocalDate;
@@ -37,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping({"/api/v1"})
 public class ComicController {
 
-    private final ComicManagementFacade comicManagementFacade;
+    private final ManagementFacade comicManagementFacade;
     private final Optional<PredictiveCacheService> predictiveCacheService;
 
     /*****************************************************************************************************************

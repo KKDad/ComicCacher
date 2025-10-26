@@ -3,8 +3,8 @@ package org.stapledon.engine.downloader;
 import com.google.common.base.Preconditions;
 
 import org.stapledon.common.infrastructure.caching.ICachable;
-import org.stapledon.common.infrastructure.web.WebInspector;
-import org.stapledon.common.infrastructure.web.WebInspectorImpl;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.JsoupInspectorService;
 import org.stapledon.common.model.ComicCachingException;
 
 import java.io.File;
@@ -35,7 +35,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
 
     private Path cacheDirectory;
 
-    final WebInspector webInspector;
+    final InspectorService webInspector;
     final String elementSelector;
 
     String comicName;
@@ -47,8 +47,8 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     protected abstract Optional<String> extractComicImage(String comicUrl);
 
 
-    DailyComic(WebInspector inspector, String elementSelector) {
-        this.webInspector = (inspector == null) ? new WebInspectorImpl() : inspector;
+    DailyComic(InspectorService inspector, String elementSelector) {
+        this.webInspector = (inspector == null) ? new JsoupInspectorService() : inspector;
         this.elementSelector = elementSelector;
     }
 

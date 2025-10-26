@@ -2,8 +2,8 @@ package org.stapledon.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.common.config.IComicsBootstrap;
-import org.stapledon.common.infrastructure.web.WebInspector;
-import org.stapledon.common.infrastructure.web.WebInspectorImpl;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.JsoupInspectorService;
 import org.stapledon.engine.downloader.ComicsKingdom;
 import org.stapledon.engine.downloader.IDailyComic;
 
@@ -23,7 +23,7 @@ public class KingComicsBootStrap implements IComicsBootstrap {
     Boolean active; // Optional: whether comic is actively publishing (null/true = active)
 
     @Autowired
-    private WebInspector webInspector;
+    private InspectorService webInspector;
 
     public KingComicsBootStrap() {
         // No args constructor for required for Gson deserialize
@@ -41,7 +41,7 @@ public class KingComicsBootStrap implements IComicsBootstrap {
 
     @Override
     public IDailyComic getDownloader() {
-        return new ComicsKingdom(webInspector != null ? webInspector : new WebInspectorImpl(), this.getWebsite());
+        return new ComicsKingdom(webInspector != null ? webInspector : new JsoupInspectorService(), this.getWebsite());
     }
 
     @Override

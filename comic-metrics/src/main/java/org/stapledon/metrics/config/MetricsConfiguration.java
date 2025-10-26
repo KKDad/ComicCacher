@@ -14,8 +14,8 @@ import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.CombinedMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
+import org.stapledon.metrics.service.JsonMetricsService;
 import org.stapledon.metrics.service.MetricsService;
-import org.stapledon.metrics.service.MetricsServiceImpl;
 import org.stapledon.metrics.service.NoOpMetricsService;
 
 import lombok.ToString;
@@ -51,8 +51,8 @@ public class MetricsConfiguration {
             CombinedMetricsRepository combinedMetricsRepository,
             MetricsArchiver metricsArchiver,
             org.stapledon.metrics.service.MetricsUpdateService metricsUpdateService) {
-        log.info("Metrics enabled - creating MetricsServiceImpl");
-        return new MetricsServiceImpl(
+        log.info("Metrics enabled - creating JsonMetricsService");
+        return new JsonMetricsService(
                 storageMetricsCollector,
                 accessMetricsCollector,
                 accessMetricsRepository,

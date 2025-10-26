@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.stapledon.common.config.CaffeineCacheProperties;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.util.Direction;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PredictiveCacheService {
 
-    private final ComicManagementFacade comicManagementFacade;
+    private final ManagementFacade comicManagementFacade;
     private final CaffeineCacheProperties cacheProperties;
 
     /**

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -88,7 +89,7 @@ class GoComicsIntegrationIT {
     }
 
     @Test
-    @Ignore("Integration test - run manually as needed")
+    @Disabled("Integration test - run manually as needed")
     void downloadAdamAtHomeFiveDaysAgo() throws Exception {
         LocalDate testDate = LocalDate.of(2025, 10, 20);
         String year = "2025";
@@ -119,7 +120,7 @@ class GoComicsIntegrationIT {
     }
 
     @Test
-    @Ignore("Integration test - run manually as needed")
+    @Disabled("Integration test - run manually as needed")
     void downloadTenWeeklyComics() throws Exception {
         LocalDate today = LocalDate.now();
         LOG.info("=== Downloading 10 Adam@Home comics, one week apart ===");

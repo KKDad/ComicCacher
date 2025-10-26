@@ -3,8 +3,8 @@ package org.stapledon.infrastructure.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.config.IComicsBootstrap;
-import org.stapledon.common.infrastructure.web.WebInspector;
-import org.stapledon.common.infrastructure.web.WebInspectorImpl;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.JsoupInspectorService;
 import org.stapledon.engine.downloader.GoComics;
 import org.stapledon.engine.downloader.IDailyComic;
 
@@ -29,7 +29,7 @@ public class GoComicsBootstrap implements IComicsBootstrap {
     Boolean active; // Optional: whether comic is actively publishing (null/true = active)
 
     @Autowired
-    private WebInspector webInspector;
+    private InspectorService webInspector;
 
     @Autowired
     private CacheProperties cacheProperties;
@@ -47,7 +47,7 @@ public class GoComicsBootstrap implements IComicsBootstrap {
     @Override
     public IDailyComic getDownloader() {
         return new GoComics(
-            webInspector != null ? webInspector : new WebInspectorImpl(),
+            webInspector != null ? webInspector : new JsoupInspectorService(),
             cacheProperties
         );
     }

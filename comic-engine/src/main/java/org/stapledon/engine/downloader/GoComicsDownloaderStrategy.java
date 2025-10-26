@@ -6,8 +6,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.infrastructure.web.WebInspector;
-import org.stapledon.common.service.ImageValidationService;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.service.ValidationService;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -34,8 +34,8 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
      * @param webInspector The web inspector to use for HTTP requests
      * @param imageValidationService The service for validating downloaded images
      */
-    public GoComicsDownloaderStrategy(WebInspector webInspector,
-                                     ImageValidationService imageValidationService) {
+    public GoComicsDownloaderStrategy(InspectorService webInspector,
+                                     ValidationService imageValidationService) {
         super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
     }
 

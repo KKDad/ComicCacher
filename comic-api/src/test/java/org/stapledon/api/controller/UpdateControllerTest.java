@@ -15,7 +15,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.stapledon.api.exception.GlobalExceptionHandler;
-import org.stapledon.engine.management.ComicManagementFacade;
+import org.stapledon.engine.management.ManagementFacade;
 
 /**
  * Standalone tests for UpdateController that don't rely on Spring context
@@ -25,7 +25,7 @@ class UpdateControllerTest {
     private MockMvc mockMvc;
     
     @Mock
-    private ComicManagementFacade comicManagementFacade;
+    private ManagementFacade comicManagementFacade;
 
     @BeforeEach
     void setup() {
