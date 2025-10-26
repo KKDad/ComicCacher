@@ -88,9 +88,9 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             return false;
         }
 
-        log.debug("Saving validated {} image for {} on {}: {}x{}",
+        log.info("Saving validated {} image for {} on {}: {}x{} ({} bytes)",
                  validation.getFormat(), comicName, date,
-                 validation.getWidth(), validation.getHeight());
+                 validation.getWidth(), validation.getHeight(), imageData.length);
 
         // Check for duplicates
         DuplicateValidationResult duplicateCheck = duplicateValidationService.validateNoDuplicate(
@@ -118,6 +118,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
         try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(imageData);
+            log.info("Saved comic strip to: {}", file.getAbsolutePath());
 
             // After successfully saving the image, analyze and save metadata
             try {

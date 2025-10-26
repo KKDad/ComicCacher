@@ -3,18 +3,18 @@
     <!-- Set timezone to America/Toronto (EST/EDT) -->
     <timestamp key="byDate" datePattern="yyyy-MM-dd" timeReference="America/Toronto"/>
 
-    <!-- Console appender with EST timezone -->
+    <!-- Console appender with EST timezone and Spring Boot aligned format -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, America/Toronto} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+            <pattern>%clr(%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, America/Toronto}){faint} %clr(%5level) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx</pattern>
         </encoder>
     </appender>
 
-    <!-- File appender with EST timezone
+    <!-- File appender with EST timezone and aligned format
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/comic-api.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, America/Toronto} %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, America/Toronto} %5level ${PID:- } --- [%15.15t] %-40.40logger{39} : %m%n%wEx</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/comic-api.%d{yyyy-MM-dd, America/Toronto}.log</fileNamePattern>

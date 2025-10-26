@@ -108,12 +108,12 @@ public class DuplicateImageHashRepository {
                 if (loaded != null) {
                     hashes.putAll(loaded);
                 }
-                log.debug("Loaded {} hash records for comic {} year {}", hashes.size(), comicName, year);
+                log.info("Loaded {} hash records for comic {} year {} from {}", hashes.size(), comicName, year, hashFile.getAbsolutePath());
             } catch (IOException e) {
                 log.error("Failed to load hash file {}: {}", hashFile.getAbsolutePath(), e.getMessage(), e);
             }
         } else {
-            log.debug("No existing hash file for comic {} year {}", comicName, year);
+            log.info("No existing hash file for comic {} year {}, creating new hash cache", comicName, year);
         }
 
         // Store in cache
@@ -143,7 +143,7 @@ public class DuplicateImageHashRepository {
         try (FileWriter writer = new FileWriter(hashFile)) {
             gson.toJson(hashes, writer);
             writer.flush();
-            log.debug("Saved {} hash records to {}", hashes.size(), hashFile.getAbsolutePath());
+            log.info("Saved {} hash records to {}", hashes.size(), hashFile.getAbsolutePath());
         } catch (IOException e) {
             log.error("Failed to save hash file {}: {}", hashFile.getAbsolutePath(), e.getMessage(), e);
         }

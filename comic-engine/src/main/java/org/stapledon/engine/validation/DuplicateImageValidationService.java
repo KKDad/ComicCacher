@@ -87,7 +87,7 @@ public class DuplicateImageValidationService implements DuplicateValidationServi
 
         hashRepository.addHash(comicId, comicName, year, newRecord);
 
-        log.debug("Image for {} on {} is unique (hash: {})", comicName, date, hash);
+        log.info("Image for {} on {} is unique (hash: {})", comicName, date, hash);
         return DuplicateValidationResult.unique(hash);
     }
 

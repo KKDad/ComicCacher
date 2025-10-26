@@ -46,7 +46,7 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     @Override
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
         try {
-            log.debug("Downloading comic {} for date {} from {}",
+            log.info("Downloading comic {} for date {} from {}",
                       request.getComicName(), request.getDate(), source);
 
             byte[] imageData = downloadComicImage(request);
