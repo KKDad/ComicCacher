@@ -16,7 +16,6 @@ import org.stapledon.core.auth.service.AuthService;
 import org.stapledon.core.comic.service.UpdateService;
 import org.stapledon.core.preference.service.PreferenceService;
 import org.stapledon.core.user.service.UserService;
-import org.stapledon.engine.downloader.ComicCacher;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 import org.stapledon.infrastructure.security.JwtAuthenticationEntryPoint;
 import org.stapledon.infrastructure.security.JwtTokenFilter;
@@ -127,12 +126,6 @@ public class TestApplicationConfig {
     @Primary
     public InspectorService webInspector() {
         return Mockito.mock(InspectorService.class);
-    }
-
-    @Bean
-    @Primary
-    public ComicCacher comicCacher() {
-        return Mockito.mock(ComicCacher.class);
     }
 
     @Bean
