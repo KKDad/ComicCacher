@@ -2,6 +2,7 @@ package org.stapledon;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Contact;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
         servers = @Server(url = "http://comics.stapledon.local")
 )
 @SpringBootApplication
+@EnableScheduling
 @RequiredArgsConstructor
 public class ComicApiApplication {
     public static void main(String[] args) {
