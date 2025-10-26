@@ -16,6 +16,7 @@ import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.ImageUtils;
+import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,6 +55,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     private final CacheProperties cacheProperties;
     private final ValidationService imageValidationService;
     private final DuplicateValidationService duplicateValidationService;
+    private final DuplicateHashCacheService duplicateHashCacheService;
     private final AnalysisService imageAnalysisService;
     private final ImageMetadataRepository imageMetadataRepository;
     
@@ -119,6 +121,9 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(imageData);
             log.info("Saved comic strip to: {}", file.getAbsolutePath());
+
+            // Add to hash cache after successful save
+            duplicateHashCacheService.addImageToCache(comicId, comicName, date, imageData, file.getAbsolutePath());
 
             // After successfully saving the image, analyze and save metadata
             try {

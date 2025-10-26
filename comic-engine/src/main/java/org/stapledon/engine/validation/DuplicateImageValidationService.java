@@ -6,7 +6,6 @@ import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageHashRecord;
 import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ImageHasher;
-import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -26,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DuplicateImageValidationService implements DuplicateValidationService {
 
-    private final DuplicateImageHashRepository hashRepository;
+    private final DuplicateHashCacheService hashCacheService;
     private final ImageHasherFactory imageHasherFactory;
     private final CacheProperties cacheProperties;
 
@@ -52,8 +51,8 @@ public class DuplicateImageValidationService implements DuplicateValidationServi
 
         int year = date.getYear();
 
-        // Check if this hash already exists for this comic/year
-        Optional<ImageHashRecord> existingRecord = hashRepository.findByHash(comicId, comicName, year, hash);
+        // Check if this hash already exists for this comic/year (with automatic backfill/rebuild)
+        Optional<ImageHashRecord> existingRecord = hashCacheService.findByHash(comicId, comicName, year, hash);
 
         if (existingRecord.isPresent()) {
             ImageHashRecord existing = existingRecord.get();
@@ -76,50 +75,8 @@ public class DuplicateImageValidationService implements DuplicateValidationServi
             );
         }
 
-        // No duplicate found - add this hash to the repository
-        String filePath = buildFilePath(comicId, comicName, date);
-        ImageHashRecord newRecord = ImageHashRecord.builder()
-                .hash(hash)
-                .date(date)
-                .filePath(filePath)
-                .algorithm(cacheProperties.getHashAlgorithm())
-                .build();
-
-        hashRepository.addHash(comicId, comicName, year, newRecord);
-
-        log.info("Image for {} on {} is unique (hash: {})", comicName, date, hash);
+        // No duplicate found - validation passed
+        log.debug("Image for {} on {} is unique (hash: {})", comicName, date, hash);
         return DuplicateValidationResult.unique(hash);
-    }
-
-    /**
-     * Builds the expected file path for a comic strip.
-     *
-     * @param comicId The comic ID
-     * @param comicName The comic name
-     * @param date The date
-     * @return The file path
-     */
-    private String buildFilePath(int comicId, String comicName, LocalDate date) {
-        String comicNameParsed = getComicNameParsed(comicId, comicName);
-        String year = String.valueOf(date.getYear());
-        String filename = date.toString(); // yyyy-MM-dd format
-        String cacheRoot = cacheProperties.getLocation();
-
-        return String.format("%s/%s/%s/%s.png", cacheRoot, comicNameParsed, year, filename);
-    }
-
-    /**
-     * Gets a directory name for a comic - uses the comic name if available,
-     * otherwise falls back to the comic ID.
-     *
-     * @param comicId The comic ID
-     * @param comicName The comic name (can be null)
-     * @return A string to use as the directory name
-     */
-    private String getComicNameParsed(int comicId, String comicName) {
-        if (comicName == null) {
-            return "comic_" + comicId;
-        }
-        return comicName.replace(" ", "");
     }
 }

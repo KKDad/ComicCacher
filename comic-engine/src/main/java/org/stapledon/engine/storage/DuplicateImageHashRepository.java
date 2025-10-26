@@ -192,6 +192,34 @@ public class DuplicateImageHashRepository {
     }
 
     /**
+     * Gets the year directory for a comic.
+     *
+     * @param comicId The comic ID
+     * @param comicName The comic name
+     * @param year The year
+     * @return The year directory File object
+     */
+    public File getYearDirectory(int comicId, String comicName, int year) {
+        String comicNameParsed = getComicNameParsed(comicId, comicName);
+        String cacheRoot = cacheProperties.getLocation();
+        return new File(String.format("%s/%s/%d", cacheRoot, comicNameParsed, year));
+    }
+
+    /**
+     * Replaces all hashes for a comic/year (used for rebuilding cache).
+     *
+     * @param comicId The comic ID
+     * @param comicName The comic name
+     * @param year The year
+     * @param hashes The new hash map to store
+     */
+    public void replaceHashes(int comicId, String comicName, int year, Map<String, ImageHashRecord> hashes) {
+        String cacheKey = getCacheKey(comicId, year);
+        cache.put(cacheKey, new ConcurrentHashMap<>(hashes));
+        saveHashes(comicId, comicName, year, hashes);
+    }
+
+    /**
      * Clears the in-memory cache.
      * Useful for testing or when you want to force reload from disk.
      */

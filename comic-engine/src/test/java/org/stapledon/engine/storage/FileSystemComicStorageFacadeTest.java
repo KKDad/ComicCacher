@@ -2,7 +2,11 @@ package org.stapledon.engine.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +21,7 @@ import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
+import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +49,9 @@ class FileSystemComicStorageFacadeTest {
 
     @Mock
     private DuplicateValidationService duplicateValidationService;
+
+    @Mock
+    private DuplicateHashCacheService duplicateHashCacheService;
 
     @Mock
     private org.stapledon.common.service.AnalysisService imageAnalysisService;
@@ -85,7 +93,7 @@ class FileSystemComicStorageFacadeTest {
                 .thenReturn(DuplicateValidationResult.unique("test-hash"));
 
         storageFacade = new FileSystemComicStorageFacade(cacheProperties, imageValidationService,
-                duplicateValidationService, imageAnalysisService, imageMetadataRepository);
+                duplicateValidationService, duplicateHashCacheService, imageAnalysisService, imageMetadataRepository);
 
         // Create test directory structure
         createTestDirectoryStructure();
@@ -283,5 +291,79 @@ class FileSystemComicStorageFacadeTest {
                 .captureTimestamp(LocalDateTime.now())
                 .sourceUrl(null)
                 .build();
+    }
+
+    @Test
+    void saveComicStrip_shouldAddImageToCache_afterSuccessfulSave() throws IOException {
+        // Arrange
+        LocalDate date = LocalDate.of(2023, 2, 1);
+        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
+
+        // Act
+        boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
+
+        // Assert
+        assertThat(result).isTrue();
+
+        // Verify that addImageToCache was called with correct parameters
+        verify(duplicateHashCacheService).addImageToCache(
+                eq(COMIC_ID),
+                eq(COMIC_NAME),
+                eq(date),
+                eq(imageData),
+                anyString()  // File path will be generated
+        );
+    }
+
+    @Test
+    void saveComicStrip_shouldNotAddToCache_whenImageIsDuplicate() throws IOException {
+        // Arrange
+        LocalDate date = LocalDate.of(2023, 2, 1);
+        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
+
+        // Mock duplicate validation to return duplicate
+        when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class), any(byte[].class)))
+                .thenReturn(DuplicateValidationResult.duplicate("hash", LocalDate.of(2023, 1, 1), "/path/to/duplicate.png"));
+
+        // Act
+        boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
+
+        // Assert
+        assertThat(result).isTrue();  // Returns true because download was successful
+
+        // Verify that addImageToCache was NOT called since it's a duplicate
+        verify(duplicateHashCacheService, never()).addImageToCache(
+                anyInt(),
+                anyString(),
+                any(LocalDate.class),
+                any(byte[].class),
+                anyString()
+        );
+    }
+
+    @Test
+    void saveComicStrip_shouldNotAddToCache_whenSaveFails() throws IOException {
+        // Arrange
+        LocalDate date = LocalDate.of(2023, 2, 1);
+        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
+
+        // Mock validation to fail
+        when(imageValidationService.validateWithMinDimensions(any(byte[].class), any(int.class), any(int.class)))
+                .thenReturn(ImageValidationResult.failure("Validation failed"));
+
+        // Act
+        boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
+
+        // Assert
+        assertThat(result).isFalse();
+
+        // Verify that addImageToCache was NOT called since validation failed
+        verify(duplicateHashCacheService, never()).addImageToCache(
+                anyInt(),
+                anyString(),
+                any(LocalDate.class),
+                any(byte[].class),
+                anyString()
+        );
     }
 }
