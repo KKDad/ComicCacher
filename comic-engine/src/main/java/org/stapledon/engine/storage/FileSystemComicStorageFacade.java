@@ -228,11 +228,12 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
     
     @Override
-    @Cacheable(value = "navigationDates", key = "'next:' + #comicId + ':' + #fromDate")
+    @Cacheable(value = "navigationDates", key = "'next:' + #comicId + ':' + #comicName + ':' + #fromDate")
     public Optional<LocalDate> getNextDateWithComic(int comicId, String comicName, LocalDate fromDate) {
         Objects.requireNonNull(fromDate, "fromDate cannot be null");
 
         String comicNameParsed = getComicNameParsed(comicId, comicName);
+        log.debug("getNextDateWithComic: comicId={}, comicName={}, comicNameParsed={}, fromDate={}", comicId, comicName, comicNameParsed, fromDate);
         File root = new File(String.format("%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed));
         
         if (!root.exists()) {
@@ -264,11 +265,12 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
     
     @Override
-    @Cacheable(value = "navigationDates", key = "'prev:' + #comicId + ':' + #fromDate")
+    @Cacheable(value = "navigationDates", key = "'prev:' + #comicId + ':' + #comicName + ':' + #fromDate")
     public Optional<LocalDate> getPreviousDateWithComic(int comicId, String comicName, LocalDate fromDate) {
         Objects.requireNonNull(fromDate, "fromDate cannot be null");
 
         String comicNameParsed = getComicNameParsed(comicId, comicName);
+        log.debug("getPreviousDateWithComic: comicId={}, comicName={}, comicNameParsed={}, fromDate={}", comicId, comicName, comicNameParsed, fromDate);
         File root = new File(String.format("%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed));
         
         if (!root.exists()) {
@@ -389,6 +391,12 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         return directory.delete();
     }
     
+    /**
+     * Purges comic strip images older than the specified number of days.
+     * NOTE: This method is currently not called by any scheduled job or API endpoint.
+     * The application is configured to retain all historical comic strips indefinitely.
+     * This implementation is preserved for potential future use if retention policies change.
+     */
     @Override
     public boolean purgeOldImages(int comicId, String comicName, int daysToKeep) {
         LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
