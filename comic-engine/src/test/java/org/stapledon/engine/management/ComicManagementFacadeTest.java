@@ -101,7 +101,6 @@ class ComicManagementFacadeTest {
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                taskExecutionTracker,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );
     }
@@ -162,7 +161,6 @@ class ComicManagementFacadeTest {
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                taskExecutionTracker,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );
         
@@ -237,7 +235,6 @@ class ComicManagementFacadeTest {
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                taskExecutionTracker,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
         );
         
@@ -409,24 +406,24 @@ class ComicManagementFacadeTest {
                 .sourceIdentifier("testcomic")
                 .date(LocalDate.now())
                 .build();
-        
+
         ComicDownloadResult result = ComicDownloadResult.builder()
                 .request(request)
                 .successful(true)
                 .imageData(testImageData)
                 .build();
-        
+
         List<ComicDownloadResult> results = List.of(result);
-        
-        when(downloaderFacade.downloadLatestComics(any())).thenReturn(results);
+
+        when(downloaderFacade.downloadComicsForDate(any(), any())).thenReturn(results);
         when(storageFacade.saveComicStrip(anyInt(), anyString(), any(), any())).thenReturn(true);
-        
+
         // Act
         boolean updated = facade.updateAllComics();
-        
+
         // Assert
         assertTrue(updated);
-        verify(downloaderFacade).downloadLatestComics(any());
+        verify(downloaderFacade).downloadComicsForDate(any(), any());
         verify(storageFacade).saveComicStrip(eq(1), eq("Test Comic"), any(), eq(testImageData));
         verify(configFacade).saveComicConfig(any());
     }

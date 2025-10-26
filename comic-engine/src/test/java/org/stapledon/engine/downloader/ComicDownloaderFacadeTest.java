@@ -22,6 +22,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -256,5 +257,131 @@ class ComicDownloaderFacadeTest {
         assertTrue(results.get(0).isSuccessful());
 
         verify(goComicsStrategy).downloadComic(any(ComicDownloadRequest.class));
+    }
+
+    @Test
+    void shouldSkipInactiveComics() {
+        // Arrange
+        List<ComicItem> comics = new ArrayList<>();
+        comics.add(ComicItem.builder()
+                .id(1)
+                .name("Active Comic")
+                .source("gocomics")
+                .sourceIdentifier("active")
+                .active(true)
+                .build());
+        comics.add(ComicItem.builder()
+                .id(2)
+                .name("Inactive Comic")
+                .source("gocomics")
+                .sourceIdentifier("inactive")
+                .active(false)
+                .build());
+
+        ComicConfig config = new ComicConfig();
+        config.setComics(comics);
+
+        ComicDownloadResult mockResult = ComicDownloadResult.success(
+                ComicDownloadRequest.builder()
+                        .comicId(1)
+                        .comicName("Active Comic")
+                        .source("gocomics")
+                        .sourceIdentifier("active")
+                        .date(testDate)
+                        .build(),
+                testImageData);
+
+        when(goComicsStrategy.downloadComic(any(ComicDownloadRequest.class))).thenReturn(mockResult);
+
+        // Act
+        List<ComicDownloadResult> results = facade.downloadComicsForDate(config, testDate);
+
+        // Assert
+        assertEquals(1, results.size());
+        assertEquals("Active Comic", results.get(0).getRequest().getComicName());
+    }
+
+    @Test
+    void shouldSkipComicsNotPublishingOnTargetDay() {
+        // Arrange
+        LocalDate monday = LocalDate.of(2025, 10, 27); // A Monday
+        DayOfWeek mondayDay = monday.getDayOfWeek();
+
+        List<ComicItem> comics = new ArrayList<>();
+        comics.add(ComicItem.builder()
+                .id(1)
+                .name("Daily Comic")
+                .source("gocomics")
+                .sourceIdentifier("daily")
+                .active(true)
+                .build()); // No publication days = publishes daily
+        comics.add(ComicItem.builder()
+                .id(2)
+                .name("Sunday Only")
+                .source("gocomics")
+                .sourceIdentifier("sunday-only")
+                .active(true)
+                .publicationDays(List.of(DayOfWeek.SUNDAY))
+                .build());
+
+        ComicConfig config = new ComicConfig();
+        config.setComics(comics);
+
+        ComicDownloadResult mockResult = ComicDownloadResult.success(
+                ComicDownloadRequest.builder()
+                        .comicId(1)
+                        .comicName("Daily Comic")
+                        .source("gocomics")
+                        .sourceIdentifier("daily")
+                        .date(monday)
+                        .build(),
+                testImageData);
+
+        when(goComicsStrategy.downloadComic(any(ComicDownloadRequest.class))).thenReturn(mockResult);
+
+        // Act
+        List<ComicDownloadResult> results = facade.downloadComicsForDate(config, monday);
+
+        // Assert - only the daily comic should be downloaded
+        assertEquals(1, results.size());
+        assertEquals("Daily Comic", results.get(0).getRequest().getComicName());
+    }
+
+    @Test
+    void shouldIncludeComicWhenPublicationDaysMatchesTargetDay() {
+        // Arrange
+        LocalDate monday = LocalDate.of(2025, 10, 27); // A Monday
+
+        List<ComicItem> comics = new ArrayList<>();
+        comics.add(ComicItem.builder()
+                .id(1)
+                .name("Monday Comic")
+                .source("gocomics")
+                .sourceIdentifier("monday")
+                .active(true)
+                .publicationDays(List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY))
+                .build());
+
+        ComicConfig config = new ComicConfig();
+        config.setComics(comics);
+
+        ComicDownloadResult mockResult = ComicDownloadResult.success(
+                ComicDownloadRequest.builder()
+                        .comicId(1)
+                        .comicName("Monday Comic")
+                        .source("gocomics")
+                        .sourceIdentifier("monday")
+                        .date(monday)
+                        .build(),
+                testImageData);
+
+        when(goComicsStrategy.downloadComic(any(ComicDownloadRequest.class))).thenReturn(mockResult);
+
+        // Act
+        List<ComicDownloadResult> results = facade.downloadComicsForDate(config, monday);
+
+        // Assert
+        assertEquals(1, results.size());
+        assertEquals("Monday Comic", results.get(0).getRequest().getComicName());
     }
 }

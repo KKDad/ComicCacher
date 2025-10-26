@@ -3,14 +3,8 @@
     "1": {
       "id": 1,
       "name": "Test Comic",
-      "author": "Test Author",
-      "oldest": "2023-01-01",
-      "newest": "2024-05-19",
-      "enabled": true,
-      "description": "A comic for integration testing",
-      "avatarAvailable": true,
-      "source": "gocomics",
-      "sourceIdentifier": "testcomic"
+      "enabled": false,
+      "avatarAvailable": false
     },
     "2": {
       "id": 2,
@@ -24,5 +18,31 @@
       "source": "comicskingdom",
       "sourceIdentifier": "anothertestcomic"
     }
-  }
+  },
+  "comics": [
+    {
+      "id": 1,
+      "name": "Test Comic",
+      "author": "Test Author",
+      "oldest": "2023-01-01",
+      "newest": "2024-05-19",
+      "enabled": true,
+      "description": "A comic for integration testing",
+      "avatarAvailable": true,
+      "source": "gocomics",
+      "sourceIdentifier": "testcomic"
+    },
+    {
+      "id": 2,
+      "name": "Another Test Comic",
+      "author": "Another Test Author",
+      "oldest": "2023-02-15",
+      "newest": "2024-05-18",
+      "enabled": true,
+      "description": "Another comic for integration testing",
+      "avatarAvailable": true,
+      "source": "comicskingdom",
+      "sourceIdentifier": "anothertestcomic"
+    }
+  ]
 }

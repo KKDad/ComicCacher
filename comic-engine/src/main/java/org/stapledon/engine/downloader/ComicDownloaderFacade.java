@@ -11,6 +11,7 @@ import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.service.ErrorTrackingService;
 import org.stapledon.common.service.RetrievalStatusService;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -126,11 +127,28 @@ public class ComicDownloaderFacade implements DownloaderFacade {
             return results;
         }
 
+        DayOfWeek dayOfWeek = date.getDayOfWeek();
+
         for (ComicItem comic : config.getComics()) {
             // Skip comics with null or empty source
             if (comic.getSource() == null || comic.getSource().isEmpty()) {
                 log.warn("Skipping comic '{}' - has null or empty source", comic.getName());
                 continue;
+            }
+
+            // Skip inactive comics (discontinued/delisted)
+            if (!comic.isActive()) {
+                log.info("Skipping comic '{}' - comic is inactive/discontinued", comic.getName());
+                continue;
+            }
+
+            // Skip if comic doesn't publish on this day
+            if (comic.getPublicationDays() != null && !comic.getPublicationDays().isEmpty()) {
+                if (!comic.getPublicationDays().contains(dayOfWeek)) {
+                    log.info("Skipping comic '{}' - not published on {} (publishes: {})",
+                            comic.getName(), dayOfWeek, comic.getPublicationDays());
+                    continue;
+                }
             }
 
             ComicDownloadRequest request = ComicDownloadRequest.builder()

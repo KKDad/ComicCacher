@@ -91,31 +91,28 @@ public interface ManagementFacade {
      * Returns true if all comics were successfully updated, false otherwise.
      */
     boolean updateAllComics();
-    
+
+    /**
+     * Updates all comics by downloading strips for the specified date.
+     * Downloads and saves each comic strip to disk.
+     *
+     * @param date The date for which to download comics
+     * @return List of download results for each comic
+     */
+    List<org.stapledon.common.dto.ComicDownloadResult> updateComicsForDate(LocalDate date);
+
     /**
      * Updates a specific comic by downloading its latest strip.
      * Returns true if the comic was successfully updated, false otherwise.
      */
     boolean updateComic(int comicId);
-    
+
     /**
      * Updates a specific comic by downloading its latest strip.
      * Returns true if the comic was successfully updated, false otherwise.
      */
     boolean updateComic(String comicName);
-    
-    /**
-     * Reconciles the comic configuration with the bootstrap configuration.
-     * This ensures that all comics defined in the bootstrap are available in the comic configuration.
-     * Returns true if the reconciliation was successful, false otherwise.
-     */
-    boolean reconcileWithBootstrap();
-    
-    /**
-     * Schedules a periodic reconciliation task according to the given cron expression.
-     */
-    void scheduleReconciliation(String cronExpression);
-    
+
     /**
      * Refreshes the comic list from storage and configuration.
      * This ensures that the in-memory comic list matches the persisted state.
