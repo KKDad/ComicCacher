@@ -79,7 +79,7 @@ dependencies {
 	implementation "org.jsoup:jsoup:${jsoupVersion}"
 
 	// Selenium dependencies
-	implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
+	implementation 'org.seleniumhq.selenium:selenium-java:4.38.0'
 	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
 
 	// Spring Boot starters - use managed versions
