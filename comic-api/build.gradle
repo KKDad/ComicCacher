@@ -97,7 +97,7 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 
 	// OpenAPI documentation
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
 	// JWT dependencies - use consistent versions
 	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
