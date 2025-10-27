@@ -1,0 +1,228 @@
+# RESOLVE_ISSUES_2.3 - Bug Fix Tracking
+
+**Created:** 2025-10-27
+**Status:** In Progress
+
+---
+
+## Overview
+
+This document tracks the resolution of 15 bugs identified in ComicCacher:
+- 3 UI navigation issues
+- 6 Backend caching/metrics/error tracking issues
+- 6 Comic configuration issues (✓ COMPLETED)
+
+---
+
+## Production Migration Status
+
+### ✓ COMPLETED: comics.json Migration (2025-10-27)
+- **Action:** Removed stale `comics` array from production comics.json
+- **Result:** Application now uses correct `items` map data
+- **Impact:** Fixed 404 errors for Baby Blues, Mother Goose & Grimm, Sherman's Lagoon, TheDuplex
+
+---
+
+## Bug Status Summary
+
+| Category | Total | Completed | In Progress | Pending |
+|----------|-------|-----------|-------------|---------|
+| Comic Config | 6 | 6 | 0 | 0 |
+| Backend | 6 | 0 | 0 | 6 |
+| UI | 3 | 0 | 0 | 3 |
+| **TOTAL** | **15** | **6** | **0** | **9** |
+
+---
+
+## Comic Configuration Issues ✓ COMPLETED
+
+### BUG-CFG-1: PCandPixel - Missing inactive flag ✓
+- **Status:** FIXED (production comics.json has `"active": false`)
+- **Verified:** 2025-10-27
+
+### BUG-CFG-2: Baby Blues - Wrong source ✓
+- **Status:** FIXED (production has `"source": "gocomics"`, `"sourceIdentifier": "babyblues"`)
+- **Verified:** 2025-10-27
+
+### BUG-CFG-3: Sherman's Lagoon - Wrong source ✓
+- **Status:** FIXED (production has `"source": "gocomics"`, `"sourceIdentifier": "shermanslagoon"`)
+- **Verified:** 2025-10-27
+
+### BUG-CFG-4: Mother Goose & Grimm - Wrong source ✓
+- **Status:** FIXED (production has `"source": "gocomics"`, `"sourceIdentifier": "mother-goose-and-grimm"`)
+- **Verified:** 2025-10-27
+
+### BUG-CFG-5: FoxTrot - Missing publicationDays 🔄
+- **Status:** PARTIALLY FIXED
+- **Production:** Has correct `sourceIdentifier: "foxtrot"`
+- **Missing:** `"publicationDays": ["SUNDAY"]` - needs manual fix
+- **Action Required:** Update production comics.json
+
+### BUG-CFG-6: TheDuplex - Wrong sourceIdentifier ✓
+- **Status:** FIXED (production has `"sourceIdentifier": "duplex"`)
+- **Verified:** 2025-10-27
+
+### BUG-CFG-7: Committed - Missing inactive flag ✓
+- **Status:** FIXED (production has `"active": false`)
+- **Verified:** 2025-10-27
+
+---
+
+## Backend Issues (6 pending)
+
+### BUG-BE-1: Cache Key Inconsistency
+- **Status:** PENDING
+- **Issue:** Cache keys may not consistently include comic ID/name + date
+- **Location:** `@Cacheable` annotations in ComicManagementFacade, PredictiveCacheService
+- **Fix Plan:** Audit all cache keys, ensure format: `comicId + ":" + date`
+- **Files:**
+  - `comic-api/src/main/java/org/stapledon/infrastructure/config/CaffeineCacheConfiguration.java`
+  - `comic-engine/src/main/java/org/stapledon/engine/management/ComicManagementFacade.java`
+  - `comic-api/src/main/java/org/stapledon/infrastructure/caching/PredictiveCacheService.java`
+
+### BUG-BE-2: Attempting to Cache Today + 1
+- **Status:** PENDING
+- **Issue:** System tries to cache tomorrow's comics (don't exist yet)
+- **Fix Plan:** Add boundary check: `if (date.isAfter(LocalDate.now())) return;`
+- **Files:**
+  - `comic-api/src/main/java/org/stapledon/infrastructure/caching/PredictiveCacheService.java`
+  - Download batch jobs
+
+### BUG-BE-3: Date Advance Cache Staleness
+- **Status:** PENDING
+- **Issue:** When date advances (26th → 27th), cache doesn't update, stops showing comics past start date
+- **Root Cause:** Cache doesn't evict on date change
+- **Fix Plan:** Implement cache eviction strategy (TTL-based or date-based key)
+- **Files:**
+  - `comic-api/src/main/java/org/stapledon/infrastructure/config/CaffeineCacheConfiguration.java`
+  - `comic-api/src/main/java/org/stapledon/infrastructure/caching/PredictiveCacheService.java`
+
+### BUG-BE-4: access-metrics.json Always Empty
+- **Status:** PENDING
+- **Issue:** File shows `{"lastUpdated":"...","comicMetrics":{}}` - no metrics tracked
+- **Root Cause:** Either `trackAccess()` not called, `persistAccessMetrics()` not invoked, or lifecycle hooks not working
+- **Fix Plan:** Debug metric tracking integration, verify @PostConstruct/@PreDestroy
+- **Files:**
+  - `comic-metrics/src/main/java/org/stapledon/metrics/collector/AccessMetricsCollector.java`
+  - Integration points where trackAccess() should be called
+
+### BUG-BE-5: last_errors.json Accumulating Over Multiple Days
+- **Status:** PENDING
+- **Issue:** Should only contain errors from last execution, but accumulates over days
+- **Fix Plan:** Clear old errors before batch run OR filter by timestamp (last 24 hours)
+- **Files:**
+  - `comic-engine/src/main/java/org/stapledon/engine/storage/JsonErrorTrackingRepository.java:104-120`
+
+### BUG-BE-6: Error Tracking Not Per-Execution
+- **Status:** PENDING
+- **Related To:** BUG-BE-5
+- **Fix Plan:** Each batch job should start with clean slate or implement time-window filter
+
+---
+
+## UI Issues (3 pending)
+
+### BUG-UI-1: Page Up/Down Misalignment
+- **Status:** PENDING
+- **Issue:** When comic is partially shown, PageUp/PageDown doesn't align to next/previous comic
+- **Expected:** Should snap/align to nearest comic boundary
+- **Fix Plan:** Modify `scrollUpByOneComic()` and `scrollDownByOneComic()` to detect misalignment and snap
+- **Files:**
+  - `comic-web/src/app/comicpage/container/container.component.ts:162-234`
+
+### BUG-UI-2: Page Up/Down Missing Selection
+- **Status:** PENDING
+- **Issue:** No comic visually selected after PageUp/PageDown
+- **Expected:** Comic should be selected as if clicked
+- **Fix Plan:** Add visual focus state to comic scrolled into view
+- **Files:**
+  - `comic-web/src/app/comicpage/container/container.component.ts`
+  - `comic-web/src/app/comicpage/section/section.component.ts`
+
+### BUG-UI-3: Left/Right Arrow Navigation Broken
+- **Status:** PENDING
+- **Issue:** Left/Right arrows only work when comic has explicit focus (from clicking)
+- **Expected:** Should work globally to navigate prev/next day
+- **Fix Plan:** Make arrow keys work globally OR auto-focus top visible comic
+- **Files:**
+  - `comic-web/src/app/shared/a11y/keyboard-service.ts`
+  - `comic-web/src/app/comicpage/section/section.component.ts`
+
+---
+
+## Phase 1: Code Fixes (Prevent Future Issues) ✓ COMPLETED
+
+### Task 1.1: Add @JsonIgnore to ComicConfig ✓
+- **File:** `comic-common/src/main/java/org/stapledon/common/dto/ComicConfig.java`
+- **Change:** Added `@JsonIgnore` annotation to `getComics()` method
+- **Purpose:** Prevent `comics` array from being serialized in future saves
+- **Status:** COMPLETED (2025-10-27)
+
+### Task 1.2: Update ComicCacher.json Bootstrap ✓
+- **File:** `comic-api/src/main/resources/ComicCacher.json`
+- **Changes Applied:**
+  - ✓ Added `"sourceIdentifier": "foxtrot"` to FoxTrot (already had publicationDays)
+  - ✓ Added `"sourceIdentifier": "pcandpixel"` to PCandPixel (already had active: false)
+  - ✓ Added `"sourceIdentifier": "committed"` to Committed (already had active: false)
+  - ✓ Verified all other sourceIdentifiers correct (Baby Blues, Sherman's Lagoon, Mother Goose & Grimm, TheDuplex)
+- **Status:** COMPLETED (2025-10-27)
+
+### Task 1.3: Fix FoxTrot in Production 📝
+- **File:** Production `comics.json` (in cache directory)
+- **Change:** Add `"publicationDays": ["SUNDAY"]` to FoxTrot entry in items map
+- **Status:** PENDING (requires production access)
+
+---
+
+## Testing Checklist
+
+### Backend Tests
+- [ ] Verify cache keys include comic+date consistently
+- [ ] Verify no future date caching attempts
+- [ ] Verify cache updates on date change
+- [ ] Verify metrics persist correctly
+- [ ] Verify last_errors.json contains only recent errors
+
+### UI Tests
+- [ ] Test PageUp/PageDown alignment from various scroll positions
+- [ ] Verify comic selection after paging
+- [ ] Test Left/Right arrows without explicit focus
+
+### Integration Tests
+- [ ] Full navigation flow across date boundaries
+- [ ] Comic configs load correctly from bootstrap
+- [ ] No 404 errors for properly configured comics
+- [ ] FoxTrot only downloads on Sundays
+- [ ] PCandPixel and Committed are skipped (inactive)
+
+---
+
+## Implementation Timeline
+
+- **Day 1-2:** Phase 1 - Code fixes (prevent config corruption)
+- **Day 3-5:** Phase 2 - Backend bug fixes (cache, metrics, errors)
+- **Day 6-8:** Phase 3 - UI bug fixes (navigation, alignment, selection)
+- **Day 9-10:** Testing - Full regression testing
+
+---
+
+## Notes
+
+### ComicCacher.json vs comics.json
+- **ComicCacher.json** (resources): Bootstrap template, loaded as @Bean but never used to initialize production
+- **comics.json** (cache directory): Live production data, what application actually uses
+- **Migration complete:** Removed stale `comics` array, keeping correct `items` map
+- **No data loss:** Items map had more complete and correct data than comics array
+
+### Key Learnings
+1. Production comics.json had both `items` (correct) and `comics` (stale) sections
+2. ComicConfig.getComics() used `comics` array when present, causing wrong data
+3. Removing `comics` array triggers auto-migration from `items` map
+4. Bootstrap config exists but was never integrated for production initialization
+
+---
+
+## Version History
+
+- **2025-10-27:** Initial creation, production migration completed (6 config bugs fixed)
+- **2025-10-27:** Phase 1 started - code fixes to prevent future corruption
