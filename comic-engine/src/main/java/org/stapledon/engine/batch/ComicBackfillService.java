@@ -57,6 +57,13 @@ public class ComicBackfillService {
         // Don't scan future dates - start from today or end of year, whichever is earlier
         LocalDate scanStart = yearEnd.isAfter(today) ? today : yearEnd;
 
+        log.info("Backfill date range: scanning from {} backwards to {} (today: {}, yearEnd: {})",
+                scanStart, yearStart, today, yearEnd);
+
+        if (scanStart.isAfter(today)) {
+            log.error("⚠️ FUTURE DATE BUG: scanStart ({}) is AFTER today ({})", scanStart, today);
+        }
+
         for (ComicItem comic : comics) {
             if (!comic.isActive()) {
                 log.debug("Skipping inactive comic: {}", comic.getName());

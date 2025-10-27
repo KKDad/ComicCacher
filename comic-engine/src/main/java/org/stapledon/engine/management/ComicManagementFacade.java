@@ -303,6 +303,14 @@ public class ComicManagementFacade implements ManagementFacade {
         List<ComicDownloadResult> results = new ArrayList<>();
 
         try {
+            // Log if attempting to download future dates
+            if (date.isAfter(LocalDate.now())) {
+                log.warn("⚠️ FUTURE DATE DETECTED: Attempting to download comics for {} which is AFTER today ({})",
+                        date, LocalDate.now());
+            } else {
+                log.info("Downloading comics for date: {} (today: {})", date, LocalDate.now());
+            }
+
             // Get the current comic configuration
             ComicConfig config = configFacade.loadComicConfig();
 
