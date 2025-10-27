@@ -76,7 +76,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
     
     @Override
-    @CacheEvict(value = "boundaryDates", key = "'newest:' + #comicId")
+    @CacheEvict(value = "boundaryDates", key = "'newest:' + #comicId + ':' + #comicName")
     public boolean saveComicStrip(int comicId, String comicName, LocalDate date, byte[] imageData) {
         // Only validate the essential parameters
         Objects.requireNonNull(date, "date cannot be null");
@@ -304,7 +304,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
     
     @Override
-    @Cacheable(value = "boundaryDates", key = "'newest:' + #comicId")
+    @Cacheable(value = "boundaryDates", key = "'newest:' + #comicId + ':' + #comicName")
     public Optional<LocalDate> getNewestDateWithComic(int comicId, String comicName) {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
 
@@ -312,12 +312,12 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                 .id(comicId)
                 .name(comicNameParsed)
                 .build();
-        
+
         File newest = findNewest(comicItem);
         if (newest == null) {
             return Optional.empty();
         }
-        
+
         try {
             String filename = Files.getNameWithoutExtension(newest.getName());
             return Optional.of(LocalDate.parse(filename, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
@@ -326,9 +326,9 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             return Optional.empty();
         }
     }
-    
+
     @Override
-    @Cacheable(value = "boundaryDates", key = "'oldest:' + #comicId")
+    @Cacheable(value = "boundaryDates", key = "'oldest:' + #comicId + ':' + #comicName")
     public Optional<LocalDate> getOldestDateWithComic(int comicId, String comicName) {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
 
