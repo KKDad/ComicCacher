@@ -3,26 +3,11 @@ plugins {
 	id "java"
 }
 
-group = 'kkdad'
-version = '1.2.0-SNAPSHOT'
-
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
-}
 
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
-}
-
-// Define common dependency versions
-ext {
-	lombokVersion = '1.18.42'
-	gsonVersion = '2.11.0'
-	guavaVersion = '33.5.0-jre'
 }
 
 repositories {
@@ -34,20 +19,20 @@ dependencies {
 	implementation project(':comic-common')
 
 	// Gson for JSON serialization
-	implementation "com.google.code.gson:gson:${gsonVersion}"
+	implementation "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
 
 	// Guava for utilities
-	implementation "com.google.guava:guava:${guavaVersion}"
+	implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
 
 	// Spring Boot for dependency injection and configuration
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
 	// Lombok
-	compileOnly "org.projectlombok:lombok:${lombokVersion}"
-	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
 
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -56,7 +41,7 @@ dependencies {
 // Spring Boot dependency management (without the plugin)
 dependencyManagement {
 	imports {
-		mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.5"
+		mavenBom "org.springframework.boot:spring-boot-dependencies:${rootProject.ext.springBootVersion}"
 	}
 }
 
