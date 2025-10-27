@@ -39,6 +39,7 @@ public class ComicController {
 
     private final ManagementFacade comicManagementFacade;
     private final Optional<PredictiveCacheService> predictiveCacheService;
+    private final Optional<org.stapledon.metrics.collector.AccessMetricsCollector> accessMetricsCollector;
 
     /*****************************************************************************************************************
      * Comic Strip Listing and Configuration
@@ -140,8 +141,12 @@ public class ComicController {
 
     @GetMapping("/comics/{comic}/next/{date}")
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveNextComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
+        long startTime = System.currentTimeMillis();
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, from);
+
+        // Track access metrics if available
+        trackAccess(comicId, result, startTime);
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
@@ -157,8 +162,12 @@ public class ComicController {
 
     @GetMapping("/comics/{comic}/previous/{date}")
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrievePreviousComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
+        long startTime = System.currentTimeMillis();
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD, from);
+
+        // Track access metrics if available
+        trackAccess(comicId, result, startTime);
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
@@ -174,7 +183,11 @@ public class ComicController {
 
     @GetMapping("/comics/{comic}/strips/last")
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveLastComicImage(@PathVariable(name = "comic") Integer comicId) {
+        long startTime = System.currentTimeMillis();
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD);
+
+        // Track access metrics if available
+        trackAccess(comicId, result, startTime);
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
@@ -186,5 +199,17 @@ public class ComicController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .cacheControl(CacheControl.maxAge(600, TimeUnit.SECONDS))
                 .body(result);
+    }
+
+    /**
+     * Track access metrics for comic strip retrieval
+     */
+    private void trackAccess(Integer comicId, ComicNavigationResult result, long startTime) {
+        if (result.isFound() && accessMetricsCollector.isPresent()) {
+            comicManagementFacade.getComic(comicId).ifPresent(comic -> {
+                long accessTime = System.currentTimeMillis() - startTime;
+                accessMetricsCollector.get().trackAccess(comic.getName(), true, accessTime);
+            });
+        }
     }
 }

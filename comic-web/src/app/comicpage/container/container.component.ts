@@ -157,7 +157,7 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
 
       /**
        * Scroll up by one comic section (PageUp key)
-       * Intelligently snaps to the top of the previous comic card
+       * Intelligently snaps to the top of the previous comic card and focuses it
        */
       private scrollUpByOneComic(): void {
         if (!this.viewport) {
@@ -191,28 +191,42 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
 
         // Determine target comic
         let targetOffset = 0;
+        let targetComicIndex = 0;
 
         if (currentComicIndex === -1) {
             // No comic found at current position, scroll to top
             targetOffset = 0;
+            targetComicIndex = 0;
         } else if (currentOffset - currentComicTop > 10) {
             // Current comic is partially scrolled - snap to its top
             targetOffset = currentComicTop;
+            targetComicIndex = currentComicIndex;
         } else if (currentComicIndex > 0) {
             // Already aligned, go to previous comic
             const prevElement = comicElements[currentComicIndex - 1] as HTMLElement;
             targetOffset = prevElement.offsetTop;
+            targetComicIndex = currentComicIndex - 1;
         } else {
             // Already at first comic, scroll to top
             targetOffset = 0;
+            targetComicIndex = 0;
         }
 
         this.viewport.scrollToOffset(targetOffset, 'smooth');
+
+        // Focus the target comic after a brief delay to allow scrolling to complete
+        setTimeout(() => {
+            const targetElement = comicElements[targetComicIndex] as HTMLElement;
+            const sectionElement = targetElement.querySelector('app-section');
+            if (sectionElement) {
+                (sectionElement as HTMLElement).focus();
+            }
+        }, 300);
       }
 
       /**
        * Scroll down by one comic section (PageDown key)
-       * Intelligently snaps to the top of the next comic card
+       * Intelligently snaps to the top of the next comic card and focuses it
        */
       private scrollDownByOneComic(): void {
         if (!this.viewport) {
@@ -246,23 +260,45 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
 
         // Determine target comic
         let targetOffset: number;
+        let targetComicIndex: number | null = null;
 
         if (currentComicIndex === -1) {
             // No comic found, scroll by one card height
             targetOffset = currentOffset + this.COMIC_CARD_HEIGHT;
+            // Find which comic we'll land on
+            for (let i = 0; i < comicElements.length; i++) {
+                const element = comicElements[i] as HTMLElement;
+                if (element.offsetTop >= targetOffset) {
+                    targetComicIndex = i;
+                    break;
+                }
+            }
         } else if (currentOffset - currentComicTop > 10) {
             // Current comic is partially scrolled - snap to its top first
             targetOffset = currentComicTop;
+            targetComicIndex = currentComicIndex;
         } else if (currentComicIndex < comicElements.length - 1) {
             // Already aligned, go to next comic
             const nextElement = comicElements[currentComicIndex + 1] as HTMLElement;
             targetOffset = nextElement.offsetTop;
+            targetComicIndex = currentComicIndex + 1;
         } else {
             // Already at last comic, stay there
             return;
         }
 
         this.viewport.scrollToOffset(targetOffset, 'smooth');
+
+        // Focus the target comic after a brief delay to allow scrolling to complete
+        if (targetComicIndex !== null) {
+            setTimeout(() => {
+                const targetElement = comicElements[targetComicIndex!] as HTMLElement;
+                const sectionElement = targetElement.querySelector('app-section');
+                if (sectionElement) {
+                    (sectionElement as HTMLElement).focus();
+                }
+            }, 300);
+        }
       }
 
 }

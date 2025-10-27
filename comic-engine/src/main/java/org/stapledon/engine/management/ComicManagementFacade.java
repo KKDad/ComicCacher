@@ -206,7 +206,6 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
-    @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #from + ':' + #direction")
     public ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from) {
         Optional<ComicItem> comicOpt = getComic(comicId);
         if (comicOpt.isEmpty()) {
@@ -215,18 +214,28 @@ public class ComicManagementFacade implements ManagementFacade {
 
         ComicItem comic = comicOpt.get();
 
+        // Delegate to the cached implementation with comic name
+        return getComicStripCached(comicId, comic.getName(), direction, from);
+    }
+
+    /**
+     * Cached implementation of getComicStrip that includes comic name in the cache key.
+     * This ensures that each comic has its own cache entries.
+     */
+    @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #comicName + ':' + #from + ':' + #direction")
+    private ComicNavigationResult getComicStripCached(int comicId, String comicName, Direction direction, LocalDate from) {
         try {
             // Get the next/previous date
             Optional<LocalDate> dateOpt;
             if (direction == Direction.FORWARD) {
-                dateOpt = storageFacade.getNextDateWithComic(comicId, comic.getName(), from);
+                dateOpt = storageFacade.getNextDateWithComic(comicId, comicName, from);
             } else {
-                dateOpt = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), from);
+                dateOpt = storageFacade.getPreviousDateWithComic(comicId, comicName, from);
             }
 
             if (dateOpt.isEmpty()) {
                 log.debug("No comic found for {} in direction {} from {}",
-                        comic.getName(), direction, from);
+                        comicName, direction, from);
 
                 // Determine if we're at the beginning or end
                 String reason;
@@ -237,15 +246,15 @@ public class ComicManagementFacade implements ManagementFacade {
                 }
 
                 // Get the nearest dates for navigation hints
-                LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), from).orElse(null);
-                LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comic.getName(), from).orElse(null);
+                LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comicName, from).orElse(null);
+                LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comicName, from).orElse(null);
 
                 return ComicNavigationResult.notFound(reason, from, nearestPrev, nearestNext);
             }
 
             // Get the image for the found date
             LocalDate targetDate = dateOpt.get();
-            Optional<ImageDto> imageOpt = storageFacade.getComicStrip(comicId, comic.getName(), targetDate);
+            Optional<ImageDto> imageOpt = storageFacade.getComicStrip(comicId, comicName, targetDate);
 
             if (imageOpt.isEmpty()) {
                 // Image date exists but image couldn't be loaded
@@ -253,8 +262,8 @@ public class ComicManagementFacade implements ManagementFacade {
             }
 
             // Get boundary dates for navigation hints
-            LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), targetDate).orElse(null);
-            LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comic.getName(), targetDate).orElse(null);
+            LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comicName, targetDate).orElse(null);
+            LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comicName, targetDate).orElse(null);
 
             return ComicNavigationResult.found(imageOpt.get(), nearestPrev, nearestNext);
         } catch (Exception e) {
