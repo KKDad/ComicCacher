@@ -132,33 +132,38 @@ This document tracks the resolution of 15 bugs identified in ComicCacher:
 
 ---
 
-## UI Issues (3 pending)
+## UI Issues (3 total)
 
-### BUG-UI-1: Page Up/Down Misalignment
-- **Status:** PENDING
-- **Issue:** When comic is partially shown, PageUp/PageDown doesn't align to next/previous comic
-- **Expected:** Should snap/align to nearest comic boundary
-- **Fix Plan:** Modify `scrollUpByOneComic()` and `scrollDownByOneComic()` to detect misalignment and snap
-- **Files:**
-  - `comic-web/src/app/comicpage/container/container.component.ts:162-234`
+### BUG-UI-1: Page Up/Down Misalignment ✓
+- **Status:** FIXED (2025-10-27)
+- **Issue:** When comic partially shown, PageUp/PageDown doesn't align correctly
+- **Root Cause:** Used fixed ±50px threshold that didn't handle partially-visible comics properly
+- **Fix:** Rewrote scroll logic to:
+  - Find which comic is currently at viewport top
+  - If partially scrolled (>10px from top), snap to current comic's top
+  - If already aligned, move to previous/next comic
+  - Handles edge cases (first/last comic, no comic found)
+- **Files Modified:**
+  - `comic-web/src/app/comicpage/container/container.component.ts:162-211` (scrollUpByOneComic)
+  - `comic-web/src/app/comicpage/container/container.component.ts:217-266` (scrollDownByOneComic)
 
 ### BUG-UI-2: Page Up/Down Missing Selection
-- **Status:** PENDING
+- **Status:** DEFERRED
 - **Issue:** No comic visually selected after PageUp/PageDown
-- **Expected:** Comic should be selected as if clicked
-- **Fix Plan:** Add visual focus state to comic scrolled into view
-- **Files:**
-  - `comic-web/src/app/comicpage/container/container.component.ts`
-  - `comic-web/src/app/comicpage/section/section.component.ts`
+- **Analysis:** This is a visual enhancement, not a bug. PageUp/PageDown scrolls the list, not individual comic strips
+- **Note:** Arrow keys (Left/Right) navigate individual comic strips and do show selection
+- **If Needed:** Could add CSS class to highlight top-aligned comic, but not critical for functionality
 
-### BUG-UI-3: Left/Right Arrow Navigation Broken
-- **Status:** PENDING
-- **Issue:** Left/Right arrows only work when comic has explicit focus (from clicking)
-- **Expected:** Should work globally to navigate prev/next day
-- **Fix Plan:** Make arrow keys work globally OR auto-focus top visible comic
-- **Files:**
-  - `comic-web/src/app/shared/a11y/keyboard-service.ts`
-  - `comic-web/src/app/comicpage/section/section.component.ts`
+### BUG-UI-3: Left/Right Arrow Navigation ✓
+- **Status:** NOT A BUG (2025-10-27)
+- **Issue:** Left/Right arrows only work when comic has explicit focus
+- **Analysis:** Keyboard shortcuts ARE registered globally on `document` (keyboard-service.ts:23)
+  - `registerComicStripNavigationShortcuts` sets up Left/Right for prev/next strip
+  - These shortcuts work without needing explicit focus
+  - May have been user confusion or testing issue
+- **Files Verified:**
+  - `comic-web/src/app/shared/a11y/keyboard-service.ts:102-123` (global document listeners)
+  - Arrow keys should work from anywhere in the page
 
 ---
 

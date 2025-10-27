@@ -172,24 +172,38 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
             return;
         }
 
-        // Find the previous comic to scroll to
-        let targetOffset = 0;
-        let foundPrevious = false;
+        // Find which comic is currently at the top of viewport
+        let currentComicIndex = -1;
+        let currentComicTop = 0;
 
-        for (let i = comicElements.length - 1; i >= 0; i--) {
+        for (let i = 0; i < comicElements.length; i++) {
             const element = comicElements[i] as HTMLElement;
             const elementTop = element.offsetTop;
+            const elementBottom = elementTop + element.offsetHeight;
 
-            // Find a comic that starts above the current scroll position (with small threshold)
-            if (elementTop < currentOffset - 50) {
-                targetOffset = elementTop;
-                foundPrevious = true;
+            // Check if this comic is at or near the top of the viewport
+            if (elementTop <= currentOffset && elementBottom > currentOffset) {
+                currentComicIndex = i;
+                currentComicTop = elementTop;
                 break;
             }
         }
 
-        // If no previous comic found, scroll to top
-        if (!foundPrevious) {
+        // Determine target comic
+        let targetOffset = 0;
+
+        if (currentComicIndex === -1) {
+            // No comic found at current position, scroll to top
+            targetOffset = 0;
+        } else if (currentOffset - currentComicTop > 10) {
+            // Current comic is partially scrolled - snap to its top
+            targetOffset = currentComicTop;
+        } else if (currentComicIndex > 0) {
+            // Already aligned, go to previous comic
+            const prevElement = comicElements[currentComicIndex - 1] as HTMLElement;
+            targetOffset = prevElement.offsetTop;
+        } else {
+            // Already at first comic, scroll to top
             targetOffset = 0;
         }
 
@@ -213,23 +227,41 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
             return;
         }
 
-        // Find the next comic to scroll to
-        let targetOffset = currentOffset + this.COMIC_CARD_HEIGHT; // Fallback
-        let foundNext = false;
+        // Find which comic is currently at the top of viewport
+        let currentComicIndex = -1;
+        let currentComicTop = 0;
 
         for (let i = 0; i < comicElements.length; i++) {
             const element = comicElements[i] as HTMLElement;
             const elementTop = element.offsetTop;
+            const elementBottom = elementTop + element.offsetHeight;
 
-            // Find a comic that starts below the current scroll position (with small threshold)
-            if (elementTop > currentOffset + 50) {
-                targetOffset = elementTop;
-                foundNext = true;
+            // Check if this comic is at or near the top of the viewport
+            if (elementTop <= currentOffset && elementBottom > currentOffset) {
+                currentComicIndex = i;
+                currentComicTop = elementTop;
                 break;
             }
         }
 
-        // If no next comic found, use fallback (scroll by fixed amount)
+        // Determine target comic
+        let targetOffset: number;
+
+        if (currentComicIndex === -1) {
+            // No comic found, scroll by one card height
+            targetOffset = currentOffset + this.COMIC_CARD_HEIGHT;
+        } else if (currentOffset - currentComicTop > 10) {
+            // Current comic is partially scrolled - snap to its top first
+            targetOffset = currentComicTop;
+        } else if (currentComicIndex < comicElements.length - 1) {
+            // Already aligned, go to next comic
+            const nextElement = comicElements[currentComicIndex + 1] as HTMLElement;
+            targetOffset = nextElement.offsetTop;
+        } else {
+            // Already at last comic, stay there
+            return;
+        }
+
         this.viewport.scrollToOffset(targetOffset, 'smooth');
       }
 
