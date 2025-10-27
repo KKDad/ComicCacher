@@ -1,5 +1,7 @@
 package org.stapledon.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,19 +24,22 @@ public class ComicConfig {
     /**
      * Gets all comics as a list.
      * If the comics list is empty but items map has values, populates the comics list from the items map.
+     * This method is marked with @JsonIgnore to prevent serialization of the comics array,
+     * ensuring only the items map is persisted (single source of truth).
      *
      * @return List of comic items
      */
+    @JsonIgnore
     public List<ComicItem> getComics() {
         if (comics == null) {
             comics = new ArrayList<>();
         }
-        
+
         // If comics list is empty but we have items, populate comics from items
         if (comics.isEmpty() && items != null && !items.isEmpty()) {
             comics.addAll(items.values());
         }
-        
+
         return comics;
     }
 
