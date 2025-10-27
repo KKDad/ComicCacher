@@ -25,12 +25,12 @@ This document tracks the resolution of 15 bugs identified in ComicCacher:
 
 ## Bug Status Summary
 
-| Category | Total | Completed | In Progress | Pending |
-|----------|-------|-----------|-------------|---------|
+| Category | Total | Completed | Investigating | Pending |
+|----------|-------|-----------|---------------|---------|
 | Comic Config | 6 | 6 | 0 | 0 |
-| Backend | 6 | 0 | 0 | 6 |
+| Backend | 6 | 2 | 1 | 3 |
 | UI | 3 | 0 | 0 | 3 |
-| **TOTAL** | **15** | **6** | **0** | **9** |
+| **TOTAL** | **15** | **8** | **1** | **6** |
 
 ---
 
@@ -70,32 +70,37 @@ This document tracks the resolution of 15 bugs identified in ComicCacher:
 
 ## Backend Issues (6 pending)
 
-### BUG-BE-1: Cache Key Inconsistency
-- **Status:** PENDING
+### BUG-BE-1: Cache Key Inconsistency ✓
+- **Status:** FIXED (2025-10-27)
 - **Issue:** Cache keys may not consistently include comic ID/name + date
-- **Location:** `@Cacheable` annotations in ComicManagementFacade, PredictiveCacheService
-- **Fix Plan:** Audit all cache keys, ensure format: `comicId + ":" + date`
-- **Files:**
-  - `comic-api/src/main/java/org/stapledon/infrastructure/config/CaffeineCacheConfiguration.java`
-  - `comic-engine/src/main/java/org/stapledon/engine/management/ComicManagementFacade.java`
-  - `comic-api/src/main/java/org/stapledon/infrastructure/caching/PredictiveCacheService.java`
+- **Location:** `@Cacheable` annotations audited
+- **Analysis:** All cache keys are CORRECT. Navigation caches include comicId+date+direction, boundary caches include comicId. Root cause of BUG-BE-3 was missing cache eviction, not key inconsistency.
+- **Files Reviewed:**
+  - `comic-api/src/main/java/org/stapledon/infrastructure/config/CaffeineCacheConfiguration.java:40-56`
+  - `comic-engine/src/main/java/org/stapledon/engine/management/ComicManagementFacade.java:67,75,209`
+  - `comic-engine/src/main/java/org/stapledon/engine/storage/FileSystemComicStorageFacade.java:231,268,305,329`
 
-### BUG-BE-2: Attempting to Cache Today + 1
-- **Status:** PENDING
+### BUG-BE-2: Attempting to Cache Today + 1 🔍
+- **Status:** INVESTIGATING (2025-10-27)
 - **Issue:** System tries to cache tomorrow's comics (don't exist yet)
-- **Fix Plan:** Add boundary check: `if (date.isAfter(LocalDate.now())) return;`
-- **Files:**
-  - `comic-api/src/main/java/org/stapledon/infrastructure/caching/PredictiveCacheService.java`
-  - Download batch jobs
+- **Initial Analysis:** Main batch jobs use `LocalDate.now()`, backfill has guards against future dates
+- **Action Taken:** Added diagnostic logging to detect future date attempts:
+  - `ComicManagementFacade.updateComicsForDate()` - warns if date > today
+  - `ComicBackfillService.findMissingStrips()` - logs date range and warns if scanStart > today
+  - `PredictiveCacheService.prefetchAdjacentComics()` - warns if prefetch from future date
+- **Next Step:** Re-test in production to capture logs showing when/where future dates occur
+- **Files Modified:**
+  - `comic-engine/src/main/java/org/stapledon/engine/management/ComicManagementFacade.java:307-312`
+  - `comic-engine/src/main/java/org/stapledon/engine/batch/ComicBackfillService.java:60-65`
+  - `comic-api/src/main/java/org/stapledon/infrastructure/caching/PredictiveCacheService.java:45-49`
 
-### BUG-BE-3: Date Advance Cache Staleness
-- **Status:** PENDING
+### BUG-BE-3: Date Advance Cache Staleness ✓
+- **Status:** FIXED (2025-10-27)
 - **Issue:** When date advances (26th → 27th), cache doesn't update, stops showing comics past start date
-- **Root Cause:** Cache doesn't evict on date change
-- **Fix Plan:** Implement cache eviction strategy (TTL-based or date-based key)
-- **Files:**
-  - `comic-api/src/main/java/org/stapledon/infrastructure/config/CaffeineCacheConfiguration.java`
-  - `comic-api/src/main/java/org/stapledon/infrastructure/caching/PredictiveCacheService.java`
+- **Root Cause:** `getNewestDateWithComic()` cached by comicId only, never evicted when new comics downloaded
+- **Fix:** Added `@CacheEvict(value = "boundaryDates", key = "'newest:' + #comicId")` to `saveComicStrip()` method
+- **Files Modified:**
+  - `comic-engine/src/main/java/org/stapledon/engine/storage/FileSystemComicStorageFacade.java:79`
 
 ### BUG-BE-4: access-metrics.json Always Empty
 - **Status:** PENDING
