@@ -48,7 +48,7 @@ configurations {
 
 // Define common dependency versions to prevent conflicts
 ext {
-    jjwtVersion = '0.11.5'
+    jjwtVersion = '0.13.0'
     lombokVersion = '1.18.42'
     gsonVersion = '2.11.0'
     guavaVersion = '33.5.0-jre'
