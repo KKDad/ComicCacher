@@ -4,6 +4,7 @@ import com.google.common.io.Files;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
@@ -76,7 +77,10 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
     
     @Override
-    @CacheEvict(value = "boundaryDates", key = "'newest:' + #comicId + ':' + #comicName")
+    @Caching(evict = {
+        @CacheEvict(value = "boundaryDates", key = "'newest:' + #comicId + ':' + #comicName"),
+        @CacheEvict(value = "navigationDates", allEntries = true)
+    })
     public boolean saveComicStrip(int comicId, String comicName, LocalDate date, byte[] imageData) {
         // Only validate the essential parameters
         Objects.requireNonNull(date, "date cannot be null");
