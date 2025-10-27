@@ -168,13 +168,12 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             // Remove errors older than cutoff
             comicErrors.removeIf(error -> {
                 try {
-                    java.time.LocalDateTime errorTime = java.time.LocalDateTime.parse(
-                            error.getTimestamp(),
-                            java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-                    return errorTime.isBefore(cutoff);
+                    // timestamp is already a LocalDateTime, no parsing needed
+                    java.time.LocalDateTime errorTime = error.getTimestamp();
+                    return errorTime != null && errorTime.isBefore(cutoff);
                 } catch (Exception e) {
-                    log.warn("Could not parse error timestamp: {}", error.getTimestamp());
-                    return false; // Keep errors with unparseable timestamps
+                    log.warn("Error checking timestamp for comic {}: {}", entry.getKey(), e.getMessage());
+                    return false; // Keep errors if timestamp check fails
                 }
             });
 
