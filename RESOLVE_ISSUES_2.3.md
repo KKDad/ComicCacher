@@ -25,12 +25,12 @@ This document tracks the resolution of 15 bugs identified in ComicCacher:
 
 ## Bug Status Summary
 
-| Category | Total | Completed | Investigating | Pending |
-|----------|-------|-----------|---------------|---------|
-| Comic Config | 6 | 6 | 0 | 0 |
-| Backend | 6 | 2 | 1 | 3 |
-| UI | 3 | 0 | 0 | 3 |
-| **TOTAL** | **15** | **8** | **1** | **6** |
+| Category | Total | Completed | Not Integrated | Investigating | Pending |
+|----------|-------|-----------|----------------|---------------|---------|
+| Comic Config | 6 | 6 | 0 | 0 | 0 |
+| Backend | 6 | 3 | 1 | 1 | 1 |
+| UI | 3 | 0 | 0 | 0 | 3 |
+| **TOTAL** | **15** | **9** | **1** | **1** | **4** |
 
 ---
 
@@ -103,25 +103,32 @@ This document tracks the resolution of 15 bugs identified in ComicCacher:
   - `comic-engine/src/main/java/org/stapledon/engine/storage/FileSystemComicStorageFacade.java:79`
 
 ### BUG-BE-4: access-metrics.json Always Empty
-- **Status:** PENDING
+- **Status:** NOT A BUG - Feature Not Integrated (2025-10-27)
 - **Issue:** File shows `{"lastUpdated":"...","comicMetrics":{}}` - no metrics tracked
-- **Root Cause:** Either `trackAccess()` not called, `persistAccessMetrics()` not invoked, or lifecycle hooks not working
-- **Fix Plan:** Debug metric tracking integration, verify @PostConstruct/@PreDestroy
-- **Files:**
-  - `comic-metrics/src/main/java/org/stapledon/metrics/collector/AccessMetricsCollector.java`
-  - Integration points where trackAccess() should be called
+- **Root Cause:** `AccessMetricsCollector` is legacy code not integrated into current application flow
+  - `trackAccess()` is private, only called from `findOldest/findNewest/findNext/findPrevious` methods
+  - These methods are never called in production (only in tests)
+  - Application uses `ComicStorageFacade` directly, bypassing metrics collector
+  - `@PostConstruct/@PreDestroy` hooks exist but metrics never populate
+- **Fix Options:**
+  1. Integrate metrics into `ComicManagementFacade` navigation methods
+  2. Remove unused metrics feature entirely
+- **Files Analyzed:**
+  - `comic-metrics/src/main/java/org/stapledon/metrics/collector/AccessMetricsCollector.java:126` (trackAccess is private)
+  - `comic-engine/src/main/java/org/stapledon/engine/management/ComicManagementFacade.java:166-264` (uses storageFacade directly)
 
-### BUG-BE-5: last_errors.json Accumulating Over Multiple Days
-- **Status:** PENDING
-- **Issue:** Should only contain errors from last execution, but accumulates over days
-- **Fix Plan:** Clear old errors before batch run OR filter by timestamp (last 24 hours)
-- **Files:**
-  - `comic-engine/src/main/java/org/stapledon/engine/storage/JsonErrorTrackingRepository.java:104-120`
-
-### BUG-BE-6: Error Tracking Not Per-Execution
-- **Status:** PENDING
-- **Related To:** BUG-BE-5
-- **Fix Plan:** Each batch job should start with clean slate or implement time-window filter
+### BUG-BE-5 & BUG-BE-6: last_errors.json Accumulating Over Multiple Days ✓
+- **Status:** FIXED (2025-10-27)
+- **Issue:** Errors accumulate over days instead of showing only recent errors
+- **Root Cause:** No mechanism to clear old errors, only limited to 5 per comic
+- **Fix:**
+  - Added `clearOldErrors(int hoursToKeep)` method to ErrorTrackingService
+  - ComicDownloadJobScheduler calls `clearOldErrors(48)` before each batch run
+  - Keeps errors from last 48 hours, removes older ones
+- **Files Modified:**
+  - `comic-common/src/main/java/org/stapledon/common/service/ErrorTrackingService.java:50-56` (added method)
+  - `comic-engine/src/main/java/org/stapledon/engine/storage/JsonErrorTrackingRepository.java:158-195` (implementation)
+  - `comic-engine/src/main/java/org/stapledon/engine/batch/ComicDownloadJobScheduler.java:51,130-135` (call clearOldErrors)
 
 ---
 

@@ -155,6 +155,45 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
         return errors.size();
     }
 
+    @Override
+    public void clearOldErrors(int hoursToKeep) {
+        Map<String, List<ComicErrorRecord>> errors = loadErrors();
+        java.time.LocalDateTime cutoff = java.time.LocalDateTime.now().minusHours(hoursToKeep);
+
+        boolean modified = false;
+        for (Map.Entry<String, List<ComicErrorRecord>> entry : errors.entrySet()) {
+            List<ComicErrorRecord> comicErrors = entry.getValue();
+            int originalSize = comicErrors.size();
+
+            // Remove errors older than cutoff
+            comicErrors.removeIf(error -> {
+                try {
+                    java.time.LocalDateTime errorTime = java.time.LocalDateTime.parse(
+                            error.getTimestamp(),
+                            java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                    return errorTime.isBefore(cutoff);
+                } catch (Exception e) {
+                    log.warn("Could not parse error timestamp: {}", error.getTimestamp());
+                    return false; // Keep errors with unparseable timestamps
+                }
+            });
+
+            if (comicErrors.size() < originalSize) {
+                modified = true;
+                log.debug("Cleared {} old errors for comic {}",
+                         originalSize - comicErrors.size(), entry.getKey());
+            }
+        }
+
+        // Remove empty entries
+        errors.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+
+        if (modified) {
+            saveErrors();
+            log.info("Cleared old errors (keeping last {} hours)", hoursToKeep);
+        }
+    }
+
     /**
      * Reset the error cache (for testing purposes)
      */
