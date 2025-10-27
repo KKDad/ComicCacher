@@ -42,6 +42,12 @@ public class PredictiveCacheService {
         log.debug("Prefetching {} adjacent comics for comic {} from {} in direction {}",
             lookaheadCount, comicId, currentDate, direction);
 
+        // Warn if attempting to prefetch from a future date
+        if (currentDate.isAfter(LocalDate.now())) {
+            log.warn("⚠️ FUTURE DATE PREFETCH: Attempting to prefetch from {} which is AFTER today ({})",
+                    currentDate, LocalDate.now());
+        }
+
         try {
             LocalDate searchDate = currentDate;
             int successCount = 0;
