@@ -16,14 +16,6 @@ integrationTest {
     systemProperty 'spring.profiles.active', 'integration'
 }
 
-group = 'kkdad'
-version = '2.3.0'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
 
 configurations {
 	compileOnly {
@@ -46,20 +38,11 @@ configurations {
 	all*.exclude group: 'commons-logging', module: 'commons-logging'
 }
 
-// Define common dependency versions to prevent conflicts
-ext {
-    jjwtVersion = '0.11.5'
-    lombokVersion = '1.18.42'
-    gsonVersion = '2.11.0'
-    guavaVersion = '33.5.0-jre'
-    jsoupVersion = '1.21.2'
-}
-
 // Import BOMs for consistent dependency versions
 dependencyManagement {
     imports {
         // Use Jackson BOM to ensure consistent Jackson library versions
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.20.0"
+        mavenBom "com.fasterxml.jackson:jackson-bom:${rootProject.ext.jacksonBomVersion}"
     }
 }
 
@@ -74,13 +57,13 @@ dependencies {
 	implementation project(':comic-engine')
 
 	// Core dependencies
-	implementation "com.google.code.gson:gson:${gsonVersion}"
-	implementation "com.google.guava:guava:${guavaVersion}"
-	implementation "org.jsoup:jsoup:${jsoupVersion}"
+	implementation "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
+	implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
+	implementation "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
 
 	// Selenium dependencies
-	implementation 'org.seleniumhq.selenium:selenium-java:4.38.0'
-	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
+	implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
+	implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
 
 	// Spring Boot starters - use managed versions
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -90,28 +73,28 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 
 	// Caffeine cache
-	implementation 'com.github.ben-manes.caffeine:caffeine:3.2.3'
+	implementation "com.github.ben-manes.caffeine:caffeine:${rootProject.ext.caffeineVersion}"
 
 	// JDBC and H2 database for Spring Batch job repository (use Spring Boot managed versions)
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	runtimeOnly 'com.h2database:h2'
 
 	// OpenAPI documentation
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${rootProject.ext.springdocVersion}"
 
 	// JWT dependencies - use consistent versions
-	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
-	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
-	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
-	
+	implementation "io.jsonwebtoken:jjwt-api:${rootProject.ext.jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${rootProject.ext.jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${rootProject.ext.jjwtVersion}"
+
 	// Other dependencies
-	implementation 'org.mindrot:jbcrypt:0.4'
+	implementation "org.mindrot:jbcrypt:${rootProject.ext.bcryptVersion}"
 
 	// Lombok
-	compileOnly "org.projectlombok:lombok:${lombokVersion}"
-	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
 
 	// Annotation processors
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'

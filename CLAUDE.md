@@ -57,6 +57,30 @@ comic-common (shared DTOs, config, services)
          comic-web (Angular)
 ```
 
+### Key Dependency Versions
+
+**Backend (Java/Spring Boot)**:
+- Java: 21
+- Spring Boot: 3.5.7
+- Lombok: 1.18.42
+- Gson: 2.11.0
+- Guava: 33.5.0-jre
+- Jsoup: 1.21.2
+- Caffeine Cache: 3.2.2
+- Jackson BOM: 2.20.0
+- JJWT: 0.11.5
+- Selenium: 4.38.0
+- Springdoc OpenAPI: 2.8.13
+- TwelveMonkeys ImageIO: 3.12.0
+
+**Frontend (Angular)**:
+- Angular: 19.2.0
+- TypeScript: 5.8.0
+- Node.js: 22 LTS
+- RxJS: 7.8.2
+- Jasmine: 5.7.1
+- Karma: 6.4.4
+
 ## Build Commands
 
 ### Backend Modules (Gradle Multi-Module)
@@ -146,9 +170,17 @@ npm run buildProd
     - Controllers call engine/common services directly (no redundant service layer)
   - **Services:** `UpdateService`, `RetrievalStatusServiceImpl`, `AuthService`, `UserService`, `PreferenceService`
   - **Repositories:** `ComicRepository`, `UserRepository`, `PreferenceRepository`
-  - **Batch Jobs:** Spring Batch framework with 6 scheduled jobs (see BATCH_JOBS_MIGRATION.md)
-    - Jobs log next execution time on startup for visibility
-    - ComicDownloadJob auto-runs on startup if missed today (CommandLineRunner)
+  - **Batch Jobs:** Spring Batch framework with 6 independent scheduler classes:
+    1. `ComicDownloadJobScheduler` - Daily comic downloads (cron: 6:00 AM, auto-runs on startup if missed)
+    2. `ComicBackfillJobScheduler` - Fills gaps in comic history (cron configurable)
+    3. `RetrievalRecordPurgeJobScheduler` - Cleans old retrieval records (cron configurable)
+    4. `MetricsUpdateJobScheduler` - Updates metrics cache (fixedDelay)
+    5. `MetricsArchiveJobScheduler` - Archives old metrics (cron configurable)
+    6. `ImageMetadataJobScheduler` - Analyzes comic image metadata (cron configurable)
+    - Each scheduler uses `@Scheduled` annotations (cron or fixedDelay)
+    - `@PostConstruct` methods log next scheduled execution time for visibility
+    - `@ConditionalOnProperty` allows individual enable/disable per job
+    - `ComicDownloadJobScheduler` implements `CommandLineRunner` for startup execution
   - **Security:** JWT-based authentication and authorization
   - **Configuration:** `ApplicationConfigurationFacade` (extends `ComicConfigurationService`)
 - **Depends on:** comic-common, comic-metrics, comic-engine
@@ -252,18 +284,18 @@ When incrementing the build version, you must update **all** of the following fi
 
 1. **comic-api/build.gradle** - Update the `version` property
    ```gradle
-   version = '2.1.35'
+   version = '2.3.0'
    ```
 
 2. **comic-api/Dockerfile** - Update both the COPY and ENTRYPOINT lines
    ```dockerfile
-   COPY build/libs/comic-api-2.1.35.jar /
-   ENTRYPOINT [ "java", "-jar", "/comic-api-2.1.35.jar" ]
+   COPY build/libs/comic-api-2.3.0.jar /
+   ENTRYPOINT [ "java", "-jar", "/comic-api-2.3.0.jar" ]
    ```
 
 3. **comic-web/package.json** - Update the `version` property
    ```json
-   "version": "2.1.35"
+   "version": "2.3.0"
    ```
 
 ### Verification:
@@ -278,8 +310,8 @@ grep -r "VERSION_NUMBER" --include="*.gradle" --include="Dockerfile" --include="
 
 The docker build scripts (`comic-api/build-docker.sh` and `comic-web/build-docker.sh`) accept the version tag as a command-line argument, so they do not need to be updated when the version changes:
 ```bash
-./comic-api/build-docker.sh 2.1.35
-./comic-web/build-docker.sh 2.1.35
+./comic-api/build-docker.sh 2.3.0
+./comic-web/build-docker.sh 2.3.0
 ```
 
 ## Image Validation Architecture
