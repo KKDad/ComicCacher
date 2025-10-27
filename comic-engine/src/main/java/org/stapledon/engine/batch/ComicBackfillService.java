@@ -40,8 +40,9 @@ public class ComicBackfillService {
 
     /**
      * Scans all enabled comics for the target year and identifies missing strips.
+     * Scans backwards in time from today (or end of year) to the start of the year.
      *
-     * @return List of backfill tasks (comic + date pairs)
+     * @return List of backfill tasks (comic + date pairs) in reverse chronological order
      */
     public List<BackfillTask> findMissingStrips() {
         log.info("Scanning for missing comic strips in year {}", targetYear);
@@ -53,8 +54,8 @@ public class ComicBackfillService {
         LocalDate yearEnd = LocalDate.of(targetYear, 12, 31);
         LocalDate today = LocalDate.now();
 
-        // Don't scan future dates
-        LocalDate scanEnd = yearEnd.isAfter(today) ? today : yearEnd;
+        // Don't scan future dates - start from today or end of year, whichever is earlier
+        LocalDate scanStart = yearEnd.isAfter(today) ? today : yearEnd;
 
         for (ComicItem comic : comics) {
             if (!comic.isActive()) {
@@ -67,10 +68,10 @@ public class ComicBackfillService {
                 continue;
             }
 
-            log.info("Scanning {} for missing strips ({} to {})",
-                comic.getName(), yearStart, scanEnd);
+            log.info("Scanning {} for missing strips (backwards from {} to {})",
+                comic.getName(), scanStart, yearStart);
 
-            List<BackfillTask> comicTasks = scanComicForMissingStrips(comic, yearStart, scanEnd);
+            List<BackfillTask> comicTasks = scanComicForMissingStrips(comic, scanStart, yearStart);
             backfillTasks.addAll(comicTasks);
 
             log.info("Found {} missing strips for {}", comicTasks.size(), comic.getName());
@@ -82,6 +83,7 @@ public class ComicBackfillService {
 
     /**
      * Scans a single comic for missing strips in the date range.
+     * Scans backwards in time from start to end.
      * Stops early if too many consecutive missing strips are found (comic didn't exist yet).
      */
     private List<BackfillTask> scanComicForMissingStrips(
@@ -93,7 +95,8 @@ public class ComicBackfillService {
         int consecutiveMissing = 0;
         LocalDate date = start;
 
-        while (!date.isAfter(end)) {
+        // Scan backwards in time
+        while (!date.isBefore(end)) {
             // Check if this comic publishes on this day of week
             if (shouldCheckDate(comic, date)) {
                 boolean exists = storageFacade.comicStripExists(
@@ -119,7 +122,7 @@ public class ComicBackfillService {
                 }
             }
 
-            date = date.plusDays(1);
+            date = date.minusDays(1); // Go backwards in time
         }
 
         return tasks;
