@@ -74,7 +74,7 @@ dependencies {
 // Spring Boot dependency management (without the plugin)
 dependencyManagement {
 	imports {
-		mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.5"
+		mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.7"
 	}
 }
 
