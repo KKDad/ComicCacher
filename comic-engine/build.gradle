@@ -21,7 +21,7 @@ configurations {
 // Define common dependency versions
 ext {
 	lombokVersion = '1.18.42'
-	gsonVersion = '2.11.0'
+	gsonVersion = '2.13.2'
 	guavaVersion = '33.5.0-jre'
 	jsoupVersion = '1.21.2'
 	twelvemonkeysVersion = '3.12.0'
