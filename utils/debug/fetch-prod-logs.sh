@@ -3,7 +3,7 @@
 # Configuration
 REMOTE_HOST="root@portainer.stapledon.ca" # Or 10.0.0.47
 CONTAINER_NAME="comics-api"
-LINES=500
+LINES=${1:-500}
 
 echo "Fetching last $LINES lines from $CONTAINER_NAME on $REMOTE_HOST..."
 
@@ -15,7 +15,6 @@ LOG_CONTENT=$(ssh "$REMOTE_HOST" "docker logs --tail $LINES $CONTAINER_NAME 2>&1
 echo "--------------------------------------------------------"
 echo "I am debugging a Java Spring Boot API."
 echo "Below are the last $LINES lines of logs from the production container."
-echo "Please analyze them for exceptions, error patterns, or 500 status codes."
 echo "--------------------------------------------------------"
 echo ""
 echo "$LOG_CONTENT"
