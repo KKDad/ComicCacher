@@ -1,8 +1,10 @@
 package org.stapledon.engine.management;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -43,6 +45,11 @@ public class ComicManagementFacade implements ManagementFacade {
     private final ComicConfigurationService configFacade;
     private final DownloaderFacade downloaderFacade;
     private final RetrievalStatusService retrievalStatusService;
+
+    // Self-reference to enable @Cacheable on internal method calls
+    @Lazy
+    @Autowired
+    private ComicManagementFacade self;
 
     // Thread-safe collection for comics
     private final Map<Integer, ComicItem> comics = new ConcurrentHashMap<>();
@@ -214,8 +221,8 @@ public class ComicManagementFacade implements ManagementFacade {
 
         ComicItem comic = comicOpt.get();
 
-        // Delegate to the cached implementation with comic name
-        return getComicStripCached(comicId, comic.getName(), direction, from);
+        // Delegate to the cached implementation with comic name via self-reference to enable caching
+        return self.getComicStripCached(comicId, comic.getName(), direction, from);
     }
 
     /**
@@ -223,7 +230,7 @@ public class ComicManagementFacade implements ManagementFacade {
      * This ensures that each comic has its own cache entries.
      */
     @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #comicName + ':' + #from + ':' + #direction")
-    private ComicNavigationResult getComicStripCached(int comicId, String comicName, Direction direction, LocalDate from) {
+    ComicNavigationResult getComicStripCached(int comicId, String comicName, Direction direction, LocalDate from) {
         log.info("getComicStrip: comicId={}, comicName={}, direction={}, from={}", comicId, comicName, direction, from);
 
         try {
