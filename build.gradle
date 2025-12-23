@@ -1,7 +1,39 @@
+// Centralized version management for all modules
+ext {
+    // Project version
+    projectVersion = '2.3.0'
+
+    // Core dependency versions
+    springBootVersion = '3.5.7'
+    springDependencyManagementVersion = '1.1.7'
+
+    // Library versions
+    lombokVersion = '1.18.42'
+    gsonVersion = '2.11.0'
+    guavaVersion = '33.5.0-jre'
+    jsoupVersion = '1.21.2'
+    jjwtVersion = '0.11.5'
+    seleniumVersion = '4.38.0'
+    webdrivermanagerVersion = '5.5.3'
+    caffeineVersion = '3.2.2'
+    jacksonBomVersion = '2.20.0'
+    twelvemonkeysVersion = '3.12.0'
+    bcryptVersion = '0.4'
+    h2Version = 'managed' // managed by Spring Boot
+    springdocVersion = '2.8.13'
+
+    // Test dependency versions
+    jacocoVersion = '0.8.11'
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'jacoco'
+
+    // Set version from central definition
+    version = rootProject.ext.projectVersion
+    group = 'kkdad'
 
     repositories {
         mavenCentral()
@@ -15,7 +47,12 @@ subprojects {
 
     // Default JaCoCo configuration for all subprojects
     jacoco {
-        toolVersion = "0.8.11"
+        toolVersion = rootProject.ext.jacocoVersion
+    }
+
+    // Add JUnit Platform Launcher for all subprojects (required by Gradle 8.5+)
+    dependencies {
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 }
 

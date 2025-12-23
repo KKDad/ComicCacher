@@ -3,28 +3,11 @@ plugins {
 	id "java"
 }
 
-group = 'kkdad'
-version = '1.2.0-SNAPSHOT'
-
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
-}
 
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
-}
-
-// Define common dependency versions
-ext {
-	lombokVersion = '1.18.42'
-	gsonVersion = '2.11.0'
-	guavaVersion = '33.5.0-jre'
-	jsoupVersion = '1.21.2'
-	twelvemonkeysVersion = '3.12.0'
 }
 
 repositories {
@@ -39,21 +22,20 @@ dependencies {
 	implementation project(':comic-metrics')
 
 	// Core dependencies
-	implementation "com.google.code.gson:gson:${gsonVersion}"
-	implementation "com.google.guava:guava:${guavaVersion}"
-	implementation "org.jsoup:jsoup:${jsoupVersion}"
+	implementation "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
+	implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
+	implementation "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
 
 	// TwelveMonkeys ImageIO for enhanced image format support (WebP, TIFF, BMP, etc.)
-	implementation "com.twelvemonkeys.imageio:imageio-core:${twelvemonkeysVersion}"
-	implementation "com.twelvemonkeys.imageio:imageio-jpeg:${twelvemonkeysVersion}"
-	implementation "com.twelvemonkeys.imageio:imageio-webp:${twelvemonkeysVersion}"
-	implementation "com.twelvemonkeys.imageio:imageio-tiff:${twelvemonkeysVersion}"
-	implementation "com.twelvemonkeys.imageio:imageio-bmp:${twelvemonkeysVersion}"
-
+	implementation "com.twelvemonkeys.imageio:imageio-core:${rootProject.ext.twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-jpeg:${rootProject.ext.twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-webp:${rootProject.ext.twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-tiff:${rootProject.ext.twelvemonkeysVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-bmp:${rootProject.ext.twelvemonkeysVersion}"
 
 	// Selenium for web scraping
-	implementation 'org.seleniumhq.selenium:selenium-java:4.38.0'
-	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
+	implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
+	implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
 
 	// Spring Boot for dependency injection and configuration
 	implementation 'org.springframework.boot:spring-boot-starter'
@@ -61,10 +43,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 
 	// Lombok
-	compileOnly "org.projectlombok:lombok:${lombokVersion}"
-	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
 
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -74,7 +56,7 @@ dependencies {
 // Spring Boot dependency management (without the plugin)
 dependencyManagement {
 	imports {
-		mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.5"
+		mavenBom "org.springframework.boot:spring-boot-dependencies:${rootProject.ext.springBootVersion}"
 	}
 }
 
