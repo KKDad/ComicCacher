@@ -224,18 +224,22 @@ public class ComicManagementFacade implements ManagementFacade {
      */
     @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #comicName + ':' + #from + ':' + #direction")
     private ComicNavigationResult getComicStripCached(int comicId, String comicName, Direction direction, LocalDate from) {
+        log.info("getComicStrip: comicId={}, comicName={}, direction={}, from={}", comicId, comicName, direction, from);
+
         try {
             // Get the next/previous date
             Optional<LocalDate> dateOpt;
             if (direction == Direction.FORWARD) {
                 dateOpt = storageFacade.getNextDateWithComic(comicId, comicName, from);
+                log.info("getNextDateWithComic returned: {} (from: {})", dateOpt.orElse(null), from);
             } else {
                 dateOpt = storageFacade.getPreviousDateWithComic(comicId, comicName, from);
+                log.info("getPreviousDateWithComic returned: {} (from: {})", dateOpt.orElse(null), from);
             }
 
             if (dateOpt.isEmpty()) {
-                log.debug("No comic found for {} in direction {} from {}",
-                        comicName, direction, from);
+                log.info("No comic found going {} from {}, reason={}", direction, from,
+                        direction == Direction.FORWARD ? "AT_END" : "AT_BEGINNING");
 
                 // Determine if we're at the beginning or end
                 String reason;
@@ -249,14 +253,18 @@ public class ComicManagementFacade implements ManagementFacade {
                 LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comicName, from).orElse(null);
                 LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comicName, from).orElse(null);
 
+                log.info("Returning navigation result: found=false, currentDate=null, nearestPrev={}, nearestNext={}",
+                        nearestPrev, nearestNext);
                 return ComicNavigationResult.notFound(reason, from, nearestPrev, nearestNext);
             }
 
             // Get the image for the found date
             LocalDate targetDate = dateOpt.get();
+            log.info("Found comic at {}, loading image and calculating boundaries...", targetDate);
             Optional<ImageDto> imageOpt = storageFacade.getComicStrip(comicId, comicName, targetDate);
 
             if (imageOpt.isEmpty()) {
+                log.warn("Image date exists but image couldn't be loaded for {} on {}", comicName, targetDate);
                 // Image date exists but image couldn't be loaded
                 return ComicNavigationResult.notFound("ERROR", targetDate, null, null);
             }
@@ -265,6 +273,8 @@ public class ComicManagementFacade implements ManagementFacade {
             LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comicName, targetDate).orElse(null);
             LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comicName, targetDate).orElse(null);
 
+            log.info("Returning navigation result: found=true, currentDate={}, nearestPrev={}, nearestNext={}",
+                    targetDate, nearestPrev, nearestNext);
             return ComicNavigationResult.found(imageOpt.get(), nearestPrev, nearestNext);
         } catch (Exception e) {
             log.error("Error retrieving comic strip: {}", e.getMessage(), e);

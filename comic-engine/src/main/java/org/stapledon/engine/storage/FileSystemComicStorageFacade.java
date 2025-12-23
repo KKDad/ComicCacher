@@ -239,34 +239,39 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         Objects.requireNonNull(fromDate, "fromDate cannot be null");
 
         String comicNameParsed = getComicNameParsed(comicId, comicName);
-        log.debug("getNextDateWithComic: comicId={}, comicName={}, comicNameParsed={}, fromDate={}", comicId, comicName, comicNameParsed, fromDate);
+        log.info("getNextDateWithComic: comicId={}, comicName={}, fromDate={}", comicId, comicName, fromDate);
         File root = new File(String.format("%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed));
-        
+
         if (!root.exists()) {
+            log.info("No next comic found - directory doesn't exist: {}", root.getAbsolutePath());
             return Optional.empty();
         }
-        
+
         // Get the newest date first as a boundary
         Optional<LocalDate> newestOpt = getNewestDateWithComic(comicId, comicName);
         if (newestOpt.isEmpty()) {
+            log.info("No next comic found - no newest date available");
             return Optional.empty();
         }
-        
+
         LocalDate newest = newestOpt.get();
         LocalDate nextCandidate = fromDate.plusDays(1);
-        
+        log.info("Searching forward from {} (newest: {})", fromDate, newest);
+
         while (nextCandidate.isBefore(newest) || nextCandidate.isEqual(newest)) {
             String yearPath = nextCandidate.format(DateTimeFormatter.ofPattern("yyyy"));
             String filename = nextCandidate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             File file = new File(String.format("%s/%s/%s.png", root.getAbsolutePath(), yearPath, filename));
-            
+
             if (file.exists()) {
+                log.info("Found next comic at: {} (searched from: {})", nextCandidate, fromDate);
                 return Optional.of(nextCandidate);
             }
-            
+
             nextCandidate = nextCandidate.plusDays(1);
         }
-        
+
+        log.info("No next comic found (searched from {} to {})", fromDate, newest);
         return Optional.empty();
     }
     
@@ -276,34 +281,39 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         Objects.requireNonNull(fromDate, "fromDate cannot be null");
 
         String comicNameParsed = getComicNameParsed(comicId, comicName);
-        log.debug("getPreviousDateWithComic: comicId={}, comicName={}, comicNameParsed={}, fromDate={}", comicId, comicName, comicNameParsed, fromDate);
+        log.info("getPreviousDateWithComic: comicId={}, comicName={}, fromDate={}", comicId, comicName, fromDate);
         File root = new File(String.format("%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed));
-        
+
         if (!root.exists()) {
+            log.info("No previous comic found - directory doesn't exist: {}", root.getAbsolutePath());
             return Optional.empty();
         }
-        
+
         // Get the oldest date first as a boundary
         Optional<LocalDate> oldestOpt = getOldestDateWithComic(comicId, comicName);
         if (oldestOpt.isEmpty()) {
+            log.info("No previous comic found - no oldest date available");
             return Optional.empty();
         }
-        
+
         LocalDate oldest = oldestOpt.get();
         LocalDate prevCandidate = fromDate.minusDays(1);
-        
+        log.info("Searching backward from {} (oldest: {})", fromDate, oldest);
+
         while (prevCandidate.isAfter(oldest) || prevCandidate.isEqual(oldest)) {
             String yearPath = prevCandidate.format(DateTimeFormatter.ofPattern("yyyy"));
             String filename = prevCandidate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             File file = new File(String.format("%s/%s/%s.png", root.getAbsolutePath(), yearPath, filename));
-            
+
             if (file.exists()) {
+                log.info("Found previous comic at: {} (searched from: {})", prevCandidate, fromDate);
                 return Optional.of(prevCandidate);
             }
-            
+
             prevCandidate = prevCandidate.minusDays(1);
         }
-        
+
+        log.info("No previous comic found (searched from {} to {})", fromDate, oldest);
         return Optional.empty();
     }
     

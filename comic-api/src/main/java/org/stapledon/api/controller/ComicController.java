@@ -125,7 +125,17 @@ public class ComicController {
 
     @GetMapping("/comics/{comic}/strips/first")
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveFirstComicImage(@PathVariable(name = "comic") Integer comicId) {
+        // Log API entry with comic name
+        String comicName = comicManagementFacade.getComic(comicId)
+                .map(ComicItem::getName)
+                .orElse("UNKNOWN");
+        log.info("API /first called: comicId={}, comicName={}", comicId, comicName);
+
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD);
+
+        // Log API result
+        log.info("API /first returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
+                result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
@@ -143,7 +153,18 @@ public class ComicController {
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveNextComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         long startTime = System.currentTimeMillis();
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        // Log API entry with comic name
+        String comicName = comicManagementFacade.getComic(comicId)
+                .map(ComicItem::getName)
+                .orElse("UNKNOWN");
+        log.info("API /next/{} called: comicId={}, comicName={}, fromDate={}", date, comicId, comicName, from);
+
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, from);
+
+        // Log API result
+        log.info("API /next/{} returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
+                date, result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
 
         // Track access metrics if available
         trackAccess(comicId, result, startTime);
@@ -164,7 +185,18 @@ public class ComicController {
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrievePreviousComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
         long startTime = System.currentTimeMillis();
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        // Log API entry with comic name
+        String comicName = comicManagementFacade.getComic(comicId)
+                .map(ComicItem::getName)
+                .orElse("UNKNOWN");
+        log.info("API /previous/{} called: comicId={}, comicName={}, fromDate={}", date, comicId, comicName, from);
+
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD, from);
+
+        // Log API result
+        log.info("API /previous/{} returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
+                date, result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
 
         // Track access metrics if available
         trackAccess(comicId, result, startTime);
@@ -184,7 +216,18 @@ public class ComicController {
     @GetMapping("/comics/{comic}/strips/last")
     public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveLastComicImage(@PathVariable(name = "comic") Integer comicId) {
         long startTime = System.currentTimeMillis();
+
+        // Log API entry with comic name
+        String comicName = comicManagementFacade.getComic(comicId)
+                .map(ComicItem::getName)
+                .orElse("UNKNOWN");
+        log.info("API /last called: comicId={}, comicName={}", comicId, comicName);
+
         ComicNavigationResult result = comicManagementFacade.getComicStrip(comicId, Direction.BACKWARD);
+
+        // Log API result
+        log.info("API /last returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
+                result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
 
         // Track access metrics if available
         trackAccess(comicId, result, startTime);
