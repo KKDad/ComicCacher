@@ -8,7 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.stapledon.api.service.ComicsService;
 import org.stapledon.api.service.DailyRunner;
-import org.stapledon.api.service.StartupReconciler;
+import org.stapledon.api.service.JsonBootstrapper;
 import org.stapledon.config.GsonProvider;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.dto.ImageDto;
@@ -37,7 +37,7 @@ class ComicControllerTest {
     private DailyRunner dailyRunner;
 
     @MockBean
-    private StartupReconciler startupReconciler;
+    private JsonBootstrapper JsonBootstrapper;
 
     @Test
     void retrieveAllComics() throws Exception {

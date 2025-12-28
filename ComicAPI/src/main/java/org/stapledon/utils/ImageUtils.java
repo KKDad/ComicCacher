@@ -1,5 +1,6 @@
 package org.stapledon.utils;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.http.MediaType;
 import org.stapledon.dto.ImageDto;
 
@@ -15,12 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
 
+@UtilityClass
 public class ImageUtils {
-
-    private ImageUtils() {
-        // Sonar: No public constructor
-    }
-
 
     /**
      * Load an image from the filesystem and return a ImageDto object

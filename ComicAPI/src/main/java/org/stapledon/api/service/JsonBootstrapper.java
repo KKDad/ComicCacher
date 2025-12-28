@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.stapledon.config.IComicsBootstrap;
-import org.stapledon.config.JsonConfigWriter;
-import org.stapledon.config.properties.StartupReconcilerProperties;
+import org.stapledon.config.JsonConfigManager;
+import org.stapledon.config.properties.StartupConfig;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.dto.Bootstrap;
 import org.stapledon.dto.ComicConfig;
@@ -18,24 +18,23 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunner {
+public class JsonBootstrapper implements Bootstrapper, CommandLineRunner {
 
-    private final StartupReconcilerProperties startupReconcilerProperties;
-
-    private final JsonConfigWriter jsonConfigWriter;
-
+    private final StartupConfig startupConfig;
+    private final JsonConfigManager jsonConfigManager;
     private final ComicCacher comicCacher;
+    private final ComicsService comicsService;
 
     @Override
     public boolean reconcile() {
         log.info("ComicApiApplication starting...");
         try {
-            var comicConfig = jsonConfigWriter.loadComics();
+            var comicConfig = jsonConfigManager.loadComics();
             reconcileBoostrapConfig(comicConfig);
-            comicConfig = jsonConfigWriter.loadComics();
+            comicConfig = jsonConfigManager.loadComics();
 
-            ComicsServiceImpl.getComics().addAll(comicConfig.getItems().values());
-            log.info("Loaded: {} comics.", ComicsServiceImpl.getComics().size());
+            comicsService.getComics().addAll(comicConfig.getItems().values());
+            log.info("Loaded: {} comics.", comicsService.getComics().size());
             return true;
 
         } catch (IOException fne) {
@@ -75,7 +74,6 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
 
         // Removed entries found in ComicConfig, but not in the CacherBootstrapConfig
         comicConfig.getItems().entrySet().removeIf(integerComicItemEntry -> findBootstrapComic(config, integerComicItemEntry.getValue()) == null);
-
 
         log.info("Reconciliation complete");
     }
@@ -124,7 +122,12 @@ public class StartupReconcilerImpl implements StartupReconciler, CommandLineRunn
     }
 
     @Override
-    public void run(String... args) throws Exception {
-        reconcile();
+    public void run(String... args) {
+        if (startupConfig.isEnabled()) {
+            log.info("JsonBootstrapper is starting ...");
+            reconcile();
+        } else {
+            log.warn("JsonBootstrapper is disabled");
+        }
     }
 }

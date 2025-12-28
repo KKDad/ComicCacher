@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
 
-@Component
 @Slf4j
+@Component
 public class BuildVersion {
 
     private Properties buildProps;

@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 public class DailyRunner implements CommandLineRunner {
 
     private final DailyRunnerProperties dailyRunnerProperties;
-
     private final ComicCacher comicCacher;
 
     /**
@@ -35,12 +34,12 @@ public class DailyRunner implements CommandLineRunner {
         var localNow = LocalDateTime.now();
         var currentZone = ZoneId.of("America/New_York");
         var zonedNow = ZonedDateTime.of(localNow, currentZone);
-        ZonedDateTime zonedNext5;
-        zonedNext5 = zonedNow.withHour(7).withMinute(0).withSecond(0);
-        if (zonedNow.compareTo(zonedNext5) > 0)
-            zonedNext5 = zonedNext5.plusDays(1);
+        ZonedDateTime zonedDateTime;
+        zonedDateTime = zonedNow.withHour(7).withMinute(0).withSecond(0);
+        if (zonedNow.compareTo(zonedDateTime) > 0)
+            zonedDateTime = zonedDateTime.plusDays(1);
 
-        var duration = Duration.between(zonedNow, zonedNext5);
+        var duration = Duration.between(zonedNow, zonedDateTime);
         long initalDelay = duration.getSeconds();
 
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);

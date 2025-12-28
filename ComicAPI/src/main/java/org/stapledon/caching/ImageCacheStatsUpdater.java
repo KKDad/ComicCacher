@@ -1,7 +1,7 @@
 package org.stapledon.caching;
 
 import lombok.extern.slf4j.Slf4j;
-import org.stapledon.config.JsonConfigWriter;
+import org.stapledon.config.JsonConfigManager;
 import org.stapledon.dto.ImageCacheStats;
 
 import java.io.File;
@@ -11,12 +11,12 @@ import java.util.Comparator;
 
 @Slf4j
 public class ImageCacheStatsUpdater {
-    private final JsonConfigWriter statsUpdater;
+    private final JsonConfigManager statsUpdater;
     private final String cacheDirectory;
 
     private ImageCacheStats cacheStats;
 
-    public ImageCacheStatsUpdater(String targetDirectory, JsonConfigWriter statsUpdater) {
+    public ImageCacheStatsUpdater(String targetDirectory, JsonConfigManager statsUpdater) {
         this.cacheDirectory = targetDirectory;
         this.statsUpdater = statsUpdater;
     }

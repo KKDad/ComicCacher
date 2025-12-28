@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.stapledon.api.service.StartupReconciler;
+import org.stapledon.api.service.JsonBootstrapper;
 import org.stapledon.api.service.UpdateService;
 
 import static org.mockito.Mockito.*;
@@ -23,7 +23,7 @@ class UpdateControllerTest {
     private UpdateService updateService;
 
     @MockBean
-    private StartupReconciler startupReconciler;
+    private JsonBootstrapper JsonBootstrapper;
 
     @Test
     void updateAll() throws Exception {

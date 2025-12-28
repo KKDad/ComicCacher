@@ -1,6 +1,6 @@
 package org.stapledon.api.service;
 
-public interface StartupReconciler {
+public interface Bootstrapper {
 
     boolean reconcile();
 }

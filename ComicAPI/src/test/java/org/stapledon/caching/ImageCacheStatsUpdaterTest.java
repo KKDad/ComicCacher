@@ -2,7 +2,7 @@ package org.stapledon.caching;
 
 import org.junit.jupiter.api.Test;
 import org.stapledon.CacheUtilsTest;
-import org.stapledon.config.JsonConfigWriter;
+import org.stapledon.config.JsonConfigManager;
 import org.stapledon.dto.ImageCacheStats;
 
 import java.io.File;
@@ -16,7 +16,7 @@ class ImageCacheStatsUpdaterTest {
         // Arrange
         File resourcesDirectory = CacheUtilsTest.getResourcesDirectory();
 
-        JsonConfigWriter mockWriter = mock(JsonConfigWriter.class);
+        JsonConfigManager mockWriter = mock(JsonConfigManager.class);
         when(mockWriter.save(any(ImageCacheStats.class), any(String.class))).thenReturn(true);
 
         ImageCacheStatsUpdater subject = new ImageCacheStatsUpdater(resourcesDirectory.getPath() + "/FakeComic", mockWriter);

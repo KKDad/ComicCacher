@@ -12,6 +12,8 @@ import org.stapledon.dto.ComicItem;
 public class UpdateServiceImpl implements UpdateService {
 
     private final ComicCacher comicCacher;
+    private final ComicsService comicsService;
+
     @Override
     public boolean updateAll() {
         return comicCacher.cacheAll();
@@ -20,7 +22,7 @@ public class UpdateServiceImpl implements UpdateService {
     @Override
     public boolean updateComic(int comicId) {
         // Determine the comic to be updated
-        ComicItem comic = ComicsServiceImpl.getComics().stream().filter(p -> p.getId() == comicId).findFirst().orElse(null);
+        ComicItem comic = comicsService.getComics().stream().filter(p -> p.getId() == comicId).findFirst().orElse(null);
         if (comic == null)
             return false;
         return comicCacher.cacheSingle(comic);

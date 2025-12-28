@@ -23,14 +23,14 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class ComicsServiceImpl implements ComicsService {
+
     private final String cacheLocation;
 
     @Getter
-    private static final List<ComicItem> comics = new ArrayList<>();
+    private final List<ComicItem> comics = new ArrayList<>();
 
     /**
      * Return details of all configured comics
-     *
      * @return list of all configured comics
      */
     @Override
@@ -81,7 +81,7 @@ public class ComicsServiceImpl implements ComicsService {
      * Returns the strip image for a specified api
      *
      * @param comicId - Comic to retrieve
-     * @param which   - Direction to retrive from, either oldest or newest.
+     * @param which   - Direction to retrieve from, either oldest or newest.
      * @return 200 with the image or 404 with no response body if not found
      */
     @Override
@@ -116,7 +116,7 @@ public class ComicsServiceImpl implements ComicsService {
         else
             image = cacheUtils.findPrevious(comic, from);
         if (image == null) {
-            log.error("Unable to locate first strip for {}", comic.getName());
+            log.error("Unable to locate strip for {} using direction {}", comic.getName(), which);
             return Optional.empty();
         }
 

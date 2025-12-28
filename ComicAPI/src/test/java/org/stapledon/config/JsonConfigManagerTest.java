@@ -18,13 +18,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class JsonConfigWriterTest {
-    private static final Logger LOG = LoggerFactory.getLogger(JsonConfigWriterTest.class);
+class JsonConfigManagerTest {
+    private static final Logger LOG = LoggerFactory.getLogger(JsonConfigManagerTest.class);
     private Path path;
 
     @BeforeEach
     void setup() throws IOException {
-        path = Files.createTempDirectory("JsonConfigWriterTest");
+        path = Files.createTempDirectory("JsonConfigManagerTest");
     }
 
     @AfterEach
@@ -52,7 +52,7 @@ class JsonConfigWriterTest {
         CacheProperties cacheProperties = new CacheProperties();
         cacheProperties.setLocation(path.toString());
         cacheProperties.setConfig(String.format("%s.json", uuid));
-        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), cacheProperties);
+        JsonConfigManager subject = new JsonConfigManager(new GsonProvider().gson(), cacheProperties);
         subject.save(item);
 
         // Assert

@@ -1,15 +1,15 @@
 package org.stapledon.config.properties;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 
-@Getter
-@Setter
+@Data
 @Component
-@ConfigurationProperties(prefix = "dailyrunner")
+@ConfigurationProperties(prefix = "daily.runner")
 public class DailyRunnerProperties {
     boolean enabled;
 }

@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class JsonConfigWriter {
+public class JsonConfigManager {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
 

@@ -1,5 +1,6 @@
 package org.stapledon.config;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import java.io.InputStreamReader;
 @Configuration
 @RequiredArgsConstructor
 public class CacherConfigLoader {
+
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
 
@@ -26,10 +28,10 @@ public class CacherConfigLoader {
      */
     @Bean
     public Bootstrap load() {
-        log.warn("Loading CacherBootstrapConfig from: {}", this.getClass().getClassLoader().getResource("ComicCacher.json"));
+        log.warn("Loading CacherBootstrapConfig from: {}", this.getClass().getClassLoader().getResource("CacherBootstrapConfig.json"));
         var inputStream = this.getClass()
                 .getClassLoader()
-                .getResourceAsStream("ComicCacher.json");
+                .getResourceAsStream("CacherBootstrapConfig.json");
 
         return load(inputStream);
     }
@@ -41,6 +43,7 @@ public class CacherConfigLoader {
      * @param inputStream Stream to load
      * @return CacherBootstrapConfig that was loaded
      */
+    @VisibleForTesting
     protected Bootstrap load(InputStream inputStream) {
         var reader = new InputStreamReader(inputStream);
         return gson.fromJson(reader, Bootstrap.class);

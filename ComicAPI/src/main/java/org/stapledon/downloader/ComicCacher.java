@@ -8,7 +8,7 @@ import org.stapledon.caching.ICachable;
 import org.stapledon.caching.ImageCacheStatsUpdater;
 import org.stapledon.config.CacheConfiguration;
 import org.stapledon.config.IComicsBootstrap;
-import org.stapledon.config.JsonConfigWriter;
+import org.stapledon.config.JsonConfigManager;
 import org.stapledon.dto.Bootstrap;
 import org.stapledon.dto.ComicItem;
 import org.stapledon.web.DefaultTrustManager;
@@ -26,9 +26,10 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ComicCacher {
 
-    private final Bootstrap config;
-    private final JsonConfigWriter statsUpdater;
+    public static final String STARS = "***********************************************************************************************";
 
+    private final Bootstrap config;
+    private final JsonConfigManager statsUpdater;
     private final CacheConfiguration cacheConfiguration;
 
     @PostConstruct
@@ -79,7 +80,7 @@ public class ComicCacher {
      * @return true if successful
      */
     public boolean cacheSingle(ComicItem comic) {
-        IComicsBootstrap dailyComic = lookupGoComics(comic);
+        IComicsBootstrap dailyComic = lookupComic(comic);
         if (dailyComic != null)
             return cacheComic(dailyComic);
 
@@ -92,7 +93,7 @@ public class ComicCacher {
      * @param comic ComicItem to lookup
      * @return IComicsBootstrap or null if none could be located
      */
-    IComicsBootstrap lookupGoComics(ComicItem comic) {
+    IComicsBootstrap lookupComic(ComicItem comic) {
         if (!config.getDailyComics().isEmpty()) {
             IComicsBootstrap dailyComics = config.getDailyComics().stream().filter(p -> p.getName().equalsIgnoreCase(comic.getName())).findFirst().orElse(null);
             if (dailyComics != null)
@@ -107,9 +108,9 @@ public class ComicCacher {
 
     private boolean cacheComic(IComicsBootstrap dcc) {
         if (log.isInfoEnabled()) {
-            log.info("***********************************************************************************************");
+            log.info(STARS);
             log.info("Processing: {}", dcc.stripName());
-            log.info("***********************************************************************************************");
+            log.info(STARS);
         }
 
         // Only search back 7 days unless we are refilling

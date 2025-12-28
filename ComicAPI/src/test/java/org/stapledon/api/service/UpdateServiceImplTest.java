@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.downloader.ComicCacher;
 import org.stapledon.dto.ComicItem;
@@ -18,6 +19,9 @@ class UpdateServiceImplTest {
     @Mock
     private ComicCacher comicCacher;
 
+    @Spy
+    private ComicsService comicsService;
+
     @InjectMocks
     UpdateServiceImpl subject;
 
@@ -29,7 +33,7 @@ class UpdateServiceImplTest {
 
     @Test
     void updateComic() {
-        ComicsServiceImpl.getComics().add(ComicItem.builder().id(42).build());
+        comicsService.getComics().add(ComicItem.builder().id(42).build());
 
         when(comicCacher.cacheSingle(any())).thenReturn(true);
 
