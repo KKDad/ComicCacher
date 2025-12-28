@@ -1,8 +1,10 @@
 package org.stapledon.engine.management;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -43,6 +45,11 @@ public class ComicManagementFacade implements ManagementFacade {
     private final ComicConfigurationService configFacade;
     private final DownloaderFacade downloaderFacade;
     private final RetrievalStatusService retrievalStatusService;
+
+    // Self-reference to enable @Cacheable on internal method calls
+    @Lazy
+    @Autowired
+    private ComicManagementFacade self;
 
     // Thread-safe collection for comics
     private final Map<Integer, ComicItem> comics = new ConcurrentHashMap<>();
@@ -206,7 +213,6 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
-    @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #from + ':' + #direction")
     public ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from) {
         Optional<ComicItem> comicOpt = getComic(comicId);
         if (comicOpt.isEmpty()) {
@@ -215,18 +221,32 @@ public class ComicManagementFacade implements ManagementFacade {
 
         ComicItem comic = comicOpt.get();
 
+        // Delegate to the cached implementation with comic name via self-reference to enable caching
+        return self.getComicStripCached(comicId, comic.getName(), direction, from);
+    }
+
+    /**
+     * Cached implementation of getComicStrip that includes comic name in the cache key.
+     * This ensures that each comic has its own cache entries.
+     */
+    @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #comicName + ':' + #from + ':' + #direction")
+    ComicNavigationResult getComicStripCached(int comicId, String comicName, Direction direction, LocalDate from) {
+        log.info("getComicStrip: comicId={}, comicName={}, direction={}, from={}", comicId, comicName, direction, from);
+
         try {
             // Get the next/previous date
             Optional<LocalDate> dateOpt;
             if (direction == Direction.FORWARD) {
-                dateOpt = storageFacade.getNextDateWithComic(comicId, comic.getName(), from);
+                dateOpt = storageFacade.getNextDateWithComic(comicId, comicName, from);
+                log.info("getNextDateWithComic returned: {} (from: {})", dateOpt.orElse(null), from);
             } else {
-                dateOpt = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), from);
+                dateOpt = storageFacade.getPreviousDateWithComic(comicId, comicName, from);
+                log.info("getPreviousDateWithComic returned: {} (from: {})", dateOpt.orElse(null), from);
             }
 
             if (dateOpt.isEmpty()) {
-                log.debug("No comic found for {} in direction {} from {}",
-                        comic.getName(), direction, from);
+                log.info("No comic found going {} from {}, reason={}", direction, from,
+                        direction == Direction.FORWARD ? "AT_END" : "AT_BEGINNING");
 
                 // Determine if we're at the beginning or end
                 String reason;
@@ -237,25 +257,31 @@ public class ComicManagementFacade implements ManagementFacade {
                 }
 
                 // Get the nearest dates for navigation hints
-                LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), from).orElse(null);
-                LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comic.getName(), from).orElse(null);
+                LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comicName, from).orElse(null);
+                LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comicName, from).orElse(null);
 
+                log.info("Returning navigation result: found=false, currentDate=null, nearestPrev={}, nearestNext={}",
+                        nearestPrev, nearestNext);
                 return ComicNavigationResult.notFound(reason, from, nearestPrev, nearestNext);
             }
 
             // Get the image for the found date
             LocalDate targetDate = dateOpt.get();
-            Optional<ImageDto> imageOpt = storageFacade.getComicStrip(comicId, comic.getName(), targetDate);
+            log.info("Found comic at {}, loading image and calculating boundaries...", targetDate);
+            Optional<ImageDto> imageOpt = storageFacade.getComicStrip(comicId, comicName, targetDate);
 
             if (imageOpt.isEmpty()) {
+                log.warn("Image date exists but image couldn't be loaded for {} on {}", comicName, targetDate);
                 // Image date exists but image couldn't be loaded
                 return ComicNavigationResult.notFound("ERROR", targetDate, null, null);
             }
 
             // Get boundary dates for navigation hints
-            LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comic.getName(), targetDate).orElse(null);
-            LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comic.getName(), targetDate).orElse(null);
+            LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(comicId, comicName, targetDate).orElse(null);
+            LocalDate nearestNext = storageFacade.getNextDateWithComic(comicId, comicName, targetDate).orElse(null);
 
+            log.info("Returning navigation result: found=true, currentDate={}, nearestPrev={}, nearestNext={}",
+                    targetDate, nearestPrev, nearestNext);
             return ComicNavigationResult.found(imageOpt.get(), nearestPrev, nearestNext);
         } catch (Exception e) {
             log.error("Error retrieving comic strip: {}", e.getMessage(), e);
@@ -303,6 +329,14 @@ public class ComicManagementFacade implements ManagementFacade {
         List<ComicDownloadResult> results = new ArrayList<>();
 
         try {
+            // Log if attempting to download future dates
+            if (date.isAfter(LocalDate.now())) {
+                log.warn("⚠️ FUTURE DATE DETECTED: Attempting to download comics for {} which is AFTER today ({})",
+                        date, LocalDate.now());
+            } else {
+                log.info("Downloading comics for date: {} (today: {})", date, LocalDate.now());
+            }
+
             // Get the current comic configuration
             ComicConfig config = configFacade.loadComicConfig();
 

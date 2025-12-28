@@ -48,6 +48,7 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
     private final JobExplorer jobExplorer;
     private final JobRepository jobRepository;
     private final DailyRunnerProperties dailyRunnerProperties;
+    private final org.stapledon.common.service.ErrorTrackingService errorTrackingService;
 
     @Value("${batch.comic-download.cron}")
     private String cronExpression;
@@ -126,13 +127,20 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
     public JobExecution runComicDownloadJob(LocalDate targetDate, String trigger) throws Exception {
         log.info("Launching ComicDownloadJob for date: {} (triggered by: {})", targetDate, trigger);
 
+        // Clear old errors before starting new batch run (keep errors from last 48 hours)
+        try {
+            errorTrackingService.clearOldErrors(48);
+        } catch (Exception e) {
+            log.warn("Failed to clear old errors: {}", e.getMessage());
+        }
+
         JobParametersBuilder parametersBuilder = new JobParametersBuilder()
                 .addString("targetDate", targetDate.toString())
                 .addString("trigger", trigger)
                 .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
 
         JobExecution execution = jobLauncher.run(comicDownloadJob, parametersBuilder.toJobParameters());
-        
+
         log.info("Job launched with execution ID: {}", execution.getId());
         return execution;
     }

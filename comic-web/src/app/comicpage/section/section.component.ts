@@ -239,10 +239,12 @@ export class SectionComponent implements OnInit, OnDestroy {
                     this.handleNavigationBoundary(result);
                 }
                 this.loading.set(false);
+                this.restoreFocus();
             },
             error: (err) => {
                 this.error.set(`Could not load first comic: ${err.message}`);
                 this.loading.set(false);
+                this.restoreFocus();
             }
         });
     }
@@ -270,10 +272,12 @@ export class SectionComponent implements OnInit, OnDestroy {
                     this.handleNavigationBoundary(result);
                 }
                 this.loading.set(false);
+                this.restoreFocus();
             },
             error: (err) => {
                 this.error.set(`Could not load previous comic: ${err.message}`);
                 this.loading.set(false);
+                this.restoreFocus();
             }
         });
     }
@@ -301,10 +305,12 @@ export class SectionComponent implements OnInit, OnDestroy {
                     this.handleNavigationBoundary(result);
                 }
                 this.loading.set(false);
+                this.restoreFocus();
             },
             error: (err) => {
                 this.error.set(`Could not load next comic: ${err.message}`);
                 this.loading.set(false);
+                this.restoreFocus();
             }
         });
     }
@@ -322,10 +328,12 @@ export class SectionComponent implements OnInit, OnDestroy {
                     this.handleNavigationBoundary(result);
                 }
                 this.loading.set(false);
+                this.restoreFocus();
             },
             error: (err) => {
                 this.error.set(`Could not load latest comic: ${err.message}`);
                 this.loading.set(false);
+                this.restoreFocus();
             }
         });
     }
@@ -398,6 +406,17 @@ export class SectionComponent implements OnInit, OnDestroy {
             this.error.set('Error processing image data');
             console.error('Error setting strip:', err);
         }
+    }
+
+    /**
+     * Restore focus to this section component after button clicks
+     * This ensures arrow key navigation continues to work
+     */
+    private restoreFocus(): void {
+        // Use a small delay to ensure the DOM has updated
+        setTimeout(() => {
+            this.element.nativeElement.focus();
+        }, 100);
     }
 
 }

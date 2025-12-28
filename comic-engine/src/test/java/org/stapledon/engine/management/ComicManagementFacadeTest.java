@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -53,17 +54,17 @@ class ComicManagementFacadeTest {
 
     @Mock
     private ExecutionTracker taskExecutionTracker;
-    
+
     @Mock
     private IComicsBootstrap goComicsBootstrap;
-    
+
     @Mock
     private IComicsBootstrap kingComicsBootstrap;
-    
+
     private ComicManagementFacade facade;
     private ComicItem testComic;
     private final byte[] testImageData = "test image data".getBytes();
-    
+
     @BeforeEach
     void setUp() {
         // Create test comic item
@@ -79,30 +80,30 @@ class ComicManagementFacadeTest {
                 .source("gocomics")
                 .sourceIdentifier("testcomic")
                 .build();
-        
+
         // Create test comic config
         ComicConfig comicConfig = new ComicConfig();
         Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
         items.put(testComic.getId(), testComic);
         comicConfig.setItems(items);
-        
+
         // Create test bootstrap
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.setDailyComics(new ArrayList<>());
         bootstrap.setKingComics(new ArrayList<>());
         bootstrap.getDailyComics().add(goComicsBootstrap);
         bootstrap.getKingComics().add(kingComicsBootstrap);
-        
+
         // Configure the minimal mocks needed for basic setup
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);
-        
+
         // Initialize facade
         facade = new ComicManagementFacade(
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
-        );
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+        ReflectionTestUtils.setField(facade, "self", facade);
     }
 
     // Test removed - on-demand downloads via CacheMissEvent no longer supported
@@ -111,62 +112,61 @@ class ComicManagementFacadeTest {
     void shouldGetAllComics() {
         // Act
         List<ComicItem> comics = facade.getAllComics();
-        
+
         // Assert
         assertEquals(1, comics.size());
         assertEquals(testComic, comics.get(0));
     }
-    
+
     @Test
     void shouldGetAllComicsWithNullNames() {
         // Arrange - Create a comic config with null name comic
         ComicConfig comicConfig = new ComicConfig();
         Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
-        
+
         // Normal comic
         ComicItem normalComic = ComicItem.builder()
                 .id(1)
                 .name("B Comic") // B will sort after A but before C
                 .build();
-                
-        // Comic with null name 
+
+        // Comic with null name
         ComicItem nullNameComic = ComicItem.builder()
                 .id(2)
-                .name(null) 
+                .name(null)
                 .build();
-                
+
         // Another normal comic
         ComicItem anotherComic = ComicItem.builder()
                 .id(3)
-                .name("C Comic") 
+                .name("C Comic")
                 .build();
-                
+
         // Yet another normal comic
         ComicItem yetAnotherComic = ComicItem.builder()
                 .id(4)
                 .name("A Comic")
                 .build();
-                
+
         // Add comics to the map
         items.put(normalComic.getId(), normalComic);
         items.put(nullNameComic.getId(), nullNameComic);
         items.put(anotherComic.getId(), anotherComic);
         items.put(yetAnotherComic.getId(), yetAnotherComic);
         comicConfig.setItems(items);
-        
+
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);
-        
+
         // Create new facade instance with our test data
         ComicManagementFacade testFacade = new ComicManagementFacade(
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
-        );
-        
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+
         // Act
         List<ComicItem> comics = testFacade.getAllComics();
-        
+
         // Assert
         assertEquals(4, comics.size());
         // Null name should be sorted first
@@ -180,7 +180,7 @@ class ComicManagementFacadeTest {
     void shouldGetComicById() {
         // Act
         Optional<ComicItem> comic = facade.getComic(1);
-        
+
         // Assert
         assertTrue(comic.isPresent());
         assertEquals(testComic, comic.get());
@@ -190,7 +190,7 @@ class ComicManagementFacadeTest {
     void shouldReturnEmptyWhenComicNotFound() {
         // Act
         Optional<ComicItem> comic = facade.getComic(999);
-        
+
         // Assert
         assertFalse(comic.isPresent());
     }
@@ -199,21 +199,21 @@ class ComicManagementFacadeTest {
     void shouldGetComicByName() {
         // Act
         Optional<ComicItem> comic = facade.getComicByName("Test Comic");
-        
+
         // Assert
         assertTrue(comic.isPresent());
         assertEquals(testComic, comic.get());
     }
-    
+
     @Test
     void shouldReturnEmptyWhenComicNameIsNull() {
         // Act
         Optional<ComicItem> comic = facade.getComicByName(null);
-        
+
         // Assert
         assertFalse(comic.isPresent());
     }
-    
+
     @Test
     void shouldHandleComicItemWithNullName() {
         // Arrange - create comic with null name
@@ -221,23 +221,22 @@ class ComicManagementFacadeTest {
                 .id(123)
                 .name(null)
                 .build();
-        
+
         // Add to comic config
         ComicConfig comicConfig = new ComicConfig();
         Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
         items.put(nullNameComic.getId(), nullNameComic);
         comicConfig.setItems(items);
-        
+
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);
-        
+
         // Create new facade with our null-name comic
         ComicManagementFacade nullNameFacade = new ComicManagementFacade(
                 storageFacade,
                 configFacade,
                 downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class)
-        );
-        
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+
         // Act and Assert - this shouldn't throw an NPE
         assertEquals(1, nullNameFacade.getAllComics().size());
         assertEquals(nullNameComic, nullNameFacade.getComic(123).get());
@@ -251,10 +250,10 @@ class ComicManagementFacadeTest {
                 .id(2)
                 .name("New Comic")
                 .build();
-        
+
         // Act
         Optional<ComicItem> created = facade.createComic(newComic);
-        
+
         // Assert
         assertTrue(created.isPresent());
         assertEquals(newComic, created.get());
@@ -265,7 +264,7 @@ class ComicManagementFacadeTest {
     void shouldNotCreateComicIfAlreadyExists() {
         // Act
         Optional<ComicItem> created = facade.createComic(testComic);
-        
+
         // Assert
         assertFalse(created.isPresent());
         verify(configFacade, never()).saveComicConfig(any());
@@ -278,10 +277,10 @@ class ComicManagementFacadeTest {
                 .id(1)
                 .name("Updated Comic")
                 .build();
-        
+
         // Act
         Optional<ComicItem> updated = facade.updateComic(1, updatedComic);
-        
+
         // Assert
         assertTrue(updated.isPresent());
         assertEquals("Updated Comic", updated.get().getName());
@@ -292,7 +291,7 @@ class ComicManagementFacadeTest {
     void shouldDeleteComic() {
         // Act
         boolean deleted = facade.deleteComic(1);
-        
+
         // Assert
         assertTrue(deleted);
         verify(storageFacade).deleteComic(1, "Test Comic");
@@ -303,7 +302,7 @@ class ComicManagementFacadeTest {
     void shouldNotDeleteComicIfNotFound() {
         // Act
         boolean deleted = facade.deleteComic(999);
-        
+
         // Assert
         assertFalse(deleted);
         verify(storageFacade, never()).deleteComic(anyInt(), anyString());
@@ -370,12 +369,12 @@ class ComicManagementFacadeTest {
         // Arrange
         LocalDate date = LocalDate.now();
         ImageDto imageDto = new ImageDto();
-        
+
         when(storageFacade.getComicStrip(1, "Test Comic", date)).thenReturn(Optional.of(imageDto));
-        
+
         // Act
         Optional<ImageDto> result = facade.getComicStripOnDate(1, date);
-        
+
         // Assert
         assertTrue(result.isPresent());
         assertEquals(imageDto, result.get());
@@ -385,12 +384,12 @@ class ComicManagementFacadeTest {
     void shouldGetAvatar() {
         // Arrange
         ImageDto imageDto = new ImageDto();
-        
+
         when(storageFacade.getAvatar(1, "Test Comic")).thenReturn(Optional.of(imageDto));
-        
+
         // Act
         Optional<ImageDto> result = facade.getAvatar(1);
-        
+
         // Assert
         assertTrue(result.isPresent());
         assertEquals(imageDto, result.get());
@@ -441,13 +440,13 @@ class ComicManagementFacadeTest {
                 .successful(true)
                 .imageData(testImageData)
                 .build();
-        
+
         when(downloaderFacade.downloadComic(any())).thenReturn(result);
         when(storageFacade.saveComicStrip(anyInt(), anyString(), any(), any())).thenReturn(true);
-        
+
         // Act
         boolean updated = facade.updateComic(1);
-        
+
         // Assert
         assertTrue(updated);
         verify(downloaderFacade).downloadComic(any());
@@ -455,17 +454,18 @@ class ComicManagementFacadeTest {
         verify(configFacade).saveComicConfig(any());
     }
 
-    // Moved the reconcile test to a separate test class to avoid UnnecessaryStubbingException
+    // Moved the reconcile test to a separate test class to avoid
+    // UnnecessaryStubbingException
     // See ComicManagementFacadeReconcileTest.java
 
     @Test
     void shouldPurgeOldImages() {
         // Arrange
         when(storageFacade.purgeOldImages(anyInt(), anyString(), anyInt())).thenReturn(true);
-        
+
         // Act
         boolean purged = facade.purgeOldImages(7);
-        
+
         // Assert
         assertTrue(purged);
         verify(storageFacade).purgeOldImages(eq(1), eq("Test Comic"), eq(7));
@@ -476,10 +476,10 @@ class ComicManagementFacadeTest {
         // Arrange
         LocalDate newest = LocalDate.now();
         when(storageFacade.getNewestDateWithComic(1, "Test Comic")).thenReturn(Optional.of(newest));
-        
+
         // Act
         Optional<LocalDate> result = facade.getNewestDateWithComic(1);
-        
+
         // Assert
         assertTrue(result.isPresent());
         assertEquals(newest, result.get());
@@ -490,10 +490,10 @@ class ComicManagementFacadeTest {
         // Arrange
         LocalDate oldest = LocalDate.now().minusDays(30);
         when(storageFacade.getOldestDateWithComic(1, "Test Comic")).thenReturn(Optional.of(oldest));
-        
+
         // Act
         Optional<LocalDate> result = facade.getOldestDateWithComic(1);
-        
+
         // Assert
         assertTrue(result.isPresent());
         assertEquals(oldest, result.get());
