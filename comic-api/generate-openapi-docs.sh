@@ -13,7 +13,7 @@ mkdir -p "${OUTPUT_DIR}"
 
 echo "Starting Spring Boot application with apidocs profile..."
 # Start the application with the apidocs profile
-${SCRIPT_DIR}/../gradlew :ComicAPI:bootRun --args='--spring.profiles.active=apidocs' > /tmp/spring-boot.log 2>&1 &
+${SCRIPT_DIR}/../gradlew :comic-api:bootRun --args='--spring.profiles.active=apidocs' > /tmp/spring-boot.log 2>&1 &
 PID=$!
 
 # Wait for the application to start (up to 30 seconds)
