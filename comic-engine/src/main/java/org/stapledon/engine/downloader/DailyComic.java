@@ -46,14 +46,14 @@ public abstract class DailyComic implements IDailyComic, ICachable {
 
     protected abstract Optional<String> extractComicImage(String comicUrl);
 
-
     DailyComic(InspectorService inspector, String elementSelector) {
         this.webInspector = (inspector == null) ? new JsoupInspectorService() : inspector;
         this.elementSelector = elementSelector;
     }
 
     /**
-     * Set the root path for this comic. The path will be later augmented with the name of the comic that is
+     * Set the root path for this comic. The path will be later augmented with the
+     * name of the comic that is
      * being cached.
      *
      * @param path Root Path to set.
@@ -75,7 +75,6 @@ public abstract class DailyComic implements IDailyComic, ICachable {
         return String.format("%s/%s", cacheDirectory, comicNameParsed);
     }
 
-
     /**
      * Download the image to the specified location.
      *
@@ -91,12 +90,12 @@ public abstract class DailyComic implements IDailyComic, ICachable {
         ensureCacheDirectory();
 
         try {
-            URL urlImage = new URL(imageUrl);
+            URL urlImage = java.net.URI.create(imageUrl).toURL();
 
             log.info("Downloading Image from: {}", urlImage);
 
             try (InputStream in = urlImage.openStream();
-                 OutputStream os = new FileOutputStream(destinationFile)) {
+                    OutputStream os = new FileOutputStream(destinationFile)) {
                 var buffer = new byte[4096];
                 int n;
                 while ((n = in.read(buffer)) != -1) {
@@ -146,21 +145,22 @@ public abstract class DailyComic implements IDailyComic, ICachable {
         }
     }
 
-
-
     private String generateCachedName() {
         ensureCacheDirectory();
         var extension = "png";
-        return String.format("%s/%s.%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
+        return String.format("%s/%s.%s", this.cacheLocation(),
+                this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/yyyy-MM-dd")), extension);
     }
 
     /**
-     * Check if the destination directory for the image exists or create it if it doesn't exist.
+     * Check if the destination directory for the image exists or create it if it
+     * doesn't exist.
      */
     private void ensureCacheDirectory() {
         Preconditions.checkNotNull(this.comicName, "Must call setComic() before ensureCacheDirectory()");
 
-        var directoryName = String.format("%s/%s", this.cacheLocation(), this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
+        var directoryName = String.format("%s/%s", this.cacheLocation(),
+                this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
         var directory = new File(directoryName);
         if (!directory.exists()) {
             if (log.isDebugEnabled())

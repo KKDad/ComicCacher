@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.metrics-update.enabled", havingValue = "true", matchIfMissing = true)
+@SuppressWarnings({ "deprecation", "removal" }) // TODO: Migrate to JobOperator in Spring Batch 6
 public class MetricsUpdateJobScheduler {
 
     private final JobLauncher jobLauncher;

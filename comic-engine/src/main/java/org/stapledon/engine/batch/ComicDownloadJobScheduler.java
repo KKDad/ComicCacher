@@ -39,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
+@SuppressWarnings({ "deprecation", "removal" }) // TODO: Migrate to JobOperator and JobRepository in Spring Batch 6
 public class ComicDownloadJobScheduler implements CommandLineRunner {
 
     private final JobLauncher jobLauncher;

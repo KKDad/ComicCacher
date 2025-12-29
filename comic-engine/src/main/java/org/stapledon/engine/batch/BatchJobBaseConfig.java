@@ -1,36 +1,40 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.context.annotation.Configuration;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Base configuration for Spring Batch jobs.
  * Provides shared configuration, utilities, and conventions for all batch jobs.
  *
- * <p>All batch jobs in ComicCacher follow these conventions:
+ * <p>
+ * All batch jobs in ComicCacher follow these conventions:
  * <ul>
- *   <li>Job names end with "Job" suffix (e.g., ComicDownloadJob)</li>
- *   <li>All jobs run in America/Toronto timezone</li>
- *   <li>All jobs use JsonBatchExecutionTracker for execution history</li>
- *   <li>Jobs are scheduled via @Scheduled with cron expressions</li>
- *   <li>Jobs can be enabled/disabled via application.properties</li>
+ * <li>Job names end with "Job" suffix (e.g., ComicDownloadJob)</li>
+ * <li>All jobs run in America/Toronto timezone</li>
+ * <li>All jobs use JsonBatchExecutionTracker for execution history</li>
+ * <li>Jobs are scheduled via @Scheduled with cron expressions</li>
+ * <li>Jobs can be enabled/disabled via application.properties</li>
  * </ul>
  *
- * <p>Timezone Configuration:
+ * <p>
+ * Timezone Configuration:
  * All cron expressions should specify timezone explicitly:
  * {@code @Scheduled(cron = "0 0 6 * * ? America/Toronto")}
  *
- * <p>Execution Tracking:
+ * <p>
+ * Execution Tracking:
  * All jobs automatically export execution summaries to:
  * {@code ${cacher.cache-location}/batch-executions.json}
  *
- * <p>Example Job Configuration:
+ * <p>
+ * Example Job Configuration:
+ * 
  * <pre>
  * &#64;Bean
  * public Job myJob(JobRepository jobRepository,
- *                  Step myStep,
- *                  JsonBatchExecutionTracker tracker) {
+ *         Step myStep,
+ *         JsonBatchExecutionTracker tracker) {
  *     return new JobBuilder("MyJob", jobRepository)
  *             .incrementer(new RunIdIncrementer())
  *             .listener(tracker)

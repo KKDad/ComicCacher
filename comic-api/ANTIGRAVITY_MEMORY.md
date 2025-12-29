@@ -1,4 +1,4 @@
-# ComicAPI Coding Standards
+# ComicAPI Coding Standards (Antigravity)
 
 ## Documentation Resources
 - For JSON storage details, refer to [STORAGE_DETAILS.md](/STORAGE_DETAILS.md)

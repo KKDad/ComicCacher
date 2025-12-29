@@ -73,7 +73,8 @@ public class ComicBackfillJobConfig {
             @Qualifier("backfillTaskWriter") ItemWriter<ComicDownloadResult> backfillTaskWriter) {
 
         return new StepBuilder("comicBackfillStep", jobRepository)
-                .<BackfillTask, ComicDownloadResult>chunk(chunkSize, transactionManager)
+                .<BackfillTask, ComicDownloadResult>chunk(chunkSize)
+                .transactionManager(transactionManager)
                 .reader(backfillTaskReader)
                 .processor(backfillTaskProcessor)
                 .writer(backfillTaskWriter)

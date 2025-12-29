@@ -67,7 +67,8 @@ public class ComicRetrievalJobConfig {
             ItemWriter<List<ComicDownloadResult>> comicResultWriter) {
 
         return new StepBuilder("comicRetrievalStep", jobRepository)
-                .<LocalDate, List<ComicDownloadResult>>chunk(1, transactionManager)
+                .<LocalDate, List<ComicDownloadResult>>chunk(1)
+                .transactionManager(transactionManager)
                 .reader(dateReader)
                 .processor(comicProcessor)
                 .writer(comicResultWriter)

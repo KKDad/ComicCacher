@@ -54,10 +54,7 @@ subprojects {
         toolVersion = rootProject.ext.jacocoVersion
     }
 
-    
-   
-        
-    
+
 
     // Add JUnit Platform Launcher for all subprojects (required by Gradle 8.5+)
     dependencies {
