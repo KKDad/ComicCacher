@@ -1,7 +1,7 @@
 package org.stapledon.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,9 +24,10 @@ import static org.assertj.core.api.Assertions.fail;
  */
 public class PureAuthIntegrationTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final ObjectMapper objectMapper = JsonMapper.builder()
+            .build();
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    
+
     @Test
     void jwtTokenGeneration() {
         // Create JWT properties
@@ -34,10 +35,10 @@ public class PureAuthIntegrationTest {
         jwtProperties.setSecret("test-secret-key-for-integration-testing-12345678901234567890");
         jwtProperties.setExpiration(300000); // 5 minutes
         jwtProperties.setRefreshExpiration(3600000); // 1 hour
-        
+
         // Create JWT token util
         JwtTokenUtil jwtTokenUtil = new JwtTokenUtil(jwtProperties);
-        
+
         // Create a test user
         User user = User.builder()
                 .username("jwtuser")
@@ -48,18 +49,18 @@ public class PureAuthIntegrationTest {
                 .roles(Collections.singletonList("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
-        
+
         // Generate token
         String token = jwtTokenUtil.generateToken(user);
 
         // Verify
         assertThat(token).as("Token should not be null").isNotNull();
         assertThat(token.length() > 20).as("Token should be of reasonable length").isTrue();
-        
+
         // Extract username from token
         String username = jwtTokenUtil.extractUsername(token);
         assertThat(username).as("Username should be extracted correctly").isEqualTo("jwtuser");
-        
+
         // Create UserDetails object for validation
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
@@ -70,7 +71,7 @@ public class PureAuthIntegrationTest {
         // Validate token
         assertThat(jwtTokenUtil.validateToken(token, userDetails)).as("Token should be valid").isTrue();
     }
-    
+
     @Test
     void userRegistrationStructure() {
         // This test verifies the structure of DTOs
@@ -86,7 +87,7 @@ public class PureAuthIntegrationTest {
         assertThat(registrationDto.getPassword()).isEqualTo("password123");
         assertThat(registrationDto.getEmail()).isEqualTo("test@example.com");
         assertThat(registrationDto.getDisplayName()).isEqualTo("Test User");
-        
+
         // Test JSON serialization
         try {
             String json = objectMapper.writeValueAsString(registrationDto);
@@ -100,7 +101,7 @@ public class PureAuthIntegrationTest {
             fail("", "JSON serialization should not throw an exception: " + e.getMessage());
         }
     }
-    
+
     @Test
     void authResponseStructure() {
         // Create auth response
@@ -116,7 +117,7 @@ public class PureAuthIntegrationTest {
         assertThat(authResponse.getDisplayName()).isEqualTo("Test User");
         assertThat(authResponse.getToken()).isEqualTo("jwt.token.here");
         assertThat(authResponse.getRefreshToken()).isEqualTo("refresh.token.here");
-        
+
         // Test JSON serialization
         try {
             String json = objectMapper.writeValueAsString(authResponse);

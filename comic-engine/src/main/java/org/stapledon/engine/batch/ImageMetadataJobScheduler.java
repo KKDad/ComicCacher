@@ -1,8 +1,9 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,8 +51,8 @@ public class ImageMetadataJobScheduler {
             CronExpression cron = CronExpression.parse(cronExpression);
             ZonedDateTime nextRun = cron.next(ZonedDateTime.now(ZoneId.of(timezone)));
             log.info("ImageMetadataJob scheduler initialized - Next scheduled run: {} ({})",
-                     nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                     nextRun.getZone());
+                    nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                    nextRun.getZone());
         } catch (Exception e) {
             log.warn("Could not parse cron expression '{}': {}", cronExpression, e.getMessage());
         }

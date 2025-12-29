@@ -39,8 +39,11 @@ dependencies {
 
 	// Spring Boot for dependency injection and configuration
 	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-batch'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'
+	// Explicitly add spring-batch modules for Gradle 8.14 module visibility
+	implementation 'org.springframework.batch:spring-batch-core'
+	implementation 'org.springframework.batch:spring-batch-infrastructure'
 
 	// Lombok
 	compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
@@ -51,7 +54,7 @@ dependencies {
 
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.batch:spring-batch-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-batch-jdbc-test'
 }
 
 // Spring Boot dependency management (without the plugin)

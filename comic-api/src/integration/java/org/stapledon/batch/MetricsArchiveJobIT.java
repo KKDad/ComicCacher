@@ -5,7 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.TestPropertySource;
@@ -30,8 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Slf4j
 @TestPropertySource(properties = {
-    "batch.metrics-archive.enabled=true",
-    "batch.metrics-archive.cron=0 30 6 * * ?"
+        "batch.metrics-archive.enabled=true",
+        "batch.metrics-archive.cron=0 30 6 * * ?"
 })
 class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
@@ -57,32 +58,32 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
             log.info("Cleaning up existing metrics-history directory");
             try (var walk = Files.walk(historyDir)) {
                 walk.sorted(java.util.Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (Exception e) {
-                            log.warn("Failed to delete {}: {}", path, e.getMessage());
-                        }
-                    });
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            } catch (Exception e) {
+                                log.warn("Failed to delete {}: {}", path, e.getMessage());
+                            }
+                        });
             }
         }
 
         // Create test metrics data
         Map<String, ComicCombinedMetrics> comicsMap = new HashMap<>();
         comicsMap.put("TestComic1", ComicCombinedMetrics.builder()
-            .comicName("TestComic1")
-            .imageCount(10)
-            .storageBytes(1024000L)
-            .build());
+                .comicName("TestComic1")
+                .imageCount(10)
+                .storageBytes(1024000L)
+                .build());
         comicsMap.put("TestComic2", ComicCombinedMetrics.builder()
-            .comicName("TestComic2")
-            .imageCount(5)
-            .storageBytes(512000L)
-            .build());
+                .comicName("TestComic2")
+                .imageCount(5)
+                .storageBytes(512000L)
+                .build());
 
         CombinedMetricsData testMetrics = CombinedMetricsData.builder()
-            .comics(comicsMap)
-            .build();
+                .comics(comicsMap)
+                .build();
 
         combinedMetricsRepository.save(testMetrics);
         log.info("Created test metrics: {} comics", 2);
@@ -113,7 +114,8 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
         assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
         assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
-        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED")
+                .isEqualTo("COMPLETED");
         log.info("Job completed with status: {}", jobExecution.getStatus());
 
         // Verify after state - archive file exists
@@ -160,7 +162,8 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         // Run job first time
         JobExecution execution1 = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
         assertThat(execution1).as("First execution should not be null").isNotNull();
-        assertThat(execution1.getStatus()).as("First execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(execution1.getStatus()).as("First execution should complete successfully")
+                .isEqualTo(BatchStatus.COMPLETED);
 
         // Verify archive exists
         assertThat(Files.exists(expectedFile)).as("Archive should exist after first run").isTrue();
@@ -169,7 +172,8 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         // Run job second time
         JobExecution execution2 = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
         assertThat(execution2).as("Second execution should not be null").isNotNull();
-        assertThat(execution2.getStatus()).as("Second execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(execution2.getStatus()).as("Second execution should complete successfully")
+                .isEqualTo(BatchStatus.COMPLETED);
 
         // Verify archive still exists
         assertThat(Files.exists(expectedFile)).as("Archive should still exist after second run").isTrue();
@@ -192,8 +196,8 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
         // Clear metrics repository
         combinedMetricsRepository.save(CombinedMetricsData.builder()
-            .comics(new HashMap<>())
-            .build());
+                .comics(new HashMap<>())
+                .build());
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
         Path expectedFile = getMetricsArchiveFile(yesterday);

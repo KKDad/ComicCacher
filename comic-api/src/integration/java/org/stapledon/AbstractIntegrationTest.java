@@ -3,12 +3,12 @@ package org.stapledon;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -29,7 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for all integration tests
- * Uses the main application security configuration with permissive settings for testing
+ * Uses the main application security configuration with permissive settings for
+ * testing
  * Provides common test utilities and helper methods
  */
 @Slf4j
@@ -46,8 +47,8 @@ public abstract class AbstractIntegrationTest {
             if (java.nio.file.Files.exists(integrationCacheDir)) {
                 try (Stream<Path> walk = Files.walk(integrationCacheDir)) {
                     walk.sorted(java.util.Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
+                            .map(Path::toFile)
+                            .forEach(File::delete);
                 }
             }
 
@@ -56,34 +57,34 @@ public abstract class AbstractIntegrationTest {
 
             // Create comics.json
             String comicsJson = """
-            {
-              "items": {
-                "1": {
-                  "id": 1,
-                  "name": "Test Comic",
-                  "author": "Test Author",
-                  "oldest": "2023-01-01",
-                  "newest": "2024-05-19",
-                  "enabled": true,
-                  "description": "A comic for integration testing",
-                  "avatarAvailable": true,
-                  "source": "gocomics",
-                  "sourceIdentifier": "testcomic"
-                },
-                "2": {
-                  "id": 2,
-                  "name": "Another Test Comic",
-                  "author": "Another Test Author",
-                  "oldest": "2023-02-15",
-                  "newest": "2024-05-18",
-                  "enabled": true,
-                  "description": "Another comic for integration testing",
-                  "avatarAvailable": true,
-                  "source": "comicskingdom",
-                  "sourceIdentifier": "anothertestcomic"
-                }
-              }
-            }""";
+                    {
+                      "items": {
+                        "1": {
+                          "id": 1,
+                          "name": "Test Comic",
+                          "author": "Test Author",
+                          "oldest": "2023-01-01",
+                          "newest": "2024-05-19",
+                          "enabled": true,
+                          "description": "A comic for integration testing",
+                          "avatarAvailable": true,
+                          "source": "gocomics",
+                          "sourceIdentifier": "testcomic"
+                        },
+                        "2": {
+                          "id": 2,
+                          "name": "Another Test Comic",
+                          "author": "Another Test Author",
+                          "oldest": "2023-02-15",
+                          "newest": "2024-05-18",
+                          "enabled": true,
+                          "description": "Another comic for integration testing",
+                          "avatarAvailable": true,
+                          "source": "comicskingdom",
+                          "sourceIdentifier": "anothertestcomic"
+                        }
+                      }
+                    }""";
             try {
                 Files.writeString(integrationCacheDir.resolve("comics.json"), comicsJson);
             } catch (IOException e) {
@@ -99,7 +100,9 @@ public abstract class AbstractIntegrationTest {
             Path testComicDir = integrationCacheDir.resolve("TestComic");
             try {
                 java.nio.file.Files.createDirectories(testComicDir);
-                java.nio.file.Files.write(testComicDir.resolve("avatar.png"), java.util.Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); // dummy avatar
+                java.nio.file.Files.write(testComicDir.resolve("avatar.png"), java.util.Base64.getDecoder().decode(
+                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); // dummy
+                                                                                                                          // avatar
                 java.nio.file.Files.createDirectories(testComicDir.resolve("2023"));
                 java.nio.file.Files.createDirectories(testComicDir.resolve("2024"));
             } catch (java.io.IOException e) {
@@ -122,11 +125,11 @@ public abstract class AbstractIntegrationTest {
     protected static final String TEST_COMIC_NAME = "Test Comic";
     protected static final LocalDate TEST_COMIC_OLDEST_DATE = LocalDate.of(2023, 1, 1);
     protected static final LocalDate TEST_COMIC_NEWEST_DATE = LocalDate.of(2024, 5, 19);
-    
+
     // Integration test users
     protected static final String TEST_USER = "testuser";
     protected static final String TEST_ADMIN_USER = "adminuser";
-    
+
     @Autowired
     protected MockMvc mockMvc;
 
@@ -135,7 +138,7 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected ObjectMapper objectMapper;
-    
+
     /**
      * Create a test user with the given username and attempt to authenticate
      * Handles errors gracefully
@@ -143,7 +146,7 @@ public abstract class AbstractIntegrationTest {
      */
     protected String authenticateUser() {
         try {
-            StapledonAccountGivens.GivenAccountContext context =givens.givenUser();
+            StapledonAccountGivens.GivenAccountContext context = givens.givenUser();
             log.info("Using test user: {}", context.getUsername());
 
             return authenticateAndGetToken(context.getUsername(), context.getPassword());
@@ -167,8 +170,8 @@ public abstract class AbstractIntegrationTest {
             log.debug("Authenticating with: {} / {}", username, password);
 
             MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(authRequest)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(authRequest)))
                     .andDo(print())
                     .andReturn();
 

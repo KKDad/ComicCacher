@@ -8,23 +8,22 @@ ext {
     projectVersion = '2.3.0'
 
     // Core dependency versions
-    springBootVersion = '3.5.7'
-    springDependencyManagementVersion = '1.1.7'
+    springBootVersion = '4.0.1'
+    springDependencyManagementVersion = '1.1.8'
 
     // Library versions
-    lombokVersion = '1.18.42'
+    bcryptVersion = '0.4'
+    caffeineVersion = '3.2.2'
     gsonVersion = '2.11.0'
     guavaVersion = '33.5.0-jre'
-    jsoupVersion = '1.21.2'
+    h2Version = 'managed'
     jjwtVersion = '0.11.5'
+    jsoupVersion = '1.21.2'
+    lombokVersion = '1.18.42'
     seleniumVersion = '4.38.0'
-    webdrivermanagerVersion = '5.5.3'
-    caffeineVersion = '3.2.2'
-    jacksonBomVersion = '2.20.0'
-    twelvemonkeysVersion = '3.12.0'
-    bcryptVersion = '0.4'
-    h2Version = 'managed' // managed by Spring Boot
     springdocVersion = '2.8.13'
+    twelvemonkeysVersion = '3.12.0'
+    webdrivermanagerVersion = '5.5.3'
 
     // Test dependency versions
     jacocoVersion = '0.8.11'
