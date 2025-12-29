@@ -18,9 +18,8 @@ dependencies {
 	// Gson for JSON serialization (used in DTOs)
 	api "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
 
-	// Jackson for JSON annotations (used in DTOs for Spring)
-	api 'com.fasterxml.jackson.core:jackson-databind'
-	api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	// Jackson for JSON annotations (used in DTOs for Spring) - Spring Boot manages Jackson 3
+	api 'org.springframework.boot:spring-boot-starter-jackson'
 
 	// Guava for utilities
 	api "com.google.guava:guava:${rootProject.ext.guavaVersion}"

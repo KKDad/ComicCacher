@@ -1,6 +1,7 @@
 package org.stapledon.infrastructure.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +35,9 @@ public class TestApplicationConfig {
     @Bean
     @Primary
     public ObjectMapper objectMapper() {
-        return new ObjectMapper().findAndRegisterModules();
+        return JsonMapper.builder()
+                .findAndAddModules()
+                .build();
     }
 
     @Bean

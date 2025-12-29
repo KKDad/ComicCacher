@@ -1,9 +1,9 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,16 +43,19 @@ public class MetricsUpdateJobScheduler {
         long minutes = fixedDelay / 60000;
         long seconds = (fixedDelay % 60000) / 1000;
         if (seconds > 0) {
-            log.info("MetricsUpdateJob scheduler initialized - Runs every {} minutes {} seconds after previous completion",
-                     minutes, seconds);
+            log.info(
+                    "MetricsUpdateJob scheduler initialized - Runs every {} minutes {} seconds after previous completion",
+                    minutes, seconds);
         } else {
-            log.info("MetricsUpdateJob scheduler initialized - Runs every {} minutes after previous completion", minutes);
+            log.info("MetricsUpdateJob scheduler initialized - Runs every {} minutes after previous completion",
+                    minutes);
         }
     }
 
     /**
      * Scheduled execution of MetricsUpdateJob
-     * Runs every 5 minutes (fixed delay, configured via batch.metrics-update.fixed-delay)
+     * Runs every 5 minutes (fixed delay, configured via
+     * batch.metrics-update.fixed-delay)
      */
     @Scheduled(fixedDelayString = "${batch.metrics-update.fixed-delay}")
     public void runPeriodicMetricsUpdate() {

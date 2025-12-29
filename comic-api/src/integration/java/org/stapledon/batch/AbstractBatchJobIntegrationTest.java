@@ -1,6 +1,6 @@
 package org.stapledon.batch;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -65,8 +65,8 @@ public abstract class AbstractBatchJobIntegrationTest {
                 log.info("Cleaning up existing batch integration cache: {}", batchCacheDir);
                 try (Stream<Path> walk = Files.walk(batchCacheDir)) {
                     walk.sorted(java.util.Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
+                            .map(Path::toFile)
+                            .forEach(File::delete);
                 }
             }
 
@@ -110,10 +110,11 @@ public abstract class AbstractBatchJobIntegrationTest {
     /**
      * Creates a test image file with specified dimensions and format.
      *
-     * @param relativePath Path relative to batch cache directory (e.g., "TestComic/2024/2024-01-15.png")
-     * @param width Image width in pixels
-     * @param height Image height in pixels
-     * @param format Image format
+     * @param relativePath Path relative to batch cache directory (e.g.,
+     *                     "TestComic/2024/2024-01-15.png")
+     * @param width        Image width in pixels
+     * @param height       Image height in pixels
+     * @param format       Image format
      * @return The created File object
      * @throws IOException if image creation fails
      */
@@ -161,20 +162,21 @@ public abstract class AbstractBatchJobIntegrationTest {
      */
     protected void assertMetadataNotExists(String imageFilePath) {
         File metadataFile = getMetadataFile(imageFilePath);
-        assertThat(metadataFile.exists()).as("Metadata file should NOT exist: " + metadataFile.getAbsolutePath()).isFalse();
+        assertThat(metadataFile.exists()).as("Metadata file should NOT exist: " + metadataFile.getAbsolutePath())
+                .isFalse();
     }
 
     /**
      * Asserts that metadata exists and validates its content.
      *
-     * @param imageFilePath Absolute path to the image file
+     * @param imageFilePath  Absolute path to the image file
      * @param expectedFormat Expected image format
-     * @param expectedWidth Expected image width
+     * @param expectedWidth  Expected image width
      * @param expectedHeight Expected image height
      * @throws IOException if reading metadata fails
      */
     protected void assertMetadataValid(String imageFilePath, ImageFormat expectedFormat,
-                                      int expectedWidth, int expectedHeight) throws IOException {
+            int expectedWidth, int expectedHeight) throws IOException {
         assertMetadataExists(imageFilePath);
 
         File metadataFile = getMetadataFile(imageFilePath);
@@ -242,7 +244,8 @@ public abstract class AbstractBatchJobIntegrationTest {
     // ==================== Job Execution Helpers ====================
 
     /**
-     * Verifies that the batch-executions.json tracking file contains an entry for the given job.
+     * Verifies that the batch-executions.json tracking file contains an entry for
+     * the given job.
      *
      * @param jobName The name of the job to look for
      * @throws IOException if reading the tracking file fails
@@ -256,7 +259,8 @@ public abstract class AbstractBatchJobIntegrationTest {
     }
 
     /**
-     * Loads and parses the batch execution summary for a specific job from batch-executions.json.
+     * Loads and parses the batch execution summary for a specific job from
+     * batch-executions.json.
      *
      * @param jobName The name of the job to load
      * @return BatchExecutionSummary for the job
@@ -269,10 +273,9 @@ public abstract class AbstractBatchJobIntegrationTest {
         String content = Files.readString(trackingFile.toPath());
 
         // Parse the entire map
-        java.util.Map<String, BatchExecutionSummary> executions =
-            objectMapper.readValue(content,
+        java.util.Map<String, BatchExecutionSummary> executions = objectMapper.readValue(content,
                 objectMapper.getTypeFactory().constructMapType(
-                    java.util.HashMap.class, String.class, BatchExecutionSummary.class));
+                        java.util.HashMap.class, String.class, BatchExecutionSummary.class));
 
         BatchExecutionSummary summary = executions.get(jobName);
         assertThat(summary).as("Should have execution summary for job: " + jobName).isNotNull();
@@ -283,20 +286,21 @@ public abstract class AbstractBatchJobIntegrationTest {
     /**
      * Validates key fields in the batch execution summary for a job.
      *
-     * @param jobName The job name to validate
-     * @param expectedStatus Expected status (e.g., "COMPLETED", "FAILED")
-     * @param expectedItemsProcessed Expected number of items processed (null to skip check)
+     * @param jobName                The job name to validate
+     * @param expectedStatus         Expected status (e.g., "COMPLETED", "FAILED")
+     * @param expectedItemsProcessed Expected number of items processed (null to
+     *                               skip check)
      * @throws IOException if reading or parsing fails
      */
     protected void assertBatchExecutionValid(String jobName, String expectedStatus,
-                                            Integer expectedItemsProcessed) throws IOException {
+            Integer expectedItemsProcessed) throws IOException {
         BatchExecutionSummary summary = loadBatchExecutionSummary(jobName);
 
         // Validate status
         assertEquals(expectedStatus, summary.getStatus(),
-            "Job status should be " + expectedStatus);
+                "Job status should be " + expectedStatus);
         assertEquals(expectedStatus, summary.getExitCode(),
-            "Exit code should be " + expectedStatus);
+                "Exit code should be " + expectedStatus);
 
         // Validate execution metadata
         assertNotNull(summary.getLastExecutionId(), "Execution ID should not be null");
@@ -307,15 +311,17 @@ public abstract class AbstractBatchJobIntegrationTest {
 
         // Validate items processed if expected count provided
         if (expectedItemsProcessed != null) {
-            assertThat(summary.getItemsProcessed()).as("Items processed should match expected count").isEqualTo(expectedItemsProcessed.intValue());
+            assertThat(summary.getItemsProcessed()).as("Items processed should match expected count")
+                    .isEqualTo(expectedItemsProcessed.intValue());
         }
 
         log.info("Batch execution validation passed for {}: status={}, duration={}s, processed={}",
-            jobName, summary.getStatus(), summary.getDurationSeconds(), summary.getItemsProcessed());
+                jobName, summary.getStatus(), summary.getDurationSeconds(), summary.getItemsProcessed());
     }
 
     /**
-     * DTO for batch execution summary data (matches JsonBatchExecutionTracker structure).
+     * DTO for batch execution summary data (matches JsonBatchExecutionTracker
+     * structure).
      */
     @lombok.Data
     public static class BatchExecutionSummary {

@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,195 +28,197 @@ import org.stapledon.metrics.dto.CombinedMetricsData;
 
 class MetricsControllerIT extends AbstractIntegrationTest {
 
-    private static final String API_BASE_PATH = "/api/v1";
-    private static final String METRICS_PATH = API_BASE_PATH + "/metrics";
-    private String authToken;
+        private static final String API_BASE_PATH = "/api/v1";
+        private static final String METRICS_PATH = API_BASE_PATH + "/metrics";
+        private String authToken;
 
-    @Autowired
-    private ManagementFacade comicManagementFacade;
+        @Autowired
+        private ManagementFacade comicManagementFacade;
 
-    @Autowired
-    private ComicStorageFacade comicStorageFacade;
+        @Autowired
+        private ComicStorageFacade comicStorageFacade;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        // Use direct JWT token generation instead of authentication
-        StapledonAccountGivens.GivenAccountContext context = StapledonAccountGivens.GivenAccountContext.builder()
-                .username("testuser")
-                .build();
+        @BeforeEach
+        void setUp() throws Exception {
+                // Use direct JWT token generation instead of authentication
+                StapledonAccountGivens.GivenAccountContext context = StapledonAccountGivens.GivenAccountContext
+                                .builder()
+                                .username("testuser")
+                                .build();
 
-        authToken = context.authenticate();
-        assertThat(authToken)
-            .as("Token generation should succeed")
-            .isNotNull();
+                authToken = context.authenticate();
+                assertThat(authToken)
+                                .as("Token generation should succeed")
+                                .isNotNull();
 
-        createTestComic(3, "New Test Comic");
+                createTestComic(3, "New Test Comic");
 
-        // Force refresh all metrics to populate the JSON files
-        MockHttpServletRequestBuilder refreshRequest = get(METRICS_PATH + "/refresh-all")
-            .header("Authorization", "Bearer " + authToken);
+                // Force refresh all metrics to populate the JSON files
+                MockHttpServletRequestBuilder refreshRequest = get(METRICS_PATH + "/refresh-all")
+                                .header("Authorization", "Bearer " + authToken);
 
-        mockMvc.perform(refreshRequest)
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(refreshRequest)
+                                .andExpect(status().isOk());
+        }
 
-    private void createTestComic(int comicId, String name) throws Exception {
-        ComicItem newComic = ComicItem.builder()
-                .id(comicId)
-                .name(name)
-                .enabled(true)
-                .build();
+        private void createTestComic(int comicId, String name) throws Exception {
+                ComicItem newComic = ComicItem.builder()
+                                .id(comicId)
+                                .name(name)
+                                .enabled(true)
+                                .build();
 
-        MockHttpServletRequestBuilder request = post("/api/v1/comics/" + comicId)
-                .header("Authorization", "Bearer " + authToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(newComic));
+                MockHttpServletRequestBuilder request = post("/api/v1/comics/" + comicId)
+                                .header("Authorization", "Bearer " + authToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(newComic));
 
-        mockMvc.perform(request)
-                .andDo(print())
-                .andExpect(status().isCreated());
-    }
+                mockMvc.perform(request)
+                                .andDo(print())
+                                .andExpect(status().isCreated());
+        }
 
-    @Test
-    @DisplayName("Should retrieve storage metrics successfully")
-    void getStorageMetricsTest() throws Exception {
-        // Execute request to get storage metrics with auth token
-        MockHttpServletRequestBuilder request = get(METRICS_PATH + "/storage")
-            .header("Authorization", "Bearer " + authToken);
-            
-        MvcResult result = mockMvc.perform(request)
-                .andDo(print())
-                .andReturn();
+        @Test
+        @DisplayName("Should retrieve storage metrics successfully")
+        void getStorageMetricsTest() throws Exception {
+                // Execute request to get storage metrics with auth token
+                MockHttpServletRequestBuilder request = get(METRICS_PATH + "/storage")
+                                .header("Authorization", "Bearer " + authToken);
 
-        // Verify response status is 200 OK
-        assertThat(result.getResponse().getStatus())
-                .as("Expected GET /metrics/storage to return status 200")
-                .isEqualTo(HttpStatus.OK.value());
+                MvcResult result = mockMvc.perform(request)
+                                .andDo(print())
+                                .andReturn();
 
-        // Verify response contains data field
-        String responseContent = result.getResponse().getContentAsString();
-        assertThat(responseContent)
-                .as("Response should contain 'data' field")
-                .contains("data");
+                // Verify response status is 200 OK
+                assertThat(result.getResponse().getStatus())
+                                .as("Expected GET /metrics/storage to return status 200")
+                                .isEqualTo(HttpStatus.OK.value());
 
-        // Verify response can be parsed
-        JsonNode root = objectMapper.readTree(responseContent);
-        assertThat(root.has("data"))
-                .as("Response JSON should have a 'data' field")
-                .isTrue();
+                // Verify response contains data field
+                String responseContent = result.getResponse().getContentAsString();
+                assertThat(responseContent)
+                                .as("Response should contain 'data' field")
+                                .contains("data");
 
-        // Attempt to parse as ImageCacheStats to verify structure
-        ImageCacheStats stats = extractFromResponse(responseContent, "data", ImageCacheStats.class);
-        assertThat(stats)
-                .as("Response should contain valid storage metrics data")
-                .isNotNull();
-    }
+                // Verify response can be parsed
+                JsonNode root = objectMapper.readTree(responseContent);
+                assertThat(root.has("data"))
+                                .as("Response JSON should have a 'data' field")
+                                .isTrue();
 
-    @Test
-    @DisplayName("Should retrieve access metrics successfully")
-    void getAccessMetricsTest() throws Exception {
-        // Execute request to get access metrics with auth token
-        MockHttpServletRequestBuilder request = get(METRICS_PATH + "/access")
-            .header("Authorization", "Bearer " + authToken);
-            
-        MvcResult result = mockMvc.perform(request)
-                .andDo(print())
-                .andReturn();
+                // Attempt to parse as ImageCacheStats to verify structure
+                ImageCacheStats stats = extractFromResponse(responseContent, "data", ImageCacheStats.class);
+                assertThat(stats)
+                                .as("Response should contain valid storage metrics data")
+                                .isNotNull();
+        }
 
-        // Verify response status is 200 OK
-        assertThat(result.getResponse().getStatus())
-                .as("Expected GET /metrics/access to return status 200")
-                .isEqualTo(HttpStatus.OK.value());
+        @Test
+        @DisplayName("Should retrieve access metrics successfully")
+        void getAccessMetricsTest() throws Exception {
+                // Execute request to get access metrics with auth token
+                MockHttpServletRequestBuilder request = get(METRICS_PATH + "/access")
+                                .header("Authorization", "Bearer " + authToken);
 
-        // Verify response contains data field
-        String responseContent = result.getResponse().getContentAsString();
-        assertThat(responseContent)
-                .as("Response should contain 'data' field")
-                .contains("data");
+                MvcResult result = mockMvc.perform(request)
+                                .andDo(print())
+                                .andReturn();
 
-        // Verify response can be parsed
-        JsonNode root = objectMapper.readTree(responseContent);
-        assertThat(root.has("data"))
-                .as("Response JSON should have a 'data' field")
-                .isTrue();
+                // Verify response status is 200 OK
+                assertThat(result.getResponse().getStatus())
+                                .as("Expected GET /metrics/access to return status 200")
+                                .isEqualTo(HttpStatus.OK.value());
 
-        // Attempt to parse as AccessMetricsData to verify structure
-        AccessMetricsData data = extractFromResponse(responseContent, "data", AccessMetricsData.class);
-        assertThat(data)
-                .as("Response should contain valid access metrics data")
-                .isNotNull();
-    }
+                // Verify response contains data field
+                String responseContent = result.getResponse().getContentAsString();
+                assertThat(responseContent)
+                                .as("Response should contain 'data' field")
+                                .contains("data");
 
-    @Test
-    @DisplayName("Should retrieve combined metrics successfully")
-    void getCombinedMetricsTest() throws Exception {
-        // Refresh storage metrics to ensure the new comic is included
-        mockMvc.perform(get(METRICS_PATH + "/storage/refresh")
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk());
+                // Verify response can be parsed
+                JsonNode root = objectMapper.readTree(responseContent);
+                assertThat(root.has("data"))
+                                .as("Response JSON should have a 'data' field")
+                                .isTrue();
 
-        // Execute request to get combined metrics with auth token
-        MockHttpServletRequestBuilder request = get(METRICS_PATH + "/combined")
-            .header("Authorization", "Bearer " + authToken);
-            
-        MvcResult result = mockMvc.perform(request)
-                .andDo(print())
-                .andReturn();
+                // Attempt to parse as AccessMetricsData to verify structure
+                AccessMetricsData data = extractFromResponse(responseContent, "data", AccessMetricsData.class);
+                assertThat(data)
+                                .as("Response should contain valid access metrics data")
+                                .isNotNull();
+        }
 
-        // Verify response status is 200 OK
-        assertThat(result.getResponse().getStatus())
-                .as("Expected GET /metrics/combined to return status 200")
-                .isEqualTo(HttpStatus.OK.value());
+        @Test
+        @DisplayName("Should retrieve combined metrics successfully")
+        void getCombinedMetricsTest() throws Exception {
+                // Refresh storage metrics to ensure the new comic is included
+                mockMvc.perform(get(METRICS_PATH + "/storage/refresh")
+                                .header("Authorization", "Bearer " + authToken))
+                                .andExpect(status().isOk());
 
-        // Verify response contains data field
-        String responseContent = result.getResponse().getContentAsString();
-        assertThat(responseContent)
-                .as("Response should contain 'data' field")
-                .contains("data");
+                // Execute request to get combined metrics with auth token
+                MockHttpServletRequestBuilder request = get(METRICS_PATH + "/combined")
+                                .header("Authorization", "Bearer " + authToken);
 
-        // Attempt to parse as CombinedMetricsData to verify structure
-        CombinedMetricsData combinedData = extractFromResponse(responseContent, "data", CombinedMetricsData.class);
-        assertThat(combinedData)
-                .as("Response should contain valid combined metrics data")
-                .isNotNull();
+                MvcResult result = mockMvc.perform(request)
+                                .andDo(print())
+                                .andReturn();
 
-        // Verify comics map exists
-        assertThat(combinedData.getComics())
-                .as("Combined metrics should have a comics map")
-                .isNotNull();
-    }
+                // Verify response status is 200 OK
+                assertThat(result.getResponse().getStatus())
+                                .as("Expected GET /metrics/combined to return status 200")
+                                .isEqualTo(HttpStatus.OK.value());
 
-    @AfterEach
-    void tearDown() {
-        comicManagementFacade.deleteComic(3);
-    }
+                // Verify response contains data field
+                String responseContent = result.getResponse().getContentAsString();
+                assertThat(responseContent)
+                                .as("Response should contain 'data' field")
+                                .contains("data");
 
-    @Test
-    @DisplayName("Should refresh storage metrics successfully")
-    void refreshStorageMetricsTest() throws Exception {
-        // Execute request to refresh storage metrics with auth token
-        MockHttpServletRequestBuilder request = get(METRICS_PATH + "/storage/refresh")
-            .header("Authorization", "Bearer " + authToken);
-            
-        MvcResult result = mockMvc.perform(request)
-                .andDo(print())
-                .andReturn();
+                // Attempt to parse as CombinedMetricsData to verify structure
+                CombinedMetricsData combinedData = extractFromResponse(responseContent, "data",
+                                CombinedMetricsData.class);
+                assertThat(combinedData)
+                                .as("Response should contain valid combined metrics data")
+                                .isNotNull();
 
-        // Verify response status is 200 OK
-        assertThat(result.getResponse().getStatus())
-                .as("Expected GET /metrics/storage/refresh to return status 200")
-                .isEqualTo(HttpStatus.OK.value());
+                // Verify comics map exists
+                assertThat(combinedData.getComics())
+                                .as("Combined metrics should have a comics map")
+                                .isNotNull();
+        }
 
-        // Verify response contains data field
-        String responseContent = result.getResponse().getContentAsString();
-        assertThat(responseContent)
-                .as("Response should contain 'data' field")
-                .contains("data");
+        @AfterEach
+        void tearDown() {
+                comicManagementFacade.deleteComic(3);
+        }
 
-        // Verify response can be parsed as ImageCacheStats
-        ImageCacheStats stats = extractFromResponse(responseContent, "data", ImageCacheStats.class);
-        assertThat(stats)
-                .as("Response should contain valid refreshed storage metrics data")
-                .isNotNull();
-    }
+        @Test
+        @DisplayName("Should refresh storage metrics successfully")
+        void refreshStorageMetricsTest() throws Exception {
+                // Execute request to refresh storage metrics with auth token
+                MockHttpServletRequestBuilder request = get(METRICS_PATH + "/storage/refresh")
+                                .header("Authorization", "Bearer " + authToken);
+
+                MvcResult result = mockMvc.perform(request)
+                                .andDo(print())
+                                .andReturn();
+
+                // Verify response status is 200 OK
+                assertThat(result.getResponse().getStatus())
+                                .as("Expected GET /metrics/storage/refresh to return status 200")
+                                .isEqualTo(HttpStatus.OK.value());
+
+                // Verify response contains data field
+                String responseContent = result.getResponse().getContentAsString();
+                assertThat(responseContent)
+                                .as("Response should contain 'data' field")
+                                .contains("data");
+
+                // Verify response can be parsed as ImageCacheStats
+                ImageCacheStats stats = extractFromResponse(responseContent, "data", ImageCacheStats.class);
+                assertThat(stats)
+                                .as("Response should contain valid refreshed storage metrics data")
+                                .isNotNull();
+        }
 }

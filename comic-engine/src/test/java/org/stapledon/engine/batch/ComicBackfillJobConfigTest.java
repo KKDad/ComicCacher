@@ -5,12 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.core.step.Step;
+import org.springframework.batch.infrastructure.item.Chunk;
+import org.springframework.batch.infrastructure.item.ItemProcessor;
+import org.springframework.batch.infrastructure.item.ItemReader;
+import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
@@ -70,12 +71,11 @@ class ComicBackfillJobConfigTest {
         ItemWriter<ComicDownloadResult> mockWriter = mock(ItemWriter.class);
 
         Step step = config.comicBackfillStep(
-            jobRepository,
-            transactionManager,
-            mockReader,
-            mockProcessor,
-            mockWriter
-        );
+                jobRepository,
+                transactionManager,
+                mockReader,
+                mockProcessor,
+                mockWriter);
 
         assertThat(step).isNotNull();
         assertThat(step.getName()).isEqualTo("comicBackfillStep");
@@ -105,15 +105,15 @@ class ComicBackfillJobConfigTest {
         BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
 
         ComicDownloadRequest request = ComicDownloadRequest.builder()
-            .comicId(comic.getId())
-            .comicName(comic.getName())
-            .date(task.date())
-            .build();
+                .comicId(comic.getId())
+                .comicName(comic.getName())
+                .date(task.date())
+                .build();
 
         ComicDownloadResult result = ComicDownloadResult.success(request, new byte[0]);
 
         when(managementFacade.updateComicsForDate(any(LocalDate.class)))
-            .thenReturn(List.of(result));
+                .thenReturn(List.of(result));
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
 
@@ -131,15 +131,15 @@ class ComicBackfillJobConfigTest {
 
         // Return result for a different comic
         ComicDownloadRequest otherRequest = ComicDownloadRequest.builder()
-            .comicId(2)
-            .comicName("Other Comic")
-            .date(task.date())
-            .build();
+                .comicId(2)
+                .comicName("Other Comic")
+                .date(task.date())
+                .build();
 
         ComicDownloadResult otherResult = ComicDownloadResult.success(otherRequest, new byte[0]);
 
         when(managementFacade.updateComicsForDate(any(LocalDate.class)))
-            .thenReturn(List.of(otherResult));
+                .thenReturn(List.of(otherResult));
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
 
@@ -154,7 +154,7 @@ class ComicBackfillJobConfigTest {
         BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
 
         when(managementFacade.updateComicsForDate(any(LocalDate.class)))
-            .thenThrow(new RuntimeException("Test exception"));
+                .thenThrow(new RuntimeException("Test exception"));
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
 
@@ -166,16 +166,16 @@ class ComicBackfillJobConfigTest {
     @Test
     void backfillTaskWriter_shouldWriteResults() throws Exception {
         ComicDownloadRequest request1 = ComicDownloadRequest.builder()
-            .comicId(1)
-            .comicName("Comic 1")
-            .date(LocalDate.of(2025, 1, 1))
-            .build();
+                .comicId(1)
+                .comicName("Comic 1")
+                .date(LocalDate.of(2025, 1, 1))
+                .build();
 
         ComicDownloadRequest request2 = ComicDownloadRequest.builder()
-            .comicId(2)
-            .comicName("Comic 2")
-            .date(LocalDate.of(2025, 1, 2))
-            .build();
+                .comicId(2)
+                .comicName("Comic 2")
+                .date(LocalDate.of(2025, 1, 2))
+                .build();
 
         ComicDownloadResult success = ComicDownloadResult.success(request1, new byte[0]);
         ComicDownloadResult failure = ComicDownloadResult.failure(request2, "Test error");
@@ -183,7 +183,7 @@ class ComicBackfillJobConfigTest {
         ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
 
         // Should not throw exception
-        assertDoesNotThrow(() -> writer.write(org.springframework.batch.item.Chunk.of(success, failure)));
+        assertDoesNotThrow(() -> writer.write(Chunk.of(success, failure)));
     }
 
     @Test
@@ -191,7 +191,7 @@ class ComicBackfillJobConfigTest {
         ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
 
         // Should handle nulls gracefully
-        assertDoesNotThrow(() -> writer.write(org.springframework.batch.item.Chunk.of((ComicDownloadResult) null)));
+        assertDoesNotThrow(() -> writer.write(Chunk.of((ComicDownloadResult) null)));
     }
 
     private ComicItem createComic(int id, String name) {

@@ -1,7 +1,7 @@
 package org.stapledon.api.controller;
 
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.step.StepExecution;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,11 +41,9 @@ public class BatchJobController {
     private final ComicBackfillJobScheduler comicBackfillJobScheduler;
 
     @GetMapping("/jobs/recent")
-    @Operation(summary = "Get recent job executions",
-               description = "Returns the most recent batch job executions with detailed status information")
+    @Operation(summary = "Get recent job executions", description = "Returns the most recent batch job executions with detailed status information")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRecentJobs(
-            @Parameter(description = "Number of recent jobs to return")
-            @RequestParam(defaultValue = "10") int count) {
+            @Parameter(description = "Number of recent jobs to return") @RequestParam(defaultValue = "10") int count) {
 
         List<JobExecution> executions = comicDownloadJobScheduler.getRecentJobExecutions(count);
         List<Map<String, Object>> jobDetails = executions.stream()
@@ -56,14 +54,11 @@ public class BatchJobController {
     }
 
     @GetMapping("/jobs/date-range")
-    @Operation(summary = "Get job executions for date range",
-               description = "Returns batch job executions within the specified date range")
+    @Operation(summary = "Get job executions for date range", description = "Returns batch job executions within the specified date range")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getJobsByDateRange(
-            @Parameter(description = "Start date (inclusive)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "Start date (inclusive)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
 
-            @Parameter(description = "End date (inclusive)")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @Parameter(description = "End date (inclusive)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         List<JobExecution> executions = comicDownloadJobScheduler.getJobExecutionsForDateRange(startDate, endDate);
         List<Map<String, Object>> jobDetails = executions.stream()
@@ -74,11 +69,9 @@ public class BatchJobController {
     }
 
     @GetMapping("/jobs/{executionId}")
-    @Operation(summary = "Get specific job execution details",
-               description = "Returns detailed information about a specific job execution")
+    @Operation(summary = "Get specific job execution details", description = "Returns detailed information about a specific job execution")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getJobExecution(
-            @Parameter(description = "Job execution ID")
-            @PathVariable Long executionId) {
+            @Parameter(description = "Job execution ID") @PathVariable Long executionId) {
 
         JobExecution execution = comicDownloadJobScheduler.getJobExecution(executionId);
         if (execution == null) {
@@ -90,23 +83,18 @@ public class BatchJobController {
     }
 
     @GetMapping("/summary")
-    @Operation(summary = "Get job execution summary",
-               description = "Returns aggregated statistics for job executions over a specified period")
+    @Operation(summary = "Get job execution summary", description = "Returns aggregated statistics for job executions over a specified period")
     public ResponseEntity<ApiResponse<ComicJobSummary>> getJobSummary(
-            @Parameter(description = "Number of days to include in summary")
-            @RequestParam(defaultValue = "7") int days) {
+            @Parameter(description = "Number of days to include in summary") @RequestParam(defaultValue = "7") int days) {
 
         ComicJobSummary summary = comicDownloadJobScheduler.getJobSummary(days);
         return ResponseBuilder.ok(summary, "Retrieved job execution summary");
     }
 
     @PostMapping("/jobs/trigger")
-    @Operation(summary = "Manually trigger comic download job",
-               description = "Manually starts a comic download job for the specified date")
+    @Operation(summary = "Manually trigger comic download job", description = "Manually starts a comic download job for the specified date")
     public ResponseEntity<ApiResponse<Map<String, Object>>> triggerJob(
-            @Parameter(description = "Target date for comic retrieval")
-            @RequestParam(defaultValue = "today")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate) {
+            @Parameter(description = "Target date for comic retrieval") @RequestParam(defaultValue = "today") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate) {
 
         if (targetDate == null) {
             targetDate = LocalDate.now();
@@ -115,10 +103,9 @@ public class BatchJobController {
         try {
             JobExecution execution = comicDownloadJobScheduler.runComicDownloadJob(targetDate, "MANUAL");
             Map<String, Object> result = Map.of(
-                "executionId", execution.getId(),
-                "status", execution.getStatus().toString(),
-                "targetDate", targetDate.toString()
-            );
+                    "executionId", execution.getId(),
+                    "status", execution.getStatus().toString(),
+                    "targetDate", targetDate.toString());
 
             return ResponseBuilder.ok(result, "Job triggered successfully");
         } catch (Exception e) {
@@ -127,20 +114,19 @@ public class BatchJobController {
     }
 
     @PostMapping("/jobs/backfill/trigger")
-    @Operation(summary = "Manually trigger comic backfill job",
-               description = "Manually starts a comic backfill job to fill in missing comics for the configured target year")
+    @Operation(summary = "Manually trigger comic backfill job", description = "Manually starts a comic backfill job to fill in missing comics for the configured target year")
     public ResponseEntity<ApiResponse<Map<String, Object>>> triggerBackfillJob() {
         try {
             JobExecution execution = comicBackfillJobScheduler.runJob("MANUAL");
             Map<String, Object> result = Map.of(
-                "executionId", execution.getId(),
-                "status", execution.getStatus().toString(),
-                "jobName", "ComicBackfillJob"
-            );
+                    "executionId", execution.getId(),
+                    "status", execution.getStatus().toString(),
+                    "jobName", "ComicBackfillJob");
 
             return ResponseBuilder.ok(result, "Backfill job triggered successfully");
         } catch (Exception e) {
-            return ResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to trigger backfill job: " + e.getMessage());
+            return ResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to trigger backfill job: " + e.getMessage());
         }
     }
 
@@ -153,7 +139,7 @@ public class BatchJobController {
         map.put("jobName", execution.getJobInstance().getJobName());
         map.put("status", execution.getStatus().toString());
         map.put("exitCode", execution.getExitStatus().getExitCode());
-        
+
         if (execution.getStartTime() != null) {
             map.put("startTime", execution.getStartTime());
         }
@@ -162,14 +148,13 @@ public class BatchJobController {
             map.put("endTime", execution.getEndTime());
 
             long durationSeconds = java.time.Duration.between(
-                execution.getStartTime(),
-                execution.getEndTime()
-            ).getSeconds();
+                    execution.getStartTime(),
+                    execution.getEndTime()).getSeconds();
             map.put("durationSeconds", durationSeconds);
         }
-        
-        map.put("jobParameters", execution.getJobParameters().getParameters());
-        
+
+        map.put("jobParameters", execution.getJobParameters().parameters());
+
         return map;
     }
 
@@ -178,13 +163,13 @@ public class BatchJobController {
      */
     private Map<String, Object> convertJobExecutionToDetailedMap(JobExecution execution) {
         Map<String, Object> map = convertJobExecutionToMap(execution);
-        
+
         // Add step execution details
         List<Map<String, Object>> stepDetails = execution.getStepExecutions().stream()
                 .map(this::convertStepExecutionToMap)
                 .toList();
         map.put("stepExecutions", stepDetails);
-        
+
         // Add failure exceptions if any
         if (!execution.getAllFailureExceptions().isEmpty()) {
             List<String> failures = execution.getAllFailureExceptions().stream()
@@ -192,7 +177,7 @@ public class BatchJobController {
                     .toList();
             map.put("failureMessages", failures);
         }
-        
+
         return map;
     }
 
@@ -208,7 +193,7 @@ public class BatchJobController {
         map.put("commitCount", stepExecution.getCommitCount());
         map.put("skipCount", stepExecution.getSkipCount());
         map.put("rollbackCount", stepExecution.getRollbackCount());
-        
+
         if (stepExecution.getStartTime() != null) {
             map.put("startTime", stepExecution.getStartTime());
         }
@@ -216,7 +201,7 @@ public class BatchJobController {
         if (stepExecution.getEndTime() != null) {
             map.put("endTime", stepExecution.getEndTime());
         }
-        
+
         return map;
     }
 }

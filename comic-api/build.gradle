@@ -1,9 +1,10 @@
 plugins {
-	id "com.coditory.integration-test" version '2.2.5'
-	id "io.spring.dependency-management" version '1.1.7'
-	id "org.springframework.boot" version '3.5.7'
 	id "java"
 	id "jacoco"
+
+	id "com.coditory.integration-test" version '2.2.5'
+	id "io.spring.dependency-management" version '1.1.7'
+	id "org.springframework.boot" version '4.0.1'
 	id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
 }
 
@@ -38,14 +39,6 @@ configurations {
 	all*.exclude group: 'commons-logging', module: 'commons-logging'
 }
 
-// Import BOMs for consistent dependency versions
-dependencyManagement {
-    imports {
-        // Use Jackson BOM to ensure consistent Jackson library versions
-        mavenBom "com.fasterxml.jackson:jackson-bom:${rootProject.ext.jacksonBomVersion}"
-    }
-}
-
 repositories {
 	mavenCentral()
 }
@@ -66,10 +59,10 @@ dependencies {
 	implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
 
 	// Spring Boot starters - use managed versions
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-batch'
+	implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 
 	// Caffeine cache
@@ -102,7 +95,8 @@ dependencies {
 
 	// Test dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
 
 }
 
@@ -117,7 +111,7 @@ bootRun {
     // Allow command-line arguments to override system properties
     // This ensures bootRun will respect spring.profiles.active when specified via --args
 	if (project.hasProperty('args')) {
-		args project.args.split(',')
+		args project.args.split(',' as Closure)
 	} else {
 		systemProperty('spring.profiles.active', 'production')
 	}
@@ -143,7 +137,7 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
-                "org/stapledon/config/properties/**", // Configuration classes
+                "org/stapledon/config/properties/**",  // Configuration classes
                 "**/dto/**",                           // Data transport objects
                 "**/*Exception.class"                  // Exception classes
             ])

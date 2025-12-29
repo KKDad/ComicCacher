@@ -3,9 +3,10 @@ package org.stapledon.engine.batch;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.listener.JobExecutionListener;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.step.StepExecution;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
@@ -25,8 +26,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Exports Spring Batch job execution data to JSON file for monitoring and history tracking.
- * Implements JobExecutionListener to automatically export after each job completion.
+ * Exports Spring Batch job execution data to JSON file for monitoring and
+ * history tracking.
+ * Implements JobExecutionListener to automatically export after each job
+ * completion.
  * Uses gsonWithLocalDate bean for proper LocalDateTime serialization.
  */
 @Slf4j
@@ -44,8 +47,8 @@ public class JsonBatchExecutionTracker implements JobExecutionListener {
     @Override
     public void beforeJob(JobExecution jobExecution) {
         log.info("Starting batch job: {} (executionId: {})",
-            jobExecution.getJobInstance().getJobName(),
-            jobExecution.getId());
+                jobExecution.getJobInstance().getJobName(),
+                jobExecution.getId());
     }
 
     @Override
@@ -89,9 +92,8 @@ public class JsonBatchExecutionTracker implements JobExecutionListener {
         // Calculate duration
         if (jobExecution.getStartTime() != null && jobExecution.getEndTime() != null) {
             Duration duration = Duration.between(
-                jobExecution.getStartTime(),
-                jobExecution.getEndTime()
-            );
+                    jobExecution.getStartTime(),
+                    jobExecution.getEndTime());
             summary.durationSeconds = duration.getSeconds();
         }
 
@@ -127,7 +129,8 @@ public class JsonBatchExecutionTracker implements JobExecutionListener {
 
         try {
             String json = Files.readString(filePath);
-            Type type = new TypeToken<Map<String, BatchExecutionSummary>>(){}.getType();
+            Type type = new TypeToken<Map<String, BatchExecutionSummary>>() {
+            }.getType();
             Map<String, BatchExecutionSummary> executions = gson.fromJson(json, type);
             return executions != null ? executions : new HashMap<>();
         } catch (IOException e) {
@@ -163,14 +166,15 @@ public class JsonBatchExecutionTracker implements JobExecutionListener {
      * Log execution summary
      */
     private void logExecutionSummary(String jobName, BatchExecutionSummary summary) {
-        log.info("Batch job completed: {} - Status: {}, Duration: {}s, Items: read={}, processed={}, written={}, skipped={}",
-            jobName,
-            summary.status,
-            summary.durationSeconds,
-            summary.itemsRead,
-            summary.itemsProcessed,
-            summary.itemsWritten,
-            summary.itemsSkipped);
+        log.info(
+                "Batch job completed: {} - Status: {}, Duration: {}s, Items: read={}, processed={}, written={}, skipped={}",
+                jobName,
+                summary.status,
+                summary.durationSeconds,
+                summary.itemsRead,
+                summary.itemsProcessed,
+                summary.itemsWritten,
+                summary.itemsSkipped);
 
         if (summary.errorMessage != null) {
             log.error("Job failed with error: {}", summary.errorMessage);

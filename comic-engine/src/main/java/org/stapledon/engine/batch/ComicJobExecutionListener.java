@@ -1,8 +1,8 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.listener.JobExecutionListener;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.step.StepExecution;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -31,9 +31,8 @@ public class ComicJobExecutionListener implements JobExecutionListener {
     @Override
     public void afterJob(JobExecution jobExecution) {
         Duration duration = Duration.between(
-            jobExecution.getStartTime(),
-            jobExecution.getEndTime()
-        );
+                jobExecution.getStartTime(),
+                jobExecution.getEndTime());
 
         log.info("==========================================");
         log.info("Comic Retrieval Job Completed: {}", jobExecution.getJobInstance().getJobName());
@@ -53,8 +52,8 @@ public class ComicJobExecutionListener implements JobExecutionListener {
         // Log any failures
         if (!jobExecution.getAllFailureExceptions().isEmpty()) {
             log.error("Job had {} failures:", jobExecution.getAllFailureExceptions().size());
-            jobExecution.getAllFailureExceptions().forEach(throwable -> 
-                log.error("Failure: {}", throwable.getMessage(), throwable));
+            jobExecution.getAllFailureExceptions()
+                    .forEach(throwable -> log.error("Failure: {}", throwable.getMessage(), throwable));
         }
 
         log.info("==========================================");
@@ -62,10 +61,8 @@ public class ComicJobExecutionListener implements JobExecutionListener {
 
     private void logStepDetails(StepExecution stepExecution) {
         Duration stepDuration = Duration.between(
-            stepExecution.getStartTime(),
-            stepExecution.getEndTime() != null ? stepExecution.getEndTime() :
-                LocalDateTime.now()
-        );
+                stepExecution.getStartTime(),
+                stepExecution.getEndTime() != null ? stepExecution.getEndTime() : LocalDateTime.now());
 
         log.info("--- Step Details ---");
         log.info("Step Name: {}", stepExecution.getStepName());
@@ -79,17 +76,17 @@ public class ComicJobExecutionListener implements JobExecutionListener {
         log.info("Read Skip Count: {}", stepExecution.getReadSkipCount());
         log.info("Write Skip Count: {}", stepExecution.getWriteSkipCount());
         log.info("Rollback Count: {}", stepExecution.getRollbackCount());
-        
-        if (stepExecution.getReadSkipCount() > 0 || 
-            stepExecution.getProcessSkipCount() > 0 || 
-            stepExecution.getWriteSkipCount() > 0) {
+
+        if (stepExecution.getReadSkipCount() > 0 ||
+                stepExecution.getProcessSkipCount() > 0 ||
+                stepExecution.getWriteSkipCount() > 0) {
             log.warn("Step had skipped items - check for comic retrieval failures");
         }
 
         if (!stepExecution.getFailureExceptions().isEmpty()) {
             log.error("Step had {} failures:", stepExecution.getFailureExceptions().size());
-            stepExecution.getFailureExceptions().forEach(throwable -> 
-                log.error("Step failure: {}", throwable.getMessage(), throwable));
+            stepExecution.getFailureExceptions()
+                    .forEach(throwable -> log.error("Step failure: {}", throwable.getMessage(), throwable));
         }
     }
 }

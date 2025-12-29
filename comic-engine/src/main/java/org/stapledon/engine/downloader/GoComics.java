@@ -6,6 +6,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -36,12 +37,11 @@ public class GoComics extends DailyComic implements AutoCloseable {
     private final CacheProperties cacheProperties;
     private final Random random = new Random();
     private final List<String> userAgents = Arrays.asList(
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/108.0.1462.46 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/108.0"
-    );
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/108.0.1462.46 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/108.0");
 
     private String getRandomUserAgent() {
         return userAgents.get(random.nextInt(userAgents.size()));
@@ -71,6 +71,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
         options.addArguments("--user-agent=" + getRandomUserAgent());
         options.setExperimentalOption("excludeSwitches", Arrays.asList("enable-automation"));
         options.setExperimentalOption("useAutomationExtension", false);
+        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
+        options.addArguments("--remote-allow-origins=*");
 
         driver = new ChromeDriver(options);
     }
@@ -99,12 +101,13 @@ public class GoComics extends DailyComic implements AutoCloseable {
     public GoComics(InspectorService inspector, CacheProperties cacheProperties) {
         super(inspector, "[src]");
         this.cacheProperties = cacheProperties;
-        // WebDriver initialization moved to lazy init - only create when actually needed
+        // WebDriver initialization moved to lazy init - only create when actually
+        // needed
     }
 
-
     /**
-     * Determines when the latest published image it. Some comics are only available on the web a couple days or
+     * Determines when the latest published image it. Some comics are only available
+     * on the web a couple days or
      * a week after they were published in print.
      *
      * @return Most recent date we can get a comic for
@@ -118,7 +121,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
      */
     @Override
     protected String generateSiteURL() {
-        return String.format("https://www.gocomics.com/%s/%s/", this.comicNameParsed, this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))).toLowerCase();
+        return String.format("https://www.gocomics.com/%s/%s/", this.comicNameParsed,
+                this.currentDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))).toLowerCase();
     }
 
     /**
@@ -131,14 +135,19 @@ public class GoComics extends DailyComic implements AutoCloseable {
     }
 
     /**
-     * Updates the metadata for a comic strip by fetching information from the GoComics website.
+     * Updates the metadata for a comic strip by fetching information from the
+     * GoComics website.
      * <p>
-     * The method attempts to extract author information and description from the comic's page,
-     * looking for structured data in JSON-LD format. If this fails, it will use a generic
+     * The method attempts to extract author information and description from the
+     * comic's page,
+     * looking for structured data in JSON-LD format. If this fails, it will use a
+     * generic
      * approach to try to find the information elsewhere on the page.
      * <p>
-     * Due to the website's structure potentially changing over time, this method is designed
-     * to gracefully degrade by providing sensible defaults when information can't be extracted.
+     * Due to the website's structure potentially changing over time, this method is
+     * designed
+     * to gracefully degrade by providing sensible defaults when information can't
+     * be extracted.
      *
      * @param comicItem The ComicItem to update with metadata from the web
      */
@@ -156,7 +165,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
             Thread.sleep(random.nextInt(delayRange) + HUMAN_BEHAVIOR_MIN_DELAY_MS);
 
             // Execute JavaScript to spoof navigator.webdriver
-            ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
+            ((JavascriptExecutor) driver)
+                    .executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
 
             // Get the page source after JavaScript execution
             Document doc = Jsoup.parse(driver.getPageSource());
@@ -167,8 +177,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
 
             // Try multiple extraction methods in order of preference
             boolean authorFound = extractFromJsonLd(doc, comicItem) ||
-                                  extractFromMetaTags(doc, comicItem) ||
-                                  extractFromPageTitle(doc, comicItem);
+                    extractFromMetaTags(doc, comicItem) ||
+                    extractFromPageTitle(doc, comicItem);
 
             // Set avatar available regardless
             comicItem.setAvatarAvailable(true);
@@ -177,10 +187,12 @@ public class GoComics extends DailyComic implements AutoCloseable {
             var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
             if (!avatarCached.exists()) {
                 // Try to find badge image in HTML using different potential CSS classes
-                Element badgeImage = doc.select("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]").first();
+                Element badgeImage = doc.select("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]")
+                        .first();
                 if (badgeImage != null) {
                     // Use the new cacheImage method that accepts a URL string
-                    comicItem.setAvatarAvailable(cacheImage(badgeImage.attr("abs:src"), avatarCached.getAbsolutePath()));
+                    comicItem
+                            .setAvatarAvailable(cacheImage(badgeImage.attr("abs:src"), avatarCached.getAbsolutePath()));
                     log.trace("Avatar has been cached");
                 }
             }
@@ -274,7 +286,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
             Element titleElement = doc.select("title").first();
             if (titleElement != null) {
                 String title = titleElement.text();
-                // Try to extract author name from title if it follows patterns like "Comic Name by Author Name"
+                // Try to extract author name from title if it follows patterns like "Comic Name
+                // by Author Name"
                 if (title.contains(" by ")) {
                     String authorName = title.substring(title.lastIndexOf(" by ") + 4).trim();
                     comicItem.setAuthor("By " + authorName);
@@ -298,7 +311,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
 
         // Format comic name to create a more human-readable default
         String formattedName = comicName.replace("-", " ")
-                                       .replaceAll("([a-z])([A-Z])", "$1 $2");
+                .replaceAll("([a-z])([A-Z])", "$1 $2");
 
         return "Creator of " + formattedName;
     }
@@ -315,7 +328,8 @@ public class GoComics extends DailyComic implements AutoCloseable {
             Thread.sleep(random.nextInt(delayRange) + HUMAN_BEHAVIOR_MIN_DELAY_MS);
 
             // Execute JavaScript to spoof navigator.webdriver
-            ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
+            ((JavascriptExecutor) driver)
+                    .executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
 
             // === DIAGNOSTIC LOGGING: Inspect the actual rendered DOM ===
             JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
@@ -330,37 +344,36 @@ public class GoComics extends DailyComic implements AutoCloseable {
 
             // Get all img tags with their attributes
             Object imgResult = jsExecutor.executeScript(
-                "var imgs = document.querySelectorAll('img');" +
-                "var result = [];" +
-                "for(var i = 0; i < imgs.length; i++) {" +
-                "  result.push({" +
-                "    src: imgs[i].src," +
-                "    className: imgs[i].className," +
-                "    id: imgs[i].id," +
-                "    alt: imgs[i].alt" +
-                "  });" +
-                "}" +
-                "return JSON.stringify(result);"
-            );
+                    "var imgs = document.querySelectorAll('img');" +
+                            "var result = [];" +
+                            "for(var i = 0; i < imgs.length; i++) {" +
+                            "  result.push({" +
+                            "    src: imgs[i].src," +
+                            "    className: imgs[i].className," +
+                            "    id: imgs[i].id," +
+                            "    alt: imgs[i].alt" +
+                            "  });" +
+                            "}" +
+                            "return JSON.stringify(result);");
             log.info("All img tags found: {}", imgResult);
 
             // Get all meta tags
             Object metaResult = jsExecutor.executeScript(
-                "var metas = document.querySelectorAll('meta[property], meta[name]');" +
-                "var result = [];" +
-                "for(var i = 0; i < metas.length; i++) {" +
-                "  result.push({" +
-                "    property: metas[i].getAttribute('property')," +
-                "    name: metas[i].getAttribute('name')," +
-                "    content: metas[i].content" +
-                "  });" +
-                "}" +
-                "return JSON.stringify(result);"
-            );
+                    "var metas = document.querySelectorAll('meta[property], meta[name]');" +
+                            "var result = [];" +
+                            "for(var i = 0; i < metas.length; i++) {" +
+                            "  result.push({" +
+                            "    property: metas[i].getAttribute('property')," +
+                            "    name: metas[i].getAttribute('name')," +
+                            "    content: metas[i].content" +
+                            "  });" +
+                            "}" +
+                            "return JSON.stringify(result);");
             log.info("All meta tags found: {}", metaResult);
 
             // Extract comic image using CSS selector for current GoComics structure
-            List<org.openqa.selenium.WebElement> imgElements = driver.findElements(By.cssSelector("img[class*='Comic_comic__image']"));
+            List<org.openqa.selenium.WebElement> imgElements = driver
+                    .findElements(By.cssSelector("img[class*='Comic_comic__image']"));
 
             if (!imgElements.isEmpty()) {
                 String src = imgElements.get(0).getAttribute("src");
@@ -377,6 +390,5 @@ public class GoComics extends DailyComic implements AutoCloseable {
             return Optional.empty();
         }
     }
-
 
 }

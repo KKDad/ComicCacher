@@ -1,13 +1,13 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
-import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -128,7 +128,8 @@ public class ImageMetadataBackfillJobConfig {
     }
 
     /**
-     * Finds all image files in the cache directory that don't have associated metadata files.
+     * Finds all image files in the cache directory that don't have associated
+     * metadata files.
      */
     private List<File> findImagesWithoutMetadata() throws IOException {
         List<File> imagesWithoutMetadata = new ArrayList<>();
@@ -145,9 +146,9 @@ public class ImageMetadataBackfillJobConfig {
                     .filter(path -> {
                         String fileName = path.getFileName().toString().toLowerCase();
                         return fileName.endsWith(".png") || fileName.endsWith(".jpg") ||
-                               fileName.endsWith(".jpeg") || fileName.endsWith(".gif") ||
-                               fileName.endsWith(".tif") || fileName.endsWith(".tiff") ||
-                               fileName.endsWith(".bmp") || fileName.endsWith(".webp");
+                                fileName.endsWith(".jpeg") || fileName.endsWith(".gif") ||
+                                fileName.endsWith(".tif") || fileName.endsWith(".tiff") ||
+                                fileName.endsWith(".bmp") || fileName.endsWith(".webp");
                     })
                     .filter(path -> {
                         // Exclude avatar files

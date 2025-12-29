@@ -1,12 +1,12 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobInstance;
-import org.springframework.batch.core.JobParametersBuilder;
-import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.job.JobInstance;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.explore.JobExplorer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -30,7 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Scheduler for the ComicDownloadJob batch job.
- * Handles scheduling, startup execution, and manual triggering of comic downloads.
+ * Handles scheduling, startup execution, and manual triggering of comic
+ * downloads.
  * Provides monitoring capabilities and execution history.
  */
 @Slf4j
@@ -65,8 +66,8 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
             CronExpression cron = CronExpression.parse(cronExpression);
             ZonedDateTime nextRun = cron.next(ZonedDateTime.now(ZoneId.of(timezone)));
             log.info("ComicDownloadJob scheduler initialized - Next scheduled run: {} ({})",
-                     nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                     nextRun.getZone());
+                    nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                    nextRun.getZone());
             log.info("ComicDownloadJob will also run immediately on startup if not yet executed today");
         } catch (Exception e) {
             log.warn("Could not parse cron expression '{}': {}", cronExpression, e.getMessage());
@@ -127,7 +128,8 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
     public JobExecution runComicDownloadJob(LocalDate targetDate, String trigger) throws Exception {
         log.info("Launching ComicDownloadJob for date: {} (triggered by: {})", targetDate, trigger);
 
-        // Clear old errors before starting new batch run (keep errors from last 48 hours)
+        // Clear old errors before starting new batch run (keep errors from last 48
+        // hours)
         try {
             errorTrackingService.clearOldErrors(48);
         } catch (Exception e) {
@@ -163,11 +165,12 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
      */
     public List<JobExecution> getJobExecutionsForDateRange(LocalDate startDate, LocalDate endDate) {
         List<JobInstance> jobInstances = jobExplorer.getJobInstances("ComicDownloadJob", 0, 100);
-        
+
         return jobInstances.stream()
                 .flatMap(instance -> jobExplorer.getJobExecutions(instance).stream())
                 .filter(execution -> {
-                    if (execution.getStartTime() == null) return false;
+                    if (execution.getStartTime() == null)
+                        return false;
                     LocalDate executionDate = execution.getStartTime().toLocalDate();
                     return !executionDate.isBefore(startDate) && !executionDate.isAfter(endDate);
                 })
@@ -188,9 +191,10 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
     private boolean hasJobRunToday() {
         LocalDate today = LocalDate.now();
         List<JobExecution> todayExecutions = getJobExecutionsForDateRange(today, today);
-        
+
         return todayExecutions.stream()
-                .anyMatch(execution -> execution.getStatus().isGreaterThan(org.springframework.batch.core.BatchStatus.STARTED));
+                .anyMatch(execution -> execution.getStatus()
+                        .isGreaterThan(org.springframework.batch.core.BatchStatus.STARTED));
     }
 
     /**
@@ -199,24 +203,24 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
     public ComicJobSummary getJobSummary(int dayCount) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(dayCount - 1);
-        
+
         List<JobExecution> executions = getJobExecutionsForDateRange(startDate, endDate);
-        
+
         long successCount = executions.stream()
                 .filter(e -> e.getStatus() == org.springframework.batch.core.BatchStatus.COMPLETED)
                 .count();
-        
+
         long failureCount = executions.stream()
                 .filter(e -> e.getStatus() == org.springframework.batch.core.BatchStatus.FAILED)
                 .count();
-        
+
         double avgDurationMinutes = executions.stream()
                 .filter(e -> e.getStartTime() != null && e.getEndTime() != null)
                 .mapToLong(e -> java.time.Duration.between(
-                    e.getStartTime(), e.getEndTime()).toMinutes())
+                        e.getStartTime(), e.getEndTime()).toMinutes())
                 .average()
                 .orElse(0.0);
-        
+
         return ComicJobSummary.builder()
                 .totalExecutions(executions.size())
                 .successfulExecutions(successCount)
