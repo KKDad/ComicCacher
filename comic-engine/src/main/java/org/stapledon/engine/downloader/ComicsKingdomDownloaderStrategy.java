@@ -33,11 +33,11 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
     /**
      * Creates a new Comics Kingdom downloader strategy.
      *
-     * @param webInspector The web inspector to use for HTTP requests
+     * @param webInspector           The web inspector to use for HTTP requests
      * @param imageValidationService The service for validating downloaded images
      */
     public ComicsKingdomDownloaderStrategy(InspectorService webInspector,
-                                          ValidationService imageValidationService) {
+            ValidationService imageValidationService) {
         super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
     }
 
@@ -55,20 +55,20 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
                 .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
                 .timeout(TIMEOUT)
                 .get();
-        
+
         Elements media = doc.select("meta");
         Elements imageElements = pickImages(media);
-        
+
         if (imageElements == null || imageElements.isEmpty()) {
             log.error("No images were selected from the media");
             log.error("Site: {}", url);
             webInspector.dumpMedia(media);
             return null;
         }
-        
+
         Element imageElement = imageElements.first();
-        URL imageUrl = new URL(imageElement.attr("content"));
-        
+        URL imageUrl = java.net.URI.create(imageElement.attr("content")).toURL();
+
         try (InputStream in = imageUrl.openStream()) {
             return in.readAllBytes();
         }
@@ -79,7 +79,8 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
      */
     @Override
     protected byte[] downloadAvatarImage(int comicId, String comicName, String sourceIdentifier) throws Exception {
-        String url = String.format(ABOUT_SITE_STRING, sourceIdentifier != null ? sourceIdentifier : comicName.replace(' ', '-'));
+        String url = String.format(ABOUT_SITE_STRING,
+                sourceIdentifier != null ? sourceIdentifier : comicName.replace(' ', '-'));
         log.debug("Fetching avatar from {}", url);
 
         Document doc = Jsoup.connect(url)
@@ -88,14 +89,14 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
                 .header("Accept", "text/html,application/xhtml+xml,application/xml")
                 .timeout(TIMEOUT)
                 .get();
-        
+
         Element featureAvatars = doc.select("img[src^=https://api.kingdigital.com/img/features/]").last();
         if (featureAvatars == null) {
             log.error("Unable to determine site avatar for comic {}", comicName);
             return null;
         }
-        
-        URL imageUrl = new URL(featureAvatars.attr("abs:src"));
+
+        URL imageUrl = java.net.URI.create(featureAvatars.attr("abs:src")).toURL();
         try (InputStream in = imageUrl.openStream()) {
             return in.readAllBytes();
         }
@@ -107,11 +108,11 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
     private String generateSiteURL(ComicDownloadRequest request) {
         String sourceIdentifier = request.getSourceIdentifier();
         String dateString = request.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        
+
         // Use either the source identifier or the comic name as the URL path
-        String urlPath = sourceIdentifier != null && !sourceIdentifier.isEmpty() ? 
-                sourceIdentifier : request.getComicName().replace(' ', '-');
-                
+        String urlPath = sourceIdentifier != null && !sourceIdentifier.isEmpty() ? sourceIdentifier
+                : request.getComicName().replace(' ', '-');
+
         return String.format("%s/%s/%s", BASE_URL, urlPath, dateString);
     }
 
@@ -123,22 +124,23 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
      */
     private Elements pickImages(Elements media) {
         var elements = new Elements();
-        
+
         for (Element src : media) {
             if (src.tagName().equals("meta") && src.attr("property").contains("og:image")) {
                 elements.add(src);
             }
         }
-        
+
         webInspector.dumpMedia(elements);
-        
-        // We get back 2-3 images. The 2nd image is the hi-res version - we'll select it.
+
+        // We get back 2-3 images. The 2nd image is the hi-res version - we'll select
+        // it.
         if (elements.size() > 1) {
             var e = new Elements();
             e.add(elements.get(1));
             return e;
         }
-        
+
         return elements;
     }
 }

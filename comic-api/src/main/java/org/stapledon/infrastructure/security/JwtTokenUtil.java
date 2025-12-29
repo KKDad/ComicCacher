@@ -7,7 +7,6 @@ import org.stapledon.api.dto.user.User;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -20,6 +19,9 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.crypto.SecretKey;
+
 
 @Slf4j
 @ToString
@@ -162,11 +164,11 @@ public class JwtTokenUtil {
      * @return Claims
      */
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**
@@ -174,7 +176,7 @@ public class JwtTokenUtil {
      *
      * @return Signing key
      */
-    private Key getSigningKey() {
+    private SecretKey getSigningKey() {
         byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }

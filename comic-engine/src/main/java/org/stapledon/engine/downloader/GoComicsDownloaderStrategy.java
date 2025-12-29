@@ -31,11 +31,11 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
     /**
      * Creates a new GoComics downloader strategy.
      *
-     * @param webInspector The web inspector to use for HTTP requests
+     * @param webInspector           The web inspector to use for HTTP requests
      * @param imageValidationService The service for validating downloaded images
      */
     public GoComicsDownloaderStrategy(InspectorService webInspector,
-                                     ValidationService imageValidationService) {
+            ValidationService imageValidationService) {
         super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
     }
 
@@ -63,7 +63,7 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
         }
 
         log.debug("Found image via Open Graph metadata: {}", imageUrl);
-        URL imgUrl = new URL(imageUrl);
+        URL imgUrl = java.net.URI.create(imageUrl).toURL();
         try (InputStream in = imgUrl.openStream()) {
             return in.readAllBytes();
         }
@@ -98,15 +98,15 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
                 .header("Accept", "text/html,application/xhtml+xml,application/xml")
                 .timeout(TIMEOUT)
                 .get();
-        
+
         // Try to find badge image in HTML using different potential CSS classes
         Element badgeImage = doc.select("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]").first();
         if (badgeImage == null) {
             log.error("No avatar image found for comic {}", comicName);
             return null;
         }
-        
-        URL imageUrl = new URL(badgeImage.attr("abs:src"));
+
+        URL imageUrl = java.net.URI.create(badgeImage.attr("abs:src")).toURL();
         try (InputStream in = imageUrl.openStream()) {
             return in.readAllBytes();
         }
@@ -119,11 +119,10 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
         String comicNameParsed = request.getComicName().replace(" ", "");
         String sourceIdentifier = request.getSourceIdentifier();
         String dateString = request.getDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-        
+
         // Use either the source identifier or the comic name as the URL path
-        String urlPath = sourceIdentifier != null && !sourceIdentifier.isEmpty() ? 
-                sourceIdentifier : comicNameParsed;
-                
+        String urlPath = sourceIdentifier != null && !sourceIdentifier.isEmpty() ? sourceIdentifier : comicNameParsed;
+
         return String.format("https://www.gocomics.com/%s/%s/", urlPath, dateString).toLowerCase();
     }
 
@@ -145,10 +144,10 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
                 if (parent != null) {
                     // Look for the picture element that contains the main strip
                     if (parent.tagName().equals("picture") &&
-                        parent.parent() != null &&
-                        (parent.parent().className().contains("ComicImage") ||
-                         parent.parent().className().contains("comic__image") ||
-                         parent.parent().className().contains("item__image"))) {
+                            parent.parent() != null &&
+                            (parent.parent().className().contains("ComicImage") ||
+                                    parent.parent().className().contains("comic__image") ||
+                                    parent.parent().className().contains("item__image"))) {
                         elements.add(src);
                         break; // Found the main comic, stop looking
                     }
@@ -161,8 +160,8 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
         if (elements.isEmpty()) {
             for (Element src : media) {
                 if (src.tagName().equals("img") &&
-                    (src.attr("abs:src").contains("assets.amuniversal.com") ||
-                     src.attr("abs:src").contains("featureassets.gocomics.com"))) {
+                        (src.attr("abs:src").contains("assets.amuniversal.com") ||
+                                src.attr("abs:src").contains("featureassets.gocomics.com"))) {
                     elements.add(src);
                     break; // Take only the first matching image
                 }
@@ -175,8 +174,8 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
                 if (src.tagName().equals("img")) {
                     // Check for images in containers with specific class names
                     if (src.parent() != null &&
-                        (src.parent().className().contains("comic") ||
-                         src.parent().className().contains("ShowComicViewer"))) {
+                            (src.parent().className().contains("comic") ||
+                                    src.parent().className().contains("ShowComicViewer"))) {
                         elements.add(src);
                     }
                     // Check for images that are large enough to likely be the comic

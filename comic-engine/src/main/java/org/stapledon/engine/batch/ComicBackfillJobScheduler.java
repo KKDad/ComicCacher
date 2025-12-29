@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
+@SuppressWarnings({ "deprecation", "removal" }) // TODO: Migrate to JobOperator in Spring Batch 6
 public class ComicBackfillJobScheduler {
 
     private final JobLauncher jobLauncher;

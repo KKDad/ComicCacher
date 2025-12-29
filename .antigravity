@@ -1,0 +1,22 @@
+# Antigravity Initialization File
+
+This project is ComicCacher, a modular multi-module Spring Boot / Angular application.
+
+## Core Directives
+- Always follow the standards in `ANTIGRAVITY.md`.
+- For `comic-api` specifically, follow `comic-api/ANTIGRAVITY_MEMORY.md`.
+- Ensure all tests pass before completing a task.
+- Be proactive in exploring the codebase but avoid destructive changes without confirmation.
+
+## Key Modules
+- `comic-common`: Foundation DTOs and utilities.
+- `comic-metrics`: Independent metrics collection.
+- `comic-engine`: Core download and storage logic.
+- `comic-api`: REST API orchestration.
+- `comic-web`: Angular frontend.
+
+## Useful Commands
+- Build All: `./gradlew clean build`
+- Run Backend: `./gradlew :comic-api:bootRun`
+- Run Frontend: `cd comic-web && npm start`
+- Tunnel to Prod: `./utils/debug/tunnel-to-prod-api.sh`

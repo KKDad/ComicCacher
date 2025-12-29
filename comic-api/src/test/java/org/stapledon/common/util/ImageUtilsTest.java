@@ -11,13 +11,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 
-
 class ImageUtilsTest {
 
     private static File getResourcesDirectory() {
         File resourcesDirectory = new File("src/test/resources");
         if (!resourcesDirectory.exists()) {
-            resourcesDirectory = new File("ComicAPI/src/test/resources");
+            resourcesDirectory = new File("comic-api/src/test/resources");
         }
         assertThat(resourcesDirectory).exists();
         return resourcesDirectory;

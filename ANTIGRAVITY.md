@@ -1,8 +1,8 @@
-# CLAUDE.md
+# ANTIGRAVITY.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Antigravity (Google Deepmind) when working with code in this repository.
 
-**IMPORTANT: When working with comic-api code, always follow the coding standards in [comic-api/CLAUDE_MEMORY.md](./comic-api/CLAUDE_MEMORY.md). These standards override any conflicting global standards.**
+**IMPORTANT: When working with comic-api code, always follow the coding standards in [comic-api/ANTIGRAVITY_MEMORY.md](./comic-api/ANTIGRAVITY_MEMORY.md). These standards override any conflicting global standards.**
 
 ## Project Overview
 
@@ -131,6 +131,14 @@ Update version in: `comic-api/build.gradle`, `comic-api/Dockerfile`, `comic-web/
 
 ## Debug Utilities
 
-**utils/debug/** - Production debugging tools:
-- `fetch-prod-logs.sh [lines]` - Fetches Docker logs from production container (portainer.stapledon.ca) via SSH
-- `tunnel-to-prod-api.sh` - Creates SSH tunnel mapping localhost:8888 to production API for local debugging
+The `utils/` directory contains tools for production debugging:
+
+- **`utils/fetch-prod-logs.sh [lines]`**:
+  - Fetches Docker logs from the production container (`comics-api` on `portainer.stapledon.ca`) via SSH.
+  - Defaults to 500 lines if no argument is provided.
+  - Captures both stdout and stderr for full visibility into Spring Boot logs.
+
+- **`utils/tunnel-to-prod-api.sh`**:
+  - Establishes an SSH tunnel mapping `localhost:8888` on your machine to the production API.
+  - This allows running the Angular frontend (`comic-web`) locally while connected to the production backend.
+  - Includes a trap to automatically close the tunnel on `SIGINT` (Ctrl+C).

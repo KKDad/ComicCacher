@@ -25,7 +25,7 @@ The primary issue is that the existing integration tests were designed with the 
 Unit tests are fully functional and can be run with:
 
 ```bash
-./gradlew clean :ComicAPI:test
+./gradlew clean :comic-api:test
 ```
 
 ## Future Integration Test Strategy

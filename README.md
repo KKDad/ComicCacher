@@ -7,7 +7,7 @@
 A personal project to read my favorite daily comic strips without ads, pop-ups, or paywalls. Just comics.
 
 Originally written in C# and .NET 3.0 back in 2013, this has been rebuilt from the ground up with modern tech:
-- **Backend**: Spring Boot 3 + Java 21 API that downloads and caches comics daily
+- **Backend**: Spring Boot 4 + Java 21 API that downloads and caches comics daily
 - **Frontend**: Angular 19 + Material Design web app with glassmorphism UI
 - **Hosting**: Runs in my home K8s cluster
 
