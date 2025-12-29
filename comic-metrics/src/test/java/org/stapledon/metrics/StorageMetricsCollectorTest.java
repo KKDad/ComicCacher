@@ -1,14 +1,5 @@
 package org.stapledon.metrics;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -26,6 +17,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class StorageMetricsCollectorTest {
 
@@ -98,9 +95,9 @@ class StorageMetricsCollectorTest {
         ImageCacheStats stats = cacheStatsUpdater.cacheStats();
 
         // Assert
-        assertNotNull(stats);
-        assertEquals(0, stats.getTotalStorageBytes());
-        assertTrue(stats.getPerComicMetrics() == null || stats.getPerComicMetrics().isEmpty());
+        assertThat(stats).isNotNull();
+        assertThat(stats.getTotalStorageBytes()).isEqualTo(0);
+        assertThat(stats.getPerComicMetrics() == null || stats.getPerComicMetrics().isEmpty()).isTrue();
     }
 
     @Test
@@ -109,7 +106,7 @@ class StorageMetricsCollectorTest {
         boolean result = cacheStatsUpdater.updateStats();
 
         // Assert
-        assertTrue(result);
+        assertThat(result).isTrue();
 
         // Capture the saved stats
         ArgumentCaptor<ImageCacheStats> statsCaptor = ArgumentCaptor.forClass(ImageCacheStats.class);
@@ -118,7 +115,7 @@ class StorageMetricsCollectorTest {
         ImageCacheStats capturedStats = statsCaptor.getValue();
 
         // Expected total: 10KB + 15KB + 12KB + 20KB + 25KB = 82KB
-        assertEquals(82 * 1024, capturedStats.getTotalStorageBytes());
+        assertThat(capturedStats.getTotalStorageBytes()).isEqualTo(82 * 1024);
     }
 
     @Test
@@ -127,7 +124,7 @@ class StorageMetricsCollectorTest {
         boolean result = cacheStatsUpdater.updateStats();
 
         // Assert
-        assertTrue(result);
+        assertThat(result).isTrue();
 
         // Capture the saved stats
         ArgumentCaptor<ImageCacheStats> statsCaptor = ArgumentCaptor.forClass(ImageCacheStats.class);
@@ -136,24 +133,24 @@ class StorageMetricsCollectorTest {
         ImageCacheStats capturedStats = statsCaptor.getValue();
         Map<String, ComicStorageMetrics> perComicMetrics = capturedStats.getPerComicMetrics();
 
-        assertNotNull(perComicMetrics);
-        assertEquals(2, perComicMetrics.size());
+        assertThat(perComicMetrics).isNotNull();
+        assertThat(perComicMetrics.size()).isEqualTo(2);
 
         // Check Calvin and Hobbes metrics
         ComicStorageMetrics calvin = perComicMetrics.get("CalvinAndHobbes");
-        assertNotNull(calvin);
-        assertEquals("CalvinAndHobbes", calvin.getComicName());
-        assertEquals(3, calvin.getImageCount());
-        assertEquals((10 + 15 + 12) * 1024, calvin.getStorageBytes());
-        assertEquals((10 + 15 + 12) * 1024 / 3.0, calvin.getAverageImageSize(), 0.1);
+        assertThat(calvin).isNotNull();
+        assertThat(calvin.getComicName()).isEqualTo("CalvinAndHobbes");
+        assertThat(calvin.getImageCount()).isEqualTo(3);
+        assertThat(calvin.getStorageBytes()).isEqualTo((10 + 15 + 12) * 1024);
+        assertThat(calvin.getAverageImageSize()).isCloseTo((10 + 15 + 12) * 1024 / 3.0, within(0.1));
 
         // Check Garfield metrics
         ComicStorageMetrics garfield = perComicMetrics.get("Garfield");
-        assertNotNull(garfield);
-        assertEquals("Garfield", garfield.getComicName());
-        assertEquals(2, garfield.getImageCount());
-        assertEquals((20 + 25) * 1024, garfield.getStorageBytes());
-        assertEquals((20 + 25) * 1024 / 2.0, garfield.getAverageImageSize(), 0.1);
+        assertThat(garfield).isNotNull();
+        assertThat(garfield.getComicName()).isEqualTo("Garfield");
+        assertThat(garfield.getImageCount()).isEqualTo(2);
+        assertThat(garfield.getStorageBytes()).isEqualTo((20 + 25) * 1024);
+        assertThat(garfield.getAverageImageSize()).isCloseTo((20 + 25) * 1024 / 2.0, within(0.1));
     }
 
     @Test
@@ -162,7 +159,7 @@ class StorageMetricsCollectorTest {
         boolean result = cacheStatsUpdater.updateStats();
 
         // Assert
-        assertTrue(result);
+        assertThat(result).isTrue();
 
         // Capture the saved stats
         ArgumentCaptor<ImageCacheStats> statsCaptor = ArgumentCaptor.forClass(ImageCacheStats.class);
@@ -174,17 +171,17 @@ class StorageMetricsCollectorTest {
         // Check Calvin and Hobbes yearly breakdown
         ComicStorageMetrics calvin = perComicMetrics.get("CalvinAndHobbes");
         Map<String, Long> calvinYearStorage = calvin.getStorageByYear();
-        assertNotNull(calvinYearStorage);
-        assertEquals(2, calvinYearStorage.size());
-        assertEquals((10 + 15) * 1024, calvinYearStorage.get("2010"));
-        assertEquals(12 * 1024, calvinYearStorage.get("2011"));
+        assertThat(calvinYearStorage).isNotNull();
+        assertThat(calvinYearStorage.size()).isEqualTo(2);
+        assertThat(calvinYearStorage.get("2010")).isEqualTo((10 + 15) * 1024);
+        assertThat(calvinYearStorage.get("2011")).isEqualTo(12 * 1024);
 
         // Check Garfield yearly breakdown
         ComicStorageMetrics garfield = perComicMetrics.get("Garfield");
         Map<String, Long> garfieldYearStorage = garfield.getStorageByYear();
-        assertNotNull(garfieldYearStorage);
-        assertEquals(1, garfieldYearStorage.size());
-        assertEquals((20 + 25) * 1024, garfieldYearStorage.get("2020"));
+        assertThat(garfieldYearStorage).isNotNull();
+        assertThat(garfieldYearStorage.size()).isEqualTo(1);
+        assertThat(garfieldYearStorage.get("2020")).isEqualTo((20 + 25) * 1024);
     }
 
     private void deleteDirectory(File dir) {

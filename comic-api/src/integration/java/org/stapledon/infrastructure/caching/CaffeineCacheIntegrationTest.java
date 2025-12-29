@@ -1,12 +1,5 @@
 package org.stapledon.infrastructure.caching;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-
-import java.time.LocalDate;
-import java.util.Optional;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +11,11 @@ import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.infrastructure.config.CaffeineCacheConfiguration;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration test for Caffeine cache functionality.
@@ -35,27 +33,27 @@ class CaffeineCacheIntegrationTest {
 
     @Test
     void testCacheManagerIsConfigured() {
-        assertNotNull(cacheManager, "CacheManager should be autowired");
+        assertThat(cacheManager).as("CacheManager should be autowired").isNotNull();
 
         // Verify all expected caches exist
         Cache navigationCache = cacheManager.getCache(CaffeineCacheConfiguration.COMIC_NAVIGATION_CACHE);
-        assertNotNull(navigationCache, "Navigation cache should exist");
+        assertThat(navigationCache).as("Navigation cache should exist").isNotNull();
 
         Cache boundaryCache = cacheManager.getCache(CaffeineCacheConfiguration.BOUNDARY_DATES_CACHE);
-        assertNotNull(boundaryCache, "Boundary dates cache should exist");
+        assertThat(boundaryCache).as("Boundary dates cache should exist").isNotNull();
 
         Cache navigationDatesCache = cacheManager.getCache(CaffeineCacheConfiguration.NAVIGATION_DATES_CACHE);
-        assertNotNull(navigationDatesCache, "Navigation dates cache should exist");
+        assertThat(navigationDatesCache).as("Navigation dates cache should exist").isNotNull();
 
         Cache metadataCache = cacheManager.getCache(CaffeineCacheConfiguration.COMIC_METADATA_CACHE);
-        assertNotNull(metadataCache, "Metadata cache should exist");
+        assertThat(metadataCache).as("Metadata cache should exist").isNotNull();
     }
 
     @Test
     void testComicMetadataCaching() {
         // Clear the cache first
         Cache metadataCache = cacheManager.getCache(CaffeineCacheConfiguration.COMIC_METADATA_CACHE);
-        assertNotNull(metadataCache);
+        assertThat(metadataCache).isNotNull();
         metadataCache.clear();
 
         // First call - should cache the result
@@ -65,11 +63,11 @@ class CaffeineCacheIntegrationTest {
         var allComics2 = comicManagementFacade.getAllComics();
 
         // Verify same instance is returned (proving it's cached)
-        assertSame(allComics1, allComics2, "Second call should return cached instance");
+        assertThat(allComics2).as("Second call should return cached instance").isSameAs(allComics1);
 
         // Verify cache contains the entry
         var cachedValue = metadataCache.get("allComics");
-        assertNotNull(cachedValue, "Cache should contain 'allComics' entry");
+        assertThat(cachedValue).as("Cache should contain 'allComics' entry").isNotNull();
     }
 
     @Test
@@ -86,7 +84,7 @@ class CaffeineCacheIntegrationTest {
 
         // Clear the cache first
         Cache metadataCache = cacheManager.getCache(CaffeineCacheConfiguration.COMIC_METADATA_CACHE);
-        assertNotNull(metadataCache);
+        assertThat(metadataCache).isNotNull();
         metadataCache.clear();
 
         // First call - should cache the result
@@ -97,7 +95,7 @@ class CaffeineCacheIntegrationTest {
 
         // Verify same instance is returned (proving cache is working)
         if (comic1.isPresent() && comic2.isPresent()) {
-            assertSame(comic1.get(), comic2.get(), "Second call should return cached instance");
+            assertThat(comic2.get()).as("Second call should return cached instance").isSameAs(comic1.get());
         }
     }
 
@@ -116,7 +114,7 @@ class CaffeineCacheIntegrationTest {
 
         // Clear the navigation cache first
         Cache navigationCache = cacheManager.getCache(CaffeineCacheConfiguration.COMIC_NAVIGATION_CACHE);
-        assertNotNull(navigationCache);
+        assertThat(navigationCache).isNotNull();
         navigationCache.clear();
 
         // First call - should cache the result
@@ -126,10 +124,10 @@ class CaffeineCacheIntegrationTest {
         ComicNavigationResult result2 = comicManagementFacade.getComicStrip(comicId, Direction.FORWARD, testDate);
 
         // Verify same instance is returned (proving it's cached)
-        assertSame(result1, result2, "Second call should return cached instance");
+        assertThat(result2).as("Second call should return cached instance").isSameAs(result1);
 
         // Verify the reason is consistent
-        assertEquals(result1.getReason(), result2.getReason(), "Cached result should have same reason");
+        assertThat(result2.getReason()).as("Cached result should have same reason").isEqualTo(result1.getReason());
     }
 
     @Test

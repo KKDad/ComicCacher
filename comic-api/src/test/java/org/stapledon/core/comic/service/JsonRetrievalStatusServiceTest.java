@@ -1,14 +1,5 @@
 package org.stapledon.core.comic.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +15,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JsonRetrievalStatusServiceTest {
@@ -75,10 +71,10 @@ class JsonRetrievalStatusServiceTest {
         
         // Act
         Optional<ComicRetrievalRecord> result = service.getRetrievalRecord(recordId);
-        
+
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(successRecord, result.get());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(successRecord);
         verify(repository).getRecord(recordId);
     }
     
@@ -99,17 +95,17 @@ class JsonRetrievalStatusServiceTest {
                 LocalDate.now().minusDays(1), 
                 LocalDate.now()
         );
-        
+
         // Assert
-        assertNotNull(summary);
-        assertEquals(2, summary.get("totalCount"));
-        assertEquals(0.5, summary.get("successRate"));
+        assertThat(summary).isNotNull();
+        assertThat(summary.get("totalCount")).isEqualTo(2);
+        assertThat(summary.get("successRate")).isEqualTo(0.5);
         
         @SuppressWarnings("unchecked")
         Map<ComicRetrievalStatus, Long> countsByStatus = 
                 (Map<ComicRetrievalStatus, Long>) summary.get("countsByStatus");
-                
-        assertEquals(1L, countsByStatus.get(ComicRetrievalStatus.SUCCESS));
-        assertEquals(1L, countsByStatus.get(ComicRetrievalStatus.NETWORK_ERROR));
+
+        assertThat(countsByStatus.get(ComicRetrievalStatus.SUCCESS)).isEqualTo(1L);
+        assertThat(countsByStatus.get(ComicRetrievalStatus.NETWORK_ERROR)).isEqualTo(1L);
     }
 }

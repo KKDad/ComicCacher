@@ -1,104 +1,136 @@
-# Project Overview
+# CLAUDE.md
 
-This project, "The Comic Processor," is a webcomic scroller that consists of a Java-based backend (comic-api) and an Angular-based frontend (comic-web). The backend is responsible for caching comics from sources like GoComics and ComicsKingdom, while the frontend provides a user interface for browsing the cached comics.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Backend (comic-api)
+**IMPORTANT: When working with comic-api code, always follow the coding standards in [comic-api/CLAUDE_MEMORY.md](./comic-api/CLAUDE_MEMORY.md). These standards override any conflicting global standards.**
 
-The backend is a Spring Boot application written in Java 21. It exposes a REST API for comic retrieval and management, with OpenAPI 3.0 documentation. The project is built using Gradle and includes support for unit and integration tests with JaCoCo for code coverage.
+## Project Overview
 
-### Key Technologies:
-- **Framework:** Spring Boot 3.4.5
-- **Language:** Java 21
-- **Build Tool:** Gradle 8.5
-- **API Documentation:** OpenAPI 3.0 with springdoc-openapi-starter-webmvc-ui
-- **Testing:** JUnit 5, Spring Test, JaCoCo
+ComicCacher is a web comic downloader and viewer application with a **modular multi-module architecture**:
 
-## Frontend (comic-web)
+### Backend Modules (Java/Spring Boot)
 
-The frontend is an Angular application that uses Angular Material for its UI components. It provides features like infinite virtual scrolling and automatic comic refresh. The project is built using the Angular CLI and includes support for testing with Karma and Jasmine.
+1. **comic-common** - Shared foundation module:
+    - Common DTOs (ComicItem, ComicConfig, ComicRetrievalRecord, etc.)
+    - Service interfaces (ComicConfigurationService, RetrievalStatusService)
+    - Configuration classes (IComicsBootstrap, CacheProperties)
+    - Utilities (Bootstrap, Direction, ImageUtils)
+    - Infrastructure (TaskExecutionTracker, WebInspector)
 
-### Key Technologies:
-- **Framework:** Angular with Material Design
-- **Build Tool:** Angular CLI
-- **Testing:** Karma, Jasmine
+2. **comic-metrics** - Independent metrics collection module:
+    - Metric collectors (CacheMetricsCollector, StorageMetricsCollector)
+    - Stats writers (JsonStatsWriter, ConsoleStatsWriter)
+    - Pluggable metrics outputs
+    - **Depends only on:** comic-common
 
-# Building and Running
+3. **comic-engine** - Independent download/storage engine:
+    - Comic downloaders (GoComics, ComicsKingdom, ComicCacher)
+    - Management facade (ComicManagementFacade)
+    - Storage facade (ComicStorageFacade)
+    - Spring Batch jobs for scheduled downloads
+    - **Depends only on:** comic-common
 
-## Backend (comic-api)
+4. **comic-api** - REST API orchestration layer:
+    - REST controllers (ComicController, UpdateController, BatchJobController)
+    - Services (ComicsService, UpdateService)
+    - Repositories (ComicRepository, UserRepository, PreferenceRepository)
+    - Infrastructure (Scheduling, Security, Configuration)
+    - **Depends on:** comic-common, comic-metrics, comic-engine
 
-### Local Development
-```bash
-# Build the project
-./gradlew :comic-api:build
+### Frontend
 
-# Run tests
-./gradlew :comic-api:test
+5. **comic-web** - Angular frontend that:
+    - Displays cached comics in a user-friendly interface
+    - Uses Angular Material for UI components
+    - Supports infinite virtual scrolling for comic viewing
 
-# Run integration tests
-./gradlew :comic-api:integrationTest
+### Architecture Diagram
 
-# Generate test coverage reports
-./gradlew :comic-api:jacocoTestReport         # Unit test coverage only
-./gradlew :comic-api:jacocoIntegrationTestReport   # Integration test coverage only
-./gradlew :comic-api:jacocoAllReport          # Combined coverage report
-
-# Generate API documentation
-./gradlew :comic-api:updateApiDocs
-
-# Run the application locally
-./gradlew :comic-api:bootRun
+```
+comic-common (shared DTOs, config, services)
+     ↑
+     ├─── comic-metrics (independent)
+     ├─── comic-engine (independent)
+     │         ↑
+     └─── comic-api (orchestrates)
+              ↓
+         comic-web (Angular)
 ```
 
-### Docker Deployment
-```bash
-# Build the project
-./gradlew :comic-api:build
+### Key Dependency Versions
 
-# Build the Docker image
-./comic-api/build-docker.sh <version>
-```
+**Backend (Java/Spring Boot)**:
+- Java: 21
+- Spring Boot: 3.5.7
+- Lombok: 1.18.42
+- Gson: 2.11.0
+- Guava: 33.5.0-jre
+- Jsoup: 1.21.2
+- Caffeine Cache: 3.2.2
+- Jackson BOM: 2.20.0
+- JJWT: 0.11.5
+- Selenium: 4.38.0
+- Springdoc OpenAPI: 2.8.13
+- TwelveMonkeys ImageIO: 3.12.0
 
-## Frontend (comic-web)
+**Frontend (Angular)**:
+- Angular: 19.2.0
+- TypeScript: 5.8.0
+- Node.js: 22 LTS
+- RxJS: 7.8.2
+- Jasmine: 5.7.1
+- Karma: 6.4.4
 
-### Local Development
-```bash
-# Navigate to comic-web directory
-cd comic-web
+## Build Commands
 
-# Install dependencies
-npm install
+**Backend:** `./gradlew clean build`, `./gradlew :comic-api:bootRun`, `./gradlew :comic-api:integrationTest`
+**Frontend:** `cd comic-web && npm install`, `ng serve` (http://localhost:4200), `ng test`, `ng lint`, `npm run buildProd`
 
-# Run development server (available at http://localhost:4200)
-ng serve
+## Module Architecture Details
 
-# Run tests
-ng test
+### comic-common
+Shared foundation: DTOs (ComicItem, ComicConfig, ComicRetrievalRecord, ImageDto), interfaces (ComicConfigurationService, RetrievalStatusService, IComicsBootstrap), utilities (Bootstrap, Direction, ImageUtils). No external module dependencies.
 
-# Build for production
-npm run buildProd
-```
+### comic-metrics
+Independent metrics: CacheMetricsCollector, StorageMetricsCollector, StatsWriter (JSON/Console). Depends on: comic-common only.
 
-### Docker Deployment
-```bash
-# Navigate to comic-web directory
-cd comic-web
+### comic-engine
+Download/storage engine: Downloaders (GoComics, ComicsKingdom implement IDailyComic), facades (ComicManagementFacade, ComicDownloaderFacade, ComicStorageFacade), Spring Batch integration. Depends on: comic-common only. Can be used standalone.
 
-# Build Docker image
-./build-docker.sh
-```
+### comic-api
+REST orchestration: Controllers (ComicController, UpdateController, BatchJobController call engine/common services directly), Services (UpdateService, RetrievalStatusServiceImpl, AuthService, UserService, PreferenceService), Repositories (ComicRepository, UserRepository, PreferenceRepository). 6 Spring Batch schedulers: ComicDownloadJobScheduler (6 AM cron, CommandLineRunner for startup), ComicBackfillJobScheduler, RetrievalRecordPurgeJobScheduler, MetricsUpdateJobScheduler, MetricsArchiveJobScheduler, ImageMetadataJobScheduler (all with @Scheduled, @PostConstruct logging, @ConditionalOnProperty). JWT-based security. ApplicationConfigurationFacade extends ComicConfigurationService. Depends on: comic-common, comic-metrics, comic-engine.
 
-# Development Conventions
+### comic-web
+Angular 19.2, TypeScript 5.8, Material Design. Components: ComicPage, Container, Section, Refresh.
 
-## Backend (comic-api)
+#### comic-web Standards
 
-*   The project follows standard Java and Spring Boot conventions.
-*   Unit and integration tests are located in `src/test/java` and `src/integration/java` respectively.
-*   JaCoCo is used for code coverage, and reports can be generated using the `jacocoTestReport`, `jacocoIntegrationTestReport`, and `jacocoAllReport` Gradle tasks.
-*   API documentation is generated using the `springdoc-openapi-gradle-plugin` and can be updated by running the `updateApiDocs` Gradle task.
+- **TypeScript:** Primitive types, strict mode, no `any`, JSDoc on public methods, `readonly` where applicable
+- **Angular:** Standalone components, signals for state, `inject()` for DI, explicit return types, virtual scrolling (CDK)
+- **Testing:** All tests must pass before merge; use `createStandaloneComponentFixture()`, `jasmine.createSpyObj()`, testing utilities
+- **Subscriptions:** Return `Subscription` from methods, unsubscribe in `ngOnDestroy()`, use `takeUntil()` or `takeUntilDestroyed()`
+- **Commits:** Never add `Co-Authored-By` lines, run tests before committing
 
-## Frontend (comic-web)
+## Testing & Deployment
 
-*   The project follows standard Angular conventions.
-*   Tests are written using Karma and Jasmine and can be run with the `ng test` command.
-*   The `angular.json` file contains the project's build and test configurations.
-*   The `package.json` file lists the project's dependencies and scripts.
+- comic-api: JUnit 5 (unit/integration tests)
+- comic-web: Karma/Jasmine
+- Docker images: `./comic-api/build-docker.sh <TAG>`, `./comic-web/build-docker.sh <TAG>`
+- Kubernetes deployment: `helm upgrade comics comics`
+
+## Version Management
+
+Update version in: `comic-api/build.gradle`, `comic-api/Dockerfile`, `comic-web/package.json`
+
+## Image Validation
+
+**comic-common:** `ImageFormat` enum, `ImageValidationResult` DTO, `ImageValidationService` interface
+**comic-engine:** `ImageValidationServiceImpl` - validates null/empty data, file size (max 10MB), decode ability, dimensions (min 100x50 for strips)
+**Integration:** `AbstractComicDownloaderStrategy` validates downloads; `ComicStorageFacadeImpl` validates before disk write
+**Format Support:** PNG, JPEG, GIF, BMP, WebP, TIFF via TwelveMonkeys ImageIO 3.12.0 (auto-discovered by Java ImageIO SPI)
+
+## Debug Utilities
+
+**utils/debug/** - Production debugging tools:
+- `fetch-prod-logs.sh [lines]` - Fetches Docker logs from production container (portainer.stapledon.ca) via SSH
+- `tunnel-to-prod-api.sh` - Creates SSH tunnel mapping localhost:8888 to production API for local debugging

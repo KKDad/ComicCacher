@@ -1,18 +1,16 @@
 package org.stapledon.api.exception;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.common.dto.ComicItem;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration tests for the GlobalExceptionHandler
@@ -40,7 +38,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
 
         // Verify the status code only - response content may vary
         int status = mvcResult.getResponse().getStatus();
-        assertTrue(status == 404, "Should return 404 Not Found status code");
+        assertThat(status == 404).as("Should return 404 Not Found status code").isTrue();
     }
 
     @Test
@@ -58,8 +56,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
 
         // Verify the response indicates not found
         String responseContent = mvcResult.getResponse().getContentAsString();
-        assertTrue(responseContent.contains("\"found\":false"),
-                "Response should indicate comic strip not found with found=false");
+        assertThat(responseContent.contains("\"found\":false")).as("Response should indicate comic strip not found with found=false").isTrue();
     }
 
     @Test
@@ -73,8 +70,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
 
         // Then - manually check response content
         String content = mvcResult.getResponse().getContentAsString();
-        assertTrue(content.contains("Invalid") || content.contains("Bad Request") || content.contains("invalid") || content.contains("bad request"),
-                "Error response should indicate invalid parameter");
+        assertThat(content.contains("Invalid") || content.contains("Bad Request") || content.contains("invalid") || content.contains("bad request")).as("Error response should indicate invalid parameter").isTrue();
     }
 
     @Test
@@ -97,8 +93,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
 
         // Then - manually check response content
         String content = mvcResult.getResponse().getContentAsString();
-        assertTrue(content.contains("Invalid") || content.contains("Bad Request") || content.contains("invalid") || content.contains("cannot be null"),
-                "Error response should indicate invalid parameter");
+        assertThat(content.contains("Invalid") || content.contains("Bad Request") || content.contains("invalid") || content.contains("cannot be null")).as("Error response should indicate invalid parameter").isTrue();
     }
 
     @Test
@@ -116,8 +111,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
 
         // Then - manually check response content
         String content = mvcResult.getResponse().getContentAsString();
-        assertTrue(content.contains("Invalid") || content.contains("date") || content.contains("Date") || content.contains("format"),
-                "Error response should indicate invalid date format");
+        assertThat(content.contains("Invalid") || content.contains("date") || content.contains("Date") || content.contains("format")).as("Error response should indicate invalid date format").isTrue();
     }
 
     @Test
@@ -133,7 +127,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
         int status = mvcResult.getResponse().getStatus();
         System.out.println("Authentication failure status code: " + status);
         // Since we don't know what security configuration is being used, we'll accept any status code
-        assertTrue(true, "Test passes regardless of status code - we just want to exercise the code path");
+        assertThat(true).as("Test passes regardless of status code - we just want to exercise the code path").isTrue();
     }
 
     @Test
@@ -153,8 +147,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
 
         // Then - manually check response content
         String content = mvcResult.getResponse().getContentAsString();
-        assertTrue(content.contains("Authentication") || content.contains("authentication") || content.contains("login") || content.contains("credentials"),
-                "Error response should indicate authentication failure");
+        assertThat(content.contains("Authentication") || content.contains("authentication") || content.contains("login") || content.contains("credentials")).as("Error response should indicate authentication failure").isTrue();
     }
 
     @Test
@@ -178,7 +171,6 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
         // Then - verify we get a response (we don't care exactly what it is, as it depends on implementation)
         // The controller might correct the ID mismatch or it might reject it
         int status = mvcResult.getResponse().getStatus();
-        assertTrue(status == 200 || status == 400 || status == 422, 
-                "Should return either 200 OK if corrected, or 400/422 if rejected");
+        assertThat(status == 200 || status == 400 || status == 422).as("Should return either 200 OK if corrected, or 400/422 if rejected").isTrue();
     }
 }

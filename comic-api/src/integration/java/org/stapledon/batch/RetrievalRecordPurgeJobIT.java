@@ -1,5 +1,6 @@
 package org.stapledon.batch;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -7,16 +8,13 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.stapledon.common.dto.ComicRetrievalRecord;
-import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.engine.batch.RetrievalRecordPurgeJobScheduler;
 
 import java.time.LocalDate;
 import java.util.List;
 
-import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for RetrievalRecordPurgeJob.
@@ -81,48 +79,44 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
         // Verify before state - all records exist
         List<ComicRetrievalRecord> allRecordsBefore = retrievalStatusService.getRetrievalRecords(
             null, null, null, null, Integer.MAX_VALUE);
-        assertEquals(15, allRecordsBefore.size(), "Should have 15 total records before purge");
+        assertThat(allRecordsBefore.size()).as("Should have 15 total records before purge").isEqualTo(15);
 
         long recentCountBefore = allRecordsBefore.stream()
             .filter(r -> r.getComicDate().isAfter(LocalDate.now().minusDays(30)))
             .count();
-        assertEquals(5, recentCountBefore, "Should have 5 recent records before purge");
+        assertThat(recentCountBefore).as("Should have 5 recent records before purge").isEqualTo(5);
 
         long oldCountBefore = allRecordsBefore.stream()
             .filter(r -> r.getComicDate().isBefore(LocalDate.now().minusDays(30)))
             .count();
-        assertEquals(10, oldCountBefore, "Should have 10 old records before purge");
+        assertThat(oldCountBefore).as("Should have 10 old records before purge").isEqualTo(10);
 
         // Execute the job
         log.info("Executing RetrievalRecordPurgeJob via scheduler");
         JobExecution jobExecution = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
 
         // Assert job completed successfully
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
-            "Job should complete successfully");
-        assertNotNull(jobExecution.getExitStatus(), "Exit status should not be null");
-        assertEquals("COMPLETED", jobExecution.getExitStatus().getExitCode(),
-            "Exit code should be COMPLETED");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
         log.info("Job completed with status: {}", jobExecution.getStatus());
 
         // Verify after state - only recent records remain
         List<ComicRetrievalRecord> allRecordsAfter = retrievalStatusService.getRetrievalRecords(
             null, null, null, null, Integer.MAX_VALUE);
-        assertEquals(5, allRecordsAfter.size(), "Should have 5 records after purge");
+        assertThat(allRecordsAfter.size()).as("Should have 5 records after purge").isEqualTo(5);
 
         // All remaining records should be recent
         for (ComicRetrievalRecord record : allRecordsAfter) {
-            assertTrue(record.getComicDate().isAfter(LocalDate.now().minusDays(31)),
-                "All remaining records should be recent (within 30 days)");
-            assertTrue(record.getComicName().startsWith("RecentComic"),
-                "Remaining records should be recent comics");
+            assertThat(record.getComicDate().isAfter(LocalDate.now().minusDays(31))).as("All remaining records should be recent (within 30 days)").isTrue();
+            assertThat(record.getComicName().startsWith("RecentComic")).as("Remaining records should be recent comics").isTrue();
         }
 
         // Verify no old records remain
         boolean hasOldRecords = allRecordsAfter.stream()
             .anyMatch(r -> r.getComicName().startsWith("OldComic"));
-        assertFalse(hasOldRecords, "No old records should remain after purge");
+        assertThat(hasOldRecords).as("No old records should remain after purge").isFalse();
 
         // Verify JsonBatchExecutionTracker recorded the execution
         assertBatchExecutionTracked("RetrievalRecordPurgeJob");
@@ -153,9 +147,8 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
         JobExecution jobExecution = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
 
         // Job should complete successfully even with no records
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
-            "Job should complete successfully even with no old records");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully even with no old records").isEqualTo(BatchStatus.COMPLETED);
 
         log.info("SUCCESS: Job handled no records gracefully");
     }
@@ -173,28 +166,25 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
         // Run job first time
         JobExecution execution1 = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
-        assertNotNull(execution1, "First execution should not be null");
-        assertEquals(BatchStatus.COMPLETED, execution1.getStatus(),
-            "First execution should complete successfully");
+        assertThat(execution1).as("First execution should not be null").isNotNull();
+        assertThat(execution1.getStatus()).as("First execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Check records after first run
         List<ComicRetrievalRecord> recordsAfterFirst = retrievalStatusService.getRetrievalRecords(
             null, null, null, null, Integer.MAX_VALUE);
         int countAfterFirst = recordsAfterFirst.size();
-        assertEquals(5, countAfterFirst, "Should have 5 records after first purge");
+        assertThat(countAfterFirst).as("Should have 5 records after first purge").isEqualTo(5);
 
         // Run job second time
         JobExecution execution2 = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
-        assertNotNull(execution2, "Second execution should not be null");
-        assertEquals(BatchStatus.COMPLETED, execution2.getStatus(),
-            "Second execution should complete successfully");
+        assertThat(execution2).as("Second execution should not be null").isNotNull();
+        assertThat(execution2.getStatus()).as("Second execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Check records after second run - should be the same
         List<ComicRetrievalRecord> recordsAfterSecond = retrievalStatusService.getRetrievalRecords(
             null, null, null, null, Integer.MAX_VALUE);
         int countAfterSecond = recordsAfterSecond.size();
-        assertEquals(countAfterFirst, countAfterSecond,
-            "Record count should be same after second purge");
+        assertThat(countAfterSecond).as("Record count should be same after second purge").isEqualTo(countAfterFirst);
 
         log.info("SUCCESS: Job is idempotent");
     }

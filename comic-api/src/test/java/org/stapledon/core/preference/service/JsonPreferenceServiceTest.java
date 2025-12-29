@@ -1,10 +1,5 @@
 package org.stapledon.core.preference.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +12,10 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JsonPreferenceServiceTest {
@@ -43,8 +42,8 @@ class JsonPreferenceServiceTest {
         Optional<UserPreference> result = preferenceService.getPreference(username);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(preferenceConfigWriter).getPreference(username);
     }
 
@@ -61,8 +60,8 @@ class JsonPreferenceServiceTest {
         Optional<UserPreference> result = preferenceService.addFavorite(username, comicId);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(preferenceConfigWriter).addFavorite(username, comicId);
     }
 
@@ -79,8 +78,8 @@ class JsonPreferenceServiceTest {
         Optional<UserPreference> result = preferenceService.removeFavorite(username, comicId);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(preferenceConfigWriter).removeFavorite(username, comicId);
     }
 
@@ -98,8 +97,8 @@ class JsonPreferenceServiceTest {
         Optional<UserPreference> result = preferenceService.updateLastRead(username, comicId, date);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(preferenceConfigWriter).updateLastRead(username, comicId, date);
     }
 
@@ -117,8 +116,8 @@ class JsonPreferenceServiceTest {
         Optional<UserPreference> result = preferenceService.updateDisplaySettings(username, settings);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(preferenceConfigWriter).updateDisplaySettings(username, settings);
     }
 

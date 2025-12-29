@@ -1,14 +1,5 @@
 package org.stapledon.api.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
@@ -21,12 +12,13 @@ import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.preference.service.PreferenceService;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 /**
  * Basic unit test for PreferenceController without using Spring context
@@ -55,13 +47,13 @@ class PreferenceControllerBasicTest {
         ResponseEntity<ApiResponse<UserPreference>> response = controller.getPreferences(userDetails);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals(2, response.getBody().getData().getFavoriteComics().size());
-        assertTrue(response.getBody().getData().getFavoriteComics().contains(123));
-        assertTrue(response.getBody().getData().getFavoriteComics().contains(456));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getFavoriteComics().size()).isEqualTo(2);
+        assertThat(response.getBody().getData().getFavoriteComics().contains(123)).isTrue();
+        assertThat(response.getBody().getData().getFavoriteComics().contains(456)).isTrue();
     }
 
     @Test
@@ -76,7 +68,7 @@ class PreferenceControllerBasicTest {
         when(preferenceService.getPreference("testuser")).thenReturn(Optional.empty());
 
         // When/Then
-        assertThrows(AuthenticationException.class, () -> controller.getPreferences(userDetails));
+         assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> controller.getPreferences(userDetails));
     }
 
     @Test
@@ -102,12 +94,12 @@ class PreferenceControllerBasicTest {
         ResponseEntity<ApiResponse<UserPreference>> response = controller.addFavorite(userDetails, comicId);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals(3, response.getBody().getData().getFavoriteComics().size());
-        assertTrue(response.getBody().getData().getFavoriteComics().contains(comicId));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getFavoriteComics().size()).isEqualTo(3);
+        assertThat(response.getBody().getData().getFavoriteComics().contains(comicId)).isTrue();
     }
 
     @Test
@@ -133,12 +125,12 @@ class PreferenceControllerBasicTest {
         ResponseEntity<ApiResponse<UserPreference>> response = controller.removeFavorite(userDetails, comicId);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals(1, response.getBody().getData().getFavoriteComics().size());
-        assertFalse(response.getBody().getData().getFavoriteComics().contains(comicId));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getFavoriteComics().size()).isEqualTo(1);
+        assertThat(response.getBody().getData().getFavoriteComics().contains(comicId)).isFalse();
     }
 
     @Test
@@ -171,12 +163,12 @@ class PreferenceControllerBasicTest {
         ResponseEntity<ApiResponse<UserPreference>> response = controller.updateLastRead(userDetails, comicId, dateData);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals(1, response.getBody().getData().getLastReadDates().size());
-        assertEquals(date, response.getBody().getData().getLastReadDates().get(comicId));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getLastReadDates().size()).isEqualTo(1);
+        assertThat(response.getBody().getData().getLastReadDates().get(comicId)).isEqualTo(date);
     }
 
     @Test
@@ -205,12 +197,12 @@ class PreferenceControllerBasicTest {
         ResponseEntity<ApiResponse<UserPreference>> response = controller.updateDisplaySettings(userDetails, settings);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals(2, response.getBody().getData().getDisplaySettings().size());
-        assertEquals(true, response.getBody().getData().getDisplaySettings().get("darkMode"));
-        assertEquals(16, response.getBody().getData().getDisplaySettings().get("fontSize"));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getDisplaySettings().size()).isEqualTo(2);
+        assertThat(response.getBody().getData().getDisplaySettings().get("darkMode")).isEqualTo(true);
+        assertThat(response.getBody().getData().getDisplaySettings().get("fontSize")).isEqualTo(16);
     }
 }

@@ -1,15 +1,5 @@
 package org.stapledon.api.controller;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,6 +16,12 @@ import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -82,8 +78,8 @@ public class RetrievalStatusMultiDayIT extends AbstractIntegrationTest {
                              ", Comic: " + record.getComicName() + 
                              ", Date: " + record.getComicDate() + 
                              ", Status: " + record.getStatus()));
-        
-        assertEquals(4, allRecords.size(), "Should have 4 records stored");
+
+        assertThat(allRecords.size()).as("Should have 4 records stored").isEqualTo(4);
         
         // Verify records for specific comic
         List<ComicRetrievalRecord> comicRecords = retrievalStatusRepository.getRecords(
@@ -95,8 +91,8 @@ public class RetrievalStatusMultiDayIT extends AbstractIntegrationTest {
                              ", Comic: " + record.getComicName() + 
                              ", Date: " + record.getComicDate() + 
                              ", Status: " + record.getStatus()));
-        
-        assertEquals(4, comicRecords.size(), "Should have 4 records for the comic");
+
+        assertThat(comicRecords.size()).as("Should have 4 records for the comic").isEqualTo(4);
         
         // Test via API - Get all records
         mockMvc.perform(get("/api/v1/retrieval-status")
@@ -159,8 +155,8 @@ public class RetrievalStatusMultiDayIT extends AbstractIntegrationTest {
                              ", Comic: " + record.getComicName() + 
                              ", Date: " + record.getComicDate() + 
                              ", Status: " + record.getStatus()));
-        
-        assertEquals(3, dayRecords.size(), "Should have 3 records for the same day");
+
+        assertThat(dayRecords.size()).as("Should have 3 records for the same day").isEqualTo(3);
         
         // Test via API
         mockMvc.perform(get("/api/v1/retrieval-status")

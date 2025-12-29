@@ -1,12 +1,5 @@
 package org.stapledon.engine.downloader;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +14,9 @@ import org.stapledon.common.service.ValidationService;
 
 import java.time.LocalDate;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AbstractComicDownloaderStrategyTest {
@@ -61,15 +57,15 @@ class AbstractComicDownloaderStrategyTest {
         ComicDownloadResult result = strategy.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertTrue(result.isSuccessful());
-        assertNotNull(result.getImageData());
-        assertEquals(validImageData, result.getImageData());
-        assertNotNull(result.getRequest());
-        assertEquals(request, result.getRequest());
-        assertEquals(ImageFormat.PNG, validationResult.getFormat());
-        assertEquals(800, validationResult.getWidth());
-        assertEquals(600, validationResult.getHeight());
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isTrue();
+        assertThat(result.getImageData()).isNotNull();
+        assertThat(result.getImageData()).isEqualTo(validImageData);
+        assertThat(result.getRequest()).isNotNull();
+        assertThat(result.getRequest()).isEqualTo(request);
+        assertThat(validationResult.getFormat()).isEqualTo(ImageFormat.PNG);
+        assertThat(validationResult.getWidth()).isEqualTo(800);
+        assertThat(validationResult.getHeight()).isEqualTo(600);
     }
 
     @Test
@@ -89,12 +85,12 @@ class AbstractComicDownloaderStrategyTest {
         ComicDownloadResult result = strategy.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccessful());
-        assertNotNull(result.getErrorMessage());
-        assertTrue(result.getErrorMessage().contains("empty"));
-        assertNotNull(result.getRequest());
-        assertEquals(request, result.getRequest());
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage()).isNotNull();
+        assertThat(result.getErrorMessage().contains("empty")).isTrue();
+        assertThat(result.getRequest()).isNotNull();
+        assertThat(result.getRequest()).isEqualTo(request);
     }
 
     @Test
@@ -114,12 +110,12 @@ class AbstractComicDownloaderStrategyTest {
         ComicDownloadResult result = strategy.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccessful());
-        assertNotNull(result.getErrorMessage());
-        assertTrue(result.getErrorMessage().contains("empty"));
-        assertNotNull(result.getRequest());
-        assertEquals(request, result.getRequest());
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage()).isNotNull();
+        assertThat(result.getErrorMessage().contains("empty")).isTrue();
+        assertThat(result.getRequest()).isNotNull();
+        assertThat(result.getRequest()).isEqualTo(request);
     }
 
     @Test
@@ -143,10 +139,10 @@ class AbstractComicDownloaderStrategyTest {
         ComicDownloadResult result = strategy.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccessful());
-        assertTrue(result.getErrorMessage().contains("Invalid image"));
-        assertTrue(result.getErrorMessage().contains("corrupted"));
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage().contains("Invalid image")).isTrue();
+        assertThat(result.getErrorMessage().contains("corrupted")).isTrue();
     }
 
     @Test
@@ -166,12 +162,12 @@ class AbstractComicDownloaderStrategyTest {
         ComicDownloadResult result = strategy.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccessful());
-        assertNotNull(result.getErrorMessage());
-        assertTrue(result.getErrorMessage().contains("Error downloading comic"));
-        assertNotNull(result.getRequest());
-        assertEquals(request, result.getRequest());
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage()).isNotNull();
+        assertThat(result.getErrorMessage().contains("Error downloading comic")).isTrue();
+        assertThat(result.getRequest()).isNotNull();
+        assertThat(result.getRequest()).isEqualTo(request);
     }
 
     @Test
@@ -191,8 +187,8 @@ class AbstractComicDownloaderStrategyTest {
         Optional<byte[]> result = strategy.downloadAvatar(comicId, comicName, sourceIdentifier);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(validImageData, result.get());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(validImageData);
     }
 
     @Test
@@ -208,7 +204,7 @@ class AbstractComicDownloaderStrategyTest {
         Optional<byte[]> result = strategy.downloadAvatar(comicId, comicName, sourceIdentifier);
 
         // Assert
-        assertFalse(result.isPresent());
+        assertThat(result.isPresent()).isFalse();
     }
 
     @Test
@@ -224,7 +220,7 @@ class AbstractComicDownloaderStrategyTest {
         Optional<byte[]> result = strategy.downloadAvatar(comicId, comicName, sourceIdentifier);
 
         // Assert
-        assertFalse(result.isPresent());
+        assertThat(result.isPresent()).isFalse();
     }
 
     @Test
@@ -244,7 +240,7 @@ class AbstractComicDownloaderStrategyTest {
         Optional<byte[]> result = strategy.downloadAvatar(comicId, comicName, sourceIdentifier);
 
         // Assert
-        assertFalse(result.isPresent());
+        assertThat(result.isPresent()).isFalse();
     }
 
     @Test
@@ -260,13 +256,13 @@ class AbstractComicDownloaderStrategyTest {
         Optional<byte[]> result = strategy.downloadAvatar(comicId, comicName, sourceIdentifier);
 
         // Assert
-        assertFalse(result.isPresent());
+        assertThat(result.isPresent()).isFalse();
     }
 
     @Test
     void shouldReturnCorrectSource() {
         // Assert
-        assertEquals("test-source", strategy.getSource());
+        assertThat(strategy.getSource()).isEqualTo("test-source");
     }
 
     /**

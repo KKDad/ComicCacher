@@ -1,10 +1,5 @@
 package org.stapledon.metrics;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -16,6 +11,10 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for the access tracking features of CacheUtils
@@ -85,13 +84,13 @@ class AccessMetricsCollectorAccessTrackingTest {
         Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
 
         // Verify access was tracked
-        assertTrue(accessCounts.containsKey("DilbertTest"));
-        assertEquals(1, accessCounts.get("DilbertTest").intValue());
+        assertThat(accessCounts.containsKey("DilbertTest")).isTrue();
+        assertThat(accessCounts.get("DilbertTest").intValue()).isEqualTo(1);
 
         // Verify last access time was recorded
         Map<String, String> lastAccessTimes = accessMetricsCollector.getLastAccessTimes();
-        assertTrue(lastAccessTimes.containsKey("DilbertTest"));
-        assertNotNull(lastAccessTimes.get("DilbertTest"));
+        assertThat(lastAccessTimes.containsKey("DilbertTest")).isTrue();
+        assertThat(lastAccessTimes.get("DilbertTest")).isNotNull();
     }
 
     @Test
@@ -101,10 +100,10 @@ class AccessMetricsCollectorAccessTrackingTest {
 
         // Assert
         Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
-        
+
         // Verify access was tracked
-        assertTrue(accessCounts.containsKey("CalvinTest"));
-        assertEquals(1, accessCounts.get("CalvinTest").intValue());
+        assertThat(accessCounts.containsKey("CalvinTest")).isTrue();
+        assertThat(accessCounts.get("CalvinTest").intValue()).isEqualTo(1);
     }
     
     @Test
@@ -116,9 +115,9 @@ class AccessMetricsCollectorAccessTrackingTest {
 
         // Assert
         Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
-        
+
         // Verify access count is correct
-        assertEquals(3, accessCounts.get("DilbertTest").intValue());
+        assertThat(accessCounts.get("DilbertTest").intValue()).isEqualTo(3);
     }
     
     @Test
@@ -131,14 +130,14 @@ class AccessMetricsCollectorAccessTrackingTest {
         Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
 
         // Verify access was tracked
-        assertTrue(accessCounts.containsKey("DilbertTest"));
-        assertEquals(1, accessCounts.get("DilbertTest").intValue());
+        assertThat(accessCounts.containsKey("DilbertTest")).isTrue();
+        assertThat(accessCounts.get("DilbertTest").intValue()).isEqualTo(1);
 
         // Verify hit ratio tracking
         Map<String, Double> hitRatios = accessMetricsCollector.getHitRatios();
-        assertTrue(hitRatios.containsKey("DilbertTest"));
+        assertThat(hitRatios.containsKey("DilbertTest")).isTrue();
         // Access is a hit
-        assertEquals(1.0, hitRatios.get("DilbertTest"), 0.001);
+        assertThat(hitRatios.get("DilbertTest")).isCloseTo(1.0, within(0.001));
     }
 
     @Test
@@ -151,8 +150,8 @@ class AccessMetricsCollectorAccessTrackingTest {
         Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
 
         // Verify access was tracked
-        assertTrue(accessCounts.containsKey("CalvinTest"));
-        assertEquals(1, accessCounts.get("CalvinTest").intValue());
+        assertThat(accessCounts.containsKey("CalvinTest")).isTrue();
+        assertThat(accessCounts.get("CalvinTest").intValue()).isEqualTo(1);
     }
 
     @Test
@@ -167,8 +166,8 @@ class AccessMetricsCollectorAccessTrackingTest {
         Map<String, Double> hitRatios = accessMetricsCollector.getHitRatios();
 
         // Verify it was tracked correctly as a miss (0.0 ratio)
-        assertTrue(hitRatios.containsKey("DilbertTest"));
-        assertEquals(0.0, hitRatios.get("DilbertTest"), 0.001);
+        assertThat(hitRatios.containsKey("DilbertTest")).isTrue();
+        assertThat(hitRatios.get("DilbertTest")).isCloseTo(0.0, within(0.001));
     }
     
     @Test
@@ -181,10 +180,10 @@ class AccessMetricsCollectorAccessTrackingTest {
 
         // Assert
         Map<String, Integer> accessCounts = accessMetricsCollector.getAccessCounts();
-        
+
         // Verify each comic has separate counters
-        assertEquals(2, accessCounts.get("DilbertTest").intValue());
-        assertEquals(1, accessCounts.get("CalvinTest").intValue());
+        assertThat(accessCounts.get("DilbertTest").intValue()).isEqualTo(2);
+        assertThat(accessCounts.get("CalvinTest").intValue()).isEqualTo(1);
     }
     
     @Test
@@ -195,9 +194,9 @@ class AccessMetricsCollectorAccessTrackingTest {
 
         // Assert
         Map<String, Double> avgTimes = accessMetricsCollector.getAverageAccessTimes();
-        
+
         // Verify average time is tracked
-        assertTrue(avgTimes.containsKey("DilbertTest"));
-        assertTrue(avgTimes.get("DilbertTest") >= 0.0);
+        assertThat(avgTimes.containsKey("DilbertTest")).isTrue();
+        assertThat(avgTimes.get("DilbertTest") >= 0.0).isTrue();
     }
 }

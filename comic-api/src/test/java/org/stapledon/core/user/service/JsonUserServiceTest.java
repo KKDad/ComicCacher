@@ -1,10 +1,5 @@
 package org.stapledon.core.user.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +13,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JsonUserServiceTest {
@@ -49,8 +48,8 @@ class JsonUserServiceTest {
         Optional<User> result = userService.registerUser(registrationDto);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals("testuser", result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo("testuser");
         verify(userConfigWriter).registerUser(registrationDto);
     }
 
@@ -67,8 +66,8 @@ class JsonUserServiceTest {
         Optional<User> result = userService.authenticateUser(username, password);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(userConfigWriter).authenticateUser(username, password);
     }
 
@@ -84,8 +83,8 @@ class JsonUserServiceTest {
         Optional<User> result = userService.getUser(username);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(userConfigWriter).getUser(username);
     }
 
@@ -100,8 +99,8 @@ class JsonUserServiceTest {
         Optional<User> result = userService.updateUser(user);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals("testuser", result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo("testuser");
         verify(userConfigWriter).updateUser(user);
     }
 
@@ -118,8 +117,8 @@ class JsonUserServiceTest {
         Optional<User> result = userService.updatePassword(username, newPassword);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
         verify(userConfigWriter).updatePassword(username, newPassword);
     }
 

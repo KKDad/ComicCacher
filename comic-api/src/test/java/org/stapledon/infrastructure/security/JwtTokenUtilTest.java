@@ -1,12 +1,5 @@
 package org.stapledon.infrastructure.security;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +11,10 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class JwtTokenUtilTest {
 
@@ -45,13 +42,13 @@ class JwtTokenUtilTest {
         String token = jwtTokenUtil.generateToken(user);
 
         // Then
-        assertNotNull(token);
-        assertEquals("testuser", jwtTokenUtil.extractUsername(token));
+        assertThat(token).isNotNull();
+        assertThat(jwtTokenUtil.extractUsername(token)).isEqualTo("testuser");
         
         List<String> roles = jwtTokenUtil.extractRoles(token);
-        assertNotNull(roles);
-        assertEquals(1, roles.size());
-        assertEquals("USER", roles.get(0));
+        assertThat(roles).isNotNull();
+        assertThat(roles.size()).isEqualTo(1);
+        assertThat(roles.get(0)).isEqualTo("USER");
     }
 
     @Test
@@ -63,8 +60,8 @@ class JwtTokenUtilTest {
         String refreshToken = jwtTokenUtil.generateRefreshToken(user);
 
         // Then
-        assertNotNull(refreshToken);
-        assertEquals("testuser", jwtTokenUtil.extractUsername(refreshToken));
+        assertThat(refreshToken).isNotNull();
+        assertThat(jwtTokenUtil.extractUsername(refreshToken)).isEqualTo("testuser");
     }
 
     @Test
@@ -76,11 +73,11 @@ class JwtTokenUtilTest {
         JwtTokenDto tokenDto = jwtTokenUtil.createToken(user);
 
         // Then
-        assertNotNull(tokenDto);
-        assertEquals("testuser", tokenDto.getUsername());
-        assertNotNull(tokenDto.getToken());
-        assertNotNull(tokenDto.getIssuedAt());
-        assertNotNull(tokenDto.getExpiresAt());
+        assertThat(tokenDto).isNotNull();
+        assertThat(tokenDto.getUsername()).isEqualTo("testuser");
+        assertThat(tokenDto.getToken()).isNotNull();
+        assertThat(tokenDto.getIssuedAt()).isNotNull();
+        assertThat(tokenDto.getExpiresAt()).isNotNull();
     }
 
     @Test
@@ -96,7 +93,7 @@ class JwtTokenUtilTest {
         boolean isValid = jwtTokenUtil.validateToken(token, userDetails);
 
         // Then
-        assertTrue(isValid);
+        assertThat(isValid).isTrue();
     }
 
     @Test
@@ -112,7 +109,7 @@ class JwtTokenUtilTest {
         boolean isValid = jwtTokenUtil.validateToken(token, userDetails);
 
         // Then
-        assertFalse(isValid);
+        assertThat(isValid).isFalse();
     }
 
     @Test
@@ -125,9 +122,9 @@ class JwtTokenUtilTest {
         Date expiration = jwtTokenUtil.extractExpiration(token);
 
         // Then
-        assertNotNull(expiration);
+        assertThat(expiration).isNotNull();
         // Expiration should be in the future
-        assertTrue(expiration.after(new Date()));
+        assertThat(expiration.after(new Date())).isTrue();
     }
 
     private User createTestUser(String username) {

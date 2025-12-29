@@ -1,11 +1,5 @@
 package org.stapledon.engine.downloader;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,6 +9,10 @@ import org.stapledon.common.infrastructure.web.InspectorService;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.Mockito.mock;
 
 class DailyComicTest {
 
@@ -36,14 +34,14 @@ class DailyComicTest {
         IDailyComic result = comic.setCacheRoot(tempDir.toString());
 
         // Assert
-        assertNotNull(result);
-        assertEquals(comic, result); // Verify fluent interface
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(comic); // Verify fluent interface
     }
 
     @Test
     void shouldThrowWhenCacheRootIsNull() {
         // Act & Assert
-        assertThrows(NullPointerException.class, () -> comic.setCacheRoot(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> comic.setCacheRoot(null));
     }
 
     @Test
@@ -55,9 +53,9 @@ class DailyComicTest {
         IDailyComic result = comic.setComic(comicName);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(comic, result); // Verify fluent interface
-        assertEquals(comicName, comic.getComic());
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(comic); // Verify fluent interface
+        assertThat(comic.getComic()).isEqualTo(comicName);
     }
 
     @Test
@@ -69,11 +67,11 @@ class DailyComicTest {
         comic.setComic(comicName);
 
         // Assert
-        assertEquals(comicName, comic.getComic());
+        assertThat(comic.getComic()).isEqualTo(comicName);
         // comicNameParsed should have spaces removed
         String cacheLocation = comic.cacheLocation();
-        assertNotNull(cacheLocation);
-        assertTrue(cacheLocation.contains("TestComicName"));
+        assertThat(cacheLocation).isNotNull();
+        assertThat(cacheLocation.contains("TestComicName")).isTrue();
     }
 
     @Test
@@ -85,9 +83,9 @@ class DailyComicTest {
         IDailyComic result = comic.setDate(date);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(comic, result); // Verify fluent interface
-        assertEquals(date, comic.getDate());
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(comic); // Verify fluent interface
+        assertThat(comic.getDate()).isEqualTo(date);
     }
 
     @Test
@@ -103,8 +101,8 @@ class DailyComicTest {
         LocalDate nextDate = comic.advance();
 
         // Assert
-        assertEquals(expectedNextDate, nextDate);
-        assertEquals(expectedNextDate, comic.getDate());
+        assertThat(nextDate).isEqualTo(expectedNextDate);
+        assertThat(comic.getDate()).isEqualTo(expectedNextDate);
     }
 
     @Test
@@ -118,8 +116,8 @@ class DailyComicTest {
         LocalDate resultDate = comic.advance();
 
         // Assert
-        assertEquals(lastDate, resultDate);
-        assertEquals(lastDate, comic.getDate());
+        assertThat(resultDate).isEqualTo(lastDate);
+        assertThat(comic.getDate()).isEqualTo(lastDate);
     }
 
     @Test
@@ -132,10 +130,10 @@ class DailyComicTest {
         String location = comic.cacheLocation();
 
         // Assert
-        assertNotNull(location);
+        assertThat(location).isNotNull();
         // Should contain temp dir and parsed comic name
-        assertTrue(location.contains(tempDir.toString()));
-        assertTrue(location.contains("TestComic"));
+        assertThat(location.contains(tempDir.toString())).isTrue();
+        assertThat(location.contains("TestComic")).isTrue();
     }
 
     @Test
@@ -147,8 +145,8 @@ class DailyComicTest {
         TestDailyComic customComic = new TestDailyComic(customInspector, "selector");
 
         // Assert
-        assertNotNull(customComic);
-        assertEquals("selector", customComic.getElementSelector());
+        assertThat(customComic).isNotNull();
+        assertThat(customComic.getElementSelector()).isEqualTo("selector");
     }
 
     @Test
@@ -157,9 +155,9 @@ class DailyComicTest {
         TestDailyComic comicWithNullInspector = new TestDailyComic(null, "selector");
 
         // Assert
-        assertNotNull(comicWithNullInspector);
+        assertThat(comicWithNullInspector).isNotNull();
         // Should create default JsoupInspectorService
-        assertNotNull(comicWithNullInspector.getWebInspector());
+        assertThat(comicWithNullInspector.getWebInspector()).isNotNull();
     }
 
     @Test
@@ -172,9 +170,9 @@ class DailyComicTest {
         String toString = comic.toString();
 
         // Assert
-        assertNotNull(toString);
-        assertTrue(toString.contains("Test Comic"));
-        assertTrue(toString.contains("2024-01-15"));
+        assertThat(toString).isNotNull();
+        assertThat(toString.contains("Test Comic")).isTrue();
+        assertThat(toString.contains("2024-01-15")).isTrue();
     }
 
     /**

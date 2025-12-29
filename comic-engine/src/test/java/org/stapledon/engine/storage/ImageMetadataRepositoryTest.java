@@ -1,16 +1,11 @@
 package org.stapledon.engine.storage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,6 +18,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ImageMetadataRepositoryTest {
 
@@ -54,8 +51,8 @@ class ImageMetadataRepositoryTest {
         boolean result = repository.saveMetadata(metadata);
 
         // Then
-        assertTrue(result);
-        assertTrue(new File(tempDir.resolve("2023-01-15.json").toString()).exists());
+        assertThat(result).isTrue();
+        assertThat(new File(tempDir.resolve("2023-01-15.json").toString()).exists()).isTrue();
     }
 
     @Test
@@ -71,13 +68,13 @@ class ImageMetadataRepositoryTest {
         Optional<ImageMetadata> loadedMetadata = repository.loadMetadata(imagePath);
 
         // Then
-        assertTrue(loadedMetadata.isPresent());
-        assertEquals(originalMetadata.getFilePath(), loadedMetadata.get().getFilePath());
-        assertEquals(originalMetadata.getFormat(), loadedMetadata.get().getFormat());
-        assertEquals(originalMetadata.getWidth(), loadedMetadata.get().getWidth());
-        assertEquals(originalMetadata.getHeight(), loadedMetadata.get().getHeight());
-        assertEquals(originalMetadata.getSizeInBytes(), loadedMetadata.get().getSizeInBytes());
-        assertEquals(originalMetadata.getColorMode(), loadedMetadata.get().getColorMode());
+        assertThat(loadedMetadata.isPresent()).isTrue();
+        assertThat(loadedMetadata.get().getFilePath()).isEqualTo(originalMetadata.getFilePath());
+        assertThat(loadedMetadata.get().getFormat()).isEqualTo(originalMetadata.getFormat());
+        assertThat(loadedMetadata.get().getWidth()).isEqualTo(originalMetadata.getWidth());
+        assertThat(loadedMetadata.get().getHeight()).isEqualTo(originalMetadata.getHeight());
+        assertThat(loadedMetadata.get().getSizeInBytes()).isEqualTo(originalMetadata.getSizeInBytes());
+        assertThat(loadedMetadata.get().getColorMode()).isEqualTo(originalMetadata.getColorMode());
     }
 
     @Test
@@ -89,7 +86,7 @@ class ImageMetadataRepositoryTest {
         Optional<ImageMetadata> metadata = repository.loadMetadata(imagePath);
 
         // Then
-        assertTrue(metadata.isEmpty());
+        assertThat(metadata.isEmpty()).isTrue();
     }
 
     @Test
@@ -99,11 +96,11 @@ class ImageMetadataRepositoryTest {
         createEmptyFile(imagePath);
 
         // When/Then - Before saving
-        assertFalse(repository.metadataExists(imagePath));
+        assertThat(repository.metadataExists(imagePath)).isFalse();
 
         // When/Then - After saving
         repository.saveMetadata(createTestMetadata(imagePath));
-        assertTrue(repository.metadataExists(imagePath));
+        assertThat(repository.metadataExists(imagePath)).isTrue();
     }
 
     @Test
@@ -114,14 +111,14 @@ class ImageMetadataRepositoryTest {
 
         ImageMetadata metadata = createTestMetadata(imagePath);
         repository.saveMetadata(metadata);
-        assertTrue(repository.metadataExists(imagePath));
+        assertThat(repository.metadataExists(imagePath)).isTrue();
 
         // When
         boolean result = repository.deleteMetadata(imagePath);
 
         // Then
-        assertTrue(result);
-        assertFalse(repository.metadataExists(imagePath));
+        assertThat(result).isTrue();
+        assertThat(repository.metadataExists(imagePath)).isFalse();
     }
 
     @Test
@@ -133,7 +130,7 @@ class ImageMetadataRepositoryTest {
         boolean result = repository.deleteMetadata(imagePath);
 
         // Then
-        assertTrue(result); // Already deleted
+        assertThat(result).isTrue(); // Already deleted
     }
 
     @Test
@@ -142,21 +139,21 @@ class ImageMetadataRepositoryTest {
         String pngPath = tempDir.resolve("image.png").toString();
         createEmptyFile(pngPath);
         repository.saveMetadata(createTestMetadata(pngPath));
-        assertTrue(repository.metadataExists(pngPath));
-        assertTrue(new File(tempDir.resolve("image.json").toString()).exists());
+        assertThat(repository.metadataExists(pngPath)).isTrue();
+        assertThat(new File(tempDir.resolve("image.json").toString()).exists()).isTrue();
 
         // Test JPG
         String jpgPath = tempDir.resolve("image.jpg").toString();
         createEmptyFile(jpgPath);
         repository.saveMetadata(createTestMetadata(jpgPath));
-        assertTrue(repository.metadataExists(jpgPath));
-        assertTrue(new File(tempDir.resolve("image.json").toString()).exists());
+        assertThat(repository.metadataExists(jpgPath)).isTrue();
+        assertThat(new File(tempDir.resolve("image.json").toString()).exists()).isTrue();
 
         // Test JPEG
         String jpegPath = tempDir.resolve("photo.jpeg").toString();
         createEmptyFile(jpegPath);
         repository.saveMetadata(createTestMetadata(jpegPath));
-        assertTrue(repository.metadataExists(jpegPath));
+        assertThat(repository.metadataExists(jpegPath)).isTrue();
     }
 
     @Test
@@ -169,8 +166,8 @@ class ImageMetadataRepositoryTest {
         repository.saveMetadata(createTestMetadata(gifPath));
 
         // Then
-        assertTrue(repository.metadataExists(gifPath));
-        assertTrue(new File(tempDir.resolve("animation.json").toString()).exists());
+        assertThat(repository.metadataExists(gifPath)).isTrue();
+        assertThat(new File(tempDir.resolve("animation.json").toString()).exists()).isTrue();
     }
 
     @Test
@@ -183,8 +180,8 @@ class ImageMetadataRepositoryTest {
         repository.saveMetadata(createTestMetadata(webpPath));
 
         // Then
-        assertTrue(repository.metadataExists(webpPath));
-        assertTrue(new File(tempDir.resolve("modern.json").toString()).exists());
+        assertThat(repository.metadataExists(webpPath)).isTrue();
+        assertThat(new File(tempDir.resolve("modern.json").toString()).exists()).isTrue();
     }
 
     @Test
@@ -197,8 +194,8 @@ class ImageMetadataRepositoryTest {
         repository.saveMetadata(createTestMetadata(tiffPath));
 
         // Then
-        assertTrue(repository.metadataExists(tiffPath));
-        assertTrue(new File(tempDir.resolve("photo.json").toString()).exists());
+        assertThat(repository.metadataExists(tiffPath)).isTrue();
+        assertThat(new File(tempDir.resolve("photo.json").toString()).exists()).isTrue();
     }
 
     @Test
@@ -211,8 +208,8 @@ class ImageMetadataRepositoryTest {
         repository.saveMetadata(createTestMetadata(tifPath));
 
         // Then
-        assertTrue(repository.metadataExists(tifPath));
-        assertTrue(new File(tempDir.resolve("photo.json").toString()).exists());
+        assertThat(repository.metadataExists(tifPath)).isTrue();
+        assertThat(new File(tempDir.resolve("photo.json").toString()).exists()).isTrue();
     }
 
     @Test
@@ -225,8 +222,8 @@ class ImageMetadataRepositoryTest {
         repository.saveMetadata(createTestMetadata(bmpPath));
 
         // Then
-        assertTrue(repository.metadataExists(bmpPath));
-        assertTrue(new File(tempDir.resolve("bitmap.json").toString()).exists());
+        assertThat(repository.metadataExists(bmpPath)).isTrue();
+        assertThat(new File(tempDir.resolve("bitmap.json").toString()).exists()).isTrue();
     }
 
     @Test
@@ -239,8 +236,8 @@ class ImageMetadataRepositoryTest {
         repository.saveMetadata(createTestMetadata(noExtPath));
 
         // Then
-        assertTrue(repository.metadataExists(noExtPath));
-        assertTrue(new File(noExtPath + ".json").exists());
+        assertThat(repository.metadataExists(noExtPath)).isTrue();
+        assertThat(new File(noExtPath + ".json").exists()).isTrue();
     }
 
     @Test
@@ -266,11 +263,11 @@ class ImageMetadataRepositoryTest {
         Optional<ImageMetadata> loaded = repository.loadMetadata(imagePath);
 
         // Then
-        assertTrue(loaded.isPresent());
+        assertThat(loaded.isPresent()).isTrue();
         ImageMetadata loadedMetadata = loaded.get();
-        assertEquals("http://example.com/image.png", loadedMetadata.getSourceUrl());
-        assertEquals(5.0, loadedMetadata.getSamplePercentage());
-        assertEquals(LocalDateTime.of(2023, 1, 15, 10, 30, 45), loadedMetadata.getCaptureTimestamp());
+        assertThat(loadedMetadata.getSourceUrl()).isEqualTo("http://example.com/image.png");
+        assertThat(loadedMetadata.getSamplePercentage()).isEqualTo(5.0);
+        assertThat(loadedMetadata.getCaptureTimestamp()).isEqualTo(LocalDateTime.of(2023, 1, 15, 10, 30, 45));
     }
 
     @Test
@@ -296,8 +293,8 @@ class ImageMetadataRepositoryTest {
         Optional<ImageMetadata> loaded = repository.loadMetadata(imagePath);
 
         // Then
-        assertTrue(loaded.isPresent());
-        assertEquals(ImageMetadata.ColorMode.GRAYSCALE, loaded.get().getColorMode());
+        assertThat(loaded.isPresent()).isTrue();
+        assertThat(loaded.get().getColorMode()).isEqualTo(ImageMetadata.ColorMode.GRAYSCALE);
     }
 
     @Test
@@ -322,8 +319,8 @@ class ImageMetadataRepositoryTest {
         boolean result = repository.saveMetadata(invalidMetadata);
 
         // Then
-        assertFalse(result);
-        assertFalse(repository.metadataExists(imagePath));
+        assertThat(result).isFalse();
+        assertThat(repository.metadataExists(imagePath)).isFalse();
     }
 
     @Test
@@ -348,11 +345,11 @@ class ImageMetadataRepositoryTest {
         boolean result = repository.saveMetadata(metadata);
 
         // Then
-        assertTrue(result);
-        assertTrue(repository.metadataExists(imagePath));
+        assertThat(result).isTrue();
+        assertThat(repository.metadataExists(imagePath)).isTrue();
         Optional<ImageMetadata> loaded = repository.loadMetadata(imagePath);
-        assertTrue(loaded.isPresent());
-        assertEquals(ImageMetadata.ColorMode.UNKNOWN, loaded.get().getColorMode());
+        assertThat(loaded.isPresent()).isTrue();
+        assertThat(loaded.get().getColorMode()).isEqualTo(ImageMetadata.ColorMode.UNKNOWN);
     }
 
     @Test
@@ -377,8 +374,8 @@ class ImageMetadataRepositoryTest {
         boolean result = repository.saveMetadata(metadata);
 
         // Then
-        assertFalse(result);
-        assertFalse(repository.metadataExists(imagePath));
+        assertThat(result).isFalse();
+        assertThat(repository.metadataExists(imagePath)).isFalse();
     }
 
     @Test
@@ -403,8 +400,8 @@ class ImageMetadataRepositoryTest {
         boolean result = repository.saveMetadata(metadata);
 
         // Then
-        assertFalse(result);
-        assertFalse(repository.metadataExists(imagePath));
+        assertThat(result).isFalse();
+        assertThat(repository.metadataExists(imagePath)).isFalse();
     }
 
     // Helper methods

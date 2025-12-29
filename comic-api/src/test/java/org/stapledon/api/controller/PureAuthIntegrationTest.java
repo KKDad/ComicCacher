@@ -1,13 +1,7 @@
 package org.stapledon.api.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,6 +14,9 @@ import org.stapledon.infrastructure.security.JwtTokenUtil;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Pure integration test that tests JWT token generation directly
@@ -54,14 +51,14 @@ public class PureAuthIntegrationTest {
         
         // Generate token
         String token = jwtTokenUtil.generateToken(user);
-        
+
         // Verify
-        assertNotNull(token, "Token should not be null");
-        assertTrue(token.length() > 20, "Token should be of reasonable length");
+        assertThat(token).as("Token should not be null").isNotNull();
+        assertThat(token.length() > 20).as("Token should be of reasonable length").isTrue();
         
         // Extract username from token
         String username = jwtTokenUtil.extractUsername(token);
-        assertEquals("jwtuser", username, "Username should be extracted correctly");
+        assertThat(username).as("Username should be extracted correctly").isEqualTo("jwtuser");
         
         // Create UserDetails object for validation
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
@@ -71,7 +68,7 @@ public class PureAuthIntegrationTest {
                 .build();
 
         // Validate token
-        assertTrue(jwtTokenUtil.validateToken(token, userDetails), "Token should be valid");
+        assertThat(jwtTokenUtil.validateToken(token, userDetails)).as("Token should be valid").isTrue();
     }
     
     @Test
@@ -83,24 +80,24 @@ public class PureAuthIntegrationTest {
                 .email("test@example.com")
                 .displayName("Test User")
                 .build();
-        
+
         // Verify DTO properties
-        assertEquals("testuser", registrationDto.getUsername());
-        assertEquals("password123", registrationDto.getPassword());
-        assertEquals("test@example.com", registrationDto.getEmail());
-        assertEquals("Test User", registrationDto.getDisplayName());
+        assertThat(registrationDto.getUsername()).isEqualTo("testuser");
+        assertThat(registrationDto.getPassword()).isEqualTo("password123");
+        assertThat(registrationDto.getEmail()).isEqualTo("test@example.com");
+        assertThat(registrationDto.getDisplayName()).isEqualTo("Test User");
         
         // Test JSON serialization
         try {
             String json = objectMapper.writeValueAsString(registrationDto);
             UserRegistrationDto deserialized = objectMapper.readValue(json, UserRegistrationDto.class);
-            
-            assertEquals(registrationDto.getUsername(), deserialized.getUsername());
-            assertEquals(registrationDto.getPassword(), deserialized.getPassword());
-            assertEquals(registrationDto.getEmail(), deserialized.getEmail());
-            assertEquals(registrationDto.getDisplayName(), deserialized.getDisplayName());
+
+            assertThat(deserialized.getUsername()).isEqualTo(registrationDto.getUsername());
+            assertThat(deserialized.getPassword()).isEqualTo(registrationDto.getPassword());
+            assertThat(deserialized.getEmail()).isEqualTo(registrationDto.getEmail());
+            assertThat(deserialized.getDisplayName()).isEqualTo(registrationDto.getDisplayName());
         } catch (Exception e) {
-            fail("JSON serialization should not throw an exception: " + e.getMessage());
+            fail("", "JSON serialization should not throw an exception: " + e.getMessage());
         }
     }
     
@@ -113,24 +110,24 @@ public class PureAuthIntegrationTest {
                 .token("jwt.token.here")
                 .refreshToken("refresh.token.here")
                 .build();
-        
+
         // Verify properties
-        assertEquals("testuser", authResponse.getUsername());
-        assertEquals("Test User", authResponse.getDisplayName());
-        assertEquals("jwt.token.here", authResponse.getToken());
-        assertEquals("refresh.token.here", authResponse.getRefreshToken());
+        assertThat(authResponse.getUsername()).isEqualTo("testuser");
+        assertThat(authResponse.getDisplayName()).isEqualTo("Test User");
+        assertThat(authResponse.getToken()).isEqualTo("jwt.token.here");
+        assertThat(authResponse.getRefreshToken()).isEqualTo("refresh.token.here");
         
         // Test JSON serialization
         try {
             String json = objectMapper.writeValueAsString(authResponse);
             AuthResponse deserialized = objectMapper.readValue(json, AuthResponse.class);
-            
-            assertEquals(authResponse.getUsername(), deserialized.getUsername());
-            assertEquals(authResponse.getDisplayName(), deserialized.getDisplayName());
-            assertEquals(authResponse.getToken(), deserialized.getToken());
-            assertEquals(authResponse.getRefreshToken(), deserialized.getRefreshToken());
+
+            assertThat(deserialized.getUsername()).isEqualTo(authResponse.getUsername());
+            assertThat(deserialized.getDisplayName()).isEqualTo(authResponse.getDisplayName());
+            assertThat(deserialized.getToken()).isEqualTo(authResponse.getToken());
+            assertThat(deserialized.getRefreshToken()).isEqualTo(authResponse.getRefreshToken());
         } catch (Exception e) {
-            fail("JSON serialization should not throw an exception: " + e.getMessage());
+            fail("", "JSON serialization should not throw an exception: " + e.getMessage());
         }
     }
 }

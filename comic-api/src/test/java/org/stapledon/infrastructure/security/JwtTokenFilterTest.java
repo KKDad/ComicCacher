@@ -1,12 +1,8 @@
 package org.stapledon.infrastructure.security;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +13,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collections;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtTokenFilterTest {
@@ -72,10 +67,10 @@ class JwtTokenFilterTest {
         verify(jwtTokenUtil).validateToken(token, userDetails);
         verify(jwtTokenUtil).extractRoles(token);
         verify(filterChain).doFilter(request, response);
-        
+
         // Authentication should be set in security context
-        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
-        assertEquals(username, SecurityContextHolder.getContext().getAuthentication().getName());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo(username);
     }
 
     @Test
@@ -97,9 +92,9 @@ class JwtTokenFilterTest {
         verify(userDetailsService).loadUserByUsername(username);
         verify(jwtTokenUtil).validateToken(token, userDetails);
         verify(filterChain).doFilter(request, response);
-        
+
         // Authentication should not be set in security context
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test
@@ -113,9 +108,9 @@ class JwtTokenFilterTest {
         // Then
         verify(filterChain).doFilter(request, response);
         verifyNoInteractions(jwtTokenUtil, userDetailsService);
-        
+
         // Authentication should not be set in security context
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test
@@ -132,8 +127,8 @@ class JwtTokenFilterTest {
         // Then
         verify(jwtTokenUtil).extractUsername(token);
         verify(filterChain).doFilter(request, response);
-        
+
         // Authentication should not be set in security context
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 }

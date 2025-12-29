@@ -1,8 +1,5 @@
 package org.stapledon.infrastructure.storage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +16,8 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("integration")
@@ -62,15 +61,15 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
     void saveAndRetrieveRecordShouldWork() {
         // Act
         repository.saveRecord(testRecord);
-        
+
         // Assert file was created
-        assertTrue(storageFile.exists());
+        assertThat(storageFile.exists()).isTrue();
         
         // Retrieve and verify
         Optional<ComicRetrievalRecord> retrieved = repository.getRecord(testRecord.getId());
-        assertTrue(retrieved.isPresent());
-        assertEquals(testRecord.getComicName(), retrieved.get().getComicName());
-        assertEquals(testRecord.getStatus(), retrieved.get().getStatus());
+        assertThat(retrieved.isPresent()).isTrue();
+        assertThat(retrieved.get().getComicName()).isEqualTo(testRecord.getComicName());
+        assertThat(retrieved.get().getStatus()).isEqualTo(testRecord.getStatus());
     }
     
     @Test
@@ -109,22 +108,22 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         // Act & Assert - Filter by comic name
         List<ComicRetrievalRecord> comicNameResults = repository.getRecords(
                 "Comic1", null, null, null, 10);
-        assertEquals(2, comicNameResults.size());
+        assertThat(comicNameResults.size()).isEqualTo(2);
         
         // Filter by status
         List<ComicRetrievalRecord> statusResults = repository.getRecords(
                 null, ComicRetrievalStatus.SUCCESS, null, null, 10);
-        assertEquals(2, statusResults.size());
+        assertThat(statusResults.size()).isEqualTo(2);
         
         // Filter by date
         List<ComicRetrievalRecord> dateResults = repository.getRecords(
                 null, null, LocalDate.now(), LocalDate.now(), 10);
-        assertEquals(2, dateResults.size());
+        assertThat(dateResults.size()).isEqualTo(2);
         
         // Combined filters
         List<ComicRetrievalRecord> combinedResults = repository.getRecords(
                 "Comic1", ComicRetrievalStatus.SUCCESS, LocalDate.now(), LocalDate.now(), 10);
-        assertEquals(1, combinedResults.size());
+        assertThat(combinedResults.size()).isEqualTo(1);
     }
     
     @Test
@@ -155,13 +154,13 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         
         // Act
         int purgedCount = repository.purgeOldRecords(1);
-        
+
         // Assert
-        assertEquals(1, purgedCount);
+        assertThat(purgedCount).isEqualTo(1);
         
         List<ComicRetrievalRecord> remainingRecords = repository.getRecords(
                 null, null, null, null, 10);
-        assertEquals(1, remainingRecords.size());
-        assertEquals(recentRecord.getId(), remainingRecords.get(0).getId());
+        assertThat(remainingRecords.size()).isEqualTo(1);
+        assertThat(remainingRecords.get(0).getId()).isEqualTo(recentRecord.getId());
     }
 }

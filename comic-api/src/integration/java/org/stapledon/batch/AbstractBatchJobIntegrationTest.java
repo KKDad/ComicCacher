@@ -2,7 +2,8 @@ package org.stapledon.batch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -152,8 +151,7 @@ public abstract class AbstractBatchJobIntegrationTest {
      */
     protected void assertMetadataExists(String imageFilePath) {
         File metadataFile = getMetadataFile(imageFilePath);
-        assertTrue(metadataFile.exists(),
-            "Metadata file should exist: " + metadataFile.getAbsolutePath());
+        assertThat(metadataFile.exists()).as("Metadata file should exist: " + metadataFile.getAbsolutePath()).isTrue();
     }
 
     /**
@@ -163,8 +161,7 @@ public abstract class AbstractBatchJobIntegrationTest {
      */
     protected void assertMetadataNotExists(String imageFilePath) {
         File metadataFile = getMetadataFile(imageFilePath);
-        assertFalse(metadataFile.exists(),
-            "Metadata file should NOT exist: " + metadataFile.getAbsolutePath());
+        assertThat(metadataFile.exists()).as("Metadata file should NOT exist: " + metadataFile.getAbsolutePath()).isFalse();
     }
 
     /**
@@ -184,13 +181,13 @@ public abstract class AbstractBatchJobIntegrationTest {
         try (FileReader reader = new FileReader(metadataFile)) {
             ImageMetadata metadata = gson.fromJson(reader, ImageMetadata.class);
 
-            assertNotNull(metadata, "Metadata should not be null");
-            assertEquals(expectedFormat, metadata.getFormat(), "Image format mismatch");
-            assertEquals(expectedWidth, metadata.getWidth(), "Image width mismatch");
-            assertEquals(expectedHeight, metadata.getHeight(), "Image height mismatch");
-            assertTrue(metadata.getSizeInBytes() > 0, "Image size should be > 0");
-            assertNotNull(metadata.getColorMode(), "ColorMode should not be null");
-            assertNotNull(metadata.getFilePath(), "FilePath should not be null");
+            assertThat(metadata).as("Metadata should not be null").isNotNull();
+            assertThat(metadata.getFormat()).as("Image format mismatch").isEqualTo(expectedFormat);
+            assertThat(metadata.getWidth()).as("Image width mismatch").isEqualTo(expectedWidth);
+            assertThat(metadata.getHeight()).as("Image height mismatch").isEqualTo(expectedHeight);
+            assertThat(metadata.getSizeInBytes() > 0).as("Image size should be > 0").isTrue();
+            assertThat(metadata.getColorMode()).as("ColorMode should not be null").isNotNull();
+            assertThat(metadata.getFilePath()).as("FilePath should not be null").isNotNull();
         }
     }
 
@@ -252,11 +249,10 @@ public abstract class AbstractBatchJobIntegrationTest {
      */
     protected void assertBatchExecutionTracked(String jobName) throws IOException {
         File trackingFile = Paths.get(BATCH_CACHE_DIR, "batch-executions.json").toFile();
-        assertTrue(trackingFile.exists(), "Batch execution tracking file should exist");
+        assertThat(trackingFile.exists()).as("Batch execution tracking file should exist").isTrue();
 
         String content = Files.readString(trackingFile.toPath());
-        assertTrue(content.contains(jobName),
-            "Batch execution tracking should contain job: " + jobName);
+        assertThat(content.contains(jobName)).as("Batch execution tracking should contain job: " + jobName).isTrue();
     }
 
     /**
@@ -268,7 +264,7 @@ public abstract class AbstractBatchJobIntegrationTest {
      */
     protected BatchExecutionSummary loadBatchExecutionSummary(String jobName) throws IOException {
         File trackingFile = Paths.get(BATCH_CACHE_DIR, "batch-executions.json").toFile();
-        assertTrue(trackingFile.exists(), "Batch execution tracking file should exist");
+        assertThat(trackingFile.exists()).as("Batch execution tracking file should exist").isTrue();
 
         String content = Files.readString(trackingFile.toPath());
 
@@ -279,7 +275,7 @@ public abstract class AbstractBatchJobIntegrationTest {
                     java.util.HashMap.class, String.class, BatchExecutionSummary.class));
 
         BatchExecutionSummary summary = executions.get(jobName);
-        assertNotNull(summary, "Should have execution summary for job: " + jobName);
+        assertThat(summary).as("Should have execution summary for job: " + jobName).isNotNull();
 
         return summary;
     }
@@ -311,8 +307,7 @@ public abstract class AbstractBatchJobIntegrationTest {
 
         // Validate items processed if expected count provided
         if (expectedItemsProcessed != null) {
-            assertEquals(expectedItemsProcessed.intValue(), summary.getItemsProcessed(),
-                "Items processed should match expected count");
+            assertThat(summary.getItemsProcessed()).as("Items processed should match expected count").isEqualTo(expectedItemsProcessed.intValue());
         }
 
         log.info("Batch execution validation passed for {}: status={}, duration={}s, processed={}",
