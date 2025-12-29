@@ -6,11 +6,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.core.job.Job;
-import org.springframework.batch.core.Step;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.core.step.Step;
+import org.springframework.batch.infrastructure.item.Chunk;
+import org.springframework.batch.infrastructure.item.ItemProcessor;
+import org.springframework.batch.infrastructure.item.ItemReader;
+import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
@@ -182,7 +183,7 @@ class ComicBackfillJobConfigTest {
         ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
 
         // Should not throw exception
-        assertDoesNotThrow(() -> writer.write(org.springframework.batch.item.Chunk.of(success, failure)));
+        assertDoesNotThrow(() -> writer.write(Chunk.of(success, failure)));
     }
 
     @Test
@@ -190,7 +191,7 @@ class ComicBackfillJobConfigTest {
         ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
 
         // Should handle nulls gracefully
-        assertDoesNotThrow(() -> writer.write(org.springframework.batch.item.Chunk.of((ComicDownloadResult) null)));
+        assertDoesNotThrow(() -> writer.write(Chunk.of((ComicDownloadResult) null)));
     }
 
     private ComicItem createComic(int id, String name) {

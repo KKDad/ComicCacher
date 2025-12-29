@@ -9,7 +9,7 @@ BUILD_TAG=$1
 if [ -z "${BUILD_TAG}" ]; then
    echo "Build Tag is required"
    # Get a sorted list of the current tags in the repository
-   echo "Current Tags for kkdad/photo-organizer-api:"
+   echo "Current Tags for kkdad/comic-api:"
    curl -s "https://${DOCKER_REGISTRY}/v2/kkdad/comic-api/tags/list" | jq -r '.tags[]' | sort -r
    exit
 fi
