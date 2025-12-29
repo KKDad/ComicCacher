@@ -13,17 +13,17 @@ ext {
 
     // Library versions
     bcryptVersion = '0.4'
-    caffeineVersion = '3.2.2'
-    gsonVersion = '2.11.0'
+    caffeineVersion = '3.2.3'
+    gsonVersion = '2.13.2'
     guavaVersion = '33.5.0-jre'
     h2Version = 'managed'
-    jjwtVersion = '0.11.5'
+    jjwtVersion = '0.13.0'
     jsoupVersion = '1.21.2'
     lombokVersion = '1.18.42'
-    seleniumVersion = '4.38.0'
+    seleniumVersion = '4.39.0'
     springdocVersion = '2.8.13'
-    twelvemonkeysVersion = '3.12.0'
-    webdrivermanagerVersion = '5.5.3'
+    twelvemonkeysVersion = '3.13.0'
+    webdrivermanagerVersion = '6.3.3'
 
     // Test dependency versions
     jacocoVersion = '0.8.11'
