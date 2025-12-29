@@ -1,18 +1,5 @@
 package org.stapledon.infrastructure.caching;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDate;
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +11,14 @@ import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.management.ManagementFacade;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for PredictiveCacheService.
@@ -54,7 +49,7 @@ class PredictiveCacheServiceTest {
 
     @Test
     void testServiceCreation() {
-        assertNotNull(service, "Service should be created successfully");
+        assertThat(service).as("Service should be created successfully").isNotNull();
     }
 
     @Test
@@ -103,16 +98,16 @@ class PredictiveCacheServiceTest {
 
         // Verify dates are sequential
         List<LocalDate> capturedDates = dateCaptor.getAllValues();
-        assertTrue(capturedDates.size() >= 3, "Should have fetched at least 3 comics");
+        assertThat(capturedDates.size() >= 3).as("Should have fetched at least 3 comics").isTrue();
 
         // First call should be from the start date
-        assertEquals(startDate, capturedDates.get(0), "First fetch should be from start date");
+        assertThat(capturedDates.get(0)).as("First fetch should be from start date").isEqualTo(startDate);
 
         // Second call should be from the next date (startDate + 1)
-        assertEquals(startDate.plusDays(1), capturedDates.get(1), "Second fetch should be from next date");
+        assertThat(capturedDates.get(1)).as("Second fetch should be from next date").isEqualTo(startDate.plusDays(1));
 
         // Third call should be from the date after that (startDate + 2)
-        assertEquals(startDate.plusDays(2), capturedDates.get(2), "Third fetch should be from date after that");
+        assertThat(capturedDates.get(2)).as("Third fetch should be from date after that").isEqualTo(startDate.plusDays(2));
     }
 
     @Test
@@ -161,12 +156,12 @@ class PredictiveCacheServiceTest {
 
         // Verify dates are going backward
         List<LocalDate> capturedDates = dateCaptor.getAllValues();
-        assertTrue(capturedDates.size() >= 3, "Should have fetched at least 3 comics");
+        assertThat(capturedDates.size() >= 3).as("Should have fetched at least 3 comics").isTrue();
 
         // Verify backward progression
-        assertEquals(startDate, capturedDates.get(0), "First fetch should be from start date");
-        assertEquals(startDate.minusDays(1), capturedDates.get(1), "Second fetch should be from previous date");
-        assertEquals(startDate.minusDays(2), capturedDates.get(2), "Third fetch should be from date before that");
+        assertThat(capturedDates.get(0)).as("First fetch should be from start date").isEqualTo(startDate);
+        assertThat(capturedDates.get(1)).as("Second fetch should be from previous date").isEqualTo(startDate.minusDays(1));
+        assertThat(capturedDates.get(2)).as("Third fetch should be from date before that").isEqualTo(startDate.minusDays(2));
     }
 
     @Test
@@ -224,8 +219,7 @@ class PredictiveCacheServiceTest {
 
         // Should have stopped after hitting the end (no more than 2 calls)
         List<LocalDate> capturedDates = dateCaptor.getAllValues();
-        assertTrue(capturedDates.size() <= 2,
-            "Should have stopped after hitting end, found " + capturedDates.size() + " calls");
+        assertThat(capturedDates.size() <= 2).as("Should have stopped after hitting end, found " + capturedDates.size() + " calls").isTrue();
     }
 
     @Test
@@ -266,7 +260,6 @@ class PredictiveCacheServiceTest {
 
         // Should have fetched exactly 2 comics (respecting the count)
         List<LocalDate> capturedDates = dateCaptor.getAllValues();
-        assertEquals(2, capturedDates.size(),
-            "Should have fetched exactly 2 comics when lookahead count is 2");
+        assertThat(capturedDates.size()).as("Should have fetched exactly 2 comics when lookahead count is 2").isEqualTo(2);
     }
 }

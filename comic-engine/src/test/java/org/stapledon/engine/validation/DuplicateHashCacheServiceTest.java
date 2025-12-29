@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -74,8 +74,8 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> result = service.loadHashesWithBackfill(COMIC_ID, COMIC_NAME, YEAR);
 
         // Then
-        assertNotNull(result, "Result should not be null");
-        assertTrue(result.isEmpty(), "Result should be empty when no images exist");
+        assertThat(result).as("Result should not be null").isNotNull();
+        assertThat(result.isEmpty()).as("Result should be empty when no images exist").isTrue();
         verify(hashRepository, never()).replaceHashes(anyInt(), anyString(), anyInt(), any());
     }
 
@@ -103,8 +103,8 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> result = service.loadHashesWithBackfill(COMIC_ID, COMIC_NAME, YEAR);
 
         // Then
-        assertNotNull(result, "Result should not be null");
-        assertEquals(2, result.size(), "Should have backfilled 2 images");
+        assertThat(result).as("Result should not be null").isNotNull();
+        assertThat(result.size()).as("Should have backfilled 2 images").isEqualTo(2);
         verify(hashRepository).replaceHashes(eq(COMIC_ID), eq(COMIC_NAME), eq(YEAR), any());
         verify(imageHasher, times(2)).calculateHash(any(byte[].class));
     }
@@ -139,8 +139,8 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> result = service.loadHashesWithBackfill(COMIC_ID, COMIC_NAME, YEAR);
 
         // Then
-        assertNotNull(result, "Result should not be null");
-        assertTrue(result.containsKey("new-hash"), "Should have new hash with current algorithm");
+        assertThat(result).as("Result should not be null").isNotNull();
+        assertThat(result.containsKey("new-hash")).as("Should have new hash with current algorithm").isTrue();
         verify(hashRepository).replaceHashes(eq(COMIC_ID), eq(COMIC_NAME), eq(YEAR), any());
         verify(imageHasher).calculateHash(any(byte[].class));
     }
@@ -165,9 +165,9 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> result = service.loadHashesWithBackfill(COMIC_ID, COMIC_NAME, YEAR);
 
         // Then
-        assertNotNull(result, "Result should not be null");
-        assertEquals(1, result.size(), "Should return existing cache");
-        assertTrue(result.containsKey(TEST_HASH), "Should contain existing hash");
+        assertThat(result).as("Result should not be null").isNotNull();
+        assertThat(result.size()).as("Should return existing cache").isEqualTo(1);
+        assertThat(result.containsKey(TEST_HASH)).as("Should contain existing hash").isTrue();
         verify(hashRepository, never()).replaceHashes(anyInt(), anyString(), anyInt(), any());
     }
 
@@ -192,8 +192,8 @@ class DuplicateHashCacheServiceTest {
         Optional<ImageHashRecord> result = service.findByHash(COMIC_ID, COMIC_NAME, YEAR, TEST_HASH);
 
         // Then
-        assertTrue(result.isPresent(), "Should find the hash");
-        assertEquals(TEST_HASH, result.get().getHash(), "Hash should match");
+        assertThat(result.isPresent()).as("Should find the hash").isTrue();
+        assertThat(result.get().getHash()).as("Hash should match").isEqualTo(TEST_HASH);
         verify(hashRepository).findByHash(COMIC_ID, COMIC_NAME, YEAR, TEST_HASH);
     }
 
@@ -211,7 +211,7 @@ class DuplicateHashCacheServiceTest {
         Optional<ImageHashRecord> result = service.findByHash(COMIC_ID, COMIC_NAME, YEAR, "nonexistent");
 
         // Then
-        assertFalse(result.isPresent(), "Should not find non-existent hash");
+        assertThat(result.isPresent()).as("Should not find non-existent hash").isFalse();
     }
 
     @Test
@@ -251,10 +251,10 @@ class DuplicateHashCacheServiceTest {
         verify(hashRepository).addHash(eq(COMIC_ID), eq(COMIC_NAME), eq(YEAR), recordCaptor.capture());
 
         ImageHashRecord capturedRecord = recordCaptor.getValue();
-        assertEquals(TEST_HASH, capturedRecord.getHash(), "Hash should match");
-        assertEquals(date, capturedRecord.getDate(), "Date should match");
-        assertEquals(filePath, capturedRecord.getFilePath(), "File path should match");
-        assertEquals(CURRENT_ALGORITHM, capturedRecord.getAlgorithm(), "Algorithm should match");
+        assertThat(capturedRecord.getHash()).as("Hash should match").isEqualTo(TEST_HASH);
+        assertThat(capturedRecord.getDate()).as("Date should match").isEqualTo(date);
+        assertThat(capturedRecord.getFilePath()).as("File path should match").isEqualTo(filePath);
+        assertThat(capturedRecord.getAlgorithm()).as("Algorithm should match").isEqualTo(CURRENT_ALGORITHM);
     }
 
     @Test
@@ -320,7 +320,7 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> result = service.loadHashesWithBackfill(COMIC_ID, COMIC_NAME, YEAR);
 
         // Then
-        assertEquals(1, result.size(), "Should only backfill PNG files");
+        assertThat(result.size()).as("Should only backfill PNG files").isEqualTo(1);
         verify(imageHasher, times(1)).calculateHash(any(byte[].class));
     }
 
@@ -342,7 +342,7 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> result = service.loadHashesWithBackfill(COMIC_ID, COMIC_NAME, YEAR);
 
         // Then
-        assertTrue(result.isEmpty(), "Should not backfill files with invalid date format");
+        assertThat(result.isEmpty()).as("Should not backfill files with invalid date format").isTrue();
         verify(imageHasher, never()).calculateHash(any(byte[].class));
     }
 
@@ -364,7 +364,7 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> result = service.loadHashesWithBackfill(COMIC_ID, COMIC_NAME, YEAR);
 
         // Then
-        assertNotNull(result, "Should handle null algorithm gracefully");
-        assertEquals(1, result.size(), "Should still return the existing cache");
+        assertThat(result).as("Should handle null algorithm gracefully").isNotNull();
+        assertThat(result.size()).as("Should still return the existing cache").isEqualTo(1);
     }
 }

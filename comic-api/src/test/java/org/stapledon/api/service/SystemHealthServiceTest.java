@@ -1,9 +1,5 @@
 package org.stapledon.api.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -23,6 +19,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for the SystemHealthService
@@ -94,44 +93,44 @@ class SystemHealthServiceTest {
     void getHealthStatus_shouldReturnBasicHealthInfo() {
         // Act
         HealthStatus status = healthService.getHealthStatus();
-        
+
         // Assert
-        assertNotNull(status);
-        assertEquals(HealthStatus.Status.UP, status.getStatus());
-        assertNotNull(status.getTimestamp());
-        assertNotNull(status.getBuildInfo());
-        assertEquals("ComicAPI", status.getBuildInfo().getName());
-        assertEquals("1.0.0", status.getBuildInfo().getVersion());
+        assertThat(status).isNotNull();
+        assertThat(status.getStatus()).isEqualTo(HealthStatus.Status.UP);
+        assertThat(status.getTimestamp()).isNotNull();
+        assertThat(status.getBuildInfo()).isNotNull();
+        assertThat(status.getBuildInfo().getName()).isEqualTo("ComicAPI");
+        assertThat(status.getBuildInfo().getVersion()).isEqualTo("1.0.0");
     }
     
     @Test
     void getDetailedHealthStatus_shouldReturnDetailedHealthInfo() {
         // Act
         HealthStatus status = healthService.getDetailedHealthStatus();
-        
+
         // Assert
-        assertNotNull(status);
-        assertEquals(HealthStatus.Status.UP, status.getStatus());
-        assertNotNull(status.getTimestamp());
-        assertNotNull(status.getBuildInfo());
-        assertNotNull(status.getSystemResources());
-        assertNotNull(status.getCacheStatus());
-        assertNotNull(status.getComponents());
-        
+        assertThat(status).isNotNull();
+        assertThat(status.getStatus()).isEqualTo(HealthStatus.Status.UP);
+        assertThat(status.getTimestamp()).isNotNull();
+        assertThat(status.getBuildInfo()).isNotNull();
+        assertThat(status.getSystemResources()).isNotNull();
+        assertThat(status.getCacheStatus()).isNotNull();
+        assertThat(status.getComponents()).isNotNull();
+
         // Verify system resources
-        assertEquals(Runtime.getRuntime().availableProcessors(), status.getSystemResources().getAvailableProcessors());
-        
+        assertThat(status.getSystemResources().getAvailableProcessors()).isEqualTo(Runtime.getRuntime().availableProcessors());
+
         // Verify cache status
-        assertEquals(2, status.getCacheStatus().getTotalComics());
-        assertEquals(150, status.getCacheStatus().getTotalImages());
-        assertEquals(1024 * 1024 * 15, status.getCacheStatus().getTotalStorageBytes());
-        assertEquals("/path/to/oldest.png", status.getCacheStatus().getOldestImage());
-        assertEquals("/path/to/newest.png", status.getCacheStatus().getNewestImage());
-        assertEquals(tempDir.toString(), status.getCacheStatus().getCacheLocation());
-        
+        assertThat(status.getCacheStatus().getTotalComics()).isEqualTo(2);
+        assertThat(status.getCacheStatus().getTotalImages()).isEqualTo(150);
+        assertThat(status.getCacheStatus().getTotalStorageBytes()).isEqualTo(1024 * 1024 * 15);
+        assertThat(status.getCacheStatus().getOldestImage()).isEqualTo("/path/to/oldest.png");
+        assertThat(status.getCacheStatus().getNewestImage()).isEqualTo("/path/to/newest.png");
+        assertThat(status.getCacheStatus().getCacheLocation()).isEqualTo(tempDir.toString());
+
         // Verify components
-        assertNotNull(status.getComponents().get("cache"));
-        assertEquals(HealthStatus.Status.UP, status.getComponents().get("cache").getStatus());
+        assertThat(status.getComponents().get("cache")).isNotNull();
+        assertThat(status.getComponents().get("cache").getStatus()).isEqualTo(HealthStatus.Status.UP);
     }
     
     @Test
@@ -141,13 +140,13 @@ class SystemHealthServiceTest {
         
         // Act
         HealthStatus status = healthService.getDetailedHealthStatus();
-        
+
         // Assert
-        assertNotNull(status);
-        assertEquals(HealthStatus.Status.DOWN, status.getStatus());
-        assertNotNull(status.getComponents().get("cache"));
-        assertEquals(HealthStatus.Status.DOWN, status.getComponents().get("cache").getStatus());
-        assertEquals("Cache directory is not accessible or writable", status.getComponents().get("cache").getMessage());
+        assertThat(status).isNotNull();
+        assertThat(status.getStatus()).isEqualTo(HealthStatus.Status.DOWN);
+        assertThat(status.getComponents().get("cache")).isNotNull();
+        assertThat(status.getComponents().get("cache").getStatus()).isEqualTo(HealthStatus.Status.DOWN);
+        assertThat(status.getComponents().get("cache").getMessage()).isEqualTo("Cache directory is not accessible or writable");
     }
     
     /**

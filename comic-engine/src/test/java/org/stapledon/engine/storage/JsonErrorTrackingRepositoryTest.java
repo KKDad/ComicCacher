@@ -1,16 +1,11 @@
 package org.stapledon.engine.storage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -25,6 +20,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class JsonErrorTrackingRepositoryTest {
 
@@ -60,9 +57,9 @@ class JsonErrorTrackingRepositoryTest {
 
         // Then
         List<ComicErrorRecord> errors = repository.getErrors("TestComic");
-        assertEquals(1, errors.size());
-        assertEquals("TestComic", errors.get(0).getComicName());
-        assertEquals("Test error message", errors.get(0).getErrorMessage());
+        assertThat(errors.size()).isEqualTo(1);
+        assertThat(errors.get(0).getComicName()).isEqualTo("TestComic");
+        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Test error message");
     }
 
     @Test
@@ -78,10 +75,10 @@ class JsonErrorTrackingRepositoryTest {
 
         // Then - Should only keep last 5
         List<ComicErrorRecord> errors = repository.getErrors(comicName);
-        assertEquals(5, errors.size());
+        assertThat(errors.size()).isEqualTo(5);
         // Most recent should be first
-        assertEquals("Error 7", errors.get(0).getErrorMessage());
-        assertEquals("Error 3", errors.get(4).getErrorMessage());
+        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Error 7");
+        assertThat(errors.get(4).getErrorMessage()).isEqualTo("Error 3");
     }
 
     @Test
@@ -96,8 +93,8 @@ class JsonErrorTrackingRepositoryTest {
         repository.clearErrors("Comic1");
 
         // Then
-        assertTrue(repository.getErrors("Comic1").isEmpty());
-        assertFalse(repository.getErrors("Comic2").isEmpty());
+        assertThat(repository.getErrors("Comic1").isEmpty()).isTrue();
+        assertThat(repository.getErrors("Comic2").isEmpty()).isFalse();
     }
 
     @Test
@@ -106,7 +103,7 @@ class JsonErrorTrackingRepositoryTest {
         List<ComicErrorRecord> errors = repository.getErrors("NonExistentComic");
 
         // Then
-        assertTrue(errors.isEmpty());
+        assertThat(errors.isEmpty()).isTrue();
     }
 
     @Test
@@ -120,11 +117,11 @@ class JsonErrorTrackingRepositoryTest {
         Map<String, List<ComicErrorRecord>> allErrors = repository.getAllErrors();
 
         // Then
-        assertEquals(2, allErrors.size());
-        assertTrue(allErrors.containsKey("Comic1"));
-        assertTrue(allErrors.containsKey("Comic2"));
-        assertEquals(2, allErrors.get("Comic1").size());
-        assertEquals(1, allErrors.get("Comic2").size());
+        assertThat(allErrors.size()).isEqualTo(2);
+        assertThat(allErrors.containsKey("Comic1")).isTrue();
+        assertThat(allErrors.containsKey("Comic2")).isTrue();
+        assertThat(allErrors.get("Comic1").size()).isEqualTo(2);
+        assertThat(allErrors.get("Comic2").size()).isEqualTo(1);
     }
 
     @Test
@@ -138,7 +135,7 @@ class JsonErrorTrackingRepositoryTest {
         int count = repository.getComicErrorCount();
 
         // Then
-        assertEquals(3, count);
+        assertThat(count).isEqualTo(3);
     }
 
     @Test
@@ -155,8 +152,8 @@ class JsonErrorTrackingRepositoryTest {
         List<ComicErrorRecord> errors = newRepository.getErrors("TestComic");
 
         // Then
-        assertEquals(1, errors.size());
-        assertEquals("Test error", errors.get(0).getErrorMessage());
+        assertThat(errors.size()).isEqualTo(1);
+        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Test error");
     }
 
     @Test
@@ -171,10 +168,10 @@ class JsonErrorTrackingRepositoryTest {
 
         // Then
         List<ComicErrorRecord> errors = repository.getErrors(comicName);
-        assertEquals(3, errors.size());
+        assertThat(errors.size()).isEqualTo(3);
         // Most recent first
-        assertEquals("Storage error", errors.get(0).getErrorMessage());
-        assertEquals("Network error", errors.get(2).getErrorMessage());
+        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Storage error");
+        assertThat(errors.get(2).getErrorMessage()).isEqualTo("Network error");
     }
 
     @Test
@@ -205,11 +202,11 @@ class JsonErrorTrackingRepositoryTest {
         List<ComicErrorRecord> errors = allErrors.get(comicName);
 
         // Then
-        assertEquals(3, errors.size());
-        assertTrue(errors.get(0).getTimestamp().isAfter(errors.get(1).getTimestamp()) ||
-                   errors.get(0).getTimestamp().isEqual(errors.get(1).getTimestamp()));
-        assertTrue(errors.get(1).getTimestamp().isAfter(errors.get(2).getTimestamp()) ||
-                   errors.get(1).getTimestamp().isEqual(errors.get(2).getTimestamp()));
+        assertThat(errors.size()).isEqualTo(3);
+        assertThat(errors.get(0).getTimestamp().isAfter(errors.get(1).getTimestamp()) ||
+                errors.get(0).getTimestamp().isEqual(errors.get(1).getTimestamp())).isTrue();
+        assertThat(errors.get(1).getTimestamp().isAfter(errors.get(2).getTimestamp()) ||
+                errors.get(1).getTimestamp().isEqual(errors.get(2).getTimestamp())).isTrue();
     }
 
     @Test
@@ -221,8 +218,8 @@ class JsonErrorTrackingRepositoryTest {
         List<ComicErrorRecord> errors = repository.getErrors("AnyComic");
 
         // Then
-        assertTrue(errors.isEmpty());
-        assertEquals(0, repository.getComicErrorCount());
+        assertThat(errors.isEmpty()).isTrue();
+        assertThat(repository.getComicErrorCount()).isEqualTo(0);
     }
 
     private ComicErrorRecord createTestError(String comicName, String errorMessage) {

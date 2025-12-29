@@ -1,16 +1,5 @@
 package org.stapledon.core.auth.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +19,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthServiceTest {
@@ -82,11 +75,11 @@ class JwtAuthServiceTest {
         Optional<AuthResponse> result = authService.register(registrationDto);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals("newuser", result.get().getUsername());
-        assertEquals("New User", result.get().getDisplayName());
-        assertEquals("jwtToken", result.get().getToken());
-        assertEquals("refreshToken", result.get().getRefreshToken());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo("newuser");
+        assertThat(result.get().getDisplayName()).isEqualTo("New User");
+        assertThat(result.get().getToken()).isEqualTo("jwtToken");
+        assertThat(result.get().getRefreshToken()).isEqualTo("refreshToken");
         
         verify(userService).registerUser(registrationDto);
         verify(jwtTokenUtil).generateToken(newUser);
@@ -109,7 +102,7 @@ class JwtAuthServiceTest {
         Optional<AuthResponse> result = authService.register(registrationDto);
 
         // Then
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
         verify(userService).registerUser(registrationDto);
         verifyNoInteractions(jwtTokenUtil);
     }
@@ -131,10 +124,10 @@ class JwtAuthServiceTest {
         Optional<AuthResponse> result = authService.login(authRequest);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals("user", result.get().getUsername());
-        assertEquals("jwtToken", result.get().getToken());
-        assertEquals("refreshToken", result.get().getRefreshToken());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo("user");
+        assertThat(result.get().getToken()).isEqualTo("jwtToken");
+        assertThat(result.get().getRefreshToken()).isEqualTo("refreshToken");
         
         verify(userService).authenticateUser(authRequest.getUsername(), authRequest.getPassword());
         verify(jwtTokenUtil).generateToken(user);
@@ -152,7 +145,7 @@ class JwtAuthServiceTest {
         when(userService.authenticateUser(authRequest.getUsername(), authRequest.getPassword())).thenReturn(Optional.empty());
 
         // When/Then
-        assertThrows(BadCredentialsException.class, () -> authService.login(authRequest));
+        assertThatExceptionOfType(BadCredentialsException.class).isThrownBy(() -> authService.login(authRequest));
         
         verify(userService).authenticateUser(authRequest.getUsername(), authRequest.getPassword());
         verifyNoInteractions(jwtTokenUtil);
@@ -179,10 +172,10 @@ class JwtAuthServiceTest {
         Optional<AuthResponse> result = authService.refreshToken(refreshToken);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
-        assertEquals("newJwtToken", result.get().getToken());
-        assertEquals("newRefreshToken", result.get().getRefreshToken());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
+        assertThat(result.get().getToken()).isEqualTo("newJwtToken");
+        assertThat(result.get().getRefreshToken()).isEqualTo("newRefreshToken");
         
         verify(jwtTokenUtil).extractUsername(refreshToken);
         verify(userService).getUser(username);
@@ -203,7 +196,7 @@ class JwtAuthServiceTest {
         Optional<AuthResponse> result = authService.refreshToken(refreshToken);
 
         // Then
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
         verify(jwtTokenUtil).extractUsername(refreshToken);
         verifyNoMoreInteractions(userService, userDetailsService);
         verify(jwtTokenUtil, never()).generateToken(any());
@@ -224,7 +217,7 @@ class JwtAuthServiceTest {
         boolean result = authService.validateToken(token);
 
         // Then
-        assertTrue(result);
+        assertThat(result).isTrue();
         verify(jwtTokenUtil).extractUsername(token);
         verify(userDetailsService).loadUserByUsername(username);
         verify(jwtTokenUtil).validateToken(token, userDetails);
@@ -241,7 +234,7 @@ class JwtAuthServiceTest {
         boolean result = authService.validateToken(token);
 
         // Then
-        assertFalse(result);
+        assertThat(result).isFalse();
         verify(jwtTokenUtil).extractUsername(token);
         verifyNoInteractions(userDetailsService);
     }

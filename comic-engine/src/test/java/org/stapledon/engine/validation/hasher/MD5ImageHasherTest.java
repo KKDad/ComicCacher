@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for MD5ImageHasher.
@@ -31,9 +31,9 @@ class MD5ImageHasherTest {
 
         String hash = hasher.calculateHash(imageData);
 
-        assertNotNull(hash, "Hash should not be null");
-        assertEquals(32, hash.length(), "MD5 hash should be 32 characters (128 bits in hex)");
-        assertTrue(hash.matches("[0-9a-f]+"), "Hash should be lowercase hexadecimal");
+        assertThat(hash).as("Hash should not be null").isNotNull();
+        assertThat(hash.length()).as("MD5 hash should be 32 characters (128 bits in hex)").isEqualTo(32);
+        assertThat(hash.matches("[0-9a-f]+")).as("Hash should be lowercase hexadecimal").isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class MD5ImageHasherTest {
         String hash1 = hasher.calculateHash(imageData1);
         String hash2 = hasher.calculateHash(imageData2);
 
-        assertEquals(hash1, hash2, "Identical images should produce identical hashes");
+        assertThat(hash2).as("Identical images should produce identical hashes").isEqualTo(hash1);
     }
 
     @Test
@@ -55,7 +55,7 @@ class MD5ImageHasherTest {
         String redHash = hasher.calculateHash(redImage);
         String blueHash = hasher.calculateHash(blueImage);
 
-        assertNotEquals(redHash, blueHash, "Different images should produce different hashes");
+        assertThat(blueHash).as("Different images should produce different hashes").isNotEqualTo(redHash);
     }
 
     @Test
@@ -84,19 +84,19 @@ class MD5ImageHasherTest {
         String hash1 = hasher.calculateHash(imageData1);
         String hash2 = hasher.calculateHash(imageData2);
 
-        assertNotEquals(hash1, hash2, "Images with single pixel difference should have different MD5 hashes");
+        assertThat(hash2).as("Images with single pixel difference should have different MD5 hashes").isNotEqualTo(hash1);
     }
 
     @Test
     void testCalculateHash_NullData_ReturnsNull() {
         String hash = hasher.calculateHash(null);
-        assertNull(hash, "Null image data should return null");
+        assertThat(hash).as("Null image data should return null").isNull();
     }
 
     @Test
     void testCalculateHash_EmptyData_ReturnsNull() {
         String hash = hasher.calculateHash(new byte[0]);
-        assertNull(hash, "Empty image data should return null");
+        assertThat(hash).as("Empty image data should return null").isNull();
     }
 
     @Test
@@ -108,8 +108,8 @@ class MD5ImageHasherTest {
 
         // MD5 should still calculate a hash because it's just hashing the bytes
         // It doesn't validate whether it's a valid image
-        assertNotNull(hash, "MD5 should hash any byte array, even if not a valid image");
-        assertEquals(32, hash.length(), "MD5 hash should be 32 characters");
+        assertThat(hash).as("MD5 should hash any byte array, even if not a valid image").isNotNull();
+        assertThat(hash.length()).as("MD5 hash should be 32 characters").isEqualTo(32);
     }
 
     @Test
@@ -121,8 +121,7 @@ class MD5ImageHasherTest {
         String smallHash = hasher.calculateHash(small);
         String largeHash = hasher.calculateHash(large);
 
-        assertNotEquals(smallHash, largeHash,
-                "Images with different dimensions should have different hashes, even if same color");
+        assertThat(largeHash).as("Images with different dimensions should have different hashes, even if same color").isNotEqualTo(smallHash);
     }
 
     /**

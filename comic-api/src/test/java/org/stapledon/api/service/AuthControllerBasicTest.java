@@ -1,11 +1,5 @@
 package org.stapledon.api.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
@@ -19,6 +13,11 @@ import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.auth.service.AuthService;
 
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * Basic unit test for AuthController without using Spring context
@@ -52,11 +51,11 @@ class AuthControllerBasicTest {
         ResponseEntity<ApiResponse<AuthResponse>> response = controller.register(registrationDto);
 
         // Then
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals("Test User", response.getBody().getData().getDisplayName());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getDisplayName()).isEqualTo("Test User");
     }
 
     @Test
@@ -76,7 +75,7 @@ class AuthControllerBasicTest {
                 .thenReturn(Optional.empty());
 
         // When/Then
-        assertThrows(AuthenticationException.class, () -> controller.register(registrationDto));
+        assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> controller.register(registrationDto));
     }
 
     @Test
@@ -104,11 +103,11 @@ class AuthControllerBasicTest {
         ResponseEntity<ApiResponse<AuthResponse>> response = controller.login(authRequest);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals("jwtToken", response.getBody().getData().getToken());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getToken()).isEqualTo("jwtToken");
     }
 
     @Test
@@ -126,6 +125,6 @@ class AuthControllerBasicTest {
                 .thenReturn(Optional.empty());
 
         // When/Then
-        assertThrows(AuthenticationException.class, () -> controller.login(authRequest));
+        assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> controller.login(authRequest));
     }
 }

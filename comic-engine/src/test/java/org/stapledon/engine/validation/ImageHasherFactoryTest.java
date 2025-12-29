@@ -13,7 +13,9 @@ import org.stapledon.engine.validation.hasher.DifferenceImageHasher;
 import org.stapledon.engine.validation.hasher.MD5ImageHasher;
 import org.stapledon.engine.validation.hasher.SHA256ImageHasher;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.mockito.Mockito.when;
 
 /**
@@ -60,9 +62,9 @@ class ImageHasherFactoryTest {
         ImageHasher hasher = factory.getImageHasher();
 
         // Then
-        assertNotNull(hasher, "Hasher should not be null");
-        assertSame(md5ImageHasher, hasher, "Should return MD5ImageHasher instance");
-        assertTrue(hasher instanceof MD5ImageHasher, "Should be an instance of MD5ImageHasher");
+        assertThat(hasher).as("Hasher should not be null").isNotNull();
+        assertThat(hasher).as("Should return MD5ImageHasher instance").isSameAs(md5ImageHasher);
+        assertThat(hasher instanceof MD5ImageHasher).as("Should be an instance of MD5ImageHasher").isTrue();
     }
 
     @Test
@@ -74,9 +76,9 @@ class ImageHasherFactoryTest {
         ImageHasher hasher = factory.getImageHasher();
 
         // Then
-        assertNotNull(hasher, "Hasher should not be null");
-        assertSame(sha256ImageHasher, hasher, "Should return SHA256ImageHasher instance");
-        assertTrue(hasher instanceof SHA256ImageHasher, "Should be an instance of SHA256ImageHasher");
+        assertThat(hasher).as("Hasher should not be null").isNotNull();
+        assertThat(hasher).as("Should return SHA256ImageHasher instance").isSameAs(sha256ImageHasher);
+        assertThat(hasher instanceof SHA256ImageHasher).as("Should be an instance of SHA256ImageHasher").isTrue();
     }
 
     @Test
@@ -88,9 +90,9 @@ class ImageHasherFactoryTest {
         ImageHasher hasher = factory.getImageHasher();
 
         // Then
-        assertNotNull(hasher, "Hasher should not be null");
-        assertSame(averageImageHasher, hasher, "Should return AverageImageHasher instance");
-        assertTrue(hasher instanceof AverageImageHasher, "Should be an instance of AverageImageHasher");
+        assertThat(hasher).as("Hasher should not be null").isNotNull();
+        assertThat(hasher).as("Should return AverageImageHasher instance").isSameAs(averageImageHasher);
+        assertThat(hasher instanceof AverageImageHasher).as("Should be an instance of AverageImageHasher").isTrue();
     }
 
     @Test
@@ -102,9 +104,9 @@ class ImageHasherFactoryTest {
         ImageHasher hasher = factory.getImageHasher();
 
         // Then
-        assertNotNull(hasher, "Hasher should not be null");
-        assertSame(differenceImageHasher, hasher, "Should return DifferenceImageHasher instance");
-        assertTrue(hasher instanceof DifferenceImageHasher, "Should be an instance of DifferenceImageHasher");
+        assertThat(hasher).as("Hasher should not be null").isNotNull();
+        assertThat(hasher).as("Should return DifferenceImageHasher instance").isSameAs(differenceImageHasher);
+        assertThat(hasher instanceof DifferenceImageHasher).as("Should be an instance of DifferenceImageHasher").isTrue();
     }
 
     @Test
@@ -117,7 +119,7 @@ class ImageHasherFactoryTest {
         ImageHasher hasher2 = factory.getImageHasher();
 
         // Then
-        assertSame(hasher1, hasher2, "Multiple calls should return the same hasher instance");
+        assertThat(hasher2).as("Multiple calls should return the same hasher instance").isSameAs(hasher1);
     }
 
     @Test
@@ -163,14 +165,13 @@ class ImageHasherFactoryTest {
             String avgHash = averageImageHasher.calculateHash(imageData);
             String diffHash = differenceImageHasher.calculateHash(imageData);
 
-            assertNotNull(avgHash, "Average hash should not be null");
-            assertNotNull(diffHash, "Difference hash should not be null");
-            assertEquals(16, avgHash.length(), "Average hash should be 16 characters");
-            assertEquals(16, diffHash.length(), "Difference hash should be 16 characters");
-            assertEquals(avgHash.length(), diffHash.length(),
-                    "Both perceptual hashers should produce same-length hashes");
+            assertThat(avgHash).as("Average hash should not be null").isNotNull();
+            assertThat(diffHash).as("Difference hash should not be null").isNotNull();
+            assertThat(avgHash.length()).as("Average hash should be 16 characters").isEqualTo(16);
+            assertThat(diffHash.length()).as("Difference hash should be 16 characters").isEqualTo(16);
+            assertThat(diffHash.length()).as("Both perceptual hashers should produce same-length hashes").isEqualTo(avgHash.length());
         } catch (java.io.IOException e) {
-            fail("Failed to create test image: " + e.getMessage());
+            fail("", "Failed to create test image: " + e.getMessage());
         }
     }
 
@@ -182,11 +183,10 @@ class ImageHasherFactoryTest {
         String md5Hash = md5ImageHasher.calculateHash(testData);
         String sha256Hash = sha256ImageHasher.calculateHash(testData);
 
-        assertNotNull(md5Hash, "MD5 hash should not be null");
-        assertNotNull(sha256Hash, "SHA256 hash should not be null");
-        assertEquals(32, md5Hash.length(), "MD5 hash should be 32 characters");
-        assertEquals(64, sha256Hash.length(), "SHA256 hash should be 64 characters");
-        assertNotEquals(md5Hash.length(), sha256Hash.length(),
-                "Cryptographic hashers should produce different-length hashes");
+        assertThat(md5Hash).as("MD5 hash should not be null").isNotNull();
+        assertThat(sha256Hash).as("SHA256 hash should not be null").isNotNull();
+        assertThat(md5Hash.length()).as("MD5 hash should be 32 characters").isEqualTo(32);
+        assertThat(sha256Hash.length()).as("SHA256 hash should be 64 characters").isEqualTo(64);
+        assertThat(sha256Hash.length()).as("Cryptographic hashers should produce different-length hashes").isNotEqualTo(md5Hash.length());
     }
 }

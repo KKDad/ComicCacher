@@ -1,10 +1,5 @@
 package org.stapledon.engine.downloader;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +10,9 @@ import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
 
 import java.time.LocalDate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class ComicsKingdomDownloaderStrategyTest {
@@ -35,7 +33,7 @@ class ComicsKingdomDownloaderStrategyTest {
     @Test
     void shouldHaveCorrectSourceIdentifier() {
         // Assert
-        assertEquals("comicskingdom", strategy.getSource());
+        assertThat(strategy.getSource()).isEqualTo("comicskingdom");
     }
 
     @Test
@@ -49,8 +47,8 @@ class ComicsKingdomDownloaderStrategyTest {
                 mockInspector, mockValidation);
 
         // Assert
-        assertNotNull(newStrategy);
-        assertEquals("comicskingdom", newStrategy.getSource());
+        assertThat(newStrategy).isNotNull();
+        assertThat(newStrategy.getSource()).isEqualTo("comicskingdom");
     }
 
     @Test
@@ -66,13 +64,13 @@ class ComicsKingdomDownloaderStrategyTest {
 
         // Note: This test verifies that the strategy is set up correctly
         // Integration tests will verify actual download functionality
-        assertNotNull(strategy);
-        assertNotNull(request);
-        assertEquals("comicskingdom", strategy.getSource());
-        assertEquals(1, request.getComicId());
-        assertEquals("Daddy Daze", request.getComicName());
-        assertEquals("daddy-daze", request.getSourceIdentifier());
-        assertEquals(LocalDate.of(2024, 1, 15), request.getDate());
+        assertThat(strategy).isNotNull();
+        assertThat(request).isNotNull();
+        assertThat(strategy.getSource()).isEqualTo("comicskingdom");
+        assertThat(request.getComicId()).isEqualTo(1);
+        assertThat(request.getComicName()).isEqualTo("Daddy Daze");
+        assertThat(request.getSourceIdentifier()).isEqualTo("daddy-daze");
+        assertThat(request.getDate()).isEqualTo(LocalDate.of(2024, 1, 15));
     }
 
     @Test
@@ -87,8 +85,8 @@ class ComicsKingdomDownloaderStrategyTest {
                 .build();
 
         // Act & Assert - verify construction doesn't throw
-        assertNotNull(request);
-        assertEquals("Daddy Daze", request.getComicName());
+        assertThat(request).isNotNull();
+        assertThat(request.getComicName()).isEqualTo("Daddy Daze");
     }
 
     @Test
@@ -103,10 +101,10 @@ class ComicsKingdomDownloaderStrategyTest {
                 .build();
 
         // Act & Assert
-        assertNotNull(request.getDate());
-        assertEquals(2024, request.getDate().getYear());
-        assertEquals(1, request.getDate().getMonthValue());
-        assertEquals(15, request.getDate().getDayOfMonth());
+        assertThat(request.getDate()).isNotNull();
+        assertThat(request.getDate().getYear()).isEqualTo(2024);
+        assertThat(request.getDate().getMonthValue()).isEqualTo(1);
+        assertThat(request.getDate().getDayOfMonth()).isEqualTo(15);
     }
 
     @Test
@@ -115,9 +113,9 @@ class ComicsKingdomDownloaderStrategyTest {
         String toString = strategy.toString();
 
         // Assert
-        assertNotNull(toString);
+        assertThat(toString).isNotNull();
         // Lombok's @ToString should include class name
-        assertTrue(toString.contains("ComicsKingdomDownloaderStrategy"));
+        assertThat(toString.contains("ComicsKingdomDownloaderStrategy")).isTrue();
     }
 
     @Test
@@ -132,10 +130,10 @@ class ComicsKingdomDownloaderStrategyTest {
                 .build();
 
         // Act & Assert
-        assertNotNull(request);
-        assertEquals(1, request.getComicId());
-        assertEquals("Multi Word Comic Name", request.getComicName());
-        assertEquals("multi-word-comic-name", request.getSourceIdentifier());
-        assertEquals("comicskingdom", request.getSource());
+        assertThat(request).isNotNull();
+        assertThat(request.getComicId()).isEqualTo(1);
+        assertThat(request.getComicName()).isEqualTo("Multi Word Comic Name");
+        assertThat(request.getSourceIdentifier()).isEqualTo("multi-word-comic-name");
+        assertThat(request.getSource()).isEqualTo("comicskingdom");
     }
 }

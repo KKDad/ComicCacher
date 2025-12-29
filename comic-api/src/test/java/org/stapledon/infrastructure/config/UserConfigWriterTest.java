@@ -1,16 +1,8 @@
 package org.stapledon.infrastructure.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -30,6 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserConfigWriterTest {
 
@@ -224,9 +219,9 @@ class UserConfigWriterTest {
         UserConfig result = userConfigWriter.loadUsers();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getUsers());
-        assertTrue(result.getUsers().isEmpty());
+        assertThat(result).isNotNull();
+        assertThat(result.getUsers()).isNotNull();
+        assertThat(result.getUsers().isEmpty()).isTrue();
     }
 
     @Test
@@ -243,11 +238,11 @@ class UserConfigWriterTest {
         UserConfig result = userConfigWriter.loadUsers();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getUsers());
-        assertEquals(1, result.getUsers().size());
-        assertTrue(result.getUsers().containsKey("testuser"));
-        assertEquals("testuser", result.getUsers().get("testuser").getUsername());
+        assertThat(result).isNotNull();
+        assertThat(result.getUsers()).isNotNull();
+        assertThat(result.getUsers().size()).isEqualTo(1);
+        assertThat(result.getUsers().containsKey("testuser")).isTrue();
+        assertThat(result.getUsers().get("testuser").getUsername()).isEqualTo("testuser");
     }
 
     @Test
@@ -264,15 +259,15 @@ class UserConfigWriterTest {
         Optional<User> result = userConfigWriter.registerUser(registrationDto);
 
         // Then
-        assertTrue(result.isPresent());
+        assertThat(result.isPresent()).isTrue();
         User user = result.get();
-        assertEquals("newuser", user.getUsername());
-        assertEquals("newuser@example.com", user.getEmail());
-        assertEquals("New User", user.getDisplayName());
-        assertTrue(BCrypt.checkpw("password123", user.getPasswordHash()));
-        assertEquals(List.of("USER"), user.getRoles());
-        assertNotNull(user.getCreated());
-        assertNotNull(user.getUserToken());
+        assertThat(user.getUsername()).isEqualTo("newuser");
+        assertThat(user.getEmail()).isEqualTo("newuser@example.com");
+        assertThat(user.getDisplayName()).isEqualTo("New User");
+        assertThat(BCrypt.checkpw("password123", user.getPasswordHash())).isTrue();
+        assertThat(user.getRoles()).isEqualTo(List.of("USER"));
+        assertThat(user.getCreated()).isNotNull();
+        assertThat(user.getUserToken()).isNotNull();
     }
 
     @Test
@@ -300,7 +295,7 @@ class UserConfigWriterTest {
         Optional<User> result = userConfigWriter.registerUser(duplicateDto);
 
         // Then
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
@@ -322,9 +317,9 @@ class UserConfigWriterTest {
         Optional<User> result = userConfigWriter.authenticateUser(username, password);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
-        assertNotNull(result.get().getLastLogin());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
+        assertThat(result.get().getLastLogin()).isNotNull();
     }
 
     @Test
@@ -347,7 +342,7 @@ class UserConfigWriterTest {
         Optional<User> result = userConfigWriter.authenticateUser(username, wrongPassword);
 
         // Then
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
@@ -360,20 +355,20 @@ class UserConfigWriterTest {
         Optional<User> result = userConfigWriter.getUser("getuser");
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals("getuser", result.get().getUsername());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo("getuser");
     }
 
     @Test
     void getUserShouldReturnEmptyForNonExistingUsername() {
         // Make sure there are no users
-        assertTrue(userConfigWriter.loadUsers().getUsers().isEmpty());
+        assertThat(userConfigWriter.loadUsers().getUsers().isEmpty()).isTrue();
         
         // When
         Optional<User> result = userConfigWriter.getUser("nonexistentuser");
 
         // Then
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
@@ -392,12 +387,12 @@ class UserConfigWriterTest {
         Optional<User> result = userConfigWriter.updateUser(updatedUser);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals("updateuser", result.get().getUsername());
-        assertEquals("updated@example.com", result.get().getEmail());
-        assertEquals("Updated Name", result.get().getDisplayName());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo("updateuser");
+        assertThat(result.get().getEmail()).isEqualTo("updated@example.com");
+        assertThat(result.get().getDisplayName()).isEqualTo("Updated Name");
         // Password should be preserved
-        assertEquals(originalUser.getPasswordHash(), result.get().getPasswordHash());
+        assertThat(result.get().getPasswordHash()).isEqualTo(originalUser.getPasswordHash());
     }
 
     @Test
@@ -420,13 +415,13 @@ class UserConfigWriterTest {
         Optional<User> result = userConfigWriter.updatePassword(username, newPassword);
 
         // Then
-        assertTrue(result.isPresent());
-        
+        assertThat(result.isPresent()).isTrue();
+
         // Verify old password no longer works
-        assertTrue(userConfigWriter.authenticateUser(username, originalPassword).isEmpty());
-        
+        assertThat(userConfigWriter.authenticateUser(username, originalPassword).isEmpty()).isTrue();
+
         // Verify new password works
-        assertTrue(userConfigWriter.authenticateUser(username, newPassword).isPresent());
+        assertThat(userConfigWriter.authenticateUser(username, newPassword).isPresent()).isTrue();
     }
 
     /**
@@ -465,16 +460,16 @@ class UserConfigWriterTest {
         UserConfig result = userConfigWriter.loadUsers();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getUsers());
-        assertEquals(2, result.getUsers().size());
-        assertTrue(result.getUsers().containsKey("testuser"));
-        assertTrue(result.getUsers().containsKey("adminuser"));
+        assertThat(result).isNotNull();
+        assertThat(result.getUsers()).isNotNull();
+        assertThat(result.getUsers().size()).isEqualTo(2);
+        assertThat(result.getUsers().containsKey("testuser")).isTrue();
+        assertThat(result.getUsers().containsKey("adminuser")).isTrue();
 
         // Verify admin user has the right roles
         User resultAdminUser = result.getUsers().get("adminuser");
-        assertEquals(2, resultAdminUser.getRoles().size());
-        assertTrue(resultAdminUser.getRoles().contains("ADMIN"));
+        assertThat(resultAdminUser.getRoles().size()).isEqualTo(2);
+        assertThat(resultAdminUser.getRoles().contains("ADMIN")).isTrue();
     }
 
     /**
@@ -488,9 +483,9 @@ class UserConfigWriterTest {
         UserConfig result = userConfigWriter.loadUsers();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getUsers());
-        assertEquals(0, result.getUsers().size());
+        assertThat(result).isNotNull();
+        assertThat(result.getUsers()).isNotNull();
+        assertThat(result.getUsers().size()).isEqualTo(0);
     }
 
     /**
@@ -513,9 +508,9 @@ class UserConfigWriterTest {
         });
 
         // Verify it's the right exception with a meaningful message
-        assertTrue(exception.getMessage().contains("malformed") ||
-                  exception.getMessage().contains("Expected") ||
-                  exception.getMessage().contains("syntax"));
+        assertThat(exception.getMessage().contains("malformed") ||
+                exception.getMessage().contains("Expected") ||
+                exception.getMessage().contains("syntax")).isTrue();
     }
 
     /**
@@ -545,9 +540,9 @@ class UserConfigWriterTest {
         UserConfig result = nullMapWriter.loadUsers();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getUsers()); // Should be initialized to empty map
-        assertEquals(0, result.getUsers().size());
+        assertThat(result).isNotNull();
+        assertThat(result.getUsers()).isNotNull(); // Should be initialized to empty map
+        assertThat(result.getUsers().size()).isEqualTo(0);
     }
 
     /**
@@ -574,17 +569,17 @@ class UserConfigWriterTest {
         UserConfig result = userConfigWriter.loadUsers();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getUsers());
-        assertEquals(1, result.getUsers().size());
+        assertThat(result).isNotNull();
+        assertThat(result.getUsers()).isNotNull();
+        assertThat(result.getUsers().size()).isEqualTo(1);
 
         User user = result.getUsers().get("missingfieldsuser");
-        assertNotNull(user);
-        assertEquals("missingfieldsuser", user.getUsername());
-        assertEquals("missing@example.com", user.getEmail());
+        assertThat(user).isNotNull();
+        assertThat(user.getUsername()).isEqualTo("missingfieldsuser");
+        assertThat(user.getEmail()).isEqualTo("missing@example.com");
         // Check that default fields were properly initialized
-        assertNull(user.getDisplayName()); // No default for display name
-        assertNotNull(user.getRoles()); // Should default to empty list
+        assertThat(user.getDisplayName()).isNull(); // No default for display name
+        assertThat(user.getRoles()).isNotNull(); // Should default to empty list
     }
 
     /**
@@ -600,7 +595,7 @@ class UserConfigWriterTest {
         boolean result = userConfigWriter.saveUser(user);
 
         // Then
-        assertFalse(result);
+        assertThat(result).isFalse();
     }
 
     /**
@@ -617,7 +612,7 @@ class UserConfigWriterTest {
         boolean result = userConfigWriter.saveUser(user);
 
         // Then
-        assertFalse(result);
+        assertThat(result).isFalse();
 
         // Clean up
         userConfigWriter.setSimulateWriteFailure(false);
@@ -649,14 +644,14 @@ class UserConfigWriterTest {
         // Then
         // Verify all registrations succeeded
         for (boolean result : results) {
-            assertTrue(result);
+            assertThat(result).isTrue();
         }
 
         // Check the final state
         UserConfig finalConfig = userConfigWriter.loadUsers();
-        assertEquals(5, finalConfig.getUsers().size());
+        assertThat(finalConfig.getUsers().size()).isEqualTo(5);
         for (int i = 0; i < 5; i++) {
-            assertTrue(finalConfig.getUsers().containsKey("sequential" + i));
+            assertThat(finalConfig.getUsers().containsKey("sequential" + i)).isTrue();
         }
     }
 

@@ -1,17 +1,6 @@
 package org.stapledon.engine.storage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.lenient;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
-
+import com.google.gson.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +16,9 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class DuplicateImageHashRepositoryTest {
@@ -61,7 +53,7 @@ class DuplicateImageHashRepositoryTest {
         Optional<ImageHashRecord> result = repository.findByHash(comicId, comicName, year, testHash);
 
         // Assert
-        assertFalse(result.isPresent());
+        assertThat(result.isPresent()).isFalse();
     }
 
     @Test
@@ -78,10 +70,10 @@ class DuplicateImageHashRepositoryTest {
         Optional<ImageHashRecord> result = repository.findByHash(comicId, comicName, year, testHash);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(testHash, result.get().getHash());
-        assertEquals(LocalDate.of(2024, 6, 15), result.get().getDate());
-        assertEquals("/comics/test/2024/2024-06-15.png", result.get().getFilePath());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getHash()).isEqualTo(testHash);
+        assertThat(result.get().getDate()).isEqualTo(LocalDate.of(2024, 6, 15));
+        assertThat(result.get().getFilePath()).isEqualTo("/comics/test/2024/2024-06-15.png");
     }
 
     @Test
@@ -102,13 +94,13 @@ class DuplicateImageHashRepositoryTest {
         Optional<ImageHashRecord> result = repository.findByHash(comicId, comicName, year, testHash);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertNotNull(result.get());
-        assertEquals(testHash, result.get().getHash());
-        assertNotNull(result.get().getDate());
-        assertEquals(LocalDate.of(2024, 6, 15), result.get().getDate());
-        assertNotNull(result.get().getFilePath());
-        assertEquals("/comics/test/2024/2024-06-15.png", result.get().getFilePath());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isNotNull();
+        assertThat(result.get().getHash()).isEqualTo(testHash);
+        assertThat(result.get().getDate()).isNotNull();
+        assertThat(result.get().getDate()).isEqualTo(LocalDate.of(2024, 6, 15));
+        assertThat(result.get().getFilePath()).isNotNull();
+        assertThat(result.get().getFilePath()).isEqualTo("/comics/test/2024/2024-06-15.png");
     }
 
     @Test
@@ -126,14 +118,14 @@ class DuplicateImageHashRepositoryTest {
         Map<String, ImageHashRecord> hashes = repository.loadHashes(comicId, comicName, year);
 
         // Assert
-        assertNotNull(hashes);
-        assertEquals(1, hashes.size());
-        assertTrue(hashes.containsKey(testHash));
+        assertThat(hashes).isNotNull();
+        assertThat(hashes.size()).isEqualTo(1);
+        assertThat(hashes.containsKey(testHash)).isTrue();
         ImageHashRecord retrievedRecord = hashes.get(testHash);
-        assertNotNull(retrievedRecord);
-        assertEquals(testHash, retrievedRecord.getHash());
-        assertEquals(LocalDate.of(2024, 6, 15), retrievedRecord.getDate());
-        assertEquals("/comics/test/2024/2024-06-15.png", retrievedRecord.getFilePath());
+        assertThat(retrievedRecord).isNotNull();
+        assertThat(retrievedRecord.getHash()).isEqualTo(testHash);
+        assertThat(retrievedRecord.getDate()).isEqualTo(LocalDate.of(2024, 6, 15));
+        assertThat(retrievedRecord.getFilePath()).isEqualTo("/comics/test/2024/2024-06-15.png");
     }
 
     @Test
@@ -162,12 +154,12 @@ class DuplicateImageHashRepositoryTest {
         Optional<ImageHashRecord> oldResult = repository.findByHash(comicId, comicName, year, "oldHash");
         Optional<ImageHashRecord> newResult = repository.findByHash(comicId, comicName, year, testHash);
 
-        assertFalse(oldResult.isPresent());
-        assertTrue(newResult.isPresent());
-        assertNotNull(newResult.get());
-        assertEquals(testHash, newResult.get().getHash());
-        assertEquals(LocalDate.of(2024, 6, 20), newResult.get().getDate());
-        assertEquals("/comics/test/2024/2024-06-20.png", newResult.get().getFilePath());
+        assertThat(oldResult.isPresent()).isFalse();
+        assertThat(newResult.isPresent()).isTrue();
+        assertThat(newResult.get()).isNotNull();
+        assertThat(newResult.get().getHash()).isEqualTo(testHash);
+        assertThat(newResult.get().getDate()).isEqualTo(LocalDate.of(2024, 6, 20));
+        assertThat(newResult.get().getFilePath()).isEqualTo("/comics/test/2024/2024-06-20.png");
     }
 
     @Test
@@ -176,9 +168,9 @@ class DuplicateImageHashRepositoryTest {
         File yearDir = repository.getYearDirectory(comicId, comicName, year);
 
         // Assert
-        assertNotNull(yearDir);
-        assertTrue(yearDir.getPath().contains("TestComic"));
-        assertTrue(yearDir.getPath().contains("2024"));
+        assertThat(yearDir).isNotNull();
+        assertThat(yearDir.getPath().contains("TestComic")).isTrue();
+        assertThat(yearDir.getPath().contains("2024")).isTrue();
     }
 
     @Test
@@ -195,11 +187,11 @@ class DuplicateImageHashRepositoryTest {
         Optional<ImageHashRecord> result = repository.findByHash(comicId, null, year, testHash);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertNotNull(result.get());
-        assertEquals(testHash, result.get().getHash());
-        assertEquals(LocalDate.of(2024, 6, 15), result.get().getDate());
-        assertEquals("/comics/comic_1/2024/2024-06-15.png", result.get().getFilePath());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isNotNull();
+        assertThat(result.get().getHash()).isEqualTo(testHash);
+        assertThat(result.get().getDate()).isEqualTo(LocalDate.of(2024, 6, 15));
+        assertThat(result.get().getFilePath()).isEqualTo("/comics/comic_1/2024/2024-06-15.png");
     }
 
     @Test
@@ -220,11 +212,11 @@ class DuplicateImageHashRepositoryTest {
         Optional<ImageHashRecord> result = repository.findByHash(comicId, comicName, year, testHash);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertNotNull(result.get());
-        assertEquals(testHash, result.get().getHash());
-        assertEquals(LocalDate.of(2024, 6, 15), result.get().getDate());
-        assertEquals("/comics/test/2024/2024-06-15.png", result.get().getFilePath());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isNotNull();
+        assertThat(result.get().getHash()).isEqualTo(testHash);
+        assertThat(result.get().getDate()).isEqualTo(LocalDate.of(2024, 6, 15));
+        assertThat(result.get().getFilePath()).isEqualTo("/comics/test/2024/2024-06-15.png");
     }
 
     @Test
@@ -242,9 +234,9 @@ class DuplicateImageHashRepositoryTest {
         File yearDir = repository.getYearDirectory(comicId, comicNameWithSpaces, year);
 
         // Assert
-        assertNotNull(yearDir);
+        assertThat(yearDir).isNotNull();
         // Spaces should be removed
-        assertFalse(yearDir.getPath().contains(" "));
+        assertThat(yearDir.getPath().contains(" ")).isFalse();
     }
 
     @Test
@@ -270,12 +262,12 @@ class DuplicateImageHashRepositoryTest {
         Optional<ImageHashRecord> result2024 = repository.findByHash(comicId, comicName, 2024, testHash);
         Optional<ImageHashRecord> result2023 = repository.findByHash(comicId, comicName, 2023, testHash);
 
-        assertTrue(result2024.isPresent());
-        assertTrue(result2023.isPresent());
-        assertEquals(2024, result2024.get().getDate().getYear());
-        assertEquals(2023, result2023.get().getDate().getYear());
-        assertEquals("/comics/test/2024/2024-06-15.png", result2024.get().getFilePath());
-        assertEquals("/comics/test/2023/2023-06-15.png", result2023.get().getFilePath());
+        assertThat(result2024.isPresent()).isTrue();
+        assertThat(result2023.isPresent()).isTrue();
+        assertThat(result2024.get().getDate().getYear()).isEqualTo(2024);
+        assertThat(result2023.get().getDate().getYear()).isEqualTo(2023);
+        assertThat(result2024.get().getFilePath()).isEqualTo("/comics/test/2024/2024-06-15.png");
+        assertThat(result2023.get().getFilePath()).isEqualTo("/comics/test/2023/2023-06-15.png");
     }
 
     @Test
@@ -284,6 +276,6 @@ class DuplicateImageHashRepositoryTest {
         String toString = repository.toString();
 
         // Assert
-        assertNotNull(toString);
+        assertThat(toString).isNotNull();
     }
 }

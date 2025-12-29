@@ -21,7 +21,8 @@ import org.stapledon.engine.management.ManagementFacade;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -58,8 +59,8 @@ class ComicBackfillJobConfigTest {
 
         Job job = config.comicBackfillJob(jobRepository, mockStep, jsonBatchExecutionTracker);
 
-        assertNotNull(job);
-        assertEquals("ComicBackfillJob", job.getName());
+        assertThat(job).isNotNull();
+        assertThat(job.getName()).isEqualTo("ComicBackfillJob");
     }
 
     @Test
@@ -76,8 +77,8 @@ class ComicBackfillJobConfigTest {
             mockWriter
         );
 
-        assertNotNull(step);
-        assertEquals("comicBackfillStep", step.getName());
+        assertThat(step).isNotNull();
+        assertThat(step.getName()).isEqualTo("comicBackfillStep");
     }
 
     @Test
@@ -90,12 +91,12 @@ class ComicBackfillJobConfigTest {
         ItemReader<BackfillTask> reader = config.backfillTaskReader();
 
         BackfillTask result = reader.read();
-        assertNotNull(result);
-        assertEquals(comic, result.comic());
-        assertEquals(LocalDate.of(2025, 1, 1), result.date());
+        assertThat(result).isNotNull();
+        assertThat(result.comic()).isEqualTo(comic);
+        assertThat(result.date()).isEqualTo(LocalDate.of(2025, 1, 1));
 
         // Second read should return null (end of list)
-        assertNull(reader.read());
+        assertThat(reader.read()).isNull();
     }
 
     @Test
@@ -118,8 +119,8 @@ class ComicBackfillJobConfigTest {
 
         ComicDownloadResult processedResult = processor.process(task);
 
-        assertNotNull(processedResult);
-        assertTrue(processedResult.isSuccessful());
+        assertThat(processedResult).isNotNull();
+        assertThat(processedResult.isSuccessful()).isTrue();
         verify(managementFacade).updateComicsForDate(task.date());
     }
 
@@ -144,7 +145,7 @@ class ComicBackfillJobConfigTest {
 
         ComicDownloadResult result = processor.process(task);
 
-        assertNull(result); // No matching result for this comic
+        assertThat(result).isNull(); // No matching result for this comic
     }
 
     @Test
@@ -159,7 +160,7 @@ class ComicBackfillJobConfigTest {
 
         ComicDownloadResult result = processor.process(task);
 
-        assertNull(result); // Should return null on exception
+        assertThat(result).isNull(); // Should return null on exception
     }
 
     @Test

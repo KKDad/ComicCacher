@@ -1,10 +1,5 @@
 package org.stapledon.engine.analysis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -12,6 +7,7 @@ import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -19,7 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import javax.imageio.ImageIO;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ImageAnalysisServiceTest {
 
@@ -42,7 +38,7 @@ class ImageAnalysisServiceTest {
         ImageMetadata.ColorMode colorMode = service.detectColorMode(imageData);
 
         // Then
-        assertEquals(ImageMetadata.ColorMode.COLOR, colorMode);
+        assertThat(colorMode).isEqualTo(ImageMetadata.ColorMode.COLOR);
     }
 
     @Test
@@ -54,7 +50,7 @@ class ImageAnalysisServiceTest {
         ImageMetadata.ColorMode colorMode = service.detectColorMode(imageData);
 
         // Then
-        assertEquals(ImageMetadata.ColorMode.GRAYSCALE, colorMode);
+        assertThat(colorMode).isEqualTo(ImageMetadata.ColorMode.GRAYSCALE);
     }
 
     @Test
@@ -68,15 +64,15 @@ class ImageAnalysisServiceTest {
         ImageMetadata metadata = service.analyzeImage(imageFile, validation, "http://example.com/image.png");
 
         // Then
-        assertNotNull(metadata);
-        assertEquals(imageFile.getAbsolutePath(), metadata.getFilePath());
-        assertEquals(ImageFormat.PNG, metadata.getFormat());
-        assertEquals(100, metadata.getWidth());
-        assertEquals(100, metadata.getHeight());
-        assertEquals(ImageMetadata.ColorMode.COLOR, metadata.getColorMode());
-        assertEquals(5.0, metadata.getSamplePercentage());
-        assertEquals("http://example.com/image.png", metadata.getSourceUrl());
-        assertNotNull(metadata.getCaptureTimestamp());
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.getFilePath()).isEqualTo(imageFile.getAbsolutePath());
+        assertThat(metadata.getFormat()).isEqualTo(ImageFormat.PNG);
+        assertThat(metadata.getWidth()).isEqualTo(100);
+        assertThat(metadata.getHeight()).isEqualTo(100);
+        assertThat(metadata.getColorMode()).isEqualTo(ImageMetadata.ColorMode.COLOR);
+        assertThat(metadata.getSamplePercentage()).isEqualTo(5.0);
+        assertThat(metadata.getSourceUrl()).isEqualTo("http://example.com/image.png");
+        assertThat(metadata.getCaptureTimestamp()).isNotNull();
     }
 
     @Test
@@ -91,13 +87,13 @@ class ImageAnalysisServiceTest {
         ImageMetadata metadata = service.analyzeImage(imageData, filePath, validation, null);
 
         // Then
-        assertNotNull(metadata);
-        assertEquals(filePath, metadata.getFilePath());
-        assertEquals(ImageFormat.PNG, metadata.getFormat());
-        assertEquals(50, metadata.getWidth());
-        assertEquals(50, metadata.getHeight());
-        assertEquals(ImageMetadata.ColorMode.COLOR, metadata.getColorMode());
-        assertNull(metadata.getSourceUrl());
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.getFilePath()).isEqualTo(filePath);
+        assertThat(metadata.getFormat()).isEqualTo(ImageFormat.PNG);
+        assertThat(metadata.getWidth()).isEqualTo(50);
+        assertThat(metadata.getHeight()).isEqualTo(50);
+        assertThat(metadata.getColorMode()).isEqualTo(ImageMetadata.ColorMode.COLOR);
+        assertThat(metadata.getSourceUrl()).isNull();
     }
 
     @Test
@@ -106,7 +102,7 @@ class ImageAnalysisServiceTest {
         ImageMetadata.ColorMode colorMode = service.detectColorMode(null);
 
         // Then
-        assertEquals(ImageMetadata.ColorMode.UNKNOWN, colorMode);
+        assertThat(colorMode).isEqualTo(ImageMetadata.ColorMode.UNKNOWN);
     }
 
     @Test
@@ -115,7 +111,7 @@ class ImageAnalysisServiceTest {
         ImageMetadata.ColorMode colorMode = service.detectColorMode(new byte[0]);
 
         // Then
-        assertEquals(ImageMetadata.ColorMode.UNKNOWN, colorMode);
+        assertThat(colorMode).isEqualTo(ImageMetadata.ColorMode.UNKNOWN);
     }
 
     @Test
@@ -127,7 +123,7 @@ class ImageAnalysisServiceTest {
         ImageMetadata.ColorMode colorMode = service.detectColorMode(invalidData);
 
         // Then
-        assertEquals(ImageMetadata.ColorMode.UNKNOWN, colorMode);
+        assertThat(colorMode).isEqualTo(ImageMetadata.ColorMode.UNKNOWN);
     }
 
     @Test
@@ -141,8 +137,8 @@ class ImageAnalysisServiceTest {
         ImageMetadata metadata = service.analyzeImage(nonExistentFile, validation, null);
 
         // Then
-        assertNotNull(metadata);
-        assertEquals(ImageMetadata.ColorMode.UNKNOWN, metadata.getColorMode());
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.getColorMode()).isEqualTo(ImageMetadata.ColorMode.UNKNOWN);
     }
 
     @Test
@@ -154,7 +150,7 @@ class ImageAnalysisServiceTest {
         ImageMetadata.ColorMode colorMode = service.detectColorMode(imageData);
 
         // Then
-        assertEquals(ImageMetadata.ColorMode.GRAYSCALE, colorMode);
+        assertThat(colorMode).isEqualTo(ImageMetadata.ColorMode.GRAYSCALE);
     }
 
     @Test
@@ -168,9 +164,9 @@ class ImageAnalysisServiceTest {
         // Then
         // Due to random sampling, this might be COLOR or GRAYSCALE
         // We just verify it doesn't crash and returns a valid value
-        assertNotNull(colorMode);
-        assertTrue(colorMode == ImageMetadata.ColorMode.COLOR ||
-                   colorMode == ImageMetadata.ColorMode.GRAYSCALE);
+        assertThat(colorMode).isNotNull();
+        assertThat(colorMode == ImageMetadata.ColorMode.COLOR ||
+                colorMode == ImageMetadata.ColorMode.GRAYSCALE).isTrue();
     }
 
     @Test
@@ -182,7 +178,7 @@ class ImageAnalysisServiceTest {
         ImageMetadata.ColorMode colorMode = service.detectColorMode(imageData);
 
         // Then
-        assertEquals(ImageMetadata.ColorMode.COLOR, colorMode);
+        assertThat(colorMode).isEqualTo(ImageMetadata.ColorMode.COLOR);
     }
 
     @Test
@@ -197,7 +193,7 @@ class ImageAnalysisServiceTest {
                 imageData, "/tmp/test.png", validation, null);
 
         // Then
-        assertEquals(5.0, metadata.getSamplePercentage());
+        assertThat(metadata.getSamplePercentage()).isEqualTo(5.0);
     }
 
     // Helper methods

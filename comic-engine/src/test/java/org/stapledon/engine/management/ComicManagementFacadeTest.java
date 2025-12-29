@@ -1,17 +1,5 @@
 package org.stapledon.engine.management;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,12 +8,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.stapledon.common.config.IComicsBootstrap;
-import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.dto.ComicNavigationResult;
-import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.*;
 import org.stapledon.common.infrastructure.config.ExecutionTracker;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
@@ -39,6 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ComicManagementFacadeTest {
@@ -114,8 +101,8 @@ class ComicManagementFacadeTest {
         List<ComicItem> comics = facade.getAllComics();
 
         // Assert
-        assertEquals(1, comics.size());
-        assertEquals(testComic, comics.get(0));
+        assertThat(comics.size()).isEqualTo(1);
+        assertThat(comics.get(0)).isEqualTo(testComic);
     }
 
     @Test
@@ -168,12 +155,12 @@ class ComicManagementFacadeTest {
         List<ComicItem> comics = testFacade.getAllComics();
 
         // Assert
-        assertEquals(4, comics.size());
+        assertThat(comics.size()).isEqualTo(4);
         // Null name should be sorted first
-        assertEquals(null, comics.get(0).getName());
-        assertEquals("A Comic", comics.get(1).getName());
-        assertEquals("B Comic", comics.get(2).getName());
-        assertEquals("C Comic", comics.get(3).getName());
+        assertThat(comics.get(0).getName()).isEqualTo(null);
+        assertThat(comics.get(1).getName()).isEqualTo("A Comic");
+        assertThat(comics.get(2).getName()).isEqualTo("B Comic");
+        assertThat(comics.get(3).getName()).isEqualTo("C Comic");
     }
 
     @Test
@@ -182,8 +169,8 @@ class ComicManagementFacadeTest {
         Optional<ComicItem> comic = facade.getComic(1);
 
         // Assert
-        assertTrue(comic.isPresent());
-        assertEquals(testComic, comic.get());
+        assertThat(comic.isPresent()).isTrue();
+        assertThat(comic.get()).isEqualTo(testComic);
     }
 
     @Test
@@ -192,7 +179,7 @@ class ComicManagementFacadeTest {
         Optional<ComicItem> comic = facade.getComic(999);
 
         // Assert
-        assertFalse(comic.isPresent());
+        assertThat(comic.isPresent()).isFalse();
     }
 
     @Test
@@ -201,8 +188,8 @@ class ComicManagementFacadeTest {
         Optional<ComicItem> comic = facade.getComicByName("Test Comic");
 
         // Assert
-        assertTrue(comic.isPresent());
-        assertEquals(testComic, comic.get());
+        assertThat(comic.isPresent()).isTrue();
+        assertThat(comic.get()).isEqualTo(testComic);
     }
 
     @Test
@@ -211,7 +198,7 @@ class ComicManagementFacadeTest {
         Optional<ComicItem> comic = facade.getComicByName(null);
 
         // Assert
-        assertFalse(comic.isPresent());
+        assertThat(comic.isPresent()).isFalse();
     }
 
     @Test
@@ -238,9 +225,9 @@ class ComicManagementFacadeTest {
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
 
         // Act and Assert - this shouldn't throw an NPE
-        assertEquals(1, nullNameFacade.getAllComics().size());
-        assertEquals(nullNameComic, nullNameFacade.getComic(123).get());
-        assertEquals(0, nullNameFacade.getComicByName("AnyName").stream().count());
+        assertThat(nullNameFacade.getAllComics().size()).isEqualTo(1);
+        assertThat(nullNameFacade.getComic(123).get()).isEqualTo(nullNameComic);
+        assertThat(nullNameFacade.getComicByName("AnyName").stream().count()).isEqualTo(0);
     }
 
     @Test
@@ -255,8 +242,8 @@ class ComicManagementFacadeTest {
         Optional<ComicItem> created = facade.createComic(newComic);
 
         // Assert
-        assertTrue(created.isPresent());
-        assertEquals(newComic, created.get());
+        assertThat(created.isPresent()).isTrue();
+        assertThat(created.get()).isEqualTo(newComic);
         verify(configFacade).saveComicConfig(any());
     }
 
@@ -266,7 +253,7 @@ class ComicManagementFacadeTest {
         Optional<ComicItem> created = facade.createComic(testComic);
 
         // Assert
-        assertFalse(created.isPresent());
+        assertThat(created.isPresent()).isFalse();
         verify(configFacade, never()).saveComicConfig(any());
     }
 
@@ -282,8 +269,8 @@ class ComicManagementFacadeTest {
         Optional<ComicItem> updated = facade.updateComic(1, updatedComic);
 
         // Assert
-        assertTrue(updated.isPresent());
-        assertEquals("Updated Comic", updated.get().getName());
+        assertThat(updated.isPresent()).isTrue();
+        assertThat(updated.get().getName()).isEqualTo("Updated Comic");
         verify(configFacade).saveComicConfig(any());
     }
 
@@ -293,7 +280,7 @@ class ComicManagementFacadeTest {
         boolean deleted = facade.deleteComic(1);
 
         // Assert
-        assertTrue(deleted);
+        assertThat(deleted).isTrue();
         verify(storageFacade).deleteComic(1, "Test Comic");
         verify(configFacade).saveComicConfig(any());
     }
@@ -304,7 +291,7 @@ class ComicManagementFacadeTest {
         boolean deleted = facade.deleteComic(999);
 
         // Assert
-        assertFalse(deleted);
+        assertThat(deleted).isFalse();
         verify(storageFacade, never()).deleteComic(anyInt(), anyString());
         verify(configFacade, never()).saveComicConfig(any());
     }
@@ -322,9 +309,9 @@ class ComicManagementFacadeTest {
         ComicNavigationResult result = facade.getComicStrip(1, Direction.FORWARD);
 
         // Assert
-        assertTrue(result.isFound());
-        assertNotNull(result.getImage());
-        assertEquals(imageDto, result.getImage());
+        assertThat(result.isFound()).isTrue();
+        assertThat(result.getImage()).isNotNull();
+        assertThat(result.getImage()).isEqualTo(imageDto);
     }
 
     @Test
@@ -340,9 +327,9 @@ class ComicManagementFacadeTest {
         ComicNavigationResult result = facade.getComicStrip(1, Direction.BACKWARD);
 
         // Assert
-        assertTrue(result.isFound());
-        assertNotNull(result.getImage());
-        assertEquals(imageDto, result.getImage());
+        assertThat(result.isFound()).isTrue();
+        assertThat(result.getImage()).isNotNull();
+        assertThat(result.getImage()).isEqualTo(imageDto);
     }
 
     @Test
@@ -359,9 +346,9 @@ class ComicManagementFacadeTest {
         ComicNavigationResult result = facade.getComicStrip(1, Direction.FORWARD, from);
 
         // Assert
-        assertTrue(result.isFound());
-        assertNotNull(result.getImage());
-        assertEquals(imageDto, result.getImage());
+        assertThat(result.isFound()).isTrue();
+        assertThat(result.getImage()).isNotNull();
+        assertThat(result.getImage()).isEqualTo(imageDto);
     }
 
     @Test
@@ -376,8 +363,8 @@ class ComicManagementFacadeTest {
         Optional<ImageDto> result = facade.getComicStripOnDate(1, date);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(imageDto, result.get());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(imageDto);
     }
 
     @Test
@@ -391,8 +378,8 @@ class ComicManagementFacadeTest {
         Optional<ImageDto> result = facade.getAvatar(1);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(imageDto, result.get());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(imageDto);
     }
 
     @Test
@@ -425,7 +412,7 @@ class ComicManagementFacadeTest {
         boolean updated = facade.updateAllComics();
 
         // Assert
-        assertTrue(updated);
+        assertThat(updated).isTrue();
         verify(storageFacade).comicStripExists(eq(1), eq("Test Comic"), any());
         verify(downloaderFacade).downloadComic(any());
         verify(storageFacade).saveComicStrip(eq(1), eq("Test Comic"), any(), eq(testImageData));
@@ -448,7 +435,7 @@ class ComicManagementFacadeTest {
         boolean updated = facade.updateComic(1);
 
         // Assert
-        assertTrue(updated);
+        assertThat(updated).isTrue();
         verify(downloaderFacade).downloadComic(any());
         verify(storageFacade).saveComicStrip(eq(1), eq("Test Comic"), any(), eq(testImageData));
         verify(configFacade).saveComicConfig(any());
@@ -467,7 +454,7 @@ class ComicManagementFacadeTest {
         boolean purged = facade.purgeOldImages(7);
 
         // Assert
-        assertTrue(purged);
+        assertThat(purged).isTrue();
         verify(storageFacade).purgeOldImages(eq(1), eq("Test Comic"), eq(7));
     }
 
@@ -481,8 +468,8 @@ class ComicManagementFacadeTest {
         Optional<LocalDate> result = facade.getNewestDateWithComic(1);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(newest, result.get());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(newest);
     }
 
     @Test
@@ -495,7 +482,7 @@ class ComicManagementFacadeTest {
         Optional<LocalDate> result = facade.getOldestDateWithComic(1);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(oldest, result.get());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(oldest);
     }
 }

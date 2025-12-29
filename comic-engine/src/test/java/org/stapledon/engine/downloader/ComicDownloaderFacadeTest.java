@@ -1,16 +1,5 @@
 package org.stapledon.engine.downloader;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +16,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ComicDownloaderFacadeTest {
@@ -66,10 +59,10 @@ class ComicDownloaderFacadeTest {
         ComicDownloadResult result = facade.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertTrue(result.isSuccessful());
-        assertEquals(testImageData, result.getImageData());
-        assertEquals(request, result.getRequest());
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isTrue();
+        assertThat(result.getImageData()).isEqualTo(testImageData);
+        assertThat(result.getRequest()).isEqualTo(request);
         verify(goComicsStrategy).downloadComic(request);
         verify(comicsKingdomStrategy, never()).downloadComic(any());
     }
@@ -89,9 +82,9 @@ class ComicDownloaderFacadeTest {
         ComicDownloadResult result = facade.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccessful());
-        assertTrue(result.getErrorMessage().contains("No downloader strategy registered"));
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage().contains("No downloader strategy registered")).isTrue();
         verify(goComicsStrategy, never()).downloadComic(any());
         verify(comicsKingdomStrategy, never()).downloadComic(any());
     }
@@ -113,9 +106,9 @@ class ComicDownloaderFacadeTest {
         ComicDownloadResult result = facade.downloadComic(request);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isSuccessful());
-        assertTrue(result.getErrorMessage().contains("Error downloading comic"));
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage().contains("Error downloading comic")).isTrue();
         verify(goComicsStrategy).downloadComic(request);
     }
 
@@ -134,8 +127,8 @@ class ComicDownloaderFacadeTest {
         Optional<byte[]> result = facade.downloadAvatar(comicId, comicName, source, sourceIdentifier);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals(testImageData, result.get());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get()).isEqualTo(testImageData);
         verify(goComicsStrategy).downloadAvatar(comicId, comicName, sourceIdentifier);
         verify(comicsKingdomStrategy, never()).downloadAvatar(anyInt(), anyString(), anyString());
     }
@@ -152,7 +145,7 @@ class ComicDownloaderFacadeTest {
         Optional<byte[]> result = facade.downloadAvatar(comicId, comicName, source, sourceIdentifier);
 
         // Assert
-        assertFalse(result.isPresent());
+        assertThat(result.isPresent()).isFalse();
         verify(goComicsStrategy, never()).downloadAvatar(anyInt(), anyString(), anyString());
         verify(comicsKingdomStrategy, never()).downloadAvatar(anyInt(), anyString(), anyString());
     }
@@ -203,9 +196,9 @@ class ComicDownloaderFacadeTest {
         List<ComicDownloadResult> results = facade.downloadComicsForDate(config, testDate);
 
         // Assert
-        assertEquals(2, results.size());
-        assertTrue(results.get(0).isSuccessful());
-        assertFalse(results.get(1).isSuccessful());
+        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.get(0).isSuccessful()).isTrue();
+        assertThat(results.get(1).isSuccessful()).isFalse();
 
         verify(goComicsStrategy).downloadComic(any(ComicDownloadRequest.class));
         verify(comicsKingdomStrategy).downloadComic(any(ComicDownloadRequest.class));
@@ -217,7 +210,7 @@ class ComicDownloaderFacadeTest {
         List<ComicDownloadResult> results = facade.downloadComicsForDate(null, testDate);
 
         // Assert
-        assertTrue(results.isEmpty());
+        assertThat(results.isEmpty()).isTrue();
         verify(goComicsStrategy, never()).downloadComic(any());
         verify(comicsKingdomStrategy, never()).downloadComic(any());
     }
@@ -253,8 +246,8 @@ class ComicDownloaderFacadeTest {
         List<ComicDownloadResult> results = facade.downloadLatestComics(config);
 
         // Assert
-        assertEquals(1, results.size());
-        assertTrue(results.get(0).isSuccessful());
+        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.get(0).isSuccessful()).isTrue();
 
         verify(goComicsStrategy).downloadComic(any(ComicDownloadRequest.class));
     }
@@ -297,8 +290,8 @@ class ComicDownloaderFacadeTest {
         List<ComicDownloadResult> results = facade.downloadComicsForDate(config, testDate);
 
         // Assert
-        assertEquals(1, results.size());
-        assertEquals("Active Comic", results.get(0).getRequest().getComicName());
+        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.get(0).getRequest().getComicName()).isEqualTo("Active Comic");
     }
 
     @Test
@@ -343,8 +336,8 @@ class ComicDownloaderFacadeTest {
         List<ComicDownloadResult> results = facade.downloadComicsForDate(config, monday);
 
         // Assert - only the daily comic should be downloaded
-        assertEquals(1, results.size());
-        assertEquals("Daily Comic", results.get(0).getRequest().getComicName());
+        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.get(0).getRequest().getComicName()).isEqualTo("Daily Comic");
     }
 
     @Test
@@ -381,7 +374,7 @@ class ComicDownloaderFacadeTest {
         List<ComicDownloadResult> results = facade.downloadComicsForDate(config, monday);
 
         // Assert
-        assertEquals(1, results.size());
-        assertEquals("Monday Comic", results.get(0).getRequest().getComicName());
+        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.get(0).getRequest().getComicName()).isEqualTo("Monday Comic");
     }
 }

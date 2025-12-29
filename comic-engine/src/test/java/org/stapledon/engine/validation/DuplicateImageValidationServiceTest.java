@@ -1,16 +1,5 @@
 package org.stapledon.engine.validation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +12,11 @@ import org.stapledon.common.service.ImageHasher;
 
 import java.time.LocalDate;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DuplicateImageValidationServiceTest {
@@ -62,8 +56,8 @@ class DuplicateImageValidationServiceTest {
                 comicId, comicName, testDate, testImageData);
 
         // Assert
-        assertFalse(result.isDuplicate());
-        assertEquals("disabled", result.getHash());
+        assertThat(result.isDuplicate()).isFalse();
+        assertThat(result.getHash()).isEqualTo("disabled");
         verify(imageHasherFactory, never()).getImageHasher();
         verify(hashCacheService, never()).findByHash(anyInt(), anyString(), anyInt(), anyString());
     }
@@ -80,8 +74,8 @@ class DuplicateImageValidationServiceTest {
                 comicId, comicName, testDate, testImageData);
 
         // Assert
-        assertFalse(result.isDuplicate());
-        assertEquals("hash-failed", result.getHash());
+        assertThat(result.isDuplicate()).isFalse();
+        assertThat(result.getHash()).isEqualTo("hash-failed");
         verify(hashCacheService, never()).findByHash(anyInt(), anyString(), anyInt(), anyString());
     }
 
@@ -99,10 +93,10 @@ class DuplicateImageValidationServiceTest {
                 comicId, comicName, testDate, testImageData);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isDuplicate());
-        assertNotNull(result.getHash());
-        assertEquals(testHash, result.getHash());
+        assertThat(result).isNotNull();
+        assertThat(result.isDuplicate()).isFalse();
+        assertThat(result.getHash()).isNotNull();
+        assertThat(result.getHash()).isEqualTo(testHash);
     }
 
     @Test
@@ -125,10 +119,10 @@ class DuplicateImageValidationServiceTest {
                 comicId, comicName, testDate, testImageData);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isDuplicate());
-        assertNotNull(result.getHash());
-        assertEquals(testHash, result.getHash());
+        assertThat(result).isNotNull();
+        assertThat(result.isDuplicate()).isFalse();
+        assertThat(result.getHash()).isNotNull();
+        assertThat(result.getHash()).isEqualTo(testHash);
     }
 
     @Test
@@ -154,14 +148,14 @@ class DuplicateImageValidationServiceTest {
                 comicId, comicName, testDate, testImageData);
 
         // Assert
-        assertNotNull(result);
-        assertTrue(result.isDuplicate());
-        assertNotNull(result.getHash());
-        assertEquals(testHash, result.getHash());
-        assertNotNull(result.getDuplicateDate());
-        assertEquals(existingDate, result.getDuplicateDate());
-        assertNotNull(result.getDuplicateFilePath());
-        assertEquals(existingFilePath, result.getDuplicateFilePath());
+        assertThat(result).isNotNull();
+        assertThat(result.isDuplicate()).isTrue();
+        assertThat(result.getHash()).isNotNull();
+        assertThat(result.getHash()).isEqualTo(testHash);
+        assertThat(result.getDuplicateDate()).isNotNull();
+        assertThat(result.getDuplicateDate()).isEqualTo(existingDate);
+        assertThat(result.getDuplicateFilePath()).isNotNull();
+        assertThat(result.getDuplicateFilePath()).isEqualTo(existingFilePath);
     }
 
     @Test
@@ -179,7 +173,7 @@ class DuplicateImageValidationServiceTest {
                 comicId, comicName, dateInDifferentYear, testImageData);
 
         // Assert
-        assertFalse(result.isDuplicate());
+        assertThat(result.isDuplicate()).isFalse();
         verify(hashCacheService).findByHash(comicId, comicName, 2023, testHash);
     }
 
@@ -198,9 +192,9 @@ class DuplicateImageValidationServiceTest {
                 comicId, comicName, testDate, emptyData);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isDuplicate());
-        assertNotNull(result.getHash());
+        assertThat(result).isNotNull();
+        assertThat(result.isDuplicate()).isFalse();
+        assertThat(result.getHash()).isNotNull();
         verify(imageHasher).calculateHash(emptyData);
     }
 
@@ -210,6 +204,6 @@ class DuplicateImageValidationServiceTest {
         String toString = service.toString();
 
         // Assert
-        assertNotNull(toString);
+        assertThat(toString).isNotNull();
     }
 }

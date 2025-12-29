@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for AverageImageHasher.
@@ -31,9 +31,9 @@ class AverageImageHasherTest {
 
         String hash = hasher.calculateHash(imageData);
 
-        assertNotNull(hash, "Hash should not be null");
-        assertEquals(16, hash.length(), "aHash should be 16 characters (64 bits in hex)");
-        assertTrue(hash.matches("[0-9a-f]+"), "Hash should be lowercase hexadecimal");
+        assertThat(hash).as("Hash should not be null").isNotNull();
+        assertThat(hash.length()).as("aHash should be 16 characters (64 bits in hex)").isEqualTo(16);
+        assertThat(hash.matches("[0-9a-f]+")).as("Hash should be lowercase hexadecimal").isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class AverageImageHasherTest {
         String hash1 = hasher.calculateHash(imageData1);
         String hash2 = hasher.calculateHash(imageData2);
 
-        assertEquals(hash1, hash2, "Identical images should produce identical hashes");
+        assertThat(hash2).as("Identical images should produce identical hashes").isEqualTo(hash1);
     }
 
     @Test
@@ -58,9 +58,9 @@ class AverageImageHasherTest {
         String checkerboardHash = hasher.calculateHash(checkerboard);
         String stripesHash = hasher.calculateHash(stripes);
 
-        assertNotEquals(checkerboardHash, stripesHash, "Different patterns should produce different hashes");
-        assertNotEquals("0000000000000000", checkerboardHash, "Checkerboard should not be all zeros");
-        assertNotEquals("0000000000000000", stripesHash, "Stripes should not be all zeros");
+        assertThat(stripesHash).as("Different patterns should produce different hashes").isNotEqualTo(checkerboardHash);
+        assertThat(checkerboardHash).as("Checkerboard should not be all zeros").isNotEqualTo("0000000000000000");
+        assertThat(stripesHash).as("Stripes should not be all zeros").isNotEqualTo("0000000000000000");
     }
 
     @Test
@@ -74,8 +74,7 @@ class AverageImageHasherTest {
         String largeHash = hasher.calculateHash(large);
 
         // For solid color images, aHash should produce the same hash regardless of size
-        assertEquals(smallHash, largeHash,
-                "aHash should produce same hash for solid color images of different sizes");
+        assertThat(largeHash).as("aHash should produce same hash for solid color images of different sizes").isEqualTo(smallHash);
     }
 
     @Test
@@ -104,20 +103,20 @@ class AverageImageHasherTest {
 
         // With a small modification, hashes might be the same or very similar
         // This test documents the perceptual nature of aHash
-        assertNotNull(hash1);
-        assertNotNull(hash2);
+        assertThat(hash1).isNotNull();
+        assertThat(hash2).isNotNull();
     }
 
     @Test
     void testCalculateHash_NullData_ReturnsNull() {
         String hash = hasher.calculateHash(null);
-        assertNull(hash, "Null image data should return null");
+        assertThat(hash).as("Null image data should return null").isNull();
     }
 
     @Test
     void testCalculateHash_EmptyData_ReturnsNull() {
         String hash = hasher.calculateHash(new byte[0]);
-        assertNull(hash, "Empty image data should return null");
+        assertThat(hash).as("Empty image data should return null").isNull();
     }
 
     @Test
@@ -128,7 +127,7 @@ class AverageImageHasherTest {
         String hash = hasher.calculateHash(invalidData);
 
         // Unlike MD5/SHA256, aHash requires valid image decoding
-        assertNull(hash, "aHash should return null for invalid image data");
+        assertThat(hash).as("aHash should return null for invalid image data").isNull();
     }
 
     @Test
@@ -159,8 +158,7 @@ class AverageImageHasherTest {
         String checkerboardHash = hasher.calculateHash(checkerboardData);
         String stripesHash = hasher.calculateHash(stripesData);
 
-        assertNotEquals(checkerboardHash, stripesHash,
-                "Different patterns should produce different aHashes");
+        assertThat(stripesHash).as("Different patterns should produce different aHashes").isNotEqualTo(checkerboardHash);
     }
 
     @Test
@@ -169,9 +167,9 @@ class AverageImageHasherTest {
 
         String hash = hasher.calculateHash(imageData);
 
-        assertEquals(16, hash.length(), "aHash should produce 16-character hash");
-        assertTrue(hash.length() < 32, "aHash should be shorter than MD5 (32 chars)");
-        assertTrue(hash.length() < 64, "aHash should be shorter than SHA-256 (64 chars)");
+        assertThat(hash.length()).as("aHash should produce 16-character hash").isEqualTo(16);
+        assertThat(hash.length() < 32).as("aHash should be shorter than MD5 (32 chars)").isTrue();
+        assertThat(hash.length() < 64).as("aHash should be shorter than SHA-256 (64 chars)").isTrue();
     }
 
     /**

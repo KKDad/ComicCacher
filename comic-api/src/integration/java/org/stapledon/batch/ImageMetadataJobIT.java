@@ -1,5 +1,6 @@
 package org.stapledon.batch;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -12,9 +13,7 @@ import org.stapledon.engine.batch.ImageMetadataJobScheduler;
 import java.io.File;
 import java.io.IOException;
 
-import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for ImageMetadataJob.
@@ -68,9 +67,8 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
 
         // Assert job completed successfully
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
-            "Job should complete successfully");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
         log.info("Job completed with status: {}", jobExecution.getStatus());
 
         // Verify after state - all metadata files exist with correct data
@@ -80,16 +78,15 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         // Verify metadata content in detail for first image
         ImageMetadata metadata1 = loadMetadata(testImage1.getAbsolutePath());
-        assertNotNull(metadata1.getColorMode(), "ColorMode should not be null");
-        assertNotEquals(ImageMetadata.ColorMode.UNKNOWN, metadata1.getColorMode(),
-            "ColorMode should be detected (not UNKNOWN)");
-        assertTrue(metadata1.getSizeInBytes() > 0, "File size should be > 0");
-        assertTrue(metadata1.getFilePath().endsWith("2024-01-15.png"), "File path should be correct");
-        assertEquals(metadata1.getFormat(), ImageFormat.PNG, "Format should match");
+        assertThat(metadata1.getColorMode()).as("ColorMode should not be null").isNotNull();
+        assertThat(metadata1.getColorMode()).as("ColorMode should be detected (not UNKNOWN)").isNotEqualTo(ImageMetadata.ColorMode.UNKNOWN);
+        assertThat(metadata1.getSizeInBytes() > 0).as("File size should be > 0").isTrue();
+        assertThat(metadata1.getFilePath().endsWith("2024-01-15.png")).as("File path should be correct").isTrue();
+        assertThat(ImageFormat.PNG).as("Format should match").isEqualTo(metadata1.getFormat());
 
         // Verify job execution details
-        assertNotNull(jobExecution.getExitStatus(), "Exit status should not be null");
-        assertEquals("COMPLETED", jobExecution.getExitStatus().getExitCode(), "Exit code should be COMPLETED");
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
 
         // Verify JsonBatchExecutionTracker recorded the execution
         assertBatchExecutionTracked("ImageMetadataBackfillJob");
@@ -120,7 +117,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
             .build();
 
         boolean saved = imageMetadataRepository.saveMetadata(existingMetadata);
-        assertTrue(saved, "Should save existing metadata for test setup");
+        assertThat(saved).as("Should save existing metadata for test setup").isTrue();
 
         // Verify before state
         assertMetadataExists(testImage1.getAbsolutePath());
@@ -130,22 +127,18 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
 
         // Assert job completed successfully
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
-            "Job should complete successfully");
-        assertNotNull(jobExecution.getExitStatus(), "Exit status should not be null");
-        assertEquals("COMPLETED", jobExecution.getExitStatus().getExitCode(),
-            "Exit code should be COMPLETED");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
 
         // Verify image1 metadata was NOT changed (still has test size)
         ImageMetadata metadata1After = loadMetadata(testImage1.getAbsolutePath());
-        assertNotNull(metadata1After, "Metadata should exist");
-        assertEquals(12345L, metadata1After.getSizeInBytes(),
-            "Existing metadata should not be overwritten");
-        assertEquals(ImageFormat.PNG, metadata1After.getFormat(),
-            "Format should remain unchanged");
-        assertEquals(800, metadata1After.getWidth(), "Width should remain unchanged");
-        assertEquals(600, metadata1After.getHeight(), "Height should remain unchanged");
+        assertThat(metadata1After).as("Metadata should exist").isNotNull();
+        assertThat(metadata1After.getSizeInBytes()).as("Existing metadata should not be overwritten").isEqualTo(12345L);
+        assertThat(metadata1After.getFormat()).as("Format should remain unchanged").isEqualTo(ImageFormat.PNG);
+        assertThat(metadata1After.getWidth()).as("Width should remain unchanged").isEqualTo(800);
+        assertThat(metadata1After.getHeight()).as("Height should remain unchanged").isEqualTo(600);
 
         // Verify image2 got new metadata
         assertMetadataValid(testImage2.getAbsolutePath(), ImageFormat.JPEG, 1024, 768);
@@ -175,18 +168,16 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
 
         // Assert job completed successfully even with invalid images
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
-            "Job should complete even with invalid images");
-        assertNotNull(jobExecution.getExitStatus(), "Exit status should not be null");
-        assertEquals("COMPLETED", jobExecution.getExitStatus().getExitCode(),
-            "Exit code should be COMPLETED");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete even with invalid images").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
 
         // Valid image should have metadata with correct values
         assertMetadataValid(testImage1.getAbsolutePath(), ImageFormat.PNG, 800, 600);
         ImageMetadata validMetadata = loadMetadata(testImage1.getAbsolutePath());
-        assertNotNull(validMetadata.getColorMode(), "ColorMode should not be null");
-        assertTrue(validMetadata.getSizeInBytes() > 0, "File size should be > 0");
+        assertThat(validMetadata.getColorMode()).as("ColorMode should not be null").isNotNull();
+        assertThat(validMetadata.getSizeInBytes() > 0).as("File size should be > 0").isTrue();
 
         // Invalid image should NOT have metadata
         assertMetadataNotExists(invalidImage.getAbsolutePath());
@@ -207,30 +198,29 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         // Execute the job
         JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
-            "Job should complete successfully");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Load and verify format for PNG image
         ImageMetadata pngMetadata = loadMetadata(testImage1.getAbsolutePath());
-        assertNotNull(pngMetadata, "PNG metadata should exist");
-        assertEquals(ImageFormat.PNG, pngMetadata.getFormat(), "PNG format should be detected");
-        assertEquals(800, pngMetadata.getWidth(), "PNG width should be correct");
-        assertEquals(600, pngMetadata.getHeight(), "PNG height should be correct");
+        assertThat(pngMetadata).as("PNG metadata should exist").isNotNull();
+        assertThat(pngMetadata.getFormat()).as("PNG format should be detected").isEqualTo(ImageFormat.PNG);
+        assertThat(pngMetadata.getWidth()).as("PNG width should be correct").isEqualTo(800);
+        assertThat(pngMetadata.getHeight()).as("PNG height should be correct").isEqualTo(600);
 
         // Load and verify format for JPEG image
         ImageMetadata jpegMetadata = loadMetadata(testImage2.getAbsolutePath());
-        assertNotNull(jpegMetadata, "JPEG metadata should exist");
-        assertEquals(ImageFormat.JPEG, jpegMetadata.getFormat(), "JPEG format should be detected");
-        assertEquals(1024, jpegMetadata.getWidth(), "JPEG width should be correct");
-        assertEquals(768, jpegMetadata.getHeight(), "JPEG height should be correct");
+        assertThat(jpegMetadata).as("JPEG metadata should exist").isNotNull();
+        assertThat(jpegMetadata.getFormat()).as("JPEG format should be detected").isEqualTo(ImageFormat.JPEG);
+        assertThat(jpegMetadata.getWidth()).as("JPEG width should be correct").isEqualTo(1024);
+        assertThat(jpegMetadata.getHeight()).as("JPEG height should be correct").isEqualTo(768);
 
         // Load and verify format for GIF image
         ImageMetadata gifMetadata = loadMetadata(testImage3.getAbsolutePath());
-        assertNotNull(gifMetadata, "GIF metadata should exist");
-        assertEquals(ImageFormat.GIF, gifMetadata.getFormat(), "GIF format should be detected");
-        assertEquals(400, gifMetadata.getWidth(), "GIF width should be correct");
-        assertEquals(300, gifMetadata.getHeight(), "GIF height should be correct");
+        assertThat(gifMetadata).as("GIF metadata should exist").isNotNull();
+        assertThat(gifMetadata.getFormat()).as("GIF format should be detected").isEqualTo(ImageFormat.GIF);
+        assertThat(gifMetadata.getWidth()).as("GIF width should be correct").isEqualTo(400);
+        assertThat(gifMetadata.getHeight()).as("GIF height should be correct").isEqualTo(300);
 
         log.info("SUCCESS: All image formats detected correctly");
     }
@@ -248,13 +238,12 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         // Run job first time
         JobExecution execution1 = imageMetadataJobScheduler.runImageMetadataJob("TEST");
-        assertNotNull(execution1, "First execution should not be null");
-        assertEquals(BatchStatus.COMPLETED, execution1.getStatus(),
-            "First execution should complete successfully");
+        assertThat(execution1).as("First execution should not be null").isNotNull();
+        assertThat(execution1.getStatus()).as("First execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Verify metadata exists after first run
         ImageMetadata metadataAfterFirst = loadMetadata(testImage1.getAbsolutePath());
-        assertNotNull(metadataAfterFirst, "Metadata should exist after first run");
+        assertThat(metadataAfterFirst).as("Metadata should exist after first run").isNotNull();
         long firstSize = metadataAfterFirst.getSizeInBytes();
         ImageFormat firstFormat = metadataAfterFirst.getFormat();
         int firstWidth = metadataAfterFirst.getWidth();
@@ -262,21 +251,16 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         // Run job second time
         JobExecution execution2 = imageMetadataJobScheduler.runImageMetadataJob("TEST");
-        assertNotNull(execution2, "Second execution should not be null");
-        assertEquals(BatchStatus.COMPLETED, execution2.getStatus(),
-            "Second execution should complete successfully");
+        assertThat(execution2).as("Second execution should not be null").isNotNull();
+        assertThat(execution2.getStatus()).as("Second execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Verify metadata still exists and hasn't changed
         ImageMetadata metadataAfterSecond = loadMetadata(testImage1.getAbsolutePath());
-        assertNotNull(metadataAfterSecond, "Metadata should still exist after second run");
-        assertEquals(firstSize, metadataAfterSecond.getSizeInBytes(),
-            "File size should not change on second run");
-        assertEquals(firstFormat, metadataAfterSecond.getFormat(),
-            "Format should not change on second run");
-        assertEquals(firstWidth, metadataAfterSecond.getWidth(),
-            "Width should not change on second run");
-        assertEquals(firstHeight, metadataAfterSecond.getHeight(),
-            "Height should not change on second run");
+        assertThat(metadataAfterSecond).as("Metadata should still exist after second run").isNotNull();
+        assertThat(metadataAfterSecond.getSizeInBytes()).as("File size should not change on second run").isEqualTo(firstSize);
+        assertThat(metadataAfterSecond.getFormat()).as("Format should not change on second run").isEqualTo(firstFormat);
+        assertThat(metadataAfterSecond.getWidth()).as("Width should not change on second run").isEqualTo(firstWidth);
+        assertThat(metadataAfterSecond.getHeight()).as("Height should not change on second run").isEqualTo(firstHeight);
 
         log.info("SUCCESS: Job is idempotent");
     }

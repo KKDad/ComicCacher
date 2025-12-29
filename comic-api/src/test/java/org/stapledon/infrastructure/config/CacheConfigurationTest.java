@@ -1,9 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +11,9 @@ import org.stapledon.common.config.CacheProperties;
 
 import java.io.File;
 import java.nio.file.Paths;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CacheConfigurationTest {
@@ -97,8 +96,8 @@ class CacheConfigurationTest {
 
         // Then
         File directory = new File(result);
-        assertTrue(directory.exists());
-        assertTrue(directory.isDirectory());
+        assertThat(directory.exists()).isTrue();
+        assertThat(directory.isDirectory()).isTrue();
         
         // Clean up
         directory.delete();

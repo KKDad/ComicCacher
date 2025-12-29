@@ -1,10 +1,5 @@
 package org.stapledon.api.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -21,6 +16,10 @@ import org.stapledon.api.service.HealthService;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for the HealthController
@@ -48,10 +47,10 @@ class HealthControllerTest {
         ResponseEntity<ApiResponse<HealthStatus>> response = healthController.getHealthStatus(false);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals(mockStatus, response.getBody().getData());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData()).isEqualTo(mockStatus);
 
         // Verify HealthService was called
         verify(mockHealthService).getHealthStatus();
@@ -67,10 +66,10 @@ class HealthControllerTest {
         ResponseEntity<ApiResponse<HealthStatus>> response = healthController.getHealthStatus(true);
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals(mockStatus, response.getBody().getData());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData()).isEqualTo(mockStatus);
 
         // Verify HealthService was called
         verify(mockHealthService).getDetailedHealthStatus();

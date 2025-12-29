@@ -13,9 +13,8 @@ import org.stapledon.engine.management.ManagementFacade;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -48,7 +47,7 @@ class ComicBackfillServiceTest {
 
         List<BackfillTask> result = service.findMissingStrips();
 
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
         verify(managementFacade).getAllComics();
         verifyNoInteractions(storageFacade);
     }
@@ -60,7 +59,7 @@ class ComicBackfillServiceTest {
 
         List<BackfillTask> result = service.findMissingStrips();
 
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
         verifyNoInteractions(storageFacade);
     }
 
@@ -72,7 +71,7 @@ class ComicBackfillServiceTest {
 
         List<BackfillTask> result = service.findMissingStrips();
 
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
         verifyNoInteractions(storageFacade);
     }
 
@@ -87,7 +86,7 @@ class ComicBackfillServiceTest {
 
         List<BackfillTask> result = service.findMissingStrips();
 
-        assertTrue(result.isEmpty());
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
@@ -107,9 +106,9 @@ class ComicBackfillServiceTest {
 
         List<BackfillTask> result = service.findMissingStrips();
 
-        assertFalse(result.isEmpty());
-        assertTrue(result.stream().anyMatch(t -> t.date().equals(missingDate1)));
-        assertTrue(result.stream().anyMatch(t -> t.date().equals(missingDate2)));
+        assertThat(result.isEmpty()).isFalse();
+        assertThat(result.stream().anyMatch(t -> t.date().equals(missingDate1))).isTrue();
+        assertThat(result.stream().anyMatch(t -> t.date().equals(missingDate2))).isTrue();
     }
 
     @Test
@@ -124,7 +123,7 @@ class ComicBackfillServiceTest {
         List<BackfillTask> result = service.findMissingStrips();
 
         // Should stop after MAX_CONSECUTIVE_FAILURES missing strips
-        assertTrue(result.size() <= MAX_CONSECUTIVE_FAILURES);
+        assertThat(result.size() <= MAX_CONSECUTIVE_FAILURES).isTrue();
     }
 
     @Test
@@ -143,7 +142,7 @@ class ComicBackfillServiceTest {
         List<BackfillTask> result = service.findMissingStrips();
 
         // Should continue past MAX_CONSECUTIVE_FAILURES because counter resets
-        assertTrue(result.size() > MAX_CONSECUTIVE_FAILURES);
+        assertThat(result.size() > MAX_CONSECUTIVE_FAILURES).isTrue();
     }
 
     @Test
@@ -168,8 +167,8 @@ class ComicBackfillServiceTest {
         // Verify no weekend dates are included
         for (BackfillTask task : result) {
             DayOfWeek dayOfWeek = task.date().getDayOfWeek();
-            assertNotEquals(DayOfWeek.SATURDAY, dayOfWeek);
-            assertNotEquals(DayOfWeek.SUNDAY, dayOfWeek);
+            assertThat(dayOfWeek).isNotEqualTo(DayOfWeek.SATURDAY);
+            assertThat(dayOfWeek).isNotEqualTo(DayOfWeek.SUNDAY);
         }
     }
 
@@ -188,8 +187,7 @@ class ComicBackfillServiceTest {
 
         // Verify no future dates are included
         for (BackfillTask task : result) {
-            assertFalse(task.date().isAfter(today),
-                "Should not scan future dates: " + task.date());
+            assertThat(task.date().isAfter(today)).as("Should not scan future dates: " + task.date()).isFalse();
         }
     }
 
@@ -209,7 +207,7 @@ class ComicBackfillServiceTest {
         List<BackfillTask> result = service.findMissingStrips();
 
         // Should have tasks for both comics
-        assertEquals(2, result.stream().filter(t -> t.date().equals(missingDate)).count());
+        assertThat(result.stream().filter(t -> t.date().equals(missingDate)).count()).isEqualTo(2);
     }
 
     @Test
@@ -227,8 +225,7 @@ class ComicBackfillServiceTest {
 
         // Verify no dates beyond year boundary
         for (BackfillTask task : result) {
-            assertFalse(task.date().isAfter(yearEnd),
-                "Should not exceed year boundary: " + task.date());
+            assertThat(task.date().isAfter(yearEnd)).as("Should not exceed year boundary: " + task.date()).isFalse();
         }
     }
 

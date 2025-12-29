@@ -1,16 +1,13 @@
 package org.stapledon.infrastructure.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.stapledon.common.config.CaffeineCacheProperties;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for CaffeineCacheConfiguration.
@@ -48,55 +45,51 @@ class CaffeineCacheConfigurationTest {
     void testCacheManagerCreation() {
         CacheManager cacheManager = configuration.cacheManager();
 
-        assertNotNull(cacheManager, "Cache manager should not be null");
-        assertTrue(cacheManager instanceof CaffeineCacheManager, "Cache manager should be CaffeineCacheManager");
+        assertThat(cacheManager).as("Cache manager should not be null").isNotNull();
+        assertThat(cacheManager instanceof CaffeineCacheManager).as("Cache manager should be CaffeineCacheManager").isTrue();
 
         CaffeineCacheManager caffeineCacheManager = (CaffeineCacheManager) cacheManager;
 
         // Verify all cache names are registered
-        assertTrue(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.COMIC_NAVIGATION_CACHE),
-            "Should contain comicNavigation cache");
-        assertTrue(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.BOUNDARY_DATES_CACHE),
-            "Should contain boundaryDates cache");
-        assertTrue(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.NAVIGATION_DATES_CACHE),
-            "Should contain navigationDates cache");
-        assertTrue(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.COMIC_METADATA_CACHE),
-            "Should contain comicMetadata cache");
+        assertThat(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.COMIC_NAVIGATION_CACHE)).as("Should contain comicNavigation cache").isTrue();
+        assertThat(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.BOUNDARY_DATES_CACHE)).as("Should contain boundaryDates cache").isTrue();
+        assertThat(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.NAVIGATION_DATES_CACHE)).as("Should contain navigationDates cache").isTrue();
+        assertThat(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.COMIC_METADATA_CACHE)).as("Should contain comicMetadata cache").isTrue();
     }
 
     @Test
     void testNavigationCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.navigationCaffeine();
 
-        assertNotNull(caffeine, "Navigation Caffeine builder should not be null");
+        assertThat(caffeine).as("Navigation Caffeine builder should not be null").isNotNull();
     }
 
     @Test
     void testBoundaryCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.boundaryCaffeine();
 
-        assertNotNull(caffeine, "Boundary Caffeine builder should not be null");
+        assertThat(caffeine).as("Boundary Caffeine builder should not be null").isNotNull();
     }
 
     @Test
     void testNavigationDatesCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.navigationDatesCaffeine();
 
-        assertNotNull(caffeine, "NavigationDates Caffeine builder should not be null");
+        assertThat(caffeine).as("NavigationDates Caffeine builder should not be null").isNotNull();
     }
 
     @Test
     void testMetadataCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.metadataCaffeine();
 
-        assertNotNull(caffeine, "Metadata Caffeine builder should not be null");
+        assertThat(caffeine).as("Metadata Caffeine builder should not be null").isNotNull();
     }
 
     @Test
     void testCacheNameConstants() {
-        assertEquals("comicNavigation", CaffeineCacheConfiguration.COMIC_NAVIGATION_CACHE);
-        assertEquals("boundaryDates", CaffeineCacheConfiguration.BOUNDARY_DATES_CACHE);
-        assertEquals("navigationDates", CaffeineCacheConfiguration.NAVIGATION_DATES_CACHE);
-        assertEquals("comicMetadata", CaffeineCacheConfiguration.COMIC_METADATA_CACHE);
+        assertThat(CaffeineCacheConfiguration.COMIC_NAVIGATION_CACHE).isEqualTo("comicNavigation");
+        assertThat(CaffeineCacheConfiguration.BOUNDARY_DATES_CACHE).isEqualTo("boundaryDates");
+        assertThat(CaffeineCacheConfiguration.NAVIGATION_DATES_CACHE).isEqualTo("navigationDates");
+        assertThat(CaffeineCacheConfiguration.COMIC_METADATA_CACHE).isEqualTo("comicMetadata");
     }
 }

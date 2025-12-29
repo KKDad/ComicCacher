@@ -1,10 +1,5 @@
 package org.stapledon.api.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -22,6 +17,10 @@ import org.stapledon.metrics.service.MetricsService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for the MetricsController
@@ -50,10 +49,10 @@ class MetricsControllerTest {
         ResponseEntity<ApiResponse<ImageCacheStats>> response = metricsController.getStorageMetrics();
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals(mockStats, response.getBody().getData());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData()).isEqualTo(mockStats);
 
         // Verify MetricsService was called
         verify(mockMetricsService).getStorageMetrics();
@@ -69,10 +68,10 @@ class MetricsControllerTest {
         ResponseEntity<ApiResponse<AccessMetricsData>> response = metricsController.getAccessMetrics();
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals(mockAccessData, response.getBody().getData());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData()).isEqualTo(mockAccessData);
 
         // Verify service was called
         verify(mockMetricsService).getAccessMetrics();
@@ -88,10 +87,10 @@ class MetricsControllerTest {
         ResponseEntity<ApiResponse<CombinedMetricsData>> response = metricsController.getCombinedMetrics();
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals(mockCombinedData, response.getBody().getData());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData()).isEqualTo(mockCombinedData);
 
         // Verify service was called
         verify(mockMetricsService).getCombinedMetrics();
@@ -107,8 +106,8 @@ class MetricsControllerTest {
         ResponseEntity<ApiResponse<ImageCacheStats>> response = metricsController.refreshStorageMetrics();
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
 
         // Verify refresh was called
         verify(mockMetricsService).refreshStorageMetrics();
@@ -120,10 +119,10 @@ class MetricsControllerTest {
         ResponseEntity<ApiResponse<String>> response = metricsController.refreshAllMetrics();
 
         // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("All metrics refreshed successfully", response.getBody().getData());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData()).isEqualTo("All metrics refreshed successfully");
 
         // Verify service method was called
         verify(mockMetricsService).refreshAllMetrics();

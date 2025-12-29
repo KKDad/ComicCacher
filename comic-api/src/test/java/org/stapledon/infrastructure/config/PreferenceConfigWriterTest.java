@@ -1,13 +1,7 @@
 package org.stapledon.infrastructure.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,6 +15,8 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PreferenceConfigWriterTest {
 
@@ -129,9 +125,9 @@ class PreferenceConfigWriterTest {
         PreferenceConfig result = preferenceConfigWriter.loadPreferences();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getPreferences());
-        assertTrue(result.getPreferences().isEmpty());
+        assertThat(result).isNotNull();
+        assertThat(result.getPreferences()).isNotNull();
+        assertThat(result.getPreferences().isEmpty()).isTrue();
     }
 
     @Test
@@ -144,11 +140,11 @@ class PreferenceConfigWriterTest {
         PreferenceConfig result = preferenceConfigWriter.loadPreferences();
 
         // Then
-        assertNotNull(result);
-        assertNotNull(result.getPreferences());
-        assertEquals(1, result.getPreferences().size());
-        assertTrue(result.getPreferences().containsKey("testuser"));
-        assertEquals("testuser", result.getPreferences().get("testuser").getUsername());
+        assertThat(result).isNotNull();
+        assertThat(result.getPreferences()).isNotNull();
+        assertThat(result.getPreferences().size()).isEqualTo(1);
+        assertThat(result.getPreferences().containsKey("testuser")).isTrue();
+        assertThat(result.getPreferences().get("testuser").getUsername()).isEqualTo("testuser");
     }
 
     @Test
@@ -160,14 +156,14 @@ class PreferenceConfigWriterTest {
         Optional<UserPreference> result = preferenceConfigWriter.getPreference(username);
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
-        assertNotNull(result.get().getFavoriteComics());
-        assertTrue(result.get().getFavoriteComics().isEmpty());
-        assertNotNull(result.get().getLastReadDates());
-        assertTrue(result.get().getLastReadDates().isEmpty());
-        assertNotNull(result.get().getDisplaySettings());
-        assertTrue(result.get().getDisplaySettings().isEmpty());
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo(username);
+        assertThat(result.get().getFavoriteComics()).isNotNull();
+        assertThat(result.get().getFavoriteComics().isEmpty()).isTrue();
+        assertThat(result.get().getLastReadDates()).isNotNull();
+        assertThat(result.get().getLastReadDates().isEmpty()).isTrue();
+        assertThat(result.get().getDisplaySettings()).isNotNull();
+        assertThat(result.get().getDisplaySettings().isEmpty()).isTrue();
     }
 
     @Test
@@ -180,11 +176,11 @@ class PreferenceConfigWriterTest {
         Optional<UserPreference> result = preferenceConfigWriter.getPreference("existinguser");
 
         // Then
-        assertTrue(result.isPresent());
-        assertEquals("existinguser", result.get().getUsername());
-        assertEquals(2, result.get().getFavoriteComics().size());
-        assertTrue(result.get().getFavoriteComics().contains(123));
-        assertTrue(result.get().getFavoriteComics().contains(456));
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getUsername()).isEqualTo("existinguser");
+        assertThat(result.get().getFavoriteComics().size()).isEqualTo(2);
+        assertThat(result.get().getFavoriteComics().contains(123)).isTrue();
+        assertThat(result.get().getFavoriteComics().contains(456)).isTrue();
     }
 
     @Test
@@ -200,8 +196,8 @@ class PreferenceConfigWriterTest {
         Optional<UserPreference> result = preferenceConfigWriter.addFavorite(username, comicId);
 
         // Then
-        assertTrue(result.isPresent());
-        assertTrue(result.get().getFavoriteComics().contains(comicId));
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getFavoriteComics().contains(comicId)).isTrue();
     }
 
     @Test
@@ -218,11 +214,11 @@ class PreferenceConfigWriterTest {
         Optional<UserPreference> beforeResult = preferenceConfigWriter.getPreference(username);
         int beforeSize = beforeResult.get().getFavoriteComics().size();
         Optional<UserPreference> result = preferenceConfigWriter.addFavorite(username, comicId);
-        
+
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(beforeSize, result.get().getFavoriteComics().size());
-        assertTrue(result.get().getFavoriteComics().contains(comicId));
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getFavoriteComics().size()).isEqualTo(beforeSize);
+        assertThat(result.get().getFavoriteComics().contains(comicId)).isTrue();
     }
 
     @Test
@@ -237,10 +233,10 @@ class PreferenceConfigWriterTest {
         
         // When
         Optional<UserPreference> result = preferenceConfigWriter.removeFavorite(username, comicId);
-        
+
         // Then
-        assertTrue(result.isPresent());
-        assertFalse(result.get().getFavoriteComics().contains(comicId));
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getFavoriteComics().contains(comicId)).isFalse();
     }
 
     @Test
@@ -255,11 +251,11 @@ class PreferenceConfigWriterTest {
         
         // When
         Optional<UserPreference> result = preferenceConfigWriter.updateLastRead(username, comicId, date);
-        
+
         // Then
-        assertTrue(result.isPresent());
-        assertTrue(result.get().getLastReadDates().containsKey(comicId));
-        assertEquals(date, result.get().getLastReadDates().get(comicId));
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getLastReadDates().containsKey(comicId)).isTrue();
+        assertThat(result.get().getLastReadDates().get(comicId)).isEqualTo(date);
     }
 
     @Test
@@ -275,12 +271,12 @@ class PreferenceConfigWriterTest {
         
         // When
         Optional<UserPreference> result = preferenceConfigWriter.updateDisplaySettings(username, settings);
-        
+
         // Then
-        assertTrue(result.isPresent());
-        assertEquals(2, result.get().getDisplaySettings().size());
-        assertEquals(true, result.get().getDisplaySettings().get("darkMode"));
-        assertEquals(14, result.get().getDisplaySettings().get("fontSize"));
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getDisplaySettings().size()).isEqualTo(2);
+        assertThat(result.get().getDisplaySettings().get("darkMode")).isEqualTo(true);
+        assertThat(result.get().getDisplaySettings().get("fontSize")).isEqualTo(14);
     }
 
     private UserPreference createTestPreference(String username) {

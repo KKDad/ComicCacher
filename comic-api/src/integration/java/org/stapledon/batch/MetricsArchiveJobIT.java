@@ -1,6 +1,7 @@
 package org.stapledon.batch;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -21,9 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for MetricsArchiveJob.
@@ -104,41 +103,38 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         Path expectedFile = getMetricsArchiveFile(yesterday);
 
         // Verify before state - no archive file
-        assertFalse(Files.exists(expectedFile), "Archive file should not exist before job runs");
+        assertThat(Files.exists(expectedFile)).as("Archive file should not exist before job runs").isFalse();
 
         // Execute the job
         log.info("Executing MetricsArchiveJob via scheduler");
         JobExecution jobExecution = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
 
         // Assert job completed successfully
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus(),
-            "Job should complete successfully");
-        assertNotNull(jobExecution.getExitStatus(), "Exit status should not be null");
-        assertEquals("COMPLETED", jobExecution.getExitStatus().getExitCode(),
-            "Exit code should be COMPLETED");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
         log.info("Job completed with status: {}", jobExecution.getStatus());
 
         // Verify after state - archive file exists
-        assertTrue(Files.exists(expectedFile), "Archive file should exist after job runs");
-        assertTrue(Files.isRegularFile(expectedFile), "Archive should be a regular file");
-        assertTrue(Files.size(expectedFile) > 0, "Archive file should not be empty");
+        assertThat(Files.exists(expectedFile)).as("Archive file should exist after job runs").isTrue();
+        assertThat(Files.isRegularFile(expectedFile)).as("Archive should be a regular file").isTrue();
+        assertThat(Files.size(expectedFile) > 0).as("Archive file should not be empty").isTrue();
 
         // Verify archive content
         String json = Files.readString(expectedFile);
         CombinedMetricsData archived = gson.fromJson(json, CombinedMetricsData.class);
 
-        assertNotNull(archived, "Archived metrics should not be null");
-        assertNotNull(archived.getComics(), "Comics map should not be null");
-        assertEquals(2, archived.getComics().size(), "Should have 2 comics");
+        assertThat(archived).as("Archived metrics should not be null").isNotNull();
+        assertThat(archived.getComics()).as("Comics map should not be null").isNotNull();
+        assertThat(archived.getComics().size()).as("Should have 2 comics").isEqualTo(2);
 
         // Verify specific comic metrics
-        assertTrue(archived.getComics().containsKey("TestComic1"),
-            "TestComic1 should be in archive");
+        assertThat(archived.getComics().containsKey("TestComic1")).as("TestComic1 should be in archive").isTrue();
         ComicCombinedMetrics comic1 = archived.getComics().get("TestComic1");
-        assertEquals("TestComic1", comic1.getComicName(), "Comic name should match");
-        assertEquals(10, comic1.getImageCount(), "TestComic1 image count should match");
-        assertEquals(1024000L, comic1.getStorageBytes(), "TestComic1 size should match");
+        assertThat(comic1.getComicName()).as("Comic name should match").isEqualTo("TestComic1");
+        assertThat(comic1.getImageCount()).as("TestComic1 image count should match").isEqualTo(10);
+        assertThat(comic1.getStorageBytes()).as("TestComic1 size should match").isEqualTo(1024000L);
 
         // Verify JsonBatchExecutionTracker recorded the execution
         assertBatchExecutionTracked("MetricsArchiveJob");
@@ -163,24 +159,22 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
         // Run job first time
         JobExecution execution1 = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
-        assertNotNull(execution1, "First execution should not be null");
-        assertEquals(BatchStatus.COMPLETED, execution1.getStatus(),
-            "First execution should complete successfully");
+        assertThat(execution1).as("First execution should not be null").isNotNull();
+        assertThat(execution1.getStatus()).as("First execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Verify archive exists
-        assertTrue(Files.exists(expectedFile), "Archive should exist after first run");
+        assertThat(Files.exists(expectedFile)).as("Archive should exist after first run").isTrue();
         long firstSize = Files.size(expectedFile);
 
         // Run job second time
         JobExecution execution2 = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
-        assertNotNull(execution2, "Second execution should not be null");
-        assertEquals(BatchStatus.COMPLETED, execution2.getStatus(),
-            "Second execution should complete successfully");
+        assertThat(execution2).as("Second execution should not be null").isNotNull();
+        assertThat(execution2.getStatus()).as("Second execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Verify archive still exists
-        assertTrue(Files.exists(expectedFile), "Archive should still exist after second run");
+        assertThat(Files.exists(expectedFile)).as("Archive should still exist after second run").isTrue();
         long secondSize = Files.size(expectedFile);
-        assertEquals(firstSize, secondSize, "Archive size should be consistent across runs");
+        assertThat(secondSize).as("Archive size should be consistent across runs").isEqualTo(firstSize);
 
         log.info("SUCCESS: Job is idempotent");
     }
@@ -208,15 +202,13 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         JobExecution jobExecution = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
 
         // Job should fail when there are no metrics
-        assertNotNull(jobExecution, "JobExecution should not be null");
-        assertEquals(BatchStatus.FAILED, jobExecution.getStatus(),
-            "Job should fail with no metrics");
-        assertNotNull(jobExecution.getExitStatus(), "Exit status should not be null");
-        assertEquals("FAILED", jobExecution.getExitStatus().getExitCode(),
-            "Exit code should be FAILED");
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should fail with no metrics").isEqualTo(BatchStatus.FAILED);
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be FAILED").isEqualTo("FAILED");
 
         // No archive file should be created
-        assertFalse(Files.exists(expectedFile), "Archive file should not exist when no metrics");
+        assertThat(Files.exists(expectedFile)).as("Archive file should not exist when no metrics").isFalse();
 
         // Verify JsonBatchExecutionTracker recorded the failure
         assertBatchExecutionTracked("MetricsArchiveJob");

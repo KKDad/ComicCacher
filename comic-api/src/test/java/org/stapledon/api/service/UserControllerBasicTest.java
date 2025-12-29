@@ -1,12 +1,5 @@
 package org.stapledon.api.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
@@ -20,11 +13,13 @@ import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 /**
  * Basic unit test for UserController without using Spring context
@@ -56,11 +51,11 @@ class UserControllerBasicTest {
         ResponseEntity<ApiResponse<User>> response = controller.getProfile(userDetails);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals("Test User", response.getBody().getData().getDisplayName());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getDisplayName()).isEqualTo("Test User");
     }
 
     @Test
@@ -75,7 +70,7 @@ class UserControllerBasicTest {
         when(userService.getUser("nonexistentuser")).thenReturn(Optional.empty());
 
         // When/Then
-        assertThrows(AuthenticationException.class, () -> controller.getProfile(userDetails));
+        assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> controller.getProfile(userDetails));
     }
 
     @Test
@@ -102,12 +97,12 @@ class UserControllerBasicTest {
         ResponseEntity<ApiResponse<User>> response = controller.updateProfile(userDetails, user);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("testuser", response.getBody().getData().getUsername());
-        assertEquals("Updated Name", response.getBody().getData().getDisplayName());
-        assertEquals("updated@example.com", response.getBody().getData().getEmail());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().getUsername()).isEqualTo("testuser");
+        assertThat(response.getBody().getData().getDisplayName()).isEqualTo("Updated Name");
+        assertThat(response.getBody().getData().getEmail()).isEqualTo("updated@example.com");
     }
 
     @Test
@@ -136,10 +131,10 @@ class UserControllerBasicTest {
         ResponseEntity<ApiResponse<Map<String, String>>> response = controller.updatePassword(userDetails, passwordData);
 
         // Then
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertNotNull(response.getBody().getData());
-        assertEquals("Password updated successfully", response.getBody().getData().get("message"));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData()).isNotNull();
+        assertThat(response.getBody().getData().get("message")).isEqualTo("Password updated successfully");
     }
 
     @Test
@@ -156,6 +151,6 @@ class UserControllerBasicTest {
         when(userService.updatePassword(anyString(), anyString())).thenReturn(Optional.empty());
 
         // When/Then
-        assertThrows(AuthenticationException.class, () -> controller.updatePassword(userDetails, passwordData));
+        assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> controller.updatePassword(userDetails, passwordData));
     }
 }
