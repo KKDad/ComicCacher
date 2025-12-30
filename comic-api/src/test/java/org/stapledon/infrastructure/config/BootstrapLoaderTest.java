@@ -42,10 +42,10 @@ class BootstrapLoaderTest {
         // Arrange
         String initialString = "{'dailyComics':[{'name':'Adam At Home','startDate':{'year':2008,'month':1,'day':9}}]}\n";
         InputStream targetStream = CharSource.wrap(initialString.replace('\'', '\"')).asByteSource(StandardCharsets.UTF_8).openStream();
-        
+
         // Create a test bootstrap to return
         Bootstrap testBootstrap = createTestBootstrap("Adam At Home", LocalDate.of(2008, 1, 9));
-        
+
         // Mock the gson behavior
         when(mockGson.fromJson(any(Reader.class), eq(Bootstrap.class))).thenReturn(testBootstrap);
 
@@ -63,10 +63,10 @@ class BootstrapLoaderTest {
         // Arrange
         String initialString = "{'dailyComics':[{'name': 'Adam At Home','startDate': '2019-01-21'}]}";
         InputStream targetStream = CharSource.wrap(initialString.replace('\'', '\"')).asByteSource(StandardCharsets.UTF_8).openStream();
-        
+
         // Create a test bootstrap to return
         Bootstrap testBootstrap = createTestBootstrap("Adam At Home", LocalDate.of(2019, 1, 21));
-        
+
         // Mock the gson behavior
         when(mockGson.fromJson(any(Reader.class), eq(Bootstrap.class))).thenReturn(testBootstrap);
 
@@ -93,26 +93,26 @@ class BootstrapLoaderTest {
                 .setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .create();
-        
+
         // Act
         String serialized = realGson.toJson(config);
 
         // Assert
         assertThat(serialized).isNotNull().contains("2019-01-21");
     }
-    
+
     // Helper method to create test bootstrap objects
     private Bootstrap createTestBootstrap(String name, LocalDate date) {
         GoComicsBootstrap comic = GoComicsBootstrap.builder()
                 .name(name)
                 .startDate(date)
                 .build();
-                
+
         return Bootstrap.builder()
                 .dailyComics(List.of(comic))
                 .build();
     }
-    
+
     // Simple adapter class for LocalDate
     private static class LocalDateAdapter implements com.google.gson.JsonSerializer<LocalDate> {
         @Override

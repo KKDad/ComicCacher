@@ -22,27 +22,27 @@ class PreferenceConfigWriterTest {
 
     @TempDir
     Path tempDir;
-    
+
     // Test subclass that avoids facade issues
     private static class TestPreferenceConfigWriter extends PreferenceConfigWriter {
         private final PreferenceConfig inMemoryConfig;
-        
+
         public TestPreferenceConfigWriter(Gson gson) {
             super(gson, new CacheProperties(), null);
             inMemoryConfig = new PreferenceConfig();
         }
-        
+
         @Override
         public PreferenceConfig loadPreferences() {
             return inMemoryConfig;
         }
-        
+
         @Override
         public boolean savePreference(UserPreference preference) {
             inMemoryConfig.getPreferences().put(preference.getUsername(), preference);
             return true;
         }
-        
+
         @Override
         public Optional<UserPreference> getPreference(String username) {
             // Create default if not exists
@@ -55,7 +55,7 @@ class PreferenceConfigWriterTest {
             }
             return Optional.of(inMemoryConfig.getPreferences().get(username));
         }
-        
+
         @Override
         public Optional<UserPreference> addFavorite(String username, int comicId) {
             Optional<UserPreference> prefOpt = getPreference(username);
@@ -68,7 +68,7 @@ class PreferenceConfigWriterTest {
             }
             return Optional.empty();
         }
-        
+
         @Override
         public Optional<UserPreference> removeFavorite(String username, int comicId) {
             Optional<UserPreference> prefOpt = getPreference(username);
@@ -79,7 +79,7 @@ class PreferenceConfigWriterTest {
             }
             return Optional.empty();
         }
-        
+
         @Override
         public Optional<UserPreference> updateLastRead(String username, int comicId, LocalDate date) {
             Optional<UserPreference> prefOpt = getPreference(username);
@@ -90,7 +90,7 @@ class PreferenceConfigWriterTest {
             }
             return Optional.empty();
         }
-        
+
         @Override
         public Optional<UserPreference> updateDisplaySettings(String username, HashMap<String, Object> settings) {
             Optional<UserPreference> prefOpt = getPreference(username);
@@ -132,7 +132,7 @@ class PreferenceConfigWriterTest {
 
     @Test
     void loadPreferencesShouldLoadExistingPreferencesFromFile() {
-        // Given 
+        // Given
         UserPreference preference = createTestPreference("testuser");
         preferenceConfigWriter.savePreference(preference);
 
@@ -188,7 +188,7 @@ class PreferenceConfigWriterTest {
         // Given
         String username = "favoriteuser";
         int comicId = 789;
-        
+
         // Create user first
         preferenceConfigWriter.getPreference(username);
 
@@ -205,11 +205,11 @@ class PreferenceConfigWriterTest {
         // Given
         String username = "duplicateuser";
         int comicId = 789;
-        
+
         // Create user and add comic first
         preferenceConfigWriter.getPreference(username);
         preferenceConfigWriter.addFavorite(username, comicId);
-        
+
         // When
         Optional<UserPreference> beforeResult = preferenceConfigWriter.getPreference(username);
         int beforeSize = beforeResult.get().getFavoriteComics().size();
@@ -226,11 +226,11 @@ class PreferenceConfigWriterTest {
         // Given
         String username = "removeuser";
         int comicId = 789;
-        
+
         // Create user and add comic first
         preferenceConfigWriter.getPreference(username);
         preferenceConfigWriter.addFavorite(username, comicId);
-        
+
         // When
         Optional<UserPreference> result = preferenceConfigWriter.removeFavorite(username, comicId);
 
@@ -245,10 +245,10 @@ class PreferenceConfigWriterTest {
         String username = "readuser";
         int comicId = 101;
         LocalDate date = LocalDate.now();
-        
+
         // Create user first
         preferenceConfigWriter.getPreference(username);
-        
+
         // When
         Optional<UserPreference> result = preferenceConfigWriter.updateLastRead(username, comicId, date);
 
@@ -265,10 +265,10 @@ class PreferenceConfigWriterTest {
         HashMap<String, Object> settings = new HashMap<>();
         settings.put("darkMode", true);
         settings.put("fontSize", 14);
-        
+
         // Create user first
         preferenceConfigWriter.getPreference(username);
-        
+
         // When
         Optional<UserPreference> result = preferenceConfigWriter.updateDisplaySettings(username, settings);
 
@@ -282,10 +282,10 @@ class PreferenceConfigWriterTest {
     private UserPreference createTestPreference(String username) {
         HashMap<String, Object> settings = new HashMap<>();
         settings.put("theme", "light");
-        
+
         HashMap<Integer, LocalDate> lastReadDates = new HashMap<>();
         lastReadDates.put(123, LocalDate.now().minusDays(5));
-        
+
         return UserPreference.builder()
                 .username(username)
                 .favoriteComics(Arrays.asList(123, 456))

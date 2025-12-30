@@ -21,9 +21,9 @@ import org.stapledon.engine.management.ManagementFacade;
  * Standalone tests for UpdateController that don't rely on Spring context
  */
 class UpdateControllerTest {
-    
+
     private MockMvc mockMvc;
-    
+
     @Mock
     private ManagementFacade comicManagementFacade;
 
@@ -35,33 +35,33 @@ class UpdateControllerTest {
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
-    
+
     @Test
     void updateAll() throws Exception {
         // Given
         when(comicManagementFacade.updateAllComics()).thenReturn(true);
-        
+
         // When & Then
         this.mockMvc.perform(get("/api/v1/update"))
                 .andDo(print())
                 .andExpect(status().isOk());
-        
+
         verify(comicManagementFacade, times(1)).updateAllComics();
     }
-    
+
     @Test
     void updateSpecific() throws Exception {
         // Given
         when(comicManagementFacade.updateComic(42)).thenReturn(true);
-        
+
         // When & Then
         this.mockMvc.perform(get("/api/v1/update/42"))
                 .andDo(print())
                 .andExpect(status().isOk());
-        
+
         verify(comicManagementFacade, times(1)).updateComic(anyInt());
     }
-    
+
     @Test
     void updateAllFailure() throws Exception {
         // Given

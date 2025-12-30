@@ -89,7 +89,7 @@ public class ComicManagementFacade implements ManagementFacade {
         if (comicName == null) {
             return Optional.empty();
         }
-        
+
         return comics.values().stream()
                 .filter(comic -> {
                     String name = comic.getName();
@@ -134,14 +134,14 @@ public class ComicManagementFacade implements ManagementFacade {
                     .sourceIdentifier(comicItem.getSourceIdentifier())
                     .build();
         }
-        
+
         comics.put(comicId, comicItem);
-        
+
         // Save to configuration
         ComicConfig config = configFacade.loadComicConfig();
         config.getItems().put(comicId, comicItem);
         configFacade.saveComicConfig(config);
-        
+
         return Optional.of(comicItem);
     }
 
@@ -436,7 +436,7 @@ public class ComicManagementFacade implements ManagementFacade {
             log.warn("Comic with ID {} not found, cannot update", comicId);
             return false;
         }
-        
+
         try {
             ComicItem comic = comicOpt.get();
             // Create download request
@@ -447,10 +447,10 @@ public class ComicManagementFacade implements ManagementFacade {
                     .sourceIdentifier(comic.getSourceIdentifier())
                     .date(LocalDate.now())
                     .build();
-            
+
             // Download the comic
             ComicDownloadResult result = downloaderFacade.downloadComic(request);
-            
+
             if (result.isSuccessful()) {
                 // Save the comic to storage
                 boolean saved = storageFacade.saveComicStrip(
@@ -458,7 +458,7 @@ public class ComicManagementFacade implements ManagementFacade {
                         comic.getName(),
                         request.getDate(),
                         result.getImageData());
-                
+
                 if (saved) {
                     // Update comic item metadata
                     ComicItem updated = ComicItem.builder()
@@ -473,20 +473,20 @@ public class ComicManagementFacade implements ManagementFacade {
                             .source(comic.getSource())
                             .sourceIdentifier(comic.getSourceIdentifier())
                             .build();
-                    
+
                     updateComic(comic.getId(), updated);
                 } else {
                     log.error("Failed to save comic {} to storage", comic.getName());
                 }
             } else {
-                log.error("Failed to download comic {}: {}", 
+                log.error("Failed to download comic {}: {}",
                         comic.getName(), result.getErrorMessage());
             }
-            
+
             // Always return true if the comic exists and we attempted to update it,
             // regardless of whether the update succeeded
             return true;
-            
+
         } catch (Exception e) {
             log.error("Error occurred while updating comic with ID {}", comicId, e);
             // Still return true since we successfully triggered the update for an existing comic
@@ -506,13 +506,13 @@ public class ComicManagementFacade implements ManagementFacade {
         try {
             // Load comic configuration
             ComicConfig comicConfig = configFacade.loadComicConfig();
-            
+
             // Clear and reload comics
             comics.clear();
             if (comicConfig.getItems() != null) {
                 comics.putAll(comicConfig.getItems());
             }
-            
+
             log.info("Refreshed comic list: loaded {} comics", comics.size());
         } catch (Exception e) {
             log.error("Error refreshing comic list: {}", e.getMessage(), e);
@@ -522,7 +522,7 @@ public class ComicManagementFacade implements ManagementFacade {
     @Override
     public boolean purgeOldImages(int daysToKeep) {
         boolean allSucceeded = true;
-        
+
         for (ComicItem comic : comics.values()) {
             boolean success = storageFacade.purgeOldImages(comic.getId(), comic.getName(), daysToKeep);
             if (!success) {
@@ -530,7 +530,7 @@ public class ComicManagementFacade implements ManagementFacade {
                 allSucceeded = false;
             }
         }
-        
+
         return allSucceeded;
     }
 
@@ -550,27 +550,27 @@ public class ComicManagementFacade implements ManagementFacade {
     public List<ComicRetrievalRecord> getRetrievalRecords(String comicName, int limit) {
         return retrievalStatusService.getRetrievalRecords(comicName, null, null, null, limit);
     }
-    
+
     @Override
     public List<ComicRetrievalRecord> getRetrievalRecordsForDate(String comicName, LocalDate date) {
         return retrievalStatusService.getRetrievalRecords(comicName, null, date, date, 100);
     }
-    
+
     @Override
     public List<ComicRetrievalRecord> getFilteredRetrievalRecords(
-            String comicName, 
-            ComicRetrievalStatus status, 
-            LocalDate fromDate, 
-            LocalDate toDate, 
+            String comicName,
+            ComicRetrievalStatus status,
+            LocalDate fromDate,
+            LocalDate toDate,
             int limit) {
         return retrievalStatusService.getRetrievalRecords(comicName, status, fromDate, toDate, limit);
     }
-    
+
     @Override
     public Map<String, Object> getRetrievalSummary(LocalDate fromDate, LocalDate toDate) {
         return retrievalStatusService.getRetrievalSummary(fromDate, toDate);
     }
-    
+
     @Override
     public int purgeOldRetrievalRecords(int daysToKeep) {
         return retrievalStatusService.purgeOldRecords(daysToKeep);

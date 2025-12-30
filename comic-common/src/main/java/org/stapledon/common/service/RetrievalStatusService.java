@@ -16,32 +16,32 @@ public interface RetrievalStatusService {
      * Records a comic retrieval result
      */
     void recordRetrievalResult(ComicRetrievalRecord record);
-    
+
     /**
      * Gets a specific retrieval record by ID
      */
     Optional<ComicRetrievalRecord> getRetrievalRecord(String id);
-    
+
     /**
      * Gets retrieval records with optional filtering
      */
     List<ComicRetrievalRecord> getRetrievalRecords(
-            String comicName, 
-            ComicRetrievalStatus status, 
-            LocalDate fromDate, 
-            LocalDate toDate, 
+            String comicName,
+            ComicRetrievalStatus status,
+            LocalDate fromDate,
+            LocalDate toDate,
             int limit);
-    
+
     /**
      * Gets retrieval summary statistics
      */
     Map<String, Object> getRetrievalSummary(LocalDate fromDate, LocalDate toDate);
-    
+
     /**
      * Deletes a specific retrieval record
      */
     boolean deleteRetrievalRecord(String id);
-    
+
     /**
      * Purges retrieval records older than specified days
      */

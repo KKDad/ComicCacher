@@ -31,12 +31,12 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldAllowAuthenticatedUserToViewProfile() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
             .isNotNull();
-        
+
         // Get user profile
         MockHttpServletRequestBuilder request = get(USERS_PATH + "/profile")
             .header("Authorization", "Bearer " + token);
@@ -49,19 +49,19 @@ class UserControllerIT extends AbstractIntegrationTest {
         assertThat(profileResult.getResponse().getStatus())
             .as("Expected GET /users/profile to return status 200")
             .isEqualTo(HttpStatus.OK.value());
-        
+
         // Verify response contains data field
         String responseContent = profileResult.getResponse().getContentAsString();
         assertThat(responseContent)
             .as("Response should contain 'data' field")
             .contains("data");
-        
+
         // Verify user data can be parsed
         User user = extractFromResponse(responseContent, "data", User.class);
         assertThat(user)
             .as("Response should contain valid user data")
             .isNotNull();
-            
+
         // Verify username matches test user
         assertThat(user.getUsername())
             .as("User data should contain correct username")
@@ -87,7 +87,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldAllowUserToUpdateProfile() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
@@ -117,24 +117,24 @@ class UserControllerIT extends AbstractIntegrationTest {
         assertThat(updateResult.getResponse().getStatus())
             .as("Expected PUT /users/profile to return status 200")
             .isEqualTo(HttpStatus.OK.value());
-        
+
         // Verify response contains data field
         String responseContent = updateResult.getResponse().getContentAsString();
         assertThat(responseContent)
             .as("Response should contain 'data' field")
             .contains("data");
-        
+
         // Verify updated user data can be parsed
         User user = extractFromResponse(responseContent, "data", User.class);
         assertThat(user)
             .as("Response should contain valid user data")
             .isNotNull();
-            
+
         // Verify display name was updated
         assertThat(user.getDisplayName())
             .as("Display name should be updated")
             .isEqualTo(updatedDisplayName);
-            
+
         // Verify email was updated
         assertThat(user.getEmail())
             .as("Email should be updated")
@@ -146,7 +146,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldAllowUserToUpdatePassword() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
@@ -176,7 +176,7 @@ class UserControllerIT extends AbstractIntegrationTest {
     void shouldRejectEmptyPasswordUpdate() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")

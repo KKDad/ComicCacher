@@ -29,39 +29,39 @@ class JsonExecutionTrackerTest {
     private final String tempDir = System.getProperty("java.io.tmpdir");
     private final String uniqueTestDir = UUID.randomUUID().toString();
     private final String testTaskName = "test-task";
-    
+
     @Mock
     private CacheProperties cacheProperties;
-    
-    
+
+
     private Gson gson;
-    
+
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-        
+
         // Create a temporary test directory
         Path testPath = Paths.get(tempDir, uniqueTestDir);
         Files.createDirectories(testPath);
-        
+
         // Configure the mock
         when(cacheProperties.getLocation()).thenReturn(testPath.toString());
-        
+
         // Create Gson with LocalDate support
         gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .create();
-        
+
         // Create the tracker
         tracker = new JsonExecutionTracker(gson, cacheProperties);
         tracker.init();
     }
-    
+
     @AfterEach
     void tearDown() {
         // No static state to clean up
     }
-    
+
     @Test
     void verifyFirstRunAllowed() {
         // A task that hasn't run before should be allowed to run
@@ -70,12 +70,12 @@ class JsonExecutionTrackerTest {
         // Last execution date should be null
         assertThat(tracker.getLastExecutionDate(testTaskName)).isNull();
     }
-    
+
     @Test
     void verifyOnlyRunsOncePerDay() {
         // First run should be allowed
         assertThat(tracker.canRunToday(testTaskName)).isTrue();
-        
+
         // Mark as executed
         tracker.markTaskExecuted(testTaskName);
 
@@ -85,7 +85,7 @@ class JsonExecutionTrackerTest {
         // Check last execution date
         assertThat(tracker.getLastExecutionDate(testTaskName)).isEqualTo(LocalDate.now());
     }
-    
+
     @Test
     void verifyMultipleTasksTrackedIndependently() {
         String secondTask = "second-task";
@@ -96,7 +96,7 @@ class JsonExecutionTrackerTest {
 
         // Second task should still be allowed to run
         assertThat(tracker.canRunToday(secondTask)).isTrue();
-        
+
         // Mark second task as executed
         tracker.markTaskExecuted(secondTask);
 
@@ -104,12 +104,12 @@ class JsonExecutionTrackerTest {
         assertThat(tracker.canRunToday(testTaskName)).isFalse();
         assertThat(tracker.canRunToday(secondTask)).isFalse();
     }
-    
+
     @Test
     void verifyPersistenceAcrossInstances() {
         // Mark task as executed in first instance
         tracker.markTaskExecuted(testTaskName);
-        
+
         // Create a new instance of the tracker
         JsonExecutionTracker newTracker = new JsonExecutionTracker(gson, cacheProperties);
         newTracker.init();
@@ -118,19 +118,19 @@ class JsonExecutionTrackerTest {
         assertThat(newTracker.canRunToday(testTaskName)).isFalse();
         assertThat(newTracker.getLastExecutionDate(testTaskName)).isEqualTo(LocalDate.now());
     }
-    
+
     // Disabled: DailyRunner has been replaced by ComicDownloadJobScheduler (Spring Batch)
     // @Test
     // void verifyDailyRunnerUsesTrackerCorrectly() throws Exception {
     //     // Test removed as DailyRunner is no longer used
     // }
-    
+
     @Test
     void verifyStartupReconcilerUsesTrackerCorrectly() {
         // Skip this test as it requires more complex setup
         // The functionality is covered by the integration tests
     }
-    
+
     /**
      * Simple LocalDate adapter for Gson
      */

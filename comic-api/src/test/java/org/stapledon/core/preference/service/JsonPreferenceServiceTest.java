@@ -34,7 +34,7 @@ class JsonPreferenceServiceTest {
     void getPreferenceShouldDelegateToConfigWriter() {
         // Given
         String username = "testuser";
-        
+
         UserPreference expectedPreference = createTestPreference(username);
         when(preferenceConfigWriter.getPreference(username)).thenReturn(Optional.of(expectedPreference));
 
@@ -52,7 +52,7 @@ class JsonPreferenceServiceTest {
         // Given
         String username = "testuser";
         int comicId = 123;
-        
+
         UserPreference expectedPreference = createTestPreference(username);
         when(preferenceConfigWriter.addFavorite(username, comicId)).thenReturn(Optional.of(expectedPreference));
 
@@ -70,7 +70,7 @@ class JsonPreferenceServiceTest {
         // Given
         String username = "testuser";
         int comicId = 123;
-        
+
         UserPreference expectedPreference = createTestPreference(username);
         when(preferenceConfigWriter.removeFavorite(username, comicId)).thenReturn(Optional.of(expectedPreference));
 
@@ -89,7 +89,7 @@ class JsonPreferenceServiceTest {
         String username = "testuser";
         int comicId = 123;
         LocalDate date = LocalDate.now();
-        
+
         UserPreference expectedPreference = createTestPreference(username);
         when(preferenceConfigWriter.updateLastRead(username, comicId, date)).thenReturn(Optional.of(expectedPreference));
 
@@ -108,7 +108,7 @@ class JsonPreferenceServiceTest {
         String username = "testuser";
         HashMap<String, Object> settings = new HashMap<>();
         settings.put("darkMode", true);
-        
+
         UserPreference expectedPreference = createTestPreference(username);
         when(preferenceConfigWriter.updateDisplaySettings(username, settings)).thenReturn(Optional.of(expectedPreference));
 
@@ -124,10 +124,10 @@ class JsonPreferenceServiceTest {
     private UserPreference createTestPreference(String username) {
         HashMap<String, Object> settings = new HashMap<>();
         settings.put("theme", "light");
-        
+
         HashMap<Integer, LocalDate> lastReadDates = new HashMap<>();
         lastReadDates.put(123, LocalDate.now().minusDays(5));
-        
+
         return UserPreference.builder()
                 .username(username)
                 .favoriteComics(Arrays.asList(123, 456))

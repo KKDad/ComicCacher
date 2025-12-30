@@ -36,25 +36,25 @@ class UserConfigWriterTest {
         private UserConfig inMemoryConfig;
         private final Path tempDir;
         private boolean simulateWriteFailure = false;
-        
+
         public TestUserConfigWriter(Gson gson, Path tempDir) {
             super(gson, createCacheProperties(tempDir), null);
             this.tempDir = tempDir;
             inMemoryConfig = new UserConfig();
         }
-        
+
         private static CacheProperties createCacheProperties(Path tempDir) {
             CacheProperties props = new CacheProperties();
             props.setLocation(tempDir.toString());
             props.setUsersConfig("users.json");
             return props;
         }
-        
+
         @Override
         public UserConfig loadUsers() {
             return inMemoryConfig;
         }
-        
+
         @Override
         public boolean saveUser(User user) {
             if (simulateWriteFailure) {
@@ -63,16 +63,16 @@ class UserConfigWriterTest {
             inMemoryConfig.getUsers().put(user.getUsername(), user);
             return true;
         }
-        
+
         public void setSimulateWriteFailure(boolean simulate) {
             this.simulateWriteFailure = simulate;
         }
-        
+
         // For testing resource loading
         public void setUserConfig(UserConfig config) {
             this.inMemoryConfig = config;
         }
-        
+
         @Override
         public Optional<User> getUser(String username) {
             if (inMemoryConfig.getUsers().containsKey(username)) {
@@ -80,7 +80,7 @@ class UserConfigWriterTest {
             }
             return Optional.empty();
         }
-        
+
         @Override
         public Optional<User> updateUser(User user) {
             if (inMemoryConfig.getUsers().containsKey(user.getUsername())) {
@@ -91,7 +91,7 @@ class UserConfigWriterTest {
             }
             return Optional.empty();
         }
-        
+
         @Override
         public Optional<User> updatePassword(String username, String newPassword) {
             if (inMemoryConfig.getUsers().containsKey(username)) {
@@ -111,7 +111,7 @@ class UserConfigWriterTest {
             }
             return Optional.empty();
         }
-        
+
         @Override
         public Optional<User> authenticateUser(String username, String password) {
             if (inMemoryConfig.getUsers().containsKey(username)) {
@@ -133,13 +133,13 @@ class UserConfigWriterTest {
             }
             return Optional.empty();
         }
-        
+
         @Override
         public Optional<User> registerUser(UserRegistrationDto registration) {
             if (inMemoryConfig.getUsers().containsKey(registration.getUsername())) {
                 return Optional.empty();
             }
-            
+
             User newUser = User.builder()
                 .username(registration.getUsername())
                 .email(registration.getEmail())
@@ -149,11 +149,11 @@ class UserConfigWriterTest {
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
-                
+
             inMemoryConfig.getUsers().put(newUser.getUsername(), newUser);
             return Optional.of(newUser);
         }
-        
+
         private User mergeUsers(User existingUser, User updatedUser) {
             return User.builder()
                 .username(existingUser.getUsername())
@@ -166,12 +166,12 @@ class UserConfigWriterTest {
                 .userToken(existingUser.getUserToken())
                 .build();
         }
-        
+
         public void simulateNonExistentDirectory() {
             // Just set the flag to simulate failure
             this.simulateWriteFailure = true;
         }
-        
+
         private void setProperties(CacheProperties props) {
             try {
                 java.lang.reflect.Field field = UserConfigWriter.class.getDeclaredField("cacheProperties");
@@ -181,7 +181,7 @@ class UserConfigWriterTest {
                 throw new RuntimeException("Failed to set properties", e);
             }
         }
-        
+
         // For testing resource file copies
         public File getUsersFile() {
             return tempDir.resolve("users.json").toFile();
@@ -208,7 +208,7 @@ class UserConfigWriterTest {
 
         // Create the test writer
         userConfigWriter = new TestUserConfigWriter(gson, tempDir);
-        
+
         // Set usersFile for helper methods
         usersFile = userConfigWriter.getUsersFile();
     }
@@ -230,7 +230,7 @@ class UserConfigWriterTest {
         UserConfig initialConfig = new UserConfig();
         User user = createTestUser("testuser");
         initialConfig.getUsers().put(user.getUsername(), user);
-        
+
         // Set the config directly in our test writer
         userConfigWriter.setUserConfig(initialConfig);
 
@@ -279,10 +279,10 @@ class UserConfigWriterTest {
                 .email("existinguser@example.com")
                 .displayName("Existing User")
                 .build();
-        
+
         // Register first user
         userConfigWriter.registerUser(registrationDto);
-        
+
         // Try to register with same username
         UserRegistrationDto duplicateDto = UserRegistrationDto.builder()
                 .username("existinguser")
@@ -303,14 +303,14 @@ class UserConfigWriterTest {
         // Given
         String username = "authuser";
         String password = "authpassword";
-        
+
         UserRegistrationDto registrationDto = UserRegistrationDto.builder()
                 .username(username)
                 .password(password)
                 .email("auth@example.com")
                 .displayName("Auth User")
                 .build();
-        
+
         userConfigWriter.registerUser(registrationDto);
 
         // When
@@ -328,14 +328,14 @@ class UserConfigWriterTest {
         String username = "authuser";
         String password = "authpassword";
         String wrongPassword = "wrongpassword";
-        
+
         UserRegistrationDto registrationDto = UserRegistrationDto.builder()
                 .username(username)
                 .password(password)
                 .email("auth@example.com")
                 .displayName("Auth User")
                 .build();
-        
+
         userConfigWriter.registerUser(registrationDto);
 
         // When
@@ -363,7 +363,7 @@ class UserConfigWriterTest {
     void getUserShouldReturnEmptyForNonExistingUsername() {
         // Make sure there are no users
         assertThat(userConfigWriter.loadUsers().getUsers().isEmpty()).isTrue();
-        
+
         // When
         Optional<User> result = userConfigWriter.getUser("nonexistentuser");
 
@@ -376,7 +376,7 @@ class UserConfigWriterTest {
         // Given
         User originalUser = createTestUser("updateuser");
         userConfigWriter.saveUser(originalUser);
-        
+
         User updatedUser = User.builder()
                 .username("updateuser")
                 .email("updated@example.com")
@@ -401,14 +401,14 @@ class UserConfigWriterTest {
         String username = "pwduser";
         String originalPassword = "original123";
         String newPassword = "updated456";
-        
+
         UserRegistrationDto registrationDto = UserRegistrationDto.builder()
                 .username(username)
                 .password(originalPassword)
                 .email("pwd@example.com")
                 .displayName("Password User")
                 .build();
-        
+
         userConfigWriter.registerUser(registrationDto);
 
         // When
@@ -431,7 +431,7 @@ class UserConfigWriterTest {
     void loadUsersFromValidTestResource() {
         // Given - Create a valid user config
         UserConfig validConfig = new UserConfig();
-        
+
         User testUser = User.builder()
             .username("testuser")
             .passwordHash(BCrypt.hashpw("testpass", BCrypt.gensalt()))
@@ -440,7 +440,7 @@ class UserConfigWriterTest {
             .roles(List.of("USER"))
             .created(LocalDateTime.now())
             .build();
-            
+
         User adminUser = User.builder()
             .username("adminuser")
             .passwordHash(BCrypt.hashpw("adminpass", BCrypt.gensalt()))
@@ -449,10 +449,10 @@ class UserConfigWriterTest {
             .roles(List.of("USER", "ADMIN"))
             .created(LocalDateTime.now())
             .build();
-            
+
         validConfig.getUsers().put("testuser", testUser);
         validConfig.getUsers().put("adminuser", adminUser);
-        
+
         // Set the config in our test writer
         userConfigWriter.setUserConfig(validConfig);
 
@@ -478,7 +478,7 @@ class UserConfigWriterTest {
     @Test
     void loadUsersFromEmptyUsersResource() {
         // Given - Empty config is already set up in setUp()
-        
+
         // When
         UserConfig result = userConfigWriter.loadUsers();
 
@@ -521,7 +521,7 @@ class UserConfigWriterTest {
         // Given - create a config with null users map
         UserConfig nullUsersConfig = new UserConfig();
         nullUsersConfig.setUsers(null);
-        
+
         // Create a test implementation that initializes empty map
         TestUserConfigWriter nullMapWriter = new TestUserConfigWriter(gson, tempDir) {
             @Override
@@ -553,7 +553,7 @@ class UserConfigWriterTest {
     void loadUsersWithMissingFields() {
         // Given - Create a config with missing fields
         UserConfig missingFieldsConfig = new UserConfig();
-        
+
         // Create a user with minimal fields
         User minimalUser = User.builder()
             .username("missingfieldsuser")
@@ -561,7 +561,7 @@ class UserConfigWriterTest {
             .passwordHash(BCrypt.hashpw("password", BCrypt.gensalt()))
             .roles(new ArrayList<>())
             .build();
-            
+
         missingFieldsConfig.getUsers().put("missingfieldsuser", minimalUser);
         userConfigWriter.setUserConfig(missingFieldsConfig);
 

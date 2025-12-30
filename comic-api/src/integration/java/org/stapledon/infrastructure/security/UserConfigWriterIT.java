@@ -17,13 +17,13 @@ class UserConfigWriterIT extends AbstractIntegrationTest {
 
     @Autowired
     private UserConfigWriter userConfigWriter;
-    
+
     @Test
     @DisplayName("Should be able to register and retrieve users")
     void registerAndRetrieveUserTest() {
         // Create a unique username for testing
         String username = "test_user_" + System.currentTimeMillis();
-        
+
         // Register new user
         UserRegistrationDto registrationDto = UserRegistrationDto.builder()
                 .username(username)
@@ -31,23 +31,23 @@ class UserConfigWriterIT extends AbstractIntegrationTest {
                 .email(username + "@example.com")
                 .displayName("Test User")
                 .build();
-                
+
         // Register user and get result
         User newUser = userConfigWriter.registerUser(registrationDto)
                 .orElse(null);
-                
+
         // Verify user was created
         assertThat(newUser).isNotNull();
         assertThat(newUser.getUsername()).isEqualTo(username);
-        
+
         // Retrieve user by username
         User retrievedUser = userConfigWriter.getUser(username)
                 .orElse(null);
-                
+
         // Verify user can be retrieved
         assertThat(retrievedUser).isNotNull();
         assertThat(retrievedUser.getUsername()).isEqualTo(username);
-        
+
         // Verify user properties
         assertThat(retrievedUser.getEmail()).isEqualTo(username + "@example.com");
         assertThat(retrievedUser.getDisplayName()).isEqualTo("Test User");

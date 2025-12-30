@@ -38,12 +38,12 @@ public class JsonExecutionTracker implements ExecutionTracker {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
-    
+
     private final Map<String, LocalDate> taskExecutions = new HashMap<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    
+
     private static final String EXECUTION_TRACKER_FILE = "task-executions.json";
-    
+
     /**
      * Initialize by loading existing execution data.
      */
@@ -51,14 +51,14 @@ public class JsonExecutionTracker implements ExecutionTracker {
     public void init() {
         loadTaskExecutions();
     }
-    
+
     @Override
     public boolean canRunToday(String taskName) {
         lock.readLock().lock();
         try {
             LocalDate lastRun = taskExecutions.get(taskName);
             LocalDate today = LocalDate.now();
-            
+
             // Task has never run or hasn't run today
             return lastRun == null || !lastRun.equals(today);
         } finally {
@@ -79,7 +79,7 @@ public class JsonExecutionTracker implements ExecutionTracker {
             lock.writeLock().unlock();
         }
     }
-    
+
     @Override
     public LocalDate getLastExecutionDate(String taskName) {
         lock.readLock().lock();
@@ -89,7 +89,7 @@ public class JsonExecutionTracker implements ExecutionTracker {
             lock.readLock().unlock();
         }
     }
-    
+
     /**
      * Load task execution data from the JSON file.
      */
@@ -97,12 +97,12 @@ public class JsonExecutionTracker implements ExecutionTracker {
         lock.writeLock().lock();
         try {
             Path filePath = Paths.get(cacheProperties.getLocation(), EXECUTION_TRACKER_FILE);
-            
+
             if (Files.exists(filePath)) {
                 try (Reader reader = new FileReader(filePath.toFile())) {
                     Type type = new TypeToken<Map<String, LocalDate>>() {}.getType();
                     Map<String, LocalDate> loadedData = gson.fromJson(reader, type);
-                    
+
                     if (loadedData != null) {
                         taskExecutions.clear();
                         taskExecutions.putAll(loadedData);
@@ -118,10 +118,10 @@ public class JsonExecutionTracker implements ExecutionTracker {
             lock.writeLock().unlock();
         }
     }
-    
+
     /**
      * Save task execution data to the JSON file
-     * 
+     *
      * @return true if successful, false otherwise
      */
     private boolean saveTaskExecutions() {
@@ -130,9 +130,9 @@ public class JsonExecutionTracker implements ExecutionTracker {
             if (!Files.exists(directory)) {
                 Files.createDirectories(directory);
             }
-            
+
             Path filePath = directory.resolve(EXECUTION_TRACKER_FILE);
-            
+
             try (Writer writer = new FileWriter(filePath.toFile())) {
                 gson.toJson(taskExecutions, writer);
                 writer.flush();

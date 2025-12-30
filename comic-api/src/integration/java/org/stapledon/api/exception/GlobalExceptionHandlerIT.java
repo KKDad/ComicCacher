@@ -100,7 +100,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
     void shouldHandleDateTimeParseException() throws Exception {
         // Given - use test comic ID
         int comicId = TEST_COMIC_ID;
-        
+
         // When - using an invalid date format
         String invalidDate = "2023-13-32"; // Invalid date format
         MvcResult mvcResult = mockMvc.perform(get("/api/v1/comics/{id}/next/{date}", comicId, invalidDate)
@@ -135,9 +135,9 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
         // When - attempt to log in with invalid credentials
         String username = "nonexistentuser";
         String password = "wrongpassword";
-        
+
         String requestBody = String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password);
-        
+
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
@@ -154,7 +154,7 @@ public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
     void shouldHandleComicIdMismatchException() throws Exception {
         // Given - create a comic item with mismatched ID
         int comicId = TEST_COMIC_ID;
-        
+
         ComicItem mismatchedComic = ComicItem.builder()
                 .id(comicId + 1) // ID different from path variable
                 .name("Test Comic")
