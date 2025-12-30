@@ -1,6 +1,8 @@
 // Centralized version management for all modules
 plugins {
     id 'org.openrewrite.rewrite' version '6.26.0' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 ext {
@@ -27,12 +29,16 @@ ext {
 
     // Test dependency versions
     jacocoVersion = '0.8.11'
+
+    // Tool versions
+    checkstyleVersion = '10.21.1'
 }
 
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'jacoco'
+    apply plugin: 'checkstyle'
     apply plugin: 'org.openrewrite.rewrite'
 
     // Set version from central definition
@@ -54,7 +60,23 @@ subprojects {
         toolVersion = rootProject.ext.jacocoVersion
     }
 
+    // Checkstyle configuration
+    checkstyle {
+        toolVersion = rootProject.ext.checkstyleVersion
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        configDirectory = rootProject.file('config/checkstyle')
+        ignoreFailures = true  // Report but don't fail build initially
+        maxWarnings = 0
+    }
 
+    checkstyleMain {
+        source = 'src/main/java'
+    }
+
+    checkstyleTest {
+        source = 'src/test/java'
+        enabled = false  // Skip checkstyle on test code initially
+    }
 
     // Add JUnit Platform Launcher for all subprojects (required by Gradle 8.5+)
     dependencies {
