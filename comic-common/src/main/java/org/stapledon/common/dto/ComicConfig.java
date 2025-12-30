@@ -50,12 +50,12 @@ public class ComicConfig {
      */
     public void setComics(List<ComicItem> comics) {
         this.comics = comics;
-        
+
         // Also update items map to maintain consistency
         if (this.items == null) {
             this.items = new ConcurrentHashMap<>();
         }
-        
+
         // Clear and repopulate items map
         this.items.clear();
         if (comics != null) {

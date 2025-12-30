@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ComicUpdateService implements UpdateService {
 
     private final ManagementFacade comicManagementFacade;
-    
+
     @Override
     public boolean updateAll() {
         log.info("Updating all comics");

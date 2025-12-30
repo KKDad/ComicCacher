@@ -77,9 +77,9 @@ public class ComicJobExecutionListener implements JobExecutionListener {
         log.info("Write Skip Count: {}", stepExecution.getWriteSkipCount());
         log.info("Rollback Count: {}", stepExecution.getRollbackCount());
 
-        if (stepExecution.getReadSkipCount() > 0 ||
-                stepExecution.getProcessSkipCount() > 0 ||
-                stepExecution.getWriteSkipCount() > 0) {
+        if (stepExecution.getReadSkipCount() > 0
+                || stepExecution.getProcessSkipCount() > 0
+                || stepExecution.getWriteSkipCount() > 0) {
             log.warn("Step had skipped items - check for comic retrieval failures");
         }
 

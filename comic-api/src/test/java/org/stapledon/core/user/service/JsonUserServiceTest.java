@@ -40,7 +40,7 @@ class JsonUserServiceTest {
                 .email("test@example.com")
                 .displayName("Test User")
                 .build();
-        
+
         User expectedUser = createTestUser("testuser");
         when(userConfigWriter.registerUser(registrationDto)).thenReturn(Optional.of(expectedUser));
 
@@ -58,7 +58,7 @@ class JsonUserServiceTest {
         // Given
         String username = "testuser";
         String password = "password123";
-        
+
         User expectedUser = createTestUser(username);
         when(userConfigWriter.authenticateUser(username, password)).thenReturn(Optional.of(expectedUser));
 
@@ -75,7 +75,7 @@ class JsonUserServiceTest {
     void getUserShouldDelegateToConfigWriter() {
         // Given
         String username = "testuser";
-        
+
         User expectedUser = createTestUser(username);
         when(userConfigWriter.getUser(username)).thenReturn(Optional.of(expectedUser));
 
@@ -92,7 +92,7 @@ class JsonUserServiceTest {
     void updateUserShouldDelegateToConfigWriter() {
         // Given
         User user = createTestUser("testuser");
-        
+
         when(userConfigWriter.updateUser(user)).thenReturn(Optional.of(user));
 
         // When
@@ -109,7 +109,7 @@ class JsonUserServiceTest {
         // Given
         String username = "testuser";
         String newPassword = "newpassword";
-        
+
         User expectedUser = createTestUser(username);
         when(userConfigWriter.updatePassword(username, newPassword)).thenReturn(Optional.of(expectedUser));
 

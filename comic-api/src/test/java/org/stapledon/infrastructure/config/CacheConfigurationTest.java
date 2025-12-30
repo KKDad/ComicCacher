@@ -23,7 +23,7 @@ class CacheConfigurationTest {
 
     @InjectMocks
     CacheConfiguration subject;
-    
+
     private String originalOsName;
 
     @BeforeEach
@@ -31,7 +31,7 @@ class CacheConfigurationTest {
         // Save the original os.name
         originalOsName = System.getProperty("os.name");
     }
-    
+
     @AfterEach
     void tearDown() {
         // Restore original OS name
@@ -43,7 +43,7 @@ class CacheConfigurationTest {
         when(cacheProperties.getConfig()).thenReturn("myfancyconfigname.json");
         assertThat(subject.configName()).isEqualTo("myfancyconfigname.json");
     }
-    
+
     @Test
     void shouldReturnWindowsPathOnWindows() {
         // Given
@@ -98,7 +98,7 @@ class CacheConfigurationTest {
         File directory = new File(result);
         assertThat(directory.exists()).isTrue();
         assertThat(directory.isDirectory()).isTrue();
-        
+
         // Clean up
         directory.delete();
     }

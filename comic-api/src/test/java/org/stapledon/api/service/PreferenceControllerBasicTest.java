@@ -30,16 +30,16 @@ class PreferenceControllerBasicTest {
         // Given
         PreferenceService preferenceService = Mockito.mock(PreferenceService.class);
         PreferenceController controller = new PreferenceController(preferenceService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
-        
+
         UserPreference preference = UserPreference.builder()
                 .username("testuser")
                 .favoriteComics(Arrays.asList(123, 456))
                 .lastReadDates(new HashMap<>())
                 .displaySettings(new HashMap<>())
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(preferenceService.getPreference("testuser")).thenReturn(Optional.of(preference));
 
@@ -61,9 +61,9 @@ class PreferenceControllerBasicTest {
         // Given
         PreferenceService preferenceService = Mockito.mock(PreferenceService.class);
         PreferenceController controller = new PreferenceController(preferenceService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(preferenceService.getPreference("testuser")).thenReturn(Optional.empty());
 
@@ -76,17 +76,17 @@ class PreferenceControllerBasicTest {
         // Given
         PreferenceService preferenceService = Mockito.mock(PreferenceService.class);
         PreferenceController controller = new PreferenceController(preferenceService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
         int comicId = 789;
-        
+
         UserPreference preference = UserPreference.builder()
                 .username("testuser")
                 .favoriteComics(new ArrayList<>(Arrays.asList(123, 456, 789)))
                 .lastReadDates(new HashMap<>())
                 .displaySettings(new HashMap<>())
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(preferenceService.addFavorite("testuser", comicId)).thenReturn(Optional.of(preference));
 
@@ -107,17 +107,17 @@ class PreferenceControllerBasicTest {
         // Given
         PreferenceService preferenceService = Mockito.mock(PreferenceService.class);
         PreferenceController controller = new PreferenceController(preferenceService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
         int comicId = 123;
-        
+
         UserPreference preference = UserPreference.builder()
                 .username("testuser")
                 .favoriteComics(new ArrayList<>(List.of(456)))
                 .lastReadDates(new HashMap<>())
                 .displaySettings(new HashMap<>())
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(preferenceService.removeFavorite("testuser", comicId)).thenReturn(Optional.of(preference));
 
@@ -138,23 +138,23 @@ class PreferenceControllerBasicTest {
         // Given
         PreferenceService preferenceService = Mockito.mock(PreferenceService.class);
         PreferenceController controller = new PreferenceController(preferenceService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
         int comicId = 123;
         LocalDate date = LocalDate.now();
         Map<String, String> dateData = new HashMap<>();
         dateData.put("date", date.toString());
-        
+
         Map<Integer, LocalDate> lastReadDates = new HashMap<>();
         lastReadDates.put(comicId, date);
-        
+
         UserPreference preference = UserPreference.builder()
                 .username("testuser")
                 .favoriteComics(new ArrayList<>())
                 .lastReadDates(lastReadDates)
                 .displaySettings(new HashMap<>())
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(preferenceService.updateLastRead(eq("testuser"), eq(comicId), any(LocalDate.class)))
                 .thenReturn(Optional.of(preference));
@@ -176,19 +176,19 @@ class PreferenceControllerBasicTest {
         // Given
         PreferenceService preferenceService = Mockito.mock(PreferenceService.class);
         PreferenceController controller = new PreferenceController(preferenceService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
         HashMap<String, Object> settings = new HashMap<>();
         settings.put("darkMode", true);
         settings.put("fontSize", 16);
-        
+
         UserPreference preference = UserPreference.builder()
                 .username("testuser")
                 .favoriteComics(new ArrayList<>())
                 .lastReadDates(new HashMap<>())
                 .displaySettings(settings)
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(preferenceService.updateDisplaySettings(eq("testuser"), any(HashMap.class)))
                 .thenReturn(Optional.of(preference));

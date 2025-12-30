@@ -31,10 +31,10 @@ class UserControllerBasicTest {
         // Given
         UserService userService = Mockito.mock(UserService.class);
         UserController controller = new UserController(userService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
         Authentication authentication = Mockito.mock(Authentication.class);
-        
+
         User user = User.builder()
                 .username("testuser")
                 .email("test@example.com")
@@ -43,7 +43,7 @@ class UserControllerBasicTest {
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(userService.getUser("testuser")).thenReturn(Optional.of(user));
 
@@ -63,9 +63,9 @@ class UserControllerBasicTest {
         // Given
         UserService userService = Mockito.mock(UserService.class);
         UserController controller = new UserController(userService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
-        
+
         when(userDetails.getUsername()).thenReturn("nonexistentuser");
         when(userService.getUser("nonexistentuser")).thenReturn(Optional.empty());
 
@@ -78,9 +78,9 @@ class UserControllerBasicTest {
         // Given
         UserService userService = Mockito.mock(UserService.class);
         UserController controller = new UserController(userService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
-        
+
         User user = User.builder()
                 .username("testuser")
                 .email("updated@example.com")
@@ -89,7 +89,7 @@ class UserControllerBasicTest {
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(userService.updateUser(any(User.class))).thenReturn(Optional.of(user));
 
@@ -110,11 +110,11 @@ class UserControllerBasicTest {
         // Given
         UserService userService = Mockito.mock(UserService.class);
         UserController controller = new UserController(userService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
         Map<String, String> passwordData = new HashMap<>();
         passwordData.put("newPassword", "newpassword123");
-        
+
         User updatedUser = User.builder()
                 .username("testuser")
                 .email("test@example.com")
@@ -123,7 +123,7 @@ class UserControllerBasicTest {
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(userService.updatePassword(anyString(), anyString())).thenReturn(Optional.of(updatedUser));
 
@@ -142,11 +142,11 @@ class UserControllerBasicTest {
         // Given
         UserService userService = Mockito.mock(UserService.class);
         UserController controller = new UserController(userService);
-        
+
         UserDetails userDetails = Mockito.mock(UserDetails.class);
         Map<String, String> passwordData = new HashMap<>();
         passwordData.put("newPassword", "newpassword123");
-        
+
         when(userDetails.getUsername()).thenReturn("testuser");
         when(userService.updatePassword(anyString(), anyString())).thenReturn(Optional.empty());
 

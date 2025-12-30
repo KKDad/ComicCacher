@@ -1,8 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
-
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -11,18 +8,20 @@ import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.common.config.CacheProperties;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Configuration writer for user-related data.
- * This implementation now delegates to ApplicationConfigurationFacade for most operations.
+ * This implementation now delegates to ApplicationConfigurationFacade for most
+ * operations.
  */
 @Slf4j
 @ToString
@@ -72,9 +71,9 @@ public class UserConfigWriter {
      */
     public Optional<User> registerUser(UserRegistrationDto registrationDto) {
         // Validate input
-        if (registrationDto == null ||
-            registrationDto.getUsername() == null || registrationDto.getUsername().isEmpty() ||
-            registrationDto.getPassword() == null || registrationDto.getPassword().isEmpty()) {
+        if (registrationDto == null
+                || registrationDto.getUsername() == null || registrationDto.getUsername().isEmpty()
+                || registrationDto.getPassword() == null || registrationDto.getPassword().isEmpty()) {
             log.error("Cannot register user: Missing required fields (username or password)");
             return Optional.empty();
         }
@@ -291,7 +290,8 @@ public class UserConfigWriter {
      * Load users from the users.json file
      *
      * @return UserConfig containing users
-     * @throws JsonParseException if the file is malformed JSON (for testing purposes)
+     * @throws JsonParseException if the file is malformed JSON (for testing
+     *                            purposes)
      */
     public UserConfig loadUsers() throws JsonParseException {
         // Return cached config if already loaded and valid

@@ -16,7 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for identifying missing comic strips that need to be backfilled.
- * Scans a target year for each comic and builds a list of dates with missing strips.
+ * Scans a target year for each comic and builds a list of dates with missing
+ * strips.
  */
 @Slf4j
 @Service
@@ -42,7 +43,8 @@ public class ComicBackfillService {
      * Scans all enabled comics for the target year and identifies missing strips.
      * Scans backwards in time from today (or end of year) to the start of the year.
      *
-     * @return List of backfill tasks (comic + date pairs) in reverse chronological order
+     * @return List of backfill tasks (comic + date pairs) in reverse chronological
+     *         order
      */
     public List<BackfillTask> findMissingStrips() {
         log.info("Scanning for missing comic strips in year {}", targetYear);
@@ -54,7 +56,8 @@ public class ComicBackfillService {
         LocalDate yearEnd = LocalDate.of(targetYear, 12, 31);
         LocalDate today = LocalDate.now();
 
-        // Don't scan future dates - start from today or end of year, whichever is earlier
+        // Don't scan future dates - start from today or end of year, whichever is
+        // earlier
         LocalDate scanStart = yearEnd.isAfter(today) ? today : yearEnd;
 
         log.info("Backfill date range: scanning from {} backwards to {} (today: {}, yearEnd: {})",
@@ -76,7 +79,7 @@ public class ComicBackfillService {
             }
 
             log.info("Scanning {} for missing strips (backwards from {} to {})",
-                comic.getName(), scanStart, yearStart);
+                    comic.getName(), scanStart, yearStart);
 
             List<BackfillTask> comicTasks = scanComicForMissingStrips(comic, scanStart, yearStart);
             backfillTasks.addAll(comicTasks);
@@ -91,7 +94,8 @@ public class ComicBackfillService {
     /**
      * Scans a single comic for missing strips in the date range.
      * Scans backwards in time from start to end.
-     * Stops early if too many consecutive missing strips are found (comic didn't exist yet).
+     * Stops early if too many consecutive missing strips are found (comic didn't
+     * exist yet).
      */
     private List<BackfillTask> scanComicForMissingStrips(
             ComicItem comic,
@@ -107,10 +111,9 @@ public class ComicBackfillService {
             // Check if this comic publishes on this day of week
             if (shouldCheckDate(comic, date)) {
                 boolean exists = storageFacade.comicStripExists(
-                    comic.getId(),
-                    comic.getName(),
-                    date
-                );
+                        comic.getId(),
+                        comic.getName(),
+                        date);
 
                 if (!exists) {
                     tasks.add(new BackfillTask(comic, date));
@@ -119,9 +122,9 @@ public class ComicBackfillService {
                     // Stop if we've hit too many consecutive missing strips
                     // This likely means the comic didn't exist this far back
                     if (consecutiveMissing >= maxConsecutiveFailures) {
-                        log.info("Stopping scan for {} at {} - {} consecutive missing strips " +
-                            "(comic likely didn't exist this far back)",
-                            comic.getName(), date, consecutiveMissing);
+                        log.info("Stopping scan for {} at {} - {} consecutive missing strips "
+                                + "(comic likely didn't exist this far back)",
+                                comic.getName(), date, consecutiveMissing);
                         break;
                     }
                 } else {
@@ -136,7 +139,8 @@ public class ComicBackfillService {
     }
 
     /**
-     * Determines if we should check for a comic on this date based on publication schedule.
+     * Determines if we should check for a comic on this date based on publication
+     * schedule.
      */
     private boolean shouldCheckDate(ComicItem comic, LocalDate date) {
         // If no publication days specified, check every day

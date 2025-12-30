@@ -10,7 +10,7 @@ public interface AuthService {
 
     /**
      * Register a new user
-     * 
+     *
      * @param registrationDto User registration data
      * @return Authentication response with token if successful, empty otherwise
      */
@@ -18,7 +18,7 @@ public interface AuthService {
 
     /**
      * Authenticate a user
-     * 
+     *
      * @param authRequest Authentication request containing username and password
      * @return Authentication response with token if successful, empty otherwise
      */
@@ -26,7 +26,7 @@ public interface AuthService {
 
     /**
      * Refresh token
-     * 
+     *
      * @param refreshToken Refresh token
      * @return Authentication response with new token if successful, empty otherwise
      */
@@ -34,7 +34,7 @@ public interface AuthService {
 
     /**
      * Validate token
-     * 
+     *
      * @param token JWT token
      * @return true if token is valid, false otherwise
      */

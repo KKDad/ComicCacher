@@ -1,7 +1,6 @@
 package org.stapledon.api.dto.health;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,22 +15,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SystemResources {
-    
+
     /**
      * Available processors
      */
     private int availableProcessors;
-    
+
     /**
      * Memory usage in MB
      */
     private MemoryInfo memory;
-    
+
     /**
      * Disk space information in MB
      */
     private DiskSpace diskSpace;
-    
+
     /**
      * Memory metrics
      */
@@ -45,7 +44,7 @@ public class SystemResources {
         private long maxMemory;
         private double usedPercentage;
     }
-    
+
     /**
      * Disk space metrics
      */

@@ -29,35 +29,35 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     void getPreferencesTest() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
             .isNotNull();
-        
+
         // Get user preferences
         MvcResult result = mockMvc.perform(get(PREFERENCES_PATH)
                 .header("Authorization", "Bearer " + token))
             .andDo(print())
             .andReturn();
-            
+
         // Verify response status is 200 OK
         assertThat(result.getResponse().getStatus())
             .as("Expected GET /preferences to return status 200")
             .isEqualTo(HttpStatus.OK.value());
-        
+
         // Verify response contains data field
         String responseContent = result.getResponse().getContentAsString();
         assertThat(responseContent)
             .as("Response should contain 'data' field")
             .contains("data");
-        
+
         // Verify preferences can be parsed
         UserPreference preferences = extractFromResponse(responseContent, "data", UserPreference.class);
         assertThat(preferences)
             .as("Response should contain valid preference data")
             .isNotNull();
-            
+
         // Verify username in preferences matches test user
         assertThat(preferences.getUsername())
             .as("Preferences should contain correct username")
@@ -71,7 +71,7 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
         MvcResult result = mockMvc.perform(get(PREFERENCES_PATH))
             .andDo(print())
             .andReturn();
-            
+
         // Verify response status is 401 Unauthorized
         assertThat(result.getResponse().getStatus())
             .as("Expected GET /preferences without authentication to return status 401")
@@ -83,31 +83,31 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     void addAndRemoveFavoriteTest() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
             .isNotNull();
-        
+
         // Use test comic ID from constants
         int comicId = TEST_COMIC_ID;
-        
+
         // First remove the comic from favorites if it's there
         mockMvc.perform(delete(PREFERENCES_PATH + "/comics/{comicId}/favorite", comicId)
                 .header("Authorization", "Bearer " + token))
             .andReturn();
-        
+
         // Add the comic to favorites
         MvcResult addResult = mockMvc.perform(post(PREFERENCES_PATH + "/comics/{comicId}/favorite", comicId)
                 .header("Authorization", "Bearer " + token))
             .andDo(print())
             .andReturn();
-            
+
         // Verify response status is 200 OK
         assertThat(addResult.getResponse().getStatus())
             .as("Expected POST /preferences/comics/{comicId}/favorite to return status 200")
             .isEqualTo(HttpStatus.OK.value());
-        
+
         // Verify the comic is now in favorites
         UserPreference prefs = extractFromResponse(addResult.getResponse().getContentAsString(), "data", UserPreference.class);
         assertThat(prefs)
@@ -116,18 +116,18 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
         assertThat(prefs.getFavoriteComics())
             .as("Favorites should include the added comic ID")
             .contains(comicId);
-        
+
         // Remove the comic from favorites
         MvcResult removeResult = mockMvc.perform(delete(PREFERENCES_PATH + "/comics/{comicId}/favorite", comicId)
                 .header("Authorization", "Bearer " + token))
             .andDo(print())
             .andReturn();
-            
+
         // Verify response status is 200 OK
         assertThat(removeResult.getResponse().getStatus())
             .as("Expected DELETE /preferences/comics/{comicId}/favorite to return status 200")
             .isEqualTo(HttpStatus.OK.value());
-        
+
         // Verify the comic is no longer in favorites
         prefs = extractFromResponse(removeResult.getResponse().getContentAsString(), "data", UserPreference.class);
         assertThat(prefs)
@@ -143,20 +143,20 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     void updateLastReadTest() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
             .isNotNull();
-        
+
         // Use test comic ID from constants
         int comicId = TEST_COMIC_ID;
-        
+
         // Set a last read date
         LocalDate today = LocalDate.now();
         Map<String, String> dateData = new HashMap<>();
         dateData.put("date", today.format(DateTimeFormatter.ISO_DATE));
-        
+
         // Update last read date
         MvcResult updateResult = mockMvc.perform(post(PREFERENCES_PATH + "/comics/{comicId}/lastread", comicId)
                 .header("Authorization", "Bearer " + token)
@@ -164,12 +164,12 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
                 .content(objectMapper.writeValueAsString(dateData)))
             .andDo(print())
             .andReturn();
-            
+
         // Verify response status is 200 OK
         assertThat(updateResult.getResponse().getStatus())
             .as("Expected POST /preferences/comics/{comicId}/lastread to return status 200")
             .isEqualTo(HttpStatus.OK.value());
-        
+
         // Verify the last read date was updated
         UserPreference prefs = extractFromResponse(updateResult.getResponse().getContentAsString(), "data", UserPreference.class);
         assertThat(prefs)
@@ -189,18 +189,18 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     void updateDisplaySettingsTest() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
             .isNotNull();
-        
+
         // Create display settings
         HashMap<String, Object> settings = new HashMap<>();
         settings.put("theme", "dark");
         settings.put("fontSize", 16);
         settings.put("showTutorial", false);
-        
+
         // Update display settings
         MvcResult updateResult = mockMvc.perform(post(PREFERENCES_PATH + "/display-settings")
                 .header("Authorization", "Bearer " + token)
@@ -208,12 +208,12 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
                 .content(objectMapper.writeValueAsString(settings)))
             .andDo(print())
             .andReturn();
-            
+
         // Verify response status is 200 OK
         assertThat(updateResult.getResponse().getStatus())
             .as("Expected POST /preferences/display-settings to return status 200")
             .isEqualTo(HttpStatus.OK.value());
-        
+
         // Verify the display settings were updated
         UserPreference prefs = extractFromResponse(updateResult.getResponse().getContentAsString(), "data", UserPreference.class);
         assertThat(prefs)
@@ -241,19 +241,19 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
     void updateLastReadWithInvalidDateFormatTest() throws Exception {
         // Create a test user and authenticate
         String token = authenticateUser();
-        
+
         // Verify authentication succeeded
         assertThat(token)
             .as("Authentication should succeed for test user")
             .isNotNull();
-        
+
         // Use test comic ID from constants
         int comicId = TEST_COMIC_ID;
-        
+
         // Set an invalid date format
         Map<String, String> dateData = new HashMap<>();
         dateData.put("date", "not-a-date");
-        
+
         // Attempt to update with invalid date
         MvcResult result = mockMvc.perform(post(PREFERENCES_PATH + "/comics/{comicId}/lastread", comicId)
                 .header("Authorization", "Bearer " + token)
@@ -261,7 +261,7 @@ class PreferenceControllerIT extends AbstractIntegrationTest {
                 .content(objectMapper.writeValueAsString(dateData)))
             .andDo(print())
             .andReturn();
-            
+
         // Verify response status is 400 Bad Request
         assertThat(result.getResponse().getStatus())
             .as("Expected POST /preferences/comics/{comicId}/lastread with invalid date to return status 400")

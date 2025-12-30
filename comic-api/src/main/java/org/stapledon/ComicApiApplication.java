@@ -15,27 +15,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ToString
-@OpenAPIDefinition(
-        info = @Info(
-                title = "Web-comics scroller",
-                description = "Saturday Comics Page brought Online",
-                contact = @Contact(
-                        name = "ComicsApi",
-                        url = "https://github.com/KKDad/ComicCacher",
-                        email = "adrian@gilbert.ca"
-                ),
-                version = "2.0",
-                license = @License(
-                        name = "MIT Licence",
-                        url = "https://github.com/thombergs/code-examples/blob/master/LICENSE")),
-        servers = @Server(url = "http://comics.stapledon.local")
-)
+@OpenAPIDefinition(info = @Info(title = "Web-comics scroller", description = "Saturday Comics Page brought Online", contact = @Contact(name = "ComicsApi", url = "https://github.com/KKDad/ComicCacher", email = "adrian@gilbert.ca"), version = "2.0", license = @License(name = "MIT Licence", url = "https://github.com/thombergs/code-examples/blob/master/LICENSE")), servers = @Server(url = "http://comics.stapledon.local"))
 @SpringBootApplication
 @EnableScheduling
 @RequiredArgsConstructor
+@SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 public class ComicApiApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(ComicApiApplication.class, args);
-    }
+        public static void main(String[] args) {
+                SpringApplication.run(ComicApiApplication.class, args);
+        }
 }
-

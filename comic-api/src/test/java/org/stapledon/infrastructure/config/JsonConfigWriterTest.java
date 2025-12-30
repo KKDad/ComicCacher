@@ -28,7 +28,7 @@ import java.util.UUID;
 class JsonConfigWriterTest {
     private static final Logger LOG = LoggerFactory.getLogger(JsonConfigWriterTest.class);
     private Path path;
-    
+
     @Mock
     private ApplicationConfigurationFacade configurationFacade;
 
@@ -62,12 +62,12 @@ class JsonConfigWriterTest {
         CacheProperties cacheProperties = new CacheProperties();
         cacheProperties.setLocation(path.toString());
         cacheProperties.setConfig(String.format("%s.json", uuid));
-        
+
         // Mock the configuration facade behavior
         ComicConfig comicConfig = new ComicConfig();
         when(configurationFacade.loadComicConfig()).thenReturn(comicConfig);
         when(configurationFacade.saveComicConfig(any(ComicConfig.class))).thenReturn(true);
-        
+
         JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), cacheProperties, configurationFacade);
         subject.save(item);
 

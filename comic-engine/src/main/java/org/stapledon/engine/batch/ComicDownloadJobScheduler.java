@@ -170,8 +170,9 @@ public class ComicDownloadJobScheduler implements CommandLineRunner {
         return jobInstances.stream()
                 .flatMap(instance -> jobExplorer.getJobExecutions(instance).stream())
                 .filter(execution -> {
-                    if (execution.getStartTime() == null)
+                    if (execution.getStartTime() == null) {
                         return false;
+                    }
                     LocalDate executionDate = execution.getStartTime().toLocalDate();
                     return !executionDate.isBefore(startDate) && !executionDate.isAfter(endDate);
                 })

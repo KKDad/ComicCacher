@@ -191,17 +191,17 @@ public class AccessMetricsCollector {
     public File findOldest(ComicItem comic) {
         var timer = Stopwatch.createStarted();
         File result = null;
-        
+
         // Use the facade
         Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(comic.getId(), comic.getName());
         if (oldestDate.isPresent()) {
             LocalDate date = oldestDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            result = new File(String.format("%s/%s/%s/%s.png", 
+            result = new File(String.format("%s/%s/%s/%s.png",
                 cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
-        
+
         timer.stop();
         trackAccess(comic.getName(), result != null, timer.elapsed(TimeUnit.MILLISECONDS));
         return result;
@@ -210,17 +210,17 @@ public class AccessMetricsCollector {
     public File findNewest(ComicItem comic) {
         var timer = Stopwatch.createStarted();
         File result = null;
-        
+
         // Use the facade
         Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(comic.getId(), comic.getName());
         if (newestDate.isPresent()) {
             LocalDate date = newestDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            result = new File(String.format("%s/%s/%s/%s.png", 
+            result = new File(String.format("%s/%s/%s/%s.png",
                 cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
-        
+
         timer.stop();
         trackAccess(comic.getName(), result != null, timer.elapsed(TimeUnit.MILLISECONDS));
         return result;
@@ -231,14 +231,14 @@ public class AccessMetricsCollector {
         var timer = Stopwatch.createStarted();
         File resultFile = null;
         boolean found = false;
-        
+
         // Use the facade
         Optional<LocalDate> nextDate = storageFacade.getNextDateWithComic(comic.getId(), comic.getName(), from);
         if (nextDate.isPresent()) {
             LocalDate date = nextDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            resultFile = new File(String.format("%s/%s/%s/%s.png", 
+            resultFile = new File(String.format("%s/%s/%s/%s.png",
                 cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
             found = true;
         }
@@ -255,14 +255,14 @@ public class AccessMetricsCollector {
         var timer = Stopwatch.createStarted();
         File resultFile = null;
         boolean found = false;
-        
+
         // Use the facade
         Optional<LocalDate> prevDate = storageFacade.getPreviousDateWithComic(comic.getId(), comic.getName(), from);
         if (prevDate.isPresent()) {
             LocalDate date = prevDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            resultFile = new File(String.format("%s/%s/%s/%s.png", 
+            resultFile = new File(String.format("%s/%s/%s/%s.png",
                 cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
             found = true;
         }

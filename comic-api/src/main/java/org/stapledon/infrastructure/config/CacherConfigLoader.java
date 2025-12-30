@@ -1,19 +1,16 @@
 package org.stapledon.infrastructure.config;
 
-import com.google.gson.Gson;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.stapledon.common.util.Bootstrap;
 
+import com.google.gson.Gson;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Slf4j
 @ToString
@@ -30,7 +27,8 @@ public class CacherConfigLoader {
      */
     @Bean
     public Bootstrap load() {
-        log.warn("Loading CacherBootstrapConfig from: {}", this.getClass().getClassLoader().getResource("ComicCacher.json"));
+        log.warn("Loading CacherBootstrapConfig from: {}",
+                this.getClass().getClassLoader().getResource("ComicCacher.json"));
         var inputStream = this.getClass()
                 .getClassLoader()
                 .getResourceAsStream("ComicCacher.json");

@@ -6,22 +6,19 @@ import org.stapledon.api.dto.auth.JwtTokenDto;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.crypto.SecretKey;
-
 
 @Slf4j
 @ToString
@@ -40,10 +37,10 @@ public class JwtTokenUtil {
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", user.getRoles());
-        
+
         Instant now = Instant.now();
         Instant expiration = now.plusMillis(jwtProperties.getExpiration());
-        
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(user.getUsername())
@@ -62,7 +59,7 @@ public class JwtTokenUtil {
     public String generateRefreshToken(User user) {
         Instant now = Instant.now();
         Instant expiration = now.plusMillis(jwtProperties.getRefreshExpiration());
-        
+
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .setIssuedAt(Date.from(now))
@@ -80,7 +77,7 @@ public class JwtTokenUtil {
     public JwtTokenDto createToken(User user) {
         String token = generateToken(user);
         String refreshToken = generateRefreshToken(user);
-        
+
         return JwtTokenDto.builder()
                 .token(token)
                 .refreshToken(refreshToken)
@@ -93,7 +90,7 @@ public class JwtTokenUtil {
     /**
      * Validate token against user details
      *
-     * @param token JWT token
+     * @param token       JWT token
      * @param userDetails User details
      * @return true if token is valid, false otherwise
      */
@@ -138,7 +135,7 @@ public class JwtTokenUtil {
     /**
      * Extract claim from token
      *
-     * @param token JWT token
+     * @param token          JWT token
      * @param claimsResolver Claims resolver
      * @return Claim
      */

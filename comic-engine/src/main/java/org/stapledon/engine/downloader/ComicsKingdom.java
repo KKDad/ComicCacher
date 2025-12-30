@@ -51,7 +51,8 @@ public class ComicsKingdom extends DailyComic {
             // ComicsKingdom often uses a meta tag for the image
             Elements metaTags = doc.select("meta[property=og:image]");
             if (!metaTags.isEmpty()) {
-                // We get back 2-3 images. The 2nd image is the hi-res version - we'll select it.
+                // We get back 2-3 images. The 2nd image is the hi-res version - we'll select
+                // it.
                 if (metaTags.size() > 1) {
                     return Optional.ofNullable(metaTags.get(1).attr("content"));
                 }
@@ -64,10 +65,9 @@ public class ComicsKingdom extends DailyComic {
         }
     }
 
-
-
     /**
-     * Determines when the latest published image is. Some comics are only available on the web a couple days or
+     * Determines when the latest published image is. Some comics are only available
+     * on the web a couple days or
      * a week after they were published in print.
      *
      * @return Most recent date we can get an image for
@@ -103,19 +103,17 @@ public class ComicsKingdom extends DailyComic {
             var avatarCached = new File(String.format("%s/avatar.png", this.cacheLocation()));
             if (!avatarCached.exists()) {
                 Element featureAvatars = doc.select("img[src^=https://api.kingdigital.com/img/features/]").last();
-                if (featureAvatars == null)
+                if (featureAvatars == null) {
                     log.error("Unable to determine site avatar");
-                else {
+                } else {
                     cacheImage(featureAvatars.attr("abs:src"), avatarCached.getAbsolutePath());
                     log.trace("Avatar has been cached");
                 }
             }
 
-
         } catch (IOException ioe) {
             log.error(ioe.getMessage());
         }
     }
-
 
 }

@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>
  * Example Job Configuration:
- * 
+ *
  * <pre>
  * &#64;Bean
  * public Job myJob(JobRepository jobRepository,

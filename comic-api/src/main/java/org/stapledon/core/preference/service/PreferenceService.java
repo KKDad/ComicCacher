@@ -10,7 +10,7 @@ public interface PreferenceService {
 
     /**
      * Get user preferences by username
-     * 
+     *
      * @param username Username
      * @return The user preferences if found, empty otherwise
      */
@@ -18,7 +18,7 @@ public interface PreferenceService {
 
     /**
      * Add a comic to user's favorites
-     * 
+     *
      * @param username Username
      * @param comicId Comic ID
      * @return Updated user preferences if successful, empty otherwise
@@ -27,7 +27,7 @@ public interface PreferenceService {
 
     /**
      * Remove a comic from user's favorites
-     * 
+     *
      * @param username Username
      * @param comicId Comic ID
      * @return Updated user preferences if successful, empty otherwise
@@ -36,7 +36,7 @@ public interface PreferenceService {
 
     /**
      * Update last read date for a comic
-     * 
+     *
      * @param username Username
      * @param comicId Comic ID
      * @param date Last read date
@@ -46,7 +46,7 @@ public interface PreferenceService {
 
     /**
      * Update display settings for a user
-     * 
+     *
      * @param username Username
      * @param settings Display settings
      * @return Updated user preferences if successful, empty otherwise

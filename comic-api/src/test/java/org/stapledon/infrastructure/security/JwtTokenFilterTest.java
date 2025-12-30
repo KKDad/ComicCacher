@@ -50,7 +50,7 @@ class JwtTokenFilterTest {
         // Given
         String token = "valid_token";
         String username = "testuser";
-        
+
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtTokenUtil.extractUsername(token)).thenReturn(username);
         when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
@@ -78,7 +78,7 @@ class JwtTokenFilterTest {
         // Given
         String token = "invalid_token";
         String username = "testuser";
-        
+
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtTokenUtil.extractUsername(token)).thenReturn(username);
         when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
@@ -117,7 +117,7 @@ class JwtTokenFilterTest {
     void doFilterInternalShouldHandleExceptions() throws Exception {
         // Given
         String token = "error_token";
-        
+
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtTokenUtil.extractUsername(token)).thenThrow(new RuntimeException("Test exception"));
 

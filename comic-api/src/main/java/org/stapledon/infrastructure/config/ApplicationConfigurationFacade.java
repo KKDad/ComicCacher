@@ -1,8 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.preference.PreferenceConfig;
@@ -11,6 +8,8 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.util.Bootstrap;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -21,7 +20,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Paths;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -35,33 +33,33 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class ApplicationConfigurationFacade implements ConfigurationFacade {
-    
+
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
-    
+
     private ComicConfig comicConfig;
     private UserConfig userConfig;
     private PreferenceConfig preferenceConfig;
     private Bootstrap bootstrapConfig;
-    
+
     @Override
     public ComicConfig loadComicConfig() {
         if (comicConfig != null && comicConfig.getItems() != null && !comicConfig.getItems().isEmpty()) {
             return comicConfig;
         }
-        
+
         File configFile = getConfigFile(cacheProperties.getConfig());
-        
+
         if (!configFile.exists()) {
             log.warn("{} does not exist, creating new comic configuration", configFile);
             comicConfig = new ComicConfig();
             return comicConfig;
         }
-        
+
         try (FileReader reader = new FileReader(configFile)) {
             comicConfig = gson.fromJson(reader, ComicConfig.class);
-            
+
             if (comicConfig == null) {
                 log.warn("Null comic configuration from {}, creating new one", configFile);
                 comicConfig = new ComicConfig();
@@ -69,7 +67,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
                 log.warn("Null items map in comic configuration from {}, initializing", configFile);
                 comicConfig.setItems(new java.util.concurrent.ConcurrentHashMap<>());
             }
-            
+
             log.info("Loaded {} comics from {}", comicConfig.getItems().size(), configFile);
             return comicConfig;
         } catch (JsonParseException e) {
@@ -82,11 +80,11 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             return comicConfig;
         }
     }
-    
+
     @Override
     public boolean saveComicConfig(ComicConfig config) {
         File configFile = getConfigFile(cacheProperties.getConfig());
-        
+
         try (Writer writer = new FileWriter(configFile)) {
             gson.toJson(config, writer);
             this.comicConfig = config;
@@ -96,20 +94,20 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             return false;
         }
     }
-    
+
     @Override
     public Bootstrap loadBootstrapConfig() {
         if (bootstrapConfig != null) {
             return bootstrapConfig;
         }
-        
+
         // Note: This method assumes ComicCacher.json is in the classpath resources
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("ComicCacher.json")) {
             if (is != null) {
                 Reader reader = new InputStreamReader(is);
                 bootstrapConfig = gson.fromJson(reader, Bootstrap.class);
-                log.info("Loaded bootstrap configuration with {} daily comics and {} king comics", 
-                        bootstrapConfig.getDailyComics().size(), 
+                log.info("Loaded bootstrap configuration with {} daily comics and {} king comics",
+                        bootstrapConfig.getDailyComics().size(),
                         bootstrapConfig.getKingComics().size());
                 return bootstrapConfig;
             } else {
@@ -123,7 +121,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             return bootstrapConfig;
         }
     }
-    
+
     @Override
     public boolean saveBootstrapConfig(Bootstrap config) {
         // Bootstrap config is typically read-only from resources
@@ -131,26 +129,26 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
         log.warn("Saving bootstrap configuration is not supported");
         return false;
     }
-    
+
     @Override
     public UserConfig loadUserConfig() {
         if (userConfig != null && userConfig.getUsers() != null) {
             return userConfig;
         }
-        
+
         File configFile = getConfigFile(cacheProperties.getUsersConfig());
-        
+
         if (!configFile.exists()) {
             log.warn("{} does not exist, creating new user configuration", configFile);
             userConfig = new UserConfig();
             return userConfig;
         }
-        
+
         try (InputStream inputStream = new FileInputStream(configFile);
              Reader reader = new InputStreamReader(inputStream)) {
-            
+
             userConfig = gson.fromJson(reader, UserConfig.class);
-            
+
             if (userConfig == null) {
                 log.warn("Null user configuration from {}, creating new one", configFile);
                 userConfig = new UserConfig();
@@ -158,7 +156,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
                 log.warn("Null users map in user configuration from {}, initializing", configFile);
                 userConfig.setUsers(new java.util.concurrent.ConcurrentHashMap<>());
             }
-            
+
             log.info("Loaded {} users from {}", userConfig.getUsers().size(), configFile);
             return userConfig;
         } catch (JsonParseException e) {
@@ -170,11 +168,11 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             return userConfig;
         }
     }
-    
+
     @Override
     public boolean saveUserConfig(UserConfig config) {
         File configFile = getConfigFile(cacheProperties.getUsersConfig());
-        
+
         try (Writer writer = new FileWriter(configFile)) {
             gson.toJson(config, writer);
             this.userConfig = config;
@@ -184,26 +182,26 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             return false;
         }
     }
-    
+
     @Override
     public PreferenceConfig loadPreferenceConfig() {
         if (preferenceConfig != null && preferenceConfig.getPreferences() != null) {
             return preferenceConfig;
         }
-        
+
         File configFile = getConfigFile(cacheProperties.getPreferencesConfig());
-        
+
         if (!configFile.exists()) {
             log.warn("{} does not exist, creating new preference configuration", configFile);
             preferenceConfig = new PreferenceConfig();
             return preferenceConfig;
         }
-        
+
         try (InputStream inputStream = new FileInputStream(configFile);
              Reader reader = new InputStreamReader(inputStream)) {
-            
+
             preferenceConfig = gson.fromJson(reader, PreferenceConfig.class);
-            
+
             if (preferenceConfig == null) {
                 log.warn("Null preference configuration from {}, creating new one", configFile);
                 preferenceConfig = new PreferenceConfig();
@@ -211,7 +209,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
                 log.warn("Null preferences map in preference configuration from {}, initializing", configFile);
                 preferenceConfig.setPreferences(new java.util.concurrent.ConcurrentHashMap<>());
             }
-            
+
             log.info("Loaded {} preferences from {}", preferenceConfig.getPreferences().size(), configFile);
             return preferenceConfig;
         } catch (IOException e) {
@@ -220,11 +218,11 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             return preferenceConfig;
         }
     }
-    
+
     @Override
     public boolean savePreferenceConfig(PreferenceConfig config) {
         File configFile = getConfigFile(cacheProperties.getPreferencesConfig());
-        
+
         try (Writer writer = new FileWriter(configFile)) {
             gson.toJson(config, writer);
             this.preferenceConfig = config;
@@ -234,26 +232,26 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             return false;
         }
     }
-    
+
     @Override
     public String getConfigPath(String configName) {
         return Paths.get(cacheProperties.getLocation(), configName).toString();
     }
-    
+
     @Override
     public boolean configExists(String configName) {
         return getConfigFile(configName).exists();
     }
-    
+
     @Override
     public File getConfigFile(String configName) {
         File parentDir = new File(cacheProperties.getLocation());
-        
+
         // Ensure parent directory exists
         if (!parentDir.exists() && !parentDir.mkdirs()) {
             log.error("Failed to create directory: {}", parentDir);
         }
-        
+
         return Paths.get(cacheProperties.getLocation(), configName).toFile();
     }
 }

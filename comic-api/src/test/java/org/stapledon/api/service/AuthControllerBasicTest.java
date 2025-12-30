@@ -29,21 +29,21 @@ class AuthControllerBasicTest {
         // Given
         AuthService authService = Mockito.mock(AuthService.class);
         AuthController controller = new AuthController(authService);
-        
+
         UserRegistrationDto registrationDto = UserRegistrationDto.builder()
                 .username("testuser")
                 .password("password123")
                 .email("test@example.com")
                 .displayName("Test User")
                 .build();
-        
+
         AuthResponse authResponse = AuthResponse.builder()
                 .token("jwtToken")
                 .refreshToken("refreshToken")
                 .username("testuser")
                 .displayName("Test User")
                 .build();
-        
+
         when(authService.register(any(UserRegistrationDto.class)))
                 .thenReturn(Optional.of(authResponse));
 
@@ -63,14 +63,14 @@ class AuthControllerBasicTest {
         // Given
         AuthService authService = Mockito.mock(AuthService.class);
         AuthController controller = new AuthController(authService);
-        
+
         UserRegistrationDto registrationDto = UserRegistrationDto.builder()
                 .username("existinguser")
                 .password("password123")
                 .email("existing@example.com")
                 .displayName("Existing User")
                 .build();
-        
+
         when(authService.register(any(UserRegistrationDto.class)))
                 .thenReturn(Optional.empty());
 
@@ -83,19 +83,19 @@ class AuthControllerBasicTest {
         // Given
         AuthService authService = Mockito.mock(AuthService.class);
         AuthController controller = new AuthController(authService);
-        
+
         AuthRequest authRequest = AuthRequest.builder()
                 .username("testuser")
                 .password("password123")
                 .build();
-        
+
         AuthResponse authResponse = AuthResponse.builder()
                 .token("jwtToken")
                 .refreshToken("refreshToken")
                 .username("testuser")
                 .displayName("Test User")
                 .build();
-        
+
         when(authService.login(any(AuthRequest.class)))
                 .thenReturn(Optional.of(authResponse));
 
@@ -115,12 +115,12 @@ class AuthControllerBasicTest {
         // Given
         AuthService authService = Mockito.mock(AuthService.class);
         AuthController controller = new AuthController(authService);
-        
+
         AuthRequest authRequest = AuthRequest.builder()
                 .username("testuser")
                 .password("wrongpassword")
                 .build();
-        
+
         when(authService.login(any(AuthRequest.class)))
                 .thenReturn(Optional.empty());
 

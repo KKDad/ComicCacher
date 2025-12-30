@@ -1,5 +1,9 @@
 package org.stapledon.infrastructure.config;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.stapledon.common.config.IComicsBootstrap;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
@@ -11,11 +15,6 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.stapledon.common.config.IComicsBootstrap;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
@@ -34,16 +33,17 @@ public class GsonProvider {
                 .registerTypeAdapter(IComicsBootstrap.class, new IComicsBootstrapDeserializer())
                 .create();
     }
-    
+
     /**
      * Custom deserializer for IComicsBootstrap interface
      * Determines the concrete implementation based on fields in the JSON
      */
     static class IComicsBootstrapDeserializer implements JsonDeserializer<IComicsBootstrap> {
         @Override
-        public IComicsBootstrap deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public IComicsBootstrap deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
             JsonObject jsonObject = json.getAsJsonObject();
-            
+
             // Determine which implementation to use based on fields present
             if (jsonObject.has("website")) {
                 // If it has a website field, it's a KingComicsBootStrap
@@ -68,9 +68,9 @@ public class GsonProvider {
         /**
          * Deserialize a LocalDate stored one of three ways:
          * - Serialized from Local date (Object, w/ 3 fields)
-         *     - year
-         *     - month
-         *     - day
+         * - year
+         * - month
+         * - day
          * - Serialized as a String (YYYY-MM-DD)
          * - Null Value
          *
@@ -111,18 +111,19 @@ public class GsonProvider {
     }
 
     /**
-     * Type adapter for LocalDateTime that handles serialization and deserialization safely
+     * Type adapter for LocalDateTime that handles serialization and deserialization
+     * safely
      * without accessing internal fields directly.
      */
     static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
-        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
         @Override
         public void write(JsonWriter jsonWriter, LocalDateTime localDateTime) throws IOException {
             if (localDateTime == null) {
                 jsonWriter.nullValue();
             } else {
-                jsonWriter.value(formatter.format(localDateTime));
+                jsonWriter.value(FORMATTER.format(localDateTime));
             }
         }
 
@@ -134,7 +135,7 @@ public class GsonProvider {
             }
 
             String dateTimeStr = jsonReader.nextString();
-            return LocalDateTime.parse(dateTimeStr, formatter);
+            return LocalDateTime.parse(dateTimeStr, FORMATTER);
         }
     }
 }

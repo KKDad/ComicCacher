@@ -54,18 +54,18 @@ class AccessMetricsCollectorAccessTrackingTest {
                 .newest(LocalDate.of(2022, 6, 10))
                 .oldest(LocalDate.of(2022, 6, 1))
                 .build();
-                
+
         // Set up mock data
         mockStorageFacade.setupComic(
                 testComic1.getId(),
                 testComic1.getName(),
                 LocalDate.of(2023, 1, 1),
                 LocalDate.of(2023, 1, 5),
-                LocalDate.of(2023, 1, 2), 
+                LocalDate.of(2023, 1, 2),
                 LocalDate.of(2023, 1, 3),
                 LocalDate.of(2023, 1, 4)
         );
-        
+
         mockStorageFacade.setupComic(
                 testComic2.getId(),
                 testComic2.getName(),
@@ -105,7 +105,7 @@ class AccessMetricsCollectorAccessTrackingTest {
         assertThat(accessCounts.containsKey("CalvinTest")).isTrue();
         assertThat(accessCounts.get("CalvinTest").intValue()).isEqualTo(1);
     }
-    
+
     @Test
     void multipleFindCalls_shouldIncrementAccessCount() {
         // Act - multiple find calls for same comic
@@ -119,7 +119,7 @@ class AccessMetricsCollectorAccessTrackingTest {
         // Verify access count is correct
         assertThat(accessCounts.get("DilbertTest").intValue()).isEqualTo(3);
     }
-    
+
     @Test
     void findNext_shouldTrackAccess() {
         // Act - find next comic
@@ -169,7 +169,7 @@ class AccessMetricsCollectorAccessTrackingTest {
         assertThat(hitRatios.containsKey("DilbertTest")).isTrue();
         assertThat(hitRatios.get("DilbertTest")).isCloseTo(0.0, within(0.001));
     }
-    
+
     @Test
     void accessTracking_shouldMaintainSeparateStatsPerComic() {
         // Act - find for both comics
@@ -185,7 +185,7 @@ class AccessMetricsCollectorAccessTrackingTest {
         assertThat(accessCounts.get("DilbertTest").intValue()).isEqualTo(2);
         assertThat(accessCounts.get("CalvinTest").intValue()).isEqualTo(1);
     }
-    
+
     @Test
     void averageAccessTimes_shouldBeTracked() {
         // Act

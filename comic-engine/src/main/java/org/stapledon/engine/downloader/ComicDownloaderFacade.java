@@ -27,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of the DownloaderFacade interface.
- * Coordinates comic downloading operations using registered downloader strategies.
+ * Coordinates comic downloading operations using registered downloader
+ * strategies.
  */
 @Slf4j
 @ToString
@@ -64,21 +65,21 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         }
 
         try {
-            log.debug("Downloading comic {} for date {} from source {}", 
+            log.debug("Downloading comic {} for date {} from source {}",
                     request.getComicName(), request.getDate(), request.getSource());
             ComicDownloadResult result = strategy.downloadComic(request);
-            
+
             // Record the result
             if (result.isSuccessful()) {
                 recordSuccess(request, startTime, result.getImageData().length);
             } else {
-                recordFailure(request, ComicRetrievalStatus.COMIC_UNAVAILABLE, 
+                recordFailure(request, ComicRetrievalStatus.COMIC_UNAVAILABLE,
                         result.getErrorMessage(), startTime, null);
             }
-            
+
             return result;
         } catch (Exception e) {
-            String errorMessage = String.format("Error downloading comic %s for date %s: %s", 
+            String errorMessage = String.format("Error downloading comic %s for date %s: %s",
                     request.getComicName(), request.getDate(), e.getMessage());
             log.error(errorMessage, e);
             ComicRetrievalStatus status = determineErrorStatus(e);
@@ -181,15 +182,15 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         if (strategy == null) {
             throw new IllegalArgumentException("Strategy cannot be null");
         }
-        
+
         log.info("Registering downloader strategy for source: {}", source);
         downloaderStrategies.put(source, strategy);
     }
-    
+
     private ComicRetrievalStatus determineErrorStatus(Exception e) {
-        if (e instanceof java.net.ConnectException || 
-            e instanceof java.net.SocketTimeoutException ||
-            e instanceof java.io.IOException) {
+        if (e instanceof java.net.ConnectException
+                || e instanceof java.net.SocketTimeoutException
+                || e instanceof java.io.IOException) {
             return ComicRetrievalStatus.NETWORK_ERROR;
         } else if (e instanceof org.jsoup.HttpStatusException) {
             return ComicRetrievalStatus.PARSING_ERROR;
@@ -199,7 +200,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
             return ComicRetrievalStatus.UNKNOWN_ERROR;
         }
     }
-    
+
     private void recordSuccess(ComicDownloadRequest request, LocalDateTime startTime, long imageSize) {
         long durationMs = Duration.between(startTime, LocalDateTime.now()).toMillis();
 
@@ -208,15 +209,14 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 request.getDate(),
                 request.getSource(),
                 durationMs,
-                imageSize
-        );
+                imageSize);
 
         retrievalStatusService.recordRetrievalResult(record);
 
         // Clear error history on successful download
         errorTrackingService.clearErrors(request.getComicName());
     }
-    
+
     private void recordFailure(
             ComicDownloadRequest request,
             ComicRetrievalStatus status,
@@ -233,8 +233,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 status,
                 errorMessage,
                 durationMs,
-                httpStatusCode
-        );
+                httpStatusCode);
 
         retrievalStatusService.recordRetrievalResult(record);
 

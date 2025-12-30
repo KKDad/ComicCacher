@@ -1,9 +1,9 @@
 package org.stapledon.core.comic.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.downloader.ComicDownloaderStrategy;
 import org.stapledon.engine.downloader.ComicsKingdomDownloaderStrategy;
+import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.downloader.GoComicsDownloaderStrategy;
 
 import jakarta.annotation.PostConstruct;
@@ -33,13 +33,13 @@ public class ComicDownloaderConfig {
     @PostConstruct
     public void init() {
         log.info("Registering comic downloader strategies...");
-        
+
         registerStrategy(goComicsStrategy);
         registerStrategy(comicsKingdomStrategy);
-        
+
         log.info("Comic downloader strategies registered successfully");
     }
-    
+
     /**
      * Registers a downloader strategy with the downloader facade.
      *

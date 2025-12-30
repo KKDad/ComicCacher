@@ -10,10 +10,10 @@ import org.stapledon.common.infrastructure.web.JsoupInspectorService;
  */
 @Configuration
 public class InspectorServiceConfig {
-    
+
     /**
      * Creates a InspectorService bean for dependency injection
-     * 
+     *
      * @return Configured InspectorService instance
      */
     @Bean

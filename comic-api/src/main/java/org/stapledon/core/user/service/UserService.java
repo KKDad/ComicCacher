@@ -9,7 +9,7 @@ public interface UserService {
 
     /**
      * Register a new user
-     * 
+     *
      * @param registrationDto User registration data
      * @return The created user if successful, empty otherwise
      */
@@ -17,7 +17,7 @@ public interface UserService {
 
     /**
      * Authenticate a user
-     * 
+     *
      * @param username Username
      * @param password Raw password
      * @return The authenticated user if successful, empty otherwise
@@ -26,7 +26,7 @@ public interface UserService {
 
     /**
      * Get a user by username
-     * 
+     *
      * @param username Username
      * @return The user if found, empty otherwise
      */
@@ -34,7 +34,7 @@ public interface UserService {
 
     /**
      * Update a user's profile
-     * 
+     *
      * @param user Updated user data
      * @return The updated user if successful, empty otherwise
      */
@@ -42,7 +42,7 @@ public interface UserService {
 
     /**
      * Update a user's password
-     * 
+     *
      * @param username Username
      * @param newPassword New password
      * @return The updated user if successful, empty otherwise
