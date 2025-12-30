@@ -19,7 +19,6 @@ import org.stapledon.core.preference.service.PreferenceService;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +34,7 @@ public class PreferenceController {
 
     /**
      * Get user preferences
-     * 
+     *
      * @param userDetails Current authenticated user
      * @return User preferences
      */
@@ -46,9 +45,9 @@ public class PreferenceController {
             log.warn("Attempt to access preferences without authentication");
             throw new AuthenticationException("Authentication required");
         }
-        
+
         log.info("Getting preferences for user: {}", userDetails.getUsername());
-        
+
         return preferenceService.getPreference(userDetails.getUsername())
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Failed to get preferences"));
@@ -56,22 +55,22 @@ public class PreferenceController {
 
     /**
      * Add a comic to favorites
-     * 
+     *
      * @param userDetails Current authenticated user
      * @param comicId Comic ID
      * @return Updated user preferences
      */
     @PostMapping("/comics/{comicId}/favorite")
     public ResponseEntity<ApiResponse<UserPreference>> addFavorite(
-            @AuthenticationPrincipal UserDetails userDetails, 
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable int comicId) {
         if (userDetails == null) {
             log.warn("Attempt to modify favorites without authentication");
             throw new AuthenticationException("Authentication required");
         }
-            
+
         log.info("Adding comic {} to favorites for user: {}", comicId, userDetails.getUsername());
-        
+
         return preferenceService.addFavorite(userDetails.getUsername(), comicId)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Failed to add favorite"));
@@ -79,22 +78,22 @@ public class PreferenceController {
 
     /**
      * Remove a comic from favorites
-     * 
+     *
      * @param userDetails Current authenticated user
      * @param comicId Comic ID
      * @return Updated user preferences
      */
     @DeleteMapping("/comics/{comicId}/favorite")
     public ResponseEntity<ApiResponse<UserPreference>> removeFavorite(
-            @AuthenticationPrincipal UserDetails userDetails, 
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable int comicId) {
         if (userDetails == null) {
             log.warn("Attempt to modify favorites without authentication");
             throw new AuthenticationException("Authentication required");
         }
-            
+
         log.info("Removing comic {} from favorites for user: {}", comicId, userDetails.getUsername());
-        
+
         return preferenceService.removeFavorite(userDetails.getUsername(), comicId)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Failed to remove favorite"));
@@ -102,7 +101,7 @@ public class PreferenceController {
 
     /**
      * Update last read date for a comic
-     * 
+     *
      * @param userDetails Current authenticated user
      * @param comicId Comic ID
      * @param dateData Map containing date
@@ -110,24 +109,24 @@ public class PreferenceController {
      */
     @PostMapping("/comics/{comicId}/lastread")
     public ResponseEntity<ApiResponse<UserPreference>> updateLastRead(
-            @AuthenticationPrincipal UserDetails userDetails, 
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable int comicId,
             @RequestBody Map<String, String> dateData) {
         if (userDetails == null) {
             log.warn("Attempt to update last read date without authentication");
             throw new AuthenticationException("Authentication required");
         }
-            
+
         log.info("Updating last read date for comic {} for user: {}", comicId, userDetails.getUsername());
-        
+
         String dateStr = dateData.get("date");
-        
+
         if (dateStr == null || dateStr.isEmpty()) {
             throw new IllegalArgumentException("Date is required");
         }
-        
+
         LocalDate date = LocalDate.parse(dateStr);
-        
+
         return preferenceService.updateLastRead(userDetails.getUsername(), comicId, date)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Failed to update last read date"));
@@ -135,22 +134,22 @@ public class PreferenceController {
 
     /**
      * Update display settings
-     * 
+     *
      * @param userDetails Current authenticated user
      * @param settings Display settings
      * @return Updated user preferences
      */
     @PostMapping("/display-settings")
     public ResponseEntity<ApiResponse<UserPreference>> updateDisplaySettings(
-            @AuthenticationPrincipal UserDetails userDetails, 
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody HashMap<String, Object> settings) {
         if (userDetails == null) {
             log.warn("Attempt to update display settings without authentication");
             throw new AuthenticationException("Authentication required");
         }
-            
+
         log.info("Updating display settings for user: {}", userDetails.getUsername());
-        
+
         return preferenceService.updateDisplaySettings(userDetails.getUsername(), settings)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Failed to update display settings"));

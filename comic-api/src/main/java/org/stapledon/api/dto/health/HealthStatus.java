@@ -1,10 +1,8 @@
 package org.stapledon.api.dto.health;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.time.LocalDateTime;
 import java.util.Map;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,42 +18,42 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class HealthStatus {
-    
+
     /**
      * Overall status of the application
      */
     private Status status;
-    
+
     /**
      * Current server time when check was performed
      */
     private LocalDateTime timestamp;
-    
+
     /**
      * Application uptime in milliseconds
      */
     private long uptime;
-    
+
     /**
      * Application version and build information
      */
     private BuildInfo buildInfo;
-    
+
     /**
      * System resource metrics (CPU, memory, etc.)
      */
     private SystemResources systemResources;
-    
+
     /**
      * Cache status information
      */
     private CacheStatus cacheStatus;
-    
+
     /**
      * Status of individual components
      */
     private Map<String, ComponentHealth> components;
-    
+
     /**
      * Possible health statuses
      */

@@ -29,14 +29,14 @@ public class AuthController {
 
     /**
      * Register a new user
-     * 
+     *
      * @param registrationDto User registration data
      * @return Authentication response with token
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@RequestBody UserRegistrationDto registrationDto) {
         log.info("User registration request for: {}", registrationDto.getUsername());
-        
+
         return authService.register(registrationDto)
                 .map(ResponseBuilder::created)
                 .orElseThrow(() -> new AuthenticationException("User registration failed"));
@@ -44,14 +44,14 @@ public class AuthController {
 
     /**
      * Authenticate a user
-     * 
+     *
      * @param authRequest Authentication request containing username and password
      * @return Authentication response with token
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody AuthRequest authRequest) {
         log.info("Login request for user: {}", authRequest.getUsername());
-        
+
         return authService.login(authRequest)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Authentication failed"));
@@ -59,20 +59,20 @@ public class AuthController {
 
     /**
      * Refresh token
-     * 
+     *
      * @param refreshToken Refresh token
      * @return Authentication response with new token
      */
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@RequestBody String refreshToken) {
         log.info("Token refresh request");
-        
+
         // Remove quotes if present (fixes issue with direct string body)
         String token = refreshToken;
         if (token.startsWith("\"") && token.endsWith("\"")) {
             token = token.substring(1, token.length() - 1);
         }
-        
+
         return authService.refreshToken(token)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Invalid refresh token"));
@@ -80,20 +80,20 @@ public class AuthController {
 
     /**
      * Validate token
-     * 
+     *
      * @param token JWT token
      * @return true if token is valid
      */
     @PostMapping("/validate-token")
     public ResponseEntity<ApiResponse<Boolean>> validateToken(@RequestHeader(value = "Authorization", required = false) String bearerToken) {
         log.info("Token validation request");
-        
+
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             String token = bearerToken.substring(7);
             boolean valid = authService.validateToken(token);
             return ResponseBuilder.ok(valid);
         }
-        
+
         return ResponseBuilder.ok(false);
     }
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+          "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+          "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    Checkstyle suppression configuration.
+    Add patterns here to exclude generated code or files that shouldn't be checked.
+-->
+<suppressions>
+    <!-- Suppress checks for generated code -->
+    <suppress files="[\\/]generated[\\/]" checks=".*"/>
+    <suppress files="[\\/]build[\\/]" checks=".*"/>
+    
+    <!-- Suppress checks for test files where naming conventions may differ -->
+    <suppress files=".*Test\.java$" checks="MagicNumber"/>
+    <suppress files=".*IT\.java$" checks="MagicNumber"/>
+</suppressions>

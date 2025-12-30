@@ -1,17 +1,15 @@
 package org.stapledon.infrastructure.config;
 
-import com.google.gson.Gson;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
 import org.stapledon.common.config.CacheProperties;
 
+import com.google.gson.Gson;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +32,7 @@ public class PreferenceConfigWriter {
 
     /**
      * Save user preferences to the preferences.json file
-     * 
+     *
      * @param preference User preferences to save
      * @return true if successful, false otherwise
      */
@@ -53,26 +51,26 @@ public class PreferenceConfigWriter {
 
     /**
      * Get user preferences by username
-     * 
+     *
      * @param username Username
      * @return The user preferences if found, empty otherwise
      */
     public Optional<UserPreference> getPreference(String username) {
         try {
             loadPreferences();
-            
+
             if (preferenceConfig.getPreferences().containsKey(username)) {
                 return Optional.of(preferenceConfig.getPreferences().get(username));
             }
-            
+
             // Create default preferences if not exists
             UserPreference newPreference = UserPreference.builder()
                     .username(username)
                     .build();
-            
+
             preferenceConfig.getPreferences().put(username, newPreference);
             savePreference(newPreference);
-            
+
             return Optional.of(newPreference);
         } catch (Exception e) {
             log.error("Failed to get preferences: {}", e.getMessage(), e);
@@ -82,7 +80,7 @@ public class PreferenceConfigWriter {
 
     /**
      * Add a comic to user's favorites
-     * 
+     *
      * @param username Username
      * @param comicId Comic ID
      * @return Updated user preferences if successful, empty otherwise
@@ -90,18 +88,18 @@ public class PreferenceConfigWriter {
     public Optional<UserPreference> addFavorite(String username, int comicId) {
         try {
             Optional<UserPreference> preferenceOpt = getPreference(username);
-            
+
             if (preferenceOpt.isEmpty()) {
                 return Optional.empty();
             }
-            
+
             UserPreference preference = preferenceOpt.get();
-            
+
             if (!preference.getFavoriteComics().contains(comicId)) {
                 preference.getFavoriteComics().add(comicId);
                 savePreference(preference);
             }
-            
+
             return Optional.of(preference);
         } catch (Exception e) {
             log.error("Failed to add favorite: {}", e.getMessage(), e);
@@ -111,7 +109,7 @@ public class PreferenceConfigWriter {
 
     /**
      * Remove a comic from user's favorites
-     * 
+     *
      * @param username Username
      * @param comicId Comic ID
      * @return Updated user preferences if successful, empty otherwise
@@ -119,15 +117,15 @@ public class PreferenceConfigWriter {
     public Optional<UserPreference> removeFavorite(String username, int comicId) {
         try {
             Optional<UserPreference> preferenceOpt = getPreference(username);
-            
+
             if (preferenceOpt.isEmpty()) {
                 return Optional.empty();
             }
-            
+
             UserPreference preference = preferenceOpt.get();
             preference.getFavoriteComics().remove(Integer.valueOf(comicId));
             savePreference(preference);
-            
+
             return Optional.of(preference);
         } catch (Exception e) {
             log.error("Failed to remove favorite: {}", e.getMessage(), e);
@@ -137,7 +135,7 @@ public class PreferenceConfigWriter {
 
     /**
      * Update last read date for a comic
-     * 
+     *
      * @param username Username
      * @param comicId Comic ID
      * @param date Last read date
@@ -146,15 +144,15 @@ public class PreferenceConfigWriter {
     public Optional<UserPreference> updateLastRead(String username, int comicId, LocalDate date) {
         try {
             Optional<UserPreference> preferenceOpt = getPreference(username);
-            
+
             if (preferenceOpt.isEmpty()) {
                 return Optional.empty();
             }
-            
+
             UserPreference preference = preferenceOpt.get();
             preference.getLastReadDates().put(comicId, date);
             savePreference(preference);
-            
+
             return Optional.of(preference);
         } catch (Exception e) {
             log.error("Failed to update last read date: {}", e.getMessage(), e);
@@ -164,7 +162,7 @@ public class PreferenceConfigWriter {
 
     /**
      * Update display settings for a user
-     * 
+     *
      * @param username Username
      * @param settings Display settings
      * @return Updated user preferences if successful, empty otherwise
@@ -172,15 +170,15 @@ public class PreferenceConfigWriter {
     public Optional<UserPreference> updateDisplaySettings(String username, HashMap<String, Object> settings) {
         try {
             Optional<UserPreference> preferenceOpt = getPreference(username);
-            
+
             if (preferenceOpt.isEmpty()) {
                 return Optional.empty();
             }
-            
+
             UserPreference preference = preferenceOpt.get();
             preference.setDisplaySettings(settings);
             savePreference(preference);
-            
+
             return Optional.of(preference);
         } catch (Exception e) {
             log.error("Failed to update display settings: {}", e.getMessage(), e);
@@ -190,7 +188,7 @@ public class PreferenceConfigWriter {
 
     /**
      * Load preferences from the preferences.json file
-     * 
+     *
      * @return PreferenceConfig containing user preferences
      */
     public PreferenceConfig loadPreferences() {

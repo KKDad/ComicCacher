@@ -1,8 +1,5 @@
 package org.stapledon.infrastructure.caching;
 
-import java.time.LocalDate;
-import java.util.Optional;
-
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -11,6 +8,7 @@ import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.management.ManagementFacade;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,7 +27,8 @@ public class PredictiveCacheService {
     private final CaffeineCacheProperties cacheProperties;
 
     /**
-     * Asynchronously prefetches adjacent comics for improved navigation performance.
+     * Asynchronously prefetches adjacent comics for improved navigation
+     * performance.
      * Warms the Caffeine cache with comics N±3 from the current position.
      */
     @Async
@@ -40,7 +39,7 @@ public class PredictiveCacheService {
 
         int lookaheadCount = cacheProperties.getLookahead().getCount();
         log.debug("Prefetching {} adjacent comics for comic {} from {} in direction {}",
-            lookaheadCount, comicId, currentDate, direction);
+                lookaheadCount, comicId, currentDate, direction);
 
         // Warn if attempting to prefetch from a future date
         if (currentDate.isAfter(LocalDate.now())) {
@@ -60,21 +59,21 @@ public class PredictiveCacheService {
                     successCount++;
                     searchDate = result.getCurrentDate();
                     log.trace("Prefetched comic {} for date {} (step {}/{})",
-                        comicId, searchDate, i + 1, lookaheadCount);
+                            comicId, searchDate, i + 1, lookaheadCount);
                 } else {
                     // No more comics in this direction, stop prefetching
                     log.debug("Reached end of available comics at step {}/{}, prefetched {} comics",
-                        i + 1, lookaheadCount, successCount);
+                            i + 1, lookaheadCount, successCount);
                     break;
                 }
             }
 
             log.debug("Completed prefetch for comic {}: successfully cached {} of {} requested comics",
-                comicId, successCount, lookaheadCount);
+                    comicId, successCount, lookaheadCount);
 
         } catch (Exception e) {
             log.warn("Error during predictive cache prefetch for comic {}: {}",
-                comicId, e.getMessage());
+                    comicId, e.getMessage());
         }
     }
 
@@ -82,7 +81,7 @@ public class PredictiveCacheService {
      * Prefetches comics bidirectionally from the current date.
      * Useful for warming cache when a comic is first accessed.
      *
-     * @param comicId the ID of the comic
+     * @param comicId     the ID of the comic
      * @param currentDate the date of the comic currently being viewed
      */
     @Async

@@ -18,7 +18,6 @@ import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.engine.caching.CacheException;
 
 import java.time.format.DateTimeParseException;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -104,11 +103,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(ResponseStatusException ex, WebRequest request) {
         String sanitizedReason = sanitizeAndTruncate(ex.getReason());
         log.warn("Response status exception: {}", sanitizedReason, ex);
-        
+
         // Generate appropriate status-specific message
         String message;
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
-        
+
         // Use generic messages based on status code
         switch (status) {
             case NOT_FOUND:
@@ -126,7 +125,7 @@ public class GlobalExceptionHandler {
             default:
                 message = "An error occurred processing your request";
         }
-        
+
         return ResponseBuilder.error(status, message);
     }
 
@@ -138,24 +137,24 @@ public class GlobalExceptionHandler {
         String value = ex.getValue() != null ? ex.getValue().toString() : "null";
         String propertyName = sanitizeInput(ex.getPropertyName());
         String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
-        
+
         // Sanitize and truncate all inputs
         value = sanitizeAndTruncate(value, 20);
         propertyName = sanitizeAndTruncate(propertyName, 30);
         requiredType = sanitizeAndTruncate(requiredType, 30);
-        
-        String logMessage = String.format("Invalid value '%s' for field '%s'. Expected type: %s", 
+
+        String logMessage = String.format("Invalid value '%s' for field '%s'. Expected type: %s",
                 value, propertyName, requiredType);
-                
+
         log.warn("Type mismatch exception: {}", logMessage, ex);
-        
+
         // Use a generic message that doesn't expose raw input values
-        String message = String.format("Invalid value for field '%s'. Expected type: %s", 
+        String message = String.format("Invalid value for field '%s'. Expected type: %s",
                 propertyName, requiredType);
-                
+
         return ResponseBuilder.error(HttpStatus.BAD_REQUEST, message);
     }
-    
+
     /**
      * Handle IllegalArgumentException
      */
@@ -165,7 +164,7 @@ public class GlobalExceptionHandler {
         log.warn("Invalid argument: {}", sanitizedMessage, ex);
         return ResponseBuilder.error(HttpStatus.BAD_REQUEST, "Invalid request parameter");
     }
-    
+
     /**
      * Handle DateTimeParseException which occurs when a date string can't be parsed
      */
@@ -173,21 +172,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDateTimeParseException(DateTimeParseException ex, WebRequest request) {
         String parsedString = ex.getParsedString();
         String sanitizedInput = sanitizeAndTruncate(parsedString, 30);
-        
+
         // Log the sanitized input
         log.warn("Date parsing exception for input: {}", sanitizedInput, ex);
-        
+
         // Return a generic message that doesn't include the exact input
         return ResponseBuilder.error(HttpStatus.BAD_REQUEST, "Invalid date format. Expected format: yyyy-MM-dd");
     }
-    
+
     /**
      * Helper method to sanitize and truncate input for safe logging and error messages
      */
     private String sanitizeAndTruncate(String input) {
         return sanitizeAndTruncate(input, MAX_MESSAGE_LENGTH);
     }
-    
+
     /**
      * Helper method to sanitize and truncate input with a specified max length
      */
@@ -195,18 +194,18 @@ public class GlobalExceptionHandler {
         if (input == null) {
             return "[null]";
         }
-        
+
         // Sanitize the input first
         String sanitized = sanitizeInput(input);
-        
+
         // Then truncate if necessary
         if (sanitized.length() > maxLength) {
             return sanitized.substring(0, maxLength) + TRUNCATION_SUFFIX;
         }
-        
+
         return sanitized;
     }
-    
+
     /**
      * Helper method to sanitize input for safe logging and error messages
      */

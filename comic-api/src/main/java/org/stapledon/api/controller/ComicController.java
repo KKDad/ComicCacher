@@ -29,7 +29,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,13 +59,14 @@ public class ComicController {
     }
 
     @PostMapping("/comics/{comic}")
-    public ResponseEntity<ApiResponse<ComicItem>> createComicDetails(@RequestBody ComicItem comicItem, @PathVariable(name = "comic") Integer comicId) {
-        
+    public ResponseEntity<ApiResponse<ComicItem>> createComicDetails(@RequestBody ComicItem comicItem,
+                                                                     @PathVariable(name = "comic") Integer comicId) {
+
         // Validate comic name is not null
         if (comicItem.getName() == null) {
             throw new IllegalArgumentException("Comic name cannot be null");
         }
-        
+
         // Ensure the comic ID in the path matches the comic ID in the request body
         if (comicItem.getId() != comicId) {
             comicItem = ComicItem.builder()
@@ -82,19 +82,20 @@ public class ComicController {
                     .sourceIdentifier(comicItem.getSourceIdentifier())
                     .build();
         }
-        
+
         return comicManagementFacade.createComic(comicItem)
                 .map(ResponseBuilder::created)
                 .orElseThrow(() -> new ComicCachingException("Unable to save ComicItem"));
     }
 
     @PatchMapping("/comics/{comic}")
-    public ResponseEntity<ApiResponse<ComicItem>> updateComicDetails(@PathVariable(name = "comic") Integer comicId, @RequestBody ComicItem comicItem) {
+    public ResponseEntity<ApiResponse<ComicItem>> updateComicDetails(@PathVariable(name = "comic") Integer comicId,
+                                                                     @RequestBody ComicItem comicItem) {
         // Validate comic name is not null
         if (comicItem.getName() == null) {
             throw new IllegalArgumentException("Comic name cannot be null");
         }
-        
+
         return comicManagementFacade.updateComic(comicId, comicItem)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new ComicCachingException("Unable to update ComicItem"));
@@ -126,7 +127,8 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/strips/first")
-    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveFirstComicImage(@PathVariable(name = "comic") Integer comicId) {
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveFirstComicImage(
+            @PathVariable(name = "comic") Integer comicId) {
         // Log API entry with comic name
         String comicName = comicManagementFacade.getComic(comicId)
                 .map(ComicItem::getName)
@@ -137,12 +139,13 @@ public class ComicController {
 
         // Log API result
         log.info("API /first returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
-                result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
+                result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(),
+                result.getNearestNextDate());
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
-            predictiveCacheService.ifPresent(service ->
-                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.FORWARD));
+            predictiveCacheService.ifPresent(
+                    service -> service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.FORWARD));
         }
 
         return ResponseEntity.ok()
@@ -152,7 +155,9 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/next/{date}")
-    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveNextComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveNextComicImage(
+            @PathVariable(name = "comic") Integer comicId,
+            @PathVariable String date) {
         long startTime = System.currentTimeMillis();
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
@@ -166,15 +171,16 @@ public class ComicController {
 
         // Log API result
         log.info("API /next/{} returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
-                date, result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
+                date, result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(),
+                result.getNearestNextDate());
 
         // Track access metrics if available
         trackAccess(comicId, result, startTime);
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
-            predictiveCacheService.ifPresent(service ->
-                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.FORWARD));
+            predictiveCacheService.ifPresent(
+                    service -> service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.FORWARD));
         }
 
         return ResponseEntity.ok()
@@ -184,7 +190,9 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/previous/{date}")
-    public @ResponseBody ResponseEntity<ComicNavigationResult> retrievePreviousComicImage(@PathVariable(name = "comic") Integer comicId, @PathVariable String date) {
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrievePreviousComicImage(
+            @PathVariable(name = "comic") Integer comicId,
+            @PathVariable String date) {
         long startTime = System.currentTimeMillis();
         var from = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
@@ -198,15 +206,16 @@ public class ComicController {
 
         // Log API result
         log.info("API /previous/{} returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
-                date, result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
+                date, result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(),
+                result.getNearestNextDate());
 
         // Track access metrics if available
         trackAccess(comicId, result, startTime);
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
-            predictiveCacheService.ifPresent(service ->
-                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.BACKWARD));
+            predictiveCacheService.ifPresent(
+                    service -> service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.BACKWARD));
         }
 
         return ResponseEntity.ok()
@@ -216,7 +225,8 @@ public class ComicController {
     }
 
     @GetMapping("/comics/{comic}/strips/last")
-    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveLastComicImage(@PathVariable(name = "comic") Integer comicId) {
+    public @ResponseBody ResponseEntity<ComicNavigationResult> retrieveLastComicImage(
+            @PathVariable(name = "comic") Integer comicId) {
         long startTime = System.currentTimeMillis();
 
         // Log API entry with comic name
@@ -229,15 +239,16 @@ public class ComicController {
 
         // Log API result
         log.info("API /last returning: found={}, currentDate={}, nearestPrev={}, nearestNext={}",
-                result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(), result.getNearestNextDate());
+                result.isFound(), result.getCurrentDate(), result.getNearestPreviousDate(),
+                result.getNearestNextDate());
 
         // Track access metrics if available
         trackAccess(comicId, result, startTime);
 
         // Trigger predictive lookahead if result found and cache service is available
         if (result.isFound() && result.getCurrentDate() != null) {
-            predictiveCacheService.ifPresent(service ->
-                service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.BACKWARD));
+            predictiveCacheService.ifPresent(
+                    service -> service.prefetchAdjacentComics(comicId, result.getCurrentDate(), Direction.BACKWARD));
         }
 
         return ResponseEntity.ok()

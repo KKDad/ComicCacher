@@ -16,7 +16,6 @@ import org.stapledon.core.user.service.UserService;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -32,14 +31,14 @@ public class UserController {
 
     /**
      * Get current user profile
-     * 
+     *
      * @param userDetails Current authenticated user
      * @return User profile
      */
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse<User>> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         log.info("Getting profile for user: {}", userDetails.getUsername());
-        
+
         return userService.getUser(userDetails.getUsername())
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("User not found"));
@@ -47,7 +46,7 @@ public class UserController {
 
     /**
      * Update user profile
-     * 
+     *
      * @param userDetails Current authenticated user
      * @param user Updated user data
      * @return Updated user profile
@@ -55,12 +54,12 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<ApiResponse<User>> updateProfile(@AuthenticationPrincipal UserDetails userDetails, @RequestBody User user) {
         log.info("Updating profile for user: {}", userDetails.getUsername());
-        
+
         // Ensure username matches authenticated user
         if (!userDetails.getUsername().equals(user.getUsername())) {
             throw new AuthenticationException("Username mismatch");
         }
-        
+
         return userService.updateUser(user)
                 .map(ResponseBuilder::ok)
                 .orElseThrow(() -> new AuthenticationException("Failed to update profile"));
@@ -68,29 +67,29 @@ public class UserController {
 
     /**
      * Update user password
-     * 
+     *
      * @param userDetails Current authenticated user
      * @param passwordData Map containing new password
      * @return Success message
      */
     @PutMapping("/password")
     public ResponseEntity<ApiResponse<Map<String, String>>> updatePassword(
-            @AuthenticationPrincipal UserDetails userDetails, 
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, String> passwordData) {
         log.info("Updating password for user: {}", userDetails.getUsername());
-        
+
         String newPassword = passwordData.get("newPassword");
-        
+
         if (newPassword == null || newPassword.isEmpty()) {
             throw new AuthenticationException("New password is required");
         }
-        
+
         userService.updatePassword(userDetails.getUsername(), newPassword)
                 .orElseThrow(() -> new AuthenticationException("Failed to update password"));
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Password updated successfully");
-        
+
         return ResponseBuilder.ok(response);
     }
 }
