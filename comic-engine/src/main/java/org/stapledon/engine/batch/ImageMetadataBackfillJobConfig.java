@@ -145,10 +145,10 @@ public class ImageMetadataBackfillJobConfig {
             paths.filter(Files::isRegularFile)
                     .filter(path -> {
                         String fileName = path.getFileName().toString().toLowerCase();
-                        return fileName.endsWith(".png") || fileName.endsWith(".jpg") ||
-                                fileName.endsWith(".jpeg") || fileName.endsWith(".gif") ||
-                                fileName.endsWith(".tif") || fileName.endsWith(".tiff") ||
-                                fileName.endsWith(".bmp") || fileName.endsWith(".webp");
+                        return fileName.endsWith(".png") || fileName.endsWith(".jpg")
+                                || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")
+                                || fileName.endsWith(".tif") || fileName.endsWith(".tiff")
+                                || fileName.endsWith(".bmp") || fileName.endsWith(".webp");
                     })
                     .filter(path -> {
                         // Exclude avatar files

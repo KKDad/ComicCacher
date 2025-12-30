@@ -64,7 +64,8 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
         }
 
         try (FileReader reader = new FileReader(storageFile)) {
-            Type storageType = new TypeToken<ComicRetrievalRecordStorage>(){}.getType();
+            Type storageType = new TypeToken<ComicRetrievalRecordStorage>() {
+            }.getType();
             recordStorage = gson.fromJson(reader, storageType);
 
             if (recordStorage == null) {
@@ -103,7 +104,8 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
     public void saveRecord(ComicRetrievalRecord record) {
         ComicRetrievalRecordStorage storage = loadRecords();
 
-        // Since we're using comic name and date as ID, we need to check for existing record
+        // Since we're using comic name and date as ID, we need to check for existing
+        // record
         // and replace it if it exists
         storage.getRecords().removeIf(r -> r.getId().equals(record.getId()));
         storage.getRecords().add(record);
@@ -132,10 +134,10 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
         return storage.getRecords().stream()
                 .filter(record -> comicName == null || record.getComicName().equals(comicName))
                 .filter(record -> status == null || record.getStatus() == status)
-                .filter(record -> fromDate == null ||
-                        (record.getComicDate() != null && !record.getComicDate().isBefore(fromDate)))
-                .filter(record -> toDate == null ||
-                        (record.getComicDate() != null && !record.getComicDate().isAfter(toDate)))
+                .filter(record -> fromDate == null
+                        || (record.getComicDate() != null && !record.getComicDate().isBefore(fromDate)))
+                .filter(record -> toDate == null
+                        || (record.getComicDate() != null && !record.getComicDate().isAfter(toDate)))
                 .sorted((r1, r2) -> r2.getComicDate().compareTo(r1.getComicDate())) // Latest first
                 .limit(limit)
                 .collect(Collectors.toList());
@@ -163,8 +165,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
         int initialSize = storage.getRecords().size();
         LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
 
-        storage.getRecords().removeIf(record ->
-                record.getComicDate().isBefore(cutoffDate));
+        storage.getRecords().removeIf(record -> record.getComicDate().isBefore(cutoffDate));
 
         int removedCount = initialSize - storage.getRecords().size();
 

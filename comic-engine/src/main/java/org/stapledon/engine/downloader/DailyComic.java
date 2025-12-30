@@ -119,13 +119,15 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     public boolean ensureCache() {
         var f = new File(generateCachedName());
         if (f.exists()) {
-            if (log.isTraceEnabled())
+            if (log.isTraceEnabled()) {
                 log.trace("Image has already been cached as: {}", f.getAbsolutePath());
+            }
             return true;
         }
 
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("Caching image to: {}", f.getAbsolutePath());
+        }
 
         try {
             String url = this.generateSiteURL();
@@ -163,10 +165,12 @@ public abstract class DailyComic implements IDailyComic, ICachable {
                 this.currentDate.format(DateTimeFormatter.ofPattern("yyyy")));
         var directory = new File(directoryName);
         if (!directory.exists()) {
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Creating utils directory to: {}", directoryName);
-            if (!directory.mkdirs())
+            }
+            if (!directory.mkdirs()) {
                 throw new IllegalStateException("Cannot create cache location");
+            }
         }
     }
 
@@ -179,8 +183,9 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     @Override
     public IDailyComic setDate(LocalDate date) {
         this.currentDate = date;
-        if (log.isInfoEnabled())
+        if (log.isInfoEnabled()) {
             log.info("Date set to: {}", this.currentDate);
+        }
 
         return this;
     }
@@ -199,8 +204,9 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     public IDailyComic setComic(String comicName) {
         this.comicName = comicName;
         this.comicNameParsed = comicName.replace(" ", "");
-        if (log.isInfoEnabled())
+        if (log.isInfoEnabled()) {
             log.info("Comic: {}", this.comicName);
+        }
 
         return this;
     }
@@ -210,8 +216,9 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     }
 
     public LocalDate advance() {
-        if (this.currentDate.isBefore(this.getLastStripOn()))
+        if (this.currentDate.isBefore(this.getLastStripOn())) {
             this.currentDate = this.currentDate.plusDays(1);
+        }
         return this.currentDate;
     }
 }

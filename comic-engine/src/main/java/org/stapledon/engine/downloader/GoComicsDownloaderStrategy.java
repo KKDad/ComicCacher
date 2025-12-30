@@ -143,11 +143,11 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
                 Element parent = src.parent();
                 if (parent != null) {
                     // Look for the picture element that contains the main strip
-                    if (parent.tagName().equals("picture") &&
-                            parent.parent() != null &&
-                            (parent.parent().className().contains("ComicImage") ||
-                                    parent.parent().className().contains("comic__image") ||
-                                    parent.parent().className().contains("item__image"))) {
+                    if (parent.tagName().equals("picture")
+                            && parent.parent() != null
+                            && (parent.parent().className().contains("ComicImage")
+                                    || parent.parent().className().contains("comic__image")
+                                    || parent.parent().className().contains("item__image"))) {
                         elements.add(src);
                         break; // Found the main comic, stop looking
                     }
@@ -159,9 +159,9 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
         // The main comic strip is typically the first one on the page
         if (elements.isEmpty()) {
             for (Element src : media) {
-                if (src.tagName().equals("img") &&
-                        (src.attr("abs:src").contains("assets.amuniversal.com") ||
-                                src.attr("abs:src").contains("featureassets.gocomics.com"))) {
+                if (src.tagName().equals("img")
+                        && (src.attr("abs:src").contains("assets.amuniversal.com")
+                                || src.attr("abs:src").contains("featureassets.gocomics.com"))) {
                     elements.add(src);
                     break; // Take only the first matching image
                 }
@@ -173,9 +173,9 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
             for (Element src : media) {
                 if (src.tagName().equals("img")) {
                     // Check for images in containers with specific class names
-                    if (src.parent() != null &&
-                            (src.parent().className().contains("comic") ||
-                                    src.parent().className().contains("ShowComicViewer"))) {
+                    if (src.parent() != null
+                            && (src.parent().className().contains("comic")
+                                    || src.parent().className().contains("ShowComicViewer"))) {
                         elements.add(src);
                     }
                     // Check for images that are large enough to likely be the comic

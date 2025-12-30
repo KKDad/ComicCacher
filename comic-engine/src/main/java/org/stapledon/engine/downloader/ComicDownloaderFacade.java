@@ -27,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of the DownloaderFacade interface.
- * Coordinates comic downloading operations using registered downloader strategies.
+ * Coordinates comic downloading operations using registered downloader
+ * strategies.
  */
 @Slf4j
 @ToString
@@ -187,9 +188,9 @@ public class ComicDownloaderFacade implements DownloaderFacade {
     }
 
     private ComicRetrievalStatus determineErrorStatus(Exception e) {
-        if (e instanceof java.net.ConnectException ||
-            e instanceof java.net.SocketTimeoutException ||
-            e instanceof java.io.IOException) {
+        if (e instanceof java.net.ConnectException
+                || e instanceof java.net.SocketTimeoutException
+                || e instanceof java.io.IOException) {
             return ComicRetrievalStatus.NETWORK_ERROR;
         } else if (e instanceof org.jsoup.HttpStatusException) {
             return ComicRetrievalStatus.PARSING_ERROR;
@@ -208,8 +209,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 request.getDate(),
                 request.getSource(),
                 durationMs,
-                imageSize
-        );
+                imageSize);
 
         retrievalStatusService.recordRetrievalResult(record);
 
@@ -233,8 +233,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 status,
                 errorMessage,
                 durationMs,
-                httpStatusCode
-        );
+                httpStatusCode);
 
         retrievalStatusService.recordRetrievalResult(record);
 
