@@ -38,10 +38,10 @@ public class ComicBackfillJobScheduler {
 
     @PostConstruct
     public void init() {
-        log.info("ComicBackfillJob initialized");
+        log.warn("======== INITIALIZING SCHEDULER: ComicBackfillJobScheduler ========");
         log.info("  Schedule: {}", cronExpression);
         log.info("  Target Year: {}", targetYear);
-        log.info("  Status: ENABLED");
+        log.warn("ComicBackfillJob scheduler SUCCESSFULLY initialized - Status: ENABLED");
     }
 
     /**

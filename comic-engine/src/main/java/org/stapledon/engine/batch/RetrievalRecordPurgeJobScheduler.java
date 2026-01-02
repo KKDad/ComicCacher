@@ -47,14 +47,18 @@ public class RetrievalRecordPurgeJobScheduler {
      */
     @PostConstruct
     public void logScheduleInfo() {
+        log.warn("======== INITIALIZING SCHEDULER: RetrievalRecordPurgeJobScheduler ========");
         try {
+            log.info("Cron expression: {}", cronExpression);
+            log.info("Timezone: {}", timezone);
             CronExpression cron = CronExpression.parse(cronExpression);
             ZonedDateTime nextRun = cron.next(ZonedDateTime.now(ZoneId.of(timezone)));
-            log.info("RetrievalRecordPurgeJob scheduler initialized - Next scheduled run: {} ({})",
+            log.warn("RetrievalRecordPurgeJob scheduler SUCCESSFULLY initialized - Next run: {} ({})",
                     nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                     nextRun.getZone());
         } catch (Exception e) {
-            log.warn("Could not parse cron expression '{}': {}", cronExpression, e.getMessage());
+            log.error("======== FAILED TO INITIALIZE SCHEDULER: RetrievalRecordPurgeJobScheduler ========", e);
+            throw new RuntimeException("RetrievalRecordPurgeJobScheduler initialization failed", e);
         }
     }
 

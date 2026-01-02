@@ -48,14 +48,18 @@ public class ImageMetadataJobScheduler {
      */
     @PostConstruct
     public void logScheduleInfo() {
+        log.warn("======== INITIALIZING SCHEDULER: ImageMetadataJobScheduler ========");
         try {
+            log.info("Cron expression: {}", cronExpression);
+            log.info("Timezone: {}", timezone);
             CronExpression cron = CronExpression.parse(cronExpression);
             ZonedDateTime nextRun = cron.next(ZonedDateTime.now(ZoneId.of(timezone)));
-            log.info("ImageMetadataJob scheduler initialized - Next scheduled run: {} ({})",
+            log.warn("ImageMetadataJob scheduler SUCCESSFULLY initialized - Next run: {} ({})",
                     nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                     nextRun.getZone());
         } catch (Exception e) {
-            log.warn("Could not parse cron expression '{}': {}", cronExpression, e.getMessage());
+            log.error("======== FAILED TO INITIALIZE SCHEDULER: ImageMetadataJobScheduler ========", e);
+            throw new RuntimeException("ImageMetadataJobScheduler initialization failed", e);
         }
     }
 
