@@ -7,7 +7,7 @@ plugins {
 
 ext {
     // Project version
-    projectVersion = '2.3.0'
+    projectVersion = '2.3.1'
 
     // Core dependency versions
     springBootVersion = '4.0.1'

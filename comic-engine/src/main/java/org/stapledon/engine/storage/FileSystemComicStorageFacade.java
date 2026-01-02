@@ -48,7 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
     private static final String COMBINE_PATH = "%s/%s";
-    private static final int WARNING_TIME_MS = 100;
     private static final String AVATAR_FILE = "avatar.png";
     private static final int MIN_COMIC_WIDTH = 100;
     private static final int MIN_COMIC_HEIGHT = 50;
@@ -63,9 +62,10 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
     /**
      * Gets a directory name for a comic - uses the comic name if available,
-     * otherwise falls back to the comic ID. This ensures we can handle comics with null names.
+     * otherwise falls back to the comic ID. This ensures we can handle comics with
+     * null names.
      *
-     * @param comicId the comic ID
+     * @param comicId   the comic ID
      * @param comicName the comic name (can be null)
      * @return a string to use as the directory name
      */
@@ -78,8 +78,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
     @Override
     @Caching(evict = {
-        @CacheEvict(value = "boundaryDates", key = "'newest:' + #comicId + ':' + #comicName"),
-        @CacheEvict(value = "navigationDates", allEntries = true)
+            @CacheEvict(value = "boundaryDates", key = "'newest:' + #comicId + ':' + #comicName"),
+            @CacheEvict(value = "navigationDates", allEntries = true)
     })
     public boolean saveComicStrip(int comicId, String comicName, LocalDate date, byte[] imageData) {
         // Only validate the essential parameters
@@ -92,13 +92,13 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
         if (!validation.isValid()) {
             log.error("Refusing to save invalid comic strip for {} on {}: {}",
-                     comicName, date, validation.getErrorMessage());
+                    comicName, date, validation.getErrorMessage());
             return false;
         }
 
         log.info("Saving validated {} image for {} on {}: {}x{} ({} bytes)",
-                 validation.getFormat(), comicName, date,
-                 validation.getWidth(), validation.getHeight(), imageData.length);
+                validation.getFormat(), comicName, date,
+                validation.getWidth(), validation.getHeight(), imageData.length);
 
         // Check for duplicates
         DuplicateValidationResult duplicateCheck = duplicateValidationService.validateNoDuplicate(
@@ -114,7 +114,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
         // Create directory structure if it doesn't exist
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-        File directory = new File(String.format("%s/%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed, yearPath));
+        File directory = new File(
+                String.format("%s/%s/%s", getCacheRoot().getAbsolutePath(), comicNameParsed, yearPath));
         if (!directory.exists() && !directory.mkdirs()) {
             log.error("Failed to create directory: {}", directory.getAbsolutePath());
             return false;
@@ -140,7 +141,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                     log.debug("Saved metadata for comic strip: {}", file.getAbsolutePath());
                 } else {
                     // Metadata was invalid or failed to save
-                    log.error("Failed to save metadata for comic strip {} on {}: metadata validation failed or incomplete",
+                    log.error(
+                            "Failed to save metadata for comic strip {} on {}: metadata validation failed or incomplete",
                             comicName, date);
                 }
             } catch (Exception e) {
@@ -164,13 +166,13 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         ImageValidationResult validation = imageValidationService.validate(imageData);
         if (!validation.isValid()) {
             log.error("Refusing to save invalid avatar for {}: {}",
-                     comicName, validation.getErrorMessage());
+                    comicName, validation.getErrorMessage());
             return false;
         }
 
         log.debug("Saving validated {} avatar for {}: {}x{}",
-                 validation.getFormat(), comicName,
-                 validation.getWidth(), validation.getHeight());
+                validation.getFormat(), comicName,
+                validation.getWidth(), validation.getHeight());
 
         String comicNameParsed = getComicNameParsed(comicId, comicName);
 
@@ -205,7 +207,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().getAbsolutePath(), comicNameParsed, yearPath, filename));
+        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().getAbsolutePath(), comicNameParsed,
+                yearPath, filename));
 
         try {
             return Optional.of(ImageUtils.getImageDto(file));
@@ -372,7 +375,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().getAbsolutePath(), comicNameParsed, yearPath, filename));
+        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().getAbsolutePath(), comicNameParsed,
+                yearPath, filename));
 
         return file.exists();
     }
@@ -409,9 +413,12 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
     /**
      * Purges comic strip images older than the specified number of days.
-     * NOTE: This method is currently not called by any scheduled job or API endpoint.
-     * The application is configured to retain all historical comic strips indefinitely.
-     * This implementation is preserved for potential future use if retention policies change.
+     * NOTE: This method is currently not called by any scheduled job or API
+     * endpoint.
+     * The application is configured to retain all historical comic strips
+     * indefinitely.
+     * This implementation is preserved for potential future use if retention
+     * policies change.
      */
     @Override
     public boolean purgeOldImages(int comicId, String comicName, int daysToKeep) {
@@ -491,7 +498,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             return new ArrayList<>();
         }
 
-        File[] yearDirs = comicRoot.listFiles(file -> file.isDirectory() && !file.getName().equals(EXCLUDED_SYNOLOGY_DIR));
+        File[] yearDirs = comicRoot
+                .listFiles(file -> file.isDirectory() && !file.getName().equals(EXCLUDED_SYNOLOGY_DIR));
         if (yearDirs == null) {
             return new ArrayList<>();
         }
@@ -499,7 +507,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         return Arrays.stream(yearDirs)
                 .map(File::getName)
                 .sorted()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -551,24 +559,65 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         File root = new File(getComicCacheRoot(comicId, comicName));
 
         if (!root.exists()) {
-            log.debug("Comic directory doesn't exist: {}. This might be expected for comics with null names.", root.getAbsolutePath());
+            log.debug("Comic directory doesn't exist: {}. This might be expected for comics with null names.",
+                    root.getAbsolutePath());
             return null;
         }
 
-        // Comics are stored by year, find year folders, excluding Synology metadata directory
-        String[] yearFolders = root.list((dir, name) -> new File(dir, name).isDirectory() && !name.equals(EXCLUDED_SYNOLOGY_DIR));
+        // Comics are stored by year, find year folders, excluding Synology metadata
+        // directory
+        String[] yearFolders = root
+                .list((dir, name) -> new File(dir, name).isDirectory() && !name.equals(EXCLUDED_SYNOLOGY_DIR));
         if (yearFolders == null || yearFolders.length == 0) {
             return null;
         }
 
         Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
 
-        // Comics are stored with filename that is sortable.
-        File folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(),
-                which == Direction.FORWARD ? yearFolders[0] : yearFolders[yearFolders.length - 1]));
+        // Iterate through year folders in direction order until we find one with
+        // content
+        if (which == Direction.FORWARD) {
+            // Forward = Oldest to Newest
+            for (String yearFolder : yearFolders) {
+                File result = findFirstInYear(root, yearFolder, which);
+                if (result != null) {
+                    return result;
+                }
+            }
+        } else {
+            // Backward = Newest to Oldest (reverse order)
+            for (int i = yearFolders.length - 1; i >= 0; i--) {
+                File result = findFirstInYear(root, yearFolders[i], which);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
 
-        String[] cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() && !name.equals(EXCLUDED_SYNOLOGY_DIR) && name.endsWith(".png"));
+        return null; // No content found in any year folder
+    }
+
+    private File findFirstInYear(File root, String yearFolder, Direction which) {
+        File folder = new File(String.format(COMBINE_PATH, root.getAbsolutePath(), yearFolder));
+
+        // Strictly filter for valid comic filenames (yyyy-MM-dd.png) to avoid picking up invalid files
+        // that might sort before valid ones (e.g. "2025-12-30-copy.png" sorts before "2025-12-30.png")
+        String[] cachedStrips = folder.list((dir, name) -> {
+            File f = new File(dir, name);
+            boolean isFile = f.isFile();
+            boolean formatMatch = name.matches("^\\d{4}-\\d{2}-\\d{2}\\.png$");
+
+            // Log for debugging
+            if (!formatMatch && isFile && name.endsWith(".png")) {
+                log.debug("DEBUG: Ignoring file with invalid name format: {}", name);
+            }
+            return isFile
+                    && !name.equals(EXCLUDED_SYNOLOGY_DIR)
+                    && formatMatch;
+        });
+
         if (cachedStrips == null || cachedStrips.length == 0) {
+            log.debug("DEBUG: No valid strips found in year folder {}", yearFolder);
             return null;
         }
 
