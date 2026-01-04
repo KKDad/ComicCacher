@@ -50,7 +50,7 @@ public class ComicRetrievalJobConfig {
         return new JobBuilder("ComicDownloadJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(jsonBatchExecutionTracker)
-                .listener(new ComicJobExecutionListener())
+                .listener(new LoggingJobExecutionListener())
                 .start(comicRetrievalStep)
                 .build();
     }

@@ -140,7 +140,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
         // Verify JsonBatchExecutionTracker recorded the execution
         assertBatchExecutionTracked("MetricsArchiveJob");
-        assertBatchExecutionValid("MetricsArchiveJob", "COMPLETED", null); // Tasklet job, no item counts
+        assertBatchExecutionValid("MetricsArchiveJob", "COMPLETED"); // Tasklet job, no item counts
 
         log.info("SUCCESS: Metrics archive created and validated at {}", expectedFile);
     }
@@ -216,7 +216,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
         // Verify JsonBatchExecutionTracker recorded the failure
         assertBatchExecutionTracked("MetricsArchiveJob");
-        assertBatchExecutionValid("MetricsArchiveJob", "FAILED", null); // Failed job, no item counts
+        assertBatchExecutionValid("MetricsArchiveJob", "FAILED"); // Failed job, no item counts
 
         log.info("SUCCESS: Job failed appropriately with empty metrics");
     }

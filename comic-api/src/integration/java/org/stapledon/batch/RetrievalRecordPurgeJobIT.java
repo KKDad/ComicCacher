@@ -124,7 +124,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
                 // Verify JsonBatchExecutionTracker recorded the execution
                 assertBatchExecutionTracked("RetrievalRecordPurgeJob");
-                assertBatchExecutionValid("RetrievalRecordPurgeJob", "COMPLETED", null);
+                assertBatchExecutionValid("RetrievalRecordPurgeJob", "COMPLETED");
 
                 log.info("SUCCESS: Purged 10 old records, kept 5 recent records, execution tracked");
         }

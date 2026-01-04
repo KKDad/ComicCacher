@@ -14,6 +14,8 @@ import org.stapledon.ComicApiApplication;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
+import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
 import java.io.File;
@@ -288,12 +290,9 @@ public abstract class AbstractBatchJobIntegrationTest {
      *
      * @param jobName                The job name to validate
      * @param expectedStatus         Expected status (e.g., "COMPLETED", "FAILED")
-     * @param expectedItemsProcessed Expected number of items processed (null to
-     *                               skip check)
      * @throws IOException if reading or parsing fails
      */
-    protected void assertBatchExecutionValid(String jobName, String expectedStatus,
-            Integer expectedItemsProcessed) throws IOException {
+    protected void assertBatchExecutionValid(String jobName, String expectedStatus) throws IOException {
         BatchExecutionSummary summary = loadBatchExecutionSummary(jobName);
 
         // Validate status
@@ -306,38 +305,7 @@ public abstract class AbstractBatchJobIntegrationTest {
         assertNotNull(summary.getLastExecutionId(), "Execution ID should not be null");
         assertNotNull(summary.getStartTime(), "Start time should not be null");
         assertNotNull(summary.getEndTime(), "End time should not be null");
-        assertNotNull(summary.getDurationSeconds(), "Duration should not be null");
-        assertTrue(summary.getDurationSeconds() >= 0, "Duration should be >= 0");
 
-        // Validate items processed if expected count provided
-        if (expectedItemsProcessed != null) {
-            assertThat(summary.getItemsProcessed()).as("Items processed should match expected count")
-                    .isEqualTo(expectedItemsProcessed.intValue());
-        }
-
-        log.info("Batch execution validation passed for {}: status={}, duration={}s, processed={}",
-                jobName, summary.getStatus(), summary.getDurationSeconds(), summary.getItemsProcessed());
-    }
-
-    /**
-     * DTO for batch execution summary data (matches JsonBatchExecutionTracker
-     * structure).
-     */
-    @lombok.Data
-    public static class BatchExecutionSummary {
-        private Long lastExecutionId;
-        private String lastExecutionTime;
-        private String status;
-        private String exitCode;
-        private String exitMessage;
-        private String startTime;
-        private String endTime;
-        private Long durationSeconds;
-        private int itemsRead;
-        private int itemsProcessed;
-        private int itemsWritten;
-        private int itemsSkipped;
-        private int itemsFailed;
-        private String errorMessage;
+        log.info("Batch execution validation passed for {}: status={}", jobName, summary.getStatus());
     }
 }

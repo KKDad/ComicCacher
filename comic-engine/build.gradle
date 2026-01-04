@@ -64,4 +64,9 @@ dependencyManagement {
 
 tasks.withType(Test).configureEach {
 	useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
 }

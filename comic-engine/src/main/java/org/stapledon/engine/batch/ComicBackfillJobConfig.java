@@ -55,7 +55,7 @@ public class ComicBackfillJobConfig {
         return new JobBuilder("ComicBackfillJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(jsonBatchExecutionTracker)
-                .listener(new ComicJobExecutionListener())
+                .listener(new LoggingJobExecutionListener())
                 .start(comicBackfillStep)
                 .build();
     }

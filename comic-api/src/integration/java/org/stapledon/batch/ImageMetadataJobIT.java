@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
@@ -97,7 +96,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
                 // Verify JsonBatchExecutionTracker recorded the execution
                 assertBatchExecutionTracked("ImageMetadataBackfillJob");
-                assertBatchExecutionValid("ImageMetadataBackfillJob", "COMPLETED", null); // Tasklet job, no item counts
+                assertBatchExecutionValid("ImageMetadataBackfillJob", "COMPLETED"); // Tasklet job, no item counts
 
                 log.info("SUCCESS: All 3 images have valid metadata and execution tracked");
         }
