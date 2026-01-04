@@ -83,7 +83,12 @@ comic-common (shared DTOs, config, services)
 
 ## Build Commands
 
-**Backend:** `./gradlew clean build`, `./gradlew :comic-api:bootRun`, `./gradlew :comic-api:integrationTest`
+**Backend:**
+- Standard Build: `./gradlew clean build`
+- Run API: `./gradlew :comic-api:bootRun`
+- Integration Tests: `./gradlew :comic-api:integrationTest`
+- **FINAL VERIFICATION:** `./gradlew clean testAll` (Must be run before finishing any task)
+
 **Frontend:** `cd comic-web && npm install`, `ng serve` (http://localhost:4200), `ng test`, `ng lint`, `npm run buildProd`
 
 ## Module Architecture Details

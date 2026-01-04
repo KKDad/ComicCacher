@@ -1,7 +1,13 @@
-package org.stapledon.engine.batch;
+package org.stapledon.engine.health;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.stapledon.engine.batch.ComicBackfillJobScheduler;
+import org.stapledon.engine.batch.ComicDownloadJobScheduler;
+import org.stapledon.engine.batch.ImageMetadataJobScheduler;
+import org.stapledon.engine.batch.MetricsArchiveJobScheduler;
+import org.stapledon.engine.batch.MetricsUpdateJobScheduler;
+import org.stapledon.engine.batch.RetrievalRecordPurgeJobScheduler;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
