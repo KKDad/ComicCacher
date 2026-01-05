@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * DTO for component health status
@@ -15,11 +16,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@ToString(onlyExplicitlyIncluded = true)
 public class ComponentHealth {
 
     /**
      * Status of the component
      */
+    @ToString.Include
     private HealthStatus.Status status;
 
     /**

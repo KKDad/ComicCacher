@@ -7,11 +7,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString(onlyExplicitlyIncluded = true)
 public class ComicConfig {
+    @ToString.Include
     private Map<Integer, ComicItem> items;
+
     private List<ComicItem> comics;
 
     public ComicConfig() {
@@ -21,8 +25,10 @@ public class ComicConfig {
 
     /**
      * Gets all comics as a list.
-     * If the comics list is empty but items map has values, populates the comics list from the items map.
-     * This method is marked with @JsonIgnore to prevent serialization of the comics array,
+     * If the comics list is empty but items map has values, populates the comics
+     * list from the items map.
+     * This method is marked with @JsonIgnore to prevent serialization of the comics
+     * array,
      * ensuring only the items map is persisted (single source of truth).
      *
      * @return List of comic items

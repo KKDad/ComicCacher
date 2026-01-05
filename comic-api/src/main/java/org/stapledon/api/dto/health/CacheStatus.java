@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * DTO for cache status information
@@ -14,16 +15,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@ToString(onlyExplicitlyIncluded = true)
 public class CacheStatus {
 
     /**
      * Total comics cached
      */
+    @ToString.Include
     private int totalComics;
 
     /**
      * Total cached images
      */
+    @ToString.Include
     private int totalImages;
 
     /**

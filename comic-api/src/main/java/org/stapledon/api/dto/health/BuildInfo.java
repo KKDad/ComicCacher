@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * DTO for build-related information
@@ -14,11 +15,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@ToString(onlyExplicitlyIncluded = true)
 public class BuildInfo {
 
     /**
      * Application name
      */
+    @ToString.Include
     private String name;
 
     /**
@@ -34,6 +37,7 @@ public class BuildInfo {
     /**
      * Application version
      */
+    @ToString.Include
     private String version;
 
     /**

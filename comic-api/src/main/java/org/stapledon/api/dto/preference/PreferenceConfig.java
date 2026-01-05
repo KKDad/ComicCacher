@@ -12,8 +12,9 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class PreferenceConfig {
+    @ToString.Include
     @Builder.Default
     private Map<String, UserPreference> preferences = new ConcurrentHashMap<>();
 }

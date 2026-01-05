@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Storage metrics for a specific year within a comic.
@@ -17,17 +18,20 @@ import lombok.Setter;
 @AllArgsConstructor
 @EqualsAndHashCode
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class YearlyStorageMetrics {
 
     /**
      * Storage bytes for this year.
      */
+    @ToString.Include
     @Builder.Default
     private long storageBytes = 0;
 
     /**
      * Image count for this year.
      */
+    @ToString.Include
     @Builder.Default
     private int imageCount = 0;
 }

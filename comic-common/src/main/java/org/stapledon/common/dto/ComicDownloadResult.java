@@ -2,6 +2,7 @@ package org.stapledon.common.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * Data Transfer Object representing the result of a comic download operation.
@@ -9,10 +10,12 @@ import lombok.Data;
  */
 @Data
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class ComicDownloadResult {
     /**
      * The request that initiated this download.
      */
+    @ToString.Include
     private final ComicDownloadRequest request;
 
     /**
@@ -23,6 +26,7 @@ public class ComicDownloadResult {
     /**
      * Flag indicating whether the download was successful.
      */
+    @ToString.Include
     private final boolean successful;
 
     /**
@@ -33,7 +37,7 @@ public class ComicDownloadResult {
     /**
      * Factory method to create a successful result.
      *
-     * @param request The original download request
+     * @param request   The original download request
      * @param imageData The downloaded image data
      * @return A successful ComicDownloadResult
      */
@@ -48,7 +52,7 @@ public class ComicDownloadResult {
     /**
      * Factory method to create a failed result.
      *
-     * @param request The original download request
+     * @param request      The original download request
      * @param errorMessage Description of the error
      * @return A failed ComicDownloadResult
      */

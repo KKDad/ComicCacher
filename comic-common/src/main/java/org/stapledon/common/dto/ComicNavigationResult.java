@@ -19,12 +19,13 @@ import lombok.ToString;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class ComicNavigationResult {
 
     /**
      * Whether the requested image was found
      */
+    @ToString.Include
     private boolean found;
 
     /**
@@ -57,7 +58,8 @@ public class ComicNavigationResult {
     private LocalDate nearestNextDate;
 
     /**
-     * The date of the current image being displayed (same as image.imageDate when found)
+     * The date of the current image being displayed (same as image.imageDate when
+     * found)
      */
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate currentDate;
@@ -79,7 +81,7 @@ public class ComicNavigationResult {
      * Creates a not-found result with boundary information
      */
     public static ComicNavigationResult notFound(String reason, LocalDate requestedDate,
-                                                   LocalDate nearestPrev, LocalDate nearestNext) {
+            LocalDate nearestPrev, LocalDate nearestNext) {
         return ComicNavigationResult.builder()
                 .found(false)
                 .reason(reason)
