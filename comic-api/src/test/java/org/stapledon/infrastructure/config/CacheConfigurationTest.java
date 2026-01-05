@@ -44,21 +44,31 @@ class CacheConfigurationTest {
         assertThat(subject.configName()).isEqualTo("myfancyconfigname.json");
     }
 
+    // --- Windows Tests ---
+
     @Test
-    void shouldReturnWindowsPathOnWindows() {
-        // Given
+    void windows_shouldUseUserHomeWhenNoDriverLetter() {
+        // Given - Use temp directory to avoid creating C: folder on macOS
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String testPath = Paths.get(tempDir, "win-test-comics-" + System.currentTimeMillis()).toString();
         System.setProperty("os.name", "Windows 10");
-        when(cacheProperties.getLocation()).thenReturn("C:/comics");
+        when(cacheProperties.getLocation()).thenReturn(testPath);
 
         // When
         String result = subject.cacheLocation();
 
-        // Then
-        assertThat(result).isEqualTo("C:/comics");
+        // Then - Windows without drive letter should use user home
+        String expectedPath = Paths.get(System.getProperty("user.home"), "comics").toString();
+        assertThat(result).isEqualTo(expectedPath);
+
+        // Clean up
+        new File(result).delete();
     }
 
+    // --- macOS Tests ---
+
     @Test
-    void shouldConvertWindowsPathToUserHomeOnNonWindows() {
+    void macOS_shouldConvertWindowsPathToUserHome() {
         // Given
         System.setProperty("os.name", "Mac OS X");
         when(cacheProperties.getLocation()).thenReturn("C:/comics");
@@ -66,23 +76,64 @@ class CacheConfigurationTest {
         // When
         String result = subject.cacheLocation();
 
-        // Then
+        // Then - Windows-style path should be converted to user home on macOS
         String expectedPath = Paths.get(System.getProperty("user.home"), "comics").toString();
         assertThat(result).isEqualTo(expectedPath);
     }
 
     @Test
-    void shouldUseConfiguredPathWhenValid() {
-        // Given
-        System.setProperty("os.name", "Linux");
-        when(cacheProperties.getLocation()).thenReturn("/var/comics");
+    void macOS_shouldUseConfiguredUnixPath() {
+        // Given - Use temp directory path to avoid side effects
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String testPath = Paths.get(tempDir, "macos-test-comics-" + System.currentTimeMillis()).toString();
+        System.setProperty("os.name", "Mac OS X");
+        when(cacheProperties.getLocation()).thenReturn(testPath);
 
         // When
         String result = subject.cacheLocation();
 
-        // Then
-        assertThat(result).isEqualTo("/var/comics");
+        // Then - Valid Unix path should be used as-is on macOS
+        assertThat(result).isEqualTo(testPath);
+
+        // Clean up
+        new File(result).delete();
     }
+
+    // --- Linux Tests ---
+
+    @Test
+    void linux_shouldConvertWindowsPathToUserHome() {
+        // Given
+        System.setProperty("os.name", "Linux");
+        when(cacheProperties.getLocation()).thenReturn("C:/comics");
+
+        // When
+        String result = subject.cacheLocation();
+
+        // Then - Windows-style path should be converted to user home on Linux
+        String expectedPath = Paths.get(System.getProperty("user.home"), "comics").toString();
+        assertThat(result).isEqualTo(expectedPath);
+    }
+
+    @Test
+    void linux_shouldUseConfiguredUnixPath() {
+        // Given - Use temp directory path to avoid side effects
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String testPath = Paths.get(tempDir, "linux-test-comics-" + System.currentTimeMillis()).toString();
+        System.setProperty("os.name", "Linux");
+        when(cacheProperties.getLocation()).thenReturn(testPath);
+
+        // When
+        String result = subject.cacheLocation();
+
+        // Then - Valid Unix path should be used as-is on Linux
+        assertThat(result).isEqualTo(testPath);
+
+        // Clean up
+        new File(result).delete();
+    }
+
+    // --- Directory Creation Tests ---
 
     @Test
     void shouldCreateDirectoryIfNotExists() {

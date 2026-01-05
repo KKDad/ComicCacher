@@ -40,29 +40,50 @@ public class CacheConfiguration {
     }
 
     /**
-     * Normalizes a path for the current OS to prevent issues like "C:/" on non-Windows systems
+     * Normalizes a path for the current OS to prevent issues like "C:/" on
+     * non-Windows systems.
+     * <p>
+     * OS Detection:
+     * - Windows: os.name contains "win" (e.g., "Windows 10", "Windows 11")
+     * - macOS: os.name contains "mac" (e.g., "Mac OS X")
+     * - Linux: os.name contains "nux" or "nix" (e.g., "Linux")
+     * </p>
      */
     private String normalizePathForOS(String path) {
-        // Get OS name
-        String os = System.getProperty("os.name").toLowerCase();
+        String osName = System.getProperty("os.name").toLowerCase();
 
-        // For Windows, use the path as-is if it's a valid Windows path
-        if (os.contains("win")) {
-            // If it's a valid Windows path, return it normalized
-            if (path.matches("^[A-Za-z]:.*")) {
+        boolean isWindows = osName.contains("win");
+        boolean isMacOS = osName.contains("mac");
+        boolean isLinux = osName.contains("nux") || osName.contains("nix");
+
+        // Check if path is a Windows-style path (starts with drive letter like C:)
+        boolean isWindowsStylePath = path.matches("^[A-Za-z]:.*");
+
+        if (isWindows) {
+            // On Windows, accept Windows-style paths as-is
+            if (isWindowsStylePath) {
                 return path;
             }
-            // If no drive letter, create a path in user home
+            // If no drive letter on Windows, use user home
             return Paths.get(System.getProperty("user.home"), "comics").toString();
         }
 
-        // For Unix-like systems (Linux, macOS), ensure the path doesn't contain Windows-specific formats
-        if (path.matches("^[A-Za-z]:.*")) {
-            // Windows-style path on non-Windows OS, create a proper path in user home
+        if (isMacOS || isLinux) {
+            // On macOS or Linux, convert Windows-style paths to user home
+            if (isWindowsStylePath) {
+                log.info("Converting Windows-style path '{}' to user home on {}", path, osName);
+                return Paths.get(System.getProperty("user.home"), "comics").toString();
+            }
+            // Use the configured path as-is for Unix-style paths
+            return path;
+        }
+
+        // For any other OS (fallback), handle Windows-style paths
+        if (isWindowsStylePath) {
+            log.warn("Unknown OS '{}', converting Windows-style path to user home", osName);
             return Paths.get(System.getProperty("user.home"), "comics").toString();
         }
 
-        // For any other cases, use the path as configured
         return path;
     }
 

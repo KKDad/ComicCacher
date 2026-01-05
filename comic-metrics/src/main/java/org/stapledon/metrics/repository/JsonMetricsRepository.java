@@ -1,7 +1,6 @@
 package org.stapledon.metrics.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.stapledon.common.config.CacheProperties;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
 import com.google.gson.Gson;
@@ -28,16 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 public class JsonMetricsRepository implements MetricsRepository {
 
     private final Gson gson;
-    private final CacheProperties cacheProperties;
+    private final String cacheLocation;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private CombinedMetricsData cachedMetrics;
 
     private static final String COMBINED_METRICS_FILE = "combined-metrics.json";
 
-    public JsonMetricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties) {
+    public JsonMetricsRepository(
+            @Qualifier("gsonWithLocalDate") Gson gson,
+            @Qualifier("cacheLocation") String cacheLocation) {
         this.gson = gson;
-        this.cacheProperties = cacheProperties;
+        this.cacheLocation = cacheLocation;
     }
 
     /**
@@ -67,7 +68,7 @@ public class JsonMetricsRepository implements MetricsRepository {
     public CombinedMetricsData load() {
         lock.writeLock().lock();
         try {
-            Path filePath = Paths.get(cacheProperties.getLocation(), COMBINED_METRICS_FILE);
+            Path filePath = Paths.get(cacheLocation, COMBINED_METRICS_FILE);
 
             if (Files.exists(filePath)) {
                 try (Reader reader = new FileReader(filePath.toFile())) {
@@ -104,7 +105,7 @@ public class JsonMetricsRepository implements MetricsRepository {
             // Update timestamp
             metrics.setLastUpdated(LocalDateTime.now());
 
-            Path directory = Paths.get(cacheProperties.getLocation());
+            Path directory = Paths.get(cacheLocation);
             if (!Files.exists(directory)) {
                 Files.createDirectories(directory);
             }

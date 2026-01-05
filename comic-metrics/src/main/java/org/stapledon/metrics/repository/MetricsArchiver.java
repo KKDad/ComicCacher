@@ -1,7 +1,6 @@
 package org.stapledon.metrics.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.stapledon.common.config.CacheProperties;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
 import com.google.gson.Gson;
@@ -17,23 +16,28 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for archiving daily metrics snapshots.
- * Saves historical snapshots to metrics-history/ directory and cleans up old archives.
+ * Saves historical snapshots to metrics-history/ directory and cleans up old
+ * archives.
  * Configured as a bean in MetricsConfiguration when metrics are enabled.
  */
 @Slf4j
 @ToString
-@RequiredArgsConstructor
 public class MetricsArchiver {
 
-    @Qualifier("gsonWithLocalDate")
     private final Gson gson;
-    private final CacheProperties cacheProperties;
+    private final String cacheLocation;
+
+    public MetricsArchiver(
+            @Qualifier("gsonWithLocalDate") Gson gson,
+            @Qualifier("cacheLocation") String cacheLocation) {
+        this.gson = gson;
+        this.cacheLocation = cacheLocation;
+    }
 
     private static final String HISTORY_DIRECTORY = "metrics-history";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -43,12 +47,12 @@ public class MetricsArchiver {
      * Archive combined metrics for a specific date.
      *
      * @param metrics Combined metrics to archive
-     * @param date Date of the snapshot
+     * @param date    Date of the snapshot
      * @return true if successful, false otherwise
      */
     public boolean archiveMetrics(CombinedMetricsData metrics, LocalDate date) {
         try {
-            Path historyDir = Paths.get(cacheProperties.getLocation(), HISTORY_DIRECTORY);
+            Path historyDir = Paths.get(cacheLocation, HISTORY_DIRECTORY);
             if (!Files.exists(historyDir)) {
                 Files.createDirectories(historyDir);
             }
@@ -76,7 +80,7 @@ public class MetricsArchiver {
      */
     public int cleanupOldArchives(int retentionDays) {
         try {
-            Path historyDir = Paths.get(cacheProperties.getLocation(), HISTORY_DIRECTORY);
+            Path historyDir = Paths.get(cacheLocation, HISTORY_DIRECTORY);
             if (!Files.exists(historyDir)) {
                 log.debug("History directory does not exist, nothing to clean up");
                 return 0;
@@ -130,7 +134,7 @@ public class MetricsArchiver {
      */
     public List<LocalDate> getAvailableArchives() {
         try {
-            Path historyDir = Paths.get(cacheProperties.getLocation(), HISTORY_DIRECTORY);
+            Path historyDir = Paths.get(cacheLocation, HISTORY_DIRECTORY);
             if (!Files.exists(historyDir)) {
                 return Collections.emptyList();
             }

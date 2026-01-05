@@ -6,8 +6,8 @@ plugins {
 }
 
 ext {
-    // Project version
-    projectVersion = '2.3.1'
+    // Project version (can be overridden via -PbuildVersion=X.Y.Z)
+    projectVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : '2.3.1'
 
     // Core dependency versions
     springBootVersion = '4.0.1'
