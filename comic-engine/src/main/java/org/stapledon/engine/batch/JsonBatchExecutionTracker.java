@@ -146,4 +146,44 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
             log.error("Job failed with error: {}", summary.getErrorMessage());
         }
     }
+
+    // ==================== Public Read Methods ====================
+
+    /**
+     * Gets the last execution summary for a specific job.
+     *
+     * @param jobName the job name to look up
+     * @return the last execution summary, or empty if not found
+     */
+    public java.util.Optional<BatchExecutionSummary> getLastExecution(String jobName) {
+        Map<String, BatchExecutionSummary> executions = readExecutions();
+        return java.util.Optional.ofNullable(executions.get(jobName));
+    }
+
+    /**
+     * Checks if a job has already run today (based on recorded end time).
+     *
+     * @param jobName the job name to check
+     * @return true if the job completed today, false otherwise
+     */
+    public boolean hasJobRunToday(String jobName) {
+        return getLastExecution(jobName)
+                .filter(summary -> summary.getEndTime() != null)
+                .filter(summary -> summary.getEndTime().toLocalDate().equals(java.time.LocalDate.now()))
+                .isPresent();
+    }
+
+    /**
+     * Checks if a job has run since the specified time.
+     *
+     * @param jobName the job name to check
+     * @param since   the time to check against
+     * @return true if the job completed after the specified time
+     */
+    public boolean hasJobRunSince(String jobName, java.time.LocalDateTime since) {
+        return getLastExecution(jobName)
+                .filter(summary -> summary.getEndTime() != null)
+                .filter(summary -> summary.getEndTime().isAfter(since))
+                .isPresent();
+    }
 }

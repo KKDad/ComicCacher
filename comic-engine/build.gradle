@@ -39,6 +39,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'
+	// Actuator for health check endpoints
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	// Explicitly add spring-batch modules for Gradle 8.14 module visibility
 	implementation 'org.springframework.batch:spring-batch-core'
 	implementation 'org.springframework.batch:spring-batch-infrastructure'

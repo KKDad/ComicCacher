@@ -1,6 +1,7 @@
-package org.stapledon.engine.batch;
+package org.stapledon.engine.batch.config;
 
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -12,11 +13,16 @@ import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.batch.infrastructure.item.support.ListItemReader;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.engine.batch.ComicBackfillService;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
+import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.LoggingJobExecutionListener;
+import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
 import java.util.List;
@@ -31,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicBackfillJobConfig {
 
     private final ManagementFacade managementFacade;
@@ -41,6 +48,24 @@ public class ComicBackfillJobConfig {
 
     @Value("${batch.comic-backfill.delay-between-comics-ms:2000}")
     private long delayBetweenComics;
+
+    @Value("${batch.comic-backfill.cron}")
+    private String cronExpression;
+
+    @Value("${batch.timezone:America/Toronto}")
+    private String timezone;
+
+    /**
+     * Scheduler for ComicBackfillJob - runs daily at configured cron time.
+     * Triggered by SchedulerTriggers component.
+     */
+    @Bean
+    public DailyJobScheduler comicBackfillJobScheduler(
+            JobOperator jobOperator,
+            JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(
+                "ComicBackfillJob", cronExpression, timezone, jobOperator, tracker);
+    }
 
     /**
      * Main job for comic backfill

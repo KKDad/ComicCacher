@@ -4,13 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.TestPropertySource;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.service.RetrievalStatusService;
-import org.stapledon.engine.batch.RetrievalRecordPurgeJobScheduler;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,7 +32,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
         @Autowired
-        private RetrievalRecordPurgeJobScheduler retrievalRecordPurgeJobScheduler;
+        private JobLauncher jobLauncher;
+
+        @Autowired
+        @Qualifier("retrievalRecordPurgeJob")
+        private Job retrievalRecordPurgeJob;
 
         @Autowired
         private RetrievalStatusService retrievalStatusService;
@@ -65,6 +71,17 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
         }
 
         /**
+         * Runs the job manually for testing.
+         */
+        private JobExecution runJob() throws Exception {
+                return jobLauncher.run(retrievalRecordPurgeJob,
+                                new JobParametersBuilder()
+                                                .addLong("runId", System.currentTimeMillis())
+                                                .addString("trigger", "TEST")
+                                                .toJobParameters());
+        }
+
+        /**
          * Test: RetrievalRecordPurgeJob purges old records while keeping recent ones.
          *
          * Given: 15 retrieval records exist (5 recent, 10 old)
@@ -91,8 +108,8 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
                 assertThat(oldCountBefore).as("Should have 10 old records before purge").isEqualTo(10);
 
                 // Execute the job
-                log.info("Executing RetrievalRecordPurgeJob via scheduler");
-                JobExecution jobExecution = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
+                log.info("Executing RetrievalRecordPurgeJob");
+                JobExecution jobExecution = runJob();
 
                 // Assert job completed successfully
                 assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
@@ -148,7 +165,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
                 }
 
                 // Execute the job
-                JobExecution jobExecution = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
+                JobExecution jobExecution = runJob();
 
                 // Job should complete successfully even with no records
                 assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
@@ -170,7 +187,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
                 log.info("TEST: RetrievalRecordPurgeJob idempotency");
 
                 // Run job first time
-                JobExecution execution1 = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
+                JobExecution execution1 = runJob();
                 assertThat(execution1).as("First execution should not be null").isNotNull();
                 assertThat(execution1.getStatus()).as("First execution should complete successfully")
                                 .isEqualTo(BatchStatus.COMPLETED);
@@ -182,7 +199,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
                 assertThat(countAfterFirst).as("Should have 5 records after first purge").isEqualTo(5);
 
                 // Run job second time
-                JobExecution execution2 = retrievalRecordPurgeJobScheduler.runRecordPurgeJob("TEST");
+                JobExecution execution2 = runJob();
                 assertThat(execution2).as("Second execution should not be null").isNotNull();
                 assertThat(execution2.getStatus()).as("Second execution should complete successfully")
                                 .isEqualTo(BatchStatus.COMPLETED);

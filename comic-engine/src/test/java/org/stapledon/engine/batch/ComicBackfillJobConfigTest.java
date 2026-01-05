@@ -17,6 +17,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
+import org.stapledon.engine.batch.config.ComicBackfillJobConfig;
 import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;

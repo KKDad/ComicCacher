@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.stapledon.api.model.ApiResponse;
 import org.stapledon.api.model.ResponseBuilder;
-import org.stapledon.engine.batch.ComicBackfillJobScheduler;
-import org.stapledon.engine.batch.ComicDownloadJobScheduler;
+import org.stapledon.engine.batch.BatchJobMonitoringService;
 import org.stapledon.engine.batch.ComicJobSummary;
+import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -37,15 +37,19 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Batch Jobs", description = "Endpoints for monitoring comic retrieval batch jobs")
 public class BatchJobController {
 
-    private final ComicDownloadJobScheduler comicDownloadJobScheduler;
-    private final ComicBackfillJobScheduler comicBackfillJobScheduler;
+    private final BatchJobMonitoringService batchJobMonitoringService;
+    private final DailyJobScheduler comicDownloadJobScheduler;
+    private final DailyJobScheduler comicBackfillJobScheduler;
+
+    private static final String COMIC_DOWNLOAD_JOB = "ComicDownloadJob";
+    private static final String COMIC_BACKFILL_JOB = "ComicBackfillJob";
 
     @GetMapping("/jobs/recent")
     @Operation(summary = "Get recent job executions", description = "Returns the most recent batch job executions with detailed status information")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRecentJobs(
             @Parameter(description = "Number of recent jobs to return") @RequestParam(defaultValue = "10") int count) {
 
-        List<JobExecution> executions = comicDownloadJobScheduler.getRecentJobExecutions(count);
+        List<JobExecution> executions = batchJobMonitoringService.getRecentJobExecutions(COMIC_DOWNLOAD_JOB, count);
         List<Map<String, Object>> jobDetails = executions.stream()
                 .map(this::convertJobExecutionToMap)
                 .toList();
@@ -60,7 +64,8 @@ public class BatchJobController {
 
             @Parameter(description = "End date (inclusive)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        List<JobExecution> executions = comicDownloadJobScheduler.getJobExecutionsForDateRange(startDate, endDate);
+        List<JobExecution> executions = batchJobMonitoringService.getJobExecutionsForDateRange(COMIC_DOWNLOAD_JOB,
+                startDate, endDate);
         List<Map<String, Object>> jobDetails = executions.stream()
                 .map(this::convertJobExecutionToMap)
                 .toList();
@@ -73,7 +78,7 @@ public class BatchJobController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getJobExecution(
             @Parameter(description = "Job execution ID") @PathVariable Long executionId) {
 
-        JobExecution execution = comicDownloadJobScheduler.getJobExecution(executionId);
+        JobExecution execution = batchJobMonitoringService.getJobExecution(executionId);
         if (execution == null) {
             return ResponseEntity.notFound().build();
         }
@@ -87,7 +92,7 @@ public class BatchJobController {
     public ResponseEntity<ApiResponse<ComicJobSummary>> getJobSummary(
             @Parameter(description = "Number of days to include in summary") @RequestParam(defaultValue = "7") int days) {
 
-        ComicJobSummary summary = comicDownloadJobScheduler.getJobSummary(days);
+        ComicJobSummary summary = batchJobMonitoringService.getJobSummary(COMIC_DOWNLOAD_JOB, days);
         return ResponseBuilder.ok(summary, "Retrieved job execution summary");
     }
 
@@ -101,10 +106,13 @@ public class BatchJobController {
         }
 
         try {
-            JobExecution execution = comicDownloadJobScheduler.runComicDownloadJob(targetDate, "MANUAL");
+            Long executionId = comicDownloadJobScheduler.triggerManually();
+            if (executionId == null) {
+                return ResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start job");
+            }
             Map<String, Object> result = Map.of(
-                    "executionId", execution.getId(),
-                    "status", execution.getStatus().toString(),
+                    "executionId", executionId,
+                    "status", "STARTED",
                     "targetDate", targetDate.toString());
 
             return ResponseBuilder.ok(result, "Job triggered successfully");
@@ -117,11 +125,14 @@ public class BatchJobController {
     @Operation(summary = "Manually trigger comic backfill job", description = "Manually starts a comic backfill job to fill in missing comics for the configured target year")
     public ResponseEntity<ApiResponse<Map<String, Object>>> triggerBackfillJob() {
         try {
-            JobExecution execution = comicBackfillJobScheduler.runJob("MANUAL");
+            Long executionId = comicBackfillJobScheduler.triggerManually();
+            if (executionId == null) {
+                return ResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start backfill job");
+            }
             Map<String, Object> result = Map.of(
-                    "executionId", execution.getId(),
-                    "status", execution.getStatus().toString(),
-                    "jobName", "ComicBackfillJob");
+                    "executionId", executionId,
+                    "status", "STARTED",
+                    "jobName", COMIC_BACKFILL_JOB);
 
             return ResponseBuilder.ok(result, "Backfill job triggered successfully");
         } catch (Exception e) {
