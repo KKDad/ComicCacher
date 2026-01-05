@@ -20,28 +20,37 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Paths;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Implementation of the Configuration Facade that centralizes all configuration handling.
- * This facade handles loading and saving configuration data for comics, users, and preferences.
+ * Implementation of the Configuration Facade that centralizes all configuration
+ * handling.
+ * This facade handles loading and saving configuration data for comics, users,
+ * and preferences.
  */
 @Slf4j
 @ToString
 @Component
-@RequiredArgsConstructor
 public class ApplicationConfigurationFacade implements ConfigurationFacade {
 
-    @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
+    private final String cacheLocation;
 
     private ComicConfig comicConfig;
     private UserConfig userConfig;
     private PreferenceConfig preferenceConfig;
     private Bootstrap bootstrapConfig;
+
+    public ApplicationConfigurationFacade(
+            @Qualifier("gsonWithLocalDate") Gson gson,
+            CacheProperties cacheProperties,
+            @Qualifier("cacheLocation") String cacheLocation) {
+        this.gson = gson;
+        this.cacheProperties = cacheProperties;
+        this.cacheLocation = cacheLocation;
+    }
 
     @Override
     public ComicConfig loadComicConfig() {
@@ -125,7 +134,8 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
     @Override
     public boolean saveBootstrapConfig(Bootstrap config) {
         // Bootstrap config is typically read-only from resources
-        // This implementation would need to be adapted if saving to resources is required
+        // This implementation would need to be adapted if saving to resources is
+        // required
         log.warn("Saving bootstrap configuration is not supported");
         return false;
     }
@@ -145,7 +155,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
         }
 
         try (InputStream inputStream = new FileInputStream(configFile);
-             Reader reader = new InputStreamReader(inputStream)) {
+                Reader reader = new InputStreamReader(inputStream)) {
 
             userConfig = gson.fromJson(reader, UserConfig.class);
 
@@ -198,7 +208,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
         }
 
         try (InputStream inputStream = new FileInputStream(configFile);
-             Reader reader = new InputStreamReader(inputStream)) {
+                Reader reader = new InputStreamReader(inputStream)) {
 
             preferenceConfig = gson.fromJson(reader, PreferenceConfig.class);
 
@@ -235,7 +245,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
 
     @Override
     public String getConfigPath(String configName) {
-        return Paths.get(cacheProperties.getLocation(), configName).toString();
+        return Paths.get(cacheLocation, configName).toString();
     }
 
     @Override
@@ -245,13 +255,13 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
 
     @Override
     public File getConfigFile(String configName) {
-        File parentDir = new File(cacheProperties.getLocation());
+        File parentDir = new File(cacheLocation);
 
         // Ensure parent directory exists
         if (!parentDir.exists() && !parentDir.mkdirs()) {
             log.error("Failed to create directory: {}", parentDir);
         }
 
-        return Paths.get(cacheProperties.getLocation(), configName).toFile();
+        return Paths.get(cacheLocation, configName).toFile();
     }
 }

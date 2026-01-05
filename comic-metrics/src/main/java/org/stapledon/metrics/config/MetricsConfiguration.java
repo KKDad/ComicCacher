@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
@@ -105,9 +104,9 @@ public class MetricsConfiguration {
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
     public AccessMetricsRepository accessMetricsRepository(
             @Qualifier("gsonWithLocalDate") Gson gson,
-            CacheProperties cacheProperties) {
+            @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating AccessMetricsRepository");
-        return new AccessMetricsRepository(gson, cacheProperties);
+        return new AccessMetricsRepository(gson, cacheLocation);
     }
 
     /**
@@ -118,9 +117,9 @@ public class MetricsConfiguration {
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
     public MetricsRepository metricsRepository(
             @Qualifier("gsonWithLocalDate") Gson gson,
-            CacheProperties cacheProperties) {
+            @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating JsonMetricsRepository");
-        return new JsonMetricsRepository(gson, cacheProperties);
+        return new JsonMetricsRepository(gson, cacheLocation);
     }
 
     /**
@@ -131,8 +130,8 @@ public class MetricsConfiguration {
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
     public MetricsArchiver metricsArchiver(
             @Qualifier("gsonWithLocalDate") Gson gson,
-            CacheProperties cacheProperties) {
+            @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating MetricsArchiver");
-        return new MetricsArchiver(gson, cacheProperties);
+        return new MetricsArchiver(gson, cacheLocation);
     }
 }

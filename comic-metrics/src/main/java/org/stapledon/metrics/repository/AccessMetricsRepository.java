@@ -1,7 +1,6 @@
 package org.stapledon.metrics.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.stapledon.common.config.CacheProperties;
 import org.stapledon.metrics.dto.AccessMetricsData;
 
 import com.google.gson.Gson;
@@ -28,16 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 public class AccessMetricsRepository {
 
     private final Gson gson;
-    private final CacheProperties cacheProperties;
+    private final String cacheLocation;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private AccessMetricsData cachedMetrics;
 
     private static final String ACCESS_METRICS_FILE = "access-metrics.json";
 
-    public AccessMetricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties) {
+    public AccessMetricsRepository(
+            @Qualifier("gsonWithLocalDate") Gson gson,
+            @Qualifier("cacheLocation") String cacheLocation) {
         this.gson = gson;
-        this.cacheProperties = cacheProperties;
+        this.cacheLocation = cacheLocation;
     }
 
     /**
@@ -74,7 +75,7 @@ public class AccessMetricsRepository {
     public void load() {
         lock.writeLock().lock();
         try {
-            Path filePath = Paths.get(cacheProperties.getLocation(), ACCESS_METRICS_FILE);
+            Path filePath = Paths.get(cacheLocation, ACCESS_METRICS_FILE);
 
             if (Files.exists(filePath)) {
                 try (Reader reader = new FileReader(filePath.toFile())) {
@@ -83,7 +84,7 @@ public class AccessMetricsRepository {
                     if (loadedData != null) {
                         cachedMetrics = loadedData;
                         log.info("Loaded access metrics for {} comics from {}",
-                            cachedMetrics.getComicMetrics().size(), ACCESS_METRICS_FILE);
+                                cachedMetrics.getComicMetrics().size(), ACCESS_METRICS_FILE);
                     } else {
                         cachedMetrics = createEmpty();
                         log.info("Access metrics file was empty, initialized new metrics");
@@ -113,7 +114,7 @@ public class AccessMetricsRepository {
             // Update timestamp
             metrics.setLastUpdated(LocalDateTime.now());
 
-            Path directory = Paths.get(cacheProperties.getLocation());
+            Path directory = Paths.get(cacheLocation);
             if (!Files.exists(directory)) {
                 Files.createDirectories(directory);
             }
