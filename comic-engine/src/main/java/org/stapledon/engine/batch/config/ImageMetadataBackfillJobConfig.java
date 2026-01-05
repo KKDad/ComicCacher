@@ -1,6 +1,7 @@
-package org.stapledon.engine.batch;
+package org.stapledon.engine.batch.config;
 
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -10,6 +11,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -18,6 +20,8 @@ import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.AnalysisService;
 import org.stapledon.common.service.ValidationService;
+import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
 import java.io.File;
@@ -38,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ImageMetadataBackfillJobConfig {
 
     private final CacheProperties cacheProperties;
@@ -47,6 +52,24 @@ public class ImageMetadataBackfillJobConfig {
 
     @Value("${batch.image-backfill.batch-size:100}")
     private int batchSize;
+
+    @Value("${batch.image-backfill.cron}")
+    private String cronExpression;
+
+    @Value("${batch.timezone:America/Toronto}")
+    private String timezone;
+
+    /**
+     * Scheduler for ImageMetadataBackfillJob - runs daily at configured cron time.
+     * Triggered by SchedulerTriggers component.
+     */
+    @Bean
+    public DailyJobScheduler imageMetadataBackfillJobScheduler(
+            JobOperator jobOperator,
+            JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(
+                "ImageMetadataBackfillJob", cronExpression, timezone, jobOperator, tracker);
+    }
 
     /**
      * Job for backfilling image metadata

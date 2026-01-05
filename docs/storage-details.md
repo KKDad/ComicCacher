@@ -1,124 +1,159 @@
 # Storage Details for ComicCacher
 
-This document outlines the JSON files used for data storage in the ComicCacher application. The application primarily uses JSON files for configuration and persistence.
+This document outlines the JSON files used for data storage in the ComicCacher application. It serves as the single source of truth for file inventory, schemas, and location logic, verified against the codebase.
 
-## Architecture Notes
+## Module Overview
 
-### Version 1.2.0 Changes
+The JSON storage implementation is distributed across these modules:
 
-**Repository Pattern Introduction:**
-- **Repository Interfaces**: Define data access contracts (`ComicRepository`, `UserRepository`, `PreferenceRepository`)
-- **JSON Implementations**: Current implementations use JSON files (`JsonComicRepository`, `JsonUserRepository`, `JsonPreferenceRepository`)
-- **Future Flexibility**: Repository pattern allows easy migration to databases or other storage mechanisms
+- **`comic-api`**: Core configuration (Comics, Users, Preferences).
+  - *Classes*: `JsonConfigWriter`, `JsonComicRepository`, `JsonUserRepository`
+- **`comic-engine`**: Operational state (Batch jobs, Errors, Retrieval Status, Hashes).
+  - *Classes*: `JsonErrorTrackingRepository`, `JsonRetrievalStatusRepository`, `DuplicateImageHashRepository`
+- **`comic-metrics`**: Usage metrics.
+  - *Classes*: `AccessMetricsRepository`, `JsonMetricsRepository`
+- **`comic-common`**: Shared utilities.
 
-**On-Demand Downloads Removed:**
-- Removed `CacheMissEvent` system that automatically downloaded comics when cache misses occurred
-- All comic downloads now happen through:
-  - Scheduled batch jobs (DailyRunner at 7 AM)
-  - Manual API calls (UpdateController endpoints)
-- Comics are served only from cached JSON files and filesystem cache
-- Simplifies architecture and makes behavior more predictable
+## Data Relationship Diagram
 
-## Overview of Storage Files
+```mermaid
+erDiagram
+    User ||--|| UserPreferences : "has"
+    User {
+        string username PK
+        string passwordHash
+        string[] roles
+    }
+    UserPreferences {
+        string username FK
+        int[] favoriteComics
+        map lastReadDates
+    }
+    Comic ||--o{ ComicImage : "contains"
+    Comic ||--|| ComicStats : "tracked_by"
+    Comic {
+        int id PK
+        string name
+        boolean enabled
+    }
+    ComicStats {
+        string comicName FK
+        long storageBytes
+        int imageCount
+        int accessCount
+    }
+    ComicImage ||--|| ImageMetadata : "described_by"
+    ComicImage {
+        string path PK
+        string hash
+    }
+    ImageMetadata {
+        string path FK
+        int width
+        int height
+    }
+    BatchJob ||--o{ Execution : "runs"
+    BatchJob {
+        string jobName PK
+    }
+    Execution {
+        long executionId PK
+        string status
+        datetime startTime
+    }
+    GlobalMetrics ||--o{ YearlyStorage : "aggregates"
+    GlobalMetrics {
+        string oldestImage
+        string newestImage
+        long totalStorageBytes
+        int totalImageCount
+    }
+    YearlyStorage {
+        string year PK
+        long storageBytes
+        int imageCount
+    }
+```
 
-| File Name | Purpose | Location | Repository / Access Layer |
-|-----------|---------|----------|---------------------------|
-| ComicCacher.json | Bootstrap configuration for comics | /ComicAPI/src/main/resources/ | CacherConfigLoader (direct) |
-| comics.json | Comic metadata and cache state | ./comics.json (configurable) | ComicRepository → JsonComicRepository → ConfigurationFacade |
-| users.json | User accounts and authentication | ./users.json (configurable) | UserRepository → JsonUserRepository → UserConfigWriter |
-| preferences.json | User favorites and settings | ./preferences.json (configurable) | PreferenceRepository → JsonPreferenceRepository → PreferenceConfigWriter |
-| task-executions.json | Scheduled task tracking | Cache directory | TaskExecutionTrackerImpl (direct) |
-| stats.db | Comic image cache statistics | Inside comic image directories | ImageCacheStatsUpdater (direct) |
-| retrieval-status.json | Comic download attempt tracking | Cache directory | RetrievalStatusService → JsonRetrievalStatusRepository |
-| openapi.json | API documentation | /docs/ | Generated during build |
+## Inventory of Storage Files
 
-## Detailed Schema Information
+All paths relative to the configured cache location unless otherwise noted.
 
-### 1. ComicCacher.json
+### 1. Configuration Files
+Configurable via properties or loaded from classpath.
 
-Bootstrap configuration defining which comics to download and their start dates.
+| File Name | Purpose | Responsible Class | Location Logic |
+| :--- | :--- | :--- | :--- |
+| `ComicCacher.json` | Bootstrap configuration (list of comics to cache). | `CacherConfigLoader` | **Classpath** (`src/main/resources`). |
+| `comics.json` | Registry of available comics and metadata. | `JsonComicRepository` | Configurable `comics.cache.config`. Defaults to `./comics.json`. |
+| `users.json` | User accounts, credentials (hashed), and roles. | `JsonUserRepository` | Configurable `comics.cache.usersConfig`. Defaults to `./users.json`. |
+| `preferences.json` | User favorites and reading history. | `JsonPreferenceRepository` | Configurable `comics.cache.preferencesConfig`. Defaults to `./preferences.json`. |
 
-**Schema:**
+### 2. Operational State
+Track runtime state and job history. Located in the **Cache Root**.
+
+| File Name | Purpose | Responsible Class | File Name Constant |
+| :--- | :--- | :--- | :--- |
+| `batch-executions.json` | History of Spring Batch job executions. | `JsonBatchExecutionTracker` | `BATCH_EXECUTIONS_FILENAME` |
+| `retrieval-status.json` | Status of last comic retrieval attempts. | `JsonRetrievalStatusRepository` | `STORAGE_FILE` |
+| `last_errors.json` | Recent errors per comic (capped count). | `JsonErrorTrackingRepository` | `STORAGE_FILE` |
+
+### 3. Metrics
+Aggregated usage and storage statistics. Located in the **Cache Root**.
+
+| File Name | Purpose | Responsible Class | File Name Constant |
+| :--- | :--- | :--- | :--- |
+| `access-metrics.json` | Aggregated access counts. | `AccessMetricsRepository` | `ACCESS_METRICS_FILE` |
+| `combined-metrics.json` | Global + per-comic storage and access metrics. | `JsonMetricsRepository` | `COMBINED_METRICS_FILE` |
+
+> [!NOTE]
+> The `MetricsRepository` interface abstracts persistence, making it easy to swap JSON storage for Prometheus or another backend in the future.
+
+### 4. Content Metadata
+Metadata associated with specific content. Located in **Comic/Year Directories**.
+
+| File Name | Purpose | Responsible Class | Location Pattern |
+| :--- | :--- | :--- | :--- |
+| `image-hashes.json` | Perceptual hashes for duplicate detection. | `DuplicateImageHashRepository` | `{CacheRoot}/{ComicName}/{Year}/image-hashes.json` |
+| `*.json` (Sidecar) | Metadata for specific images. | `ImageMetadataRepository` | `{CacheRoot}/{ComicName}/{Year}/{Date}.json` |
+
+## Schemas
+
+### 1. ComicCacher.json (Bootstrap)
 ```json
 {
   "dailyComics": [
     {
       "name": "String",
-      "startDate": {
-        "year": "Integer",
-        "month": "Integer",
-        "day": "Integer"
-      }
+      "startDate": { "year": "Integer", "month": "Integer", "day": "Integer" }
     }
   ],
-  "kingComics": [
-    {
-      "name": "String", 
-      "website": "String",
-      "startDate": {
-        "year": "Integer",
-        "month": "Integer",
-        "day": "Integer"
-      }
-    }
-  ]
+  "kingComics": [ ... ]
 }
 ```
 
-**Purpose:** 
-- `dailyComics`: Comics from GoComics
-- `kingComics`: Comics from ComicsKingdom
-- `startDate`: The earliest date to download for each comic
-
 ### 2. comics.json
-
-Stores information about available comics and their metadata.
-
-**Schema:**
 ```json
 {
   "items": {
-    "[hash_of_comic_name]": {
+    "[hash_id]": {
       "id": "Integer",
       "name": "String",
-      "author": "String",
-      "oldest": "LocalDate",
-      "newest": "LocalDate",
       "enabled": "Boolean",
-      "description": "String",
-      "avatarAvailable": "Boolean"
+      "oldest": "LocalDate",
+      "newest": "LocalDate"
     }
   }
 }
 ```
 
-**Purpose:**
-- `items`: Map of comic items keyed by comic ID (hash of name)
-- Each comic contains metadata including date range and enabled status
-- Tracks which comics are available in the cache
-
-**Location:** Configured via `comics.cache.config` property (defaults to ./comics.json)
-
-**Access Pattern:**
-- Read/Write through `ComicRepository` interface
-- Implementation: `JsonComicRepository` delegates to `ConfigurationFacade`
-- Services use repository interfaces, not direct file access
-
 ### 3. users.json
-
-Stores user account information and authentication data.
-
-**Schema:**
 ```json
 {
   "users": {
     "[username]": {
       "username": "String",
       "passwordHash": "String",
-      "email": "String",
-      "displayName": "String",
-      "created": "LocalDateTime",
-      "lastLogin": "LocalDateTime",
       "roles": ["String"],
       "userToken": "UUID"
     }
@@ -126,118 +161,59 @@ Stores user account information and authentication data.
 }
 ```
 
-**Purpose:**
-- `users`: Map of user objects keyed by username
-- Stores credentials, profile information, and security roles
-- Tracks account creation and login dates
-
-**Location:** Configured via `comics.cache.usersConfig` property (defaults to ./users.json)
-
-**Validation:** Username and password hash are required fields
-
-**Access Pattern:**
-- Read/Write through `UserRepository` interface
-- Implementation: `JsonUserRepository` delegates to `UserConfigWriter`
-- Authentication logic encapsulated in repository layer
-
 ### 4. preferences.json
-
-Stores user preferences, favorite comics, and reading history.
-
-**Schema:**
 ```json
 {
   "preferences": {
     "[username]": {
-      "username": "String",
       "favoriteComics": ["Integer"],
-      "lastReadDates": {
-        "[comicId]": "LocalDate"
-      },
-      "displaySettings": {
-        "[settingName]": "Object"
-      }
+      "lastReadDates": { "[comicId]": "LocalDate" }
     }
   }
 }
 ```
 
-**Purpose:**
-- `preferences`: Map of user preferences keyed by username
-- `favoriteComics`: List of comic IDs marked as favorites
-- `lastReadDates`: Tracks which comics were read and when
-- `displaySettings`: User-specific display configuration
-
-**Location:** Configured via `comics.cache.preferencesConfig` property (defaults to ./preferences.json)
-
-**Access Pattern:**
-- Read/Write through `PreferenceRepository` interface
-- Implementation: `JsonPreferenceRepository` delegates to `PreferenceConfigWriter`
-- Convenience methods for favorites and reading history
-
-### 5. task-executions.json
-
-Tracks when scheduled tasks were last executed.
-
-**Schema:**
+### 5. batch-executions.json
 ```json
 {
-  "[taskName]": "LocalDate"
+  "[jobName]": {
+    "lastExecutionId": "Long",
+    "status": "COMPLETED|FAILED",
+    "startTime": "LocalDateTime",
+    "endTime": "LocalDateTime"
+  }
 }
 ```
 
-**Purpose:**
-- Simple map of task names to their last execution date
-- Prevents tasks from running more than once per scheduled period
-- Used by DailyRunner and StartupReconciler's scheduled daily reconciliation
-
-**Location:** Stored in the cache directory (configured via `cache.location`)
-
-### 6. stats.db
-
-Stores cache statistics for comic images despite the .db extension.
-
-**Schema:**
+### 6. combined-metrics.json
 ```json
 {
-  "oldestImage": "String",
-  "newestImage": "String",
-  "years": ["String"],
-  "totalStorageBytes": "long",
+  "lastUpdated": "LocalDateTime",
+  "globalMetrics": {
+    "oldestImage": "String (absolute path)",
+    "newestImage": "String (absolute path)",
+    "years": ["String"],
+    "totalStorageBytes": "long",
+    "totalImageCount": "int",
+    "storageByYear": { "[year]": "long" },
+    "imageCountByYear": { "[year]": "int" }
+  },
   "perComicMetrics": {
     "[comicName]": {
       "comicName": "String",
       "storageBytes": "long",
       "imageCount": "int",
       "averageImageSize": "double",
-      "mostRecentAccess": "String",
-      "accessCount": "int",
-      "hitRatio": "double",
-      "storageByYear": {
-        "[year]": "long"
+      "yearlyStorage": {
+        "[year]": { "storageBytes": "long", "imageCount": "int" }
       },
-      "downloadTime": "long"
+      "accessCount": "int",
+      "lastAccess": "String",
+      "averageAccessTime": "double",
+      "hitRatio": "double",
+      "cacheHits": "int",
+      "cacheMisses": "int"
     }
   }
 }
 ```
-
-**Purpose:**
-- Tracks storage metrics for the comic image cache
-- Provides access statistics and hit ratios
-- Breaks down storage by comic and year
-
-**Location:** Inside each comic's image directory under the cache location
-
-### 7. openapi.json
-
-OpenAPI documentation for the REST API.
-
-**Schema:** Standard OpenAPI 3.0 specification
-
-**Purpose:**
-- Documents API endpoints, parameters, and responses
-- Generated during the build process
-- Used for API documentation and client generation
-
-**Location:** /docs/openapi.json

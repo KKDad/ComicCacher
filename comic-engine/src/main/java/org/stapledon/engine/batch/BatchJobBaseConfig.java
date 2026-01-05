@@ -53,6 +53,19 @@ public class BatchJobBaseConfig {
     public static final String BATCH_TIMEZONE = "America/Toronto";
 
     /**
+     * Canonical set of known batch job names.
+     * Used by SchedulerHealthCheck to detect missing or unexpected schedulers.
+     * When adding a new batch job, add its name here.
+     */
+    public static final java.util.Set<String> KNOWN_JOBS = java.util.Set.of(
+            "ComicBackfillJob",
+            "ComicDownloadJob",
+            "ImageMetadataBackfillJob",
+            "MetricsArchiveJob",
+            "MetricsUpdateJob",
+            "RetrievalRecordPurgeJob");
+
+    /**
      * Standard cron schedule components
      */
     public static final class CronSchedules {

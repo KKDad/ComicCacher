@@ -1,6 +1,7 @@
-package org.stapledon.engine.batch;
+package org.stapledon.engine.batch.config;
 
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -11,11 +12,16 @@ import org.springframework.batch.infrastructure.item.ItemReader;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.batch.infrastructure.item.support.ListItemReader;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.LoggingJobExecutionListener;
+import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
@@ -33,9 +39,28 @@ import lombok.extern.slf4j.Slf4j;
 @ToString
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicRetrievalJobConfig {
 
     private final ManagementFacade managementFacade;
+
+    @Value("${batch.comic-download.cron}")
+    private String cronExpression;
+
+    @Value("${batch.timezone:America/Toronto}")
+    private String timezone;
+
+    /**
+     * Scheduler for ComicDownloadJob - runs daily at configured cron time.
+     * Triggered by SchedulerTriggers component.
+     */
+    @Bean
+    public DailyJobScheduler comicDownloadJobScheduler(
+            JobOperator jobOperator,
+            JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(
+                "ComicDownloadJob", cronExpression, timezone, jobOperator, tracker);
+    }
 
     /**
      * Main job for daily comic retrieval
@@ -50,7 +75,7 @@ public class ComicRetrievalJobConfig {
         return new JobBuilder("ComicDownloadJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(jsonBatchExecutionTracker)
-                .listener(new ComicJobExecutionListener())
+                .listener(new LoggingJobExecutionListener())
                 .start(comicRetrievalStep)
                 .build();
     }

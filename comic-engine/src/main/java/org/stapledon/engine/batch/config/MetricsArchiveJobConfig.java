@@ -1,6 +1,7 @@
-package org.stapledon.engine.batch;
+package org.stapledon.engine.batch.config;
 
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -9,9 +10,13 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.metrics.service.MetricsArchiveService;
 
 import java.time.LocalDate;
@@ -26,9 +31,28 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "true", matchIfMissing = true)
 public class MetricsArchiveJobConfig {
 
     private final MetricsArchiveService metricsArchiveService;
+
+    @Value("${batch.metrics-archive.cron}")
+    private String cronExpression;
+
+    @Value("${batch.timezone:America/Toronto}")
+    private String timezone;
+
+    /**
+     * Scheduler for MetricsArchiveJob - runs daily at configured cron time.
+     * Triggered by SchedulerTriggers component.
+     */
+    @Bean
+    public DailyJobScheduler metricsArchiveJobScheduler(
+            JobOperator jobOperator,
+            JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(
+                "MetricsArchiveJob", cronExpression, timezone, jobOperator, tracker);
+    }
 
     /**
      * Job for archiving metrics

@@ -5,15 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.TestPropertySource;
-import org.stapledon.engine.batch.MetricsArchiveJobScheduler;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData.ComicCombinedMetrics;
-import org.stapledon.metrics.repository.CombinedMetricsRepository;
+import org.stapledon.metrics.repository.MetricsRepository;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,16 +38,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired
-    private MetricsArchiveJobScheduler metricsArchiveJobScheduler;
+    private JobLauncher jobLauncher;
 
     @Autowired
-    private CombinedMetricsRepository combinedMetricsRepository;
+    @Qualifier("metricsArchiveJob")
+    private Job metricsArchiveJob;
+
+    @Autowired
+    private MetricsRepository metricsRepository;
 
     @Autowired
     @Qualifier("gsonWithLocalDate")
     private Gson gson;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    /**
+     * Runs the job manually for testing.
+     */
+    private JobExecution runJob() throws Exception {
+        return jobLauncher.run(metricsArchiveJob,
+                new JobParametersBuilder()
+                        .addLong("runId", System.currentTimeMillis())
+                        .addString("trigger", "TEST")
+                        .toJobParameters());
+    }
 
     @BeforeEach
     void setupTestMetrics() throws Exception {
@@ -82,19 +98,15 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
                 .build());
 
         CombinedMetricsData testMetrics = CombinedMetricsData.builder()
-                .comics(comicsMap)
+                .perComicMetrics(comicsMap)
                 .build();
 
-        combinedMetricsRepository.save(testMetrics);
+        metricsRepository.save(testMetrics);
         log.info("Created test metrics: {} comics", 2);
     }
 
     /**
      * Test: MetricsArchiveJob archives metrics to JSON file for yesterday.
-     *
-     * Given: Metrics data exists in the repository
-     * When: MetricsArchiveJob is executed
-     * Then: A JSON file is created in metrics-history with yesterday's date
      */
     @Test
     void testMetricsArchiveJobCreatesArchive() throws Exception {
@@ -107,8 +119,8 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         assertThat(Files.exists(expectedFile)).as("Archive file should not exist before job runs").isFalse();
 
         // Execute the job
-        log.info("Executing MetricsArchiveJob via scheduler");
-        JobExecution jobExecution = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
+        log.info("Executing MetricsArchiveJob");
+        JobExecution jobExecution = runJob();
 
         // Assert job completed successfully
         assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
@@ -128,29 +140,26 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         CombinedMetricsData archived = gson.fromJson(json, CombinedMetricsData.class);
 
         assertThat(archived).as("Archived metrics should not be null").isNotNull();
-        assertThat(archived.getComics()).as("Comics map should not be null").isNotNull();
-        assertThat(archived.getComics().size()).as("Should have 2 comics").isEqualTo(2);
+        assertThat(archived.getPerComicMetrics()).as("Comics map should not be null").isNotNull();
+        assertThat(archived.getPerComicMetrics().size()).as("Should have 2 comics").isEqualTo(2);
 
         // Verify specific comic metrics
-        assertThat(archived.getComics().containsKey("TestComic1")).as("TestComic1 should be in archive").isTrue();
-        ComicCombinedMetrics comic1 = archived.getComics().get("TestComic1");
+        assertThat(archived.getPerComicMetrics().containsKey("TestComic1")).as("TestComic1 should be in archive")
+                .isTrue();
+        ComicCombinedMetrics comic1 = archived.getPerComicMetrics().get("TestComic1");
         assertThat(comic1.getComicName()).as("Comic name should match").isEqualTo("TestComic1");
         assertThat(comic1.getImageCount()).as("TestComic1 image count should match").isEqualTo(10);
         assertThat(comic1.getStorageBytes()).as("TestComic1 size should match").isEqualTo(1024000L);
 
         // Verify JsonBatchExecutionTracker recorded the execution
         assertBatchExecutionTracked("MetricsArchiveJob");
-        assertBatchExecutionValid("MetricsArchiveJob", "COMPLETED", null); // Tasklet job, no item counts
+        assertBatchExecutionValid("MetricsArchiveJob", "COMPLETED");
 
         log.info("SUCCESS: Metrics archive created and validated at {}", expectedFile);
     }
 
     /**
      * Test: MetricsArchiveJob is idempotent and overwrites existing archives.
-     *
-     * Given: Job has already run and created an archive
-     * When: Job is run again
-     * Then: Archive is updated successfully
      */
     @Test
     void testMetricsArchiveJobIsIdempotent() throws Exception {
@@ -160,7 +169,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         Path expectedFile = getMetricsArchiveFile(yesterday);
 
         // Run job first time
-        JobExecution execution1 = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
+        JobExecution execution1 = runJob();
         assertThat(execution1).as("First execution should not be null").isNotNull();
         assertThat(execution1.getStatus()).as("First execution should complete successfully")
                 .isEqualTo(BatchStatus.COMPLETED);
@@ -170,7 +179,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         long firstSize = Files.size(expectedFile);
 
         // Run job second time
-        JobExecution execution2 = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
+        JobExecution execution2 = runJob();
         assertThat(execution2).as("Second execution should not be null").isNotNull();
         assertThat(execution2.getStatus()).as("Second execution should complete successfully")
                 .isEqualTo(BatchStatus.COMPLETED);
@@ -185,25 +194,21 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
     /**
      * Test: MetricsArchiveJob fails gracefully when no metrics exist.
-     *
-     * Given: No metrics data exists (empty comics map)
-     * When: MetricsArchiveJob is executed
-     * Then: Job fails appropriately and no archive is created
      */
     @Test
     void testMetricsArchiveJobFailsWithNoMetrics() throws Exception {
         log.info("TEST: MetricsArchiveJob fails with no metrics");
 
         // Clear metrics repository
-        combinedMetricsRepository.save(CombinedMetricsData.builder()
-                .comics(new HashMap<>())
+        metricsRepository.save(CombinedMetricsData.builder()
+                .perComicMetrics(new HashMap<>())
                 .build());
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
         Path expectedFile = getMetricsArchiveFile(yesterday);
 
         // Execute the job
-        JobExecution jobExecution = metricsArchiveJobScheduler.runMetricsArchiveJob("TEST");
+        JobExecution jobExecution = runJob();
 
         // Job should fail when there are no metrics
         assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
@@ -216,7 +221,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
         // Verify JsonBatchExecutionTracker recorded the failure
         assertBatchExecutionTracked("MetricsArchiveJob");
-        assertBatchExecutionValid("MetricsArchiveJob", "FAILED", null); // Failed job, no item counts
+        assertBatchExecutionValid("MetricsArchiveJob", "FAILED");
 
         log.info("SUCCESS: Job failed appropriately with empty metrics");
     }

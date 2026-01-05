@@ -4,12 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
-import org.stapledon.engine.batch.ImageMetadataJobScheduler;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,11 +27,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         @Autowired
-        private ImageMetadataJobScheduler imageMetadataJobScheduler;
+        private JobLauncher jobLauncher;
+
+        @Autowired
+        @Qualifier("imageMetadataBackfillJob")
+        private Job imageMetadataBackfillJob;
 
         private File testImage1;
         private File testImage2;
         private File testImage3;
+
+        /**
+         * Runs the job manually for testing.
+         */
+        private JobExecution runJob() throws Exception {
+                return jobLauncher.run(imageMetadataBackfillJob,
+                                new JobParametersBuilder()
+                                                .addLong("runId", System.currentTimeMillis())
+                                                .addString("trigger", "TEST")
+                                                .toJobParameters());
+        }
 
         @BeforeEach
         void setupTestImages() throws IOException {
@@ -51,10 +68,6 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
         /**
          * Test: ImageMetadataJob processes all images without metadata and creates
          * valid metadata files.
-         *
-         * Given: 3 test images exist without metadata files
-         * When: ImageMetadataJob is executed
-         * Then: All 3 images get metadata JSON files with correct content
          */
         @Test
         void testImageMetadataJobProcessesImagesWithoutMetadata() throws Exception {
@@ -65,9 +78,9 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
                 assertMetadataNotExists(testImage2.getAbsolutePath());
                 assertMetadataNotExists(testImage3.getAbsolutePath());
 
-                // Execute the job synchronously via scheduler interface method
-                log.info("Executing ImageMetadataJob via scheduler");
-                JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+                // Execute the job
+                log.info("Executing ImageMetadataJob");
+                JobExecution jobExecution = runJob();
 
                 // Assert job completed successfully
                 assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
@@ -97,17 +110,13 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
                 // Verify JsonBatchExecutionTracker recorded the execution
                 assertBatchExecutionTracked("ImageMetadataBackfillJob");
-                assertBatchExecutionValid("ImageMetadataBackfillJob", "COMPLETED", null); // Tasklet job, no item counts
+                assertBatchExecutionValid("ImageMetadataBackfillJob", "COMPLETED");
 
                 log.info("SUCCESS: All 3 images have valid metadata and execution tracked");
         }
 
         /**
          * Test: ImageMetadataJob skips images that already have metadata.
-         *
-         * Given: 2 images exist, one with metadata, one without
-         * When: ImageMetadataJob is executed
-         * Then: Only the image without metadata is processed
          */
         @Test
         void testImageMetadataJobSkipsImagesWithExistingMetadata() throws Exception {
@@ -131,7 +140,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
                 assertMetadataNotExists(testImage2.getAbsolutePath());
 
                 // Execute the job
-                JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+                JobExecution jobExecution = runJob();
 
                 // Assert job completed successfully
                 assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
@@ -158,10 +167,6 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         /**
          * Test: ImageMetadataJob handles invalid images gracefully.
-         *
-         * Given: Mix of valid and invalid images
-         * When: ImageMetadataJob is executed
-         * Then: Job completes, valid images get metadata, invalid images are skipped
          */
         @Test
         void testImageMetadataJobHandlesInvalidImages() throws Exception {
@@ -175,7 +180,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
                 assertMetadataNotExists(invalidImage.getAbsolutePath());
 
                 // Execute the job
-                JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+                JobExecution jobExecution = runJob();
 
                 // Assert job completed successfully even with invalid images
                 assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
@@ -199,17 +204,13 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         /**
          * Test: ImageMetadataJob processes images with various formats correctly.
-         *
-         * Given: Images in PNG, JPEG, and GIF formats
-         * When: ImageMetadataJob is executed
-         * Then: Correct format is detected for each image
          */
         @Test
         void testImageMetadataJobDetectsFormatsCorrectly() throws Exception {
                 log.info("TEST: ImageMetadataJob format detection");
 
                 // Execute the job
-                JobExecution jobExecution = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+                JobExecution jobExecution = runJob();
                 assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
                 assertThat(jobExecution.getStatus()).as("Job should complete successfully")
                                 .isEqualTo(BatchStatus.COMPLETED);
@@ -240,17 +241,13 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         /**
          * Test: ImageMetadataJob can be run multiple times safely (idempotent).
-         *
-         * Given: Job has already run and created metadata
-         * When: Job is run again
-         * Then: No errors occur, metadata remains valid
          */
         @Test
         void testImageMetadataJobIsIdempotent() throws Exception {
                 log.info("TEST: ImageMetadataJob idempotency");
 
                 // Run job first time
-                JobExecution execution1 = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+                JobExecution execution1 = runJob();
                 assertThat(execution1).as("First execution should not be null").isNotNull();
                 assertThat(execution1.getStatus()).as("First execution should complete successfully")
                                 .isEqualTo(BatchStatus.COMPLETED);
@@ -264,7 +261,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
                 int firstHeight = metadataAfterFirst.getHeight();
 
                 // Run job second time
-                JobExecution execution2 = imageMetadataJobScheduler.runImageMetadataJob("TEST");
+                JobExecution execution2 = runJob();
                 assertThat(execution2).as("Second execution should not be null").isNotNull();
                 assertThat(execution2.getStatus()).as("Second execution should complete successfully")
                                 .isEqualTo(BatchStatus.COMPLETED);

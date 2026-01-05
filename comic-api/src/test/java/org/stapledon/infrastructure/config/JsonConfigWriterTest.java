@@ -68,14 +68,13 @@ class JsonConfigWriterTest {
         when(configurationFacade.loadComicConfig()).thenReturn(comicConfig);
         when(configurationFacade.saveComicConfig(any(ComicConfig.class))).thenReturn(true);
 
-        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), cacheProperties, configurationFacade);
+        JsonConfigWriter subject = new JsonConfigWriter(new GsonProvider().gson(), configurationFacade);
         subject.save(item);
 
         // Assert
         verify(configurationFacade).loadComicConfig();
         verify(configurationFacade).saveComicConfig(any(ComicConfig.class));
     }
-
 
     private ComicItem generateTestComicItem(String name) {
         return ComicItem.builder()

@@ -3,13 +3,12 @@ package org.stapledon.engine.batch;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.batch.core.job.JobExecution;
-import org.springframework.batch.core.step.StepExecution;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -17,8 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class JsonBatchExecutionTracker implements JobExecutionListener {
+public class JsonBatchExecutionTracker extends LoggingJobExecutionListener implements JobExecutionListener {
 
     private final CacheProperties cacheProperties;
 
@@ -43,13 +40,6 @@ public class JsonBatchExecutionTracker implements JobExecutionListener {
     private final Gson gson;
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
-
-    @Override
-    public void beforeJob(JobExecution jobExecution) {
-        log.info("Starting batch job: {} (executionId: {})",
-                jobExecution.getJobInstance().getJobName(),
-                jobExecution.getId());
-    }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
@@ -79,40 +69,21 @@ public class JsonBatchExecutionTracker implements JobExecutionListener {
      * Create execution summary from JobExecution
      */
     private BatchExecutionSummary createSummary(JobExecution jobExecution) {
-        BatchExecutionSummary summary = new BatchExecutionSummary();
-
-        summary.lastExecutionId = jobExecution.getId();
-        summary.lastExecutionTime = jobExecution.getEndTime();
-        summary.status = jobExecution.getStatus().name();
-        summary.exitCode = jobExecution.getExitStatus().getExitCode();
-        summary.exitMessage = jobExecution.getExitStatus().getExitDescription();
-        summary.startTime = jobExecution.getStartTime();
-        summary.endTime = jobExecution.getEndTime();
-
-        // Calculate duration
-        if (jobExecution.getStartTime() != null && jobExecution.getEndTime() != null) {
-            Duration duration = Duration.between(
-                    jobExecution.getStartTime(),
-                    jobExecution.getEndTime());
-            summary.durationSeconds = duration.getSeconds();
-        }
-
-        // Aggregate step execution metrics
-        Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
-        for (StepExecution step : stepExecutions) {
-            summary.itemsRead += step.getReadCount();
-            summary.itemsProcessed += step.getReadCount() - step.getReadSkipCount();
-            summary.itemsWritten += step.getWriteCount();
-            summary.itemsSkipped += step.getReadSkipCount() + step.getWriteSkipCount() + step.getProcessSkipCount();
-        }
+        BatchExecutionSummary summary = BatchExecutionSummary.builder()
+                .lastExecutionId(jobExecution.getId())
+                .lastExecutionTime(jobExecution.getEndTime())
+                .status(jobExecution.getStatus().name())
+                .exitCode(jobExecution.getExitStatus().getExitCode())
+                .exitMessage(jobExecution.getExitStatus().getExitDescription())
+                .startTime(jobExecution.getStartTime())
+                .endTime(jobExecution.getEndTime())
+                .build();
 
         // Capture error message if failed
         if (jobExecution.getStatus() == BatchStatus.FAILED && !jobExecution.getAllFailureExceptions().isEmpty()) {
-            Throwable firstException = jobExecution.getAllFailureExceptions().get(0);
-            summary.errorMessage = firstException.getMessage();
+            Throwable firstException = jobExecution.getAllFailureExceptions().getFirst();
+            summary.setErrorMessage(firstException.getMessage());
         }
-
-        summary.itemsFailed = summary.itemsSkipped;
 
         return summary;
     }
@@ -166,39 +137,53 @@ public class JsonBatchExecutionTracker implements JobExecutionListener {
      * Log execution summary
      */
     private void logExecutionSummary(String jobName, BatchExecutionSummary summary) {
-        log.info(
-                "Batch job completed: {} - Status: {}, Duration: {}s, Items: read={}, processed={}, written={}, skipped={}",
-                jobName,
-                summary.status,
-                summary.durationSeconds,
-                summary.itemsRead,
-                summary.itemsProcessed,
-                summary.itemsWritten,
-                summary.itemsSkipped);
+        Duration duration = Duration.between(
+                summary.getStartTime(),
+                summary.getEndTime());
+        log.info("Batch job completed: {} - Status: {}, Duration: {}s,", jobName, summary.getStatus(), duration);
 
-        if (summary.errorMessage != null) {
-            log.error("Job failed with error: {}", summary.errorMessage);
+        if (summary.getErrorMessage() != null) {
+            log.error("Job failed with error: {}", summary.getErrorMessage());
         }
     }
 
+    // ==================== Public Read Methods ====================
+
     /**
-     * Data structure for batch execution summary
+     * Gets the last execution summary for a specific job.
+     *
+     * @param jobName the job name to look up
+     * @return the last execution summary, or empty if not found
      */
-    @SuppressWarnings("unused")
-    private static class BatchExecutionSummary {
-        Long lastExecutionId;
-        LocalDateTime lastExecutionTime;
-        String status;
-        String exitCode;
-        String exitMessage;
-        LocalDateTime startTime;
-        LocalDateTime endTime;
-        Long durationSeconds;
-        int itemsRead;
-        int itemsProcessed;
-        int itemsWritten;
-        int itemsSkipped;
-        int itemsFailed;
-        String errorMessage;
+    public java.util.Optional<BatchExecutionSummary> getLastExecution(String jobName) {
+        Map<String, BatchExecutionSummary> executions = readExecutions();
+        return java.util.Optional.ofNullable(executions.get(jobName));
+    }
+
+    /**
+     * Checks if a job has already run today (based on recorded end time).
+     *
+     * @param jobName the job name to check
+     * @return true if the job completed today, false otherwise
+     */
+    public boolean hasJobRunToday(String jobName) {
+        return getLastExecution(jobName)
+                .filter(summary -> summary.getEndTime() != null)
+                .filter(summary -> summary.getEndTime().toLocalDate().equals(java.time.LocalDate.now()))
+                .isPresent();
+    }
+
+    /**
+     * Checks if a job has run since the specified time.
+     *
+     * @param jobName the job name to check
+     * @param since   the time to check against
+     * @return true if the job completed after the specified time
+     */
+    public boolean hasJobRunSince(String jobName, java.time.LocalDateTime since) {
+        return getLastExecution(jobName)
+                .filter(summary -> summary.getEndTime() != null)
+                .filter(summary -> summary.getEndTime().isAfter(since))
+                .isPresent();
     }
 }

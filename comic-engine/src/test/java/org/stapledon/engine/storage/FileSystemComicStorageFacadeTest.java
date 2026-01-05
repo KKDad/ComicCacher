@@ -89,7 +89,8 @@ class FileSystemComicStorageFacadeTest {
         when(imageMetadataRepository.saveMetadata(any())).thenReturn(true);
 
         // Mock duplicate validation to always return unique
-        when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class), any(byte[].class)))
+        when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class),
+                any(byte[].class)))
                 .thenReturn(DuplicateValidationResult.unique("test-hash"));
 
         storageFacade = new FileSystemComicStorageFacade(cacheProperties, imageValidationService,
@@ -229,6 +230,77 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
+    void getOldestDateWithComic_shouldSkipEmptyYearDirectories() throws IOException {
+        // Arrange
+        // Create an empty year directory earlier than 2023
+        File emptyYearDir = new File(new File(cacheRoot, COMIC_NAME_PARSED), "2020");
+        emptyYearDir.mkdir();
+
+        // Act
+        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_ID, COMIC_NAME);
+
+        // Assert
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(LocalDate.of(2023, 1, 10));
+    }
+
+    @Test
+    void navigation_regressionTest_shouldHandleYearBoundaries() throws IOException {
+        // Setup specific scenario reported by user
+        File comicDir = new File(cacheRoot, COMIC_NAME_PARSED);
+
+        // 2025 - contains 2025-12-30, 2025-12-31
+        File year2025 = new File(comicDir, "2025");
+        year2025.mkdir();
+        createTestComicFile(year2025, LocalDate.of(2025, 12, 30));
+        createTestComicFile(year2025, LocalDate.of(2025, 12, 31));
+
+        // 2026 - contains 2026-01-01, 2026-01-02
+        File year2026 = new File(comicDir, "2026");
+        year2026.mkdir();
+        createTestComicFile(year2026, LocalDate.of(2026, 1, 1));
+        createTestComicFile(year2026, LocalDate.of(2026, 1, 2));
+
+        // Test 1: From 2026-01-02 should go to 2026-01-01 (User said it skipped to
+        // 2025-12-31)
+        Optional<LocalDate> prevFromJan2 = storageFacade.getPreviousDateWithComic(COMIC_ID, COMIC_NAME,
+                LocalDate.of(2026, 1, 2));
+        assertThat(prevFromJan2).isPresent();
+        assertThat(prevFromJan2.get()).isEqualTo(LocalDate.of(2026, 1, 1));
+
+        // Test 2: From 2026-01-01 should go to 2025-12-31 (Year boundary)
+        Optional<LocalDate> prevFromJan1 = storageFacade.getPreviousDateWithComic(COMIC_ID, COMIC_NAME,
+                LocalDate.of(2026, 1, 1));
+        assertThat(prevFromJan1).isPresent();
+        assertThat(prevFromJan1.get()).isEqualTo(LocalDate.of(2025, 12, 31));
+
+        // Test 3: From 2025-12-31 should go to 2025-12-30 (User said it was stuck)
+        Optional<LocalDate> prevFromDec31 = storageFacade.getPreviousDateWithComic(COMIC_ID, COMIC_NAME,
+                LocalDate.of(2025, 12, 31));
+        assertThat(prevFromDec31).isPresent();
+        assertThat(prevFromDec31.get()).isEqualTo(LocalDate.of(2025, 12, 30));
+    }
+
+    @Test
+    void navigation_shouldIgnoreInvalidFilenames() throws IOException {
+        // Setup: Use existing 2023 directory from setUp()
+        File comicDir = new File(cacheRoot, COMIC_NAME_PARSED);
+        File year2023 = new File(comicDir, "2023");
+
+        // Invalid file that sorts BEFORE valid "2023-01-10.png"
+        File invalidFile = new File(year2023, "2023-01-01-bad.png");
+        Files.writeString(invalidFile.toPath(), "bad content");
+
+        // Act
+        // This should return 2025-12-30, ignoring the invalid file
+        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_ID, COMIC_NAME);
+
+        // Assert
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(LocalDate.of(2023, 1, 10));
+    }
+
+    @Test
     void comicStripExists_shouldReturnTrueWhenExists() {
         // Act
         boolean result = storageFacade.comicStripExists(COMIC_ID, COMIC_NAME, TEST_DATE);
@@ -297,7 +369,7 @@ class FileSystemComicStorageFacadeTest {
     void saveComicStrip_shouldAddImageToCache_afterSuccessfulSave() throws IOException {
         // Arrange
         LocalDate date = LocalDate.of(2023, 2, 1);
-        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
+        byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
         // Act
         boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
@@ -311,7 +383,7 @@ class FileSystemComicStorageFacadeTest {
                 eq(COMIC_NAME),
                 eq(date),
                 eq(imageData),
-                anyString()  // File path will be generated
+                anyString() // File path will be generated
         );
     }
 
@@ -319,17 +391,19 @@ class FileSystemComicStorageFacadeTest {
     void saveComicStrip_shouldNotAddToCache_whenImageIsDuplicate() throws IOException {
         // Arrange
         LocalDate date = LocalDate.of(2023, 2, 1);
-        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
+        byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
         // Mock duplicate validation to return duplicate
-        when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class), any(byte[].class)))
-                .thenReturn(DuplicateValidationResult.duplicate("hash", LocalDate.of(2023, 1, 1), "/path/to/duplicate.png"));
+        when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class),
+                any(byte[].class)))
+                .thenReturn(DuplicateValidationResult.duplicate("hash", LocalDate.of(2023, 1, 1),
+                        "/path/to/duplicate.png"));
 
         // Act
         boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
 
         // Assert
-        assertThat(result).isTrue();  // Returns true because download was successful
+        assertThat(result).isTrue(); // Returns true because download was successful
 
         // Verify that addImageToCache was NOT called since it's a duplicate
         verify(duplicateHashCacheService, never()).addImageToCache(
@@ -337,15 +411,14 @@ class FileSystemComicStorageFacadeTest {
                 anyString(),
                 any(LocalDate.class),
                 any(byte[].class),
-                anyString()
-        );
+                anyString());
     }
 
     @Test
     void saveComicStrip_shouldNotAddToCache_whenSaveFails() throws IOException {
         // Arrange
         LocalDate date = LocalDate.of(2023, 2, 1);
-        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
+        byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
         // Mock validation to fail
         when(imageValidationService.validateWithMinDimensions(any(byte[].class), any(int.class), any(int.class)))
@@ -363,7 +436,6 @@ class FileSystemComicStorageFacadeTest {
                 anyString(),
                 any(LocalDate.class),
                 any(byte[].class),
-                anyString()
-        );
+                anyString());
     }
 }

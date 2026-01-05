@@ -1,6 +1,7 @@
-package org.stapledon.engine.batch;
+package org.stapledon.engine.batch.config;
 
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -10,9 +11,12 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
 import lombok.RequiredArgsConstructor;
@@ -25,12 +29,31 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "true", matchIfMissing = true)
 public class RetrievalRecordPurgeJobConfig {
 
     private final ManagementFacade comicManagementFacade;
 
     @Value("${batch.record-purge.days-to-keep:30}")
     private int daysToKeep;
+
+    @Value("${batch.record-purge.cron}")
+    private String cronExpression;
+
+    @Value("${batch.timezone:America/Toronto}")
+    private String timezone;
+
+    /**
+     * Scheduler for RetrievalRecordPurgeJob - runs daily at configured cron time.
+     * Triggered by SchedulerTriggers component.
+     */
+    @Bean
+    public DailyJobScheduler retrievalRecordPurgeJobScheduler(
+            JobOperator jobOperator,
+            JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(
+                "RetrievalRecordPurgeJob", cronExpression, timezone, jobOperator, tracker);
+    }
 
     /**
      * Job for purging old retrieval records

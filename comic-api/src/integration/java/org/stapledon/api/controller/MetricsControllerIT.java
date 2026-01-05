@@ -183,7 +183,7 @@ class MetricsControllerIT extends AbstractIntegrationTest {
                                 .isNotNull();
 
                 // Verify comics map exists
-                assertThat(combinedData.getComics())
+                assertThat(combinedData.getPerComicMetrics())
                                 .as("Combined metrics should have a comics map")
                                 .isNotNull();
         }

@@ -21,13 +21,13 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Repository for combined metrics persistence.
- * Loads and saves combined metrics to combined-metrics.json in the cache directory.
- * Configured as a bean in MetricsConfiguration when metrics are enabled.
+ * JSON file-based implementation of MetricsRepository.
+ * Loads and saves combined metrics to combined-metrics.json in the cache
+ * directory.
  */
 @Slf4j
 @ToString
-public class CombinedMetricsRepository {
+public class JsonMetricsRepository implements MetricsRepository {
 
     private final Gson gson;
     private final CacheProperties cacheProperties;
@@ -37,7 +37,7 @@ public class CombinedMetricsRepository {
 
     private static final String COMBINED_METRICS_FILE = "combined-metrics.json";
 
-    public CombinedMetricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties) {
+    public JsonMetricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties) {
         this.gson = gson;
         this.cacheProperties = cacheProperties;
     }
@@ -50,12 +50,7 @@ public class CombinedMetricsRepository {
         load();
     }
 
-    /**
-     * Get the current combined metrics.
-     * Returns cached metrics if available, otherwise loads from disk.
-     *
-     * @return Combined metrics data
-     */
+    @Override
     public CombinedMetricsData get() {
         lock.readLock().lock();
         try {
@@ -70,10 +65,8 @@ public class CombinedMetricsRepository {
         }
     }
 
-    /**
-     * Load combined metrics from the JSON file.
-     */
-    public void load() {
+    @Override
+    public CombinedMetricsData load() {
         lock.writeLock().lock();
         try {
             Path filePath = Paths.get(cacheProperties.getLocation(), COMBINED_METRICS_FILE);
@@ -84,8 +77,10 @@ public class CombinedMetricsRepository {
 
                     if (loadedData != null) {
                         cachedMetrics = loadedData;
-                        log.info("Loaded combined metrics for {} comics from {}",
-                            cachedMetrics.getComics().size(), COMBINED_METRICS_FILE);
+                        int comicCount = cachedMetrics.getPerComicMetrics() != null
+                                ? cachedMetrics.getPerComicMetrics().size()
+                                : 0;
+                        log.info("Loaded combined metrics for {} comics from {}", comicCount, COMBINED_METRICS_FILE);
                     } else {
                         cachedMetrics = createEmpty();
                         log.info("Combined metrics file was empty, initialized new metrics");
@@ -98,17 +93,13 @@ public class CombinedMetricsRepository {
                 log.info("Combined metrics file does not exist yet, will be created on first save");
                 cachedMetrics = createEmpty();
             }
+            return cachedMetrics;
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    /**
-     * Save combined metrics to the JSON file.
-     *
-     * @param metrics Combined metrics to save
-     * @return true if successful, false otherwise
-     */
+    @Override
     public boolean save(CombinedMetricsData metrics) {
         lock.writeLock().lock();
         try {
@@ -126,7 +117,10 @@ public class CombinedMetricsRepository {
                 gson.toJson(metrics, writer);
                 writer.flush();
                 cachedMetrics = metrics;
-                log.debug("Saved combined metrics for {} comics", metrics.getComics().size());
+                int comicCount = metrics.getPerComicMetrics() != null
+                        ? metrics.getPerComicMetrics().size()
+                        : 0;
+                log.debug("Saved combined metrics for {} comics", comicCount);
                 return true;
             }
         } catch (IOException e) {

@@ -5,54 +5,57 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.stapledon.engine.batch.ComicDownloadJobScheduler;
-import org.stapledon.engine.batch.MetricsArchiveJobScheduler;
-import org.stapledon.engine.batch.MetricsUpdateJobScheduler;
-import org.stapledon.engine.batch.RetrievalRecordPurgeJobScheduler;
+import org.stapledon.engine.batch.scheduler.AbstractJobScheduler;
+import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.PeriodicJobScheduler;
 
 /**
  * Configuration for batch integration tests.
- * Provides mock beans for schedulers that are disabled in batch integration tests.
+ * Provides mock beans for schedulers that are disabled in batch integration
+ * tests.
  *
- * Note: ImageMetadataJobScheduler is NOT mocked because it's enabled for testing.
+ * <p>
+ * Note: Since schedulers are now created via JobConfig classes
+ * with @ConditionalOnProperty,
+ * we only need to mock them when running tests with jobs disabled.
  */
 @Configuration
 @Profile("batch-integration")
 public class BatchIntegrationTestConfig {
 
     /**
-     * Mock ComicDownloadJobScheduler when batch job is disabled
+     * Mock DailyJobScheduler for ComicDownloadJob when disabled
      */
     @Bean
     @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "false")
-    public ComicDownloadJobScheduler comicDownloadJobScheduler() {
-        return Mockito.mock(ComicDownloadJobScheduler.class);
+    public DailyJobScheduler comicDownloadJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
     }
 
     /**
-     * Mock MetricsArchiveJobScheduler when batch job is disabled
+     * Mock DailyJobScheduler for MetricsArchiveJob when disabled
      */
     @Bean
     @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "false")
-    public MetricsArchiveJobScheduler metricsArchiveJobScheduler() {
-        return Mockito.mock(MetricsArchiveJobScheduler.class);
+    public DailyJobScheduler metricsArchiveJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
     }
 
     /**
-     * Mock MetricsUpdateJobScheduler when batch job is disabled
+     * Mock PeriodicJobScheduler for MetricsUpdateJob when disabled
      */
     @Bean
     @ConditionalOnProperty(name = "batch.metrics-update.enabled", havingValue = "false")
-    public MetricsUpdateJobScheduler metricsUpdateJobScheduler() {
-        return Mockito.mock(MetricsUpdateJobScheduler.class);
+    public PeriodicJobScheduler metricsUpdateJobScheduler() {
+        return Mockito.mock(PeriodicJobScheduler.class);
     }
 
     /**
-     * Mock RetrievalRecordPurgeJobScheduler when batch job is disabled
+     * Mock DailyJobScheduler for RetrievalRecordPurgeJob when disabled
      */
     @Bean
     @ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "false")
-    public RetrievalRecordPurgeJobScheduler retrievalRecordPurgeJobScheduler() {
-        return Mockito.mock(RetrievalRecordPurgeJobScheduler.class);
+    public DailyJobScheduler retrievalRecordPurgeJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
     }
 }

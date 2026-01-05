@@ -3,12 +3,8 @@ package org.stapledon.metrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
-import org.stapledon.common.infrastructure.config.StatsWriter;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 
 import java.io.File;
@@ -20,28 +16,17 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class StorageMetricsCollectorTest {
 
     @TempDir
     Path tempDir;
 
-    @Mock
-    StatsWriter mockStatsUpdater;
-
     private StorageMetricsCollector cacheStatsUpdater;
     private File cacheRoot;
 
     @BeforeEach
     void setUp() throws IOException {
-        MockitoAnnotations.openMocks(this);
-
-        // Setup mock behavior
-        when(mockStatsUpdater.save(any(ImageCacheStats.class), anyString())).thenReturn(true);
-
         // Create cache directory structure
         cacheRoot = tempDir.toFile();
 
@@ -67,8 +52,8 @@ class StorageMetricsCollectorTest {
         createDummyImage(year2020, "2020-01-01.png", 1024 * 20);
         createDummyImage(year2020, "2020-12-31.png", 1024 * 25);
 
-        // Initialize the cache stats updater
-        cacheStatsUpdater = new StorageMetricsCollector(cacheRoot.getAbsolutePath(), mockStatsUpdater);
+        // Initialize the cache stats updater (no longer requires StatsWriter)
+        cacheStatsUpdater = new StorageMetricsCollector(cacheRoot.getAbsolutePath());
     }
 
     private void createDummyImage(File directory, String fileName, int size) throws IOException {
@@ -79,15 +64,8 @@ class StorageMetricsCollectorTest {
     }
 
     @Test
-    void originalUpdateStatsTest() {
-        // Skip this test as it's replaced by the new more comprehensive tests
-        // and requires a specific directory structure that's not relevant to new metrics
-    }
-
-    @Test
     void cacheStats_whenCacheIsEmpty_returnsEmptyStats() {
-        // Arrange
-        // Clear the cache root
+        // Arrange - Clear the cache root
         deleteDirectory(cacheRoot);
         cacheRoot.mkdir();
 
@@ -108,14 +86,10 @@ class StorageMetricsCollectorTest {
         // Assert
         assertThat(result).isTrue();
 
-        // Capture the saved stats
-        ArgumentCaptor<ImageCacheStats> statsCaptor = ArgumentCaptor.forClass(ImageCacheStats.class);
-        verify(mockStatsUpdater).save(statsCaptor.capture(), eq(cacheRoot.getAbsolutePath()));
-
-        ImageCacheStats capturedStats = statsCaptor.getValue();
+        ImageCacheStats stats = cacheStatsUpdater.cacheStats();
 
         // Expected total: 10KB + 15KB + 12KB + 20KB + 25KB = 82KB
-        assertThat(capturedStats.getTotalStorageBytes()).isEqualTo(82 * 1024);
+        assertThat(stats.getTotalStorageBytes()).isEqualTo(82 * 1024);
     }
 
     @Test
@@ -126,12 +100,8 @@ class StorageMetricsCollectorTest {
         // Assert
         assertThat(result).isTrue();
 
-        // Capture the saved stats
-        ArgumentCaptor<ImageCacheStats> statsCaptor = ArgumentCaptor.forClass(ImageCacheStats.class);
-        verify(mockStatsUpdater).save(statsCaptor.capture(), eq(cacheRoot.getAbsolutePath()));
-
-        ImageCacheStats capturedStats = statsCaptor.getValue();
-        Map<String, ComicStorageMetrics> perComicMetrics = capturedStats.getPerComicMetrics();
+        ImageCacheStats stats = cacheStatsUpdater.cacheStats();
+        Map<String, ComicStorageMetrics> perComicMetrics = stats.getPerComicMetrics();
 
         assertThat(perComicMetrics).isNotNull();
         assertThat(perComicMetrics.size()).isEqualTo(2);
@@ -161,12 +131,8 @@ class StorageMetricsCollectorTest {
         // Assert
         assertThat(result).isTrue();
 
-        // Capture the saved stats
-        ArgumentCaptor<ImageCacheStats> statsCaptor = ArgumentCaptor.forClass(ImageCacheStats.class);
-        verify(mockStatsUpdater).save(statsCaptor.capture(), eq(cacheRoot.getAbsolutePath()));
-
-        ImageCacheStats capturedStats = statsCaptor.getValue();
-        Map<String, ComicStorageMetrics> perComicMetrics = capturedStats.getPerComicMetrics();
+        ImageCacheStats stats = cacheStatsUpdater.cacheStats();
+        Map<String, ComicStorageMetrics> perComicMetrics = stats.getPerComicMetrics();
 
         // Check Calvin and Hobbes yearly breakdown
         ComicStorageMetrics calvin = perComicMetrics.get("CalvinAndHobbes");
@@ -182,6 +148,26 @@ class StorageMetricsCollectorTest {
         assertThat(garfieldYearStorage).isNotNull();
         assertThat(garfieldYearStorage.size()).isEqualTo(1);
         assertThat(garfieldYearStorage.get("2020")).isEqualTo((20 + 25) * 1024);
+    }
+
+    @Test
+    void updateStats_populatesOldestAndNewestImages() {
+        // Act
+        boolean result = cacheStatsUpdater.updateStats();
+
+        // Assert
+        assertThat(result).isTrue();
+
+        ImageCacheStats stats = cacheStatsUpdater.cacheStats();
+
+        // Should contain the comic name in the path (bug fix verification)
+        assertThat(stats.getOldestImage()).contains("CalvinAndHobbes");
+        assertThat(stats.getOldestImage()).contains("2010");
+        assertThat(stats.getOldestImage()).contains("2010-01-01.png");
+
+        assertThat(stats.getNewestImage()).contains("CalvinAndHobbes");
+        assertThat(stats.getNewestImage()).contains("2011");
+        assertThat(stats.getNewestImage()).contains("2011-06-15.png");
     }
 
     private void deleteDirectory(File dir) {
