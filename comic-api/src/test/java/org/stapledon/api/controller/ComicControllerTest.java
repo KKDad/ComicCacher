@@ -15,8 +15,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -40,6 +44,7 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Standalone tests for ComicController that don't rely on Spring context
  */
+@ExtendWith(MockitoExtension.class)
 class ComicControllerTest {
 
         private MockMvc mockMvc;

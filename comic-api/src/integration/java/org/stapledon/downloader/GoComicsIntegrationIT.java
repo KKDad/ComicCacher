@@ -7,7 +7,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stapledon.common.config.CacheProperties;
@@ -168,7 +169,7 @@ class GoComicsIntegrationIT {
      * If it fails, it may be due to website changes rather than code issues.
      */
     @ParameterizedTest
-    @CsvSource({
+    @ValueSource(strings = {
             "Adam at Home",
             "Garfield",
             "Peanuts",

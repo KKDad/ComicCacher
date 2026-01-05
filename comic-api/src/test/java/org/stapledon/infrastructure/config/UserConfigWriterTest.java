@@ -1,7 +1,7 @@
 package org.stapledon.infrastructure.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -503,9 +503,8 @@ class UserConfigWriterTest {
         };
 
         // When/Then
-        Exception exception = assertThrows(JsonParseException.class, () -> {
-            exceptionWriter.loadUsers();
-        });
+        Exception exception = assertThatExceptionOfType(JsonParseException.class).isThrownBy(() ->
+                exceptionWriter.loadUsers()).actual();
 
         // Verify it's the right exception with a meaningful message
         assertThat(exception.getMessage().contains("malformed") ||

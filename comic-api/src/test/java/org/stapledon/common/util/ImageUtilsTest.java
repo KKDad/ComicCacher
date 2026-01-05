@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.stapledon.common.dto.ImageDto;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -23,7 +22,7 @@ class ImageUtilsTest {
     }
 
     @Test
-    void getImageDtoAvatar() throws IOException {
+    void getImageDtoAvatar() throws Exception {
         Path path = Paths.get(getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
@@ -34,7 +33,7 @@ class ImageUtilsTest {
     }
 
     @Test
-    void getImageDtoStrip() throws IOException {
+    void getImageDtoStrip() throws Exception {
         Path path = Paths.get(getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 

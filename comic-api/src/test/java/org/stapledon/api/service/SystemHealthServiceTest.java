@@ -5,9 +5,13 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.stapledon.api.dto.health.HealthStatus;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicStorageMetrics;
@@ -26,6 +30,7 @@ import java.util.Map;
 /**
  * Tests for the SystemHealthService
  */
+@ExtendWith(MockitoExtension.class)
 class SystemHealthServiceTest {
 
     @Mock
@@ -134,7 +139,7 @@ class SystemHealthServiceTest {
     }
 
     @Test
-    void getDetailedHealthStatus_whenCacheDirectoryNotAccessible_shouldReportCacheDegraded() throws IOException {
+    void getDetailedHealthStatus_whenCacheDirectoryNotAccessible_shouldReportCacheDegraded() throws Exception {
         // Arrange - delete temp directory to simulate inaccessible cache
         Files.delete(tempDir);
 

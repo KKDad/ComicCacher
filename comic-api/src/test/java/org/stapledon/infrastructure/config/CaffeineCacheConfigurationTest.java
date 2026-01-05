@@ -43,7 +43,7 @@ class CaffeineCacheConfigurationTest {
     }
 
     @Test
-    void testCacheManagerCreation() {
+    void cacheManagerCreation() {
         CacheManager cacheManager = configuration.cacheManager();
 
         assertThat(cacheManager).as("Cache manager should not be null").isNotNull();
@@ -59,35 +59,35 @@ class CaffeineCacheConfigurationTest {
     }
 
     @Test
-    void testNavigationCaffeineBuilder() {
+    void navigationCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.navigationCaffeine();
 
         assertThat(caffeine).as("Navigation Caffeine builder should not be null").isNotNull();
     }
 
     @Test
-    void testBoundaryCaffeineBuilder() {
+    void boundaryCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.boundaryCaffeine();
 
         assertThat(caffeine).as("Boundary Caffeine builder should not be null").isNotNull();
     }
 
     @Test
-    void testNavigationDatesCaffeineBuilder() {
+    void navigationDatesCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.navigationDatesCaffeine();
 
         assertThat(caffeine).as("NavigationDates Caffeine builder should not be null").isNotNull();
     }
 
     @Test
-    void testMetadataCaffeineBuilder() {
+    void metadataCaffeineBuilder() {
         Caffeine<Object, Object> caffeine = configuration.metadataCaffeine();
 
         assertThat(caffeine).as("Metadata Caffeine builder should not be null").isNotNull();
     }
 
     @Test
-    void testCacheNameConstants() {
+    void cacheNameConstants() {
         assertThat(CaffeineCacheConfiguration.COMIC_NAVIGATION_CACHE).isEqualTo("comicNavigation");
         assertThat(CaffeineCacheConfiguration.BOUNDARY_DATES_CACHE).isEqualTo("boundaryDates");
         assertThat(CaffeineCacheConfiguration.NAVIGATION_DATES_CACHE).isEqualTo("navigationDates");

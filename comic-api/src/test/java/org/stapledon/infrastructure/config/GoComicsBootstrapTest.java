@@ -18,7 +18,7 @@ import java.util.List;
 class GoComicsBootstrapTest {
 
     @Test
-    void testSourceIdentifierAutoGeneration() {
+    void sourceIdentifierAutoGeneration() {
         // Given: A comic with no explicit sourceIdentifier
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("TheDuplex")
@@ -33,7 +33,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testSourceIdentifierExplicitOverride() {
+    void sourceIdentifierExplicitOverride() {
         // Given: A comic with explicit sourceIdentifier
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("TheDuplex")
@@ -49,7 +49,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testSourceIdentifierWithSpaces() {
+    void sourceIdentifierWithSpaces() {
         // Given: A comic name with spaces and no explicit identifier
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Mother Goose & Grimm")
@@ -64,7 +64,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testSourceIdentifierOverrideWithSpaces() {
+    void sourceIdentifierOverrideWithSpaces() {
         // Given: A comic with explicit sourceIdentifier containing hyphens
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Mother Goose & Grimm")
@@ -80,7 +80,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testPublicationDaysNull() {
+    void publicationDaysNull() {
         // Given: A comic with no publicationDays specified
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Garfield")
@@ -95,7 +95,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testPublicationDaysSundayOnly() {
+    void publicationDaysSundayOnly() {
         // Given: A comic that publishes only on Sundays
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("FoxTrot")
@@ -111,7 +111,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testPublicationDaysWeekdaysOnly() {
+    void publicationDaysWeekdaysOnly() {
         // Given: A comic that publishes Monday-Friday
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Dilbert")
@@ -139,7 +139,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testActiveDefaultTrue() {
+    void activeDefaultTrue() {
         // Given: A comic with no active flag specified
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Garfield")
@@ -154,7 +154,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testActiveExplicitlyTrue() {
+    void activeExplicitlyTrue() {
         // Given: A comic explicitly marked as active
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Garfield")
@@ -170,7 +170,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testActiveExplicitlyFalse() {
+    void activeExplicitlyFalse() {
         // Given: A discontinued comic marked as inactive
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Committed")
@@ -186,7 +186,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testInterfaceCompatibility() {
+    void interfaceCompatibility() {
         // Given: A GoComicsBootstrap instance
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("TestComic")
@@ -209,7 +209,7 @@ class GoComicsBootstrapTest {
     }
 
     @Test
-    void testCombinedFeatures() {
+    void combinedFeatures() {
         // Given: A comic using all new features
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("FoxTrot")

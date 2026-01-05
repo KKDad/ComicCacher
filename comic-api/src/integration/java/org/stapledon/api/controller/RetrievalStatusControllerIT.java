@@ -28,7 +28,7 @@ import java.time.LocalDate;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("integration")
-public class RetrievalStatusControllerIT extends AbstractIntegrationTest {
+class RetrievalStatusControllerIT extends AbstractIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 

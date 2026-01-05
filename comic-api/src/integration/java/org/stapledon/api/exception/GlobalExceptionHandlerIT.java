@@ -19,7 +19,7 @@ import org.stapledon.common.dto.ComicItem;
  * Tests all exception handling methods by triggering genuine exceptions from controller endpoints
  * without using mocks.
  */
-public class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
+class GlobalExceptionHandlerIT extends AbstractIntegrationTest {
 
     private String authToken;
 

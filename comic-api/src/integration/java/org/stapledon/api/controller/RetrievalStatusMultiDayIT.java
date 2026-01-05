@@ -30,7 +30,7 @@ import java.util.List;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("integration")
-public class RetrievalStatusMultiDayIT extends AbstractIntegrationTest {
+class RetrievalStatusMultiDayIT extends AbstractIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 

@@ -109,7 +109,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
      * Test: MetricsArchiveJob archives metrics to JSON file for yesterday.
      */
     @Test
-    void testMetricsArchiveJobCreatesArchive() throws Exception {
+    void metricsArchiveJobCreatesArchive() throws Exception {
         log.info("TEST: MetricsArchiveJob creates metrics archive");
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
@@ -162,7 +162,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
      * Test: MetricsArchiveJob is idempotent and overwrites existing archives.
      */
     @Test
-    void testMetricsArchiveJobIsIdempotent() throws Exception {
+    void metricsArchiveJobIsIdempotent() throws Exception {
         log.info("TEST: MetricsArchiveJob idempotency");
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
@@ -196,7 +196,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
      * Test: MetricsArchiveJob fails gracefully when no metrics exist.
      */
     @Test
-    void testMetricsArchiveJobFailsWithNoMetrics() throws Exception {
+    void metricsArchiveJobFailsWithNoMetrics() throws Exception {
         log.info("TEST: MetricsArchiveJob fails with no metrics");
 
         // Clear metrics repository

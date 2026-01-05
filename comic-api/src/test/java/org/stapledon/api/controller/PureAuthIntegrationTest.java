@@ -22,7 +22,7 @@ import tools.jackson.databind.json.JsonMapper;
  * Pure integration test that tests JWT token generation directly
  * without Spring context dependencies
  */
-public class PureAuthIntegrationTest {
+class PureAuthIntegrationTest {
 
     private final ObjectMapper objectMapper = JsonMapper.builder()
             .build();

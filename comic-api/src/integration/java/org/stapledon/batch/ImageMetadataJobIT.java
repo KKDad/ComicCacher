@@ -70,7 +70,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
          * valid metadata files.
          */
         @Test
-        void testImageMetadataJobProcessesImagesWithoutMetadata() throws Exception {
+        void imageMetadataJobProcessesImagesWithoutMetadata() throws Exception {
                 log.info("TEST: ImageMetadataJob processes images without metadata");
 
                 // Verify before state - no metadata files
@@ -119,7 +119,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
          * Test: ImageMetadataJob skips images that already have metadata.
          */
         @Test
-        void testImageMetadataJobSkipsImagesWithExistingMetadata() throws Exception {
+        void imageMetadataJobSkipsImagesWithExistingMetadata() throws Exception {
                 log.info("TEST: ImageMetadataJob skips images with existing metadata");
 
                 // Setup: Create metadata for image1, leave image2 without metadata
@@ -169,7 +169,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
          * Test: ImageMetadataJob handles invalid images gracefully.
          */
         @Test
-        void testImageMetadataJobHandlesInvalidImages() throws Exception {
+        void imageMetadataJobHandlesInvalidImages() throws Exception {
                 log.info("TEST: ImageMetadataJob handles invalid images");
 
                 // Create an invalid image
@@ -206,7 +206,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
          * Test: ImageMetadataJob processes images with various formats correctly.
          */
         @Test
-        void testImageMetadataJobDetectsFormatsCorrectly() throws Exception {
+        void imageMetadataJobDetectsFormatsCorrectly() throws Exception {
                 log.info("TEST: ImageMetadataJob format detection");
 
                 // Execute the job
@@ -243,7 +243,7 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
          * Test: ImageMetadataJob can be run multiple times safely (idempotent).
          */
         @Test
-        void testImageMetadataJobIsIdempotent() throws Exception {
+        void imageMetadataJobIsIdempotent() throws Exception {
                 log.info("TEST: ImageMetadataJob idempotency");
 
                 // Run job first time

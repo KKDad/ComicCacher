@@ -1,12 +1,12 @@
 package org.stapledon.engine.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -186,7 +186,7 @@ class ComicBackfillJobConfigTest {
         ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
 
         // Should not throw exception
-        assertDoesNotThrow(() -> writer.write(Chunk.of(success, failure)));
+        Assertions.assertThatCode(() -> writer.write(Chunk.of(success, failure))).doesNotThrowAnyException();
     }
 
     @Test
@@ -194,7 +194,7 @@ class ComicBackfillJobConfigTest {
         ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
 
         // Should handle nulls gracefully
-        assertDoesNotThrow(() -> writer.write(Chunk.of((ComicDownloadResult) null)));
+        Assertions.assertThatCode(() -> writer.write(Chunk.of((ComicDownloadResult) null))).doesNotThrowAnyException();
     }
 
     private ComicItem createComic(int id, String name) {

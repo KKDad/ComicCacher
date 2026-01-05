@@ -51,12 +51,12 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testServiceCreation() {
+    void serviceCreation() {
         assertThat(service).as("Service should be created successfully").isNotNull();
     }
 
     @Test
-    void testPrefetchAdjacentComics_Forward_CallsCorrectDates() {
+    void prefetchAdjacentComicsForwardCallsCorrectDates() {
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);
 
@@ -114,7 +114,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testPrefetchAdjacentComics_Backward_CallsCorrectDates() {
+    void prefetchAdjacentComicsBackwardCallsCorrectDates() {
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);
 
@@ -168,7 +168,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testPrefetchAdjacentComics_DisabledLookahead() {
+    void prefetchAdjacentComicsDisabledLookahead() {
         // Disable lookahead
         cacheProperties.getLookahead().setEnabled(false);
 
@@ -184,7 +184,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testPrefetchAdjacentComics_StopsAtEnd() {
+    void prefetchAdjacentComicsStopsAtEnd() {
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);
 
@@ -226,7 +226,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testLookaheadCountIsRespected() {
+    void lookaheadCountIsRespected() {
         // Set lookahead count to 2 instead of default 3
         cacheProperties.getLookahead().setCount(2);
 

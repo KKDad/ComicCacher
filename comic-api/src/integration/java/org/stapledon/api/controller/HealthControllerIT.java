@@ -20,7 +20,7 @@ import tools.jackson.databind.JsonNode;
  * Integration tests for the HealthController
  * Tests actual endpoint behavior with real dependencies
  */
-public class HealthControllerIT extends AbstractIntegrationTest {
+class HealthControllerIT extends AbstractIntegrationTest {
 
         private String authToken;
 

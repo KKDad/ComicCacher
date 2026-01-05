@@ -11,9 +11,11 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageFormat;
@@ -36,6 +38,7 @@ import java.util.Optional;
 /**
  * Unit tests for FileSystemComicStorageFacade
  */
+@ExtendWith(MockitoExtension.class)
 class FileSystemComicStorageFacadeTest {
 
     @TempDir
@@ -149,7 +152,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void saveComicStrip_shouldCreateFileInCorrectLocation() throws IOException {
+    void saveComicStrip_shouldCreateFileInCorrectLocation() throws Exception {
         // Arrange
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = "Test image data".getBytes();
@@ -166,7 +169,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void saveAvatar_shouldCreateFileInCorrectLocation() throws IOException {
+    void saveAvatar_shouldCreateFileInCorrectLocation() throws Exception {
         // Arrange
         byte[] avatarData = "New avatar data".getBytes();
 
@@ -230,7 +233,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void getOldestDateWithComic_shouldSkipEmptyYearDirectories() throws IOException {
+    void getOldestDateWithComic_shouldSkipEmptyYearDirectories() throws Exception {
         // Arrange
         // Create an empty year directory earlier than 2023
         File emptyYearDir = new File(new File(cacheRoot, COMIC_NAME_PARSED), "2020");
@@ -245,7 +248,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void navigation_regressionTest_shouldHandleYearBoundaries() throws IOException {
+    void navigation_regressionTest_shouldHandleYearBoundaries() throws Exception {
         // Setup specific scenario reported by user
         File comicDir = new File(cacheRoot, COMIC_NAME_PARSED);
 
@@ -282,7 +285,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void navigation_shouldIgnoreInvalidFilenames() throws IOException {
+    void navigation_shouldIgnoreInvalidFilenames() throws Exception {
         // Setup: Use existing 2023 directory from setUp()
         File comicDir = new File(cacheRoot, COMIC_NAME_PARSED);
         File year2023 = new File(comicDir, "2023");
@@ -366,7 +369,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void saveComicStrip_shouldAddImageToCache_afterSuccessfulSave() throws IOException {
+    void saveComicStrip_shouldAddImageToCache_afterSuccessfulSave() throws Exception {
         // Arrange
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
@@ -388,7 +391,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void saveComicStrip_shouldNotAddToCache_whenImageIsDuplicate() throws IOException {
+    void saveComicStrip_shouldNotAddToCache_whenImageIsDuplicate() throws Exception {
         // Arrange
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
@@ -415,7 +418,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     @Test
-    void saveComicStrip_shouldNotAddToCache_whenSaveFails() throws IOException {
+    void saveComicStrip_shouldNotAddToCache_whenSaveFails() throws Exception {
         // Arrange
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };

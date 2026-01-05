@@ -30,7 +30,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldDetectColorImage() throws IOException {
+    void shouldDetectColorImage() throws Exception {
         // Given - Create a color image (red)
         byte[] imageData = createColorImage(100, 100, Color.RED);
 
@@ -42,7 +42,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldDetectGrayscaleImage() throws IOException {
+    void shouldDetectGrayscaleImage() throws Exception {
         // Given - Create a grayscale image
         byte[] imageData = createGrayscaleImage(100, 100);
 
@@ -54,7 +54,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldAnalyzeImageFromFile() throws IOException {
+    void shouldAnalyzeImageFromFile() throws Exception {
         // Given
         File imageFile = createTestImageFile(tempDir, "test.png", Color.BLUE);
         ImageValidationResult validation = ImageValidationResult.success(
@@ -76,7 +76,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldAnalyzeImageFromBytes() throws IOException {
+    void shouldAnalyzeImageFromBytes() throws Exception {
         // Given
         byte[] imageData = createColorImage(50, 50, Color.GREEN);
         ImageValidationResult validation = ImageValidationResult.success(
@@ -142,7 +142,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldDetectGrayscaleForBlackAndWhiteImage() throws IOException {
+    void shouldDetectGrayscaleForBlackAndWhiteImage() throws Exception {
         // Given - Create a pure black and white image
         byte[] imageData = createBlackAndWhiteImage(100, 100);
 
@@ -154,7 +154,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldDetectColorEvenWithMostlyGrayscale() throws IOException {
+    void shouldDetectColorEvenWithMostlyGrayscale() throws Exception {
         // Given - Create an image that is mostly grayscale but has one colored pixel
         byte[] imageData = createMostlyGrayscaleImage(100, 100);
 
@@ -170,7 +170,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldHandleSmallImages() throws IOException {
+    void shouldHandleSmallImages() throws Exception {
         // Given - Very small image (1x1)
         byte[] imageData = createColorImage(1, 1, Color.YELLOW);
 
@@ -182,7 +182,7 @@ class ImageAnalysisServiceTest {
     }
 
     @Test
-    void shouldIncludeSamplePercentageInMetadata() throws IOException {
+    void shouldIncludeSamplePercentageInMetadata() throws Exception {
         // Given
         byte[] imageData = createColorImage(100, 100, Color.CYAN);
         ImageValidationResult validation = ImageValidationResult.success(

@@ -25,7 +25,7 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_ValidImage_ReturnsHash() throws IOException {
+    void calculateHashValidImageReturnsHash() throws Exception {
         // Create a simple 10x10 red image
         byte[] imageData = createTestImage(10, 10, Color.RED);
 
@@ -37,7 +37,7 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_SameImage_ProducesSameHash() throws IOException {
+    void calculateHashSameImageProducesSameHash() throws Exception {
         byte[] imageData1 = createTestImage(10, 10, Color.BLUE);
         byte[] imageData2 = createTestImage(10, 10, Color.BLUE);
 
@@ -48,7 +48,7 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_DifferentImages_ProduceDifferentHashes() throws IOException {
+    void calculateHashDifferentImagesProduceDifferentHashes() throws Exception {
         // Perceptual hashes work on patterns, not colors
         // Solid color images will all produce the same hash (all zeros)
         // Use patterns instead
@@ -64,7 +64,7 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_SimilarImages_MayProduceSameHash() throws IOException {
+    void calculateHashSimilarImagesMayProduceSameHash() throws Exception {
         // aHash is perceptual - it should produce the same hash for visually similar images
         // Create two slightly different red images (different sizes but same visual content)
         byte[] small = createTestImage(100, 100, Color.RED);
@@ -78,7 +78,7 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_SlightVariation_MayProduceSimilarHash() throws IOException {
+    void calculateHashSlightVariationMayProduceSimilarHash() throws Exception {
         // Create a base image
         BufferedImage img1 = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
         Graphics2D g1 = img1.createGraphics();
@@ -108,19 +108,19 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_NullData_ReturnsNull() {
+    void calculateHashNullDataReturnsNull() {
         String hash = hasher.calculateHash(null);
         assertThat(hash).as("Null image data should return null").isNull();
     }
 
     @Test
-    void testCalculateHash_EmptyData_ReturnsNull() {
+    void calculateHashEmptyDataReturnsNull() {
         String hash = hasher.calculateHash(new byte[0]);
         assertThat(hash).as("Empty image data should return null").isNull();
     }
 
     @Test
-    void testCalculateHash_InvalidImageData_ReturnsNull() {
+    void calculateHashInvalidImageDataReturnsNull() {
         // Random bytes that don't represent a valid image
         byte[] invalidData = new byte[]{0x01, 0x02, 0x03, 0x04};
 
@@ -131,7 +131,7 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_DifferentPatterns_ProduceDifferentHashes() throws IOException {
+    void calculateHashDifferentPatternsProduceDifferentHashes() throws Exception {
         // Create a checkerboard pattern
         BufferedImage checkerboard = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
         Graphics2D g1 = checkerboard.createGraphics();
@@ -162,7 +162,7 @@ class AverageImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_ShorterThanCryptographicHashes() throws IOException {
+    void calculateHashShorterThanCryptographicHashes() throws Exception {
         byte[] imageData = createTestImage(10, 10, Color.GREEN);
 
         String hash = hasher.calculateHash(imageData);

@@ -1,8 +1,6 @@
 package org.stapledon.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -296,15 +294,13 @@ public abstract class AbstractBatchJobIntegrationTest {
         BatchExecutionSummary summary = loadBatchExecutionSummary(jobName);
 
         // Validate status
-        assertEquals(expectedStatus, summary.getStatus(),
-                "Job status should be " + expectedStatus);
-        assertEquals(expectedStatus, summary.getExitCode(),
-                "Exit code should be " + expectedStatus);
+        assertThat(summary.getStatus()).as("Job status should be " + expectedStatus).isEqualTo(expectedStatus);
+        assertThat(summary.getExitCode()).as("Exit code should be " + expectedStatus).isEqualTo(expectedStatus);
 
         // Validate execution metadata
-        assertNotNull(summary.getLastExecutionId(), "Execution ID should not be null");
-        assertNotNull(summary.getStartTime(), "Start time should not be null");
-        assertNotNull(summary.getEndTime(), "End time should not be null");
+        assertThat(summary.getLastExecutionId()).as("Execution ID should not be null").isNotNull();
+        assertThat(summary.getStartTime()).as("Start time should not be null").isNotNull();
+        assertThat(summary.getEndTime()).as("End time should not be null").isNotNull();
 
         log.info("Batch execution validation passed for {}: status={}", jobName, summary.getStatus());
     }
