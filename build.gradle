@@ -81,7 +81,7 @@ subprojects {
     // Add JUnit Platform Launcher for all subprojects (required by Gradle 8.5+)
     dependencies {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:2.0.6")
+        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.24.0")
     }
 
     rewrite {
