@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.DuplicateValidationResult;
@@ -72,51 +73,37 @@ class FileSystemComicStorageFacadeTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        MockitoAnnotations.openMocks(this);
-
         // Setup temp cache directory
         cacheRoot = tempDir.toFile();
-        when(cacheProperties.getLocation()).thenReturn(cacheRoot.getAbsolutePath());
-
-        // Mock image validation to always pass
-        when(imageValidationService.validate(any(byte[].class)))
-                .thenReturn(ImageValidationResult.success(ImageFormat.PNG, 100, 100, 1000));
-        when(imageValidationService.validateWithMinDimensions(any(byte[].class), any(int.class), any(int.class)))
-                .thenReturn(ImageValidationResult.success(ImageFormat.PNG, 100, 100, 1000));
-
-        // Mock image analysis to return a test metadata
-        when(imageAnalysisService.analyzeImage(any(byte[].class), anyString(), any(), any()))
-                .thenReturn(createTestMetadata());
-
-        // Mock metadata repository to return true
-        when(imageMetadataRepository.saveMetadata(any())).thenReturn(true);
-
-        // Mock duplicate validation to always return unique
-        when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class),
-                any(byte[].class)))
-                .thenReturn(DuplicateValidationResult.unique("test-hash"));
+        lenient().when(cacheProperties.getLocation()).thenReturn(cacheRoot.getAbsolutePath());
 
         storageFacade = new FileSystemComicStorageFacade(cacheProperties, imageValidationService,
                 duplicateValidationService, duplicateHashCacheService, imageAnalysisService, imageMetadataRepository);
 
         // Create test directory structure
         createTestDirectoryStructure();
-
-        // Mock ImageUtils.getImageDto
-        mockImageUtils();
     }
 
-    private void mockImageUtils() {
-        // This approach allows us to test without real image parsing
-        // In a real test, we would need to have a test utility that replaces ImageUtils
-        // or refactor the code to avoid static dependencies
+    private void configureMocksForSave() {
+        // Mock image validation to always pass
+        lenient().when(imageValidationService.validate(any(byte[].class)))
+                .thenReturn(ImageValidationResult.success(ImageFormat.PNG, 100, 100, 1000));
+        lenient()
+                .when(imageValidationService.validateWithMinDimensions(any(byte[].class), any(int.class),
+                        any(int.class)))
+                .thenReturn(ImageValidationResult.success(ImageFormat.PNG, 100, 100, 1000));
 
-        // No need to mock static methods for this test since we're testing
-        // the storage operations and not the image processing logic
-        // We'll need to revisit this when adding more comprehensive tests
+        // Mock image analysis to return a test metadata
+        lenient().when(imageAnalysisService.analyzeImage(any(byte[].class), anyString(), any(), any()))
+                .thenReturn(createTestMetadata());
 
-        // For now, we'll skip the static mocking and focus on testing
-        // the storage and retrieval logic
+        // Mock metadata repository to return true
+        lenient().when(imageMetadataRepository.saveMetadata(any())).thenReturn(true);
+
+        // Mock duplicate validation to always return unique
+        lenient().when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class),
+                any(byte[].class)))
+                .thenReturn(DuplicateValidationResult.unique("test-hash"));
     }
 
     /**
@@ -154,6 +141,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void saveComicStrip_shouldCreateFileInCorrectLocation() throws Exception {
         // Arrange
+        configureMocksForSave();
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = "Test image data".getBytes();
 
@@ -171,6 +159,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void saveAvatar_shouldCreateFileInCorrectLocation() throws Exception {
         // Arrange
+        configureMocksForSave();
         byte[] avatarData = "New avatar data".getBytes();
 
         // Act
@@ -371,6 +360,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void saveComicStrip_shouldAddImageToCache_afterSuccessfulSave() throws Exception {
         // Arrange
+        configureMocksForSave();
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
@@ -393,6 +383,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void saveComicStrip_shouldNotAddToCache_whenImageIsDuplicate() throws Exception {
         // Arrange
+        configureMocksForSave();
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
@@ -420,6 +411,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void saveComicStrip_shouldNotAddToCache_whenSaveFails() throws Exception {
         // Arrange
+        configureMocksForSave();
         LocalDate date = LocalDate.of(2023, 2, 1);
         byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 

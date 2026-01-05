@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.stapledon.api.dto.health.HealthStatus;
@@ -17,7 +17,7 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.infrastructure.config.BuildVersion;
-import org.stapledon.metrics.collector.AccessMetricsCollector;
+
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 
 import java.io.IOException;
@@ -39,8 +39,7 @@ class SystemHealthServiceTest {
     @Mock
     private StorageMetricsCollector mockCacheStatsUpdater;
 
-    @Mock
-    private AccessMetricsCollector mockAccessMetricsCollector;
+    // Removed unused AccessMetricsCollector mock
 
     @Mock
     private CacheProperties mockCacheProperties;
@@ -52,8 +51,6 @@ class SystemHealthServiceTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        MockitoAnnotations.openMocks(this);
-
         // Create a temporary directory for testing
         tempDir = Files.createTempDirectory("healthServiceTest");
 
@@ -67,31 +64,6 @@ class SystemHealthServiceTest {
         // Mock cache properties
         when(mockCacheProperties.getLocation()).thenReturn(tempDir.toString());
 
-        // Mock cache stats
-        ImageCacheStats mockStats = createMockImageCacheStats();
-        when(mockCacheStatsUpdater.cacheStats()).thenReturn(mockStats);
-
-        // Mock cache utils
-        Map<String, Integer> accessCounts = new HashMap<>();
-        accessCounts.put("Comic1", 10);
-        accessCounts.put("Comic2", 5);
-
-        Map<String, String> lastAccessTimes = new HashMap<>();
-        lastAccessTimes.put("Comic1", "2023-05-01T10:15:30");
-        lastAccessTimes.put("Comic2", "2023-05-02T11:20:45");
-
-        Map<String, Double> avgAccessTimes = new HashMap<>();
-        avgAccessTimes.put("Comic1", 15.5);
-        avgAccessTimes.put("Comic2", 8.2);
-
-        Map<String, Double> hitRatios = new HashMap<>();
-        hitRatios.put("Comic1", 0.8);
-        hitRatios.put("Comic2", 0.9);
-
-        when(mockAccessMetricsCollector.getAccessCounts()).thenReturn(accessCounts);
-        when(mockAccessMetricsCollector.getLastAccessTimes()).thenReturn(lastAccessTimes);
-        when(mockAccessMetricsCollector.getAverageAccessTimes()).thenReturn(avgAccessTimes);
-        when(mockAccessMetricsCollector.getHitRatios()).thenReturn(hitRatios);
     }
 
     @Test
@@ -110,6 +82,11 @@ class SystemHealthServiceTest {
 
     @Test
     void getDetailedHealthStatus_shouldReturnDetailedHealthInfo() {
+        // Arrange
+        // Mock cache stats
+        ImageCacheStats mockStats = createMockImageCacheStats();
+        when(mockCacheStatsUpdater.cacheStats()).thenReturn(mockStats);
+
         // Act
         HealthStatus status = healthService.getDetailedHealthStatus();
 
@@ -123,7 +100,8 @@ class SystemHealthServiceTest {
         assertThat(status.getComponents()).isNotNull();
 
         // Verify system resources
-        assertThat(status.getSystemResources().getAvailableProcessors()).isEqualTo(Runtime.getRuntime().availableProcessors());
+        assertThat(status.getSystemResources().getAvailableProcessors())
+                .isEqualTo(Runtime.getRuntime().availableProcessors());
 
         // Verify cache status
         assertThat(status.getCacheStatus().getTotalComics()).isEqualTo(2);
@@ -143,6 +121,10 @@ class SystemHealthServiceTest {
         // Arrange - delete temp directory to simulate inaccessible cache
         Files.delete(tempDir);
 
+        // Mock cache stats to avoid NPE
+        ImageCacheStats mockStats = createMockImageCacheStats();
+        when(mockCacheStatsUpdater.cacheStats()).thenReturn(mockStats);
+
         // Act
         HealthStatus status = healthService.getDetailedHealthStatus();
 
@@ -151,7 +133,8 @@ class SystemHealthServiceTest {
         assertThat(status.getStatus()).isEqualTo(HealthStatus.Status.DOWN);
         assertThat(status.getComponents().get("cache")).isNotNull();
         assertThat(status.getComponents().get("cache").getStatus()).isEqualTo(HealthStatus.Status.DOWN);
-        assertThat(status.getComponents().get("cache").getMessage()).isEqualTo("Cache directory is not accessible or writable");
+        assertThat(status.getComponents().get("cache").getMessage())
+                .isEqualTo("Cache directory is not accessible or writable");
     }
 
     /**
