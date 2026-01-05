@@ -7,7 +7,6 @@ import org.stapledon.infrastructure.config.PreferenceConfigWriter;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;

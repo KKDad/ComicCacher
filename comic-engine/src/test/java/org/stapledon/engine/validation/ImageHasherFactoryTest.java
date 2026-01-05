@@ -1,5 +1,10 @@
 package org.stapledon.engine.validation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,11 +17,6 @@ import org.stapledon.engine.validation.hasher.AverageImageHasher;
 import org.stapledon.engine.validation.hasher.DifferenceImageHasher;
 import org.stapledon.engine.validation.hasher.MD5ImageHasher;
 import org.stapledon.engine.validation.hasher.SHA256ImageHasher;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for ImageHasherFactory.

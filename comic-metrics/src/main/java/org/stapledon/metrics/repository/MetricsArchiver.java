@@ -1,11 +1,10 @@
 package org.stapledon.metrics.repository;
 
-import com.google.gson.Gson;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
+import com.google.gson.Gson;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -18,7 +17,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;

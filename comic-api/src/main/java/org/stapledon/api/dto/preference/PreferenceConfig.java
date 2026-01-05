@@ -2,7 +2,6 @@ package org.stapledon.api.dto.preference;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

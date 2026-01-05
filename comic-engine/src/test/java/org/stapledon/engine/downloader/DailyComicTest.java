@@ -1,5 +1,9 @@
 package org.stapledon.engine.downloader;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.Mockito.mock;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -9,10 +13,6 @@ import org.stapledon.common.infrastructure.web.InspectorService;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-import static org.mockito.Mockito.mock;
 
 class DailyComicTest {
 

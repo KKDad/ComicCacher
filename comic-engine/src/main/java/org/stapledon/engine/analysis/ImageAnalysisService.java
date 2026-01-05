@@ -12,9 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Random;
-
 import javax.imageio.ImageIO;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

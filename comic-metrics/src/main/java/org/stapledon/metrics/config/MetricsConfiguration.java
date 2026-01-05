@@ -1,7 +1,5 @@
 package org.stapledon.metrics.config;
 
-import com.google.gson.Gson;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +16,7 @@ import org.stapledon.metrics.service.JsonMetricsService;
 import org.stapledon.metrics.service.MetricsService;
 import org.stapledon.metrics.service.NoOpMetricsService;
 
+import com.google.gson.Gson;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

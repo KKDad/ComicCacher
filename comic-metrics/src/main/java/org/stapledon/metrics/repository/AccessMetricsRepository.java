@@ -1,11 +1,10 @@
 package org.stapledon.metrics.repository;
 
-import com.google.gson.Gson;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.metrics.dto.AccessMetricsData;
 
+import com.google.gson.Gson;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

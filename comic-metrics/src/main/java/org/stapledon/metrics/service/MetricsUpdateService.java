@@ -13,10 +13,8 @@ import org.stapledon.metrics.dto.YearlyStorageMetrics;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.MetricsRepository;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;

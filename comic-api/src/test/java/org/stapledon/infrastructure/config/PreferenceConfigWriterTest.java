@@ -1,7 +1,7 @@
 package org.stapledon.infrastructure.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -9,14 +9,14 @@ import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.preference.UserPreference;
 import org.stapledon.common.config.CacheProperties;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class PreferenceConfigWriterTest {
 

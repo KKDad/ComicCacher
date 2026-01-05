@@ -1,8 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
-
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +20,9 @@ import org.stapledon.infrastructure.security.JwtTokenFilter;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
+
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Central configuration class for test beans

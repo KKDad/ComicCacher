@@ -6,7 +6,6 @@ import org.stapledon.common.service.ImageHasher;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

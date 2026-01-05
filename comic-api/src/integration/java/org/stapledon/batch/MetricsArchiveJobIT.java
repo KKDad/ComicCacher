@@ -1,7 +1,7 @@
 package org.stapledon.batch;
 
-import com.google.gson.Gson;
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -16,6 +16,7 @@ import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData.ComicCombinedMetrics;
 import org.stapledon.metrics.repository.MetricsRepository;
 
+import com.google.gson.Gson;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,8 +24,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration tests for MetricsArchiveJob.

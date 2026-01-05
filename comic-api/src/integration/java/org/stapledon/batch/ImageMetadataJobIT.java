@@ -1,6 +1,7 @@
 package org.stapledon.batch;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -15,8 +16,7 @@ import org.stapledon.common.dto.ImageMetadata;
 
 import java.io.File;
 import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration tests for ImageMetadataJob.

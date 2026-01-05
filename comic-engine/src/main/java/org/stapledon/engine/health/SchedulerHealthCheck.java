@@ -6,13 +6,12 @@ import org.springframework.stereotype.Component;
 import org.stapledon.engine.batch.BatchJobBaseConfig;
 import org.stapledon.engine.batch.scheduler.AbstractJobScheduler;
 
+import jakarta.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

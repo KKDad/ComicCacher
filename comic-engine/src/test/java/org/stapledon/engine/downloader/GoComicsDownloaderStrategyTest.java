@@ -1,5 +1,8 @@
 package org.stapledon.engine.downloader;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,9 +13,6 @@ import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
 
 import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class GoComicsDownloaderStrategyTest {

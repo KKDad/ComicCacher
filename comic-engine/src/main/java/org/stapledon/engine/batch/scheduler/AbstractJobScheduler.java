@@ -3,7 +3,6 @@ package org.stapledon.engine.batch.scheduler;
 import org.springframework.batch.core.launch.JobOperator;
 
 import java.util.Properties;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

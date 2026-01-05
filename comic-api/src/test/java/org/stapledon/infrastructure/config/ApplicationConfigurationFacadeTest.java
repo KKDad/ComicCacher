@@ -2,8 +2,6 @@ package org.stapledon.infrastructure.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.gson.Gson;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,6 +13,7 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
 
+import com.google.gson.Gson;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;

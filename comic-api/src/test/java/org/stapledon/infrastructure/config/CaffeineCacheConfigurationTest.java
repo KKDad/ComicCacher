@@ -1,13 +1,14 @@
 package org.stapledon.infrastructure.config;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.stapledon.common.config.CaffeineCacheProperties;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * Unit tests for CaffeineCacheConfiguration.

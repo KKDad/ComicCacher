@@ -1,5 +1,7 @@
 package org.stapledon.infrastructure.storage;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,6 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("integration")

@@ -1,12 +1,11 @@
 package org.stapledon.engine.downloader;
 
-import com.google.common.base.Preconditions;
-
 import org.stapledon.common.infrastructure.caching.ICachable;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.JsoupInspectorService;
 import org.stapledon.common.model.ComicCachingException;
 
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -20,7 +19,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

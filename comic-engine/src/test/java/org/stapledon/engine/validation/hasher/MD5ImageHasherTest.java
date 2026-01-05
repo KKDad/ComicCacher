@@ -1,15 +1,15 @@
 package org.stapledon.engine.validation.hasher;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.imageio.ImageIO;
 
 /**
  * Unit tests for MD5ImageHasher.
