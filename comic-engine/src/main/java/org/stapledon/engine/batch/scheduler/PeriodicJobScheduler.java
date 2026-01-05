@@ -2,11 +2,10 @@ package org.stapledon.engine.batch.scheduler;
 
 import org.springframework.batch.core.launch.JobOperator;
 
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
-
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 /**

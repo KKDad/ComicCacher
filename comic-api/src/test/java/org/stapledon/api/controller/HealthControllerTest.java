@@ -1,10 +1,16 @@
 package org.stapledon.api.controller;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.stapledon.api.dto.health.BuildInfo;
@@ -17,13 +23,10 @@ import org.stapledon.api.service.HealthService;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * Tests for the HealthController
  */
+@ExtendWith(MockitoExtension.class)
 class HealthControllerTest {
 
     @Mock
@@ -31,11 +34,6 @@ class HealthControllerTest {
 
     @InjectMocks
     private HealthController healthController;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void getHealthStatus_withoutDetailedFlag_shouldReturnBasicHealthStatus() {

@@ -1,6 +1,7 @@
 package org.stapledon.batch;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -16,8 +17,7 @@ import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.LocalDate;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration tests for RetrievalRecordPurgeJob.
@@ -89,7 +89,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
          * Then: Old records are purged, recent records remain
          */
         @Test
-        void testRetrievalRecordPurgeJobPurgesOldRecords() throws Exception {
+        void retrievalRecordPurgeJobPurgesOldRecords() throws Exception {
                 log.info("TEST: RetrievalRecordPurgeJob purges old records");
 
                 // Verify before state - all records exist
@@ -154,7 +154,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
          * Then: Job completes successfully with no errors
          */
         @Test
-        void testRetrievalRecordPurgeJobWithNoRecords() throws Exception {
+        void retrievalRecordPurgeJobWithNoRecords() throws Exception {
                 log.info("TEST: RetrievalRecordPurgeJob with no records");
 
                 // Clear all records
@@ -183,7 +183,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
          * Then: No errors occur, same records remain
          */
         @Test
-        void testRetrievalRecordPurgeJobIsIdempotent() throws Exception {
+        void retrievalRecordPurgeJobIsIdempotent() throws Exception {
                 log.info("TEST: RetrievalRecordPurgeJob idempotency");
 
                 // Run job first time

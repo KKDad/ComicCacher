@@ -12,7 +12,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-
 import javax.imageio.ImageIO;
 
 /**
@@ -50,7 +49,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidPngImage() throws IOException {
+    void validPngImage() throws Exception {
         byte[] imageData = createTestImage(800, 600, "PNG");
 
         ImageValidationResult result = imageValidationService.validate(imageData);
@@ -64,7 +63,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidJpegImage() throws IOException {
+    void validJpegImage() throws Exception {
         byte[] imageData = createTestImage(640, 480, "JPEG");
 
         ImageValidationResult result = imageValidationService.validate(imageData);
@@ -77,7 +76,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidGifImage() throws IOException {
+    void validGifImage() throws Exception {
         byte[] imageData = createTestImage(400, 300, "GIF");
 
         ImageValidationResult result = imageValidationService.validate(imageData);
@@ -89,7 +88,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidTiffImage() throws IOException {
+    void validTiffImage() throws Exception {
         byte[] imageData = createTestImage(500, 400, "TIFF");
 
         ImageValidationResult result = imageValidationService.validate(imageData);
@@ -101,7 +100,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidBmpImage() throws IOException {
+    void validBmpImage() throws Exception {
         byte[] imageData = createTestImage(320, 240, "BMP");
 
         ImageValidationResult result = imageValidationService.validate(imageData);
@@ -113,7 +112,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testSmallValidImage() throws IOException {
+    void smallValidImage() throws Exception {
         // Test minimum viable image (1x1 pixel)
         byte[] imageData = createTestImage(1, 1, "PNG");
 
@@ -125,7 +124,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testNullImageData() {
+    void nullImageData() {
         ImageValidationResult result = imageValidationService.validate(null);
 
         assertThat(result.isValid()).isFalse();
@@ -134,7 +133,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testEmptyImageData() {
+    void emptyImageData() {
         byte[] emptyData = new byte[0];
 
         ImageValidationResult result = imageValidationService.validate(emptyData);
@@ -144,7 +143,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testCorruptedImage() {
+    void corruptedImage() {
         // Create a valid PNG and then truncate it
         byte[] validImage;
         try {
@@ -163,7 +162,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testHtmlContentAsImage() {
+    void htmlContentAsImage() {
         // Simulate receiving HTML error page instead of image
         String htmlContent = "<html><body><h1>404 Not Found</h1></body></html>";
         byte[] htmlBytes = htmlContent.getBytes();
@@ -175,7 +174,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testRandomBinaryData() {
+    void randomBinaryData() {
         // Create random binary data that isn't a valid image
         byte[] randomData = new byte[1000];
         for (int i = 0; i < randomData.length; i++) {
@@ -188,7 +187,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testOversizedImage() {
+    void oversizedImage() {
         // Create an image larger than MAX_IMAGE_SIZE (10MB)
         byte[] oversizedData = new byte[11 * 1024 * 1024]; // 11MB
 
@@ -199,7 +198,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidateWithMinDimensions_Pass() throws IOException {
+    void validateWithMinDimensionsPass() throws Exception {
         byte[] imageData = createTestImage(200, 150, "PNG");
 
         ImageValidationResult result = imageValidationService.validateWithMinDimensions(
@@ -211,7 +210,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidateWithMinDimensions_FailWidth() throws IOException {
+    void validateWithMinDimensionsFailWidth() throws Exception {
         byte[] imageData = createTestImage(80, 150, "PNG");
 
         ImageValidationResult result = imageValidationService.validateWithMinDimensions(
@@ -222,7 +221,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidateWithMinDimensions_FailHeight() throws IOException {
+    void validateWithMinDimensionsFailHeight() throws Exception {
         byte[] imageData = createTestImage(200, 40, "PNG");
 
         ImageValidationResult result = imageValidationService.validateWithMinDimensions(
@@ -233,7 +232,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidateWithMinDimensions_ExactBoundary() throws IOException {
+    void validateWithMinDimensionsExactBoundary() throws Exception {
         byte[] imageData = createTestImage(100, 50, "PNG");
 
         ImageValidationResult result = imageValidationService.validateWithMinDimensions(
@@ -243,7 +242,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testValidateWithMinDimensions_InvalidImage() {
+    void validateWithMinDimensionsInvalidImage() {
         byte[] invalidData = "not an image".getBytes();
 
         ImageValidationResult result = imageValidationService.validateWithMinDimensions(
@@ -255,7 +254,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testIsValidImage_Valid() throws IOException {
+    void isValidImageValid() throws Exception {
         byte[] imageData = createTestImage(100, 100, "PNG");
 
         boolean isValid = imageValidationService.isValidImage(imageData);
@@ -264,7 +263,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testIsValidImage_Invalid() {
+    void isValidImageInvalid() {
         byte[] invalidData = "not an image".getBytes();
 
         boolean isValid = imageValidationService.isValidImage(invalidData);
@@ -273,7 +272,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testTypicalComicStripDimensions() throws IOException {
+    void typicalComicStripDimensions() throws Exception {
         // Test with typical comic strip dimensions
         byte[] imageData = createTestImage(900, 300, "PNG");
 
@@ -285,7 +284,7 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void testLargeValidImage() throws IOException {
+    void largeValidImage() throws Exception {
         // Test with large but valid image (under 10MB limit)
         byte[] imageData = createTestImage(2000, 2000, "PNG");
 

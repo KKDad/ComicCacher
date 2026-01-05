@@ -1,7 +1,5 @@
 package org.stapledon.engine.storage;
 
-import com.google.common.io.Files;
-
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -20,6 +18,7 @@ import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.ImageUtils;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
 
+import com.google.common.io.Files;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,8 +30,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;

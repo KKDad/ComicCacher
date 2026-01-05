@@ -1,9 +1,7 @@
 package org.stapledon.batch;
 
-import tools.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +12,10 @@ import org.stapledon.ComicApiApplication;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
-import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
+import com.google.gson.Gson;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -25,9 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import tools.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for batch job integration tests.
@@ -296,15 +294,13 @@ public abstract class AbstractBatchJobIntegrationTest {
         BatchExecutionSummary summary = loadBatchExecutionSummary(jobName);
 
         // Validate status
-        assertEquals(expectedStatus, summary.getStatus(),
-                "Job status should be " + expectedStatus);
-        assertEquals(expectedStatus, summary.getExitCode(),
-                "Exit code should be " + expectedStatus);
+        assertThat(summary.getStatus()).as("Job status should be " + expectedStatus).isEqualTo(expectedStatus);
+        assertThat(summary.getExitCode()).as("Exit code should be " + expectedStatus).isEqualTo(expectedStatus);
 
         // Validate execution metadata
-        assertNotNull(summary.getLastExecutionId(), "Execution ID should not be null");
-        assertNotNull(summary.getStartTime(), "Start time should not be null");
-        assertNotNull(summary.getEndTime(), "End time should not be null");
+        assertThat(summary.getLastExecutionId()).as("Execution ID should not be null").isNotNull();
+        assertThat(summary.getStartTime()).as("Start time should not be null").isNotNull();
+        assertThat(summary.getEndTime()).as("End time should not be null").isNotNull();
 
         log.info("Batch execution validation passed for {}: status={}", jobName, summary.getStatus());
     }

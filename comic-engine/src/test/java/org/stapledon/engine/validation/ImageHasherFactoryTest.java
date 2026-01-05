@@ -1,5 +1,10 @@
 package org.stapledon.engine.validation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.when;
+
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,11 +17,6 @@ import org.stapledon.engine.validation.hasher.AverageImageHasher;
 import org.stapledon.engine.validation.hasher.DifferenceImageHasher;
 import org.stapledon.engine.validation.hasher.MD5ImageHasher;
 import org.stapledon.engine.validation.hasher.SHA256ImageHasher;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for ImageHasherFactory.
@@ -54,7 +54,7 @@ class ImageHasherFactoryTest {
     }
 
     @Test
-    void testGetImageHasher_MD5_ReturnsMD5Hasher() {
+    void getImageHasherMD5ReturnsMD5Hasher() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(HashAlgorithm.MD5);
 
@@ -68,7 +68,7 @@ class ImageHasherFactoryTest {
     }
 
     @Test
-    void testGetImageHasher_SHA256_ReturnsSHA256Hasher() {
+    void getImageHasherSHA256ReturnsSHA256Hasher() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(HashAlgorithm.SHA256);
 
@@ -82,7 +82,7 @@ class ImageHasherFactoryTest {
     }
 
     @Test
-    void testGetImageHasher_AverageHash_ReturnsAverageHasher() {
+    void getImageHasherAverageHashReturnsAverageHasher() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(HashAlgorithm.AVERAGE_HASH);
 
@@ -96,7 +96,7 @@ class ImageHasherFactoryTest {
     }
 
     @Test
-    void testGetImageHasher_DifferenceHash_ReturnsDifferenceHasher() {
+    void getImageHasherDifferenceHashReturnsDifferenceHasher() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(HashAlgorithm.DIFFERENCE_HASH);
 
@@ -110,7 +110,7 @@ class ImageHasherFactoryTest {
     }
 
     @Test
-    void testGetImageHasher_CalledMultipleTimes_ReturnsSameInstance() {
+    void getImageHasherCalledMultipleTimesReturnsSameInstance() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(HashAlgorithm.MD5);
 
@@ -123,7 +123,7 @@ class ImageHasherFactoryTest {
     }
 
     @Test
-    void testGetImageHasher_DifferentAlgorithms_ReturnsDifferentInstances() {
+    void getImageHasherDifferentAlgorithmsReturnsDifferentInstances() {
         // Given & When & Then
         when(cacheProperties.getHashAlgorithm()).thenReturn(HashAlgorithm.MD5);
         ImageHasher md5 = factory.getImageHasher();
@@ -131,22 +131,22 @@ class ImageHasherFactoryTest {
         when(cacheProperties.getHashAlgorithm()).thenReturn(HashAlgorithm.SHA256);
         ImageHasher sha256 = factory.getImageHasher();
 
-        assertNotSame(md5, sha256, "Different algorithms should return different hasher instances");
+        Assertions.assertThat(sha256).withFailMessage("Different algorithms should return different hasher instances").isNotSameAs(md5);
     }
 
     @Test
-    void testGetImageHasher_AllAlgorithms_AreDistinct() {
+    void getImageHasherAllAlgorithmsAreDistinct() {
         // Verify all four hasher implementations are distinct instances
-        assertNotSame(md5ImageHasher, sha256ImageHasher, "MD5 and SHA256 hashers should be different");
-        assertNotSame(md5ImageHasher, averageImageHasher, "MD5 and Average hashers should be different");
-        assertNotSame(md5ImageHasher, differenceImageHasher, "MD5 and Difference hashers should be different");
-        assertNotSame(sha256ImageHasher, averageImageHasher, "SHA256 and Average hashers should be different");
-        assertNotSame(sha256ImageHasher, differenceImageHasher, "SHA256 and Difference hashers should be different");
-        assertNotSame(averageImageHasher, differenceImageHasher, "Average and Difference hashers should be different");
+        Assertions.assertThat(sha256ImageHasher).withFailMessage("MD5 and SHA256 hashers should be different").isNotSameAs(md5ImageHasher);
+        Assertions.assertThat(averageImageHasher).withFailMessage("MD5 and Average hashers should be different").isNotSameAs(md5ImageHasher);
+        Assertions.assertThat(differenceImageHasher).withFailMessage("MD5 and Difference hashers should be different").isNotSameAs(md5ImageHasher);
+        Assertions.assertThat(averageImageHasher).withFailMessage("SHA256 and Average hashers should be different").isNotSameAs(sha256ImageHasher);
+        Assertions.assertThat(differenceImageHasher).withFailMessage("SHA256 and Difference hashers should be different").isNotSameAs(sha256ImageHasher);
+        Assertions.assertThat(differenceImageHasher).withFailMessage("Average and Difference hashers should be different").isNotSameAs(averageImageHasher);
     }
 
     @Test
-    void testGetImageHasher_PerceptualHashers_HaveSameHashLength() {
+    void getImageHasherPerceptualHashersHaveSameHashLength() {
         // Both perceptual hashers (aHash and dHash) should produce 16-character hashes
         byte[] testData = new byte[]{0x01, 0x02, 0x03, 0x04};
 
@@ -176,7 +176,7 @@ class ImageHasherFactoryTest {
     }
 
     @Test
-    void testGetImageHasher_CryptographicHashers_HaveDifferentLengths() {
+    void getImageHasherCryptographicHashersHaveDifferentLengths() {
         // MD5 produces 32-char hash, SHA256 produces 64-char hash
         byte[] testData = "test data".getBytes();
 

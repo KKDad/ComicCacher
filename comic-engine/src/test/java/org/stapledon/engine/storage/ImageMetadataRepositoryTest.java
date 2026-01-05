@@ -1,25 +1,25 @@
 package org.stapledon.engine.storage;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class ImageMetadataRepositoryTest {
 
@@ -40,7 +40,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldSaveMetadata() throws IOException {
+    void shouldSaveMetadata() throws Exception {
         // Given
         String imagePath = tempDir.resolve("2023-01-15.png").toString();
         createEmptyFile(imagePath); // Create image file
@@ -56,7 +56,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldLoadMetadata() throws IOException {
+    void shouldLoadMetadata() throws Exception {
         // Given
         String imagePath = tempDir.resolve("2023-01-15.png").toString();
         createEmptyFile(imagePath);
@@ -90,7 +90,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldCheckIfMetadataExists() throws IOException {
+    void shouldCheckIfMetadataExists() throws Exception {
         // Given
         String imagePath = tempDir.resolve("test.png").toString();
         createEmptyFile(imagePath);
@@ -104,7 +104,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldDeleteMetadata() throws IOException {
+    void shouldDeleteMetadata() throws Exception {
         // Given
         String imagePath = tempDir.resolve("test.png").toString();
         createEmptyFile(imagePath);
@@ -134,7 +134,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleDifferentImageExtensions() throws IOException {
+    void shouldHandleDifferentImageExtensions() throws Exception {
         // Test PNG
         String pngPath = tempDir.resolve("image.png").toString();
         createEmptyFile(pngPath);
@@ -157,7 +157,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleGifExtension() throws IOException {
+    void shouldHandleGifExtension() throws Exception {
         // Given
         String gifPath = tempDir.resolve("animation.gif").toString();
         createEmptyFile(gifPath);
@@ -171,7 +171,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleWebpExtension() throws IOException {
+    void shouldHandleWebpExtension() throws Exception {
         // Given
         String webpPath = tempDir.resolve("modern.webp").toString();
         createEmptyFile(webpPath);
@@ -185,7 +185,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleTiffExtension() throws IOException {
+    void shouldHandleTiffExtension() throws Exception {
         // Given
         String tiffPath = tempDir.resolve("photo.tiff").toString();
         createEmptyFile(tiffPath);
@@ -199,7 +199,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleTifExtension() throws IOException {
+    void shouldHandleTifExtension() throws Exception {
         // Given
         String tifPath = tempDir.resolve("photo.tif").toString();
         createEmptyFile(tifPath);
@@ -213,7 +213,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleBmpExtension() throws IOException {
+    void shouldHandleBmpExtension() throws Exception {
         // Given
         String bmpPath = tempDir.resolve("bitmap.bmp").toString();
         createEmptyFile(bmpPath);
@@ -227,7 +227,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleFilesWithoutExtension() throws IOException {
+    void shouldHandleFilesWithoutExtension() throws Exception {
         // Given
         String noExtPath = tempDir.resolve("noextension").toString();
         createEmptyFile(noExtPath);
@@ -241,7 +241,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldPreserveAllMetadataFields() throws IOException {
+    void shouldPreserveAllMetadataFields() throws Exception {
         // Given
         String imagePath = tempDir.resolve("complete.png").toString();
         createEmptyFile(imagePath);
@@ -271,7 +271,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldHandleGrayscaleColorMode() throws IOException {
+    void shouldHandleGrayscaleColorMode() throws Exception {
         // Given
         String imagePath = tempDir.resolve("grayscale.png").toString();
         createEmptyFile(imagePath);
@@ -298,7 +298,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldNotSaveInvalidMetadata() throws IOException {
+    void shouldNotSaveInvalidMetadata() throws Exception {
         // Given
         String imagePath = tempDir.resolve("invalid.png").toString();
         createEmptyFile(imagePath);
@@ -324,7 +324,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldSaveMetadataWithUnknownColorMode() throws IOException {
+    void shouldSaveMetadataWithUnknownColorMode() throws Exception {
         // Given - Valid metadata except ColorMode is UNKNOWN (acceptable)
         String imagePath = tempDir.resolve("grayscale-unknown.png").toString();
         createEmptyFile(imagePath);
@@ -353,7 +353,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldNotSaveMetadataWithZeroDimensions() throws IOException {
+    void shouldNotSaveMetadataWithZeroDimensions() throws Exception {
         // Given
         String imagePath = tempDir.resolve("zero-dims.png").toString();
         createEmptyFile(imagePath);
@@ -379,7 +379,7 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldNotSaveMetadataWithZeroFileSize() throws IOException {
+    void shouldNotSaveMetadataWithZeroFileSize() throws Exception {
         // Given
         String imagePath = tempDir.resolve("zero-size.png").toString();
         createEmptyFile(imagePath);

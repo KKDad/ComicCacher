@@ -1,7 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import java.util.concurrent.TimeUnit;
-
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -12,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.stapledon.common.config.CaffeineCacheProperties;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
-
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

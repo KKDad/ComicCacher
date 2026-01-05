@@ -10,7 +10,6 @@ import org.stapledon.engine.downloader.IDailyComic;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
-
 import lombok.Getter;
 
 @Getter

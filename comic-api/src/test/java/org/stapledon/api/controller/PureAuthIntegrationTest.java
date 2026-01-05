@@ -1,7 +1,8 @@
 package org.stapledon.api.controller;
 
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,15 +15,14 @@ import org.stapledon.infrastructure.security.JwtTokenUtil;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Pure integration test that tests JWT token generation directly
  * without Spring context dependencies
  */
-public class PureAuthIntegrationTest {
+class PureAuthIntegrationTest {
 
     private final ObjectMapper objectMapper = JsonMapper.builder()
             .build();

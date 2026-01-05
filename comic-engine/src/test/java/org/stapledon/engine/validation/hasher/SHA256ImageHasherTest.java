@@ -1,15 +1,15 @@
 package org.stapledon.engine.validation.hasher;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.imageio.ImageIO;
 
 /**
  * Unit tests for SHA256ImageHasher.
@@ -25,7 +25,7 @@ class SHA256ImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_ValidImage_ReturnsHash() throws IOException {
+    void calculateHashValidImageReturnsHash() throws Exception {
         // Create a simple 10x10 red image
         byte[] imageData = createTestImage(10, 10, Color.RED);
 
@@ -37,7 +37,7 @@ class SHA256ImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_SameImage_ProducesSameHash() throws IOException {
+    void calculateHashSameImageProducesSameHash() throws Exception {
         byte[] imageData1 = createTestImage(10, 10, Color.BLUE);
         byte[] imageData2 = createTestImage(10, 10, Color.BLUE);
 
@@ -48,7 +48,7 @@ class SHA256ImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_DifferentImages_ProduceDifferentHashes() throws IOException {
+    void calculateHashDifferentImagesProduceDifferentHashes() throws Exception {
         byte[] redImage = createTestImage(10, 10, Color.RED);
         byte[] blueImage = createTestImage(10, 10, Color.BLUE);
 
@@ -59,7 +59,7 @@ class SHA256ImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_SinglePixelDifference_ProducesDifferentHash() throws IOException {
+    void calculateHashSinglePixelDifferenceProducesDifferentHash() throws Exception {
         // SHA-256 is byte-exact, so even a single pixel difference should produce a different hash
         BufferedImage img1 = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
         BufferedImage img2 = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -88,19 +88,19 @@ class SHA256ImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_NullData_ReturnsNull() {
+    void calculateHashNullDataReturnsNull() {
         String hash = hasher.calculateHash(null);
         assertThat(hash).as("Null image data should return null").isNull();
     }
 
     @Test
-    void testCalculateHash_EmptyData_ReturnsNull() {
+    void calculateHashEmptyDataReturnsNull() {
         String hash = hasher.calculateHash(new byte[0]);
         assertThat(hash).as("Empty image data should return null").isNull();
     }
 
     @Test
-    void testCalculateHash_InvalidImageData_ReturnsNull() {
+    void calculateHashInvalidImageDataReturnsNull() {
         // Random bytes that don't represent a valid image
         byte[] invalidData = new byte[]{0x01, 0x02, 0x03, 0x04};
 
@@ -113,7 +113,7 @@ class SHA256ImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_DifferentSizes_SameContent_ProducesDifferentHash() throws IOException {
+    void calculateHashDifferentSizesSameContentProducesDifferentHash() throws Exception {
         // Create two solid red images of different sizes
         byte[] small = createTestImage(10, 10, Color.RED);
         byte[] large = createTestImage(20, 20, Color.RED);
@@ -125,7 +125,7 @@ class SHA256ImageHasherTest {
     }
 
     @Test
-    void testCalculateHash_SHA256_ProducesLongerHashThanMD5() throws IOException {
+    void calculateHashSHA256ProducesLongerHashThanMD5() throws Exception {
         // Verify SHA-256 produces a longer hash than MD5 (64 chars vs 32 chars)
         byte[] imageData = createTestImage(10, 10, Color.GREEN);
 

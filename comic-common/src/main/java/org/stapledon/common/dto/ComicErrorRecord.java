@@ -2,7 +2,6 @@ package org.stapledon.common.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 import lombok.Builder;
 import lombok.Data;
 

@@ -17,14 +17,13 @@ import org.stapledon.engine.batch.BatchJobMonitoringService;
 import org.stapledon.engine.batch.ComicJobSummary;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 /**

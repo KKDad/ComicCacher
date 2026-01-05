@@ -18,7 +18,7 @@ import java.util.List;
 class BootstrapTest {
 
     @Test
-    void testConvertBootstrapToComicItemBasicFields() {
+    void convertBootstrapToComicItemBasicFields() {
         // Given: A test bootstrap with basic fields
         TestBootstrap bootstrap = new TestBootstrap(
             "TestComic",
@@ -47,7 +47,7 @@ class BootstrapTest {
     }
 
     @Test
-    void testConvertBootstrapWithPublicationDays() {
+    void convertBootstrapWithPublicationDays() {
         // Given: A bootstrap with Sunday-only publication
         TestBootstrap bootstrap = new TestBootstrap(
             "FoxTrot",
@@ -72,7 +72,7 @@ class BootstrapTest {
     }
 
     @Test
-    void testConvertBootstrapWithNullPublicationDays() {
+    void convertBootstrapWithNullPublicationDays() {
         // Given: A bootstrap with null publicationDays (daily publication)
         TestBootstrap bootstrap = new TestBootstrap(
             "Garfield",
@@ -96,7 +96,7 @@ class BootstrapTest {
     }
 
     @Test
-    void testConvertBootstrapWithActiveTrue() {
+    void convertBootstrapWithActiveTrue() {
         // Given: An active comic
         TestBootstrap bootstrap = new TestBootstrap(
             "Garfield",
@@ -121,7 +121,7 @@ class BootstrapTest {
     }
 
     @Test
-    void testConvertBootstrapWithActiveFalse() {
+    void convertBootstrapWithActiveFalse() {
         // Given: An inactive comic
         TestBootstrap bootstrap = new TestBootstrap(
             "Committed",
@@ -146,7 +146,7 @@ class BootstrapTest {
     }
 
     @Test
-    void testConvertBootstrapWithNullActive() {
+    void convertBootstrapWithNullActive() {
         // Given: A comic with null active (should default to true)
         TestBootstrap bootstrap = new TestBootstrap(
             "TestComic",
@@ -170,7 +170,7 @@ class BootstrapTest {
     }
 
     @Test
-    void testConvertBootstrapWithAllNewFeatures() {
+    void convertBootstrapWithAllNewFeatures() {
         // Given: A bootstrap with all new features
         TestBootstrap bootstrap = new TestBootstrap(
             "FoxTrot",
@@ -196,7 +196,7 @@ class BootstrapTest {
     }
 
     @Test
-    void testConvertMultipleBootstraps() {
+    void convertMultipleBootstraps() {
         // Given: Multiple bootstraps with different configurations
         TestBootstrap active = new TestBootstrap(
             "Active Comic",

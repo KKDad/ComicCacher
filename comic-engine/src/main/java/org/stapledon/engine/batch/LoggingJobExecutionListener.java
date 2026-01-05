@@ -1,11 +1,10 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.listener.JobExecutionListener;
 
 import java.time.Duration;
 import java.util.Objects;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

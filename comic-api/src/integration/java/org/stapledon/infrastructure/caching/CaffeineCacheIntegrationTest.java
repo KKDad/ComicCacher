@@ -1,5 +1,7 @@
 package org.stapledon.infrastructure.caching;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,8 +16,6 @@ import org.stapledon.infrastructure.config.CaffeineCacheConfiguration;
 
 import java.time.LocalDate;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration test for Caffeine cache functionality.
@@ -32,7 +32,7 @@ class CaffeineCacheIntegrationTest {
     private ManagementFacade comicManagementFacade;
 
     @Test
-    void testCacheManagerIsConfigured() {
+    void cacheManagerIsConfigured() {
         assertThat(cacheManager).as("CacheManager should be autowired").isNotNull();
 
         // Verify all expected caches exist
@@ -50,7 +50,7 @@ class CaffeineCacheIntegrationTest {
     }
 
     @Test
-    void testComicMetadataCaching() {
+    void comicMetadataCaching() {
         // Clear the cache first
         Cache metadataCache = cacheManager.getCache(CaffeineCacheConfiguration.COMIC_METADATA_CACHE);
         assertThat(metadataCache).isNotNull();
@@ -71,7 +71,7 @@ class CaffeineCacheIntegrationTest {
     }
 
     @Test
-    void testComicByIdCaching() {
+    void comicByIdCaching() {
         // Get a comic to test with (if any exist)
         var allComics = comicManagementFacade.getAllComics();
         if (allComics.isEmpty()) {
@@ -100,7 +100,7 @@ class CaffeineCacheIntegrationTest {
     }
 
     @Test
-    void testNavigationResultCaching() {
+    void navigationResultCaching() {
         // Get a comic to test with
         var allComics = comicManagementFacade.getAllComics();
         if (allComics.isEmpty()) {
@@ -131,7 +131,7 @@ class CaffeineCacheIntegrationTest {
     }
 
     @Test
-    void testCacheEvictionAfterTTL() throws InterruptedException {
+    void cacheEvictionAfterTTL() throws Exception {
         // This test is commented out because it would take too long to run
         // But it demonstrates how you would test TTL expiration
 

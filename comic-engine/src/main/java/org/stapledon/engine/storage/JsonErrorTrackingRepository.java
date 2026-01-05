@@ -1,8 +1,5 @@
 package org.stapledon.engine.storage;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -10,6 +7,8 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicErrorRecord;
 import org.stapledon.common.service.ErrorTrackingService;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -21,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

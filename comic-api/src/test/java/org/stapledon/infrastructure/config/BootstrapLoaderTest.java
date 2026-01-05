@@ -5,10 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.google.common.io.CharSource;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +12,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.util.Bootstrap;
 
-import java.io.IOException;
+import com.google.common.io.CharSource;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +36,7 @@ class BootstrapLoaderTest {
     }
 
     @Test
-    void loadComicLocalDateTest() throws IOException {
+    void loadComicLocalDateTest() throws Exception {
         // Arrange
         String initialString = "{'dailyComics':[{'name':'Adam At Home','startDate':{'year':2008,'month':1,'day':9}}]}\n";
         InputStream targetStream = CharSource.wrap(initialString.replace('\'', '\"')).asByteSource(StandardCharsets.UTF_8).openStream();
@@ -59,7 +57,7 @@ class BootstrapLoaderTest {
     }
 
     @Test
-    void loadComicCompactDateTest() throws IOException {
+    void loadComicCompactDateTest() throws Exception {
         // Arrange
         String initialString = "{'dailyComics':[{'name': 'Adam At Home','startDate': '2019-01-21'}]}";
         InputStream targetStream = CharSource.wrap(initialString.replace('\'', '\"')).asByteSource(StandardCharsets.UTF_8).openStream();

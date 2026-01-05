@@ -1,8 +1,8 @@
 package org.stapledon.infrastructure.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -12,6 +12,9 @@ import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.common.config.CacheProperties;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,9 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserConfigWriterTest {
 
@@ -503,9 +503,8 @@ class UserConfigWriterTest {
         };
 
         // When/Then
-        Exception exception = assertThrows(JsonParseException.class, () -> {
-            exceptionWriter.loadUsers();
-        });
+        Exception exception = assertThatExceptionOfType(JsonParseException.class).isThrownBy(() ->
+                exceptionWriter.loadUsers()).actual();
 
         // Verify it's the right exception with a meaningful message
         assertThat(exception.getMessage().contains("malformed") ||

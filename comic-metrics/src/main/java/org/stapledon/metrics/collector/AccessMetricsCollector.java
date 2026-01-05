@@ -1,13 +1,12 @@
 package org.stapledon.metrics.collector;
 
-import com.google.common.base.Stopwatch;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 
+import com.google.common.base.Stopwatch;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,7 +18,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 

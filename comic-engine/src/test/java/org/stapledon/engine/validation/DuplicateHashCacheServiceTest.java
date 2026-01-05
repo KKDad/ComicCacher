@@ -1,5 +1,15 @@
 package org.stapledon.engine.validation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,17 +24,12 @@ import org.stapledon.common.service.ImageHasher;
 import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for DuplicateHashCacheService.
@@ -62,7 +67,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testLoadHashesWithBackfill_EmptyCache_NoExistingImages_ReturnsEmptyMap() {
+    void loadHashesWithBackfillEmptyCacheNoExistingImagesReturnsEmptyMap() {
         // Given
         Map<String, ImageHashRecord> emptyMap = new ConcurrentHashMap<>();
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
@@ -80,7 +85,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testLoadHashesWithBackfill_EmptyCache_WithExistingImages_BackfillsCache() throws IOException {
+    void loadHashesWithBackfillEmptyCacheWithExistingImagesBackfillsCache() throws Exception {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(CURRENT_ALGORITHM);
         when(imageHasherFactory.getImageHasher()).thenReturn(imageHasher);
@@ -110,7 +115,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testLoadHashesWithBackfill_AlgorithmChanged_RebuildsCache() throws IOException {
+    void loadHashesWithBackfillAlgorithmChangedRebuildsCache() throws Exception {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(CURRENT_ALGORITHM);
         when(imageHasherFactory.getImageHasher()).thenReturn(imageHasher);
@@ -146,7 +151,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testLoadHashesWithBackfill_SameAlgorithm_DoesNotRebuild() {
+    void loadHashesWithBackfillSameAlgorithmDoesNotRebuild() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(CURRENT_ALGORITHM);
 
@@ -172,7 +177,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testFindByHash_LoadsWithBackfillAndFinds() {
+    void findByHashLoadsWithBackfillAndFinds() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(CURRENT_ALGORITHM);
 
@@ -198,7 +203,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testFindByHash_NotFound_ReturnsEmpty() {
+    void findByHashNotFoundReturnsEmpty() {
         // Given
         Map<String, ImageHashRecord> emptyMap = new ConcurrentHashMap<>();
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
@@ -215,7 +220,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testAddHash_DelegatesToRepository() {
+    void addHashDelegatesToRepository() {
         // Given
         ImageHashRecord record = ImageHashRecord.builder()
                 .hash(TEST_HASH)
@@ -232,7 +237,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testAddImageToCache_SuccessfulHash_AddsToRepository() {
+    void addImageToCacheSuccessfulHashAddsToRepository() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(CURRENT_ALGORITHM);
         when(imageHasherFactory.getImageHasher()).thenReturn(imageHasher);
@@ -258,7 +263,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testAddImageToCache_HashCalculationFails_DoesNotAddToRepository() {
+    void addImageToCacheHashCalculationFailsDoesNotAddToRepository() {
         // Given
         when(imageHasherFactory.getImageHasher()).thenReturn(imageHasher);
 
@@ -276,7 +281,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testAddImageToCache_UsesCorrectYear() {
+    void addImageToCacheUsesCorrectYear() {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(CURRENT_ALGORITHM);
         when(imageHasherFactory.getImageHasher()).thenReturn(imageHasher);
@@ -295,7 +300,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testBackfillExistingImages_IgnoresNonPngFiles() throws IOException {
+    void backfillExistingImagesIgnoresNonPngFiles() throws Exception {
         // Given
         when(cacheProperties.getHashAlgorithm()).thenReturn(CURRENT_ALGORITHM);
         when(imageHasherFactory.getImageHasher()).thenReturn(imageHasher);
@@ -325,7 +330,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testBackfillExistingImages_HandlesInvalidFilenames() throws IOException {
+    void backfillExistingImagesHandlesInvalidFilenames() throws Exception {
         // Given
         Map<String, ImageHashRecord> emptyMap = new ConcurrentHashMap<>();
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
@@ -347,7 +352,7 @@ class DuplicateHashCacheServiceTest {
     }
 
     @Test
-    void testLoadHashesWithBackfill_NullAlgorithmInExistingRecord_DoesNotCrash() {
+    void loadHashesWithBackfillNullAlgorithmInExistingRecordDoesNotCrash() {
         // Given
         Map<String, ImageHashRecord> existingMap = new ConcurrentHashMap<>();
         ImageHashRecord recordWithNullAlgorithm = ImageHashRecord.builder()

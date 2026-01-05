@@ -2,8 +2,6 @@ package org.stapledon.infrastructure.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.gson.Gson;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,6 +13,7 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
 
+import com.google.gson.Gson;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -144,7 +143,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     @Test
-    void configExists_shouldReturnTrueWhenExists() throws IOException {
+    void configExists_shouldReturnTrueWhenExists() throws Exception {
         // Arrange
         createTestFile(COMIC_CONFIG_NAME, "{}");
 
@@ -176,7 +175,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     @Test
-    void loadComicConfig_shouldLoadExistingConfig() throws IOException {
+    void loadComicConfig_shouldLoadExistingConfig() throws Exception {
         // Arrange
         String comicConfigJson = "{ \"items\": { \"42\": { \"id\": 42, \"name\": \"Test Comic\", \"newest\": \"2023-01-01\" } } }";
         createTestFile(COMIC_CONFIG_NAME, comicConfigJson);
@@ -202,7 +201,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     @Test
-    void saveComicConfig_shouldCreateFile() throws IOException {
+    void saveComicConfig_shouldCreateFile() throws Exception {
         // Arrange
         ComicConfig config = new ComicConfig();
         ComicItem comicItem = ComicItem.builder()
@@ -235,7 +234,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     @Test
-    void loadUserConfig_shouldLoadExistingConfig() throws IOException {
+    void loadUserConfig_shouldLoadExistingConfig() throws Exception {
         // Arrange
         String userConfigJson = "{ \"users\": { \"testuser\": { \"username\": \"testuser\", \"passwordHash\": \"hash\", \"roles\": [\"USER\"] } } }";
         createTestFile(USER_CONFIG_NAME, userConfigJson);
@@ -260,7 +259,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     @Test
-    void saveUserConfig_shouldCreateFile() throws IOException {
+    void saveUserConfig_shouldCreateFile() throws Exception {
         // Arrange
         UserConfig config = new UserConfig();
         User user = User.builder()
@@ -292,7 +291,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     @Test
-    void loadPreferenceConfig_shouldLoadExistingConfig() throws IOException {
+    void loadPreferenceConfig_shouldLoadExistingConfig() throws Exception {
         // Arrange
         String preferenceConfigJson = "{ \"preferences\": { \"testuser\": { \"username\": \"testuser\", \"favoriteComics\": [42] } } }";
         createTestFile(PREFERENCE_CONFIG_NAME, preferenceConfigJson);
@@ -317,7 +316,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     @Test
-    void savePreferenceConfig_shouldCreateFile() throws IOException {
+    void savePreferenceConfig_shouldCreateFile() throws Exception {
         // Arrange
         PreferenceConfig config = new PreferenceConfig();
         UserPreference preference = UserPreference.builder()

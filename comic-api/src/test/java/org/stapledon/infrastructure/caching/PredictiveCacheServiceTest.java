@@ -1,5 +1,13 @@
 package org.stapledon.infrastructure.caching;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,11 +22,6 @@ import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for PredictiveCacheService.
@@ -48,12 +51,12 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testServiceCreation() {
+    void serviceCreation() {
         assertThat(service).as("Service should be created successfully").isNotNull();
     }
 
     @Test
-    void testPrefetchAdjacentComics_Forward_CallsCorrectDates() {
+    void prefetchAdjacentComicsForwardCallsCorrectDates() {
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);
 
@@ -111,7 +114,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testPrefetchAdjacentComics_Backward_CallsCorrectDates() {
+    void prefetchAdjacentComicsBackwardCallsCorrectDates() {
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);
 
@@ -165,7 +168,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testPrefetchAdjacentComics_DisabledLookahead() {
+    void prefetchAdjacentComicsDisabledLookahead() {
         // Disable lookahead
         cacheProperties.getLookahead().setEnabled(false);
 
@@ -181,7 +184,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testPrefetchAdjacentComics_StopsAtEnd() {
+    void prefetchAdjacentComicsStopsAtEnd() {
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);
 
@@ -223,7 +226,7 @@ class PredictiveCacheServiceTest {
     }
 
     @Test
-    void testLookaheadCountIsRespected() {
+    void lookaheadCountIsRespected() {
         // Set lookahead count to 2 instead of default 3
         cacheProperties.getLookahead().setCount(2);
 
