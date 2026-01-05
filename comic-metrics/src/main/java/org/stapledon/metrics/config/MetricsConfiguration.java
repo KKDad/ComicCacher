@@ -7,13 +7,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.infrastructure.config.StatsWriter;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
-import org.stapledon.metrics.repository.CombinedMetricsRepository;
+import org.stapledon.metrics.repository.JsonMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
+import org.stapledon.metrics.repository.MetricsRepository;
 import org.stapledon.metrics.service.JsonMetricsService;
 import org.stapledon.metrics.service.MetricsService;
 import org.stapledon.metrics.service.NoOpMetricsService;
@@ -48,7 +48,7 @@ public class MetricsConfiguration {
             StorageMetricsCollector storageMetricsCollector,
             AccessMetricsCollector accessMetricsCollector,
             AccessMetricsRepository accessMetricsRepository,
-            CombinedMetricsRepository combinedMetricsRepository,
+            MetricsRepository metricsRepository,
             MetricsArchiver metricsArchiver,
             org.stapledon.metrics.service.MetricsUpdateService metricsUpdateService) {
         log.info("Metrics enabled - creating JsonMetricsService");
@@ -56,10 +56,9 @@ public class MetricsConfiguration {
                 storageMetricsCollector,
                 accessMetricsCollector,
                 accessMetricsRepository,
-                combinedMetricsRepository,
+                metricsRepository,
                 metricsArchiver,
-                metricsUpdateService
-        );
+                metricsUpdateService);
     }
 
     /**
@@ -80,10 +79,9 @@ public class MetricsConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
     public StorageMetricsCollector storageMetricsCollector(
-            @Qualifier("cacheLocation") String cacheLocation,
-            StatsWriter statsWriter) {
+            @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating StorageMetricsCollector");
-        return new StorageMetricsCollector(cacheLocation, statsWriter);
+        return new StorageMetricsCollector(cacheLocation);
     }
 
     /**
@@ -114,16 +112,16 @@ public class MetricsConfiguration {
     }
 
     /**
-     * Creates CombinedMetricsRepository when metrics are enabled.
-     * Persists combined metrics to JSON files.
+     * Creates MetricsRepository when metrics are enabled.
+     * Uses JSON file backend by default.
      */
     @Bean
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public CombinedMetricsRepository combinedMetricsRepository(
+    public MetricsRepository metricsRepository(
             @Qualifier("gsonWithLocalDate") Gson gson,
             CacheProperties cacheProperties) {
-        log.debug("Creating CombinedMetricsRepository");
-        return new CombinedMetricsRepository(gson, cacheProperties);
+        log.debug("Creating JsonMetricsRepository");
+        return new JsonMetricsRepository(gson, cacheProperties);
     }
 
     /**

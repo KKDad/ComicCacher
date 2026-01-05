@@ -11,9 +11,9 @@ The JSON storage implementation is distributed across these modules:
 - **`comic-engine`**: Operational state (Batch jobs, Errors, Retrieval Status, Hashes).
   - *Classes*: `JsonErrorTrackingRepository`, `JsonRetrievalStatusRepository`, `DuplicateImageHashRepository`
 - **`comic-metrics`**: Usage metrics.
-  - *Classes*: `AccessMetricsRepository`, `CombinedMetricsRepository`
+  - *Classes*: `AccessMetricsRepository`, `JsonMetricsRepository`
 - **`comic-common`**: Shared utilities.
-  - *Classes*: `JsonStatsWriter`
+
 ## Data Relationship Diagram
 
 ```mermaid
@@ -61,6 +61,18 @@ erDiagram
         string status
         datetime startTime
     }
+    GlobalMetrics ||--o{ YearlyStorage : "aggregates"
+    GlobalMetrics {
+        string oldestImage
+        string newestImage
+        long totalStorageBytes
+        int totalImageCount
+    }
+    YearlyStorage {
+        string year PK
+        long storageBytes
+        int imageCount
+    }
 ```
 
 ## Inventory of Storage Files
@@ -92,8 +104,10 @@ Aggregated usage and storage statistics. Located in the **Cache Root**.
 | File Name | Purpose | Responsible Class | File Name Constant |
 | :--- | :--- | :--- | :--- |
 | `access-metrics.json` | Aggregated access counts. | `AccessMetricsRepository` | `ACCESS_METRICS_FILE` |
-| `combined-metrics.json` | Storage usage + Access stats. | `CombinedMetricsRepository` | `COMBINED_METRICS_FILE` |
-| `stats.json` | Global storage statistics. | `JsonStatsWriter` | Hardcoded `stats.json` |
+| `combined-metrics.json` | Global + per-comic storage and access metrics. | `JsonMetricsRepository` | `COMBINED_METRICS_FILE` |
+
+> [!NOTE]
+> The `MetricsRepository` interface abstracts persistence, making it easy to swap JSON storage for Prometheus or another backend in the future.
 
 ### 4. Content Metadata
 Metadata associated with specific content. Located in **Comic/Year Directories**.
@@ -103,7 +117,7 @@ Metadata associated with specific content. Located in **Comic/Year Directories**
 | `image-hashes.json` | Perceptual hashes for duplicate detection. | `DuplicateImageHashRepository` | `{CacheRoot}/{ComicName}/{Year}/image-hashes.json` |
 | `*.json` (Sidecar) | Metadata for specific images. | `ImageMetadataRepository` | `{CacheRoot}/{ComicName}/{Year}/{Date}.json` |
 
-## schemas
+## Schemas
 
 ### 1. ComicCacher.json (Bootstrap)
 ```json
@@ -171,15 +185,34 @@ Metadata associated with specific content. Located in **Comic/Year Directories**
 }
 ```
 
-### 6. stats.json
+### 6. combined-metrics.json
 ```json
 {
-  "totalStorageBytes": "long",
+  "lastUpdated": "LocalDateTime",
+  "globalMetrics": {
+    "oldestImage": "String (absolute path)",
+    "newestImage": "String (absolute path)",
+    "years": ["String"],
+    "totalStorageBytes": "long",
+    "totalImageCount": "int",
+    "storageByYear": { "[year]": "long" },
+    "imageCountByYear": { "[year]": "int" }
+  },
   "perComicMetrics": {
     "[comicName]": {
-      "imageCount": "int",
+      "comicName": "String",
       "storageBytes": "long",
-      "accessCount": "int"
+      "imageCount": "int",
+      "averageImageSize": "double",
+      "yearlyStorage": {
+        "[year]": { "storageBytes": "long", "imageCount": "int" }
+      },
+      "accessCount": "int",
+      "lastAccess": "String",
+      "averageAccessTime": "double",
+      "hitRatio": "double",
+      "cacheHits": "int",
+      "cacheMisses": "int"
     }
   }
 }

@@ -3,10 +3,8 @@ package org.stapledon.metrics.collector;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
-import org.stapledon.common.infrastructure.config.StatsWriter;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,19 +16,18 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Collector for storage metrics.
  * Scans the cache directory and computes storage utilization statistics.
- * Configured as a bean in MetricsConfiguration when metrics are enabled.
+ * This collector only computes metrics in-memory; persistence is handled by
+ * MetricsRepository.
  */
 @Slf4j
 @ToString
 public class StorageMetricsCollector {
-    private final StatsWriter statsUpdater;
     private final String cacheDirectory;
 
     private ImageCacheStats cacheStats;
 
-    public StorageMetricsCollector(@Qualifier("cacheLocation") String targetDirectory, StatsWriter statsUpdater) {
+    public StorageMetricsCollector(@Qualifier("cacheLocation") String targetDirectory) {
         this.cacheDirectory = targetDirectory;
-        this.statsUpdater = statsUpdater;
     }
 
     public ImageCacheStats cacheStats() {
@@ -40,7 +37,7 @@ public class StorageMetricsCollector {
     }
 
     /**
-     * Generate Statistics about the Images cached in a particular directory to speed up retrieval at a later date.
+     * Generate Statistics about the Images cached in a particular directory.
      *
      * @return True if successful
      */
@@ -58,7 +55,7 @@ public class StorageMetricsCollector {
         File[] comicDirs = root.listFiles(file -> file.isDirectory() && !file.getName().equals("@eaDir"));
         if (comicDirs == null || comicDirs.length == 0) {
             log.warn("No comic directories found in {}", cacheDirectory);
-            return statsUpdater.save(cacheStats, cacheDirectory);
+            return true;
         }
 
         // Process each comic directory to gather metrics
@@ -71,8 +68,10 @@ public class StorageMetricsCollector {
             totalStorageBytes += metrics.getStorageBytes();
         }
 
-        // Images are stored by year, gather a list of all years that we have stored (from the first comic)
-        String[] yearFolders = comicDirs[0].list((dir, name) -> new File(dir, name).isDirectory() && !name.equals("@eaDir"));
+        // Images are stored by year, gather a list of all years that we have stored
+        // (from the first comic)
+        String[] yearFolders = comicDirs[0]
+                .list((dir, name) -> new File(dir, name).isDirectory() && !name.equals("@eaDir"));
         if (yearFolders != null && yearFolders.length > 0) {
             var years = Arrays.asList(yearFolders);
             Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
@@ -95,8 +94,8 @@ public class StorageMetricsCollector {
                 for (File comicDir : comicDirs) {
                     File yearDir = new File(comicDir, year);
                     if (yearDir.exists() && yearDir.isDirectory()) {
-                        File[] images = yearDir.listFiles(file ->
-                                file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
+                        File[] images = yearDir.listFiles(file -> file.isFile()
+                                && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
                         if (images != null) {
                             yearImageCount += images.length;
                         }
@@ -105,12 +104,19 @@ public class StorageMetricsCollector {
                 imageCountByYear.put(year, yearImageCount);
             }
 
+            // Find oldest and newest images (fixed: include comic name in path)
+            String oldestComicName = comicDirs[0].getName();
+            String newestComicName = comicDirs[0].getName();
+            String oldestYear = yearFolders[0];
+            String newestYear = yearFolders[yearFolders.length - 1];
+
+            String oldestImage = firstImage(comicDirs[0].getAbsolutePath() + "/" + oldestYear);
+            String newestImage = lastImage(comicDirs[0].getAbsolutePath() + "/" + newestYear);
+
             cacheStats = ImageCacheStats.builder()
                     .years(years)
-                    // Find the first image in the first year. This is the oldest image available
-                    .oldestImage(expand(yearFolders[0], firstImage(String.format("%s/%s", comicDirs[0].getAbsolutePath(), yearFolders[0]))))
-                    // Find the last image in the last year. This is the newest image available
-                    .newestImage(expand(yearFolders[yearFolders.length - 1], lastImage(String.format("%s/%s", comicDirs[0].getAbsolutePath(), yearFolders[yearFolders.length - 1]))))
+                    .oldestImage(buildImagePath(oldestComicName, oldestYear, oldestImage))
+                    .newestImage(buildImagePath(newestComicName, newestYear, newestImage))
                     .totalStorageBytes(totalStorageBytes)
                     .perComicMetrics(perComicMetrics)
                     .imageCountByYear(imageCountByYear)
@@ -118,7 +124,8 @@ public class StorageMetricsCollector {
                     .build();
         }
 
-        return statsUpdater.save(cacheStats, cacheDirectory);
+        log.info("Updated storage stats: {} comics, {} total bytes", perComicMetrics.size(), totalStorageBytes);
+        return true;
     }
 
     /**
@@ -137,8 +144,8 @@ public class StorageMetricsCollector {
         if (yearDirs != null) {
             for (File yearDir : yearDirs) {
                 long yearSize = 0;
-                File[] images = yearDir.listFiles(file ->
-                    file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
+                File[] images = yearDir.listFiles(
+                        file -> file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
 
                 if (images != null) {
                     for (File image : images) {
@@ -157,16 +164,24 @@ public class StorageMetricsCollector {
                 .comicName(comicDir.getName())
                 .storageBytes(totalSize)
                 .imageCount(imageCount)
-                .averageImageSize(imageCount > 0 ? (double)totalSize / imageCount : 0)
+                .averageImageSize(imageCount > 0 ? (double) totalSize / imageCount : 0)
                 .storageByYear(yearStorage)
                 .build();
     }
 
-    private String expand(String path, String image) {
-        // image will be null if there are no matching images in the directory (eg: Caching failed).
-        if (image == null)
+    /**
+     * Build a proper image path including comic name, year, and filename.
+     *
+     * @param comicName The comic directory name
+     * @param year      The year directory name
+     * @param imageName The image filename (or null if no images)
+     * @return Full path string, or empty string if imageName is null
+     */
+    private String buildImagePath(String comicName, String year, String imageName) {
+        if (imageName == null) {
             return "";
-        return Paths.get(cacheDirectory, path, image).toFile().getAbsolutePath();
+        }
+        return String.format("%s/%s/%s/%s", cacheDirectory, comicName, year, imageName);
     }
 
     /**
@@ -176,7 +191,6 @@ public class StorageMetricsCollector {
      * @return First item in the directory when sorted by filename
      */
     private String firstImage(String location) {
-        // Find the first image in the folder
         String[] cachedStrips = images(location);
         if (cachedStrips.length < 1)
             return null;
@@ -196,7 +210,6 @@ public class StorageMetricsCollector {
         return cachedStrips[cachedStrips.length - 1];
     }
 
-
     /**
      * Get the list of Images in the selected folder
      *
@@ -205,13 +218,12 @@ public class StorageMetricsCollector {
      */
     private String[] images(String location) {
         var folder = new File(location);
-        var cachedStrips = folder.list((dir, name) ->
-            new File(dir, name).isFile() &&
-            (name.endsWith(".png") || name.endsWith(".jpg")) &&
-            !name.equals("@eaDir"));
+        var cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() &&
+                (name.endsWith(".png") || name.endsWith(".jpg")) &&
+                !name.equals("@eaDir"));
 
         if (cachedStrips == null || cachedStrips.length == 0)
-            return new String[]{};
+            return new String[] {};
         Arrays.sort(cachedStrips, String::compareTo);
         return cachedStrips;
     }

@@ -1,12 +1,11 @@
 package org.stapledon.metrics.service;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.stapledon.metrics.config.MetricsProperties;
 import org.stapledon.metrics.dto.CombinedMetricsData;
-import org.stapledon.metrics.repository.CombinedMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
+import org.stapledon.metrics.repository.MetricsRepository;
 
 import java.time.LocalDate;
 
@@ -25,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MetricsArchiveService {
 
-    private final CombinedMetricsRepository combinedMetricsRepository;
+    private final MetricsRepository metricsRepository;
     private final MetricsArchiver metricsArchiver;
     private final MetricsProperties metricsProperties;
 
@@ -39,9 +38,9 @@ public class MetricsArchiveService {
 
             // Archive yesterday's metrics
             LocalDate yesterday = LocalDate.now().minusDays(1);
-            CombinedMetricsData metrics = combinedMetricsRepository.get();
+            CombinedMetricsData metrics = metricsRepository.get();
 
-            if (metrics != null && metrics.getComics() != null && !metrics.getComics().isEmpty()) {
+            if (metrics != null && metrics.getPerComicMetrics() != null && !metrics.getPerComicMetrics().isEmpty()) {
                 boolean archived = metricsArchiver.archiveMetrics(metrics, yesterday);
 
                 if (archived) {
@@ -72,9 +71,9 @@ public class MetricsArchiveService {
      */
     public boolean archiveMetricsForDate(LocalDate date) {
         try {
-            CombinedMetricsData metrics = combinedMetricsRepository.get();
+            CombinedMetricsData metrics = metricsRepository.get();
 
-            if (metrics != null && metrics.getComics() != null && !metrics.getComics().isEmpty()) {
+            if (metrics != null && metrics.getPerComicMetrics() != null && !metrics.getPerComicMetrics().isEmpty()) {
                 boolean archived = metricsArchiver.archiveMetrics(metrics, date);
                 if (archived) {
                     log.info("Successfully archived metrics for {}", date);

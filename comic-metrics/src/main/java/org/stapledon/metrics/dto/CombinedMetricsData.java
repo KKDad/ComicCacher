@@ -24,8 +24,16 @@ import lombok.Setter;
 public class CombinedMetricsData {
     private LocalDateTime lastUpdated;
 
+    /**
+     * Global aggregate metrics across all comics.
+     */
+    private GlobalMetrics globalMetrics;
+
+    /**
+     * Per-comic combined metrics.
+     */
     @Builder.Default
-    private Map<String, ComicCombinedMetrics> comics = new HashMap<>();
+    private Map<String, ComicCombinedMetrics> perComicMetrics = new HashMap<>();
 
     /**
      * Combined storage and access metrics for a single comic
@@ -49,7 +57,11 @@ public class CombinedMetricsData {
         @Builder.Default
         private double averageImageSize = 0.0;
 
-        private Map<String, Long> storageByYear;
+        /**
+         * Yearly storage breakdown with bytes and image count per year.
+         */
+        @Builder.Default
+        private Map<String, YearlyStorageMetrics> yearlyStorage = new HashMap<>();
 
         // Access metrics
         @Builder.Default

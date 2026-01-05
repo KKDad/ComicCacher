@@ -7,8 +7,8 @@ import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
-import org.stapledon.metrics.repository.CombinedMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
+import org.stapledon.metrics.repository.MetricsRepository;
 
 import java.time.LocalDate;
 
@@ -29,7 +29,7 @@ public class JsonMetricsService implements MetricsService {
     private final StorageMetricsCollector storageMetricsCollector;
     private final AccessMetricsCollector accessMetricsCollector;
     private final AccessMetricsRepository accessMetricsRepository;
-    private final CombinedMetricsRepository combinedMetricsRepository;
+    private final MetricsRepository metricsRepository;
     private final MetricsArchiver metricsArchiver;
     private final MetricsUpdateService metricsUpdateService;
 
@@ -48,7 +48,7 @@ public class JsonMetricsService implements MetricsService {
     @Override
     public CombinedMetricsData getCombinedMetrics() {
         log.debug("Getting combined metrics");
-        return combinedMetricsRepository.get();
+        return metricsRepository.get();
     }
 
     @Override
@@ -68,7 +68,7 @@ public class JsonMetricsService implements MetricsService {
     public boolean archiveCurrentMetrics() {
         log.info("Archiving current metrics");
         try {
-            CombinedMetricsData currentMetrics = combinedMetricsRepository.get();
+            CombinedMetricsData currentMetrics = metricsRepository.get();
             return metricsArchiver.archiveMetrics(currentMetrics, LocalDate.now());
         } catch (Exception e) {
             log.error("Failed to archive metrics", e);

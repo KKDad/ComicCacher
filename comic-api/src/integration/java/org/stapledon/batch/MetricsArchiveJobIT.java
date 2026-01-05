@@ -13,7 +13,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.stapledon.engine.batch.MetricsArchiveJobScheduler;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData.ComicCombinedMetrics;
-import org.stapledon.metrics.repository.CombinedMetricsRepository;
+import org.stapledon.metrics.repository.MetricsRepository;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,7 +40,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
     private MetricsArchiveJobScheduler metricsArchiveJobScheduler;
 
     @Autowired
-    private CombinedMetricsRepository combinedMetricsRepository;
+    private MetricsRepository metricsRepository;
 
     @Autowired
     @Qualifier("gsonWithLocalDate")
@@ -82,10 +82,10 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
                 .build());
 
         CombinedMetricsData testMetrics = CombinedMetricsData.builder()
-                .comics(comicsMap)
+                .perComicMetrics(comicsMap)
                 .build();
 
-        combinedMetricsRepository.save(testMetrics);
+        metricsRepository.save(testMetrics);
         log.info("Created test metrics: {} comics", 2);
     }
 
@@ -128,12 +128,13 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         CombinedMetricsData archived = gson.fromJson(json, CombinedMetricsData.class);
 
         assertThat(archived).as("Archived metrics should not be null").isNotNull();
-        assertThat(archived.getComics()).as("Comics map should not be null").isNotNull();
-        assertThat(archived.getComics().size()).as("Should have 2 comics").isEqualTo(2);
+        assertThat(archived.getPerComicMetrics()).as("Comics map should not be null").isNotNull();
+        assertThat(archived.getPerComicMetrics().size()).as("Should have 2 comics").isEqualTo(2);
 
         // Verify specific comic metrics
-        assertThat(archived.getComics().containsKey("TestComic1")).as("TestComic1 should be in archive").isTrue();
-        ComicCombinedMetrics comic1 = archived.getComics().get("TestComic1");
+        assertThat(archived.getPerComicMetrics().containsKey("TestComic1")).as("TestComic1 should be in archive")
+                .isTrue();
+        ComicCombinedMetrics comic1 = archived.getPerComicMetrics().get("TestComic1");
         assertThat(comic1.getComicName()).as("Comic name should match").isEqualTo("TestComic1");
         assertThat(comic1.getImageCount()).as("TestComic1 image count should match").isEqualTo(10);
         assertThat(comic1.getStorageBytes()).as("TestComic1 size should match").isEqualTo(1024000L);
@@ -195,8 +196,8 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         log.info("TEST: MetricsArchiveJob fails with no metrics");
 
         // Clear metrics repository
-        combinedMetricsRepository.save(CombinedMetricsData.builder()
-                .comics(new HashMap<>())
+        metricsRepository.save(CombinedMetricsData.builder()
+                .perComicMetrics(new HashMap<>())
                 .build());
 
         LocalDate yesterday = LocalDate.now().minusDays(1);

@@ -2,23 +2,17 @@ package org.stapledon.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.dto.ImageCacheStats;
 
 import com.google.gson.Gson;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Configuration writer for comic-related data.
- * This implementation now delegates to ApplicationConfigurationFacade for most
- * operations.
+ * Delegates to ConfigurationFacade for persistence operations.
  */
 @Slf4j
 @ToString
@@ -27,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 public class JsonConfigWriter {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
-    private final CacheProperties cacheProperties;
     private final ConfigurationFacade configurationFacade;
 
     private ComicConfig comics;
@@ -47,26 +40,6 @@ public class JsonConfigWriter {
         } catch (Exception e) {
             log.error("Failed to save comic item: {}", e.getMessage(), e);
         }
-    }
-
-    /**
-     * Save ImageCacheStats to the root of an image folder
-     *
-     * @param ic              Statistics to save
-     * @param targetDirectory Location to Save them to
-     * @return True if successfully written
-     */
-    public boolean save(ImageCacheStats ic, String targetDirectory) {
-        try {
-            Writer writer = new FileWriter(targetDirectory + "/stats.json");
-            gson.toJson(ic, writer);
-            writer.flush();
-            writer.close();
-            return true;
-        } catch (IOException ioe) {
-            log.error("Failed to save image cache stats: {}", ioe.getMessage(), ioe);
-        }
-        return false;
     }
 
     /**
@@ -107,5 +80,4 @@ public class JsonConfigWriter {
         }
         return comics;
     }
-
 }

@@ -231,7 +231,7 @@ class MetricsControllerTest {
         comics.put("Comic2", comic2Metrics);
 
         return CombinedMetricsData.builder()
-                .comics(comics)
+                .perComicMetrics(comics)
                 .build();
     }
 }

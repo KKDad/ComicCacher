@@ -1,17 +1,19 @@
 package org.stapledon.metrics.service;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
-import org.stapledon.metrics.config.MetricsProperties;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
+import org.stapledon.metrics.dto.GlobalMetrics;
+import org.stapledon.metrics.dto.YearlyStorageMetrics;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
-import org.stapledon.metrics.repository.CombinedMetricsRepository;
+import org.stapledon.metrics.repository.MetricsRepository;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,8 +35,7 @@ public class MetricsUpdateService {
     private final AccessMetricsCollector accessMetricsCollector;
     private final StorageMetricsCollector storageMetricsUpdater;
     private final AccessMetricsRepository accessMetricsRepository;
-    private final CombinedMetricsRepository combinedMetricsRepository;
-    private final MetricsProperties metricsProperties;
+    private final MetricsRepository metricsRepository;
 
     /**
      * Persist access metrics and rebuild combined metrics.
@@ -81,7 +82,8 @@ public class MetricsUpdateService {
 
     /**
      * Rebuild combined metrics from storage and access metrics.
-     * This combines data from ImageCacheStats and AccessMetricsData.
+     * This combines data from ImageCacheStats and AccessMetricsData into a single
+     * structure.
      */
     public void rebuildCombinedMetrics() {
         try {
@@ -91,46 +93,47 @@ public class MetricsUpdateService {
             // Get latest access metrics
             AccessMetricsData accessData = accessMetricsRepository.get();
 
-            // Build combined metrics
-            CombinedMetricsData combinedData = CombinedMetricsData.builder().build();
-            Map<String, CombinedMetricsData.ComicCombinedMetrics> combinedMap = new HashMap<>();
+            // Build global metrics from storage stats
+            GlobalMetrics globalMetrics = buildGlobalMetrics(storageStats);
+
+            // Build per-comic metrics
+            Map<String, CombinedMetricsData.ComicCombinedMetrics> perComicMetrics = new HashMap<>();
 
             // Start with all comics from storage metrics
             if (storageStats != null && storageStats.getPerComicMetrics() != null) {
                 storageStats.getPerComicMetrics().forEach((comicName, storageMetric) -> {
-                    CombinedMetricsData.ComicCombinedMetrics.ComicCombinedMetricsBuilder builder =
-                        CombinedMetricsData.ComicCombinedMetrics.builder()
+                    CombinedMetricsData.ComicCombinedMetrics.ComicCombinedMetricsBuilder builder = CombinedMetricsData.ComicCombinedMetrics
+                            .builder()
                             .comicName(comicName)
                             .storageBytes(storageMetric.getStorageBytes())
                             .imageCount(storageMetric.getImageCount())
                             .averageImageSize(storageMetric.getAverageImageSize())
-                            .storageByYear(storageMetric.getStorageByYear());
+                            .yearlyStorage(buildYearlyStorage(storageMetric));
 
                     // Add access metrics if available
                     if (accessData != null && accessData.getComicMetrics() != null) {
-                        AccessMetricsData.ComicAccessMetrics accessMetric =
-                            accessData.getComicMetrics().get(comicName);
+                        AccessMetricsData.ComicAccessMetrics accessMetric = accessData.getComicMetrics().get(comicName);
 
                         if (accessMetric != null) {
                             builder.accessCount(accessMetric.getAccessCount())
-                                   .lastAccess(accessMetric.getLastAccess())
-                                   .averageAccessTime(accessMetric.getAverageAccessTime())
-                                   .hitRatio(accessMetric.getHitRatio())
-                                   .cacheHits(accessMetric.getCacheHits())
-                                   .cacheMisses(accessMetric.getCacheMisses());
+                                    .lastAccess(accessMetric.getLastAccess())
+                                    .averageAccessTime(accessMetric.getAverageAccessTime())
+                                    .hitRatio(accessMetric.getHitRatio())
+                                    .cacheHits(accessMetric.getCacheHits())
+                                    .cacheMisses(accessMetric.getCacheMisses());
                         }
                     }
 
-                    combinedMap.put(comicName, builder.build());
+                    perComicMetrics.put(comicName, builder.build());
                 });
             }
 
             // Add any comics that only have access metrics but no storage metrics
             if (accessData != null && accessData.getComicMetrics() != null) {
                 accessData.getComicMetrics().forEach((comicName, accessMetric) -> {
-                    if (!combinedMap.containsKey(comicName)) {
-                        CombinedMetricsData.ComicCombinedMetrics combined =
-                            CombinedMetricsData.ComicCombinedMetrics.builder()
+                    if (!perComicMetrics.containsKey(comicName)) {
+                        CombinedMetricsData.ComicCombinedMetrics combined = CombinedMetricsData.ComicCombinedMetrics
+                                .builder()
                                 .comicName(comicName)
                                 .accessCount(accessMetric.getAccessCount())
                                 .lastAccess(accessMetric.getLastAccess())
@@ -140,19 +143,74 @@ public class MetricsUpdateService {
                                 .cacheMisses(accessMetric.getCacheMisses())
                                 .build();
 
-                        combinedMap.put(comicName, combined);
+                        perComicMetrics.put(comicName, combined);
                     }
                 });
             }
 
-            combinedData.setComics(combinedMap);
+            // Build and save combined metrics
+            CombinedMetricsData combinedData = CombinedMetricsData.builder()
+                    .globalMetrics(globalMetrics)
+                    .perComicMetrics(perComicMetrics)
+                    .build();
 
-            // Save combined metrics
-            combinedMetricsRepository.save(combinedData);
+            metricsRepository.save(combinedData);
 
-            log.info("Rebuilt combined metrics for {} comics", combinedMap.size());
+            log.info("Rebuilt combined metrics for {} comics", perComicMetrics.size());
         } catch (Exception e) {
             log.error("Failed to rebuild combined metrics", e);
         }
+    }
+
+    /**
+     * Build global metrics from storage stats.
+     */
+    private GlobalMetrics buildGlobalMetrics(ImageCacheStats storageStats) {
+        if (storageStats == null) {
+            return GlobalMetrics.builder().build();
+        }
+
+        return GlobalMetrics.builder()
+                .oldestImage(storageStats.getOldestImage())
+                .newestImage(storageStats.getNewestImage())
+                .years(storageStats.getYears())
+                .totalStorageBytes(storageStats.getTotalStorageBytes())
+                .totalImageCount(calculateTotalImageCount(storageStats))
+                .storageByYear(storageStats.getStorageBytesByYear())
+                .imageCountByYear(storageStats.getImageCountByYear())
+                .build();
+    }
+
+    /**
+     * Calculate total image count from per-comic metrics.
+     */
+    private int calculateTotalImageCount(ImageCacheStats stats) {
+        if (stats.getPerComicMetrics() == null) {
+            return 0;
+        }
+        return stats.getPerComicMetrics().values().stream()
+                .mapToInt(ComicStorageMetrics::getImageCount)
+                .sum();
+    }
+
+    /**
+     * Build yearly storage metrics from comic storage metrics.
+     */
+    private Map<String, YearlyStorageMetrics> buildYearlyStorage(ComicStorageMetrics storageMetric) {
+        Map<String, YearlyStorageMetrics> yearlyStorage = new HashMap<>();
+
+        if (storageMetric.getStorageByYear() != null) {
+            storageMetric.getStorageByYear().forEach((year, bytes) -> {
+                yearlyStorage.put(year, YearlyStorageMetrics.builder()
+                        .storageBytes(bytes)
+                        // Note: Image count per year per comic not currently tracked in
+                        // ComicStorageMetrics
+                        // Would need to enhance scanning to get this
+                        .imageCount(0)
+                        .build());
+            });
+        }
+
+        return yearlyStorage;
     }
 }
