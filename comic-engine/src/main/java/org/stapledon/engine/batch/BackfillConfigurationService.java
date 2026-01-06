@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>
  * Configuration example in application.properties:
- * 
+ *
  * <pre>
  * batch.comic-backfill.default-max-per-day=50
  * batch.comic-backfill.default-max-days-back=365

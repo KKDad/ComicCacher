@@ -2,14 +2,20 @@ package org.stapledon.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Configuration for backfill constraints specific to a comic source.
  * Different comic sources may have different rate limits and history depth.
  */
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString(onlyExplicitlyIncluded = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,6 +24,7 @@ public class BackfillSourceConfig {
     /**
      * Source identifier (e.g., "gocomics", "comicskingdom").
      */
+    @ToString.Include
     private String source;
 
     /**
