@@ -146,10 +146,10 @@ public class ComicManagementFacade implements ManagementFacade {
 
     @Override
     @Caching(evict = {
-        @CacheEvict(value = "comicMetadata", allEntries = true),
-        @CacheEvict(value = "comicNavigation", allEntries = true),
-        @CacheEvict(value = "boundaryDates", allEntries = true),
-        @CacheEvict(value = "navigationDates", allEntries = true)
+            @CacheEvict(value = "comicMetadata", allEntries = true),
+            @CacheEvict(value = "comicNavigation", allEntries = true),
+            @CacheEvict(value = "boundaryDates", allEntries = true),
+            @CacheEvict(value = "navigationDates", allEntries = true)
     })
     public boolean deleteComic(int comicId) {
         ComicItem removed = comics.remove(comicId);
@@ -220,12 +220,14 @@ public class ComicManagementFacade implements ManagementFacade {
 
         ComicItem comic = comicOpt.get();
 
-        // Delegate to the cached implementation with comic name via self-reference to enable caching
+        // Delegate to the cached implementation with comic name via self-reference to
+        // enable caching
         return self.getComicStripCached(comicId, comic.getName(), direction, from);
     }
 
     /**
-     * Cached implementation of getComicStrip that includes comic name in the cache key.
+     * Cached implementation of getComicStrip that includes comic name in the cache
+     * key.
      * This ensures that each comic has its own cache entries.
      */
     @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #comicName + ':' + #from + ':' + #direction")
@@ -428,6 +430,70 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
+    public Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date) {
+        // Validate comic has a source
+        if (comic.getSource() == null || comic.getSource().isEmpty()) {
+            log.warn("Cannot download comic '{}' - has null or empty source", comic.getName());
+            return Optional.empty();
+        }
+
+        // Check if comic already exists on disk
+        if (storageFacade.comicStripExists(comic.getId(), comic.getName(), date)) {
+            log.debug("Comic '{}' for {} already cached", comic.getName(), date);
+            return Optional.empty();
+        }
+
+        // Create download request and download
+        ComicDownloadRequest request = ComicDownloadRequest.builder()
+                .comicId(comic.getId())
+                .comicName(comic.getName())
+                .source(comic.getSource())
+                .sourceIdentifier(comic.getSourceIdentifier())
+                .date(date)
+                .build();
+
+        ComicDownloadResult result = downloaderFacade.downloadComic(request);
+
+        if (result.isSuccessful()) {
+            // Save the comic to storage
+            boolean saved = storageFacade.saveComicStrip(
+                    comic.getId(),
+                    comic.getName(),
+                    date,
+                    result.getImageData());
+
+            if (!saved) {
+                log.error("Failed to save comic {} to storage", comic.getName());
+                return Optional.empty();
+            }
+
+            // Update oldest date if this is earlier than known
+            // (backfill typically downloads older strips)
+            LocalDate currentOldest = comic.getOldest();
+            if (currentOldest == null || date.isBefore(currentOldest)) {
+                ComicItem updated = ComicItem.builder()
+                        .id(comic.getId())
+                        .name(comic.getName())
+                        .description(comic.getDescription())
+                        .author(comic.getAuthor())
+                        .avatarAvailable(comic.isAvatarAvailable())
+                        .enabled(comic.isEnabled())
+                        .active(comic.isActive())
+                        .newest(comic.getNewest())
+                        .oldest(date)
+                        .source(comic.getSource())
+                        .sourceIdentifier(comic.getSourceIdentifier())
+                        .publicationDays(comic.getPublicationDays())
+                        .build();
+
+                updateComic(comic.getId(), updated);
+            }
+        }
+
+        return Optional.of(result);
+    }
+
+    @Override
     public boolean updateComic(int comicId) {
         // Check if comic exists, return false if not
         Optional<ComicItem> comicOpt = getComic(comicId);
@@ -488,7 +554,8 @@ public class ComicManagementFacade implements ManagementFacade {
 
         } catch (Exception e) {
             log.error("Error occurred while updating comic with ID {}", comicId, e);
-            // Still return true since we successfully triggered the update for an existing comic
+            // Still return true since we successfully triggered the update for an existing
+            // comic
             return true;
         }
     }
