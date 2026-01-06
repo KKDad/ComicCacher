@@ -91,6 +91,16 @@ comic-common (shared DTOs, config, services)
 
 **Frontend:** `cd comic-web && npm install`, `ng serve` (http://localhost:4200), `ng test`, `ng lint`, `npm run buildProd`
 
+## Git Workflow Rules
+
+**CRITICAL: Never commit or push directly to master.**
+
+1. Always create a feature/fix branch before making changes:
+   - `git checkout -b feature/description` or `git checkout -b fix/description`
+2. Commit changes to the branch
+3. Push the branch and create a PR via `gh pr create`
+4. Merge via GitHub after review
+
 ## Module Architecture Details
 
 ### comic-common
