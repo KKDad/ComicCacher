@@ -25,7 +25,6 @@ import org.stapledon.engine.batch.LoggingJobExecutionListener;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -115,7 +114,9 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Processor that downloads a comic for a specific date
+     * Processor that downloads a comic for a specific date.
+     * Uses downloadComicForDate for efficient single-comic downloads - the comic
+     * has already been validated and filtered by ComicBackfillService.
      */
     @Bean
     @Qualifier("backfillTaskProcessor")
@@ -129,13 +130,10 @@ public class ComicBackfillJobConfig {
                     Thread.sleep(delayBetweenComics);
                 }
 
-                // Use the existing updateComicsForDate method but for a specific date
-                List<ComicDownloadResult> results = managementFacade.updateComicsForDate(task.date());
-
-                // Find the result for this specific comic
-                return results.stream()
-                        .filter(r -> r.getRequest().getComicName().equals(task.comic().getName()))
-                        .findFirst()
+                // Download this specific comic directly - much more efficient than
+                // iterating all comics. The comic has already been validated by
+                // ComicBackfillService.
+                return managementFacade.downloadComicForDate(task.comic(), task.date())
                         .orElse(null);
 
             } catch (InterruptedException e) {

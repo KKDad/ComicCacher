@@ -12,10 +12,14 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString(exclude = {"token", "refreshToken"})
+@ToString(onlyExplicitlyIncluded = true)
 public class AuthResponse {
     private String token;
     private String refreshToken;
+
+    @ToString.Include
     private String username;
+
+    @ToString.Include
     private String displayName;
 }

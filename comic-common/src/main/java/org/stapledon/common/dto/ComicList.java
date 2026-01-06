@@ -12,8 +12,9 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class ComicList {
+    @ToString.Include
     @Builder.Default
     private List<ComicItem> comics = new ArrayList<>();
 

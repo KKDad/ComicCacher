@@ -12,10 +12,16 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString(exclude = "password")
+@ToString(onlyExplicitlyIncluded = true)
 public class UserRegistrationDto {
+    @ToString.Include
     private String username;
+
     private String password;
+
+    @ToString.Include
     private String email;
+
+    @ToString.Include
     private String displayName;
 }

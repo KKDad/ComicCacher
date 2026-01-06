@@ -3,6 +3,7 @@ package org.stapledon.common.dto;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * Metadata about an individual comic image.
@@ -10,25 +11,30 @@ import lombok.Data;
  */
 @Data
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class ImageMetadata {
     /**
      * Absolute path to the image file
      */
+    @ToString.Include
     private final String filePath;
 
     /**
      * Image format (PNG, JPEG, GIF, WEBP)
      */
+    @ToString.Include
     private final ImageFormat format;
 
     /**
      * Image width in pixels
      */
+    @ToString.Include
     private final int width;
 
     /**
      * Image height in pixels
      */
+    @ToString.Include
     private final int height;
 
     /**

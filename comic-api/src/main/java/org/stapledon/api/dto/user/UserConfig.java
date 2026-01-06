@@ -10,8 +10,9 @@ import lombok.ToString;
 
 @Data
 @NoArgsConstructor
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 @Component
 public class UserConfig {
+    @ToString.Include
     private Map<String, User> users = new ConcurrentHashMap<>();
 }

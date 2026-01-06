@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Container for all access metrics data.
@@ -20,9 +21,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @EqualsAndHashCode
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class AccessMetricsData {
+    @ToString.Include
     private LocalDateTime lastUpdated;
 
+    @ToString.Include
     @Builder.Default
     private Map<String, ComicAccessMetrics> comicMetrics = new HashMap<>();
 
@@ -35,7 +39,9 @@ public class AccessMetricsData {
     @AllArgsConstructor
     @EqualsAndHashCode
     @Builder
+    @ToString(onlyExplicitlyIncluded = true)
     public static class ComicAccessMetrics {
+        @ToString.Include
         private String comicName;
 
         @Builder.Default

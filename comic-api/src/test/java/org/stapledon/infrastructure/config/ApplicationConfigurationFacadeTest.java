@@ -39,13 +39,14 @@ class ApplicationConfigurationFacadeTest {
     private static final String USER_CONFIG_NAME = "users.json";
     private static final String PREFERENCE_CONFIG_NAME = "preferences.json";
 
-    // Test-specific implementation of ApplicationConfigurationFacade that avoids Gson serialization issues
+    // Test-specific implementation of ApplicationConfigurationFacade that avoids
+    // Gson serialization issues
     private static class TestConfigurationFacade extends ApplicationConfigurationFacade {
         private final Map<String, Object> configCache = new HashMap<>();
         private final File configRoot;
 
         public TestConfigurationFacade(Gson gson, CacheProperties properties, File configRoot) {
-            super(gson, properties);
+            super(gson, properties, configRoot.getAbsolutePath());
             this.configRoot = configRoot;
         }
 

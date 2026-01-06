@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Container for pre-computed combined metrics.
@@ -20,17 +21,21 @@ import lombok.Setter;
 @AllArgsConstructor
 @EqualsAndHashCode
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class CombinedMetricsData {
+    @ToString.Include
     private LocalDateTime lastUpdated;
 
     /**
      * Global aggregate metrics across all comics.
      */
+    @ToString.Include
     private GlobalMetrics globalMetrics;
 
     /**
      * Per-comic combined metrics.
      */
+    @ToString.Include
     @Builder.Default
     private Map<String, ComicCombinedMetrics> perComicMetrics = new HashMap<>();
 
@@ -43,7 +48,9 @@ public class CombinedMetricsData {
     @AllArgsConstructor
     @EqualsAndHashCode
     @Builder
+    @ToString(onlyExplicitlyIncluded = true)
     public static class ComicCombinedMetrics {
+        @ToString.Include
         private String comicName;
 
         // Storage metrics

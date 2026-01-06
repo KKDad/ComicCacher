@@ -12,8 +12,10 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString(exclude = "password")
+@ToString(onlyExplicitlyIncluded = true)
 public class AuthRequest {
+    @ToString.Include
     private String username;
+
     private String password;
 }

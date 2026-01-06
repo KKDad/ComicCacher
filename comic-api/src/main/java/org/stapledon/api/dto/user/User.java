@@ -17,11 +17,17 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString(exclude = {"passwordHash", "userToken"})
+@ToString(onlyExplicitlyIncluded = true)
 public class User {
+    @ToString.Include
     private String username;
+
     private String passwordHash;
+
+    @ToString.Include
     private String email;
+
+    @ToString.Include
     private String displayName;
 
     @Builder.Default

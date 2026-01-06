@@ -29,6 +29,7 @@ import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class ComicBackfillJobConfigTest {
@@ -115,8 +116,8 @@ class ComicBackfillJobConfigTest {
 
         ComicDownloadResult result = ComicDownloadResult.success(request, new byte[0]);
 
-        when(managementFacade.updateComicsForDate(any(LocalDate.class)))
-                .thenReturn(List.of(result));
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
+                .thenReturn(Optional.of(result));
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
 
@@ -124,31 +125,23 @@ class ComicBackfillJobConfigTest {
 
         assertThat(processedResult).isNotNull();
         assertThat(processedResult.isSuccessful()).isTrue();
-        verify(managementFacade).updateComicsForDate(task.date());
+        verify(managementFacade).downloadComicForDate(comic, task.date());
     }
 
     @Test
-    void backfillTaskProcessor_handlesNoMatchingResult() throws Exception {
+    void backfillTaskProcessor_handlesEmptyResult() throws Exception {
         ComicItem comic = createComic(1, "Test Comic");
         BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
 
-        // Return result for a different comic
-        ComicDownloadRequest otherRequest = ComicDownloadRequest.builder()
-                .comicId(2)
-                .comicName("Other Comic")
-                .date(task.date())
-                .build();
-
-        ComicDownloadResult otherResult = ComicDownloadResult.success(otherRequest, new byte[0]);
-
-        when(managementFacade.updateComicsForDate(any(LocalDate.class)))
-                .thenReturn(List.of(otherResult));
+        // Return empty (comic already cached or couldn't be downloaded)
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
+                .thenReturn(Optional.empty());
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
 
         ComicDownloadResult result = processor.process(task);
 
-        assertThat(result).isNull(); // No matching result for this comic
+        assertThat(result).isNull(); // Empty Optional returns null
     }
 
     @Test
@@ -156,7 +149,7 @@ class ComicBackfillJobConfigTest {
         ComicItem comic = createComic(1, "Test Comic");
         BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
 
-        when(managementFacade.updateComicsForDate(any(LocalDate.class)))
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
                 .thenThrow(new RuntimeException("Test exception"));
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();

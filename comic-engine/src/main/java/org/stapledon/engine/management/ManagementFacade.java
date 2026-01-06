@@ -1,5 +1,6 @@
 package org.stapledon.engine.management;
 
+import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
@@ -13,9 +14,11 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Facade for managing comic operations. This is the highest-level facade in the application,
+ * Facade for managing comic operations. This is the highest-level facade in the
+ * application,
  * acting as the central coordinator between all other facades.
- * It consolidates functionality from ComicsService, UpdateService, and StartupReconciler interfaces.
+ * It consolidates functionality from ComicsService, UpdateService, and
+ * StartupReconciler interfaces.
  */
 public interface ManagementFacade {
 
@@ -55,14 +58,16 @@ public interface ManagementFacade {
     /**
      * Gets a comic strip for the specified comic in the given direction.
      * Uses the most recent date available if no specific date is provided.
-     * Returns a ComicNavigationResult with image data if found, or boundary information if not.
+     * Returns a ComicNavigationResult with image data if found, or boundary
+     * information if not.
      */
     ComicNavigationResult getComicStrip(int comicId, Direction direction);
 
     /**
      * Gets a comic strip for the specified comic in the given direction,
      * starting from the specified date.
-     * Returns a ComicNavigationResult with image data if found, or boundary information if not.
+     * Returns a ComicNavigationResult with image data if found, or boundary
+     * information if not.
      */
     ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from);
 
@@ -72,7 +77,8 @@ public interface ManagementFacade {
     Optional<ImageDto> getComicStripOnDate(int comicId, LocalDate date);
 
     /**
-     * Gets a comic strip for the specified comic by name on the exact date requested.
+     * Gets a comic strip for the specified comic by name on the exact date
+     * requested.
      */
     Optional<ImageDto> getComicStripOnDate(String comicName, LocalDate date);
 
@@ -99,7 +105,18 @@ public interface ManagementFacade {
      * @param date The date for which to download comics
      * @return List of download results for each comic
      */
-    List<org.stapledon.common.dto.ComicDownloadResult> updateComicsForDate(LocalDate date);
+    List<ComicDownloadResult> updateComicsForDate(LocalDate date);
+
+    /**
+     * Downloads and saves a specific comic strip for the specified date.
+     * This is more efficient for backfill operations where the comic is already
+     * known and pre-validated, as it bypasses the full comics list iteration.
+     *
+     * @param comic The comic item to download
+     * @param date  The date for which to download the comic
+     * @return The download result, or empty if the comic couldn't be downloaded
+     */
+    Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date);
 
     /**
      * Updates a specific comic by downloading its latest strip.

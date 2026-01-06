@@ -13,11 +13,17 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString(exclude = {"token", "refreshToken"})
+@ToString(onlyExplicitlyIncluded = true)
 public class JwtTokenDto {
     private String token;
     private String refreshToken;
+
+    @ToString.Include
     private String username;
+
+    @ToString.Include
     private Instant issuedAt;
+
+    @ToString.Include
     private Instant expiresAt;
 }
