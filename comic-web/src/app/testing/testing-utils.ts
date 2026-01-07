@@ -1,6 +1,16 @@
-import {DebugElement, SchemaMetadata, Type} from '@angular/core';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {By} from '@angular/platform-browser';
+import { DebugElement, SchemaMetadata, Type } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { expect, vi, type Mock } from 'vitest';
+
+/**
+ * Type for creating properly typed partial mocks in Vitest.
+ * Each specified key becomes a Mock function.
+ * Usage: SpyObj<Router, 'navigateByUrl' | 'navigate'>
+ */
+export type SpyObj<T, K extends keyof T = keyof T> = {
+  [P in K]: T[P] extends (...args: any[]) => any ? Mock : T[P];
+};
 
 /**
  * Utility functions for Angular component testing
@@ -80,7 +90,7 @@ export function expectExists<T>(
   expectation: string
 ): void {
   const element = findEl(fixture, selector);
-  expect(element).withContext(`Element with selector "${selector}" should exist: ${expectation}`).not.toBeNull();
+  expect(element, `Element with selector "${selector}" should exist: ${expectation}`).not.toBeNull();
 }
 
 /**
@@ -96,7 +106,7 @@ export function expectNotExists<T>(
   expectation: string
 ): void {
   const element = fixture.debugElement.query(By.css(selector));
-  expect(element).withContext(`Element with selector "${selector}" should not exist: ${expectation}`).toBeNull();
+  expect(element, `Element with selector "${selector}" should not exist: ${expectation}`).toBeNull();
 }
 
 /**
@@ -119,10 +129,10 @@ export function click<T>(fixture: ComponentFixture<T>, selector: string): void {
  * @param returnValue The value to return when the method is called
  * @returns The spy
  */
-export function spyOnService<T, K extends keyof T>(
+export function spyOnService<T extends object, K extends keyof T>(
   service: T,
   method: K,
   returnValue: any
-): jasmine.Spy {
-  return spyOn(service, method as any).and.returnValue(returnValue);
+): any {
+  return vi.spyOn(service, method as any).mockReturnValue(returnValue);
 }
