@@ -1,3 +1,4 @@
+import '../../../test-setup';  // Browser API mocks (IntersectionObserver, etc.)
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ComponentFixture } from '@angular/core/testing';
 import { ContainerComponent, NavBarOption } from './container.component';
@@ -70,9 +71,9 @@ describe('ContainerComponent', () => {
             { provide: ScrollDispatcher, useValue: scrollDispatcherSpy },
             // Mock the CdkVirtualScrollViewport to prevent scrolling registration errors
             { provide: CdkVirtualScrollViewport, useClass: VirtualScrollViewportStubComponent }
-        ], 
-        // Use schema to ignore unknown elements
-        { schemas: [CUSTOM_ELEMENTS_SCHEMA] });
+        ],
+            // Use schema to ignore unknown elements
+            { schemas: [CUSTOM_ELEMENTS_SCHEMA] });
 
         component = fixture.componentInstance;
 

@@ -127,11 +127,11 @@ describe('ComicStateService', () => {
 
             service.loadComics();
 
-            setTimeout(() => {
-                expect(service.error()).toContain('Error loading comics');
-                expect(service.loading()).toBe(false);
-                ;
-            }, 10);
+            // Wait for async operation to complete
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            expect(service.error()).toContain('Error loading comics');
+            expect(service.loading()).toBe(false);
         });
     });
 

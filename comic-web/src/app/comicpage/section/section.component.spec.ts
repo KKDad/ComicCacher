@@ -1,3 +1,4 @@
+import '../../../test-setup';  // Browser API mocks (IntersectionObserver, etc.)
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { SectionComponent } from './section.component';
@@ -85,13 +86,13 @@ describe('SectionComponent', () => {
         };
 
         fixture = createStandaloneComponentFixture(SectionComponent, [], // Component already has imports
-        [
-            { provide: ComicService, useValue: comicServiceSpy },
-            { provide: ComicStateService, useValue: stateServiceSpy },
-            { provide: KeyboardService, useValue: keyboardServiceSpy },
-            { provide: DomSanitizer, useValue: sanitizerSpy },
-            { provide: ElementRef, useValue: mockElementRef }
-        ]);
+            [
+                { provide: ComicService, useValue: comicServiceSpy },
+                { provide: ComicStateService, useValue: stateServiceSpy },
+                { provide: KeyboardService, useValue: keyboardServiceSpy },
+                { provide: DomSanitizer, useValue: sanitizerSpy },
+                { provide: ElementRef, useValue: mockElementRef }
+            ]);
 
         component = fixture.componentInstance;
         component.content = mockComic;
@@ -110,11 +111,11 @@ describe('SectionComponent', () => {
         // Access private method via any type assertion
         (component as any).loadImagesLazily();
 
+        // Give the observable time to emit
+        await new Promise(resolve => setTimeout(resolve, 10));
+
         // Now avatar should be loaded
-        setTimeout(() => {
-            expect(comicServiceSpy.getAvatar).toHaveBeenCalledWith(mockComic.id);
-            ;
-        }, 10);
+        expect(comicServiceSpy.getAvatar).toHaveBeenCalledWith(mockComic.id);
     });
 
     it('should load latest comic when visible (lazy loading)', async () => {
@@ -124,11 +125,11 @@ describe('SectionComponent', () => {
         // Manually trigger the lazy loading (simulating IntersectionObserver)
         (component as any).loadImagesLazily();
 
+        // Give the observable time to emit
+        await new Promise(resolve => setTimeout(resolve, 10));
+
         // Now latest comic should be loaded
-        setTimeout(() => {
-            expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(mockComic.id);
-            ;
-        }, 10);
+        expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(mockComic.id);
     });
 
     it('should sanitize avatar image URL', () => {
