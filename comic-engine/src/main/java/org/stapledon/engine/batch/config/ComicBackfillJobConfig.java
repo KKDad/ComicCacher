@@ -5,6 +5,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
@@ -105,11 +106,15 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Reader that provides the list of backfill tasks (comic + date pairs)
+     * Reader that provides the list of backfill tasks (comic + date pairs).
+     * Uses @StepScope so findMissingStrips() is called when the job runs,
+     * not at application startup.
      */
     @Bean
+    @StepScope
     @Qualifier("backfillTaskReader")
     public ItemReader<BackfillTask> backfillTaskReader() {
+        log.info("Building backfill task list for job execution");
         return new ListItemReader<>(backfillService.findMissingStrips());
     }
 
