@@ -1,12 +1,12 @@
-import {enableProdMode, provideZoneChangeDetection} from '@angular/core';
-import {bootstrapApplication} from '@angular/platform-browser';
-import {AppComponent} from './app/app.component';
-import {environment} from './environments/environment';
-import {provideAnimations} from '@angular/platform-browser/animations';
-import {provideRouter} from '@angular/router';
-import {routes} from './app/app.routes';
-import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
-import {ContainerComponent} from './app/comicpage/container/container.component';
+import { enableProdMode, provideZonelessChangeDetection } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { environment } from './environments/environment';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
+import { routes } from './app/app.routes';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { ContainerComponent } from './app/comicpage/container/container.component';
 
 if (environment.production) {
   enableProdMode();
@@ -14,7 +14,8 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideZoneChangeDetection(),provideRouter(routes),
+    provideZonelessChangeDetection(),
+    provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
     provideAnimations(),
     // Container component is needed as a service for app component

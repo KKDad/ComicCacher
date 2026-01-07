@@ -1,14 +1,17 @@
-import {Injectable} from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class MessageService {
-  messages: string[] = [];
+  private _messages = signal<string[]>([]);
+
+  /** Messages as a readonly signal for zoneless change detection */
+  readonly messages = computed(() => this._messages());
 
   add(message: string) {
-    this.messages.push(message);
+    this._messages.update(msgs => [...msgs, message]);
   }
 
   clear() {
-    this.messages = [];
+    this._messages.set([]);
   }
 }
