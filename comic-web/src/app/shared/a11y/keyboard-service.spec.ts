@@ -105,11 +105,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'a' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(emitted).toBe(false);
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(emitted).toBe(false);
+            subscription.unsubscribe();
         });
     });
 
@@ -168,11 +166,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'a' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(emitted).toBe(false);
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(emitted).toBe(false);
+            subscription.unsubscribe();
         });
     });
 
@@ -227,11 +223,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'Home' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(onFirst).toHaveBeenCalled();
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(onFirst).toHaveBeenCalled();
+            subscription.unsubscribe();
         });
 
         it('should call onPrev when ArrowLeft is pressed', async () => {
@@ -245,11 +239,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(onPrev).toHaveBeenCalled();
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(onPrev).toHaveBeenCalled();
+            subscription.unsubscribe();
         });
 
         // PageUp/PageDown are no longer part of registerComicNavigationShortcuts
@@ -266,11 +258,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(onNext).toHaveBeenCalled();
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(onNext).toHaveBeenCalled();
+            subscription.unsubscribe();
         });
 
 
@@ -285,11 +275,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'End' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(onLast).toHaveBeenCalled();
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(onLast).toHaveBeenCalled();
+            subscription.unsubscribe();
         });
 
         it('should return a subscription that can be unsubscribed', () => {
@@ -316,11 +304,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'PageUp' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(onPageUp).toHaveBeenCalled();
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(onPageUp).toHaveBeenCalled();
+            subscription.unsubscribe();
         });
 
         it('should call onPageDown when PageDown is pressed', async () => {
@@ -332,11 +318,9 @@ describe('KeyboardService', () => {
             const event = new KeyboardEvent('keydown', { key: 'PageDown' });
             document.dispatchEvent(event);
 
-            setTimeout(() => {
-                expect(onPageDown).toHaveBeenCalled();
-                subscription.unsubscribe();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(onPageDown).toHaveBeenCalled();
+            subscription.unsubscribe();
         });
 
         it('should return a subscription that can be unsubscribed', () => {

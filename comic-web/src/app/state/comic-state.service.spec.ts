@@ -84,10 +84,8 @@ describe('ComicStateService', () => {
 
         it('should have initial state with empty comics array', async () => {
             // Give the service time to load comics
-            setTimeout(() => {
-                expect(service.comics().length).toBe(2);
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(service.comics().length).toBe(2);
         });
 
         it('should have no selected comic initially', () => {
@@ -99,10 +97,8 @@ describe('ComicStateService', () => {
         });
 
         it('should not be loading initially', async () => {
-            setTimeout(() => {
-                expect(service.loading()).toBe(false);
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(service.loading()).toBe(false);
         });
 
         it('should have no error initially', () => {
@@ -114,12 +110,10 @@ describe('ComicStateService', () => {
         it('should load comics successfully', async () => {
             service.loadComics();
 
-            setTimeout(() => {
-                expect(service.comics()).toEqual(mockComics);
-                expect(service.loading()).toBe(false);
-                expect(service.error()).toBeNull();
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            expect(service.comics()).toEqual(mockComics);
+            expect(service.loading()).toBe(false);
+            expect(service.error()).toBeNull();
         });
 
         it('should set error when loading comics fails', async () => {
@@ -142,22 +136,18 @@ describe('ComicStateService', () => {
         });
 
         it('should update selectedComic computed value', async () => {
-            setTimeout(() => {
-                service.selectComic(1);
-                expect(service.selectedComic()?.id).toBe(1);
-                expect(service.selectedComic()?.name).toBe('Comic 1');
-                ;
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            service.selectComic(1);
+            expect(service.selectedComic()?.id).toBe(1);
+            expect(service.selectedComic()?.name).toBe('Comic 1');
         });
 
         it('should load latest strip when comic is selected', async () => {
             service.selectComic(1);
 
-            setTimeout(() => {
-                expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(1);
-                expect(service.currentStrip()).toEqual(mockImageDto);
-                ;
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(1);
+            expect(service.currentStrip()).toEqual(mockImageDto);
         });
 
         it('should return null for selectedComic when no comic is selected', () => {
@@ -174,11 +164,9 @@ describe('ComicStateService', () => {
             service.selectComic(1);
             service.navigateToFirst();
 
-            setTimeout(() => {
-                expect(comicServiceSpy.getEarliest).toHaveBeenCalledWith(1);
-                expect(service.currentStrip()).toEqual(mockImageDto);
-                ;
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            expect(comicServiceSpy.getEarliest).toHaveBeenCalledWith(1);
+            expect(service.currentStrip()).toEqual(mockImageDto);
         });
 
         it('should do nothing when no comic is selected', () => {
@@ -192,11 +180,9 @@ describe('ComicStateService', () => {
             service.selectComic(1);
             service.navigateToFirst();
 
-            setTimeout(() => {
-                expect(service.error()).toContain('Error loading first strip');
-                expect(service.loading()).toBe(false);
-                ;
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            expect(service.error()).toContain('Error loading first strip');
+            expect(service.loading()).toBe(false);
         });
     });
 
@@ -208,17 +194,14 @@ describe('ComicStateService', () => {
         it('should navigate to the previous strip', async () => {
             service.selectComic(1);
 
-            setTimeout(() => {
-                const currentStrip = service.currentStrip();
-                expect(currentStrip).toBeTruthy();
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const currentStrip = service.currentStrip();
+            expect(currentStrip).toBeTruthy();
 
-                service.navigateToPrevious();
+            service.navigateToPrevious();
 
-                setTimeout(() => {
-                    expect(comicServiceSpy.getPrev).toHaveBeenCalledWith(1, currentStrip!.imageDate);
-                    ;
-                }, 20);
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 20));
+            expect(comicServiceSpy.getPrev).toHaveBeenCalledWith(1, currentStrip!.imageDate);
         });
 
         it('should do nothing when no comic is selected', () => {
@@ -231,14 +214,11 @@ describe('ComicStateService', () => {
 
             service.selectComic(1);
 
-            setTimeout(() => {
-                service.navigateToPrevious();
+            await new Promise(resolve => setTimeout(resolve, 50));
+            service.navigateToPrevious();
 
-                setTimeout(() => {
-                    expect(service.error()).toContain('Error loading previous strip');
-                    ;
-                }, 20);
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 20));
+            expect(service.error()).toContain('Error loading previous strip');
         });
     });
 
@@ -250,17 +230,14 @@ describe('ComicStateService', () => {
         it('should navigate to the next strip', async () => {
             service.selectComic(1);
 
-            setTimeout(() => {
-                const currentStrip = service.currentStrip();
-                expect(currentStrip).toBeTruthy();
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const currentStrip = service.currentStrip();
+            expect(currentStrip).toBeTruthy();
 
-                service.navigateToNext();
+            service.navigateToNext();
 
-                setTimeout(() => {
-                    expect(comicServiceSpy.getNext).toHaveBeenCalledWith(1, currentStrip!.imageDate);
-                    ;
-                }, 20);
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 20));
+            expect(comicServiceSpy.getNext).toHaveBeenCalledWith(1, currentStrip!.imageDate);
         });
 
         it('should do nothing when no comic is selected', () => {
@@ -273,14 +250,11 @@ describe('ComicStateService', () => {
 
             service.selectComic(1);
 
-            setTimeout(() => {
-                service.navigateToNext();
+            await new Promise(resolve => setTimeout(resolve, 50));
+            service.navigateToNext();
 
-                setTimeout(() => {
-                    expect(service.error()).toContain('Error loading next strip');
-                    ;
-                }, 20);
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 20));
+            expect(service.error()).toContain('Error loading next strip');
         });
     });
 
@@ -293,11 +267,9 @@ describe('ComicStateService', () => {
             service.selectComic(1);
             service.navigateToLatest();
 
-            setTimeout(() => {
-                expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(1);
-                expect(service.currentStrip()).toEqual(mockImageDto);
-                ;
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            expect(comicServiceSpy.getLatest).toHaveBeenCalledWith(1);
+            expect(service.currentStrip()).toEqual(mockImageDto);
         });
 
         it('should do nothing when no comic is selected', () => {
@@ -311,12 +283,10 @@ describe('ComicStateService', () => {
 
             service.selectComic(1);
 
-            setTimeout(() => {
-                // The error comes from the constructor's subscription when selecting a comic
-                expect(service.error()).toContain('Error loading comic strip');
-                expect(service.loading()).toBe(false);
-                ;
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            // The error comes from the constructor's subscription when selecting a comic
+            expect(service.error()).toContain('Error loading comic strip');
+            expect(service.loading()).toBe(false);
         });
     });
 
@@ -333,25 +303,21 @@ describe('ComicStateService', () => {
         it('should provide selectedComic$ observable', async () => {
             service.selectComic(1);
 
-            setTimeout(() => {
-                service.selectedComic$.subscribe(comic => {
-                    expect(comic?.id).toBe(1);
-                    ;
-                });
-            }, 10);
+            await new Promise(resolve => setTimeout(resolve, 10));
+            service.selectedComic$.subscribe(comic => {
+                expect(comic?.id).toBe(1);
+            });
         });
 
         it('should provide currentStrip$ observable', async () => {
             service.selectComic(1);
 
-            setTimeout(() => {
-                service.currentStrip$.subscribe(strip => {
-                    if (strip) {
-                        expect(strip).toEqual(mockImageDto);
-                        ;
-                    }
-                });
-            }, 50);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            service.currentStrip$.subscribe(strip => {
+                if (strip) {
+                    expect(strip).toEqual(mockImageDto);
+                }
+            });
         });
     });
 });
