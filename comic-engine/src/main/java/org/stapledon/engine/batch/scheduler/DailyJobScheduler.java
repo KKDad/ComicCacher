@@ -83,14 +83,13 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     }
 
     /**
-     * Initializes the scheduler and checks for missed executions.
-     * If the job should have run today but hasn't, it will be triggered
-     * immediately.
+     * Initializes the scheduler with logging.
+     * Note: Missed execution checks are handled by StartupJobRunner
+     * after ApplicationReadyEvent to ensure all dependencies are ready.
      */
     @PostConstruct
     public void init() {
         logInitializationWithNextRun();
-        checkAndRunMissedExecution();
     }
 
     /**
@@ -118,8 +117,10 @@ public class DailyJobScheduler extends AbstractJobScheduler {
 
     /**
      * Checks if the job missed its scheduled execution time and runs if needed.
+     * Called by StartupJobRunner after ApplicationReadyEvent ensures all beans are
+     * ready.
      */
-    private void checkAndRunMissedExecution() {
+    public void runMissedExecutionIfNeeded() {
         if (executionTracker.hasJobRunToday(jobName)) {
             log.info("{} has already run today, no makeup run needed", jobName);
             return;
