@@ -6,7 +6,7 @@ import {ImageDto} from '../../dto/image';
 import {ComicNavigationResult} from '../../dto/comic-navigation-result';
 import {MatCardModule} from '@angular/material/card';
 import {MatButtonModule} from '@angular/material/button';
-import {CommonModule} from '@angular/common';
+
 import {LoadingIndicatorComponent} from '../../shared/ui/loading-indicator/loading-indicator.component';
 import {ErrorDisplayComponent} from '../../shared/ui/error-display/error-display.component';
 import {ComicStateService} from '../../state/comic-state.service';
@@ -19,12 +19,11 @@ import {Subscription} from 'rxjs';
     styleUrls: ['section.component.css'],
     standalone: true,
     imports: [
-        CommonModule,
-        MatCardModule,
-        MatButtonModule,
-        LoadingIndicatorComponent,
-        ErrorDisplayComponent
-    ],
+    MatCardModule,
+    MatButtonModule,
+    LoadingIndicatorComponent,
+    ErrorDisplayComponent
+],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SectionComponent implements OnInit, OnDestroy {

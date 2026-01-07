@@ -9,27 +9,32 @@ import {MatIconModule} from '@angular/material/icon';
   standalone: true,
   imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
   template: `
-    <div *ngIf="errorMessage" class="error-container" [ngClass]="{'dismissible': dismissible}">
-      <mat-card appearance="outlined" class="error-card">
-        <mat-card-content>
-          <div class="error-content">
-            <mat-icon color="warn">error</mat-icon>
-            <p class="error-message">{{ errorMessage }}</p>
-            <button 
-              *ngIf="dismissible" 
-              mat-icon-button 
-              class="dismiss-button" 
-              (click)="onDismiss()">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-        </mat-card-content>
-        <mat-card-actions *ngIf="retryable">
-          <button mat-button color="primary" (click)="onRetry()">RETRY</button>
-        </mat-card-actions>
-      </mat-card>
-    </div>
-  `,
+    @if (errorMessage) {
+      <div class="error-container" [ngClass]="{'dismissible': dismissible}">
+        <mat-card appearance="outlined" class="error-card">
+          <mat-card-content>
+            <div class="error-content">
+              <mat-icon color="warn">error</mat-icon>
+              <p class="error-message">{{ errorMessage }}</p>
+              @if (dismissible) {
+                <button
+                  mat-icon-button
+                  class="dismiss-button"
+                  (click)="onDismiss()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+          </mat-card-content>
+          @if (retryable) {
+            <mat-card-actions>
+              <button mat-button color="primary" (click)="onRetry()">RETRY</button>
+            </mat-card-actions>
+          }
+        </mat-card>
+      </div>
+    }
+    `,
   styles: [`
     .error-container {
       margin: var(--spacing-sm) 0;

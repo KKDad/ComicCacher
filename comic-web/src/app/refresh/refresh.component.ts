@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {MessageService} from '../message.service';
-import {CommonModule} from '@angular/common';
+
 import {MatButtonModule} from '@angular/material/button';
 
 /**
@@ -12,9 +12,8 @@ import {MatButtonModule} from '@angular/material/button';
   templateUrl: './refresh.component.html',
   standalone: true,
   imports: [
-    CommonModule,
     MatButtonModule
-  ]
+]
 })
 export class RefreshComponent {
 

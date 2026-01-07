@@ -1,4 +1,4 @@
-import {enableProdMode} from '@angular/core';
+import {enableProdMode, provideZoneChangeDetection} from '@angular/core';
 import {bootstrapApplication} from '@angular/platform-browser';
 import {AppComponent} from './app/app.component';
 import {environment} from './environments/environment';
@@ -14,7 +14,7 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideRouter(routes),
+    provideZoneChangeDetection(),provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
     provideAnimations(),
     // Container component is needed as a service for app component
