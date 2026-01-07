@@ -3,7 +3,7 @@ import {AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output
 import {Comic} from '../../dto/comic';
 import {ComicService} from '../../comic.service';
 import {CdkScrollable, CdkVirtualScrollViewport, ScrollDispatcher, ScrollingModule} from '@angular/cdk/scrolling';
-import {CommonModule} from '@angular/common';
+
 import {SectionComponent} from '../section/section.component';
 import {LoadingIndicatorComponent} from '../../shared/ui/loading-indicator/loading-indicator.component';
 import {ErrorDisplayComponent} from '../../shared/ui/error-display/error-display.component';
@@ -21,12 +21,11 @@ export enum NavBarOption {
     styleUrls: ['container.component.css'],
     standalone: true,
     imports: [
-        CommonModule,
-        ScrollingModule,
-        SectionComponent,
-        LoadingIndicatorComponent,
-        ErrorDisplayComponent
-    ]
+    ScrollingModule,
+    SectionComponent,
+    LoadingIndicatorComponent,
+    ErrorDisplayComponent
+]
 })
 export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input() sections: Comic[];

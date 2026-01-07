@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, HostListener, signal} from '@angular/core';
 import {MatButtonModule} from '@angular/material/button';
 import {RouterModule} from '@angular/router';
-import {CommonModule} from '@angular/common';
+
 import {ContainerComponent, NavBarOption} from './comicpage/container/container.component';
 
 @Component({
@@ -10,10 +10,9 @@ import {ContainerComponent, NavBarOption} from './comicpage/container/container.
   styleUrls: ['./app.component.css'],
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     MatButtonModule
-  ]
+]
 })
 export class AppComponent implements AfterViewInit {
   title = 'The Comic Reader';

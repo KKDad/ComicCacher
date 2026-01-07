@@ -8,7 +8,7 @@ A personal project to read my favorite daily comic strips without ads, pop-ups, 
 
 Originally written in C# and .NET 3.0 back in 2013, this has been rebuilt from the ground up with modern tech:
 - **Backend**: Spring Boot 4 + Java 21 API that downloads and caches comics daily
-- **Frontend**: Angular 19 + Material Design web app with glassmorphism UI
+- **Frontend**: Angular 21 + Material Design web app with glassmorphism UI (zoneless, Vitest)
 - **Hosting**: Runs in my home K8s cluster
 
 There's no public deployment - I built this for my own use and for fun. But if you'd like to run it yourself, go ahead!
@@ -77,4 +77,4 @@ Full endpoint documentation in the [docs/](docs/) directory.
 
 ## Development
 
-For detailed architecture, build instructions, module structure, testing guidelines, and coding standards, see [CLAUDE.md](CLAUDE.md).
+For detailed architecture, build instructions, module structure, testing guidelines, and coding standards, see [Antigravity.md](Antigravity.md).

@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ContainerComponent, NavBarOption} from './container/container.component';
-import {CommonModule} from '@angular/common';
+
 import {Comic} from '../dto/comic';
 import {ComicService} from '../comic.service';
 
@@ -13,9 +13,8 @@ import {ComicService} from '../comic.service';
   styleUrls: ['./comicpage.component.css'],
   standalone: true,
   imports: [
-    CommonModule,
     ContainerComponent
-  ]
+]
 })
 export class ComicpageComponent implements OnInit {
   sections: Comic[] = [];
