@@ -22,6 +22,7 @@ import org.stapledon.common.service.AnalysisService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
 import java.io.File;
@@ -48,6 +49,7 @@ public class ImageMetadataBackfillJobConfig {
     private final ValidationService imageValidationService;
     private final AnalysisService imageAnalysisService;
     private final ImageMetadataRepository imageMetadataRepository;
+    private final ComicConfigurationService comicConfigurationService;
 
     @Value("${batch.image-backfill.batch-size:100}")
     private int batchSize;
@@ -203,9 +205,29 @@ public class ImageMetadataBackfillJobConfig {
             return;
         }
 
+        // Identify comic from path
+        String path = imageFile.getAbsolutePath();
+        String cacheRoot = cacheProperties.getLocation();
+        String relative = path.substring(cacheRoot.length());
+        if (relative.startsWith("/"))
+            relative = relative.substring(1);
+        String comicDirName = relative.split("/")[0];
+
+        int comicId = 0;
+        String comicName = comicDirName;
+
+        // Try to find the comic in configuration to get the real ID and name
+        var comicItem = comicConfigurationService.loadComicConfig().getItems().values().stream()
+                .filter(c -> c.getName().replace(" ", "").equalsIgnoreCase(comicDirName))
+                .findFirst();
+        if (comicItem.isPresent()) {
+            comicId = comicItem.get().getId();
+            comicName = comicItem.get().getName();
+        }
+
         // Analyze and create metadata
         ImageMetadata metadata = imageAnalysisService.analyzeImage(
-                imageData, imageFile.getAbsolutePath(), validation, null);
+                comicId, comicName, imageData, imageFile.getAbsolutePath(), validation, null);
 
         // Save metadata - will return false if metadata is invalid
         boolean saved = imageMetadataRepository.saveMetadata(metadata);

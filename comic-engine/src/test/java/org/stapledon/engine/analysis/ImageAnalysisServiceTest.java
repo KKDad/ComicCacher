@@ -61,7 +61,8 @@ class ImageAnalysisServiceTest {
                 ImageFormat.PNG, 100, 100, imageFile.length());
 
         // When
-        ImageMetadata metadata = service.analyzeImage(imageFile, validation, "http://example.com/image.png");
+        ImageMetadata metadata = service.analyzeImage(1, "TestComic", imageFile, validation,
+                "http://example.com/image.png");
 
         // Then
         assertThat(metadata).isNotNull();
@@ -84,7 +85,7 @@ class ImageAnalysisServiceTest {
         String filePath = tempDir.resolve("test.png").toString();
 
         // When
-        ImageMetadata metadata = service.analyzeImage(imageData, filePath, validation, null);
+        ImageMetadata metadata = service.analyzeImage(1, "TestComic", imageData, filePath, validation, null);
 
         // Then
         assertThat(metadata).isNotNull();
@@ -134,7 +135,7 @@ class ImageAnalysisServiceTest {
                 ImageFormat.PNG, 100, 100, 1000);
 
         // When
-        ImageMetadata metadata = service.analyzeImage(nonExistentFile, validation, null);
+        ImageMetadata metadata = service.analyzeImage(1, "TestComic", nonExistentFile, validation, null);
 
         // Then
         assertThat(metadata).isNotNull();
@@ -190,7 +191,7 @@ class ImageAnalysisServiceTest {
 
         // When
         ImageMetadata metadata = service.analyzeImage(
-                imageData, "/tmp/test.png", validation, null);
+                1, "TestComic", imageData, "/tmp/test.png", validation, null);
 
         // Then
         assertThat(metadata.getSamplePercentage()).isEqualTo(5.0);

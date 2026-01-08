@@ -24,21 +24,6 @@ public class CaffeineCacheProperties {
     private boolean enabled = true;
 
     /**
-     * Navigation cache settings for comic strip navigation results.
-     */
-    private CacheConfig navigation = new CacheConfig(300, 10);
-
-    /**
-     * Boundary dates cache settings for newest/oldest dates.
-     */
-    private CacheConfig boundary = new CacheConfig(100, 60);
-
-    /**
-     * Navigation dates cache settings for next/previous date lookups.
-     */
-    private CacheConfig navigationDates = new CacheConfig(200, 30);
-
-    /**
      * Metadata cache settings for comic configuration data.
      */
     private CacheConfig metadata = new CacheConfig(60, 60);

@@ -100,7 +100,6 @@ class ComicManagementFacadeTest {
                 configFacade,
                 downloaderFacade,
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
-        ReflectionTestUtils.setField(facade, "self", facade);
     }
 
     // Test removed - on-demand downloads via CacheMissEvent no longer supported
@@ -494,5 +493,36 @@ class ComicManagementFacadeTest {
         // Assert
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get()).isEqualTo(oldest);
+    }
+
+    @Test
+    void shouldNavigateBackwardConsecutively() {
+        // Arrange: 3 days of comics
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+        LocalDate dayBeforeYesterday = today.minusDays(2);
+
+        ImageDto img2 = ImageDto.builder().imageDate(yesterday).build();
+        ImageDto img3 = ImageDto.builder().imageDate(dayBeforeYesterday).build();
+
+        // 1. From today, previous is yesterday
+        when(storageFacade.getPreviousDateWithComic(1, "Test Comic", today)).thenReturn(Optional.of(yesterday));
+        when(storageFacade.getComicStrip(1, "Test Comic", yesterday)).thenReturn(Optional.of(img2));
+
+        // 2. From yesterday, previous is dayBeforeYesterday
+        when(storageFacade.getPreviousDateWithComic(1, "Test Comic", yesterday))
+                .thenReturn(Optional.of(dayBeforeYesterday));
+        when(storageFacade.getComicStrip(1, "Test Comic", dayBeforeYesterday)).thenReturn(Optional.of(img3));
+
+        // Act & Assert
+        // First navigation back
+        ComicNavigationResult res1 = facade.getComicStrip(1, Direction.BACKWARD, today);
+        assertThat(res1.isFound()).isTrue();
+        assertThat(res1.getCurrentDate()).isEqualTo(yesterday);
+
+        // Second navigation back
+        ComicNavigationResult res2 = facade.getComicStrip(1, Direction.BACKWARD, yesterday);
+        assertThat(res2.isFound()).isTrue();
+        assertThat(res2.getCurrentDate()).isEqualTo(dayBeforeYesterday);
     }
 }

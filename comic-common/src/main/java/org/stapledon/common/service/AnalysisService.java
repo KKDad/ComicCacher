@@ -13,17 +13,23 @@ public interface AnalysisService {
     /**
      * Analyzes an image file and creates comprehensive metadata.
      *
+     * @param comicId   ID of the comic
+     * @param comicName Name of the comic
      * @param sourceUrl optional source URL from which the image was downloaded
      */
-    ImageMetadata analyzeImage(File imageFile, ImageValidationResult validation, String sourceUrl);
+    ImageMetadata analyzeImage(int comicId, String comicName, File imageFile, ImageValidationResult validation,
+            String sourceUrl);
 
     /**
      * Analyzes image data in memory and creates comprehensive metadata.
      *
-     * @param filePath path where the image will be/is stored
+     * @param comicId   ID of the comic
+     * @param comicName Name of the comic
+     * @param filePath  path where the image will be/is stored
      * @param sourceUrl optional source URL from which the image was downloaded
      */
-    ImageMetadata analyzeImage(byte[] imageData, String filePath, ImageValidationResult validation, String sourceUrl);
+    ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
+            ImageValidationResult validation, String sourceUrl);
 
     /**
      * Detects the color mode of an image by sampling pixels.

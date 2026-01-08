@@ -3,7 +3,6 @@ package org.stapledon.engine.management;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicConfig;
@@ -44,11 +43,6 @@ public class ComicManagementFacade implements ManagementFacade {
     private final ComicConfigurationService configFacade;
     private final DownloaderFacade downloaderFacade;
     private final RetrievalStatusService retrievalStatusService;
-
-    // Self-reference to enable @Cacheable on internal method calls
-    @Lazy
-    @Autowired
-    private ComicManagementFacade self;
 
     // Thread-safe collection for comics
     private final Map<Integer, ComicItem> comics = new ConcurrentHashMap<>();
@@ -145,12 +139,7 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = "comicMetadata", allEntries = true),
-            @CacheEvict(value = "comicNavigation", allEntries = true),
-            @CacheEvict(value = "boundaryDates", allEntries = true),
-            @CacheEvict(value = "navigationDates", allEntries = true)
-    })
+    @CacheEvict(value = "comicMetadata", allEntries = true)
     public boolean deleteComic(int comicId) {
         ComicItem removed = comics.remove(comicId);
 
@@ -219,19 +208,14 @@ public class ComicManagementFacade implements ManagementFacade {
         }
 
         ComicItem comic = comicOpt.get();
-
-        // Delegate to the cached implementation with comic name via self-reference to
-        // enable caching
-        return self.getComicStripCached(comicId, comic.getName(), direction, from);
+        return getComicStripInternal(comicId, comic.getName(), direction, from);
     }
 
     /**
-     * Cached implementation of getComicStrip that includes comic name in the cache
-     * key.
-     * This ensures that each comic has its own cache entries.
+     * Internal implementation of getComicStrip.
      */
-    @Cacheable(value = "comicNavigation", key = "#comicId + ':' + #comicName + ':' + #from + ':' + #direction")
-    ComicNavigationResult getComicStripCached(int comicId, String comicName, Direction direction, LocalDate from) {
+    private ComicNavigationResult getComicStripInternal(int comicId, String comicName, Direction direction,
+            LocalDate from) {
         log.info("getComicStrip: comicId={}, comicName={}, direction={}, from={}", comicId, comicName, direction, from);
 
         try {
