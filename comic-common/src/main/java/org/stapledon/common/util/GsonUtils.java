@@ -10,6 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GsonUtils {
     private GsonUtils() {
     }
@@ -38,6 +41,11 @@ public class GsonUtils {
         @Override
         public LocalDate read(final JsonReader jsonReader) throws IOException {
             if (jsonReader.peek() == JsonToken.BEGIN_OBJECT) {
+                // Legacy support for dates serialized as objects
+                // TODO: Remove this once all data is migrated to ISO-8601 string format
+                LoggerFactory.getLogger(GsonUtils.class)
+                        .warn("Encountered legacy LocalDate format (object) - consider data migration.");
+
                 int year = 0;
                 int month = 0;
                 int day = 0;

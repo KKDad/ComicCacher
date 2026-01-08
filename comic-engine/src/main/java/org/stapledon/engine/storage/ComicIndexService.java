@@ -10,6 +10,7 @@ import org.stapledon.common.dto.ComicDateIndex;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -66,12 +67,14 @@ public class ComicIndexService {
 
         int pos = Collections.binarySearch(dates, fromDate);
 
-        // If fromDate is found, the previous one is at index - 1
-        // If fromDate is NOT found, insertion point is index of first element greater
-        // than key
-        int prevIndex = (pos >= 0) ? pos - 1 : (-(pos + 1) - 1);
+        // If found, previous is at index - 1.
+        // If not found, pos is (-(insertion point) - 1).
+        // Insertion point is the first element greater than the key.
+        // We want the element immediately before the insertion point.
+        int insertionPoint = (pos >= 0) ? pos : -(pos + 1);
+        int prevIndex = insertionPoint - 1;
 
-        if (prevIndex >= 0) {
+        if (prevIndex >= 0 && prevIndex < dates.size()) {
             return Optional.of(dates.get(prevIndex));
         }
         return Optional.empty();
@@ -224,8 +227,10 @@ public class ComicIndexService {
                                 }
 
                                 dateSet.add(date);
+                            } catch (DateTimeParseException | StringIndexOutOfBoundsException e) {
+                                log.warn("Skipping invalid file {}: {}", name, e.getMessage());
                             } catch (Exception e) {
-                                // Skip non-date files or parsing errors
+                                log.error("Error processing file {}: {}", name, e.getMessage(), e);
                             }
                         }
                     }

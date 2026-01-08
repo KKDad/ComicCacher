@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.AnalysisService;
@@ -25,12 +26,16 @@ import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,11 +50,15 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ImageMetadataBackfillJobConfig {
 
+    private static final int UNKNOWN_COMIC_ID = 0;
+
     private final CacheProperties cacheProperties;
     private final ValidationService imageValidationService;
     private final AnalysisService imageAnalysisService;
     private final ImageMetadataRepository imageMetadataRepository;
     private final ComicConfigurationService comicConfigurationService;
+
+    private final Map<String, ComicItem> comicDirectoryMap = new HashMap<>();
 
     @Value("${batch.image-backfill.batch-size:100}")
     private int batchSize;
@@ -59,6 +68,15 @@ public class ImageMetadataBackfillJobConfig {
 
     @Value("${batch.timezone:America/Toronto}")
     private String timezone;
+
+    @PostConstruct
+    public void init() {
+        comicConfigurationService.loadComicConfig().getItems().values().forEach(comic -> {
+            String dirName = comic.getName().replace(" ", "");
+            comicDirectoryMap.put(dirName.toLowerCase(), comic);
+        });
+        log.info("Initialized comic directory map with {} entries", comicDirectoryMap.size());
+    }
 
     /**
      * Scheduler for ImageMetadataBackfillJob - runs daily at configured cron time.
@@ -205,24 +223,34 @@ public class ImageMetadataBackfillJobConfig {
             return;
         }
 
-        // Identify comic from path
-        String path = imageFile.getAbsolutePath();
-        String cacheRoot = cacheProperties.getLocation();
-        String relative = path.substring(cacheRoot.length());
-        if (relative.startsWith("/"))
-            relative = relative.substring(1);
-        String comicDirName = relative.split("/")[0];
+        // Normalize paths to absolute for comparison
+        Path rootPath = Paths.get(cacheProperties.getLocation()).toAbsolutePath().normalize();
+        Path filePath = imageFile.toPath().toAbsolutePath().normalize();
 
-        int comicId = 0;
+        if (!filePath.startsWith(rootPath)) {
+            log.warn("Image file {} is not under cache root {}", filePath, rootPath);
+            return;
+        }
+
+        // Identify comic from path using NIO
+        Path relativePath = rootPath.relativize(filePath);
+
+        // Expected format: ComicName/Year/Date.png
+        if (relativePath.getNameCount() < 1) {
+            log.warn("Cannot determine comic name from path: {}", relativePath);
+            return;
+        }
+
+        String comicDirName = relativePath.getName(0).toString();
+
+        int comicId = UNKNOWN_COMIC_ID;
         String comicName = comicDirName;
 
-        // Try to find the comic in configuration to get the real ID and name
-        var comicItem = comicConfigurationService.loadComicConfig().getItems().values().stream()
-                .filter(c -> c.getName().replace(" ", "").equalsIgnoreCase(comicDirName))
-                .findFirst();
-        if (comicItem.isPresent()) {
-            comicId = comicItem.get().getId();
-            comicName = comicItem.get().getName();
+        // O(1) Lookup
+        ComicItem comicItem = comicDirectoryMap.get(comicDirName.toLowerCase());
+        if (comicItem != null) {
+            comicId = comicItem.getId();
+            comicName = comicItem.getName();
         }
 
         // Analyze and create metadata

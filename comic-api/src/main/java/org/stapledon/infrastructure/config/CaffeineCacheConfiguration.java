@@ -6,7 +6,6 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.stapledon.common.config.CaffeineCacheProperties;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -22,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableCaching
-@EnableAsync
 @ConditionalOnProperty(name = "comics.cache.caffeine.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class CaffeineCacheConfiguration {

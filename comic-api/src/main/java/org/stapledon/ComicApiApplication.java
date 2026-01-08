@@ -2,6 +2,7 @@ package org.stapledon;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @OpenAPIDefinition(info = @Info(title = "Web-comics scroller", description = "Saturday Comics Page brought Online", contact = @Contact(name = "ComicsApi", url = "https://github.com/KKDad/ComicCacher", email = "adrian@gilbert.ca"), version = "2.0", license = @License(name = "MIT Licence", url = "https://github.com/thombergs/code-examples/blob/master/LICENSE")), servers = @Server(url = "http://comics.stapledon.local"))
 @SpringBootApplication
 @EnableScheduling
+@EnableAsync
 @RequiredArgsConstructor
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 public class ComicApiApplication {
