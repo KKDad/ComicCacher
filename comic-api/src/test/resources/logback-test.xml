@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false">
+    <property name="LOG_EXCEPTION_CONVERSION_WORD" value="%wEx{50,org.springframework,org.apache,sun.reflect,java.lang.reflect,io.netty}"/>
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
     <logger name="org.stapledon" level="TRACE"/>
 </configuration>
