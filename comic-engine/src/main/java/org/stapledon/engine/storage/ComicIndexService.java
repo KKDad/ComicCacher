@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicDateIndex;
+import org.stapledon.common.dto.ComicIdentifier;
 
 import java.io.File;
 import java.io.FileReader;
@@ -286,6 +287,66 @@ public class ComicIndexService {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    // ==================== ComicIdentifier overloads ====================
+    // These methods accept ComicIdentifier instead of primitive (int, String) pairs
+    // to reduce primitive obsession. They delegate to the existing implementations.
+
+    /**
+     * Get the next available date with a comic strip.
+     */
+    public Optional<LocalDate> getNextDate(ComicIdentifier comic, LocalDate fromDate) {
+        return getNextDate(comic.getId(), comic.getName(), fromDate);
+    }
+
+    /**
+     * Get the previous available date with a comic strip.
+     */
+    public Optional<LocalDate> getPreviousDate(ComicIdentifier comic, LocalDate fromDate) {
+        return getPreviousDate(comic.getId(), comic.getName(), fromDate);
+    }
+
+    /**
+     * Get the newest available date for a comic.
+     */
+    public Optional<LocalDate> getNewestDate(ComicIdentifier comic) {
+        return getNewestDate(comic.getId(), comic.getName());
+    }
+
+    /**
+     * Get the oldest available date for a comic.
+     */
+    public Optional<LocalDate> getOldestDate(ComicIdentifier comic) {
+        return getOldestDate(comic.getId(), comic.getName());
+    }
+
+    /**
+     * Mark a date as available and update the index.
+     */
+    public void addDateToIndex(ComicIdentifier comic, LocalDate date) {
+        addDateToIndex(comic.getId(), comic.getName(), date);
+    }
+
+    /**
+     * Remove a date from the index.
+     */
+    public void removeDateFromIndex(ComicIdentifier comic, LocalDate date) {
+        removeDateFromIndex(comic.getId(), comic.getName(), date);
+    }
+
+    /**
+     * Rebuild the entire index from scratch.
+     */
+    public void rebuildIndex(ComicIdentifier comic) {
+        rebuildIndex(comic.getId(), comic.getName());
+    }
+
+    /**
+     * Rebuild the entire index with optional metadata validation.
+     */
+    public void rebuildIndex(ComicIdentifier comic, boolean validateMetadata) {
+        rebuildIndex(comic.getId(), comic.getName(), validateMetadata);
     }
 
     private ComicDateIndex getOrLoadIndex(int comicId, String comicName) {
