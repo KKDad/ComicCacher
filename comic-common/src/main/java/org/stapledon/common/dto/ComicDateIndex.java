@@ -34,4 +34,11 @@ public class ComicDateIndex {
      * Date when the index was last updated.
      */
     private LocalDate lastUpdated;
+
+    /**
+     * Returns a ComicIdentifier for this index.
+     */
+    public ComicIdentifier getComicIdentifier() {
+        return new ComicIdentifier(comicId, comicName);
+    }
 }

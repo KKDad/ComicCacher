@@ -90,4 +90,11 @@ public class ImageMetadata {
          */
         UNKNOWN
     }
+
+    /**
+     * Returns a ComicIdentifier for this metadata.
+     */
+    public ComicIdentifier getComicIdentifier() {
+        return new ComicIdentifier(comicId, comicName);
+    }
 }

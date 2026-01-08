@@ -1,5 +1,6 @@
 package org.stapledon.common.service;
 
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ImageDto;
 
 import java.io.File;
@@ -14,25 +15,36 @@ import java.util.Optional;
  */
 public interface ComicStorageFacade {
     // Basic file operations
-    boolean saveComicStrip(int comicId, String comicName, LocalDate date, byte[] imageData);
-    boolean saveAvatar(int comicId, String comicName, byte[] imageData);
-    Optional<ImageDto> getComicStrip(int comicId, String comicName, LocalDate date);
-    Optional<ImageDto> getAvatar(int comicId, String comicName);
+    boolean saveComicStrip(ComicIdentifier comic, LocalDate date, byte[] imageData);
+
+    boolean saveAvatar(ComicIdentifier comic, byte[] imageData);
+
+    Optional<ImageDto> getComicStrip(ComicIdentifier comic, LocalDate date);
+
+    Optional<ImageDto> getAvatar(ComicIdentifier comic);
 
     // Navigation operations
-    Optional<LocalDate> getNextDateWithComic(int comicId, String comicName, LocalDate fromDate);
-    Optional<LocalDate> getPreviousDateWithComic(int comicId, String comicName, LocalDate fromDate);
-    Optional<LocalDate> getNewestDateWithComic(int comicId, String comicName);
-    Optional<LocalDate> getOldestDateWithComic(int comicId, String comicName);
+    Optional<LocalDate> getNextDateWithComic(ComicIdentifier comic, LocalDate fromDate);
+
+    Optional<LocalDate> getPreviousDateWithComic(ComicIdentifier comic, LocalDate fromDate);
+
+    Optional<LocalDate> getNewestDateWithComic(ComicIdentifier comic);
+
+    Optional<LocalDate> getOldestDateWithComic(ComicIdentifier comic);
 
     // Management operations
-    boolean comicStripExists(int comicId, String comicName, LocalDate date);
-    boolean deleteComic(int comicId, String comicName);
-    boolean purgeOldImages(int comicId, String comicName, int daysToKeep);
+    boolean comicStripExists(ComicIdentifier comic, LocalDate date);
+
+    boolean deleteComic(ComicIdentifier comic);
+
+    boolean purgeOldImages(ComicIdentifier comic, int daysToKeep);
+
     File getCacheRoot();
-    String getComicCacheRoot(int comicId, String comicName);
+
+    String getComicCacheRoot(ComicIdentifier comic);
 
     // Cache statistics
-    List<String> getYearsWithContent(int comicId, String comicName);
-    long getStorageSize(int comicId, String comicName);
+    List<String> getYearsWithContent(ComicIdentifier comic);
+
+    long getStorageSize(ComicIdentifier comic);
 }

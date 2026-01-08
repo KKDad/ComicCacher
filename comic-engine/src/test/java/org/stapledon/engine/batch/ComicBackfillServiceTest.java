@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
@@ -51,8 +52,7 @@ class ComicBackfillServiceTest {
         lenient().when(configService.getMaxConsecutiveFailures()).thenReturn(MAX_CONSECUTIVE_FAILURES);
         lenient().when(configService.getMaxPerDayForSource(anyString())).thenReturn(DEFAULT_MAX_PER_DAY);
         lenient().when(configService.getMaxDaysBackForSource(anyString())).thenReturn(DEFAULT_MAX_DAYS_BACK);
-        lenient().when(configService.getEarliestAllowedDate(anyString()))
-                .thenReturn(LocalDate.now().minusDays(DEFAULT_MAX_DAYS_BACK));
+        lenient().when(configService.getEarliestAllowedDate(anyString())).thenReturn(LocalDate.now().minusDays(DEFAULT_MAX_DAYS_BACK));
         lenient().when(configService.isSourceEnabled(anyString())).thenReturn(true);
     }
 
@@ -109,8 +109,7 @@ class ComicBackfillServiceTest {
         when(managementFacade.getAllComics()).thenReturn(List.of(comic));
 
         // Mock all strips as existing
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenReturn(true);
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(true);
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -127,11 +126,10 @@ class ComicBackfillServiceTest {
         LocalDate missingDate2 = today.minusDays(3);
 
         // Mock specific dates as missing
-        when(storageFacade.comicStripExists(eq(1), eq("Partial Comic"), any(LocalDate.class)))
-                .thenAnswer(invocation -> {
-                    LocalDate date = invocation.getArgument(2);
-                    return !date.equals(missingDate1) && !date.equals(missingDate2);
-                });
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenAnswer(invocation -> {
+            LocalDate date = invocation.getArgument(1);
+            return !date.equals(missingDate1) && !date.equals(missingDate2);
+        });
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -146,8 +144,7 @@ class ComicBackfillServiceTest {
         when(managementFacade.getAllComics()).thenReturn(List.of(comic));
 
         // Mock all strips as missing (comic doesn't exist this far back)
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenReturn(false);
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -161,12 +158,11 @@ class ComicBackfillServiceTest {
         when(managementFacade.getAllComics()).thenReturn(List.of(comic));
 
         // Pattern: several missing, 1 found, repeat
-        when(storageFacade.comicStripExists(eq(1), eq("Spotty Comic"), any(LocalDate.class)))
-                .thenAnswer(invocation -> {
-                    LocalDate date = invocation.getArgument(2);
-                    int dayOfYear = date.getDayOfYear();
-                    return dayOfYear % 11 == 0; // Every 11th day exists
-                });
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenAnswer(invocation -> {
+            LocalDate date = invocation.getArgument(1);
+            int dayOfYear = date.getDayOfYear();
+            return dayOfYear % 11 == 0; // Every 11th day exists
+        });
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -177,18 +173,12 @@ class ComicBackfillServiceTest {
     @Test
     void findMissingStrips_respectsPublicationDays() {
         ComicItem comic = createComic(1, "Weekday Comic", true);
-        comic.setPublicationDays(List.of(
-                DayOfWeek.MONDAY,
-                DayOfWeek.TUESDAY,
-                DayOfWeek.WEDNESDAY,
-                DayOfWeek.THURSDAY,
-                DayOfWeek.FRIDAY));
+        comic.setPublicationDays(List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY));
 
         when(managementFacade.getAllComics()).thenReturn(List.of(comic));
 
         // Mock all strips as missing
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenReturn(false);
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -206,8 +196,7 @@ class ComicBackfillServiceTest {
         when(managementFacade.getAllComics()).thenReturn(List.of(comic));
 
         // Mock all strips as missing
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenReturn(false);
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -229,8 +218,7 @@ class ComicBackfillServiceTest {
         LocalDate missingDate = LocalDate.now().minusDays(5);
 
         // Mock first date as missing for both comics, all others exist
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenAnswer(invocation -> !invocation.getArgument(2).equals(missingDate));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenAnswer(invocation -> !invocation.getArgument(1).equals(missingDate));
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -248,16 +236,13 @@ class ComicBackfillServiceTest {
         when(configService.getEarliestAllowedDate("test-source")).thenReturn(earliestAllowed);
 
         // Mock all strips as missing
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenReturn(false);
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
 
         List<BackfillTask> result = service.findMissingStrips();
 
         // Verify no dates before earliest allowed
         for (BackfillTask task : result) {
-            assertThat(task.date().isBefore(earliestAllowed))
-                    .as("Should not scan before earliest allowed date: " + task.date())
-                    .isFalse();
+            assertThat(task.date().isBefore(earliestAllowed)).as("Should not scan before earliest allowed date: " + task.date()).isFalse();
         }
     }
 
@@ -270,8 +255,7 @@ class ComicBackfillServiceTest {
         when(configService.getMaxPerDayForSource("test-source")).thenReturn(5);
 
         // Mock all strips as missing
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenReturn(false);
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
 
         List<BackfillTask> result = service.findMissingStrips();
 
@@ -288,16 +272,13 @@ class ComicBackfillServiceTest {
         when(managementFacade.getAllComics()).thenReturn(List.of(comic));
 
         // Mock all strips as missing
-        when(storageFacade.comicStripExists(anyInt(), anyString(), any(LocalDate.class)))
-                .thenReturn(false);
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
 
         List<BackfillTask> result = service.findMissingStrips();
 
         // Verify no dates before comic's oldest date
         for (BackfillTask task : result) {
-            assertThat(task.date().isBefore(comicOldest))
-                    .as("Should not scan before comic's oldest date: " + task.date())
-                    .isFalse();
+            assertThat(task.date().isBefore(comicOldest)).as("Should not scan before comic's oldest date: " + task.date()).isFalse();
         }
     }
 

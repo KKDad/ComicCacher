@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.DuplicateValidationResult;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
@@ -71,6 +72,7 @@ class FileSystemComicStorageFacadeTest {
     private static final int COMIC_ID = 42;
     private static final String COMIC_NAME = "TestComic";
     private static final String COMIC_NAME_PARSED = "TestComic";
+    private static final ComicIdentifier COMIC_IDENTIFIER = new ComicIdentifier(COMIC_ID, COMIC_NAME);
     private static final String YEAR_2023 = "2023";
     private static final LocalDate TEST_DATE = LocalDate.of(2023, 1, 15);
 
@@ -152,7 +154,7 @@ class FileSystemComicStorageFacadeTest {
         byte[] imageData = "Test image data".getBytes();
 
         // Act
-        boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
+        boolean result = storageFacade.saveComicStrip(COMIC_IDENTIFIER, date, imageData);
 
         // Assert
         assertThat(result).isTrue();
@@ -169,7 +171,7 @@ class FileSystemComicStorageFacadeTest {
         byte[] avatarData = "New avatar data".getBytes();
 
         // Act
-        boolean result = storageFacade.saveAvatar(COMIC_ID, COMIC_NAME, avatarData);
+        boolean result = storageFacade.saveAvatar(COMIC_IDENTIFIER, avatarData);
 
         // Assert
         assertThat(result).isTrue();
@@ -186,15 +188,15 @@ class FileSystemComicStorageFacadeTest {
         // Arrange
         LocalDate from = LocalDate.of(2023, 1, 10);
         LocalDate next = LocalDate.of(2023, 1, 15);
-        when(comicIndexService.getNextDate(COMIC_ID, COMIC_NAME, from)).thenReturn(Optional.of(next));
+        when(comicIndexService.getNextDate(COMIC_IDENTIFIER, from)).thenReturn(Optional.of(next));
 
         // Act
-        Optional<LocalDate> result = storageFacade.getNextDateWithComic(COMIC_ID, COMIC_NAME, from);
+        Optional<LocalDate> result = storageFacade.getNextDateWithComic(COMIC_IDENTIFIER, from);
 
         // Assert
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(next);
-        verify(comicIndexService).getNextDate(COMIC_ID, COMIC_NAME, from);
+        verify(comicIndexService).getNextDate(COMIC_IDENTIFIER, from);
     }
 
     @Test
@@ -202,45 +204,45 @@ class FileSystemComicStorageFacadeTest {
         // Arrange
         LocalDate from = LocalDate.of(2023, 1, 20);
         LocalDate prev = LocalDate.of(2023, 1, 15);
-        when(comicIndexService.getPreviousDate(COMIC_ID, COMIC_NAME, from)).thenReturn(Optional.of(prev));
+        when(comicIndexService.getPreviousDate(COMIC_IDENTIFIER, from)).thenReturn(Optional.of(prev));
 
         // Act
-        Optional<LocalDate> result = storageFacade.getPreviousDateWithComic(COMIC_ID, COMIC_NAME, from);
+        Optional<LocalDate> result = storageFacade.getPreviousDateWithComic(COMIC_IDENTIFIER, from);
 
         // Assert
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(prev);
-        verify(comicIndexService).getPreviousDate(COMIC_ID, COMIC_NAME, from);
+        verify(comicIndexService).getPreviousDate(COMIC_IDENTIFIER, from);
     }
 
     @Test
     void getNewestDateWithComic_shouldReturnNewestAvailableDate() {
         // Arrange
         LocalDate newest = LocalDate.of(2023, 1, 20);
-        when(comicIndexService.getNewestDate(COMIC_ID, COMIC_NAME)).thenReturn(Optional.of(newest));
+        when(comicIndexService.getNewestDate(COMIC_IDENTIFIER)).thenReturn(Optional.of(newest));
 
         // Act
-        Optional<LocalDate> result = storageFacade.getNewestDateWithComic(COMIC_ID, COMIC_NAME);
+        Optional<LocalDate> result = storageFacade.getNewestDateWithComic(COMIC_IDENTIFIER);
 
         // Assert
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(newest);
-        verify(comicIndexService).getNewestDate(COMIC_ID, COMIC_NAME);
+        verify(comicIndexService).getNewestDate(COMIC_IDENTIFIER);
     }
 
     @Test
     void getOldestDateWithComic_shouldReturnOldestAvailableDate() {
         // Arrange
         LocalDate oldest = LocalDate.of(2023, 1, 10);
-        when(comicIndexService.getOldestDate(COMIC_ID, COMIC_NAME)).thenReturn(Optional.of(oldest));
+        when(comicIndexService.getOldestDate(COMIC_IDENTIFIER)).thenReturn(Optional.of(oldest));
 
         // Act
-        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_ID, COMIC_NAME);
+        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_IDENTIFIER);
 
         // Assert
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(oldest);
-        verify(comicIndexService).getOldestDate(COMIC_ID, COMIC_NAME);
+        verify(comicIndexService).getOldestDate(COMIC_IDENTIFIER);
     }
 
     @Test
@@ -248,10 +250,10 @@ class FileSystemComicStorageFacadeTest {
         // Note: This logic now lives in ComicIndexService.
         // We verify that the facade correctly delegates to the service.
         LocalDate oldest = LocalDate.of(2023, 1, 10);
-        when(comicIndexService.getOldestDate(COMIC_ID, COMIC_NAME)).thenReturn(Optional.of(oldest));
+        when(comicIndexService.getOldestDate(COMIC_IDENTIFIER)).thenReturn(Optional.of(oldest));
 
         // Act
-        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_ID, COMIC_NAME);
+        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_IDENTIFIER);
 
         // Assert
         assertThat(result).isPresent();
@@ -266,24 +268,24 @@ class FileSystemComicStorageFacadeTest {
         LocalDate dec31 = LocalDate.of(2025, 12, 31);
         LocalDate dec30 = LocalDate.of(2025, 12, 30);
 
-        when(comicIndexService.getPreviousDate(COMIC_ID, COMIC_NAME, jan2)).thenReturn(Optional.of(jan1));
-        when(comicIndexService.getPreviousDate(COMIC_ID, COMIC_NAME, jan1)).thenReturn(Optional.of(dec31));
-        when(comicIndexService.getPreviousDate(COMIC_ID, COMIC_NAME, dec31)).thenReturn(Optional.of(dec30));
+        when(comicIndexService.getPreviousDate(COMIC_IDENTIFIER, jan2)).thenReturn(Optional.of(jan1));
+        when(comicIndexService.getPreviousDate(COMIC_IDENTIFIER, jan1)).thenReturn(Optional.of(dec31));
+        when(comicIndexService.getPreviousDate(COMIC_IDENTIFIER, dec31)).thenReturn(Optional.of(dec30));
 
         // Act & Assert
-        assertThat(storageFacade.getPreviousDateWithComic(COMIC_ID, COMIC_NAME, jan2)).hasValue(jan1);
-        assertThat(storageFacade.getPreviousDateWithComic(COMIC_ID, COMIC_NAME, jan1)).hasValue(dec31);
-        assertThat(storageFacade.getPreviousDateWithComic(COMIC_ID, COMIC_NAME, dec31)).hasValue(dec30);
+        assertThat(storageFacade.getPreviousDateWithComic(COMIC_IDENTIFIER, jan2)).hasValue(jan1);
+        assertThat(storageFacade.getPreviousDateWithComic(COMIC_IDENTIFIER, jan1)).hasValue(dec31);
+        assertThat(storageFacade.getPreviousDateWithComic(COMIC_IDENTIFIER, dec31)).hasValue(dec30);
     }
 
     @Test
     void navigation_shouldIgnoreInvalidFilenames() throws Exception {
         // Note: This logic now lives in ComicIndexService.
         LocalDate oldest = LocalDate.of(2023, 1, 10);
-        when(comicIndexService.getOldestDate(COMIC_ID, COMIC_NAME)).thenReturn(Optional.of(oldest));
+        when(comicIndexService.getOldestDate(COMIC_IDENTIFIER)).thenReturn(Optional.of(oldest));
 
         // Act
-        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_ID, COMIC_NAME);
+        Optional<LocalDate> result = storageFacade.getOldestDateWithComic(COMIC_IDENTIFIER);
 
         // Assert
         assertThat(result).isPresent();
@@ -293,7 +295,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void comicStripExists_shouldReturnTrueWhenExists() {
         // Act
-        boolean result = storageFacade.comicStripExists(COMIC_ID, COMIC_NAME, TEST_DATE);
+        boolean result = storageFacade.comicStripExists(COMIC_IDENTIFIER, TEST_DATE);
 
         // Assert
         assertThat(result).isTrue();
@@ -305,7 +307,7 @@ class FileSystemComicStorageFacadeTest {
         LocalDate missingDate = LocalDate.of(2023, 3, 1);
 
         // Act
-        boolean result = storageFacade.comicStripExists(COMIC_ID, COMIC_NAME, missingDate);
+        boolean result = storageFacade.comicStripExists(COMIC_IDENTIFIER, missingDate);
 
         // Assert
         assertThat(result).isFalse();
@@ -314,7 +316,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void getYearsWithContent_shouldReturnCorrectYears() {
         // Act
-        List<String> years = storageFacade.getYearsWithContent(COMIC_ID, COMIC_NAME);
+        List<String> years = storageFacade.getYearsWithContent(COMIC_IDENTIFIER);
 
         // Assert
         assertThat(years).containsExactly(YEAR_2023);
@@ -323,7 +325,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void getStorageSize_shouldReturnCorrectSize() {
         // Act
-        long size = storageFacade.getStorageSize(COMIC_ID, COMIC_NAME);
+        long size = storageFacade.getStorageSize(COMIC_IDENTIFIER);
 
         // Assert
         assertThat(size).isGreaterThan(0);
@@ -332,7 +334,7 @@ class FileSystemComicStorageFacadeTest {
     @Test
     void deleteComic_shouldRemoveAllComicFiles() {
         // Act
-        boolean result = storageFacade.deleteComic(COMIC_ID, COMIC_NAME);
+        boolean result = storageFacade.deleteComic(COMIC_IDENTIFIER);
 
         // Assert
         assertThat(result).isTrue();
@@ -363,7 +365,7 @@ class FileSystemComicStorageFacadeTest {
         byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
         // Act
-        boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
+        boolean result = storageFacade.saveComicStrip(COMIC_IDENTIFIER, date, imageData);
 
         // Assert
         assertThat(result).isTrue();
@@ -378,7 +380,7 @@ class FileSystemComicStorageFacadeTest {
         );
 
         // Verify that the date was added to the index
-        verify(comicIndexService).addDateToIndex(COMIC_ID, COMIC_NAME, date);
+        verify(comicIndexService).addDateToIndex(COMIC_IDENTIFIER, date);
     }
 
     @Test
@@ -395,7 +397,7 @@ class FileSystemComicStorageFacadeTest {
                         "/path/to/duplicate.png"));
 
         // Act
-        boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
+        boolean result = storageFacade.saveComicStrip(COMIC_IDENTIFIER, date, imageData);
 
         // Assert
         assertThat(result).isTrue(); // Returns true because download was successful
@@ -421,7 +423,7 @@ class FileSystemComicStorageFacadeTest {
                 .thenReturn(ImageValidationResult.failure("Validation failed"));
 
         // Act
-        boolean result = storageFacade.saveComicStrip(COMIC_ID, COMIC_NAME, date, imageData);
+        boolean result = storageFacade.saveComicStrip(COMIC_IDENTIFIER, date, imageData);
 
         // Assert
         assertThat(result).isFalse();
