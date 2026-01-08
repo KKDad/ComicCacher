@@ -1,16 +1,39 @@
 <div class="bg">
   <mat-card appearance="elevated">
-    <mat-card-content>
-    <div>
-      <p>Daily comics is a web comics cacher that amalgamates different daily comics from multiple sources into a single ad free page.</p>
-      <p>Website for my personal use only, all comics are copywrited by their authors. Please use their official publishers please.<br>
-      <p>Frontend: Angular 19<br>
-         Backend: REST API using Springboot2 Framework<br>
-         API: Spring-restdocs-mockmvc and Asciidoctor</p>
-    </div>
-    <div class="button-wrapper">
-      <button mat-button className="mat-button-raised" (click)="onNavigateHome()">Return to the Comics</button>
-    </div>
-  </mat-card-content>
+    <mat-card-content class="content-container">
+      <h2 class="mat-h2">About Daily Comics</h2>
+
+      <div class="description-section">
+        <p>Daily Comics is a web comics cacher that amalgamates different daily comics from multiple sources into a
+          single, ad-free page.</p>
+
+        <div class="alert-box">
+          <p><strong>Note:</strong> This website is for personal use only. All comics are copyrighted by their
+            respective authors. Please support the official publishers.</p>
+        </div>
+      </div>
+
+      <div class="tech-stack-section">
+        <h3 class="mat-h3">Tech Stack</h3>
+        <dl class="tech-list">
+          <div class="tech-item">
+            <dt>Frontend</dt>
+            <dd>Angular 21</dd>
+          </div>
+          <div class="tech-item">
+            <dt>Backend</dt>
+            <dd>REST API using Spring Boot 4 Framework</dd>
+          </div>
+          <div class="tech-item">
+            <dt>API Docs</dt>
+            <dd>Spring REST Docs (MockMvc) and Asciidoctor</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="button-wrapper">
+        <button mat-raised-button color="primary" (click)="onNavigateHome()">Return to the Comics</button>
+      </div>
+    </mat-card-content>
   </mat-card>
-  </div>
+</div>
