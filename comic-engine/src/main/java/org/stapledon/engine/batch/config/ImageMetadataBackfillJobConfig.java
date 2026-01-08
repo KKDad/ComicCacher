@@ -26,7 +26,6 @@ import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
-import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -67,13 +66,25 @@ public class ImageMetadataBackfillJobConfig {
     @Value("${batch.timezone:America/Toronto}")
     private String timezone;
 
-    @PostConstruct
-    public void init() {
-        comicConfigurationService.loadComicConfig().getItems().values().forEach(comic -> {
-            String dirName = comic.getName().replace(" ", "");
-            comicDirectoryMap.put(dirName.toLowerCase(), comic);
-        });
-        log.info("Initialized comic directory map with {} entries", comicDirectoryMap.size());
+    private volatile boolean initialized = false;
+
+    /**
+     * Lazily initializes the comic directory map on first use.
+     * Avoids blocking application startup.
+     */
+    private void ensureInitialized() {
+        if (!initialized) {
+            synchronized (comicDirectoryMap) {
+                if (!initialized) {
+                    comicConfigurationService.loadComicConfig().getItems().values().forEach(comic -> {
+                        String dirName = comic.getName().replace(" ", "");
+                        comicDirectoryMap.put(dirName.toLowerCase(), comic);
+                    });
+                    initialized = true;
+                    log.info("Initialized comic directory map with {} entries", comicDirectoryMap.size());
+                }
+            }
+        }
     }
 
     /**
@@ -137,7 +148,7 @@ public class ImageMetadataBackfillJobConfig {
 
             // Process in streaming fashion with configurable max limit
             int maxToProcess = batchSize * 100; // Process up to 100 batches per run
-            int[] counters = {0, 0, 0}; // processed, successful, failed
+            int[] counters = { 0, 0, 0 }; // processed, successful, failed
 
             try (Stream<Path> paths = Files.walk(cacheRoot.toPath())) {
                 paths.filter(Files::isRegularFile)
@@ -231,7 +242,8 @@ public class ImageMetadataBackfillJobConfig {
         int comicId = UNKNOWN_COMIC_ID;
         String comicName = comicDirName;
 
-        // O(1) Lookup
+        // O(1) Lookup after lazy init
+        ensureInitialized();
         ComicItem comicItem = comicDirectoryMap.get(comicDirName.toLowerCase());
         if (comicItem != null) {
             comicId = comicItem.getId();

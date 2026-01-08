@@ -341,7 +341,10 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                     LocalDate comicDate = LocalDate.parse(filename, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
                     if (comicDate.isBefore(cutoffDate)) {
-                        if (!comicFile.delete()) {
+                        if (comicFile.delete()) {
+                            // Update the index to remove the deleted date
+                            comicIndexService.removeDateFromIndex(comicId, comicName, comicDate);
+                        } else {
                             log.error("Failed to delete old comic file: {}", comicFile.getAbsolutePath());
                             success = false;
                         }

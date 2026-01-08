@@ -297,20 +297,31 @@ public class ComicIndexService {
             }
         }
 
-        return indexCache.computeIfAbsent(comicId, id -> {
-            ComicDateIndex index = loadIndex(id, comicName);
-            if (index.getAvailableDates().isEmpty()) {
-                // Try to rebuild once
-                ComicDateIndex rebuilt = rebuildAndGetIndex(id, comicName);
-                if (rebuilt != null && rebuilt.getAvailableDates().isEmpty()) {
+        // Use get+putIfAbsent pattern to avoid ConcurrentHashMap recursive update issue
+        // (computeIfAbsent doesn't allow modifications during computation)
+        ComicDateIndex cached = indexCache.get(comicId);
+        if (cached != null) {
+            return cached;
+        }
+
+        // Load and potentially rebuild
+        ComicDateIndex index = loadIndex(comicId, comicName);
+        if (index.getAvailableDates().isEmpty()) {
+            // Try to rebuild once
+            ComicDateIndex rebuilt = rebuildAndGetIndex(comicId, comicName);
+            if (rebuilt != null) {
+                if (rebuilt.getAvailableDates().isEmpty()) {
                     // Mark as verified empty to prevent future rebuilds
                     VERIFIED_EMPTY_COMICS.add(comicId);
                     log.debug("Comic {} verified as empty, will not attempt rebuild again", comicName);
                 }
-                return rebuilt != null ? rebuilt : index;
+                return rebuilt;
             }
-            return index;
-        });
+        }
+
+        // Cache and return
+        indexCache.putIfAbsent(comicId, index);
+        return indexCache.get(comicId);
     }
 
     /**
