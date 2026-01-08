@@ -1,6 +1,5 @@
 package org.stapledon.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -8,6 +7,8 @@ import java.util.List;
 /**
  * Persistent index of available comic dates for a specific comic.
  * Saved as available-dates.json in the comic's directory.
+ *
+ * Note: Serialized using Gson with custom LocalDate adapter (GsonUtils).
  */
 @Getter
 @Setter
@@ -25,10 +26,12 @@ public class ComicDateIndex {
 
     /**
      * Sorted list of all dates that have a comic strip available on disk.
+     * Dates are stored in ISO-8601 format (yyyy-MM-dd) when serialized.
      */
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private List<LocalDate> availableDates;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    /**
+     * Date when the index was last updated.
+     */
     private LocalDate lastUpdated;
 }

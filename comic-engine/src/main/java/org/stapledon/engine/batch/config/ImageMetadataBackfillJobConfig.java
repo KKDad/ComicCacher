@@ -20,10 +20,10 @@ import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.AnalysisService;
+import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
-import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
 import jakarta.annotation.PostConstruct;
@@ -32,9 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -120,7 +118,8 @@ public class ImageMetadataBackfillJobConfig {
     }
 
     /**
-     * Tasklet that performs the actual image metadata backfill
+     * Tasklet that performs the actual image metadata backfill.
+     * Uses streaming to avoid loading all file paths into memory.
      */
     @Bean
     public Tasklet imageBackfillTasklet() {
@@ -128,84 +127,70 @@ public class ImageMetadataBackfillJobConfig {
             log.info("Starting image metadata backfill");
 
             long startTime = System.currentTimeMillis();
-            List<File> imagesToProcess = findImagesWithoutMetadata();
+            File cacheRoot = new File(cacheProperties.getLocation());
 
-            if (imagesToProcess.isEmpty()) {
-                log.info("No images need metadata backfill. Job complete.");
+            if (!cacheRoot.exists() || !cacheRoot.isDirectory()) {
+                log.warn("Cache directory does not exist or is not a directory: {}",
+                        cacheRoot.getAbsolutePath());
                 return RepeatStatus.FINISHED;
             }
 
-            log.info("Found {} images without metadata. Processing in batches of {}",
-                    imagesToProcess.size(), batchSize);
+            // Process in streaming fashion with configurable max limit
+            int maxToProcess = batchSize * 100; // Process up to 100 batches per run
+            int[] counters = {0, 0, 0}; // processed, successful, failed
 
-            int processed = 0;
-            int successful = 0;
-            int failed = 0;
+            try (Stream<Path> paths = Files.walk(cacheRoot.toPath())) {
+                paths.filter(Files::isRegularFile)
+                        .filter(this::isImageFile)
+                        .filter(path -> !path.getFileName().toString().equals("avatar.png"))
+                        .filter(path -> !imageMetadataRepository.metadataExists(path.toString()))
+                        .limit(maxToProcess)
+                        .forEach(path -> {
+                            try {
+                                backfillImageMetadata(path.toFile());
+                                counters[1]++;
+                            } catch (Exception e) {
+                                counters[2]++;
+                                log.error("Failed to backfill metadata for {}: {}",
+                                        path.toAbsolutePath(), e.getMessage());
+                            }
 
-            for (File imageFile : imagesToProcess) {
-                try {
-                    backfillImageMetadata(imageFile);
-                    successful++;
-                } catch (Exception e) {
-                    failed++;
-                    log.error("Failed to backfill metadata for {}: {}",
-                            imageFile.getAbsolutePath(), e.getMessage());
-                }
+                            counters[0]++;
 
-                processed++;
-
-                // Log progress every batch
-                if (processed % batchSize == 0) {
-                    log.info("Progress: {}/{} images processed ({} successful, {} failed)",
-                            processed, imagesToProcess.size(), successful, failed);
-                }
+                            // Log progress every batch
+                            if (counters[0] % batchSize == 0) {
+                                log.info("Progress: {} images processed ({} successful, {} failed)",
+                                        counters[0], counters[1], counters[2]);
+                            }
+                        });
             }
 
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("Image metadata backfill complete. Processed {} images in {}ms ({} successful, {} failed)",
-                    processed, duration, successful, failed);
+            if (counters[0] == 0) {
+                log.info("No images need metadata backfill. Job complete.");
+            } else {
+                long duration = System.currentTimeMillis() - startTime;
+                log.info("Image metadata backfill complete. Processed {} images in {}ms ({} successful, {} failed)",
+                        counters[0], duration, counters[1], counters[2]);
+
+                if (counters[0] >= maxToProcess) {
+                    log.info("Reached max limit of {} images per run. More images may need processing.",
+                            maxToProcess);
+                }
+            }
 
             return RepeatStatus.FINISHED;
         };
     }
 
     /**
-     * Finds all image files in the cache directory that don't have associated
-     * metadata files.
+     * Checks if a path is an image file based on extension.
      */
-    private List<File> findImagesWithoutMetadata() throws IOException {
-        List<File> imagesWithoutMetadata = new ArrayList<>();
-        File cacheRoot = new File(cacheProperties.getLocation());
-
-        if (!cacheRoot.exists() || !cacheRoot.isDirectory()) {
-            log.warn("Cache directory does not exist or is not a directory: {}", cacheRoot.getAbsolutePath());
-            return imagesWithoutMetadata;
-        }
-
-        // Walk through all subdirectories
-        try (Stream<Path> paths = Files.walk(cacheRoot.toPath())) {
-            paths.filter(Files::isRegularFile)
-                    .filter(path -> {
-                        String fileName = path.getFileName().toString().toLowerCase();
-                        return fileName.endsWith(".png") || fileName.endsWith(".jpg")
-                                || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")
-                                || fileName.endsWith(".tif") || fileName.endsWith(".tiff")
-                                || fileName.endsWith(".bmp") || fileName.endsWith(".webp");
-                    })
-                    .filter(path -> {
-                        // Exclude avatar files
-                        String fileName = path.getFileName().toString();
-                        return !fileName.equals("avatar.png");
-                    })
-                    .filter(path -> {
-                        // Check if metadata file exists
-                        String imagePath = path.toString();
-                        return !imageMetadataRepository.metadataExists(imagePath);
-                    })
-                    .forEach(path -> imagesWithoutMetadata.add(path.toFile()));
-        }
-
-        return imagesWithoutMetadata;
+    private boolean isImageFile(Path path) {
+        String fileName = path.getFileName().toString().toLowerCase();
+        return fileName.endsWith(".png") || fileName.endsWith(".jpg")
+                || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")
+                || fileName.endsWith(".tif") || fileName.endsWith(".tiff")
+                || fileName.endsWith(".bmp") || fileName.endsWith(".webp");
     }
 
     /**

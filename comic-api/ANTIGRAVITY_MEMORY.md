@@ -88,6 +88,16 @@
 - Keep Javadoc concise
 - Use regular comments for implementation details
 
+## JSON Serialization
+- **Use Gson exclusively** for JSON serialization/deserialization
+- **DO NOT use Jackson annotations** (`@JsonFormat`, `@JsonProperty`, etc.) on DTOs serialized with Gson
+- Jackson annotations have **no effect** when using Gson and create confusion
+- For date/time formatting, use `GsonUtils.createGsonBuilder()` with custom `TypeAdapter`s
+- The `@Qualifier("gsonWithLocalDate")` bean provides properly configured Gson with LocalDate support
+- If REST endpoints need Jackson (Spring default), use separate DTOs or configure Jackson to match Gson behavior
+
+> **Why?** In Jan 2026, dead `@JsonFormat` annotations were found on `ComicDateIndex` which is serialized with Gson. The annotations did nothing but caused confusion about which library was authoritative.
+
 ## Code Quality Requirements
 - Apply all code style preferences consistently
 - Follow existing patterns when modifying code

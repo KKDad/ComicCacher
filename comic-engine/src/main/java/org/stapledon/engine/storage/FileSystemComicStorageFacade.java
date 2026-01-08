@@ -1,11 +1,7 @@
 package org.stapledon.engine.storage;
 
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.ImageMetadata;
@@ -14,7 +10,6 @@ import org.stapledon.common.service.AnalysisService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
-import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.ImageUtils;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
 
@@ -26,7 +21,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,14 +56,14 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     /**
      * Gets a directory name for a comic - uses the comic name if available,
      * otherwise falls back to the comic ID. This ensures we can handle comics with
-     * null names.
+     * null or empty names.
      *
      * @param comicId   the comic ID
-     * @param comicName the comic name (can be null)
+     * @param comicName the comic name (can be null or empty)
      * @return a string to use as the directory name
      */
     private String getComicNameParsed(int comicId, String comicName) {
-        if (comicName == null) {
+        if (comicName == null || comicName.trim().isEmpty()) {
             return "comic_" + comicId;
         }
         return comicName.replace(" ", "");
@@ -278,7 +272,12 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             return false;
         }
 
-        return deleteDirectory(directory);
+        boolean deleted = deleteDirectory(directory);
+        if (deleted) {
+            // Invalidate the in-memory index cache
+            comicIndexService.invalidateCache(comicId);
+        }
+        return deleted;
     }
 
     private boolean deleteDirectory(File directory) {
