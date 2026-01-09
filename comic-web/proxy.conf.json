@@ -3,6 +3,32 @@
     "target": "https://comics.stapledon.ca/",
     "secure": false,
     "allowedHosts": "all",
-    "headers": {"host":"comics.stapledon.ca"}
+    "headers": {
+      "host": "comics.stapledon.ca"
+    }
+  },
+  "/swagger-ui.html": {
+    "target": "https://comics.stapledon.ca/",
+    "secure": false,
+    "allowedHosts": "all",
+    "headers": {
+      "host": "comics.stapledon.ca"
+    }
+  },
+  "/swagger-ui": {
+    "target": "https://comics.stapledon.ca/",
+    "secure": false,
+    "allowedHosts": "all",
+    "headers": {
+      "host": "comics.stapledon.ca"
+    }
+  },
+  "/v3/api-docs": {
+    "target": "https://comics.stapledon.ca/",
+    "secure": false,
+    "allowedHosts": "all",
+    "headers": {
+      "host": "comics.stapledon.ca"
+    }
   }
 }

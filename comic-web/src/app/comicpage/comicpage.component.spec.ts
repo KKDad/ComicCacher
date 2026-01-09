@@ -20,6 +20,10 @@ class MockComicService {
     refresh() {
         // No-op for testing
     }
+
+    isLoaded() {
+        return true;
+    }
 }
 
 // Mock ContainerComponent

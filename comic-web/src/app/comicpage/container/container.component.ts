@@ -1,14 +1,14 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, signal, ViewChild} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, signal, ViewChild } from '@angular/core';
 
-import {Comic} from '../../dto/comic';
-import {ComicService} from '../../comic.service';
-import {CdkScrollable, CdkVirtualScrollViewport, ScrollDispatcher, ScrollingModule} from '@angular/cdk/scrolling';
+import { Comic } from '../../dto/comic';
+import { ComicService } from '../../comic.service';
+import { CdkScrollable, CdkVirtualScrollViewport, ScrollDispatcher, ScrollingModule } from '@angular/cdk/scrolling';
 
-import {SectionComponent} from '../section/section.component';
-import {LoadingIndicatorComponent} from '../../shared/ui/loading-indicator/loading-indicator.component';
-import {ErrorDisplayComponent} from '../../shared/ui/error-display/error-display.component';
-import {KeyboardService} from '../../shared/a11y/keyboard-service';
-import {Subscription} from 'rxjs';
+import { SectionComponent } from '../section/section.component';
+import { LoadingIndicatorComponent } from '../../shared/ui/loading-indicator/loading-indicator.component';
+import { ErrorDisplayComponent } from '../../shared/ui/error-display/error-display.component';
+import { KeyboardService } from '../../shared/a11y/keyboard-service';
+import { Subscription } from 'rxjs';
 
 export enum NavBarOption {
     Hide,
@@ -21,11 +21,11 @@ export enum NavBarOption {
     styleUrls: ['container.component.css'],
     standalone: true,
     imports: [
-    ScrollingModule,
-    SectionComponent,
-    LoadingIndicatorComponent,
-    ErrorDisplayComponent
-]
+        ScrollingModule,
+        SectionComponent,
+        LoadingIndicatorComponent,
+        ErrorDisplayComponent
+    ]
 })
 export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input() sections: Comic[];
@@ -125,40 +125,42 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.lastOffset = scrollTop;
-      }
+    }
 
-      /**
-       * Dynamic item size function for virtualization
-       * Returns the height of each comic card in the virtual scroll viewport
-       */
-      itemSizeFn = (index: number): number => {
+    /**
+     * Dynamic item size function for virtualization
+     * Returns the height of each comic card in the virtual scroll viewport
+     */
+    itemSizeFn = (index: number): number => {
         return this.COMIC_CARD_HEIGHT;
-      };
+    };
 
-      /**
-       * Track comics by their ID for better performance in virtual scrolling
-       * @param index The index of the item in the list
-       * @param comic The comic item to track
-       * @returns The comic ID or index if ID is not available
-       */
-      trackByComicId(index: number, comic: Comic): number {
+    /**
+     * Track comics by their ID for better performance in virtual scrolling
+     * @param index The index of the item in the list
+     * @param comic The comic item to track
+     * @returns The comic ID or index if ID is not available
+     */
+    trackByComicId(index: number, comic: Comic): number {
         return comic?.id || index;
-      }
+    }
 
-      /**
-       * Check if the comics list is empty or invalid
-       * Defensive check to handle invalid data structures
-       * @returns True if comics are not available or empty
-       */
-      isComicsEmpty(): boolean {
-        return !this.sections || !Array.isArray(this.sections) || this.sections.length === 0;
-      }
+    /**
+     * Check if the comics list is empty or invalid
+     * Only shows empty state after loading completes to prevent flash of empty content
+     * @returns True if comics are not available or empty AND loading is complete
+     */
+    isComicsEmpty(): boolean {
+        // Only show empty state if loading is complete AND no comics
+        return this.comicService.isLoaded() &&
+            (!this.sections || !Array.isArray(this.sections) || this.sections.length === 0);
+    }
 
-      /**
-       * Scroll up by one comic section (PageUp key)
-       * Intelligently snaps to the top of the previous comic card and focuses it
-       */
-      private scrollUpByOneComic(): void {
+    /**
+     * Scroll up by one comic section (PageUp key)
+     * Intelligently snaps to the top of the previous comic card and focuses it
+     */
+    private scrollUpByOneComic(): void {
         if (!this.viewport) {
             return;
         }
@@ -221,13 +223,13 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
                 (sectionElement as HTMLElement).focus();
             }
         }, 300);
-      }
+    }
 
-      /**
-       * Scroll down by one comic section (PageDown key)
-       * Intelligently snaps to the top of the next comic card and focuses it
-       */
-      private scrollDownByOneComic(): void {
+    /**
+     * Scroll down by one comic section (PageDown key)
+     * Intelligently snaps to the top of the next comic card and focuses it
+     */
+    private scrollDownByOneComic(): void {
         if (!this.viewport) {
             return;
         }
@@ -298,6 +300,6 @@ export class ContainerComponent implements OnInit, AfterViewInit, OnDestroy {
                 }
             }, 300);
         }
-      }
+    }
 
 }

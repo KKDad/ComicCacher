@@ -1,10 +1,10 @@
-import {inject, Injectable, signal} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {catchError, EMPTY, map, Observable, of, shareReplay} from 'rxjs';
-import {toObservable} from '@angular/core/rxjs-interop';
-import {Comic} from './dto/comic';
-import {ImageDto} from './dto/image';
-import {ComicNavigationResult} from './dto/comic-navigation-result';
+import { inject, Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { catchError, EMPTY, map, Observable, of, shareReplay } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Comic } from './dto/comic';
+import { ImageDto } from './dto/image';
+import { ComicNavigationResult } from './dto/comic-navigation-result';
 
 @Injectable({ providedIn: 'root' })
 export class ComicService {
@@ -12,13 +12,22 @@ export class ComicService {
 
   // Signals for state management
   private comicsSignal = signal<Comic[]>([]);
+  private loadedSignal = signal<boolean>(false);
 
   // Observable from signal
   comics$ = toObservable(this.comicsSignal);
+  loaded$ = toObservable(this.loadedSignal);
 
   constructor() {
     // Initialize comics on service creation
     this.refresh();
+  }
+
+  /**
+   * Check if initial data load has completed
+   */
+  isLoaded(): boolean {
+    return this.loadedSignal();
   }
 
   /**
@@ -32,14 +41,14 @@ export class ComicService {
    * Refresh comics data from API
    */
   refresh(): void {
-    this.http.get<{data: Comic[]}>('api/v1/comics').pipe(
+    this.http.get<{ data: Comic[] }>('api/v1/comics').pipe(
       // Handle errors globally
       catchError(error => {
         console.error('Error fetching comics from API:', error);
         if (error.status) {
           console.error(`HTTP ${error.status}: ${error.statusText}`);
         }
-        return of({data: []});
+        return of({ data: [] });
       }),
       // Share the same response with multiple subscribers
       shareReplay(1)
@@ -60,6 +69,7 @@ export class ComicService {
 
       console.log(`Comic service: loaded ${response.data.length} comics from API`);
       this.comicsSignal.set(response.data);
+      this.loadedSignal.set(true);
     });
   }
 
@@ -72,7 +82,7 @@ export class ComicService {
     }
 
     const url = `api/v1/comics/${id}`;
-    return this.http.get<{data: Comic}>(url).pipe(
+    return this.http.get<{ data: Comic }>(url).pipe(
       map(response => response.data),
       catchError(this.handleError<Comic>(`getComic id=${id}`))
     );
