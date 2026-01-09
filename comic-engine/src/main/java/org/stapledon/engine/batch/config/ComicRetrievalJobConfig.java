@@ -31,14 +31,9 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Spring Batch configuration for comic retrieval jobs.
- * Provides comprehensive execution tracking, retry logic, and monitoring.
+ * Spring Batch configuration for comic retrieval jobs. Provides comprehensive execution tracking, retry logic, and monitoring.
  */
-@Slf4j
-@ToString
-@Configuration
-@RequiredArgsConstructor
-@ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j @ToString @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicRetrievalJobConfig {
 
     private final ManagementFacade managementFacade;
@@ -50,53 +45,32 @@ public class ComicRetrievalJobConfig {
     private String timezone;
 
     /**
-     * Scheduler for ComicDownloadJob - runs daily at configured cron time.
-     * Triggered by SchedulerTriggers component.
+     * Scheduler for ComicDownloadJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
-    public DailyJobScheduler comicDownloadJobScheduler(
-            JobOperator jobOperator,
-            JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(
-                "ComicDownloadJob", cronExpression, timezone, jobOperator, tracker);
+    public DailyJobScheduler comicDownloadJobScheduler(@Qualifier("comicDownloadJob") Job comicDownloadJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(comicDownloadJob, cronExpression, timezone, jobOperator, tracker);
     }
 
     /**
      * Main job for daily comic retrieval
      */
-    @Bean
-    @Primary
-    public Job comicDownloadJob(
-            JobRepository jobRepository,
-            @Qualifier("comicRetrievalStep") Step comicRetrievalStep,
-            JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+    @Bean @Primary
+    public Job comicDownloadJob(JobRepository jobRepository, @Qualifier("comicRetrievalStep") Step comicRetrievalStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ComicDownloadJob", jobRepository)
-                .incrementer(new RunIdIncrementer())
-                .listener(jsonBatchExecutionTracker)
-                .listener(new LoggingJobExecutionListener())
-                .start(comicRetrievalStep)
-                .build();
+        return new JobBuilder("ComicDownloadJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).listener(new LoggingJobExecutionListener())
+                .start(comicRetrievalStep).build();
     }
 
     /**
      * Step for processing comic retrieval
      */
     @Bean
-    public Step comicRetrievalStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager,
-            ItemReader<LocalDate> dateReader,
-            ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor,
-            ItemWriter<List<ComicDownloadResult>> comicResultWriter) {
+    public Step comicRetrievalStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, ItemReader<LocalDate> dateReader,
+            ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor, ItemWriter<List<ComicDownloadResult>> comicResultWriter) {
 
-        return new StepBuilder("comicRetrievalStep", jobRepository)
-                .<LocalDate, List<ComicDownloadResult>>chunk(1)
-                .transactionManager(transactionManager)
-                .reader(dateReader)
-                .processor(comicProcessor)
-                .writer(comicResultWriter)
-                .build();
+        return new StepBuilder("comicRetrievalStep", jobRepository).<LocalDate, List<ComicDownloadResult>>chunk(1).transactionManager(transactionManager).reader(dateReader)
+                .processor(comicProcessor).writer(comicResultWriter).build();
     }
 
     /**
@@ -123,8 +97,7 @@ public class ComicRetrievalJobConfig {
             long successCount = results.stream().filter(ComicDownloadResult::isSuccessful).count();
             long failureCount = results.size() - successCount;
 
-            log.info("Completed processing {} comics in {}ms: {} successful, {} failed",
-                    results.size(), duration, successCount, failureCount);
+            log.info("Completed processing {} comics in {}ms: {} successful, {} failed", results.size(), duration, successCount, failureCount);
 
             return results;
         };
@@ -141,8 +114,7 @@ public class ComicRetrievalJobConfig {
                     if (result.isSuccessful()) {
                         log.debug("Successfully processed: {}", result.getRequest().getComicName());
                     } else {
-                        log.error("Failed to process: {} - {}",
-                                result.getRequest().getComicName(), result.getErrorMessage());
+                        log.error("Failed to process: {} - {}", result.getRequest().getComicName(), result.getErrorMessage());
                     }
                 }
             }

@@ -30,13 +30,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Spring Batch configuration for comic backfill job.
- * Gradually backfills missing comic strips for a configurable target year.
+ * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips for a configurable target year.
  */
-@Slf4j
-@Configuration
-@RequiredArgsConstructor
-@ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicBackfillJobConfig {
 
     private final ManagementFacade managementFacade;
@@ -55,76 +51,49 @@ public class ComicBackfillJobConfig {
     private String timezone;
 
     /**
-     * Scheduler for ComicBackfillJob - runs daily at configured cron time.
-     * Triggered by SchedulerTriggers component.
+     * Scheduler for ComicBackfillJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
-    public DailyJobScheduler comicBackfillJobScheduler(
-            JobOperator jobOperator,
-            JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(
-                "ComicBackfillJob", cronExpression, timezone, jobOperator, tracker);
+    public DailyJobScheduler comicBackfillJobScheduler(@Qualifier("comicBackfillJob") Job comicBackfillJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker);
     }
 
     /**
      * Main job for comic backfill
      */
-    @Bean
-    @Qualifier("comicBackfillJob")
-    public Job comicBackfillJob(
-            JobRepository jobRepository,
-            @Qualifier("comicBackfillStep") Step comicBackfillStep,
-            JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+    @Bean @Qualifier("comicBackfillJob")
+    public Job comicBackfillJob(JobRepository jobRepository, @Qualifier("comicBackfillStep") Step comicBackfillStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ComicBackfillJob", jobRepository)
-                .incrementer(new RunIdIncrementer())
-                .listener(jsonBatchExecutionTracker)
-                .listener(new LoggingJobExecutionListener())
-                .start(comicBackfillStep)
-                .build();
+        return new JobBuilder("ComicBackfillJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).listener(new LoggingJobExecutionListener())
+                .start(comicBackfillStep).build();
     }
 
     /**
      * Step for processing comic backfill tasks
      */
-    @Bean
-    @Qualifier("comicBackfillStep")
-    public Step comicBackfillStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager,
-            @Qualifier("backfillTaskReader") ItemReader<BackfillTask> backfillTaskReader,
+    @Bean @Qualifier("comicBackfillStep")
+    public Step comicBackfillStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, @Qualifier("backfillTaskReader") ItemReader<BackfillTask> backfillTaskReader,
             @Qualifier("backfillTaskProcessor") ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor,
             @Qualifier("backfillTaskWriter") ItemWriter<ComicDownloadResult> backfillTaskWriter) {
 
-        return new StepBuilder("comicBackfillStep", jobRepository)
-                .<BackfillTask, ComicDownloadResult>chunk(chunkSize)
-                .transactionManager(transactionManager)
-                .reader(backfillTaskReader)
-                .processor(backfillTaskProcessor)
-                .writer(backfillTaskWriter)
-                .build();
+        return new StepBuilder("comicBackfillStep", jobRepository).<BackfillTask, ComicDownloadResult>chunk(chunkSize).transactionManager(transactionManager).reader(backfillTaskReader)
+                .processor(backfillTaskProcessor).writer(backfillTaskWriter).build();
     }
 
     /**
-     * Reader that provides the list of backfill tasks (comic + date pairs).
-     * Uses @StepScope so findMissingStrips() is called when the job runs,
-     * not at application startup.
+     * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup.
      */
-    @Bean
-    @StepScope
-    @Qualifier("backfillTaskReader")
+    @Bean @StepScope @Qualifier("backfillTaskReader")
     public ItemReader<BackfillTask> backfillTaskReader() {
         log.info("Building backfill task list for job execution");
         return new ListItemReader<>(backfillService.findMissingStrips());
     }
 
     /**
-     * Processor that downloads a comic for a specific date.
-     * Uses downloadComicForDate for efficient single-comic downloads - the comic
-     * has already been validated and filtered by ComicBackfillService.
+     * Processor that downloads a comic for a specific date. Uses downloadComicForDate for efficient single-comic downloads - the comic has already been validated and filtered by
+     * ComicBackfillService.
      */
-    @Bean
-    @Qualifier("backfillTaskProcessor")
+    @Bean @Qualifier("backfillTaskProcessor")
     public ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor() {
         return task -> {
             log.debug("Backfilling {} for date: {}", task.comic().getName(), task.date());
@@ -138,16 +107,14 @@ public class ComicBackfillJobConfig {
                 // Download this specific comic directly - much more efficient than
                 // iterating all comics. The comic has already been validated by
                 // ComicBackfillService.
-                return managementFacade.downloadComicForDate(task.comic(), task.date())
-                        .orElse(null);
+                return managementFacade.downloadComicForDate(task.comic(), task.date()).orElse(null);
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.warn("Backfill interrupted for {}: {}", task.comic().getName(), e.getMessage());
                 return null;
             } catch (Exception e) {
-                log.error("Error backfilling {} for {}: {}",
-                        task.comic().getName(), task.date(), e.getMessage());
+                log.error("Error backfilling {} for {}: {}", task.comic().getName(), task.date(), e.getMessage());
                 return null;
             }
         };
@@ -156,8 +123,7 @@ public class ComicBackfillJobConfig {
     /**
      * Writer that logs the backfill results
      */
-    @Bean
-    @Qualifier("backfillTaskWriter")
+    @Bean @Qualifier("backfillTaskWriter")
     public ItemWriter<ComicDownloadResult> backfillTaskWriter() {
         return chunk -> {
             int successCount = 0;
@@ -171,15 +137,10 @@ public class ComicBackfillJobConfig {
 
                 if (result.isSuccessful()) {
                     successCount++;
-                    log.debug("Successfully backfilled: {} for {}",
-                            result.getRequest().getComicName(),
-                            result.getRequest().getDate());
+                    log.debug("Successfully backfilled: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());
                 } else {
                     failureCount++;
-                    log.warn("Failed to backfill: {} for {} - {}",
-                            result.getRequest().getComicName(),
-                            result.getRequest().getDate(),
-                            result.getErrorMessage());
+                    log.warn("Failed to backfill: {} for {} - {}", result.getRequest().getComicName(), result.getRequest().getDate(), result.getErrorMessage());
                 }
             }
 
