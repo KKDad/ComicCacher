@@ -1,15 +1,14 @@
 package org.stapledon.engine.batch.scheduler;
 
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.scheduling.support.CronExpression;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 
 import jakarta.annotation.PostConstruct;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,15 +27,14 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <pre>
  * &#64;Bean
- * public DailyJobScheduler myJobScheduler(JobOperator operator, JsonBatchExecutionTracker tracker) {
- *     return new DailyJobScheduler("MyJob", "${batch.my-job.cron}", "${batch.timezone}", operator, tracker);
+ * public DailyJobScheduler myJobScheduler(Job myJob, JobOperator operator, JsonBatchExecutionTracker tracker) {
+ *     return new DailyJobScheduler(myJob, "${batch.my-job.cron}", "${batch.timezone}", operator, tracker);
  * }
  * </pre>
  */
 @Slf4j
 public class DailyJobScheduler extends AbstractJobScheduler {
 
-    private final String jobName;
     private final String cronExpression;
     private final String timezone;
     private final JsonBatchExecutionTracker executionTracker;
@@ -44,29 +42,17 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     /**
      * Creates a new DailyJobScheduler.
      *
-     * @param jobName          the Spring Batch job name
-     * @param cronExpression   cron expression for scheduling
-     * @param timezone         timezone for cron evaluation (e.g.,
-     *                         "America/Toronto")
-     * @param jobOperator      Spring Batch JobOperator
+     * @param job the Spring Batch Job bean
+     * @param cronExpression cron expression for scheduling
+     * @param timezone timezone for cron evaluation (e.g., "America/Toronto")
+     * @param jobOperator Spring Batch JobOperator
      * @param executionTracker tracker for reading/writing execution history
      */
-    public DailyJobScheduler(
-            String jobName,
-            String cronExpression,
-            String timezone,
-            JobOperator jobOperator,
-            JsonBatchExecutionTracker executionTracker) {
-        super(jobOperator);
-        this.jobName = jobName;
+    public DailyJobScheduler(Job job, String cronExpression, String timezone, JobOperator jobOperator, JsonBatchExecutionTracker executionTracker) {
+        super(job, jobOperator);
         this.cronExpression = cronExpression;
         this.timezone = timezone;
         this.executionTracker = executionTracker;
-    }
-
-    @Override
-    public String getJobName() {
-        return jobName;
     }
 
     @Override
@@ -74,18 +60,8 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         return ScheduleType.DAILY;
     }
 
-    @Override
-    protected Properties buildJobProperties(String trigger) {
-        Properties props = new Properties();
-        props.setProperty("trigger", trigger);
-        props.setProperty("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
-        return props;
-    }
-
     /**
-     * Initializes the scheduler with logging.
-     * Note: Missed execution checks are handled by StartupJobRunner
-     * after ApplicationReadyEvent to ensure all dependencies are ready.
+     * Initializes the scheduler with logging. Note: Missed execution checks are handled by StartupJobRunner after ApplicationReadyEvent to ensure all dependencies are ready.
      */
     @PostConstruct
     public void init() {
@@ -93,16 +69,15 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     }
 
     /**
-     * Scheduled execution method - to be called by @Scheduled in config beans.
-     * Checks if already run today to prevent duplicate executions.
+     * Scheduled execution method - to be called by @Scheduled in config beans. Checks if already run today to prevent duplicate executions.
      */
     public void executeScheduled() {
-        if (executionTracker.hasJobRunToday(jobName)) {
-            log.info("{} already ran today, skipping scheduled execution", jobName);
+        if (executionTracker.hasJobRunToday(getJobName())) {
+            log.info("{} already ran today, skipping scheduled execution", getJobName());
             return;
         }
 
-        log.info("Starting scheduled execution of {}", jobName);
+        log.info("Starting scheduled execution of {}", getJobName());
         runJob("SCHEDULED");
     }
 
@@ -116,13 +91,11 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     }
 
     /**
-     * Checks if the job missed its scheduled execution time and runs if needed.
-     * Called by StartupJobRunner after ApplicationReadyEvent ensures all beans are
-     * ready.
+     * Checks if the job missed its scheduled execution time and runs if needed. Called by StartupJobRunner after ApplicationReadyEvent ensures all beans are ready.
      */
     public void runMissedExecutionIfNeeded() {
-        if (executionTracker.hasJobRunToday(jobName)) {
-            log.info("{} has already run today, no makeup run needed", jobName);
+        if (executionTracker.hasJobRunToday(getJobName())) {
+            log.info("{} has already run today, no makeup run needed", getJobName());
             return;
         }
 
@@ -131,8 +104,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         ZonedDateTime todayScheduledTime = getNextScheduledTime(now.minusDays(1));
 
         if (todayScheduledTime != null && now.isAfter(todayScheduledTime)) {
-            log.warn("{} missed scheduled time ({}), running now", jobName,
-                    todayScheduledTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+            log.warn("{} missed scheduled time ({}), running now", getJobName(), todayScheduledTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
             runJob("STARTUP_MAKEUP");
         }
     }
@@ -144,18 +116,15 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         try {
             ZonedDateTime nextRun = getNextScheduledTime(ZonedDateTime.now(ZoneId.of(timezone)));
             log.warn("======== INITIALIZING SCHEDULER: {} ========", getClass().getSimpleName());
-            log.info("  Job: {}", jobName);
+            log.info("  Job: {}", getJobName());
             log.info("  Type: {}", getScheduleType());
             log.info("  Cron: {} ({})", cronExpression, timezone);
             if (nextRun != null) {
-                log.warn("{} scheduler SUCCESSFULLY initialized - Next run: {} ({})",
-                        jobName,
-                        nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                        nextRun.getZone());
+                log.warn("{} scheduler SUCCESSFULLY initialized - Next run: {} ({})", getJobName(), nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), nextRun.getZone());
             }
         } catch (Exception e) {
             log.error("======== FAILED TO INITIALIZE SCHEDULER: {} ========", getClass().getSimpleName(), e);
-            throw new IllegalStateException("Failed to initialize " + jobName + " scheduler", e);
+            throw new IllegalStateException("Failed to initialize " + getJobName() + " scheduler", e);
         }
     }
 

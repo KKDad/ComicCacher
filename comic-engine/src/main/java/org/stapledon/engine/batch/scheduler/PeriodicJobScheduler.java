@@ -1,11 +1,9 @@
 package org.stapledon.engine.batch.scheduler;
 
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.launch.JobOperator;
 
 import jakarta.annotation.PostConstruct;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -14,8 +12,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Features:
  * <ul>
- * <li>Fixed-delay scheduling (time between end of one execution and start of
- * next)</li>
+ * <li>Fixed-delay scheduling (time between end of one execution and start of next)</li>
  * <li>No missed execution logic (runs continuously)</li>
  * </ul>
  *
@@ -24,46 +21,31 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <pre>
  * &#64;Bean
- * public PeriodicJobScheduler myJobScheduler(JobOperator operator) {
- *     return new PeriodicJobScheduler("MyJob", 300000L, operator); // 5 minutes
+ * public PeriodicJobScheduler myJobScheduler(Job myJob, JobOperator operator) {
+ *     return new PeriodicJobScheduler(myJob, 300000L, operator); // 5 minutes
  * }
  * </pre>
  */
 @Slf4j
 public class PeriodicJobScheduler extends AbstractJobScheduler {
 
-    private final String jobName;
     private final long fixedDelayMs;
 
     /**
      * Creates a new PeriodicJobScheduler.
      *
-     * @param jobName      the Spring Batch job name
+     * @param job the Spring Batch Job bean
      * @param fixedDelayMs fixed delay in milliseconds between executions
-     * @param jobOperator  Spring Batch JobOperator
+     * @param jobOperator Spring Batch JobOperator
      */
-    public PeriodicJobScheduler(String jobName, long fixedDelayMs, JobOperator jobOperator) {
-        super(jobOperator);
-        this.jobName = jobName;
+    public PeriodicJobScheduler(Job job, long fixedDelayMs, JobOperator jobOperator) {
+        super(job, jobOperator);
         this.fixedDelayMs = fixedDelayMs;
-    }
-
-    @Override
-    public String getJobName() {
-        return jobName;
     }
 
     @Override
     public ScheduleType getScheduleType() {
         return ScheduleType.PERIODIC;
-    }
-
-    @Override
-    protected Properties buildJobProperties(String trigger) {
-        Properties props = new Properties();
-        props.setProperty("trigger", trigger);
-        props.setProperty("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
-        return props;
     }
 
     /**
@@ -88,7 +70,7 @@ public class PeriodicJobScheduler extends AbstractJobScheduler {
      * Scheduled execution method - to be called by @Scheduled in config beans.
      */
     public void executeScheduled() {
-        log.debug("Starting periodic execution of {}", jobName);
+        log.debug("Starting periodic execution of {}", getJobName());
         runJob("SCHEDULED");
     }
 

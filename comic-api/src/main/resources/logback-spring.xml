@@ -11,5 +11,5 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
-    <logger name="org.stapledon" level="DEBUG"/>
+    <logger name="org.stapledon" level="INFO"/>
 </configuration>
