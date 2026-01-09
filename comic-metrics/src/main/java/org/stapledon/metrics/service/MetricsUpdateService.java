@@ -54,6 +54,7 @@ public class MetricsUpdateService {
      * @return Combined metrics data, or empty data if an error occurs
      */
     public CombinedMetricsData buildCombinedMetrics() {
+        long startTime = System.currentTimeMillis();
         try {
             // Get latest storage metrics
             ImageCacheStats storageStats = storageMetricsUpdater.cacheStats();
@@ -104,7 +105,8 @@ public class MetricsUpdateService {
             // Build combined metrics (no longer saved to disk)
             CombinedMetricsData combinedData = CombinedMetricsData.builder().globalMetrics(globalMetrics).perComicMetrics(perComicMetrics).lastUpdated(java.time.LocalDateTime.now()).build();
 
-            log.debug("Built combined metrics for {} comics", perComicMetrics.size());
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Built combined metrics for {} comics in {}ms", perComicMetrics.size(), duration);
             return combinedData;
         } catch (Exception e) {
             log.error("Failed to build combined metrics", e);

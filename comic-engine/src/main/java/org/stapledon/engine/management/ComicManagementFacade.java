@@ -1,9 +1,7 @@
 package org.stapledon.engine.management;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -461,6 +459,7 @@ public class ComicManagementFacade implements ManagementFacade {
 
     @Override
     public void refreshComicList() {
+        long startTime = System.currentTimeMillis();
         try {
             // Load comic configuration
             ComicConfig comicConfig = configFacade.loadComicConfig();
@@ -471,7 +470,8 @@ public class ComicManagementFacade implements ManagementFacade {
                 comics.putAll(comicConfig.getItems());
             }
 
-            log.info("Refreshed comic list: loaded {} comics", comics.size());
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Refreshed comic list: loaded {} comics in {}ms", comics.size(), duration);
         } catch (Exception e) {
             log.error("Error refreshing comic list: {}", e.getMessage(), e);
         }
