@@ -41,8 +41,6 @@ class BatchJobBaseConfigTest {
         assertThat(BatchJobBaseConfig.PropertyKeys.METRICS_ARCHIVE_CRON).isEqualTo("batch.metrics-archive.cron");
         assertThat(BatchJobBaseConfig.PropertyKeys.IMAGE_BACKFILL_ENABLED).isEqualTo("batch.image-backfill.enabled");
         assertThat(BatchJobBaseConfig.PropertyKeys.IMAGE_BACKFILL_CRON).isEqualTo("batch.image-backfill.cron");
-        assertThat(BatchJobBaseConfig.PropertyKeys.METRICS_UPDATE_ENABLED).isEqualTo("batch.metrics-update.enabled");
-        assertThat(BatchJobBaseConfig.PropertyKeys.METRICS_UPDATE_DELAY).isEqualTo("batch.metrics-update.fixed-delay");
         assertThat(BatchJobBaseConfig.PropertyKeys.RECORD_PURGE_ENABLED).isEqualTo("batch.record-purge.enabled");
         assertThat(BatchJobBaseConfig.PropertyKeys.RECORD_PURGE_CRON).isEqualTo("batch.record-purge.cron");
     }

@@ -5,8 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Base configuration for Spring Batch jobs.
- * Provides shared configuration, utilities, and conventions for all batch jobs.
+ * Base configuration for Spring Batch jobs. Provides shared configuration, utilities, and conventions for all batch jobs.
  *
  * <p>
  * All batch jobs in ComicCacher follow these conventions:
@@ -19,33 +18,22 @@ import lombok.extern.slf4j.Slf4j;
  * </ul>
  *
  * <p>
- * Timezone Configuration:
- * All cron expressions should specify timezone explicitly:
- * {@code @Scheduled(cron = "0 0 6 * * ? America/Toronto")}
+ * Timezone Configuration: All cron expressions should specify timezone explicitly: {@code @Scheduled(cron = "0 0 6 * * ? America/Toronto")}
  *
  * <p>
- * Execution Tracking:
- * All jobs automatically export execution summaries to:
- * {@code ${cacher.cache-location}/batch-executions.json}
+ * Execution Tracking: All jobs automatically export execution summaries to: {@code ${cacher.cache-location}/batch-executions.json}
  *
  * <p>
  * Example Job Configuration:
  *
  * <pre>
  * &#64;Bean
- * public Job myJob(JobRepository jobRepository,
- *         Step myStep,
- *         JsonBatchExecutionTracker tracker) {
- *     return new JobBuilder("MyJob", jobRepository)
- *             .incrementer(new RunIdIncrementer())
- *             .listener(tracker)
- *             .start(myStep)
- *             .build();
+ * public Job myJob(JobRepository jobRepository, Step myStep, JsonBatchExecutionTracker tracker) {
+ *     return new JobBuilder("MyJob", jobRepository).incrementer(new RunIdIncrementer()).listener(tracker).start(myStep).build();
  * }
  * </pre>
  */
-@Slf4j
-@Configuration
+@Slf4j @Configuration
 public class BatchJobBaseConfig {
 
     /**
@@ -54,16 +42,9 @@ public class BatchJobBaseConfig {
     public static final String BATCH_TIMEZONE = "America/Toronto";
 
     /**
-     * Canonical set of known batch job names.
-     * Used by SchedulerHealthCheck to detect missing or unexpected schedulers.
-     * When adding a new batch job, add its name here.
+     * Canonical set of known batch job names. Used by SchedulerHealthCheck to detect missing or unexpected schedulers. When adding a new batch job, add its name here.
      */
-    public static final java.util.Set<String> KNOWN_JOBS = java.util.Set.of(
-            "ComicBackfillJob",
-            "ComicDownloadJob",
-            "ImageMetadataBackfillJob",
-            "MetricsArchiveJob",
-            "MetricsUpdateJob",
+    public static final java.util.Set<String> KNOWN_JOBS = java.util.Set.of("ComicBackfillJob", "ComicDownloadJob", "ImageMetadataBackfillJob", "MetricsArchiveJob",
             "RetrievalRecordPurgeJob");
 
     /**
@@ -108,9 +89,6 @@ public class BatchJobBaseConfig {
 
         public static final String IMAGE_BACKFILL_ENABLED = "batch.image-backfill.enabled";
         public static final String IMAGE_BACKFILL_CRON = "batch.image-backfill.cron";
-
-        public static final String METRICS_UPDATE_ENABLED = "batch.metrics-update.enabled";
-        public static final String METRICS_UPDATE_DELAY = "batch.metrics-update.fixed-delay";
 
         public static final String RECORD_PURGE_ENABLED = "batch.record-purge.enabled";
         public static final String RECORD_PURGE_CRON = "batch.record-purge.cron";

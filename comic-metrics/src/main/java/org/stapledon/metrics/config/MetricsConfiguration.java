@@ -20,117 +20,76 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Configuration for metrics system.
- * Conditionally creates metrics beans based on comics.metrics.enabled property.
+ * Configuration for metrics system. Conditionally creates metrics beans based on comics.metrics.enabled property.
  *
- * When metrics are enabled (default):
- * - Creates collectors, repositories, and services
- * - Enables scheduled metrics updates and archiving
+ * When metrics are enabled (default): - Creates collectors, repositories, and services - Enables scheduled metrics updates and archiving
  *
- * When metrics are disabled:
- * - Creates NoOpMetricsService that returns empty data
- * - Skips all collector and repository beans
+ * When metrics are disabled: - Creates NoOpMetricsService that returns empty data - Skips all collector and repository beans
  */
-@Slf4j
-@ToString
-@Configuration
+@Slf4j @ToString @Configuration
 public class MetricsConfiguration {
 
     /**
-     * Creates MetricsService when metrics are enabled.
-     * This is the main facade for all metrics operations.
+     * Creates MetricsService when metrics are enabled. This is the main facade for all metrics operations.
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public MetricsService metricsService(
-            StorageMetricsCollector storageMetricsCollector,
-            AccessMetricsCollector accessMetricsCollector,
-            AccessMetricsRepository accessMetricsRepository,
-            MetricsRepository metricsRepository,
-            MetricsArchiver metricsArchiver,
-            org.stapledon.metrics.service.MetricsUpdateService metricsUpdateService) {
+    @Bean @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public MetricsService metricsService(StorageMetricsCollector storageMetricsCollector, AccessMetricsCollector accessMetricsCollector, AccessMetricsRepository accessMetricsRepository,
+            MetricsArchiver metricsArchiver, org.stapledon.metrics.service.MetricsUpdateService metricsUpdateService) {
         log.info("Metrics enabled - creating JsonMetricsService");
-        return new JsonMetricsService(
-                storageMetricsCollector,
-                accessMetricsCollector,
-                accessMetricsRepository,
-                metricsRepository,
-                metricsArchiver,
-                metricsUpdateService);
+        return new JsonMetricsService(storageMetricsCollector, accessMetricsCollector, accessMetricsRepository, metricsArchiver, metricsUpdateService);
     }
 
     /**
-     * Creates NoOpMetricsService when metrics are disabled.
-     * Returns empty data for all operations.
+     * Creates NoOpMetricsService when metrics are disabled. Returns empty data for all operations.
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "false")
+    @Bean @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "false")
     public MetricsService noOpMetricsService() {
         log.info("Metrics disabled - creating NoOpMetricsService");
         return new NoOpMetricsService();
     }
 
     /**
-     * Creates StorageMetricsCollector when metrics are enabled.
-     * Scans filesystem to compute storage statistics.
+     * Creates StorageMetricsCollector when metrics are enabled. Scans filesystem to compute storage statistics.
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public StorageMetricsCollector storageMetricsCollector(
-            @Qualifier("cacheLocation") String cacheLocation) {
+    @Bean @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public StorageMetricsCollector storageMetricsCollector(@Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating StorageMetricsCollector");
         return new StorageMetricsCollector(cacheLocation);
     }
 
     /**
-     * Creates AccessMetricsCollector when metrics are enabled.
-     * Tracks comic access patterns and cache hit/miss rates.
+     * Creates AccessMetricsCollector when metrics are enabled. Tracks comic access patterns and cache hit/miss rates. Uses event-driven persistence based on persist-threshold.
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public AccessMetricsCollector accessMetricsCollector(
-            @Qualifier("cacheLocation") String cacheLocation,
-            ComicStorageFacade storageFacade,
-            AccessMetricsRepository accessMetricsRepository) {
-        log.debug("Creating AccessMetricsCollector");
-        return new AccessMetricsCollector(cacheLocation, storageFacade, accessMetricsRepository);
+    @Bean @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public AccessMetricsCollector accessMetricsCollector(@Qualifier("cacheLocation") String cacheLocation, ComicStorageFacade storageFacade, AccessMetricsRepository accessMetricsRepository,
+            @org.springframework.beans.factory.annotation.Value("${comics.metrics.persist-threshold:50}") int persistThreshold) {
+        log.debug("Creating AccessMetricsCollector with persist threshold: {}", persistThreshold);
+        return new AccessMetricsCollector(cacheLocation, storageFacade, accessMetricsRepository, persistThreshold);
     }
 
     /**
-     * Creates AccessMetricsRepository when metrics are enabled.
-     * Persists access metrics to JSON files.
+     * Creates AccessMetricsRepository when metrics are enabled. Persists access metrics to JSON files.
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public AccessMetricsRepository accessMetricsRepository(
-            @Qualifier("gsonWithLocalDate") Gson gson,
-            @Qualifier("cacheLocation") String cacheLocation) {
+    @Bean @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public AccessMetricsRepository accessMetricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating AccessMetricsRepository");
         return new AccessMetricsRepository(gson, cacheLocation);
     }
 
     /**
-     * Creates MetricsRepository when metrics are enabled.
-     * Uses JSON file backend by default.
+     * Creates MetricsRepository when metrics are enabled. Uses JSON file backend by default.
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public MetricsRepository metricsRepository(
-            @Qualifier("gsonWithLocalDate") Gson gson,
-            @Qualifier("cacheLocation") String cacheLocation) {
+    @Bean @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public MetricsRepository metricsRepository(@Qualifier("gsonWithLocalDate") Gson gson, @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating JsonMetricsRepository");
         return new JsonMetricsRepository(gson, cacheLocation);
     }
 
     /**
-     * Creates MetricsArchiver when metrics are enabled.
-     * Archives daily metrics snapshots for historical analysis.
+     * Creates MetricsArchiver when metrics are enabled. Archives daily metrics snapshots for historical analysis.
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public MetricsArchiver metricsArchiver(
-            @Qualifier("gsonWithLocalDate") Gson gson,
-            @Qualifier("cacheLocation") String cacheLocation) {
+    @Bean @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public MetricsArchiver metricsArchiver(@Qualifier("gsonWithLocalDate") Gson gson, @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating MetricsArchiver");
         return new MetricsArchiver(gson, cacheLocation);
     }

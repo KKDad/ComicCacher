@@ -38,41 +38,19 @@ class AccessMetricsCollectorAccessTrackingTest {
         AccessMetricsRepository mockAccessMetricsRepository = mock(AccessMetricsRepository.class);
 
         // Initialize CacheUtils with temp directory, mock facade, and mock metrics repository
-        accessMetricsCollector = new AccessMetricsCollector(cacheRoot.getAbsolutePath(), mockStorageFacade, mockAccessMetricsRepository);
+        // Use high threshold to avoid triggering persistence during tests
+        accessMetricsCollector = new AccessMetricsCollector(cacheRoot.getAbsolutePath(), mockStorageFacade, mockAccessMetricsRepository, 1000);
 
         // Create comic items for testing
-        testComic1 = ComicItem.builder()
-                .id(1)
-                .name("DilbertTest")
-                .newest(LocalDate.of(2023, 1, 5))
-                .oldest(LocalDate.of(2023, 1, 1))
-                .build();
+        testComic1 = ComicItem.builder().id(1).name("DilbertTest").newest(LocalDate.of(2023, 1, 5)).oldest(LocalDate.of(2023, 1, 1)).build();
 
-        testComic2 = ComicItem.builder()
-                .id(2)
-                .name("CalvinTest")
-                .newest(LocalDate.of(2022, 6, 10))
-                .oldest(LocalDate.of(2022, 6, 1))
-                .build();
+        testComic2 = ComicItem.builder().id(2).name("CalvinTest").newest(LocalDate.of(2022, 6, 10)).oldest(LocalDate.of(2022, 6, 1)).build();
 
         // Set up mock data
-        mockStorageFacade.setupComic(
-                testComic1.getId(),
-                testComic1.getName(),
-                LocalDate.of(2023, 1, 1),
-                LocalDate.of(2023, 1, 5),
-                LocalDate.of(2023, 1, 2),
-                LocalDate.of(2023, 1, 3),
-                LocalDate.of(2023, 1, 4)
-        );
+        mockStorageFacade.setupComic(testComic1.getId(), testComic1.getName(), LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 5), LocalDate.of(2023, 1, 2), LocalDate.of(2023, 1, 3),
+                LocalDate.of(2023, 1, 4));
 
-        mockStorageFacade.setupComic(
-                testComic2.getId(),
-                testComic2.getName(),
-                LocalDate.of(2022, 6, 1),
-                LocalDate.of(2022, 6, 10),
-                LocalDate.of(2022, 6, 5)
-        );
+        mockStorageFacade.setupComic(testComic2.getId(), testComic2.getName(), LocalDate.of(2022, 6, 1), LocalDate.of(2022, 6, 10), LocalDate.of(2022, 6, 5));
     }
 
     @Test

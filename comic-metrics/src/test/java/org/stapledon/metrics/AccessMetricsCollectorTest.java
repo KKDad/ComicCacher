@@ -24,24 +24,16 @@ public class AccessMetricsCollectorTest {
         AccessMetricsRepository mockAccessMetricsRepository = mock(AccessMetricsRepository.class);
 
         // Create test comic item
-        comicItem = ComicItem.builder()
-                .id(42)
-                .name("Fake Comic")
-                .description("Comic for Unit Tests")
-                .oldest(LocalDate.of(2008, 1, 10))
-                .newest(LocalDate.of(2019, 3, 22))
-                .build();
+        comicItem = ComicItem.builder().id(42).name("Fake Comic").description("Comic for Unit Tests").oldest(LocalDate.of(2008, 1, 10)).newest(LocalDate.of(2019, 3, 22)).build();
 
         // Set up mock data
-        mockStorageFacade.setupComic(
-                comicItem.getId(),
-                comicItem.getName(),
-                LocalDate.of(2008, 1, 10),    // oldest
-                LocalDate.of(2019, 3, 22),    // newest
-                LocalDate.of(2010, 6, 28)     // additional date between
+        mockStorageFacade.setupComic(comicItem.getId(), comicItem.getName(), LocalDate.of(2008, 1, 10), // oldest
+                LocalDate.of(2019, 3, 22), // newest
+                LocalDate.of(2010, 6, 28) // additional date between
         );
 
-        accessMetricsCollector = new AccessMetricsCollector(resourcesDirectory.toString(), mockStorageFacade, mockAccessMetricsRepository);
+        // Use high threshold to avoid triggering persistence during tests
+        accessMetricsCollector = new AccessMetricsCollector(resourcesDirectory.toString(), mockStorageFacade, mockAccessMetricsRepository, 1000);
     }
 
     @Test

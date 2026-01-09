@@ -8,7 +8,6 @@ import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
-import org.stapledon.metrics.repository.MetricsRepository;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -16,19 +15,14 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * JSON-based implementation of MetricsService.
- * Delegates to collectors and repositories to provide unified metrics access.
+ * JSON-based implementation of MetricsService. Delegates to collectors and repositories to provide unified metrics access.
  */
-@Slf4j
-@ToString
-@Service
-@RequiredArgsConstructor
+@Slf4j @ToString @Service @RequiredArgsConstructor
 public class JsonMetricsService implements MetricsService {
 
     private final StorageMetricsCollector storageMetricsCollector;
     private final AccessMetricsCollector accessMetricsCollector;
     private final AccessMetricsRepository accessMetricsRepository;
-    private final MetricsRepository metricsRepository;
     private final MetricsArchiver metricsArchiver;
     private final MetricsUpdateService metricsUpdateService;
 
@@ -46,8 +40,8 @@ public class JsonMetricsService implements MetricsService {
 
     @Override
     public CombinedMetricsData getCombinedMetrics() {
-        log.debug("Getting combined metrics");
-        return metricsRepository.get();
+        log.debug("Computing combined metrics on-demand");
+        return metricsUpdateService.buildCombinedMetrics();
     }
 
     @Override
@@ -67,7 +61,7 @@ public class JsonMetricsService implements MetricsService {
     public boolean archiveCurrentMetrics() {
         log.info("Archiving current metrics");
         try {
-            CombinedMetricsData currentMetrics = metricsRepository.get();
+            CombinedMetricsData currentMetrics = metricsUpdateService.buildCombinedMetrics();
             return metricsArchiver.archiveMetrics(currentMetrics, LocalDate.now());
         } catch (Exception e) {
             log.error("Failed to archive metrics", e);
