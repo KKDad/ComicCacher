@@ -1,27 +1,22 @@
-# -- Stage 1
+# -- Stage 1: Build Angular
 FROM node:22 AS build-step
 
 RUN mkdir -p /app
 WORKDIR /app
-COPY package.json /app
-RUN npm install
+COPY package.json package-lock.json /app/
+RUN npm ci
 COPY . /app
 RUN npm run build --omit=dev
 
-# -- Stage 2
-FROM eclipse-temurin:11-jre-alpine
-COPY --from=build-step /app/dist/comic-web/browser /static_content
+# -- Stage 2: Serve with Nginx
+FROM nginx:alpine
 
-ENV VERSION=9.4.49.v20220914
-RUN apk add --update bash wget tar && rm -rf /var/cache/apk/*
-RUN wget -q -O /jetty.tar.gz https://repo1.maven.org/maven2/org/eclipse/jetty/jetty-distribution/${VERSION}/jetty-distribution-$VERSION.tar.gz
+# Copy Angular build output
+COPY --from=build-step /app/dist/comic-web/browser /usr/share/nginx/html
 
-# Install Jetty
-RUN tar -xvf /jetty.tar.gz && rm /jetty.tar.gz && mv jetty-distribution-${VERSION} /jetty
-COPY entrypoint.sh static_content.xml /
-
-RUN chmod +x entrypoint.sh && apk del wget tar
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
 
-ENTRYPOINT /entrypoint.sh
+CMD ["nginx", "-g", "daemon off;"]

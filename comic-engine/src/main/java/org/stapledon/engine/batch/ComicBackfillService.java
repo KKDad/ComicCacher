@@ -1,6 +1,7 @@
 package org.stapledon.engine.batch;
 
 import org.springframework.stereotype.Service;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.engine.management.ManagementFacade;
@@ -242,8 +243,7 @@ public class ComicBackfillService {
             // Check if this comic publishes on this day of week
             if (shouldCheckDate(comic, date)) {
                 boolean exists = storageFacade.comicStripExists(
-                        comic.getId(),
-                        comic.getName(),
+                        ComicIdentifier.from(comic),
                         date);
 
                 if (!exists) {

@@ -22,7 +22,7 @@ describe('AppComponent', () => {
 
         // Create the fixture
         fixture = createStandaloneComponentFixture(AppComponent, [RouterModule.forRoot([])], // RouterModule is needed for routerLink
-        [{ provide: ContainerComponent, useValue: containerComponentMock }]);
+            [{ provide: ContainerComponent, useValue: containerComponentMock }]);
 
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -43,7 +43,7 @@ describe('AppComponent', () => {
 
     it('should include navigation links', () => {
         expectExists(fixture, 'a[href="https://github.com/KKDad/ComicCacher"]', 'Project link should exist');
-        expectExists(fixture, 'a[href="docs/index.html"]', 'API link should exist');
+        expectExists(fixture, 'a[href="/swagger-ui.html"]', 'API link should exist');
         // Check for About button by finding button with routerLink directive in .nav-side wrapper
         const aboutButton = fixture.nativeElement.querySelector('.nav-side button');
         expect(aboutButton, 'About button should exist').toBeTruthy();

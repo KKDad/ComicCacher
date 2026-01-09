@@ -16,7 +16,7 @@ describe('AboutComponent', () => {
         };
 
         fixture = createStandaloneComponentFixture(AboutComponent, [], // No additional imports needed, they're already in the component
-        [{ provide: Router, useValue: routerSpy }]);
+            [{ provide: Router, useValue: routerSpy }]);
 
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -28,9 +28,12 @@ describe('AboutComponent', () => {
 
     it('should display information about the application', () => {
         expectExists(fixture, 'mat-card', 'Card should be displayed');
-        expect(getText(fixture, 'mat-card-content p:first-child'))
-            .toContain('Daily comics is a web comics cacher');
-        expect(getText(fixture, 'mat-card-content p:nth-child(3)')).toContain('Angular 19');
+        expect(getText(fixture, '.description-section p:first-child'))
+            .toContain('Daily Comics is a web comics cacher');
+
+        // Tech stack is now in a definition list
+        expect(getText(fixture, '.tech-list')).toContain('Angular 21');
+        expect(getText(fixture, '.tech-list')).toContain('Spring Boot 4');
     });
 
     it('should navigate home when button is clicked', () => {

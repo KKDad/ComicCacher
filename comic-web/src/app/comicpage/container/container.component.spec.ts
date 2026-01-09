@@ -11,6 +11,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ErrorDisplayStubComponent, LoadingIndicatorStubComponent, SectionStubComponent, VirtualScrollViewportStubComponent } from '../../testing/stub-components';
 import { CommonModule } from '@angular/common';
+import { KeyboardService } from '../../shared/a11y/keyboard-service';
 
 // Mock CdkScrollable class
 class MockCdkScrollable {
@@ -41,7 +42,11 @@ describe('ContainerComponent', () => {
     beforeEach(() => {
         comicServiceSpy = {
             getComics: vi.fn().mockName("ComicService.getComics"),
-            refresh: vi.fn().mockName("ComicService.refresh")
+            refresh: vi.fn().mockName("ComicService.refresh"),
+            isLoaded: vi.fn().mockReturnValue(true).mockName("ComicService.isLoaded")
+        };
+        const keyboardServiceSpy = {
+            registerComicListScrollShortcuts: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }).mockName("KeyboardService.registerComicListScrollShortcuts")
         };
         scrollDispatcherSpy = {
             scrolled: vi.fn().mockName("ScrollDispatcher.scrolled"),
@@ -69,6 +74,12 @@ describe('ContainerComponent', () => {
         ], [
             { provide: ComicService, useValue: comicServiceSpy },
             { provide: ScrollDispatcher, useValue: scrollDispatcherSpy },
+            {
+                provide: KeyboardService, useValue: {
+                    registerComicListScrollShortcuts: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+                    registerComicStripNavigationShortcuts: vi.fn().mockReturnValue({ unsubscribe: vi.fn() })
+                }
+            },
             // Mock the CdkVirtualScrollViewport to prevent scrolling registration errors
             { provide: CdkVirtualScrollViewport, useClass: VirtualScrollViewportStubComponent }
         ],
@@ -180,7 +191,8 @@ describe('ContainerComponent - Error Handling', () => {
         // Create spy that throws error
         const errorComicServiceSpy = {
             getComics: vi.fn().mockName("ComicService.getComics"),
-            refresh: vi.fn().mockName("ComicService.refresh")
+            refresh: vi.fn().mockName("ComicService.refresh"),
+            isLoaded: vi.fn().mockReturnValue(true).mockName("ComicService.isLoaded")
         };
         errorComicServiceSpy.getComics.mockReturnValue(throwError(() => new Error('Test error')));
 
@@ -194,6 +206,12 @@ describe('ContainerComponent - Error Handling', () => {
         ], [
             { provide: ComicService, useValue: errorComicServiceSpy },
             { provide: ScrollDispatcher, useValue: scrollDispatcherSpy },
+            {
+                provide: KeyboardService, useValue: {
+                    registerComicListScrollShortcuts: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+                    registerComicStripNavigationShortcuts: vi.fn().mockReturnValue({ unsubscribe: vi.fn() })
+                }
+            },
             { provide: CdkVirtualScrollViewport, useClass: VirtualScrollViewportStubComponent }
         ], { schemas: [CUSTOM_ELEMENTS_SCHEMA] });
 

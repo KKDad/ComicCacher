@@ -1,5 +1,6 @@
 package org.stapledon.metrics;
 
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.service.ComicStorageFacade;
 
@@ -23,11 +24,12 @@ public class MockComicStorageFacade implements ComicStorageFacade {
 
     /**
      * Set up comic data for testing
-     * @param comicId Comic ID
+     * 
+     * @param comicId   Comic ID
      * @param comicName Comic name
-     * @param oldest Oldest date
-     * @param newest Newest date
-     * @param dates Additional dates between oldest and newest
+     * @param oldest    Oldest date
+     * @param newest    Newest date
+     * @param dates     Additional dates between oldest and newest
      */
     public void setupComic(int comicId, String comicName, LocalDate oldest, LocalDate newest, LocalDate... dates) {
         String key = getComicKey(comicId, comicName);
@@ -35,11 +37,11 @@ public class MockComicStorageFacade implements ComicStorageFacade {
         newestDates.put(key, newest);
 
         Map<LocalDate, byte[]> strips = new HashMap<>();
-        strips.put(oldest, new byte[]{1});
-        strips.put(newest, new byte[]{2});
+        strips.put(oldest, new byte[] { 1 });
+        strips.put(newest, new byte[] { 2 });
 
         for (LocalDate date : dates) {
-            strips.put(date, new byte[]{3});
+            strips.put(date, new byte[] { 3 });
         }
 
         comicStrips.put(key, strips);
@@ -49,21 +51,25 @@ public class MockComicStorageFacade implements ComicStorageFacade {
         return comicId + ":" + comicName;
     }
 
+    private String getComicKey(ComicIdentifier comic) {
+        return getComicKey(comic.getId(), comic.getName());
+    }
+
     @Override
-    public Optional<LocalDate> getOldestDateWithComic(int comicId, String comicName) {
-        String key = getComicKey(comicId, comicName);
+    public Optional<LocalDate> getOldestDateWithComic(ComicIdentifier comic) {
+        String key = getComicKey(comic);
         return Optional.ofNullable(oldestDates.get(key));
     }
 
     @Override
-    public Optional<LocalDate> getNewestDateWithComic(int comicId, String comicName) {
-        String key = getComicKey(comicId, comicName);
+    public Optional<LocalDate> getNewestDateWithComic(ComicIdentifier comic) {
+        String key = getComicKey(comic);
         return Optional.ofNullable(newestDates.get(key));
     }
 
     @Override
-    public Optional<LocalDate> getNextDateWithComic(int comicId, String comicName, LocalDate fromDate) {
-        String key = getComicKey(comicId, comicName);
+    public Optional<LocalDate> getNextDateWithComic(ComicIdentifier comic, LocalDate fromDate) {
+        String key = getComicKey(comic);
         Map<LocalDate, byte[]> strips = comicStrips.get(key);
 
         if (strips == null) {
@@ -81,8 +87,8 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public Optional<LocalDate> getPreviousDateWithComic(int comicId, String comicName, LocalDate fromDate) {
-        String key = getComicKey(comicId, comicName);
+    public Optional<LocalDate> getPreviousDateWithComic(ComicIdentifier comic, LocalDate fromDate) {
+        String key = getComicKey(comic);
         Map<LocalDate, byte[]> strips = comicStrips.get(key);
 
         if (strips == null) {
@@ -100,8 +106,8 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public boolean saveComicStrip(int comicId, String comicName, LocalDate date, byte[] imageData) {
-        String key = getComicKey(comicId, comicName);
+    public boolean saveComicStrip(ComicIdentifier comic, LocalDate date, byte[] imageData) {
+        String key = getComicKey(comic);
         Map<LocalDate, byte[]> strips = comicStrips.computeIfAbsent(key, k -> new HashMap<>());
         strips.put(date, imageData);
 
@@ -118,27 +124,28 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public boolean saveAvatar(int comicId, String comicName, byte[] avatarData) {
+    public boolean saveAvatar(ComicIdentifier comic, byte[] avatarData) {
         // Not needed for these tests
         return true;
     }
 
     @Override
-    public long getStorageSize(int comicId, String comicName) {
+    public long getStorageSize(ComicIdentifier comic) {
         // Return a dummy value
         return 1024L;
     }
 
     @Override
-    public List<String> getYearsWithContent(int comicId, String comicName) {
-        String key = getComicKey(comicId, comicName);
+    public List<String> getYearsWithContent(ComicIdentifier comic) {
+        String key = getComicKey(comic);
         Map<LocalDate, byte[]> strips = comicStrips.get(key);
 
         if (strips == null) {
             return new ArrayList<>();
         }
 
-        // Extract unique years from all dates in the comic strips and convert to strings
+        // Extract unique years from all dates in the comic strips and convert to
+        // strings
         return strips.keySet().stream()
                 .map(LocalDate::getYear)
                 .map(String::valueOf)
@@ -147,9 +154,9 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public String getComicCacheRoot(int comicId, String comicName) {
+    public String getComicCacheRoot(ComicIdentifier comic) {
         // Return a mock cache root path
-        return "/mock/cache/root/" + comicName.replace(" ", "");
+        return "/mock/cache/root/" + comic.getDirectoryName();
     }
 
     @Override
@@ -159,15 +166,15 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public boolean purgeOldImages(int comicId, String comicName, int daysToKeep) {
+    public boolean purgeOldImages(ComicIdentifier comic, int daysToKeep) {
         // In a mock implementation, return success
         return true;
     }
 
     @Override
-    public boolean deleteComic(int comicId, String comicName) {
+    public boolean deleteComic(ComicIdentifier comic) {
         // In a mock implementation, remove from the maps and return success
-        String key = getComicKey(comicId, comicName);
+        String key = getComicKey(comic);
         oldestDates.remove(key);
         newestDates.remove(key);
         comicStrips.remove(key);
@@ -175,14 +182,14 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public boolean comicStripExists(int comicId, String comicName, LocalDate date) {
-        String key = getComicKey(comicId, comicName);
+    public boolean comicStripExists(ComicIdentifier comic, LocalDate date) {
+        String key = getComicKey(comic);
         Map<LocalDate, byte[]> strips = comicStrips.get(key);
         return strips != null && strips.containsKey(date);
     }
 
     @Override
-    public Optional<ImageDto> getAvatar(int comicId, String comicName) {
+    public Optional<ImageDto> getAvatar(ComicIdentifier comic) {
         // Return a dummy avatar
         ImageDto imageDto = ImageDto.builder()
                 .mimeType("image/png")
@@ -194,8 +201,8 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public Optional<ImageDto> getComicStrip(int comicId, String comicName, LocalDate date) {
-        String key = getComicKey(comicId, comicName);
+    public Optional<ImageDto> getComicStrip(ComicIdentifier comic, LocalDate date) {
+        String key = getComicKey(comic);
         Map<LocalDate, byte[]> strips = comicStrips.get(key);
 
         if (strips == null || !strips.containsKey(date)) {

@@ -34,22 +34,25 @@ public class ImageAnalysisService implements AnalysisService {
     }
 
     @Override
-    public ImageMetadata analyzeImage(File imageFile, ImageValidationResult validation, String sourceUrl) {
+    public ImageMetadata analyzeImage(int comicId, String comicName, File imageFile, ImageValidationResult validation,
+            String sourceUrl) {
         if (!imageFile.exists()) {
             log.warn("Image file does not exist: {}", imageFile.getAbsolutePath());
-            return buildUnknownMetadata(imageFile.getAbsolutePath(), validation, sourceUrl);
+            return buildUnknownMetadata(comicId, comicName, imageFile.getAbsolutePath(), validation, sourceUrl);
         }
 
         try {
             BufferedImage image = ImageIO.read(imageFile);
             if (image == null) {
                 log.warn("Could not read image file: {}", imageFile.getAbsolutePath());
-                return buildUnknownMetadata(imageFile.getAbsolutePath(), validation, sourceUrl);
+                return buildUnknownMetadata(comicId, comicName, imageFile.getAbsolutePath(), validation, sourceUrl);
             }
 
             ImageMetadata.ColorMode colorMode = detectColorModeFromImage(image);
 
             return ImageMetadata.builder()
+                    .comicId(comicId)
+                    .comicName(comicName)
                     .filePath(imageFile.getAbsolutePath())
                     .format(validation.getFormat())
                     .width(validation.getWidth())
@@ -62,27 +65,30 @@ public class ImageAnalysisService implements AnalysisService {
                     .build();
         } catch (IOException e) {
             log.error("Error analyzing image file {}: {}", imageFile.getAbsolutePath(), e.getMessage());
-            return buildUnknownMetadata(imageFile.getAbsolutePath(), validation, sourceUrl);
+            return buildUnknownMetadata(comicId, comicName, imageFile.getAbsolutePath(), validation, sourceUrl);
         }
     }
 
     @Override
-    public ImageMetadata analyzeImage(byte[] imageData, String filePath, ImageValidationResult validation, String sourceUrl) {
+    public ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
+            ImageValidationResult validation, String sourceUrl) {
         if (imageData == null || imageData.length == 0) {
             log.warn("Image data is null or empty for path: {}", filePath);
-            return buildUnknownMetadata(filePath, validation, sourceUrl);
+            return buildUnknownMetadata(comicId, comicName, filePath, validation, sourceUrl);
         }
 
         try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {
             BufferedImage image = ImageIO.read(bais);
             if (image == null) {
                 log.warn("Could not read image data for path: {}", filePath);
-                return buildUnknownMetadata(filePath, validation, sourceUrl);
+                return buildUnknownMetadata(comicId, comicName, filePath, validation, sourceUrl);
             }
 
             ImageMetadata.ColorMode colorMode = detectColorModeFromImage(image);
 
             return ImageMetadata.builder()
+                    .comicId(comicId)
+                    .comicName(comicName)
                     .filePath(filePath)
                     .format(validation.getFormat())
                     .width(validation.getWidth())
@@ -95,7 +101,7 @@ public class ImageAnalysisService implements AnalysisService {
                     .build();
         } catch (IOException e) {
             log.error("Error analyzing image data for path {}: {}", filePath, e.getMessage());
-            return buildUnknownMetadata(filePath, validation, sourceUrl);
+            return buildUnknownMetadata(comicId, comicName, filePath, validation, sourceUrl);
         }
     }
 
@@ -160,8 +166,11 @@ public class ImageAnalysisService implements AnalysisService {
     /**
      * Builds metadata with UNKNOWN color mode when image cannot be analyzed
      */
-    private ImageMetadata buildUnknownMetadata(String filePath, ImageValidationResult validation, String sourceUrl) {
+    private ImageMetadata buildUnknownMetadata(int comicId, String comicName, String filePath,
+            ImageValidationResult validation, String sourceUrl) {
         return ImageMetadata.builder()
+                .comicId(comicId)
+                .comicName(comicName)
                 .filePath(filePath)
                 .format(validation.getFormat())
                 .width(validation.getWidth())

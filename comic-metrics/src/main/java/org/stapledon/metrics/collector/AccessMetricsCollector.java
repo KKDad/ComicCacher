@@ -1,6 +1,7 @@
 package org.stapledon.metrics.collector;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.metrics.dto.AccessMetricsData;
@@ -26,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
  * This class delegates storage operations to ComicStorageFacade
  * while tracking access patterns for metrics and performance monitoring.
  *
- * Note: This class is configured as a @Bean in CacheConfiguration, not as @Component
+ * Note: This class is configured as a @Bean in CacheConfiguration, not
+ * as @Component
  */
 @Slf4j
 @ToString
@@ -44,17 +46,17 @@ public class AccessMetricsCollector {
     private final ConcurrentHashMap<String, AtomicInteger> cacheHits = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, AtomicInteger> cacheMisses = new ConcurrentHashMap<>();
 
-
     /**
-     * Primary constructor with StorageFacade and AccessMetricsRepository dependencies
+     * Primary constructor with StorageFacade and AccessMetricsRepository
+     * dependencies
      */
     public AccessMetricsCollector(@Qualifier("cacheLocation") String cacheHome,
-                                  ComicStorageFacade storageFacade,
-                                  AccessMetricsRepository accessMetricsRepository) {
+            ComicStorageFacade storageFacade,
+            AccessMetricsRepository accessMetricsRepository) {
         this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
         this.storageFacade = Objects.requireNonNull(storageFacade, "storageFacade must be specified");
         this.accessMetricsRepository = Objects.requireNonNull(accessMetricsRepository,
-                                                              "accessMetricsRepository must be specified");
+                "accessMetricsRepository must be specified");
     }
 
     /**
@@ -88,7 +90,7 @@ public class AccessMetricsCollector {
                 cacheMisses.put(comicName, new AtomicInteger(metrics.getCacheMisses()));
             });
             log.info("Loaded access metrics for {} comics from persistent storage",
-                     data.getComicMetrics().size());
+                    data.getComicMetrics().size());
         }
     }
 
@@ -115,12 +117,11 @@ public class AccessMetricsCollector {
         accessMetricsRepository.save(data);
     }
 
-
     /**
      * Track access to a comic.
      *
-     * @param comicName the name of the comic being accessed
-     * @param isHit whether this was a cache hit (true) or miss (false)
+     * @param comicName  the name of the comic being accessed
+     * @param isHit      whether this was a cache hit (true) or miss (false)
      * @param accessTime time taken for the access in milliseconds
      */
     public void trackAccess(String comicName, boolean isHit, long accessTime) {
@@ -191,13 +192,13 @@ public class AccessMetricsCollector {
         File result = null;
 
         // Use the facade
-        Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(comic.getId(), comic.getName());
+        Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(ComicIdentifier.from(comic));
         if (oldestDate.isPresent()) {
             LocalDate date = oldestDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             result = new File(String.format("%s/%s/%s/%s.png",
-                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
 
         timer.stop();
@@ -210,13 +211,13 @@ public class AccessMetricsCollector {
         File result = null;
 
         // Use the facade
-        Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(comic.getId(), comic.getName());
+        Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(ComicIdentifier.from(comic));
         if (newestDate.isPresent()) {
             LocalDate date = newestDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             result = new File(String.format("%s/%s/%s/%s.png",
-                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
 
         timer.stop();
@@ -224,20 +225,19 @@ public class AccessMetricsCollector {
         return result;
     }
 
-
     public File findNext(ComicItem comic, LocalDate from) {
         var timer = Stopwatch.createStarted();
         File resultFile = null;
         boolean found = false;
 
         // Use the facade
-        Optional<LocalDate> nextDate = storageFacade.getNextDateWithComic(comic.getId(), comic.getName(), from);
+        Optional<LocalDate> nextDate = storageFacade.getNextDateWithComic(ComicIdentifier.from(comic), from);
         if (nextDate.isPresent()) {
             LocalDate date = nextDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             resultFile = new File(String.format("%s/%s/%s/%s.png",
-                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
             found = true;
         }
 
@@ -255,13 +255,13 @@ public class AccessMetricsCollector {
         boolean found = false;
 
         // Use the facade
-        Optional<LocalDate> prevDate = storageFacade.getPreviousDateWithComic(comic.getId(), comic.getName(), from);
+        Optional<LocalDate> prevDate = storageFacade.getPreviousDateWithComic(ComicIdentifier.from(comic), from);
         if (prevDate.isPresent()) {
             LocalDate date = prevDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             resultFile = new File(String.format("%s/%s/%s/%s.png",
-                cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+                    cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
             found = true;
         }
 

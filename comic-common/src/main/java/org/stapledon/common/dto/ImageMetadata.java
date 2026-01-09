@@ -13,6 +13,15 @@ import lombok.ToString;
 @Builder
 @ToString(onlyExplicitlyIncluded = true)
 public class ImageMetadata {
+    @ToString.Include
+    private final int comicId;
+
+    /**
+     * Name of the comic this image belongs to
+     */
+    @ToString.Include
+    private final String comicName;
+
     /**
      * Absolute path to the image file
      */
@@ -80,5 +89,12 @@ public class ImageMetadata {
          * Could not determine color mode
          */
         UNKNOWN
+    }
+
+    /**
+     * Returns a ComicIdentifier for this metadata.
+     */
+    public ComicIdentifier getComicIdentifier() {
+        return new ComicIdentifier(comicId, comicName);
     }
 }

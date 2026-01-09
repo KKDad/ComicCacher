@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
-import org.springframework.batch.core.job.parameters.JobParametersBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.repository.explore.JobExplorer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.TestPropertySource;
@@ -17,6 +17,7 @@ import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -32,7 +33,10 @@ import lombok.extern.slf4j.Slf4j;
 class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
         @Autowired
-        private JobLauncher jobLauncher;
+        private JobOperator jobOperator;
+
+        @Autowired
+        private JobExplorer jobExplorer;
 
         @Autowired
         @Qualifier("retrievalRecordPurgeJob")
@@ -74,11 +78,12 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
          * Runs the job manually for testing.
          */
         private JobExecution runJob() throws Exception {
-                return jobLauncher.run(retrievalRecordPurgeJob,
-                                new JobParametersBuilder()
-                                                .addLong("runId", System.currentTimeMillis())
-                                                .addString("trigger", "TEST")
-                                                .toJobParameters());
+                Properties params = new Properties();
+                params.put("runId", String.valueOf(System.currentTimeMillis()));
+                params.put("trigger", "TEST");
+
+                Long executionId = jobOperator.start(retrievalRecordPurgeJob.getName(), params);
+                return jobExplorer.getJobExecution(executionId);
         }
 
         /**

@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
-import org.springframework.batch.core.job.parameters.JobParametersBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.repository.explore.JobExplorer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.stapledon.common.dto.ImageFormat;
@@ -16,6 +16,7 @@ import org.stapledon.common.dto.ImageMetadata;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -27,7 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
         @Autowired
-        private JobLauncher jobLauncher;
+        private JobOperator jobOperator;
+
+        @Autowired
+        private JobExplorer jobExplorer;
 
         @Autowired
         @Qualifier("imageMetadataBackfillJob")
@@ -41,11 +45,12 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
          * Runs the job manually for testing.
          */
         private JobExecution runJob() throws Exception {
-                return jobLauncher.run(imageMetadataBackfillJob,
-                                new JobParametersBuilder()
-                                                .addLong("runId", System.currentTimeMillis())
-                                                .addString("trigger", "TEST")
-                                                .toJobParameters());
+                Properties params = new Properties();
+                params.put("runId", String.valueOf(System.currentTimeMillis()));
+                params.put("trigger", "TEST");
+
+                Long executionId = jobOperator.start(imageMetadataBackfillJob.getName(), params);
+                return jobExplorer.getJobExecution(executionId);
         }
 
         @BeforeEach
