@@ -24,13 +24,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Spring Batch configuration for metrics archive job.
- * Archives yesterday's metrics to JSON for historical analysis.
+ * Spring Batch configuration for metrics archive job. Archives yesterday's metrics to JSON for historical analysis.
  */
-@Slf4j
-@Configuration
-@RequiredArgsConstructor
-@ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "true", matchIfMissing = true)
 public class MetricsArchiveJobConfig {
 
     private final MetricsArchiveService metricsArchiveService;
@@ -42,44 +38,29 @@ public class MetricsArchiveJobConfig {
     private String timezone;
 
     /**
-     * Scheduler for MetricsArchiveJob - runs daily at configured cron time.
-     * Triggered by SchedulerTriggers component.
+     * Scheduler for MetricsArchiveJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
-    public DailyJobScheduler metricsArchiveJobScheduler(
-            JobOperator jobOperator,
-            JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(
-                "MetricsArchiveJob", cronExpression, timezone, jobOperator, tracker);
+    public DailyJobScheduler metricsArchiveJobScheduler(@Qualifier("metricsArchiveJob") Job metricsArchiveJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(metricsArchiveJob, cronExpression, timezone, jobOperator, tracker);
     }
 
     /**
      * Job for archiving metrics
      */
     @Bean
-    public Job metricsArchiveJob(
-            JobRepository jobRepository,
-            @Qualifier("metricsArchiveStep") Step metricsArchiveStep,
-            JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+    public Job metricsArchiveJob(JobRepository jobRepository, @Qualifier("metricsArchiveStep") Step metricsArchiveStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("MetricsArchiveJob", jobRepository)
-                .incrementer(new RunIdIncrementer())
-                .listener(jsonBatchExecutionTracker)
-                .start(metricsArchiveStep)
-                .build();
+        return new JobBuilder("MetricsArchiveJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).start(metricsArchiveStep).build();
     }
 
     /**
      * Step for performing metrics archiving
      */
     @Bean
-    public Step metricsArchiveStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager) {
+    public Step metricsArchiveStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
 
-        return new StepBuilder("metricsArchiveStep", jobRepository)
-                .tasklet(metricsArchiveTasklet(), transactionManager)
-                .build();
+        return new StepBuilder("metricsArchiveStep", jobRepository).tasklet(metricsArchiveTasklet(), transactionManager).build();
     }
 
     /**

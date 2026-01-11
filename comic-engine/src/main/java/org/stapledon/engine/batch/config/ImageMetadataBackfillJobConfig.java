@@ -38,13 +38,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Spring Batch configuration for image metadata backfill job.
- * Backfills metadata for existing images that don't have metadata files.
+ * Spring Batch configuration for image metadata backfill job. Backfills metadata for existing images that don't have metadata files.
  */
-@Slf4j
-@Configuration
-@RequiredArgsConstructor
-@ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ImageMetadataBackfillJobConfig {
 
     private static final int UNKNOWN_COMIC_ID = 0;
@@ -69,8 +65,7 @@ public class ImageMetadataBackfillJobConfig {
     private volatile boolean initialized = false;
 
     /**
-     * Lazily initializes the comic directory map on first use.
-     * Avoids blocking application startup.
+     * Lazily initializes the comic directory map on first use. Avoids blocking application startup.
      */
     private void ensureInitialized() {
         if (!initialized) {
@@ -88,49 +83,34 @@ public class ImageMetadataBackfillJobConfig {
     }
 
     /**
-     * Scheduler for ImageMetadataBackfillJob - runs daily at configured cron time.
-     * Triggered by SchedulerTriggers component.
+     * Scheduler for ImageMetadataBackfillJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
-    public DailyJobScheduler imageMetadataBackfillJobScheduler(
-            JobOperator jobOperator,
+    public DailyJobScheduler imageMetadataBackfillJobScheduler(@Qualifier("imageMetadataBackfillJob") Job imageMetadataBackfillJob, JobOperator jobOperator,
             JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(
-                "ImageMetadataBackfillJob", cronExpression, timezone, jobOperator, tracker);
+        return new DailyJobScheduler(imageMetadataBackfillJob, cronExpression, timezone, jobOperator, tracker);
     }
 
     /**
      * Job for backfilling image metadata
      */
     @Bean
-    public Job imageMetadataBackfillJob(
-            JobRepository jobRepository,
-            @Qualifier("imageBackfillStep") Step imageBackfillStep,
-            JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+    public Job imageMetadataBackfillJob(JobRepository jobRepository, @Qualifier("imageBackfillStep") Step imageBackfillStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ImageMetadataBackfillJob", jobRepository)
-                .incrementer(new RunIdIncrementer())
-                .listener(jsonBatchExecutionTracker)
-                .start(imageBackfillStep)
-                .build();
+        return new JobBuilder("ImageMetadataBackfillJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).start(imageBackfillStep).build();
     }
 
     /**
      * Step for performing image metadata backfill
      */
     @Bean
-    public Step imageBackfillStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager) {
+    public Step imageBackfillStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
 
-        return new StepBuilder("imageBackfillStep", jobRepository)
-                .tasklet(imageBackfillTasklet(), transactionManager)
-                .build();
+        return new StepBuilder("imageBackfillStep", jobRepository).tasklet(imageBackfillTasklet(), transactionManager).build();
     }
 
     /**
-     * Tasklet that performs the actual image metadata backfill.
-     * Uses streaming to avoid loading all file paths into memory.
+     * Tasklet that performs the actual image metadata backfill. Uses streaming to avoid loading all file paths into memory.
      */
     @Bean
     public Tasklet imageBackfillTasklet() {
@@ -141,8 +121,7 @@ public class ImageMetadataBackfillJobConfig {
             File cacheRoot = new File(cacheProperties.getLocation());
 
             if (!cacheRoot.exists() || !cacheRoot.isDirectory()) {
-                log.warn("Cache directory does not exist or is not a directory: {}",
-                        cacheRoot.getAbsolutePath());
+                log.warn("Cache directory does not exist or is not a directory: {}", cacheRoot.getAbsolutePath());
                 return RepeatStatus.FINISHED;
             }
 
@@ -151,27 +130,21 @@ public class ImageMetadataBackfillJobConfig {
             int[] counters = { 0, 0, 0 }; // processed, successful, failed
 
             try (Stream<Path> paths = Files.walk(cacheRoot.toPath())) {
-                paths.filter(Files::isRegularFile)
-                        .filter(this::isImageFile)
-                        .filter(path -> !path.getFileName().toString().equals("avatar.png"))
-                        .filter(path -> !imageMetadataRepository.metadataExists(path.toString()))
-                        .limit(maxToProcess)
-                        .forEach(path -> {
+                paths.filter(Files::isRegularFile).filter(this::isImageFile).filter(path -> !path.getFileName().toString().equals("avatar.png"))
+                        .filter(path -> !imageMetadataRepository.metadataExists(path.toString())).limit(maxToProcess).forEach(path -> {
                             try {
                                 backfillImageMetadata(path.toFile());
                                 counters[1]++;
                             } catch (Exception e) {
                                 counters[2]++;
-                                log.error("Failed to backfill metadata for {}: {}",
-                                        path.toAbsolutePath(), e.getMessage());
+                                log.error("Failed to backfill metadata for {}: {}", path.toAbsolutePath(), e.getMessage());
                             }
 
                             counters[0]++;
 
                             // Log progress every batch
                             if (counters[0] % batchSize == 0) {
-                                log.info("Progress: {} images processed ({} successful, {} failed)",
-                                        counters[0], counters[1], counters[2]);
+                                log.info("Progress: {} images processed ({} successful, {} failed)", counters[0], counters[1], counters[2]);
                             }
                         });
             }
@@ -180,12 +153,10 @@ public class ImageMetadataBackfillJobConfig {
                 log.info("No images need metadata backfill. Job complete.");
             } else {
                 long duration = System.currentTimeMillis() - startTime;
-                log.info("Image metadata backfill complete. Processed {} images in {}ms ({} successful, {} failed)",
-                        counters[0], duration, counters[1], counters[2]);
+                log.info("Image metadata backfill complete. Processed {} images in {}ms ({} successful, {} failed)", counters[0], duration, counters[1], counters[2]);
 
                 if (counters[0] >= maxToProcess) {
-                    log.info("Reached max limit of {} images per run. More images may need processing.",
-                            maxToProcess);
+                    log.info("Reached max limit of {} images per run. More images may need processing.", maxToProcess);
                 }
             }
 
@@ -198,9 +169,7 @@ public class ImageMetadataBackfillJobConfig {
      */
     private boolean isImageFile(Path path) {
         String fileName = path.getFileName().toString().toLowerCase();
-        return fileName.endsWith(".png") || fileName.endsWith(".jpg")
-                || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")
-                || fileName.endsWith(".tif") || fileName.endsWith(".tiff")
+        return fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".gif") || fileName.endsWith(".tif") || fileName.endsWith(".tiff")
                 || fileName.endsWith(".bmp") || fileName.endsWith(".webp");
     }
 
@@ -214,8 +183,7 @@ public class ImageMetadataBackfillJobConfig {
         // Validate the image
         ImageValidationResult validation = imageValidationService.validate(imageData);
         if (!validation.isValid()) {
-            log.warn("Skipping invalid image during backfill: {} - {}",
-                    imageFile.getAbsolutePath(), validation.getErrorMessage());
+            log.warn("Skipping invalid image during backfill: {} - {}", imageFile.getAbsolutePath(), validation.getErrorMessage());
             return;
         }
 
@@ -251,8 +219,7 @@ public class ImageMetadataBackfillJobConfig {
         }
 
         // Analyze and create metadata
-        ImageMetadata metadata = imageAnalysisService.analyzeImage(
-                comicId, comicName, imageData, imageFile.getAbsolutePath(), validation, null);
+        ImageMetadata metadata = imageAnalysisService.analyzeImage(comicId, comicName, imageData, imageFile.getAbsolutePath(), validation, null);
 
         // Save metadata - will return false if metadata is invalid
         boolean saved = imageMetadataRepository.saveMetadata(metadata);
@@ -260,8 +227,7 @@ public class ImageMetadataBackfillJobConfig {
             log.debug("Backfilled metadata for: {}", imageFile.getAbsolutePath());
         } else {
             // Metadata was invalid (UNKNOWN format, 0 dimensions, etc.)
-            String error = String.format("Metadata validation failed for %s: format=%s, dimensions=%dx%d, size=%d",
-                    imageFile.getName(), metadata.getFormat(), metadata.getWidth(),
+            String error = String.format("Metadata validation failed for %s: format=%s, dimensions=%dx%d, size=%d", imageFile.getName(), metadata.getFormat(), metadata.getWidth(),
                     metadata.getHeight(), metadata.getSizeInBytes());
             log.error("Backfill failed for {}: {}", imageFile.getAbsolutePath(), error);
             throw new IOException(error);

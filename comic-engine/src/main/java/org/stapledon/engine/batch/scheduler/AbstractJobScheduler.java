@@ -1,22 +1,23 @@
 package org.stapledon.engine.batch.scheduler;
 
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
 
-import java.util.Properties;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Abstract base class for job schedulers.
- * Provides common functionality for all batch job schedulers using the modern
- * JobOperator API.
+ * Abstract base class for job schedulers. Provides common functionality for all batch job schedulers using the modern JobOperator API.
  *
  * <p>
  * Subclasses must implement:
  * <ul>
  * <li>{@link #getJobName()} - Returns the Spring Batch job name</li>
- * <li>{@link #buildJobProperties(String)} - Builds job parameters for
- * execution</li>
+ * <li>{@link #buildJobParameters(String)} - Builds job parameters for execution</li>
  * </ul>
  *
  * <p>
@@ -27,10 +28,10 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Handle exceptions gracefully</li>
  * </ul>
  */
-@Slf4j
-@RequiredArgsConstructor
+@Slf4j @RequiredArgsConstructor
 public abstract class AbstractJobScheduler {
 
+    protected final Job job;
     protected final JobOperator jobOperator;
 
     /**
@@ -48,7 +49,9 @@ public abstract class AbstractJobScheduler {
      *
      * @return the job name (must match the @Bean name in job configuration)
      */
-    public abstract String getJobName();
+    public String getJobName() {
+        return job.getName();
+    }
 
     /**
      * Returns the scheduling type for this scheduler.
@@ -58,17 +61,18 @@ public abstract class AbstractJobScheduler {
     public abstract ScheduleType getScheduleType();
 
     /**
-     * Builds job properties for execution.
-     * Subclasses should include trigger type and any job-specific parameters.
+     * Builds job parameters for execution. Subclasses can override to add custom parameters.
      *
      * @param trigger the trigger source (e.g., "SCHEDULED", "MANUAL", "STARTUP")
-     * @return properties to pass to the job
+     * @return JobParameters to pass to the job
      */
-    protected abstract Properties buildJobProperties(String trigger);
+    protected JobParameters buildJobParameters(String trigger) {
+        return new JobParametersBuilder().addString("trigger", trigger).addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")))
+                .toJobParameters();
+    }
 
     /**
-     * Executes the job with the given trigger source.
-     * Uses JobOperator.start() which is the modern Spring Batch 6 approach.
+     * Executes the job with the given trigger source. Uses JobOperator.start(Job, JobParameters) which is the modern Spring Batch 6 approach.
      *
      * @param trigger source of the trigger ("SCHEDULED", "MANUAL", "STARTUP")
      * @return the job execution ID, or null if execution failed to start
@@ -77,8 +81,9 @@ public abstract class AbstractJobScheduler {
         log.info("Launching {} (triggered by: {})", getJobName(), trigger);
 
         try {
-            Properties properties = buildJobProperties(trigger);
-            Long executionId = jobOperator.start(getJobName(), properties);
+            JobParameters parameters = buildJobParameters(trigger);
+            org.springframework.batch.core.job.JobExecution execution = jobOperator.start(job, parameters);
+            Long executionId = execution.getId();
             log.info("{} started with execution ID: {}", getJobName(), executionId);
             return executionId;
         } catch (Exception e) {
@@ -88,8 +93,7 @@ public abstract class AbstractJobScheduler {
     }
 
     /**
-     * Logs scheduler initialization details.
-     * Called by subclasses in their @PostConstruct methods.
+     * Logs scheduler initialization details. Called by subclasses in their @PostConstruct methods.
      *
      * @param scheduleDescription human-readable schedule description
      */

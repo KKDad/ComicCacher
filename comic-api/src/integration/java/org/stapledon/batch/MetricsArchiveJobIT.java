@@ -7,8 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
-import org.springframework.batch.core.repository.explore.JobExplorer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.TestPropertySource;
@@ -24,35 +25,24 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Integration tests for MetricsArchiveJob.
- * Tests the complete flow of archiving daily metrics to JSON files.
+ * Integration tests for MetricsArchiveJob. Tests the complete flow of archiving daily metrics to JSON files.
  */
-@Slf4j
-@TestPropertySource(properties = {
-        "batch.metrics-archive.enabled=true",
-        "batch.metrics-archive.cron=0 30 6 * * ?"
-})
+@Slf4j @TestPropertySource(properties = { "batch.metrics-archive.enabled=true", "batch.metrics-archive.cron=0 30 6 * * ?" })
 class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired
     private JobOperator jobOperator;
 
-    @Autowired
-    private JobExplorer jobExplorer;
-
-    @Autowired
-    @Qualifier("metricsArchiveJob")
+    @Autowired @Qualifier("metricsArchiveJob")
     private Job metricsArchiveJob;
 
     @Autowired
     private MetricsRepository metricsRepository;
 
-    @Autowired
-    @Qualifier("gsonWithLocalDate")
+    @Autowired @Qualifier("gsonWithLocalDate")
     private Gson gson;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -61,12 +51,9 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
      * Runs the job manually for testing.
      */
     private JobExecution runJob() throws Exception {
-        Properties params = new Properties();
-        params.put("runId", String.valueOf(System.currentTimeMillis()));
-        params.put("trigger", "TEST");
+        JobParameters params = new JobParametersBuilder().addString("runId", String.valueOf(System.currentTimeMillis())).addString("trigger", "TEST").toJobParameters();
 
-        Long executionId = jobOperator.start(metricsArchiveJob.getName(), params);
-        return jobExplorer.getJobExecution(executionId);
+        return jobOperator.start(metricsArchiveJob, params);
     }
 
     @BeforeEach
@@ -78,33 +65,22 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         if (Files.exists(historyDir)) {
             log.info("Cleaning up existing metrics-history directory");
             try (var walk = Files.walk(historyDir)) {
-                walk.sorted(java.util.Comparator.reverseOrder())
-                        .forEach(path -> {
-                            try {
-                                Files.delete(path);
-                            } catch (Exception e) {
-                                log.warn("Failed to delete {}: {}", path, e.getMessage());
-                            }
-                        });
+                walk.sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (Exception e) {
+                        log.warn("Failed to delete {}: {}", path, e.getMessage());
+                    }
+                });
             }
         }
 
         // Create test metrics data
         Map<String, ComicCombinedMetrics> comicsMap = new HashMap<>();
-        comicsMap.put("TestComic1", ComicCombinedMetrics.builder()
-                .comicName("TestComic1")
-                .imageCount(10)
-                .storageBytes(1024000L)
-                .build());
-        comicsMap.put("TestComic2", ComicCombinedMetrics.builder()
-                .comicName("TestComic2")
-                .imageCount(5)
-                .storageBytes(512000L)
-                .build());
+        comicsMap.put("TestComic1", ComicCombinedMetrics.builder().comicName("TestComic1").imageCount(10).storageBytes(1024000L).build());
+        comicsMap.put("TestComic2", ComicCombinedMetrics.builder().comicName("TestComic2").imageCount(5).storageBytes(512000L).build());
 
-        CombinedMetricsData testMetrics = CombinedMetricsData.builder()
-                .perComicMetrics(comicsMap)
-                .build();
+        CombinedMetricsData testMetrics = CombinedMetricsData.builder().perComicMetrics(comicsMap).build();
 
         metricsRepository.save(testMetrics);
         log.info("Created test metrics: {} comics", 2);
@@ -131,8 +107,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
         assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
         assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
-        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED")
-                .isEqualTo("COMPLETED");
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
         log.info("Job completed with status: {}", jobExecution.getStatus());
 
         // Verify after state - archive file exists
@@ -149,8 +124,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         assertThat(archived.getPerComicMetrics().size()).as("Should have 2 comics").isEqualTo(2);
 
         // Verify specific comic metrics
-        assertThat(archived.getPerComicMetrics().containsKey("TestComic1")).as("TestComic1 should be in archive")
-                .isTrue();
+        assertThat(archived.getPerComicMetrics().containsKey("TestComic1")).as("TestComic1 should be in archive").isTrue();
         ComicCombinedMetrics comic1 = archived.getPerComicMetrics().get("TestComic1");
         assertThat(comic1.getComicName()).as("Comic name should match").isEqualTo("TestComic1");
         assertThat(comic1.getImageCount()).as("TestComic1 image count should match").isEqualTo(10);
@@ -176,8 +150,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         // Run job first time
         JobExecution execution1 = runJob();
         assertThat(execution1).as("First execution should not be null").isNotNull();
-        assertThat(execution1.getStatus()).as("First execution should complete successfully")
-                .isEqualTo(BatchStatus.COMPLETED);
+        assertThat(execution1.getStatus()).as("First execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Verify archive exists
         assertThat(Files.exists(expectedFile)).as("Archive should exist after first run").isTrue();
@@ -186,8 +159,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         // Run job second time
         JobExecution execution2 = runJob();
         assertThat(execution2).as("Second execution should not be null").isNotNull();
-        assertThat(execution2.getStatus()).as("Second execution should complete successfully")
-                .isEqualTo(BatchStatus.COMPLETED);
+        assertThat(execution2.getStatus()).as("Second execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
         // Verify archive still exists
         assertThat(Files.exists(expectedFile)).as("Archive should still exist after second run").isTrue();
@@ -205,9 +177,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
         log.info("TEST: MetricsArchiveJob fails with no metrics");
 
         // Clear metrics repository
-        metricsRepository.save(CombinedMetricsData.builder()
-                .perComicMetrics(new HashMap<>())
-                .build());
+        metricsRepository.save(CombinedMetricsData.builder().perComicMetrics(new HashMap<>()).build());
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
         Path expectedFile = getMetricsArchiveFile(yesterday);

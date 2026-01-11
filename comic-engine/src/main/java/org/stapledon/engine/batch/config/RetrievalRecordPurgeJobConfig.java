@@ -23,13 +23,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Spring Batch configuration for retrieval record purge job.
- * Purges old retrieval records to prevent unbounded growth.
+ * Spring Batch configuration for retrieval record purge job. Purges old retrieval records to prevent unbounded growth.
  */
-@Slf4j
-@Configuration
-@RequiredArgsConstructor
-@ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "true", matchIfMissing = true)
 public class RetrievalRecordPurgeJobConfig {
 
     private final ManagementFacade comicManagementFacade;
@@ -44,44 +40,29 @@ public class RetrievalRecordPurgeJobConfig {
     private String timezone;
 
     /**
-     * Scheduler for RetrievalRecordPurgeJob - runs daily at configured cron time.
-     * Triggered by SchedulerTriggers component.
+     * Scheduler for RetrievalRecordPurgeJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
-    public DailyJobScheduler retrievalRecordPurgeJobScheduler(
-            JobOperator jobOperator,
-            JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(
-                "RetrievalRecordPurgeJob", cronExpression, timezone, jobOperator, tracker);
+    public DailyJobScheduler retrievalRecordPurgeJobScheduler(@Qualifier("retrievalRecordPurgeJob") Job retrievalRecordPurgeJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
+        return new DailyJobScheduler(retrievalRecordPurgeJob, cronExpression, timezone, jobOperator, tracker);
     }
 
     /**
      * Job for purging old retrieval records
      */
     @Bean
-    public Job retrievalRecordPurgeJob(
-            JobRepository jobRepository,
-            @Qualifier("recordPurgeStep") Step recordPurgeStep,
-            JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+    public Job retrievalRecordPurgeJob(JobRepository jobRepository, @Qualifier("recordPurgeStep") Step recordPurgeStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("RetrievalRecordPurgeJob", jobRepository)
-                .incrementer(new RunIdIncrementer())
-                .listener(jsonBatchExecutionTracker)
-                .start(recordPurgeStep)
-                .build();
+        return new JobBuilder("RetrievalRecordPurgeJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).start(recordPurgeStep).build();
     }
 
     /**
      * Step for performing record purge
      */
     @Bean
-    public Step recordPurgeStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager) {
+    public Step recordPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
 
-        return new StepBuilder("recordPurgeStep", jobRepository)
-                .tasklet(recordPurgeTasklet(), transactionManager)
-                .build();
+        return new StepBuilder("recordPurgeStep", jobRepository).tasklet(recordPurgeTasklet(), transactionManager).build();
     }
 
     /**
