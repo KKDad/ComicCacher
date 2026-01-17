@@ -1,0 +1,344 @@
+# =============================================================================
+# Comics Hub GraphQL Schema
+# =============================================================================
+# This schema exposes all functionality from the REST API in a GraphQL interface.
+# Authentication is handled via JWT tokens passed in the Authorization header.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Custom Scalars
+# -----------------------------------------------------------------------------
+scalar Date
+scalar DateTime
+scalar JSON
+
+# -----------------------------------------------------------------------------
+# Directives for Authorization
+# -----------------------------------------------------------------------------
+"""
+Marks a field or type as requiring authentication.
+The request must include a valid JWT token in the Authorization header.
+"""
+directive @authenticated on FIELD_DEFINITION
+
+"""
+Marks a field as requiring a specific role.
+"""
+directive @hasRole(role: String!) on FIELD_DEFINITION
+
+# -----------------------------------------------------------------------------
+# Root Query Type
+# -----------------------------------------------------------------------------
+type Query {
+    # =========================================================================
+    # Comics
+    # =========================================================================
+
+    """
+    Get comics with optional search, filtering, and pagination.
+    Supports cursor-based pagination for efficient large archive handling.
+    """
+    comics(
+        """Search query to filter comics by name or author."""
+        search: String
+        """Filter by active status (actively publishing)."""
+        active: Boolean
+        """Filter by enabled status."""
+        enabled: Boolean
+        """Number of comics to return (max 50)."""
+        first: Int = 20
+        """Cursor for pagination - return comics after this cursor."""
+        after: String
+    ): ComicConnection!
+
+    """
+    Get a specific comic by its ID.
+    """
+    comic(id: Int!): Comic
+
+    # =========================================================================
+    # Search
+    # =========================================================================
+
+    """
+    Full-text search across comics.
+    Searches comic names, authors, and descriptions.
+    """
+    search(
+        """Search query string."""
+        query: String!
+        """Maximum number of results to return."""
+        limit: Int = 20
+    ): SearchResults!
+
+    # =========================================================================
+    # Authentication
+    # =========================================================================
+
+    """
+    Validate the current JWT token from Authorization header.
+    Returns true if the token is valid, false otherwise.
+    """
+    validateToken: Boolean!
+
+    # =========================================================================
+    # User & Preferences (Authenticated)
+    # =========================================================================
+
+    """
+    Get the current authenticated user's profile.
+    Requires authentication.
+    """
+    me: User @authenticated
+
+    """
+    Get the current authenticated user's preferences.
+    Requires authentication.
+    """
+    preferences: UserPreference @authenticated
+
+    # =========================================================================
+    # Health & System Status
+    # =========================================================================
+
+    """
+    Get the health status of the application.
+    """
+    health(detailed: Boolean = false): HealthStatus!
+
+    # =========================================================================
+    # Metrics
+    # =========================================================================
+
+    """
+    Get storage metrics for the comic cache.
+    """
+    storageMetrics: StorageMetrics
+
+    """
+    Get access metrics for all comics.
+    """
+    accessMetrics: AccessMetrics
+
+    """
+    Get combined storage and access metrics.
+    """
+    combinedMetrics: CombinedMetrics
+
+    # =========================================================================
+    # Retrieval Status
+    # =========================================================================
+
+    """
+    Get retrieval records with optional filtering.
+    Returns records from the last 7 days.
+    """
+    retrievalRecords(
+        comicName: String
+        status: RetrievalStatusEnum
+        fromDate: Date
+        toDate: Date
+        limit: Int = 100
+    ): [RetrievalRecord!]!
+
+    """
+    Get a specific retrieval record by ID.
+    """
+    retrievalRecord(id: String!): RetrievalRecord
+
+    """
+    Get summary statistics of retrieval operations.
+    """
+    retrievalSummary(fromDate: Date, toDate: Date): RetrievalSummary!
+
+    """
+    Get retrieval records for a specific comic.
+    """
+    retrievalRecordsForComic(comicName: String!, limit: Int = 20): [RetrievalRecord!]!
+
+    # =========================================================================
+    # Batch Jobs
+    # =========================================================================
+
+    """
+    Get recent batch job executions.
+    """
+    recentBatchJobs(count: Int = 10): [BatchJob!]!
+
+    """
+    Get batch jobs within a date range.
+    """
+    batchJobsByDateRange(startDate: Date!, endDate: Date!): [BatchJob!]!
+
+    """
+    Get a specific batch job execution by ID.
+    """
+    batchJob(executionId: Int!): BatchJob
+
+    """
+    Get summary statistics for batch jobs.
+    """
+    batchJobSummary(days: Int = 7): BatchJobSummary!
+
+    # =========================================================================
+    # Error Codes (Metadata)
+    # =========================================================================
+
+    """
+    Get a list of all known error codes.
+    """
+    errorCodes: [ErrorCode!]!
+}
+
+# -----------------------------------------------------------------------------
+# Root Mutation Type
+# -----------------------------------------------------------------------------
+type Mutation {
+    # =========================================================================
+    # Authentication
+    # =========================================================================
+
+    """
+    Register a new user account.
+    Returns authentication payload with JWT token on success.
+    """
+    register(input: RegisterInput!): AuthPayload!
+
+    """
+    Authenticate with username and password.
+    Returns authentication payload with JWT token on success.
+    """
+    login(input: LoginInput!): AuthPayload!
+
+    """
+    Refresh an expired JWT token using a refresh token.
+    """
+    refreshToken(refreshToken: String!): AuthPayload!
+
+    """
+    Request a password reset email.
+    Returns true if the email was sent (always returns true to prevent email enumeration).
+    """
+    forgotPassword(email: String!): Boolean!
+
+    """
+    Reset password using a token from the password reset email.
+    """
+    resetPassword(token: String!, newPassword: String!): AuthPayload!
+
+    # =========================================================================
+    # User Management (Authenticated)
+    # =========================================================================
+
+    """
+    Update the current user's profile.
+    Requires authentication.
+    """
+    updateProfile(input: UpdateProfileInput!): User! @authenticated
+
+    """
+    Update the current user's password.
+    Requires authentication.
+    """
+    updatePassword(newPassword: String!): Boolean! @authenticated
+
+    """
+    Delete the current user's account.
+    This action is irreversible.
+    Requires authentication.
+    """
+    deleteAccount: Boolean! @authenticated
+
+    # =========================================================================
+    # Preferences (Authenticated)
+    # =========================================================================
+
+    """
+    Add a comic to the user's favorites.
+    Requires authentication.
+    """
+    addFavorite(comicId: Int!): UserPreference! @authenticated
+
+    """
+    Remove a comic from the user's favorites.
+    Requires authentication.
+    """
+    removeFavorite(comicId: Int!): UserPreference! @authenticated
+
+    """
+    Update the last read date for a comic.
+    Requires authentication.
+    """
+    updateLastRead(comicId: Int!, date: Date!): UserPreference! @authenticated
+
+    """
+    Update display settings (theme, layout, etc.).
+    Requires authentication.
+    """
+    updateDisplaySettings(settings: JSON!): UserPreference! @authenticated
+
+    # =========================================================================
+    # Comic Management (Admin)
+    # =========================================================================
+
+    """
+    Create a new comic entry.
+    Requires admin role.
+    """
+    createComic(id: Int!, input: CreateComicInput!): Comic! @hasRole(role: "ADMIN")
+
+    """
+    Update an existing comic's details.
+    Requires admin role.
+    """
+    updateComic(id: Int!, input: UpdateComicInput!): Comic! @hasRole(role: "ADMIN")
+
+    """
+    Delete a comic and its cached strips.
+    Requires admin role.
+    """
+    deleteComic(id: Int!): Boolean! @hasRole(role: "ADMIN")
+
+    # =========================================================================
+    # Metrics (Admin)
+    # =========================================================================
+
+    """
+    Force a refresh of storage metrics.
+    """
+    refreshStorageMetrics: StorageMetrics! @hasRole(role: "ADMIN")
+
+    """
+    Force a refresh of all metrics (storage, access, combined).
+    """
+    refreshAllMetrics: Boolean! @hasRole(role: "ADMIN")
+
+    # =========================================================================
+    # Retrieval Status (Admin)
+    # =========================================================================
+
+    """
+    Delete a specific retrieval record.
+    """
+    deleteRetrievalRecord(id: String!): Boolean! @hasRole(role: "ADMIN")
+
+    """
+    Purge retrieval records older than specified days.
+    Returns the number of records purged.
+    """
+    purgeRetrievalRecords(daysToKeep: Int = 7): Int! @hasRole(role: "ADMIN")
+
+    # =========================================================================
+    # Batch Jobs (Admin)
+    # =========================================================================
+
+    """
+    Trigger a batch job for comic retrieval.
+    """
+    triggerBatchJob(targetDate: Date): BatchJob! @hasRole(role: "ADMIN")
+
+    """
+    Trigger a backfill job to retrieve missing comics.
+    """
+    triggerBackfillJob: BatchJob! @hasRole(role: "ADMIN")
+}

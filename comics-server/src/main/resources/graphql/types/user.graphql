@@ -1,0 +1,100 @@
+# =============================================================================
+# User Types
+# =============================================================================
+# Types for user profiles and preferences.
+# =============================================================================
+
+"""
+User account information.
+"""
+type User {
+    """
+    Unique username.
+    """
+    username: String!
+    
+    """
+    User's email address.
+    """
+    email: String
+    
+    """
+    User's display name.
+    """
+    displayName: String
+    
+    """
+    Account creation timestamp.
+    """
+    created: DateTime
+    
+    """
+    Last login timestamp.
+    """
+    lastLogin: DateTime
+    
+    """
+    User's assigned roles (e.g., "USER", "ADMIN").
+    """
+    roles: [String!]!
+}
+
+"""
+User preferences including favorites and display settings.
+"""
+type UserPreference {
+    """
+    Username this preference belongs to.
+    """
+    username: String!
+    
+    """
+    List of favorite comic IDs.
+    """
+    favoriteComics: [Int!]!
+    
+    """
+    Last read dates for each comic (comicId -> date).
+    """
+    lastReadDates: [LastReadEntry!]!
+    
+    """
+    Display settings as key-value pairs.
+    """
+    displaySettings: JSON
+}
+
+"""
+Entry representing the last read date for a comic.
+"""
+type LastReadEntry {
+    """
+    Comic ID.
+    """
+    comicId: Int!
+    
+    """
+    Last read date.
+    """
+    date: Date!
+}
+
+# =============================================================================
+# Input Types for User Management
+# =============================================================================
+
+"""
+Input for updating user profile.
+All fields are optional - only provided fields will be updated.
+"""
+input UpdateProfileInput {
+    """
+    New email address.
+    """
+    email: String
+    
+    """
+    New display name.
+    """
+    displayName: String
+}

@@ -1,0 +1,164 @@
+# =============================================================================
+# Health Types
+# =============================================================================
+# Types for system health monitoring and status checks.
+# =============================================================================
+
+"""
+Overall system health status.
+"""
+type HealthStatus {
+    """
+    Current health status.
+    """
+    status: HealthStatusEnum!
+    
+    """
+    Timestamp when the health check was performed.
+    """
+    timestamp: DateTime
+    
+    """
+    Application uptime in milliseconds.
+    """
+    uptime: Float
+    
+    """
+    Application build information.
+    """
+    buildInfo: BuildInfo
+    
+    """
+    System resource metrics (only included when detailed=true).
+    """
+    systemResources: SystemResources
+    
+    """
+    Cache status information (only included when detailed=true).
+    """
+    cacheStatus: CacheStatus
+    
+    """
+    Individual component health statuses.
+    """
+    components: [ComponentHealthEntry!]
+}
+
+"""
+Application build information.
+"""
+type BuildInfo {
+    """
+    Application version.
+    """
+    version: String
+    
+    """
+    Build timestamp.
+    """
+    buildTime: String
+    
+    """
+    Git commit hash.
+    """
+    gitCommit: String
+    
+    """
+    Git branch.
+    """
+    gitBranch: String
+}
+
+"""
+System resource metrics.
+"""
+type SystemResources {
+    """
+    Number of available CPU processors.
+    """
+    availableProcessors: Int
+    
+    """
+    Total memory in bytes.
+    """
+    totalMemory: Float
+    
+    """
+    Free memory in bytes.
+    """
+    freeMemory: Float
+    
+    """
+    Maximum memory the JVM can use in bytes.
+    """
+    maxMemory: Float
+    
+    """
+    Memory usage percentage (0-100).
+    """
+    memoryUsagePercent: Float
+}
+
+"""
+Cache status information.
+"""
+type CacheStatus {
+    """
+    Total number of comics cached.
+    """
+    totalComics: Int!
+    
+    """
+    Total number of cached images.
+    """
+    totalImages: Int!
+    
+    """
+    Total storage used in bytes.
+    """
+    totalStorageBytes: Float
+    
+    """
+    Oldest image in the cache.
+    """
+    oldestImage: String
+    
+    """
+    Newest image in the cache.
+    """
+    newestImage: String
+    
+    """
+    Directory where the cache is stored.
+    """
+    cacheLocation: String
+}
+
+"""
+Health status of an individual component.
+"""
+type ComponentHealthEntry {
+    """
+    Component name.
+    """
+    name: String!
+    
+    """
+    Component health status.
+    """
+    status: HealthStatusEnum!
+    
+    """
+    Additional details about the component.
+    """
+    details: String
+}
+
+"""
+Possible health status values.
+"""
+enum HealthStatusEnum {
+    UP
+    DEGRADED
+    DOWN
+}

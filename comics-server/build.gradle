@@ -1,0 +1,76 @@
+plugins {
+	id "java"
+	id "io.spring.dependency-management"
+	id "org.springframework.boot"
+	id "com.coditory.integration-test" version '2.2.5'
+}
+//
+//sourceSets {
+//    main {
+//        resources {
+//            srcDir 'src/main/resources'
+//            include 'graphql/**/*.graphql'
+//        }
+//    }
+//}
+
+// Integration test configuration
+integrationTest {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+	integrationTestImplementation {
+	    extendsFrom implementation
+	}
+	integrationTestCompileOnly {
+	    extendsFrom compileOnly
+	}
+	integrationTestAnnotationProcessor {
+	    extendsFrom annotationProcessor
+	}
+	integrationTestRuntimeOnly {
+	    extendsFrom runtimeOnly
+	}
+}
+
+dependencies {
+	implementation project(':comic-common')
+	implementation project(':comic-engine')
+
+	implementation 'org.springframework.boot:spring-boot-starter-graphql'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
+
+	// Lombok
+	compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-graphql-test'
+
+	// Lombok for tests
+	testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+
+	// Extra dependencies for integration tests
+	integrationImplementation 'org.springframework.boot:spring-boot-starter-test'
+	integrationImplementation 'org.springframework.boot:spring-boot-starter-graphql-test'
+	integrationRuntimeOnly 'com.h2database:h2'
+}
+
+test {
+    useJUnitPlatform()
+    include '**/*Test.class'
+    include '**/*IT.class'
+}
+
+bootRun {
+    mainClass = "org.stapledon.comics.server.ComicsServerApplication"
+}

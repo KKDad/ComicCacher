@@ -1,0 +1,76 @@
+# =============================================================================
+# Authentication Types
+# =============================================================================
+# Types for user authentication including login, registration, and JWT tokens.
+# =============================================================================
+
+"""
+Authentication payload returned after successful login or registration.
+Contains JWT tokens and user information.
+"""
+type AuthPayload {
+    """
+    JWT access token for authenticating API requests.
+    Include in Authorization header as: Bearer <token>
+    """
+    token: String!
+    
+    """
+    Refresh token for obtaining new access tokens.
+    """
+    refreshToken: String!
+    
+    """
+    Username of the authenticated user.
+    """
+    username: String!
+    
+    """
+    Display name of the authenticated user.
+    """
+    displayName: String
+}
+
+# =============================================================================
+# Input Types for Authentication
+# =============================================================================
+
+"""
+Input for user login.
+"""
+input LoginInput {
+    """
+    Username or email address.
+    """
+    username: String!
+    
+    """
+    User's password.
+    """
+    password: String!
+}
+
+"""
+Input for new user registration.
+"""
+input RegisterInput {
+    """
+    Desired username (must be unique).
+    """
+    username: String!
+    
+    """
+    User's password.
+    """
+    password: String!
+    
+    """
+    User's email address.
+    """
+    email: String!
+    
+    """
+    User's display name.
+    """
+    displayName: String
+}
