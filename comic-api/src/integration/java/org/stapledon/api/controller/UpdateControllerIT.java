@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.StapledonAccountGivens;
 
 class UpdateControllerIT extends AbstractIntegrationTest {
 
@@ -23,11 +22,7 @@ class UpdateControllerIT extends AbstractIntegrationTest {
     @BeforeEach
     void setUp() {
         // Use direct JWT token generation instead of authentication
-        StapledonAccountGivens.GivenAccountContext context = StapledonAccountGivens.GivenAccountContext.builder()
-                .username("testuser")
-                .build();
-
-        authToken = context.authenticate();
+        authToken = authenticateUser();
         assertThat(authToken)
             .as("Token generation should succeed")
             .isNotNull();

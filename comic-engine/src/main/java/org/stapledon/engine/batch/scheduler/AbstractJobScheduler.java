@@ -28,7 +28,8 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Handle exceptions gracefully</li>
  * </ul>
  */
-@Slf4j @RequiredArgsConstructor
+@Slf4j
+@RequiredArgsConstructor
 public abstract class AbstractJobScheduler {
 
     protected final Job job;
@@ -38,9 +39,13 @@ public abstract class AbstractJobScheduler {
      * Schedule type for categorization and health checks.
      */
     public enum ScheduleType {
-        /** Runs once per day at a scheduled cron time */
+        /**
+         * Runs once per day at a scheduled cron time
+         */
         DAILY,
-        /** Runs periodically with a fixed delay between executions */
+        /**
+         * Runs periodically with a fixed delay between executions
+         */
         PERIODIC
     }
 
@@ -68,7 +73,7 @@ public abstract class AbstractJobScheduler {
      */
     protected JobParameters buildJobParameters(String trigger) {
         return new JobParametersBuilder().addString("trigger", trigger).addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")))
-                .toJobParameters();
+                                         .toJobParameters();
     }
 
     /**

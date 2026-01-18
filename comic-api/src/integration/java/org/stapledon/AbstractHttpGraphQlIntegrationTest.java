@@ -1,17 +1,11 @@
 package org.stapledon;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.graphql.test.autoconfigure.tester.AutoConfigureHttpGraphQlTester;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
+import org.springframework.graphql.test.tester.HttpGraphQlTester;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.stapledon.api.dto.auth.AuthRequest;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 
@@ -22,7 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.stream.Stream;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +28,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
+@AutoConfigureHttpGraphQlTester
 @ActiveProfiles("integration")
 @Getter
-public abstract class AbstractIntegrationTest {
+public abstract class AbstractHttpGraphQlIntegrationTest {
 
     // Integration test comics
     protected static final int TEST_COMIC_ID = 1;
@@ -51,7 +44,7 @@ public abstract class AbstractIntegrationTest {
     protected static final String TEST_ADMIN_USER = "adminuser";
 
     @Autowired
-    protected MockMvc mockMvc;
+    protected HttpGraphQlTester graphQlTester;
 
     @Autowired
     protected StapledonAccountGivens givens;
@@ -69,7 +62,7 @@ public abstract class AbstractIntegrationTest {
     static void setup() {
         try {
             Path integrationCacheDir = Paths.get("./integration-cache");
-            if (java.nio.file.Files.exists(integrationCacheDir)) {
+            if (Files.exists(integrationCacheDir)) {
                 try (Stream<Path> walk = Files.walk(integrationCacheDir)) {
                     walk.sorted(java.util.Comparator.reverseOrder())
                             .map(Path::toFile)
@@ -124,24 +117,24 @@ public abstract class AbstractIntegrationTest {
             // Create test comic directory and avatar
             Path testComicDir = integrationCacheDir.resolve("TestComic");
             try {
-                java.nio.file.Files.createDirectories(testComicDir);
-                java.nio.file.Files.write(testComicDir.resolve("avatar.png"), java.util.Base64.getDecoder().decode(
+                Files.createDirectories(testComicDir);
+                Files.write(testComicDir.resolve("avatar.png"), java.util.Base64.getDecoder().decode(
                         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); // dummy
                 // avatar
-                java.nio.file.Files.createDirectories(testComicDir.resolve("2023"));
-                java.nio.file.Files.createDirectories(testComicDir.resolve("2024"));
-            } catch (java.io.IOException e) {
+                Files.createDirectories(testComicDir.resolve("2023"));
+                Files.createDirectories(testComicDir.resolve("2024"));
+            } catch (IOException e) {
                 log.error("Failed to create test comic directory or avatar: {}", e.getMessage(), e);
             }
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             log.error("Failed to create integration test directories: {}", e.getMessage(), e);
         }
     }
 
-    private static void createEmptyJsonFile(Path path) throws java.io.IOException {
-        if (!java.nio.file.Files.exists(path)) {
+    private static void createEmptyJsonFile(Path path) throws IOException {
+        if (!Files.exists(path)) {
             log.info("Creating empty JSON file: {}", path);
-            java.nio.file.Files.write(path, "{}".getBytes());
+            Files.write(path, "{}".getBytes());
         }
     }
 
@@ -152,77 +145,16 @@ public abstract class AbstractIntegrationTest {
     protected String authenticateUser() {
         try {
             StapledonAccountGivens.GivenAccountContext context = givens.givenUser();
+            String jwtToken = context.authenticate();
             log.info("Using test user: {}", context.getUsername());
+            graphQlTester = getGraphQlTester()
+                .mutate()
+                .headers(h -> h.setBearerAuth(jwtToken))
+                .build();
 
-            return authenticateAndGetToken(context.getUsername(), context.getPassword());
+            return jwtToken;
         } catch (Exception e) {
             log.error("Error authenticating user: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Authenticate with the given credentials and extract JWT token from response
-     */
-    protected String authenticateAndGetToken(String username, String password) throws Exception {
-        try {
-            AuthRequest authRequest = AuthRequest.builder()
-                    .username(username)
-                    .password(password)
-                    .build();
-
-            log.debug("Authenticating with: {} / {}", username, password);
-
-            MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(authRequest)))
-                    .andDo(print())
-                    .andReturn();
-
-            // If authentication failed, return null
-            if (result.getResponse().getStatus() != 200) {
-                log.warn("Authentication failed with status: {}", result.getResponse().getStatus());
-                return null;
-            }
-
-            String responseContent = result.getResponse().getContentAsString();
-
-            return extractFromResponse(responseContent, "data.token", String.class);
-        } catch (Exception e) {
-            log.error("Error during authentication: {}", e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * Extract a value from a JSON response by path
-     */
-    @SuppressWarnings("unchecked")
-    protected <T> T extractFromResponse(String responseContent, String path, Class<T> clazz) {
-        try {
-            JsonNode root = objectMapper.readTree(responseContent);
-            String[] pathParts = path.split("\\.");
-
-            JsonNode current = root;
-            for (String part : pathParts) {
-                current = current.path(part);
-            }
-
-            if (current.isNull() || current.isMissingNode()) {
-                return null;
-            }
-
-            if (clazz == String.class) {
-                return (T) current.asText();
-            } else if (clazz == Integer.class) {
-                return (T) Integer.valueOf(current.asInt());
-            } else if (clazz == Boolean.class) {
-                return (T) Boolean.valueOf(current.asBoolean());
-            } else {
-                return objectMapper.treeToValue(current, clazz);
-            }
-        } catch (Exception e) {
-            log.error("Error extracting from response: {} - {}", path, e.getMessage());
             return null;
         }
     }

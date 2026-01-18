@@ -10,7 +10,11 @@ import org.stapledon.infrastructure.config.UserConfigWriter;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -88,6 +92,7 @@ public class StapledonAccountGivens implements ApplicationContextAware {
         private String firstName;
         private String lastName;
         private String email;
+        private List<String> roles;
     }
 
     @Setter
@@ -102,6 +107,7 @@ public class StapledonAccountGivens implements ApplicationContextAware {
         private String firstName;
         private String lastName;
         private String email;
+        private List<String> roles;
 
         public GivenAccountContext username(String username) {
             this.username = username;
@@ -128,10 +134,23 @@ public class StapledonAccountGivens implements ApplicationContextAware {
             return this;
         }
 
+        public GivenAccountContext roles(List<String> roles) {
+            this.roles = roles;
+            return this;
+        }
+
         public String authenticate() {
+            // Collect non-null, non-blank name parts into a single string
+            String displayName = Stream.of(firstName, lastName)
+                   .filter(Objects::nonNull)
+                   .filter(name -> !name.isBlank())
+                   .collect(Collectors.joining(" "));
+
             return jwtTokenUtil().generateToken(User.builder()
                     .username(this.username)
-                    .roles(Collections.singletonList("USER"))
+                    .email(this.email)
+                    .displayName(displayName.isEmpty() ? "Anonymous" : displayName)
+                    .roles(roles == null ? Collections.singletonList("USER") : roles)
                     .build());
         }
     }

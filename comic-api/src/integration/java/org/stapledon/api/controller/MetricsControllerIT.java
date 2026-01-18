@@ -16,7 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.stapledon.AbstractIntegrationTest;
-import org.stapledon.StapledonAccountGivens;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.common.service.ComicStorageFacade;
@@ -41,12 +40,7 @@ class MetricsControllerIT extends AbstractIntegrationTest {
         @BeforeEach
         void setUp() throws Exception {
                 // Use direct JWT token generation instead of authentication
-                StapledonAccountGivens.GivenAccountContext context = StapledonAccountGivens.GivenAccountContext
-                                .builder()
-                                .username("testuser")
-                                .build();
-
-                authToken = context.authenticate();
+                authToken = authenticateUser();
                 assertThat(authToken)
                                 .as("Token generation should succeed")
                                 .isNotNull();
