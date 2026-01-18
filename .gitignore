@@ -174,3 +174,4 @@ gradle-app.setting
 **/C:/**
 **/batch-integration-cache/**
 **/integration-cache/**/
+docs/2026-ui-refactor
