@@ -7,13 +7,19 @@ import org.springframework.graphql.execution.RuntimeWiringConfigurer;
 import graphql.scalars.ExtendedScalars;
 
 /**
- * Configuration for custom GraphQL scalars. Registers Date, DateTime, and JSON scalars for use in the GraphQL schema.
+ * Configuration for custom GraphQL scalars.
+ * Registers Date, DateTime, LocalDateTime, and JSON scalars for use in the
+ * GraphQL schema.
  */
 @Configuration
 public class GraphQlScalarConfig {
 
     @Bean
     public RuntimeWiringConfigurer runtimeWiringConfigurer() {
-        return wiringBuilder -> wiringBuilder.scalar(ExtendedScalars.Date).scalar(ExtendedScalars.DateTime).scalar(ExtendedScalars.Json);
+        return wiringBuilder -> wiringBuilder
+                .scalar(ExtendedScalars.Date)
+                .scalar(ExtendedScalars.DateTime)
+                .scalar(ExtendedScalars.LocalTime)
+                .scalar(ExtendedScalars.Json);
     }
 }
