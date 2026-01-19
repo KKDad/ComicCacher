@@ -33,6 +33,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -352,7 +354,7 @@ class FileSystemComicStorageFacadeTest {
                 .sizeInBytes(1000)
                 .colorMode(ImageMetadata.ColorMode.COLOR)
                 .samplePercentage(5.0)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl(null)
                 .build();
     }

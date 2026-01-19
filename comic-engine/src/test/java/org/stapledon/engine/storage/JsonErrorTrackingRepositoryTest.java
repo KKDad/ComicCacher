@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ class JsonErrorTrackingRepositoryTest {
         gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeAdapter())
                 .setPrettyPrinting()
                 .create();
 
@@ -230,7 +233,7 @@ class JsonErrorTrackingRepositoryTest {
                 .status(ComicRetrievalStatus.NETWORK_ERROR)
                 .errorMessage(errorMessage)
                 .httpStatusCode(404)
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now())
                 .retrievalDurationMs(100L)
                 .build();
     }
@@ -277,6 +280,29 @@ class JsonErrorTrackingRepositoryTest {
             }
             String dateTimeStr = jsonReader.nextString();
             return LocalDateTime.parse(dateTimeStr, formatter);
+        }
+    }
+
+    static class OffsetDateTimeAdapter extends TypeAdapter<OffsetDateTime> {
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+        @Override
+        public void write(JsonWriter jsonWriter, OffsetDateTime offsetDateTime) throws IOException {
+            if (offsetDateTime == null) {
+                jsonWriter.nullValue();
+            } else {
+                jsonWriter.value(formatter.format(offsetDateTime));
+            }
+        }
+
+        @Override
+        public OffsetDateTime read(JsonReader jsonReader) throws IOException {
+            if (jsonReader.peek() == JsonToken.NULL) {
+                jsonReader.nextNull();
+                return null;
+            }
+            String dateTimeStr = jsonReader.nextString();
+            return OffsetDateTime.parse(dateTimeStr, formatter);
         }
     }
 }

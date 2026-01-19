@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Configuration
@@ -30,6 +31,7 @@ public class GsonProvider {
                 .setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeAdapter())
                 .registerTypeAdapter(IComicsBootstrap.class, new IComicsBootstrapDeserializer())
                 .create();
     }
@@ -136,6 +138,35 @@ public class GsonProvider {
 
             String dateTimeStr = jsonReader.nextString();
             return LocalDateTime.parse(dateTimeStr, FORMATTER);
+        }
+    }
+
+    /**
+     * Type adapter for OffsetDateTime that handles serialization and
+     * deserialization
+     * using ISO-8601 format with timezone offset.
+     */
+    static class OffsetDateTimeAdapter extends TypeAdapter<OffsetDateTime> {
+        private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+        @Override
+        public void write(JsonWriter jsonWriter, OffsetDateTime offsetDateTime) throws IOException {
+            if (offsetDateTime == null) {
+                jsonWriter.nullValue();
+            } else {
+                jsonWriter.value(FORMATTER.format(offsetDateTime));
+            }
+        }
+
+        @Override
+        public OffsetDateTime read(JsonReader jsonReader) throws IOException {
+            if (jsonReader.peek() == JsonToken.NULL) {
+                jsonReader.nextNull();
+                return null;
+            }
+
+            String dateTimeStr = jsonReader.nextString();
+            return OffsetDateTime.parse(dateTimeStr, FORMATTER);
         }
     }
 }

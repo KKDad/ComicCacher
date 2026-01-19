@@ -10,7 +10,6 @@ import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.service.MetricsService;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,15 +60,12 @@ public class MetricsResolver {
     // =========================================================================
 
     /**
-     * Convert LocalDateTime to OffsetDateTime for GraphQL DateTime scalar.
-     * TODO: Consider updating DTOs to use OffsetDateTime directly for consistency.
+     * Return lastUpdated as OffsetDateTime for GraphQL DateTime scalar.
+     * DTOs now use OffsetDateTime directly.
      */
     @SchemaMapping(typeName = "CombinedMetrics", field = "lastUpdated")
     public OffsetDateTime combinedMetricsLastUpdated(CombinedMetricsData data) {
-        if (data.getLastUpdated() == null) {
-            return null;
-        }
-        return data.getLastUpdated().atOffset(ZoneOffset.UTC);
+        return data.getLastUpdated();
     }
 
     // =========================================================================

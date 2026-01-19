@@ -65,7 +65,8 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
         }
 
         try (FileReader reader = new FileReader(storageFile)) {
-            Type mapType = new TypeToken<Map<String, List<ComicErrorRecord>>>(){}.getType();
+            Type mapType = new TypeToken<Map<String, List<ComicErrorRecord>>>() {
+            }.getType();
             errorCache = gson.fromJson(reader, mapType);
 
             if (errorCache == null) {
@@ -143,8 +144,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
                         Map.Entry::getKey,
                         entry -> entry.getValue().stream()
                                 .sorted(Comparator.comparing(ComicErrorRecord::getTimestamp).reversed())
-                                .collect(Collectors.toList())
-                ));
+                                .collect(Collectors.toList())));
     }
 
     @Override
@@ -156,7 +156,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
     @Override
     public void clearOldErrors(int hoursToKeep) {
         Map<String, List<ComicErrorRecord>> errors = loadErrors();
-        java.time.LocalDateTime cutoff = java.time.LocalDateTime.now().minusHours(hoursToKeep);
+        java.time.OffsetDateTime cutoff = java.time.OffsetDateTime.now().minusHours(hoursToKeep);
 
         boolean modified = false;
         for (Map.Entry<String, List<ComicErrorRecord>> entry : errors.entrySet()) {
@@ -166,8 +166,8 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             // Remove errors older than cutoff
             comicErrors.removeIf(error -> {
                 try {
-                    // timestamp is already a LocalDateTime, no parsing needed
-                    java.time.LocalDateTime errorTime = error.getTimestamp();
+                    // timestamp is already an OffsetDateTime, no parsing needed
+                    java.time.OffsetDateTime errorTime = error.getTimestamp();
                     return errorTime != null && errorTime.isBefore(cutoff);
                 } catch (Exception e) {
                     log.warn("Error checking timestamp for comic {}: {}", entry.getKey(), e.getMessage());
@@ -178,7 +178,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             if (comicErrors.size() < originalSize) {
                 modified = true;
                 log.debug("Cleared {} old errors for comic {}",
-                         originalSize - comicErrors.size(), entry.getKey());
+                        originalSize - comicErrors.size(), entry.getKey());
             }
         }
 

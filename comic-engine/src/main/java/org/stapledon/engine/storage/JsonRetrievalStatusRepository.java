@@ -86,7 +86,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
             return;
         }
 
-        recordStorage.setLastUpdated(LocalDateTime.now());
+        recordStorage.setLastUpdated(java.time.OffsetDateTime.now());
 
         File storageFile = new File(cacheProperties.getLocation(), STORAGE_FILE);
 

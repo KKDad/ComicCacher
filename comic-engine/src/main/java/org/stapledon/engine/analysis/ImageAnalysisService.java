@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import lombok.ToString;
@@ -60,7 +60,7 @@ public class ImageAnalysisService implements AnalysisService {
                     .sizeInBytes(validation.getSizeInBytes())
                     .colorMode(colorMode)
                     .samplePercentage(samplePercentage)
-                    .captureTimestamp(LocalDateTime.now())
+                    .captureTimestamp(OffsetDateTime.now())
                     .sourceUrl(sourceUrl)
                     .build();
         } catch (IOException e) {
@@ -96,7 +96,7 @@ public class ImageAnalysisService implements AnalysisService {
                     .sizeInBytes(validation.getSizeInBytes())
                     .colorMode(colorMode)
                     .samplePercentage(samplePercentage)
-                    .captureTimestamp(LocalDateTime.now())
+                    .captureTimestamp(OffsetDateTime.now())
                     .sourceUrl(sourceUrl)
                     .build();
         } catch (IOException e) {
@@ -178,7 +178,7 @@ public class ImageAnalysisService implements AnalysisService {
                 .sizeInBytes(validation.getSizeInBytes())
                 .colorMode(ImageMetadata.ColorMode.UNKNOWN)
                 .samplePercentage(samplePercentage)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl(sourceUrl)
                 .build();
     }

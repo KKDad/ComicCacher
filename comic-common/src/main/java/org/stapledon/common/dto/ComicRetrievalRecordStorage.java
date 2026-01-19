@@ -1,6 +1,6 @@
 package org.stapledon.common.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
@@ -13,7 +13,7 @@ public class ComicRetrievalRecordStorage {
     /**
      * Last update timestamp
      */
-    private LocalDateTime lastUpdated;
+    private OffsetDateTime lastUpdated;
 
     /**
      * List of retrieval records
@@ -21,7 +21,7 @@ public class ComicRetrievalRecordStorage {
     private List<ComicRetrievalRecord> records;
 
     public ComicRetrievalRecordStorage() {
-        this.lastUpdated = LocalDateTime.now();
+        this.lastUpdated = OffsetDateTime.now();
         this.records = new ArrayList<>();
     }
 }

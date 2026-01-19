@@ -12,7 +12,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -103,7 +103,7 @@ public class JsonMetricsRepository implements MetricsRepository {
         lock.writeLock().lock();
         try {
             // Update timestamp
-            metrics.setLastUpdated(LocalDateTime.now());
+            metrics.setLastUpdated(OffsetDateTime.now());
 
             Path directory = Paths.get(cacheLocation);
             if (!Files.exists(directory)) {
@@ -137,7 +137,7 @@ public class JsonMetricsRepository implements MetricsRepository {
      */
     private CombinedMetricsData createEmpty() {
         return CombinedMetricsData.builder()
-                .lastUpdated(LocalDateTime.now())
+                .lastUpdated(OffsetDateTime.now())
                 .build();
     }
 }
