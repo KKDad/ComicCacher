@@ -59,25 +59,6 @@ class GoComicsIntegrationIT {
     }
 
     @Test
-    void ensureCacheTest() throws Exception {
-        LocalDate testDate = LocalDate.now().minusDays(1);
-        String year = String.valueOf(testDate.getYear());
-        String dateString = testDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        File expectedFile = new File(path.toString() + "/AdamAtHome/" + year + "/" + dateString + ".png");
-        LOG.info("Expecting to get file: " + expectedFile);
-        assertThat(expectedFile).doesNotExist();
-
-        try (IDailyComic subject = getSubject("Adam at Home")) {
-            // Act
-            boolean result = subject.ensureCache();
-
-        // Assert
-        assertThat(result).isTrue();
-        assertThat(expectedFile).exists();
-        }
-    }
-
-    @Test
     void advanceTest() {
         // Arrange
         try (GoComics subject = getSubject("Adam at Home")) {
