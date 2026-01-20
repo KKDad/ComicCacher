@@ -1,6 +1,7 @@
 package org.stapledon.api.resolver;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -9,8 +10,7 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.stapledon.AbstractHttpGraphQlIntegrationTest;
 
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration test for AuthResolver GraphQL operations.

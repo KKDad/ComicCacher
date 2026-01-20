@@ -21,8 +21,7 @@ public class BuildInfo {
     /**
      * Application name
      */
-    @ToString.Include
-    private String name;
+    @ToString.Include private String name;
 
     /**
      * Application artifact
@@ -37,8 +36,7 @@ public class BuildInfo {
     /**
      * Application version
      */
-    @ToString.Include
-    private String version;
+    @ToString.Include private String version;
 
     /**
      * Build timestamp

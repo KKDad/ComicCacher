@@ -2,6 +2,12 @@ package org.stapledon.engine.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -9,12 +15,6 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicErrorRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;

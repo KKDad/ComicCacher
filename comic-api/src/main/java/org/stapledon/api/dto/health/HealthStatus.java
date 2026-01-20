@@ -24,8 +24,7 @@ public class HealthStatus {
     /**
      * Overall status of the application
      */
-    @ToString.Include
-    private Status status;
+    @ToString.Include private Status status;
 
     /**
      * Current server time when check was performed

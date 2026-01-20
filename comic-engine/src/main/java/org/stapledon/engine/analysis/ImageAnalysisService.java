@@ -1,5 +1,7 @@
 package org.stapledon.engine.analysis;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.stapledon.common.dto.ImageMetadata;
@@ -13,8 +15,6 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Random;
 import javax.imageio.ImageIO;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of ImageAnalysisService that analyzes images for metadata.

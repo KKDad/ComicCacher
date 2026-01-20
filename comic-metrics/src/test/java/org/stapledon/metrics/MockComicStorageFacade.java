@@ -37,11 +37,11 @@ public class MockComicStorageFacade implements ComicStorageFacade {
         newestDates.put(key, newest);
 
         Map<LocalDate, byte[]> strips = new HashMap<>();
-        strips.put(oldest, new byte[] { 1 });
-        strips.put(newest, new byte[] { 2 });
+        strips.put(oldest, new byte[]{1});
+        strips.put(newest, new byte[]{2});
 
         for (LocalDate date : dates) {
-            strips.put(date, new byte[] { 3 });
+            strips.put(date, new byte[]{3});
         }
 
         comicStrips.put(key, strips);

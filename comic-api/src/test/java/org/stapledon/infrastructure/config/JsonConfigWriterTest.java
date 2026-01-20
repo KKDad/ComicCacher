@@ -8,10 +8,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicItem;
@@ -23,14 +19,17 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.UUID;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class JsonConfigWriterTest {
     private static final Logger LOG = LoggerFactory.getLogger(JsonConfigWriterTest.class);
     private Path path;
 
-    @Mock
-    private ApplicationConfigurationFacade configurationFacade;
+    @Mock private ApplicationConfigurationFacade configurationFacade;
 
     @BeforeEach
     void setup() throws IOException {
@@ -39,8 +38,9 @@ class JsonConfigWriterTest {
 
     @AfterEach
     void teardown() throws IOException {
-        if (!Files.exists(path))
+        if (!Files.exists(path)) {
             return;
+        }
 
         // Remote test directory and contents
         Files.walk(path)
@@ -81,7 +81,7 @@ class JsonConfigWriterTest {
                 .id(42)
                 .name("test Comic")
                 .description("Comic for Unit Tests")
-                .oldest(LocalDate.of(1995, 05, 31))
+                .oldest(LocalDate.of(1995, 5, 31))
                 .newest(LocalDate.of(2007, 12, 8))
                 .source("gocomics")
                 .sourceIdentifier("testcomic")

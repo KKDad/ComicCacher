@@ -22,8 +22,7 @@ public class ComponentHealth {
     /**
      * Status of the component
      */
-    @ToString.Include
-    private HealthStatus.Status status;
+    @ToString.Include private HealthStatus.Status status;
 
     /**
      * Optional details specific to this component

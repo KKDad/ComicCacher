@@ -1,5 +1,7 @@
 package org.stapledon.engine.validation;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageValidationResult;
@@ -12,8 +14,6 @@ import java.util.Iterator;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of ValidationService that validates image data using Java's standard ImageIO.
@@ -83,8 +83,8 @@ public class ImageValidationService implements ValidationService {
 
     @Override
     public ImageValidationResult validateWithMinDimensions(byte[] imageData,
-                                                          int minWidth,
-                                                          int minHeight) {
+            int minWidth,
+            int minHeight) {
         ImageValidationResult result = validate(imageData);
 
         if (!result.isValid()) {

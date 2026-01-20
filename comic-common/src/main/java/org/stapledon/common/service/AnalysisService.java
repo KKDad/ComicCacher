@@ -18,7 +18,7 @@ public interface AnalysisService {
      * @param sourceUrl optional source URL from which the image was downloaded
      */
     ImageMetadata analyzeImage(int comicId, String comicName, File imageFile, ImageValidationResult validation,
-            String sourceUrl);
+                               String sourceUrl);
 
     /**
      * Analyzes image data in memory and creates comprehensive metadata.
@@ -29,7 +29,7 @@ public interface AnalysisService {
      * @param sourceUrl optional source URL from which the image was downloaded
      */
     ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
-            ImageValidationResult validation, String sourceUrl);
+                               ImageValidationResult validation, String sourceUrl);
 
     /**
      * Detects the color mode of an image by sampling pixels.

@@ -28,8 +28,9 @@ class ComicsKingdomIntegrationIT {
 
     @AfterAll
     static void tearDown() throws Exception {
-        if (!Files.exists(path))
+        if (!Files.exists(path)) {
             return;
+        }
 
         // Remote test directory and contents
         Files.walk(path)

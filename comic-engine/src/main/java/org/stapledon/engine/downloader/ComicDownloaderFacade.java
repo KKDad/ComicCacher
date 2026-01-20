@@ -1,13 +1,10 @@
 package org.stapledon.engine.downloader;
 
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.common.dto.ComicErrorRecord;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.dto.ComicRetrievalRecord;
-import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.dto.*;
 import org.stapledon.common.service.ErrorTrackingService;
 import org.stapledon.common.service.RetrievalStatusService;
 
@@ -20,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of the DownloaderFacade interface.

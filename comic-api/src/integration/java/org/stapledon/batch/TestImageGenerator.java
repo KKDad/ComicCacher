@@ -43,9 +43,9 @@ public class TestImageGenerator {
      */
     private static BufferedImage createBufferedImage(int width, int height, ImageFormat format) {
         // Use RGB for color formats, GRAY for efficiency where possible
-        int imageType = (format == ImageFormat.JPEG || format == ImageFormat.PNG)
-            ? BufferedImage.TYPE_INT_RGB
-            : BufferedImage.TYPE_INT_RGB;
+        int imageType = format == ImageFormat.JPEG || format == ImageFormat.PNG
+                ? BufferedImage.TYPE_INT_RGB
+                : BufferedImage.TYPE_INT_RGB;
 
         BufferedImage image = new BufferedImage(width, height, imageType);
         Graphics2D g2d = image.createGraphics();

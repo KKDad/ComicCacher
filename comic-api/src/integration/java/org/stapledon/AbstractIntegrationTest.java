@@ -22,10 +22,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.stream.Stream;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base class for all integration tests
@@ -50,20 +50,15 @@ public abstract class AbstractIntegrationTest {
     protected static final String TEST_USER = "testuser";
     protected static final String TEST_ADMIN_USER = "adminuser";
 
-    @Autowired
-    protected MockMvc mockMvc;
+    @Autowired protected MockMvc mockMvc;
 
-    @Autowired
-    protected StapledonAccountGivens givens;
+    @Autowired protected StapledonAccountGivens givens;
 
-    @Autowired
-    protected ObjectMapper objectMapper;
+    @Autowired protected ObjectMapper objectMapper;
 
-    @Autowired
-    protected StorageMetricsCollector storageMetricsCollector;
+    @Autowired protected StorageMetricsCollector storageMetricsCollector;
 
-    @Autowired
-    protected JwtTokenUtil jwtTokenUtil;
+    @Autowired protected JwtTokenUtil jwtTokenUtil;
 
     @BeforeAll
     static void setup() {

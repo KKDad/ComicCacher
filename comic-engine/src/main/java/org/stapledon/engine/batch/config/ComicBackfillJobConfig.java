@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch.config;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -25,9 +27,6 @@ import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.LoggingJobExecutionListener;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips for a configurable target year.
@@ -69,10 +68,10 @@ public class ComicBackfillJobConfig {
     public Job comicBackfillJob(JobRepository jobRepository, @Qualifier("comicBackfillStep") Step comicBackfillStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
         return new JobBuilder("ComicBackfillJob", jobRepository)
-            .incrementer(new RunIdIncrementer())
-            .listener(jsonBatchExecutionTracker)
-            .listener(new LoggingJobExecutionListener())
-            .start(comicBackfillStep).build();
+                .incrementer(new RunIdIncrementer())
+                .listener(jsonBatchExecutionTracker)
+                .listener(new LoggingJobExecutionListener())
+                .start(comicBackfillStep).build();
     }
 
     /**
@@ -81,11 +80,11 @@ public class ComicBackfillJobConfig {
     @Bean
     @Qualifier("comicBackfillStep")
     public Step comicBackfillStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, @Qualifier("backfillTaskReader") ItemReader<BackfillTask> backfillTaskReader,
-                                  @Qualifier("backfillTaskProcessor") ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor,
-                                  @Qualifier("backfillTaskWriter") ItemWriter<ComicDownloadResult> backfillTaskWriter) {
+            @Qualifier("backfillTaskProcessor") ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor,
+            @Qualifier("backfillTaskWriter") ItemWriter<ComicDownloadResult> backfillTaskWriter) {
 
         return new StepBuilder("comicBackfillStep", jobRepository).<BackfillTask, ComicDownloadResult>chunk(chunkSize).transactionManager(transactionManager).reader(backfillTaskReader)
-                                                                  .processor(backfillTaskProcessor).writer(backfillTaskWriter).build();
+                .processor(backfillTaskProcessor).writer(backfillTaskWriter).build();
     }
 
     /**

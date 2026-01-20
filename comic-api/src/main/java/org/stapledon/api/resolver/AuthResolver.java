@@ -36,7 +36,7 @@ public class AuthResolver {
         log.info("GraphQL: User registration request for: {}", input.username());
 
         UserRegistrationDto registrationDto = UserRegistrationDto.builder().username(input.username()).password(input.password()).email(input.email()).displayName(input.displayName())
-            .build();
+                .build();
 
         return authService.register(registrationDto).orElseThrow(() -> new AuthenticationException("User registration failed"));
     }

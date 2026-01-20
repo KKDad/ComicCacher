@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.JobInstance;
 import org.springframework.batch.core.repository.JobRepository;
@@ -8,8 +10,6 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for monitoring batch job executions. Provides access to job execution history and statistics.
@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Note: As of Spring Batch 6, JobRepository extends JobExplorer, providing all the query methods previously available through JobExplorer.
  */
-@Slf4j @Service @RequiredArgsConstructor
+@Slf4j
+@Service
+@RequiredArgsConstructor
 public class BatchJobMonitoringService {
 
     private final JobRepository jobRepository;

@@ -23,11 +23,9 @@ import java.util.Optional;
 @ActiveProfiles("integration")
 class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
 
-    @Autowired
-    private RetrievalStatusRepository repository;
+    @Autowired private RetrievalStatusRepository repository;
 
-    @Autowired
-    private CacheProperties cacheProperties;
+    @Autowired private CacheProperties cacheProperties;
 
     private File storageFile;
     private ComicRetrievalRecord testRecord;

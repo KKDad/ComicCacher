@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch.config;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -19,13 +21,13 @@ import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Spring Batch configuration for retrieval record purge job. Purges old retrieval records to prevent unbounded growth.
  */
-@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j
+@Configuration
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "true", matchIfMissing = true)
 public class RetrievalRecordPurgeJobConfig {
 
     private final ManagementFacade comicManagementFacade;

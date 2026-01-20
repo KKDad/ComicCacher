@@ -55,7 +55,7 @@ public class StorageMetricsCollector {
         cacheStats = new ImageCacheStats();
 
         // Get all comic directories (one level down from root)
-        File[] comicDirs = root.listFiles(file -> file.isDirectory() && !file.getName().equals("@eaDir"));
+        File[] comicDirs = root.listFiles(file -> file.isDirectory() && !"@eaDir".equals(file.getName()));
         if (comicDirs == null || comicDirs.length == 0) {
             log.warn("No comic directories found in {}", cacheDirectory);
             return true;
@@ -74,7 +74,7 @@ public class StorageMetricsCollector {
         // Images are stored by year, gather a list of all years that we have stored
         // (from the first comic)
         String[] yearFolders = comicDirs[0]
-                .list((dir, name) -> new File(dir, name).isDirectory() && !name.equals("@eaDir"));
+                .list((dir, name) -> new File(dir, name).isDirectory() && !"@eaDir".equals(name));
         if (yearFolders != null && yearFolders.length > 0) {
             var years = Arrays.asList(yearFolders);
             Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
@@ -85,9 +85,8 @@ public class StorageMetricsCollector {
 
             for (ComicStorageMetrics metrics : perComicMetrics.values()) {
                 if (metrics.getStorageByYear() != null) {
-                    metrics.getStorageByYear().forEach((year, bytes) -> {
-                        storageBytesByYear.merge(year, bytes, Long::sum);
-                    });
+                    metrics.getStorageByYear().forEach((year, bytes) ->
+                            storageBytesByYear.merge(year, bytes, Long::sum));
                 }
             }
 
@@ -141,7 +140,7 @@ public class StorageMetricsCollector {
         Map<String, Long> yearStorage = new HashMap<>();
 
         // Process each year directory
-        File[] yearDirs = comicDir.listFiles(file -> file.isDirectory() && !file.getName().equals("@eaDir"));
+        File[] yearDirs = comicDir.listFiles(file -> file.isDirectory() && !"@eaDir".equals(file.getName()));
         if (yearDirs != null) {
             for (File yearDir : yearDirs) {
                 long yearSize = 0;
@@ -219,10 +218,10 @@ public class StorageMetricsCollector {
     private String[] images(String location) {
         var folder = new File(location);
         var cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile()
-                && (name.endsWith(".png") || name.endsWith(".jpg")) && !name.equals("@eaDir"));
+                && (name.endsWith(".png") || name.endsWith(".jpg")) && !"@eaDir".equals(name));
 
         if (cachedStrips == null || cachedStrips.length == 0) {
-            return new String[] {};
+            return new String[]{};
         }
         Arrays.sort(cachedStrips, String::compareTo);
         return cachedStrips;

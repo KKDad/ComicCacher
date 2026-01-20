@@ -68,7 +68,7 @@ public class JsonRetrievalStatusService implements RetrievalStatusService {
         // Average duration for successful retrievals
         double avgDurationMillis = records.stream()
                 .filter(r -> r.getStatus() == ComicRetrievalStatus.SUCCESS)
-                .mapToLong(r -> r.getRetrievalDurationMs())
+                .mapToLong(ComicRetrievalRecord::getRetrievalDurationMs)
                 .average()
                 .orElse(0);
         summary.put("averageDurationMillis", avgDurationMillis);

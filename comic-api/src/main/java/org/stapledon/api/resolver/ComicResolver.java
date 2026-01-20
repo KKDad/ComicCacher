@@ -269,17 +269,17 @@ public class ComicResolver {
     }
 
     public record ComicStrip(LocalDate date, boolean available, String imageUrl, LocalDate previousDate,
-            LocalDate nextDate) {
+                             LocalDate nextDate) {
     }
 
     public record SearchResults(List<ComicItem> comics, int totalCount, String query) {
     }
 
     public record CreateComicInput(String name, String author, String description, Boolean enabled, String source,
-            String sourceIdentifier) {
+                                   String sourceIdentifier) {
     }
 
     public record UpdateComicInput(String name, String author, String description, Boolean enabled, String source,
-            String sourceIdentifier) {
+                                   String sourceIdentifier) {
     }
 }

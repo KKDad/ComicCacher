@@ -5,19 +5,18 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.stapledon.engine.management.ManagementFacade;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.engine.management.ManagementFacade;
 
 @ExtendWith(MockitoExtension.class)
 class ComicUpdateServiceTest {
 
-    @Mock
-    private ManagementFacade comicManagementFacade;
+    @Mock private ManagementFacade comicManagementFacade;
 
-    @InjectMocks
-    ComicUpdateService subject;
+    @InjectMocks ComicUpdateService subject;
 
     @Test
     void updateAll() {

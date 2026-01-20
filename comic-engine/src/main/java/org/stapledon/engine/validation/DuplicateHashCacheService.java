@@ -1,5 +1,8 @@
 package org.stapledon.engine.validation;
 
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.HashAlgorithm;
@@ -14,9 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for managing duplicate hash cache, including backfilling existing images
@@ -191,7 +191,7 @@ public class DuplicateHashCacheService {
      * @param filePath The file path where the image was saved
      */
     public void addImageToCache(int comicId, String comicName, LocalDate date,
-                                byte[] imageData, String filePath) {
+            byte[] imageData, String filePath) {
         ImageHasher hasher = imageHasherFactory.getImageHasher();
         String hash = hasher.calculateHash(imageData);
 

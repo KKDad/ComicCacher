@@ -1,0 +1,14 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.comiccacher.StyleGuide
+displayName: ComicCacher 2026 Style Guide
+recipeList:
+  - org.openrewrite.java.OrderImports:
+      # Matches your ANTIGRAVITY_RULES: Static > com > org > java > javax/jakarta
+      layout:
+        - static *
+        - com.**
+        - org.**
+        - java.**
+        - javax.**
+        - jakarta.**

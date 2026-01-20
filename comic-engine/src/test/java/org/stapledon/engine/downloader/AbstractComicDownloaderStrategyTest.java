@@ -271,11 +271,11 @@ class AbstractComicDownloaderStrategyTest {
     private static class TestComicDownloaderStrategy extends AbstractComicDownloaderStrategy {
         private byte[] mockImageData;
         private byte[] mockAvatarData;
-        private boolean throwException = false;
+        private boolean throwException;
 
         public TestComicDownloaderStrategy(String source,
-                                          InspectorService webInspector,
-                                          ValidationService imageValidationService) {
+                InspectorService webInspector,
+                ValidationService imageValidationService) {
             super(source, webInspector, imageValidationService);
         }
 

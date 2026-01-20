@@ -146,7 +146,7 @@ public class AccessMetricsCollector {
         }
 
         // Track timing statistics
-        totalAccessTime.compute(comicName, (k, v) -> (v == null) ? accessTime : v + accessTime);
+        totalAccessTime.compute(comicName, (k, v) -> v == null ? accessTime : v + accessTime);
 
         // Event-driven persistence: persist after threshold accesses
         if (accessSinceLastPersist.incrementAndGet() >= persistThreshold) {

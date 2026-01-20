@@ -1,8 +1,7 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.context.annotation.Configuration;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Base configuration for Spring Batch jobs. Provides shared configuration, utilities, and conventions for all batch jobs.
@@ -33,7 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  * }
  * </pre>
  */
-@Slf4j @Configuration
+@Slf4j
+@Configuration
 public class BatchJobBaseConfig {
 
     /**

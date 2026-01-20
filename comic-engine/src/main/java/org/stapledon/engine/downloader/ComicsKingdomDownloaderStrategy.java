@@ -1,5 +1,7 @@
 package org.stapledon.engine.downloader;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,8 +14,6 @@ import org.stapledon.common.service.ValidationService;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Strategy implementation for downloading comics from Comics Kingdom.
@@ -125,7 +125,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
         var elements = new Elements();
 
         for (Element src : media) {
-            if (src.tagName().equals("meta") && src.attr("property").contains("og:image")) {
+            if ("meta".equals(src.tagName()) && src.attr("property").contains("og:image")) {
                 elements.add(src);
             }
         }

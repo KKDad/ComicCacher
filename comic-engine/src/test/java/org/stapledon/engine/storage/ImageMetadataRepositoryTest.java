@@ -2,18 +2,18 @@ package org.stapledon.engine.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.stapledon.common.dto.ImageFormat;
-import org.stapledon.common.dto.ImageMetadata;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.stapledon.common.dto.ImageFormat;
+import org.stapledon.common.dto.ImageMetadata;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;

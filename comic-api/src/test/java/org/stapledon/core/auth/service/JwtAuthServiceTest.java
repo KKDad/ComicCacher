@@ -12,8 +12,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.stapledon.api.dto.auth.AuthRequest;
@@ -28,21 +26,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthServiceTest {
 
-    @Mock
-    private UserService userService;
+    @Mock private UserService userService;
 
-    @Mock
-    private JwtTokenUtil jwtTokenUtil;
+    @Mock private JwtTokenUtil jwtTokenUtil;
 
-    @Mock
-    private JwtUserDetailsService userDetailsService;
+    @Mock private JwtUserDetailsService userDetailsService;
 
-    @Mock
-    private UserDetails userDetails;
+    @Mock private UserDetails userDetails;
 
     private JwtAuthService authService;
 

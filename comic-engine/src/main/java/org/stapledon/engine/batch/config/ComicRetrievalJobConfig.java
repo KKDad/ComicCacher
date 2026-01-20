@@ -1,5 +1,8 @@
 package org.stapledon.engine.batch.config;
 
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -26,14 +29,15 @@ import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Spring Batch configuration for comic retrieval jobs. Provides comprehensive execution tracking, retry logic, and monitoring.
  */
-@Slf4j @ToString @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j
+@ToString
+@Configuration
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicRetrievalJobConfig {
 
     private final ManagementFacade managementFacade;
@@ -55,7 +59,8 @@ public class ComicRetrievalJobConfig {
     /**
      * Main job for daily comic retrieval
      */
-    @Bean @Primary
+    @Bean
+    @Primary
     public Job comicDownloadJob(JobRepository jobRepository, @Qualifier("comicRetrievalStep") Step comicRetrievalStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
         return new JobBuilder("ComicDownloadJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).listener(new LoggingJobExecutionListener())

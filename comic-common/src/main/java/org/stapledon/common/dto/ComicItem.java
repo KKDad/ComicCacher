@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,7 +35,8 @@ public class ComicItem implements Comparable<ComicItem> {
     String sourceIdentifier;
     List<DayOfWeek> publicationDays; // Days comic publishes (null/empty = daily)
     Boolean active; // Whether comic is actively publishing (true = active, false =
-                    // inactive/discontinued)
+
+    // inactive/discontinued)
 
     @Override
     public boolean equals(Object o) {

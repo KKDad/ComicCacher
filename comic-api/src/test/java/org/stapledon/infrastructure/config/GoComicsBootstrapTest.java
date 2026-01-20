@@ -116,11 +116,11 @@ class GoComicsBootstrapTest {
         GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
                 .name("Dilbert")
                 .publicationDays(List.of(
-                    DayOfWeek.MONDAY,
-                    DayOfWeek.TUESDAY,
-                    DayOfWeek.WEDNESDAY,
-                    DayOfWeek.THURSDAY,
-                    DayOfWeek.FRIDAY
+                        DayOfWeek.MONDAY,
+                        DayOfWeek.TUESDAY,
+                        DayOfWeek.WEDNESDAY,
+                        DayOfWeek.THURSDAY,
+                        DayOfWeek.FRIDAY
                 ))
                 .startDate(LocalDate.of(2019, 4, 1))
                 .build();
@@ -130,11 +130,11 @@ class GoComicsBootstrapTest {
 
         // Then: Should return all weekdays
         assertThat(days).containsExactlyInAnyOrder(
-            DayOfWeek.MONDAY,
-            DayOfWeek.TUESDAY,
-            DayOfWeek.WEDNESDAY,
-            DayOfWeek.THURSDAY,
-            DayOfWeek.FRIDAY
+                DayOfWeek.MONDAY,
+                DayOfWeek.TUESDAY,
+                DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY,
+                DayOfWeek.FRIDAY
         );
     }
 

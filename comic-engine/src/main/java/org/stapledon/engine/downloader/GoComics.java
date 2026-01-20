@@ -1,5 +1,8 @@
 package org.stapledon.engine.downloader;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,7 +17,6 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.infrastructure.web.InspectorService;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -22,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ToString

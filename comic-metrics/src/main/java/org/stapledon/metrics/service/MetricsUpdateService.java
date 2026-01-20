@@ -165,13 +165,12 @@ public class MetricsUpdateService {
         Map<String, YearlyStorageMetrics> yearlyStorage = new HashMap<>();
 
         if (storageMetric.getStorageByYear() != null) {
-            storageMetric.getStorageByYear().forEach((year, bytes) -> {
-                yearlyStorage.put(year, YearlyStorageMetrics.builder().storageBytes(bytes)
-                        // Note: Image count per year per comic not currently tracked in
-                        // ComicStorageMetrics
-                        // Would need to enhance scanning to get this
-                        .imageCount(0).build());
-            });
+            storageMetric.getStorageByYear().forEach((year, bytes) ->
+                    yearlyStorage.put(year, YearlyStorageMetrics.builder().storageBytes(bytes)
+                            // Note: Image count per year per comic not currently tracked in
+                            // ComicStorageMetrics
+                            // Would need to enhance scanning to get this
+                            .imageCount(0).build()));
         }
 
         return yearlyStorage;

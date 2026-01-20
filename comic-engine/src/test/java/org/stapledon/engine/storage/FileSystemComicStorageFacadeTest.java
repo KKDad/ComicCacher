@@ -15,14 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.DuplicateValidationResult;
-import org.stapledon.common.dto.ComicIdentifier;
-import org.stapledon.common.dto.ImageFormat;
-import org.stapledon.common.dto.ImageMetadata;
-import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.*;
 import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
@@ -364,7 +359,7 @@ class FileSystemComicStorageFacadeTest {
         // Arrange
         configureMocksForSave();
         LocalDate date = LocalDate.of(2023, 2, 1);
-        byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
 
         // Act
         boolean result = storageFacade.saveComicStrip(COMIC_IDENTIFIER, date, imageData);
@@ -390,7 +385,7 @@ class FileSystemComicStorageFacadeTest {
         // Arrange
         configureMocksForSave();
         LocalDate date = LocalDate.of(2023, 2, 1);
-        byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
 
         // Mock duplicate validation to return duplicate
         when(duplicateValidationService.validateNoDuplicate(any(int.class), anyString(), any(LocalDate.class),
@@ -418,7 +413,7 @@ class FileSystemComicStorageFacadeTest {
         // Arrange
         configureMocksForSave();
         LocalDate date = LocalDate.of(2023, 2, 1);
-        byte[] imageData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        byte[] imageData = new byte[]{0x01, 0x02, 0x03, 0x04};
 
         // Mock validation to fail
         when(imageValidationService.validateWithMinDimensions(any(byte[].class), any(int.class), any(int.class)))

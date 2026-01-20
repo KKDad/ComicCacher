@@ -14,10 +14,10 @@ class SmokeIT extends AbstractHttpGraphQlIntegrationTest {
     @Test
     void graphqlEndpointIsAlive() {
         getGraphQlTester()
-            .document("query { validateToken }")
-            .execute()
-            .path("validateToken")
-            .entity(Boolean.class)
-            .satisfies(Assertions::assertFalse);
+                .document("query { validateToken }")
+                .execute()
+                .path("validateToken")
+                .entity(Boolean.class)
+                .satisfies(Assertions::assertFalse);
     }
 }

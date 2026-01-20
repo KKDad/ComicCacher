@@ -30,20 +30,17 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Integration tests for MetricsArchiveJob. Tests the complete flow of archiving daily metrics to JSON files.
  */
-@Slf4j @TestPropertySource(properties = { "batch.metrics-archive.enabled=true", "batch.metrics-archive.cron=0 30 6 * * ?" })
+@Slf4j
+@TestPropertySource(properties = {"batch.metrics-archive.enabled=true", "batch.metrics-archive.cron=0 30 6 * * ?"})
 class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
-    @Autowired
-    private JobOperator jobOperator;
+    @Autowired private JobOperator jobOperator;
 
-    @Autowired @Qualifier("metricsArchiveJob")
-    private Job metricsArchiveJob;
+    @Autowired @Qualifier("metricsArchiveJob") private Job metricsArchiveJob;
 
-    @Autowired
-    private MetricsRepository metricsRepository;
+    @Autowired private MetricsRepository metricsRepository;
 
-    @Autowired @Qualifier("gsonWithLocalDate")
-    private Gson gson;
+    @Autowired @Qualifier("gsonWithLocalDate") private Gson gson;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 

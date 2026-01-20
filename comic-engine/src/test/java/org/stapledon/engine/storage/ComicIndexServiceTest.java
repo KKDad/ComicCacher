@@ -1,11 +1,16 @@
 package org.stapledon.engine.storage;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 import com.google.gson.Gson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicDateIndex;
 import org.stapledon.common.util.GsonUtils;
@@ -18,9 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
+@ExtendWith(MockitoExtension.class)
 class ComicIndexServiceTest {
 
     @TempDir

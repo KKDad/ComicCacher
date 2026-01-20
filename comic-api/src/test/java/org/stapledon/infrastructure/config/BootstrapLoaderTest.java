@@ -8,8 +8,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.util.Bootstrap;
 
 import com.google.common.io.CharSource;
@@ -21,12 +19,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BootstrapLoaderTest {
 
-    @Mock
-    private Gson mockGson;
+    @Mock private Gson mockGson;
 
     private CacherConfigLoader configLoader;
 

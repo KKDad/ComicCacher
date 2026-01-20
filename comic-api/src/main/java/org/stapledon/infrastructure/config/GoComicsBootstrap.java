@@ -27,11 +27,9 @@ public class GoComicsBootstrap implements IComicsBootstrap {
     List<DayOfWeek> publicationDays; // Optional: days comic publishes (null/empty = daily)
     Boolean active; // Optional: whether comic is actively publishing (null/true = active)
 
-    @Autowired
-    private InspectorService webInspector;
+    @Autowired private InspectorService webInspector;
 
-    @Autowired
-    private CacheProperties cacheProperties;
+    @Autowired private CacheProperties cacheProperties;
 
     @Override
     public String stripName() {
@@ -46,8 +44,8 @@ public class GoComicsBootstrap implements IComicsBootstrap {
     @Override
     public IDailyComic getDownloader() {
         return new GoComics(
-            webInspector != null ? webInspector : new JsoupInspectorService(),
-            cacheProperties
+                webInspector != null ? webInspector : new JsoupInspectorService(),
+                cacheProperties
         );
     }
 

@@ -10,9 +10,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.repository.RetrievalStatusRepository;
@@ -22,14 +19,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JsonRetrievalStatusServiceTest {
-    @Mock
-    private RetrievalStatusRepository repository;
+    @Mock private RetrievalStatusRepository repository;
 
-    @InjectMocks
-    private JsonRetrievalStatusService service;
+    @InjectMocks private JsonRetrievalStatusService service;
 
     private ComicRetrievalRecord successRecord;
     private ComicRetrievalRecord failureRecord;
@@ -103,8 +101,7 @@ class JsonRetrievalStatusServiceTest {
         assertThat(summary.get("totalCount")).isEqualTo(2);
         assertThat(summary.get("successRate")).isEqualTo(0.5);
 
-        @SuppressWarnings("unchecked")
-        Map<ComicRetrievalStatus, Long> countsByStatus =
+        @SuppressWarnings("unchecked") Map<ComicRetrievalStatus, Long> countsByStatus =
                 (Map<ComicRetrievalStatus, Long>) summary.get("countsByStatus");
 
         assertThat(countsByStatus.get(ComicRetrievalStatus.SUCCESS)).isEqualTo(1L);

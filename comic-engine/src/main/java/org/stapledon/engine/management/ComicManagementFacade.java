@@ -1,17 +1,11 @@
 package org.stapledon.engine.management;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
-import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.common.dto.ComicIdentifier;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.dto.ComicNavigationResult;
-import org.stapledon.common.dto.ComicRetrievalRecord;
-import org.stapledon.common.dto.ComicRetrievalStatus;
-import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.*;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
@@ -20,14 +14,8 @@ import org.stapledon.engine.downloader.DownloaderFacade;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of the ManagementFacade interface. Acts as the central
@@ -372,8 +360,8 @@ public class ComicManagementFacade implements ManagementFacade {
                     ComicItem updated = ComicItem.builder().id(comic.getId()).name(comic.getName())
                             .description(comic.getDescription()).author(comic.getAuthor())
                             .avatarAvailable(comic.isAvatarAvailable()).enabled(comic.isEnabled()).newest(date) // Update
-                                                                                                                // newest
-                                                                                                                // date
+                            // newest
+                            // date
                             .oldest(comic.getOldest()).source(comic.getSource())
                             .sourceIdentifier(comic.getSourceIdentifier()).build();
 

@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch;
 
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.BackfillSourceConfig;
@@ -8,8 +10,6 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for managing backfill configuration including source-specific limits.

@@ -1,5 +1,8 @@
 package org.stapledon.engine.validation;
 
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.DuplicateValidationResult;
@@ -9,9 +12,6 @@ import org.stapledon.common.service.ImageHasher;
 
 import java.time.LocalDate;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of DuplicateValidationService that detects duplicate images at download time.
@@ -30,9 +30,9 @@ public class DuplicateImageValidationService implements DuplicateValidationServi
 
     @Override
     public DuplicateValidationResult validateNoDuplicate(int comicId,
-                                                         String comicName,
-                                                         LocalDate date,
-                                                         byte[] imageData) {
+            String comicName,
+            LocalDate date,
+            byte[] imageData) {
         // Skip validation if duplicate detection is disabled
         if (!cacheProperties.isDuplicateDetectionEnabled()) {
             log.debug("Duplicate detection is disabled, skipping validation");

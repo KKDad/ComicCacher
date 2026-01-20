@@ -1,12 +1,12 @@
 package org.stapledon.engine.storage;
 
+import com.google.common.io.Files;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicIdentifier;
-import org.stapledon.common.dto.DuplicateValidationResult;
-import org.stapledon.common.dto.ImageDto;
-import org.stapledon.common.dto.ImageMetadata;
-import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.*;
 import org.stapledon.common.service.AnalysisService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.DuplicateValidationService;
@@ -14,20 +14,12 @@ import org.stapledon.common.service.ValidationService;
 import org.stapledon.common.util.ImageUtils;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
 
-import com.google.common.io.Files;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
 
 /**
  * Implementation of the Comic Storage Facade that abstracts all filesystem
@@ -317,7 +309,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         boolean success = true;
 
         for (File yearDir : yearDirs) {
-            if (yearDir.getName().equals(EXCLUDED_SYNOLOGY_DIR)) {
+            if (EXCLUDED_SYNOLOGY_DIR.equals(yearDir.getName())) {
                 continue;
             }
 
@@ -381,7 +373,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         }
 
         File[] yearDirs = comicRoot
-                .listFiles(file -> file.isDirectory() && !file.getName().equals(EXCLUDED_SYNOLOGY_DIR));
+                .listFiles(file -> file.isDirectory() && !EXCLUDED_SYNOLOGY_DIR.equals(file.getName()));
         if (yearDirs == null) {
             return new ArrayList<>();
         }
@@ -417,7 +409,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         for (File file : files) {
             if (file.isFile()) {
                 size += file.length();
-            } else if (file.isDirectory() && !file.getName().equals(EXCLUDED_SYNOLOGY_DIR)) {
+            } else if (file.isDirectory() && !EXCLUDED_SYNOLOGY_DIR.equals(file.getName())) {
                 size += calculateDirectorySize(file);
             }
         }

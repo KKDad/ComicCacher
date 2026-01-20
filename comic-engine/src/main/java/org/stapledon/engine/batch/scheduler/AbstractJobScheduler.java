@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch.scheduler;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
@@ -7,8 +9,6 @@ import org.springframework.batch.core.launch.JobOperator;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract base class for job schedulers. Provides common functionality for all batch job schedulers using the modern JobOperator API.
@@ -73,7 +73,7 @@ public abstract class AbstractJobScheduler {
      */
     protected JobParameters buildJobParameters(String trigger) {
         return new JobParametersBuilder().addString("trigger", trigger).addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")))
-                                         .toJobParameters();
+                .toJobParameters();
     }
 
     /**

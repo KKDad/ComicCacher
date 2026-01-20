@@ -14,13 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -116,7 +110,7 @@ public class ComicIndexService {
 
             // If fromDate is found, the next one is at index + 1
             // If fromDate is NOT found, binarySearch returns (-(insertion point) - 1)
-            int nextIndex = (pos >= 0) ? pos + 1 : -(pos + 1);
+            int nextIndex = pos >= 0 ? pos + 1 : -(pos + 1);
 
             if (nextIndex < dates.size()) {
                 return Optional.of(dates.get(nextIndex));
@@ -149,7 +143,7 @@ public class ComicIndexService {
             // If not found, pos is (-(insertion point) - 1).
             // Insertion point is the first element greater than the key.
             // We want the element immediately before the insertion point.
-            int insertionPoint = (pos >= 0) ? pos : -(pos + 1);
+            int insertionPoint = pos >= 0 ? pos : -(pos + 1);
             int prevIndex = insertionPoint - 1;
 
             if (prevIndex >= 0 && prevIndex < dates.size()) {

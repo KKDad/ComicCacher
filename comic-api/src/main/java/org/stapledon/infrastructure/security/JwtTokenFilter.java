@@ -66,7 +66,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                         log.warn("No username extracted from JWT token");
                     } else if (SecurityContextHolder.getContext().getAuthentication() != null) {
                         log.debug("SecurityContext already contains authentication: {}",
-                                 SecurityContextHolder.getContext().getAuthentication().getName());
+                                SecurityContextHolder.getContext().getAuthentication().getName());
                     }
                 }
             } else {
@@ -100,7 +100,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         if (!headerAuth.startsWith("Bearer ")) {
             log.debug("Authorization header does not start with 'Bearer ': {}",
-                     headerAuth.length() > 10 ? headerAuth.substring(0, 10) + "..." : headerAuth);
+                    headerAuth.length() > 10 ? headerAuth.substring(0, 10) + "..." : headerAuth);
             return null;
         }
 

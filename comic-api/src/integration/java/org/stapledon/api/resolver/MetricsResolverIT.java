@@ -1,8 +1,9 @@
 package org.stapledon.api.resolver;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.stapledon.AbstractHttpGraphQlIntegrationTest;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration tests for MetricsResolver GraphQL operations.

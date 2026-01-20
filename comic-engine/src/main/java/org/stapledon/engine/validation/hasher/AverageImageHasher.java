@@ -1,5 +1,7 @@
 package org.stapledon.engine.validation.hasher;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.service.ImageHasher;
 
@@ -9,8 +11,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Average Hash (aHash) implementation for duplicate image detection.

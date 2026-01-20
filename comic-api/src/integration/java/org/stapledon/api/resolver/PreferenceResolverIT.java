@@ -1,13 +1,13 @@
 package org.stapledon.api.resolver;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.stapledon.AbstractHttpGraphQlIntegrationTest;
 
 import java.time.LocalDate;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Integration tests for PreferenceResolver GraphQL operations.

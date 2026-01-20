@@ -7,8 +7,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.infrastructure.config.UserConfigWriter;
@@ -17,12 +15,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JsonUserServiceTest {
 
-    @Mock
-    private UserConfigWriter userConfigWriter;
+    @Mock private UserConfigWriter userConfigWriter;
 
     private JsonUserService userService;
 

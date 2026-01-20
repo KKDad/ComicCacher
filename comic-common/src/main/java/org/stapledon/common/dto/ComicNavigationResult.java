@@ -1,7 +1,9 @@
 package org.stapledon.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -81,7 +83,7 @@ public class ComicNavigationResult {
      * Creates a not-found result with boundary information
      */
     public static ComicNavigationResult notFound(String reason, LocalDate requestedDate,
-            LocalDate nearestPrev, LocalDate nearestNext) {
+                                                 LocalDate nearestPrev, LocalDate nearestNext) {
         return ComicNavigationResult.builder()
                 .found(false)
                 .reason(reason)

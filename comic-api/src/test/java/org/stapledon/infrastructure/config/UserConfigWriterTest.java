@@ -6,7 +6,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOf
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mindrot.jbcrypt.BCrypt;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
@@ -25,17 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.mindrot.jbcrypt.BCrypt;
 
 class UserConfigWriterTest {
 
-    @TempDir
-    Path tempDir;
+    @TempDir Path tempDir;
 
     // Test subclass that avoids facade issues
     private static class TestUserConfigWriter extends UserConfigWriter {
         private UserConfig inMemoryConfig;
         private final Path tempDir;
-        private boolean simulateWriteFailure = false;
+        private boolean simulateWriteFailure;
 
         public TestUserConfigWriter(Gson gson, Path tempDir) {
             super(gson, createCacheProperties(tempDir), null);
@@ -97,15 +96,15 @@ class UserConfigWriterTest {
             if (inMemoryConfig.getUsers().containsKey(username)) {
                 User user = inMemoryConfig.getUsers().get(username);
                 User updatedUser = User.builder()
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .displayName(user.getDisplayName())
-                    .roles(user.getRoles())
-                    .created(user.getCreated())
-                    .lastLogin(user.getLastLogin())
-                    .passwordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()))
-                    .userToken(user.getUserToken())
-                    .build();
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .displayName(user.getDisplayName())
+                        .roles(user.getRoles())
+                        .created(user.getCreated())
+                        .lastLogin(user.getLastLogin())
+                        .passwordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()))
+                        .userToken(user.getUserToken())
+                        .build();
                 inMemoryConfig.getUsers().put(username, updatedUser);
                 return Optional.of(updatedUser);
             }
@@ -118,15 +117,15 @@ class UserConfigWriterTest {
                 User user = inMemoryConfig.getUsers().get(username);
                 if (BCrypt.checkpw(password, user.getPasswordHash())) {
                     User loggedInUser = User.builder()
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .displayName(user.getDisplayName())
-                        .roles(user.getRoles())
-                        .created(user.getCreated())
-                        .lastLogin(LocalDateTime.now())
-                        .passwordHash(user.getPasswordHash())
-                        .userToken(user.getUserToken())
-                        .build();
+                            .username(user.getUsername())
+                            .email(user.getEmail())
+                            .displayName(user.getDisplayName())
+                            .roles(user.getRoles())
+                            .created(user.getCreated())
+                            .lastLogin(LocalDateTime.now())
+                            .passwordHash(user.getPasswordHash())
+                            .userToken(user.getUserToken())
+                            .build();
                     inMemoryConfig.getUsers().put(username, loggedInUser);
                     return Optional.of(loggedInUser);
                 }
@@ -141,14 +140,14 @@ class UserConfigWriterTest {
             }
 
             User newUser = User.builder()
-                .username(registration.getUsername())
-                .email(registration.getEmail())
-                .displayName(registration.getDisplayName())
-                .passwordHash(BCrypt.hashpw(registration.getPassword(), BCrypt.gensalt()))
-                .created(LocalDateTime.now())
-                .roles(List.of("USER"))
-                .userToken(UUID.randomUUID())
-                .build();
+                    .username(registration.getUsername())
+                    .email(registration.getEmail())
+                    .displayName(registration.getDisplayName())
+                    .passwordHash(BCrypt.hashpw(registration.getPassword(), BCrypt.gensalt()))
+                    .created(LocalDateTime.now())
+                    .roles(List.of("USER"))
+                    .userToken(UUID.randomUUID())
+                    .build();
 
             inMemoryConfig.getUsers().put(newUser.getUsername(), newUser);
             return Optional.of(newUser);
@@ -156,15 +155,15 @@ class UserConfigWriterTest {
 
         private User mergeUsers(User existingUser, User updatedUser) {
             return User.builder()
-                .username(existingUser.getUsername())
-                .email(updatedUser.getEmail() != null ? updatedUser.getEmail() : existingUser.getEmail())
-                .displayName(updatedUser.getDisplayName() != null ? updatedUser.getDisplayName() : existingUser.getDisplayName())
-                .passwordHash(existingUser.getPasswordHash())
-                .created(existingUser.getCreated())
-                .lastLogin(existingUser.getLastLogin())
-                .roles(updatedUser.getRoles() != null && !updatedUser.getRoles().isEmpty() ? updatedUser.getRoles() : existingUser.getRoles())
-                .userToken(existingUser.getUserToken())
-                .build();
+                    .username(existingUser.getUsername())
+                    .email(updatedUser.getEmail() != null ? updatedUser.getEmail() : existingUser.getEmail())
+                    .displayName(updatedUser.getDisplayName() != null ? updatedUser.getDisplayName() : existingUser.getDisplayName())
+                    .passwordHash(existingUser.getPasswordHash())
+                    .created(existingUser.getCreated())
+                    .lastLogin(existingUser.getLastLogin())
+                    .roles(updatedUser.getRoles() != null && !updatedUser.getRoles().isEmpty() ? updatedUser.getRoles() : existingUser.getRoles())
+                    .userToken(existingUser.getUserToken())
+                    .build();
         }
 
         public void simulateNonExistentDirectory() {
@@ -433,22 +432,22 @@ class UserConfigWriterTest {
         UserConfig validConfig = new UserConfig();
 
         User testUser = User.builder()
-            .username("testuser")
-            .passwordHash(BCrypt.hashpw("testpass", BCrypt.gensalt()))
-            .email("test@example.com")
-            .displayName("Test User")
-            .roles(List.of("USER"))
-            .created(LocalDateTime.now())
-            .build();
+                .username("testuser")
+                .passwordHash(BCrypt.hashpw("testpass", BCrypt.gensalt()))
+                .email("test@example.com")
+                .displayName("Test User")
+                .roles(List.of("USER"))
+                .created(LocalDateTime.now())
+                .build();
 
         User adminUser = User.builder()
-            .username("adminuser")
-            .passwordHash(BCrypt.hashpw("adminpass", BCrypt.gensalt()))
-            .email("admin@example.com")
-            .displayName("Admin User")
-            .roles(List.of("USER", "ADMIN"))
-            .created(LocalDateTime.now())
-            .build();
+                .username("adminuser")
+                .passwordHash(BCrypt.hashpw("adminpass", BCrypt.gensalt()))
+                .email("admin@example.com")
+                .displayName("Admin User")
+                .roles(List.of("USER", "ADMIN"))
+                .created(LocalDateTime.now())
+                .build();
 
         validConfig.getUsers().put("testuser", testUser);
         validConfig.getUsers().put("adminuser", adminUser);
@@ -503,8 +502,7 @@ class UserConfigWriterTest {
         };
 
         // When/Then
-        Exception exception = assertThatExceptionOfType(JsonParseException.class).isThrownBy(() ->
-                exceptionWriter.loadUsers()).actual();
+        Exception exception = assertThatExceptionOfType(JsonParseException.class).isThrownBy(exceptionWriter::loadUsers).actual();
 
         // Verify it's the right exception with a meaningful message
         assertThat(exception.getMessage().contains("malformed") ||
@@ -555,11 +553,11 @@ class UserConfigWriterTest {
 
         // Create a user with minimal fields
         User minimalUser = User.builder()
-            .username("missingfieldsuser")
-            .email("missing@example.com")
-            .passwordHash(BCrypt.hashpw("password", BCrypt.gensalt()))
-            .roles(new ArrayList<>())
-            .build();
+                .username("missingfieldsuser")
+                .email("missing@example.com")
+                .passwordHash(BCrypt.hashpw("password", BCrypt.gensalt()))
+                .roles(new ArrayList<>())
+                .build();
 
         missingFieldsConfig.getUsers().put("missingfieldsuser", minimalUser);
         userConfigWriter.setUserConfig(missingFieldsConfig);
@@ -630,11 +628,11 @@ class UserConfigWriterTest {
 
         for (int i = 0; i < 5; i++) {
             UserRegistrationDto regDto = UserRegistrationDto.builder()
-                .username("sequential" + i)
-                .password("pass" + i)
-                .email("user" + i + "@example.com")
-                .displayName("Sequential User " + i)
-                .build();
+                    .username("sequential" + i)
+                    .password("pass" + i)
+                    .email("user" + i + "@example.com")
+                    .displayName("Sequential User " + i)
+                    .build();
 
             Optional<User> user = userConfigWriter.registerUser(regDto);
             results[i] = user.isPresent();

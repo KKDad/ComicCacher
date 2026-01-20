@@ -1,13 +1,13 @@
 package org.stapledon.engine.validation.hasher;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.service.ImageHasher;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * MD5 hash implementation for duplicate image detection.

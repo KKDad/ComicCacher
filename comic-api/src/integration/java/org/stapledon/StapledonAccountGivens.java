@@ -30,8 +30,7 @@ public class StapledonAccountGivens implements ApplicationContextAware {
     private static ApplicationContext applicationContext;
     private final AtomicInteger counter = new AtomicInteger(1000);
 
-    @Autowired
-    private UserConfigWriter userConfigWriter;
+    @Autowired private UserConfigWriter userConfigWriter;
 
     private static JwtTokenUtil jwtTokenUtil() {
         return applicationContext.getBean(JwtTokenUtil.class);
@@ -142,9 +141,9 @@ public class StapledonAccountGivens implements ApplicationContextAware {
         public String authenticate() {
             // Collect non-null, non-blank name parts into a single string
             String displayName = Stream.of(firstName, lastName)
-                   .filter(Objects::nonNull)
-                   .filter(name -> !name.isBlank())
-                   .collect(Collectors.joining(" "));
+                    .filter(Objects::nonNull)
+                    .filter(name -> !name.isBlank())
+                    .collect(Collectors.joining(" "));
 
             return jwtTokenUtil().generateToken(User.builder()
                     .username(this.username)

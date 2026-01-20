@@ -16,9 +16,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.stream.Stream;
-import tools.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base class for all integration tests
@@ -43,20 +43,15 @@ public abstract class AbstractHttpGraphQlIntegrationTest {
     protected static final String TEST_USER = "testuser";
     protected static final String TEST_ADMIN_USER = "adminuser";
 
-    @Autowired
-    protected HttpGraphQlTester graphQlTester;
+    @Autowired protected HttpGraphQlTester graphQlTester;
 
-    @Autowired
-    protected StapledonAccountGivens givens;
+    @Autowired protected StapledonAccountGivens givens;
 
-    @Autowired
-    protected ObjectMapper objectMapper;
+    @Autowired protected ObjectMapper objectMapper;
 
-    @Autowired
-    protected StorageMetricsCollector storageMetricsCollector;
+    @Autowired protected StorageMetricsCollector storageMetricsCollector;
 
-    @Autowired
-    protected JwtTokenUtil jwtTokenUtil;
+    @Autowired protected JwtTokenUtil jwtTokenUtil;
 
     @BeforeAll
     static void setup() {
@@ -148,9 +143,9 @@ public abstract class AbstractHttpGraphQlIntegrationTest {
             String jwtToken = context.authenticate();
             log.info("Using test user: {}", context.getUsername());
             graphQlTester = getGraphQlTester()
-                .mutate()
-                .headers(h -> h.setBearerAuth(jwtToken))
-                .build();
+                    .mutate()
+                    .headers(h -> h.setBearerAuth(jwtToken))
+                    .build();
 
             return jwtToken;
         } catch (Exception e) {

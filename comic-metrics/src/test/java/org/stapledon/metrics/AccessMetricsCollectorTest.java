@@ -3,14 +3,14 @@ package org.stapledon.metrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 
 import java.io.File;
 import java.time.LocalDate;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AccessMetricsCollectorTest {
 
@@ -77,8 +77,9 @@ public class AccessMetricsCollectorTest {
      */
     public static File getResourcesDirectory() {
         File resourcesDirectory = new File("src/test/resources");
-        if (!resourcesDirectory.exists())
+        if (!resourcesDirectory.exists()) {
             resourcesDirectory = new File("../src/test/resources");
+        }
 
         assertThat(resourcesDirectory).exists();
         return resourcesDirectory;

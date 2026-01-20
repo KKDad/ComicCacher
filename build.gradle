@@ -82,11 +82,17 @@ subprojects {
     dependencies {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
         rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.24.0")
+        // OpenRewrite Recipes for Style and Checkstyle alignment
+        rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.1.1")
+        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.24.0")
     }
 
-    rewrite {
-        activeRecipe("org.openrewrite.java.testing.assertj.JUnitToAssertj")
-    }
+rewrite {
+    configFile = rootProject.file('rewrite.yaml')
+    // You only need the custom recipe name from your rewrite.yml
+    // This recipe acts as a container for all the others
+    activeRecipe("com.comiccacher.StyleGuide")
+}
 }
 
 // Add testAll task to run all tests in all subprojects
@@ -96,6 +102,3 @@ task testAll {
     description = 'Runs all tests in all subprojects (currently only unit tests)'
     group = 'verification'
 }
-
-
-

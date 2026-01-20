@@ -22,11 +22,9 @@ import java.util.Optional;
 @ActiveProfiles("integration")
 class CaffeineCacheIntegrationTest {
 
-    @Autowired
-    private CacheManager cacheManager;
+    @Autowired private CacheManager cacheManager;
 
-    @Autowired
-    private ManagementFacade comicManagementFacade;
+    @Autowired private ManagementFacade comicManagementFacade;
 
     @Test
     void cacheManagerIsConfigured() {
