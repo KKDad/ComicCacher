@@ -1,6 +1,8 @@
 package org.stapledon.common.util;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -11,10 +13,9 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GsonUtils {
+public final class GsonUtils {
     private GsonUtils() {
     }
 

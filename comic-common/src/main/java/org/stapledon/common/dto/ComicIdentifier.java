@@ -9,7 +9,7 @@ import lombok.ToString;
  * Value object representing a comic's identity.
  * Encapsulates the (comicId, comicName) pair that is passed throughout the
  * system.
- * 
+ *
  * Immutable and suitable for use as a cache key.
  */
 @Getter

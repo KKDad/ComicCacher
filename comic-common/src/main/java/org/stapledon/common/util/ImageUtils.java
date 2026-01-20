@@ -14,12 +14,11 @@ import java.time.format.DateTimeParseException;
 import java.util.Base64;
 import javax.imageio.ImageIO;
 
-public class ImageUtils {
+public final class ImageUtils {
 
     private ImageUtils() {
         // Utility class - prevent instantiation
     }
-
 
     /**
      * Load an image from the filesystem and return a ImageDto object
@@ -38,10 +37,12 @@ public class ImageUtils {
                     .height(bi.getHeight())
                     .width(bi.getWidth())
                     .build();
-            imageDto.setImageDate(LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            imageDto.setImageDate(LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()),
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         } catch (DateTimeParseException dte) {
-            // Ignore parse errors - filename may not be a valid date, imageDate remains null
+            // Ignore parse errors - filename may not be a valid date, imageDate remains
+            // null
         }
         return imageDto;
     }

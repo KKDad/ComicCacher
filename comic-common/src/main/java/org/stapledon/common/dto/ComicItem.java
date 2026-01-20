@@ -38,13 +38,15 @@ public class ComicItem implements Comparable<ComicItem> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         var comicItem = (ComicItem) o;
-        return getId() == comicItem.getId() &&
-                getName().equals(comicItem.getName());
+        return getId() == comicItem.getId()
+                && getName().equals(comicItem.getName());
     }
 
     @Override
@@ -54,12 +56,15 @@ public class ComicItem implements Comparable<ComicItem> {
 
     @Override
     public int compareTo(ComicItem other) {
-        if (this.name == null && other.name == null)
+        if (this.name == null && other.name == null) {
             return 0;
-        if (this.name == null)
+        }
+        if (this.name == null) {
             return -1;
-        if (other.name == null)
+        }
+        if (other.name == null) {
             return 1;
+        }
         return this.name.compareTo(other.name);
     }
 

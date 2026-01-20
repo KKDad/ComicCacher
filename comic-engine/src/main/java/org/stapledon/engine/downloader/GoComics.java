@@ -343,31 +343,31 @@ public class GoComics extends DailyComic implements AutoCloseable {
 
             // Get all img tags with their attributes
             Object imgResult = jsExecutor.executeScript(
-                    "var imgs = document.querySelectorAll('img');" +
-                            "var result = [];" +
-                            "for(var i = 0; i < imgs.length; i++) {" +
-                            "  result.push({" +
-                            "    src: imgs[i].src," +
-                            "    className: imgs[i].className," +
-                            "    id: imgs[i].id," +
-                            "    alt: imgs[i].alt" +
-                            "  });" +
-                            "}" +
-                            "return JSON.stringify(result);");
+                    "var imgs = document.querySelectorAll('img');"
+                            + "var result = [];"
+                            + "for(var i = 0; i < imgs.length; i++) {"
+                            + "  result.push({"
+                            + "    src: imgs[i].src,"
+                            + "    className: imgs[i].className,"
+                            + "    id: imgs[i].id,"
+                            + "    alt: imgs[i].alt"
+                            + "  });"
+                            + "}"
+                            + "return JSON.stringify(result);");
             log.info("All img tags found: {}", imgResult);
 
             // Get all meta tags
             Object metaResult = jsExecutor.executeScript(
-                    "var metas = document.querySelectorAll('meta[property], meta[name]');" +
-                            "var result = [];" +
-                            "for(var i = 0; i < metas.length; i++) {" +
-                            "  result.push({" +
-                            "    property: metas[i].getAttribute('property')," +
-                            "    name: metas[i].getAttribute('name')," +
-                            "    content: metas[i].content" +
-                            "  });" +
-                            "}" +
-                            "return JSON.stringify(result);");
+                    "var metas = document.querySelectorAll('meta[property], meta[name]');"
+                            + "var result = [];"
+                            + "for(var i = 0; i < metas.length; i++) {"
+                            + "  result.push({"
+                            + "    property: metas[i].getAttribute('property'),"
+                            + "    name: metas[i].getAttribute('name'),"
+                            + "    content: metas[i].content"
+                            + "  });"
+                            + "}"
+                            + "return JSON.stringify(result);");
             log.info("All meta tags found: {}", metaResult);
 
             // Extract comic image using CSS selector for current GoComics structure

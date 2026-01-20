@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * REST Controller for binary image endpoints.
  * These endpoints return binary image data that cannot be served via GraphQL.
- * 
+ *
  * For comic CRUD operations, use the GraphQL API (ComicResolver).
  */
 @Slf4j

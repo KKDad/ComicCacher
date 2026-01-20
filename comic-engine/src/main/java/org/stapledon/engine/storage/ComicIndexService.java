@@ -27,9 +27,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
 /**
- * Service to manage a persistent index of available comic dates. This avoids expensive day-by-day directory scans on NFS/RAID storage.
+ * Service to manage a persistent index of available comic dates. This avoids
+ * expensive day-by-day directory scans on NFS/RAID storage.
  */
-@Slf4j @Service
+@Slf4j
+@Service
 public class ComicIndexService {
     public static final String INDEX_FILENAME = "available-dates.json";
 
@@ -37,7 +39,8 @@ public class ComicIndexService {
     private static final String SYNOLOGY_METADATA_PREFIX = "@";
 
     /**
-     * Pattern to validate comic names - alphanumeric, spaces, hyphens, underscores only
+     * Pattern to validate comic names - alphanumeric, spaces, hyphens, underscores
+     * only
      */
     private static final Pattern VALID_COMIC_NAME = Pattern.compile("^[a-zA-Z0-9 _-]+$");
 
@@ -54,17 +57,19 @@ public class ComicIndexService {
     // Per-comic locks for thread-safe index updates
     private final Map<Integer, ReadWriteLock> comicLocks = new ConcurrentHashMap<>();
 
-    public ComicIndexService(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties, ImageMetadataRepository metadataRepository) {
+    public ComicIndexService(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties,
+            ImageMetadataRepository metadataRepository) {
         this.gson = gson;
         this.cacheProperties = cacheProperties;
         this.metadataRepository = metadataRepository;
     }
 
     /**
-     * Sanitizes a comic name to prevent path traversal attacks. Removes any characters that could be used for directory traversal.
+     * Sanitizes a comic name to prevent path traversal attacks. Removes any
+     * characters that could be used for directory traversal.
      *
      * @param comicName the comic name to sanitize
-     * @param comicId fallback ID if name is invalid
+     * @param comicId   fallback ID if name is invalid
      * @return sanitized name safe for filesystem operations
      */
     private String sanitizeComicName(String comicName, int comicId) {
@@ -199,7 +204,8 @@ public class ComicIndexService {
     }
 
     /**
-     * Mark a date as available and update the index. Thread-safe: uses write lock to prevent concurrent modification.
+     * Mark a date as available and update the index. Thread-safe: uses write lock
+     * to prevent concurrent modification.
      */
     public void addDateToIndex(int comicId, String comicName, LocalDate date) {
         ReadWriteLock lock = getLock(comicId);
@@ -208,7 +214,8 @@ public class ComicIndexService {
             ComicDateIndex index = getOrLoadIndexUnsafe(comicId, comicName);
             if (index == null) {
                 // Create new index
-                index = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
+                index = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>())
+                        .lastUpdated(LocalDate.now()).build();
             }
 
             List<LocalDate> dates = index.getAvailableDates();
@@ -346,7 +353,8 @@ public class ComicIndexService {
     /**
      * Rebuild the entire index from scratch by scanning the filesystem.
      *
-     * @param validateMetadata If true, reads each sidecar JSON to verify the comicId matches.
+     * @param validateMetadata If true, reads each sidecar JSON to verify the
+     *                         comicId matches.
      */
     public void rebuildIndex(int comicId, String comicName, boolean validateMetadata) {
         String parsedName = sanitizeComicName(comicName, comicId);
@@ -389,7 +397,8 @@ public class ComicIndexService {
         List<LocalDate> sortedDates = new ArrayList<>(dateSet);
         Collections.sort(sortedDates);
 
-        ComicDateIndex index = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(sortedDates).lastUpdated(LocalDate.now()).build();
+        ComicDateIndex index = ComicDateIndex.builder().comicId(comicId).comicName(comicName)
+                .availableDates(sortedDates).lastUpdated(LocalDate.now()).build();
 
         indexCache.put(comicId, index);
         saveIndex(index, comicName);
@@ -463,7 +472,8 @@ public class ComicIndexService {
             }
         }
 
-        return ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
+        return ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>())
+                .lastUpdated(LocalDate.now()).build();
     }
 
     private ComicDateIndex rebuildAndGetIndex(int comicId, String comicName) {
@@ -472,15 +482,18 @@ public class ComicIndexService {
             ComicDateIndex result = indexCache.get(comicId);
             if (result == null) {
                 // Rebuild didn't populate cache - return empty index
-                log.warn("Rebuild for comic '{}' (id={}) did not populate cache, returning empty index", comicName, comicId);
-                result = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
+                log.warn("Rebuild for comic '{}' (id={}) did not populate cache, returning empty index", comicName,
+                        comicId);
+                result = ComicDateIndex.builder().comicId(comicId).comicName(comicName)
+                        .availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
                 indexCache.put(comicId, result);
             }
             return result;
         } catch (Exception e) {
             log.error("Failed to rebuild index for comic '{}' (id={}): {}", comicName, comicId, e.getMessage(), e);
             // Return empty index rather than null to prevent NPE
-            ComicDateIndex emptyIndex = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
+            ComicDateIndex emptyIndex = ComicDateIndex.builder().comicId(comicId).comicName(comicName)
+                    .availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
             indexCache.put(comicId, emptyIndex);
             return emptyIndex;
         }
@@ -515,7 +528,8 @@ public class ComicIndexService {
         if (metadataRepository.metadataExists(image.getAbsolutePath())) {
             metadataRepository.loadMetadata(image.getAbsolutePath()).ifPresent(md -> {
                 if (md.getComicId() != comicId) {
-                    log.error("MISMATCH: Comic ID mismatch for '{}' on {}. Expected {}, found {}", comicName, date, comicId, md.getComicId());
+                    log.error("MISMATCH: Comic ID mismatch for '{}' on {}. Expected {}, found {}", comicName, date,
+                            comicId, md.getComicId());
                 }
             });
         } else {

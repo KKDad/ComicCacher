@@ -23,12 +23,16 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Collector for access metrics and comic cache operations. This class delegates storage operations to ComicStorageFacade while tracking access patterns for metrics and performance
+ * Collector for access metrics and comic cache operations. This class delegates
+ * storage operations to ComicStorageFacade while tracking access patterns for
+ * metrics and performance
  * monitoring.
  *
- * Note: This class is configured as a @Bean in CacheConfiguration, not as @Component
+ * Note: This class is configured as a @Bean in CacheConfiguration, not
+ * as @Component
  */
-@Slf4j @ToString
+@Slf4j
+@ToString
 public class AccessMetricsCollector {
     private static final int WARNING_TIME_MS = 100;
     public static final String COMBINE_PATH = "%s/%s";
@@ -48,18 +52,22 @@ public class AccessMetricsCollector {
     private final int persistThreshold;
 
     /**
-     * Primary constructor with StorageFacade and AccessMetricsRepository dependencies
+     * Primary constructor with StorageFacade and AccessMetricsRepository
+     * dependencies
      *
-     * @param cacheHome Cache directory location
-     * @param storageFacade Facade for comic storage operations
+     * @param cacheHome               Cache directory location
+     * @param storageFacade           Facade for comic storage operations
      * @param accessMetricsRepository Repository for persisting access metrics
-     * @param persistThreshold Number of accesses before persisting (default 50)
+     * @param persistThreshold        Number of accesses before persisting (default
+     *                                50)
      */
-    public AccessMetricsCollector(@Qualifier("cacheLocation") String cacheHome, ComicStorageFacade storageFacade, AccessMetricsRepository accessMetricsRepository,
+    public AccessMetricsCollector(@Qualifier("cacheLocation") String cacheHome, ComicStorageFacade storageFacade,
+            AccessMetricsRepository accessMetricsRepository,
             @org.springframework.beans.factory.annotation.Value("${comics.metrics.persist-threshold:50}") int persistThreshold) {
         this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
         this.storageFacade = Objects.requireNonNull(storageFacade, "storageFacade must be specified");
-        this.accessMetricsRepository = Objects.requireNonNull(accessMetricsRepository, "accessMetricsRepository must be specified");
+        this.accessMetricsRepository = Objects.requireNonNull(accessMetricsRepository,
+                "accessMetricsRepository must be specified");
         this.persistThreshold = persistThreshold;
         log.info("AccessMetricsCollector initialized with persist threshold: {}", persistThreshold);
     }
@@ -106,9 +114,12 @@ public class AccessMetricsCollector {
 
         Map<String, AccessMetricsData.ComicAccessMetrics> comicMetrics = new HashMap<>();
         accessCounters.forEach((comicName, count) -> {
-            AccessMetricsData.ComicAccessMetrics metrics = AccessMetricsData.ComicAccessMetrics.builder().comicName(comicName).accessCount(count.get())
-                    .lastAccess(lastAccessTime.getOrDefault(comicName, "")).totalAccessTimeMs(totalAccessTime.getOrDefault(comicName, 0L))
-                    .cacheHits(cacheHits.getOrDefault(comicName, new AtomicInteger(0)).get()).cacheMisses(cacheMisses.getOrDefault(comicName, new AtomicInteger(0)).get()).build();
+            AccessMetricsData.ComicAccessMetrics metrics = AccessMetricsData.ComicAccessMetrics.builder()
+                    .comicName(comicName).accessCount(count.get())
+                    .lastAccess(lastAccessTime.getOrDefault(comicName, ""))
+                    .totalAccessTimeMs(totalAccessTime.getOrDefault(comicName, 0L))
+                    .cacheHits(cacheHits.getOrDefault(comicName, new AtomicInteger(0)).get())
+                    .cacheMisses(cacheMisses.getOrDefault(comicName, new AtomicInteger(0)).get()).build();
             comicMetrics.put(comicName, metrics);
         });
 
@@ -119,8 +130,8 @@ public class AccessMetricsCollector {
     /**
      * Track access to a comic.
      *
-     * @param comicName the name of the comic being accessed
-     * @param isHit whether this was a cache hit (true) or miss (false)
+     * @param comicName  the name of the comic being accessed
+     * @param isHit      whether this was a cache hit (true) or miss (false)
      * @param accessTime time taken for the access in milliseconds
      */
     public void trackAccess(String comicName, boolean isHit, long accessTime) {
@@ -203,7 +214,8 @@ public class AccessMetricsCollector {
             LocalDate date = oldestDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            result = new File(String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            result = new File(
+                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
 
         timer.stop();
@@ -221,7 +233,8 @@ public class AccessMetricsCollector {
             LocalDate date = newestDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            result = new File(String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            result = new File(
+                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
         }
 
         timer.stop();
@@ -240,13 +253,15 @@ public class AccessMetricsCollector {
             LocalDate date = nextDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            resultFile = new File(String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            resultFile = new File(
+                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
             found = true;
         }
 
         timer.stop();
-        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
+        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled()) {
             log.info(String.format("findNext took: %s for %s", timer, comic.getName()));
+        }
 
         trackAccess(comic.getName(), found, timer.elapsed(TimeUnit.MILLISECONDS));
         return resultFile;
@@ -263,13 +278,15 @@ public class AccessMetricsCollector {
             LocalDate date = prevDate.get();
             String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
             String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            resultFile = new File(String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
+            resultFile = new File(
+                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
             found = true;
         }
 
         timer.stop();
-        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled())
+        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled()) {
             log.info(String.format("findPrevious took: %s for %s", timer, comic.getName()));
+        }
 
         trackAccess(comic.getName(), found, timer.elapsed(TimeUnit.MILLISECONDS));
         return resultFile;

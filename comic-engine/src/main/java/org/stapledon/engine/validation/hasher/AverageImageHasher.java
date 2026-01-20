@@ -3,7 +3,8 @@ package org.stapledon.engine.validation.hasher;
 import org.springframework.stereotype.Component;
 import org.stapledon.common.service.ImageHasher;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,7 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Average Hash (aHash) implementation for duplicate image detection.
- * Fast perceptual hash that detects visually similar images even if bytes differ.
+ * Fast perceptual hash that detects visually similar images even if bytes
+ * differ.
  *
  * Algorithm:
  * 1. Resize image to 8x8 grayscale
@@ -79,8 +81,8 @@ public class AverageImageHasher implements ImageHasher {
      * Resizes an image and converts it to grayscale.
      *
      * @param original The original image
-     * @param width The target width
-     * @param height The target height
+     * @param width    The target width
+     * @param height   The target height
      * @return The resized grayscale image
      */
     private BufferedImage resizeAndGrayscale(BufferedImage original, int width, int height) {
