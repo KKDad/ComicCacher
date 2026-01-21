@@ -23,9 +23,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 import org.stapledon.common.config.IComicsBootstrap;
-import org.stapledon.common.dto.*;
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicIdentifier;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicNavigationResult;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.infrastructure.config.ExecutionTracker;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
@@ -61,7 +66,8 @@ class ComicManagementFacadeTest {
     @BeforeEach
     void setUp() {
         // Create test comic item
-        testComic = ComicItem.builder().id(1).name("Test Comic").author("Test Author").description("Test Description").newest(LocalDate.now()).oldest(LocalDate.now().minusDays(30))
+        testComic = ComicItem.builder().id(1).name("Test Comic").author("Test Author").description("Test Description")
+                .newest(LocalDate.now()).oldest(LocalDate.now().minusDays(30))
                 .enabled(true).avatarAvailable(true).source("gocomics").sourceIdentifier("testcomic").build();
 
         // Create test comic config
@@ -81,7 +87,8 @@ class ComicManagementFacadeTest {
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);
 
         // Initialize facade
-        facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade, Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+        facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
     }
 
     // Test removed - on-demand downloads via CacheMissEvent no longer supported
@@ -125,7 +132,8 @@ class ComicManagementFacadeTest {
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);
 
         // Create new facade instance with our test data
-        ComicManagementFacade testFacade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade, Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+        ComicManagementFacade testFacade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
 
         // Act
         List<ComicItem> comics = testFacade.getAllComics();
@@ -349,9 +357,11 @@ class ComicManagementFacadeTest {
     @Test
     void shouldUpdateAllComics() {
         // Arrange
-        ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(1).comicName("Test Comic").source("gocomics").sourceIdentifier("testcomic").date(LocalDate.now()).build();
+        ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(1).comicName("Test Comic")
+                .source("gocomics").sourceIdentifier("testcomic").date(LocalDate.now()).build();
 
-        ComicDownloadResult result = ComicDownloadResult.builder().request(request).successful(true).imageData(testImageData).build();
+        ComicDownloadResult result = ComicDownloadResult.builder().request(request).successful(true)
+                .imageData(testImageData).build();
 
         // Mock: comic doesn't exist on disk yet
         when(storageFacade.comicStripExists(any(ComicIdentifier.class), any())).thenReturn(false);
@@ -376,7 +386,8 @@ class ComicManagementFacadeTest {
     @Test
     void shouldUpdateSingleComic() {
         // Arrange
-        ComicDownloadResult result = ComicDownloadResult.builder().request(ComicDownloadRequest.builder().build()).successful(true).imageData(testImageData).build();
+        ComicDownloadResult result = ComicDownloadResult.builder().request(ComicDownloadRequest.builder().build())
+                .successful(true).imageData(testImageData).build();
 
         when(downloaderFacade.downloadComic(any())).thenReturn(result);
         when(storageFacade.saveComicStrip(any(ComicIdentifier.class), any(), any())).thenReturn(true);
@@ -447,12 +458,15 @@ class ComicManagementFacadeTest {
         ImageDto img3 = ImageDto.builder().imageDate(dayBeforeYesterday).build();
 
         // 1. From today, previous is yesterday
-        when(storageFacade.getPreviousDateWithComic(any(ComicIdentifier.class), eq(today))).thenReturn(Optional.of(yesterday));
+        when(storageFacade.getPreviousDateWithComic(any(ComicIdentifier.class), eq(today)))
+                .thenReturn(Optional.of(yesterday));
         when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(yesterday))).thenReturn(Optional.of(img2));
 
         // 2. From yesterday, previous is dayBeforeYesterday
-        when(storageFacade.getPreviousDateWithComic(any(ComicIdentifier.class), eq(yesterday))).thenReturn(Optional.of(dayBeforeYesterday));
-        when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(dayBeforeYesterday))).thenReturn(Optional.of(img3));
+        when(storageFacade.getPreviousDateWithComic(any(ComicIdentifier.class), eq(yesterday)))
+                .thenReturn(Optional.of(dayBeforeYesterday));
+        when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(dayBeforeYesterday)))
+                .thenReturn(Optional.of(img3));
 
         // Act & Assert
         // First navigation back

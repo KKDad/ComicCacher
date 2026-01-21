@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -65,8 +66,10 @@ class AverageImageHasherTest {
 
     @Test
     void calculateHashSimilarImagesMayProduceSameHash() throws Exception {
-        // aHash is perceptual - it should produce the same hash for visually similar images
-        // Create two slightly different red images (different sizes but same visual content)
+        // aHash is perceptual - it should produce the same hash for visually similar
+        // images
+        // Create two slightly different red images (different sizes but same visual
+        // content)
         byte[] small = createTestImage(100, 100, Color.RED);
         byte[] large = createTestImage(200, 200, Color.RED);
 
@@ -74,7 +77,8 @@ class AverageImageHasherTest {
         String largeHash = hasher.calculateHash(large);
 
         // For solid color images, aHash should produce the same hash regardless of size
-        assertThat(largeHash).as("aHash should produce same hash for solid color images of different sizes").isEqualTo(smallHash);
+        assertThat(largeHash).as("aHash should produce same hash for solid color images of different sizes")
+                .isEqualTo(smallHash);
     }
 
     @Test
@@ -92,7 +96,7 @@ class AverageImageHasherTest {
         g2.setColor(Color.RED);
         g2.fillRect(0, 0, 100, 100);
         g2.setColor(Color.WHITE);
-        g2.fillRect(45, 45, 10, 10);  // Small 10x10 white square in center
+        g2.fillRect(45, 45, 10, 10); // Small 10x10 white square in center
         g2.dispose();
 
         byte[] imageData1 = imageToBytes(img1);
@@ -122,7 +126,7 @@ class AverageImageHasherTest {
     @Test
     void calculateHashInvalidImageDataReturnsNull() {
         // Random bytes that don't represent a valid image
-        byte[] invalidData = new byte[]{0x01, 0x02, 0x03, 0x04};
+        byte[] invalidData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
         String hash = hasher.calculateHash(invalidData);
 
@@ -158,7 +162,8 @@ class AverageImageHasherTest {
         String checkerboardHash = hasher.calculateHash(checkerboardData);
         String stripesHash = hasher.calculateHash(stripesData);
 
-        assertThat(stripesHash).as("Different patterns should produce different aHashes").isNotEqualTo(checkerboardHash);
+        assertThat(stripesHash).as("Different patterns should produce different aHashes")
+                .isNotEqualTo(checkerboardHash);
     }
 
     @Test

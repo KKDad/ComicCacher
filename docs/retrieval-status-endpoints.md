@@ -1,292 +1,242 @@
-# Retrieval Status Endpoints Documentation
+# Retrieval Status API Documentation
 
-The ComicCacher API provides endpoints for monitoring comic retrieval operations and their status records.
+> [!IMPORTANT]
+> **GraphQL Migration Complete**: All retrieval status operations now use GraphQL.
+> There are no REST endpoints for retrieval status operations.
 
-## Base Path
+## GraphQL Endpoint
 
-All retrieval status endpoints are under:
+**Endpoint:** `POST /graphql`
 
-```
-/api/v1/retrieval-status
-```
+All retrieval status queries and mutations use the GraphQL endpoint.
 
-## Authentication
+---
 
-All retrieval status endpoints require authentication. Include a valid JWT token in the Authorization header:
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-## Endpoints
+## Queries
 
 ### Get Retrieval Records
 
-```
-GET /api/v1/retrieval-status
-```
+Query retrieval records with optional filtering. Returns records from the last 7 days.
 
-Returns retrieval records from the last 7 days with optional filters. If date parameters are not provided, all available records are returned.
-
-#### Query Parameters
-
-| Parameter | Type                     | Required | Default | Description                              |
-|-----------|--------------------------|----------|---------|------------------------------------------|
-| comicName | String                   | No       | -       | Filter by comic name                     |
-| status    | ComicRetrievalStatus     | No       | -       | Filter by status                         |
-| fromDate  | String (yyyy-MM-dd)      | No       | -       | Filter by from date (inclusive, within the 7-day window) |
-| toDate    | String (yyyy-MM-dd)      | No       | -       | Filter by to date (inclusive, within the 7-day window) |
-| limit     | Integer                  | No       | 100     | Maximum number of records to return      |
-
-#### Retrieval Status Values
-
-- SUCCESS
-- NETWORK_ERROR
-- PARSING_ERROR
-- COMIC_UNAVAILABLE
-- AUTHENTICATION_ERROR
-- STORAGE_ERROR
-- UNKNOWN_ERROR
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Retrieved status records successfully",
-  "data": [
-    {
-      "id": "rec-123",
-      "comicName": "Dilbert",
-      "comicDate": "2023-05-01",
-      "source": "gocomics",
-      "status": "SUCCESS",
-      "errorMessage": null,
-      "retrievalDurationMs": 1500,
-      "imageSize": 25000,
-      "httpStatusCode": 200
-    }
-  ]
+```graphql
+query GetRetrievalRecords($comicName: String, $status: RetrievalStatusEnum, $fromDate: Date, $toDate: Date, $limit: Int) {
+  retrievalRecords(
+    comicName: $comicName
+    status: $status
+    fromDate: $fromDate
+    toDate: $toDate
+    limit: $limit
+  ) {
+    id
+    comicName
+    comicDate
+    source
+    status
+    errorMessage
+    retrievalDurationMs
+    imageSize
+    httpStatusCode
+  }
 }
 ```
+
+**Variables:**
+| Variable   | Type                 | Required | Default | Description                       |
+|------------|----------------------|----------|---------|-----------------------------------|
+| comicName  | String               | No       | -       | Filter by comic name              |
+| status     | RetrievalStatusEnum  | No       | -       | Filter by status                  |
+| fromDate   | Date                 | No       | -       | Filter by from date (inclusive)   |
+| toDate     | Date                 | No       | -       | Filter by to date (inclusive)     |
+| limit      | Int                  | No       | 100     | Maximum records to return         |
+
+---
 
 ### Get Specific Retrieval Record
 
-```
-GET /api/v1/retrieval-status/{recordId}
-```
+Query a single retrieval record by ID.
 
-Get a specific retrieval record by ID.
-
-#### Path Parameters
-
-| Parameter | Type   | Required | Description |
-|-----------|--------|----------|-------------|
-| recordId  | String | Yes      | Record ID   |
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Retrieved status record successfully",
-  "data": {
-    "id": "rec-123",
-    "comicName": "Dilbert",
-    "comicDate": "2023-05-01",
-    "source": "gocomics",
-    "status": "SUCCESS",
-    "errorMessage": null,
-    "retrievalDurationMs": 1500,
-    "imageSize": 25000,
-    "httpStatusCode": 200
+```graphql
+query GetRetrievalRecord($id: String!) {
+  retrievalRecord(id: $id) {
+    id
+    comicName
+    comicDate
+    source
+    status
+    errorMessage
+    retrievalDurationMs
+    imageSize
+    httpStatusCode
   }
 }
 ```
+
+---
 
 ### Get Retrieval Summary
 
-```
-GET /api/v1/retrieval-status/summary
-```
+Query aggregated statistics for retrieval operations.
 
-Returns aggregated statistics for all retrieval operations. Date parameters are optional and will further filter results within the available 7-day window.
-
-#### Query Parameters
-
-| Parameter | Type                | Required | Description                     |
-|-----------|---------------------|----------|---------------------------------|
-| fromDate  | String (yyyy-MM-dd) | No       | Filter by from date (inclusive, within the 7-day window) |
-| toDate    | String (yyyy-MM-dd) | No       | Filter by to date (inclusive, within the 7-day window) |
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Retrieved status summary successfully",
-  "data": {
-    "totalRecords": 1000,
-    "successfulRetrievals": 950,
-    "failedRetrievals": 50,
-    "successRate": 0.95,
-    "avgRetrievalTime": 1200,
-    "totalDataTransferred": 125000000
+```graphql
+query GetRetrievalSummary($fromDate: Date, $toDate: Date) {
+  retrievalSummary(fromDate: $fromDate, toDate: $toDate) {
+    totalAttempts
+    successCount
+    failureCount
+    skippedCount
+    successRate
+    averageDurationMs
+    byComic {
+      comicName
+      totalAttempts
+      successCount
+      failureCount
+    }
+    byStatus {
+      status
+      count
+    }
   }
 }
 ```
 
+---
+
 ### Get Retrieval Records for Comic
 
+Query retrieval records for a specific comic.
+
+```graphql
+query GetRetrievalRecordsForComic($comicName: String!, $limit: Int) {
+  retrievalRecordsForComic(comicName: $comicName, limit: $limit) {
+    id
+    comicDate
+    status
+    errorMessage
+    retrievalDurationMs
+  }
+}
 ```
-GET /api/v1/retrieval-status/comics/{comicName}
+
+---
+
+## Mutations
+
+### Delete Retrieval Record
+
+Delete a specific retrieval record. Requires ADMIN role.
+
+```graphql
+mutation DeleteRetrievalRecord($id: String!) {
+  deleteRetrievalRecord(id: $id)
+}
 ```
 
-Get retrieval records for a specific comic.
+**Returns:** `Boolean!` - true if deleted successfully
 
-#### Path Parameters
+---
 
-| Parameter | Type   | Required | Description |
-|-----------|--------|----------|-------------|
-| comicName | String | Yes      | Comic name  |
+### Purge Old Records
 
-#### Query Parameters
+Purge retrieval records older than specified days. Requires ADMIN role.
 
-| Parameter | Type    | Required | Default | Description                              |
-|-----------|---------|----------|---------|------------------------------------------|
-| limit     | Integer | No       | 20      | Maximum number of records to return      |
+```graphql
+mutation PurgeRetrievalRecords($daysToKeep: Int) {
+  purgeRetrievalRecords(daysToKeep: $daysToKeep)
+}
+```
 
-#### Response Format
+**Variables:**
+| Variable    | Type | Required | Default | Description                  |
+|-------------|------|----------|---------|------------------------------|
+| daysToKeep  | Int  | No       | 7       | Days of records to keep      |
+
+**Returns:** `Int!` - number of records purged
+
+---
+
+## Retrieval Status Enum
+
+```graphql
+enum RetrievalStatusEnum {
+  SUCCESS
+  FAILURE
+  SKIPPED
+  ERROR
+  NOT_FOUND
+  RATE_LIMITED
+}
+```
+
+| Value        | Description                                      |
+|--------------|--------------------------------------------------|
+| SUCCESS      | Comic retrieved successfully                     |
+| FAILURE      | General retrieval failure                        |
+| SKIPPED      | Retrieval skipped (e.g., already exists)         |
+| ERROR        | Error during retrieval process                   |
+| NOT_FOUND    | Comic not found at source                        |
+| RATE_LIMITED | Request was rate limited by source               |
+
+---
+
+## Response Types
+
+### RetrievalRecord
+
+| Field               | Type                | Description                              |
+|---------------------|---------------------|------------------------------------------|
+| id                  | String!             | Unique ID (format: "ComicName_YYYY-MM-DD")|
+| comicName           | String!             | Name of the comic                        |
+| comicDate           | Date!               | Date of the comic strip                  |
+| source              | String              | Source provider (e.g., "gocomics")       |
+| status              | RetrievalStatusEnum!| Retrieval status                         |
+| errorMessage        | String              | Error message if failed                  |
+| retrievalDurationMs | Float               | Duration in milliseconds                 |
+| imageSize           | Float               | Image size in bytes                      |
+| httpStatusCode      | Int                 | HTTP status from source                  |
+
+### RetrievalSummary
+
+| Field             | Type                     | Description                     |
+|-------------------|--------------------------|---------------------------------|
+| totalAttempts     | Int!                     | Total retrieval attempts        |
+| successCount      | Int!                     | Successful retrievals           |
+| failureCount      | Int!                     | Failed retrievals               |
+| skippedCount      | Int!                     | Skipped retrievals              |
+| successRate       | Float!                   | Success rate (0-100)            |
+| averageDurationMs | Float                    | Average duration in ms          |
+| byComic           | [ComicRetrievalSummary!] | Breakdown by comic              |
+| byStatus          | [StatusCount!]           | Breakdown by status             |
+
+---
+
+## Error Handling
+
+GraphQL errors follow the standard format:
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Retrieved status records for comic successfully",
-  "data": [
+  "data": null,
+  "errors": [
     {
-      "id": "rec-123",
-      "comicName": "Dilbert",
-      "comicDate": "2023-05-01",
-      "source": "gocomics",
-      "status": "SUCCESS",
-      "errorMessage": null,
-      "retrievalDurationMs": 1500,
-      "imageSize": 25000,
-      "httpStatusCode": 200
+      "message": "Retrieval record not found",
+      "path": ["retrievalRecord"],
+      "extensions": {
+        "classification": "NOT_FOUND"
+      }
     }
   ]
 }
 ```
 
-### Delete Retrieval Record
+---
 
+## Authorization
+
+- **Queries**: Require authentication (valid JWT token)
+- **Mutations**: Require ADMIN role
+
+Include JWT token in the Authorization header:
 ```
-DELETE /api/v1/retrieval-status/{recordId}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
-
-Delete a specific retrieval record.
-
-#### Path Parameters
-
-| Parameter | Type   | Required | Description |
-|-----------|--------|----------|-------------|
-| recordId  | String | Yes      | Record ID   |
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Retrieval record deleted",
-  "data": "Record deleted successfully"
-}
-```
-
-### Purge Old Records
-
-```
-DELETE /api/v1/retrieval-status
-```
-
-Purge all retrieval records older than specified days.
-
-#### Query Parameters
-
-| Parameter   | Type    | Required | Default | Description                    |
-|-------------|---------|----------|---------|--------------------------------|
-| daysToKeep  | Integer | No       | 7       | Days to keep (default is 7)    |
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Old retrieval records purged successfully",
-  "data": "Purged 150 records older than 7 days"
-}
-```
-
-## Response Fields
-
-### Retrieval Record Fields
-
-| Field                | Description                                           |
-|----------------------|-------------------------------------------------------|
-| id                   | Unique identifier for the retrieval record           |
-| comicName            | Name of the comic                                     |
-| comicDate            | Date of the comic strip                               |
-| source               | Source of the comic (e.g., "gocomics")               |
-| status               | Status of the retrieval operation                     |
-| errorMessage         | Error message if the retrieval failed (null if successful) |
-| retrievalDurationMs  | Duration of the retrieval operation in milliseconds   |
-| imageSize            | Size of the retrieved image in bytes                  |
-| httpStatusCode       | HTTP status code returned by the source              |
-
-## Error Responses
-
-### Unauthorized (401)
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 401,
-  "message": "Authentication required",
-  "data": null
-}
-```
-
-### Record Not Found (404)
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 404,
-  "message": "Retrieval record not found with ID: recordId",
-  "data": null
-}
-```
-
-### Internal Server Error (500)
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 500,
-  "message": "An unexpected error occurred",
-  "data": null
-}
-```
-
-## Use Cases
-
-1. **Monitoring**: Track the success and failure rates of comic downloads
-2. **Troubleshooting**: Identify comics that are failing to download
-3. **Performance Analysis**: Monitor download times and identify bottlenecks
-4. **Maintenance**: Clean up old retrieval records to manage storage
-5. **Reporting**: Generate reports on comic retrieval operations

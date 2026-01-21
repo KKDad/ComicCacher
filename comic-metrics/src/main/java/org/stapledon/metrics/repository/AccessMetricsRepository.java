@@ -1,17 +1,14 @@
 package org.stapledon.metrics.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.metrics.dto.AccessMetricsData;
 
 import com.google.gson.Gson;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.ToString;
@@ -75,10 +72,10 @@ public class AccessMetricsRepository {
     public void load() {
         lock.writeLock().lock();
         try {
-            Path filePath = Paths.get(cacheLocation, ACCESS_METRICS_FILE);
+            Path filePath = NfsFileOperations.resolvePath(cacheLocation, ACCESS_METRICS_FILE);
 
             if (Files.exists(filePath)) {
-                try (Reader reader = new FileReader(filePath.toFile())) {
+                try (Reader reader = Files.newBufferedReader(filePath)) {
                     AccessMetricsData loadedData = gson.fromJson(reader, AccessMetricsData.class);
 
                     if (loadedData != null) {
@@ -114,20 +111,19 @@ public class AccessMetricsRepository {
             // Update timestamp
             metrics.setLastUpdated(OffsetDateTime.now());
 
-            Path directory = Paths.get(cacheLocation);
+            Path directory = NfsFileOperations.resolvePath(cacheLocation);
             if (!Files.exists(directory)) {
                 Files.createDirectories(directory);
             }
 
             Path filePath = directory.resolve(ACCESS_METRICS_FILE);
 
-            try (Writer writer = new FileWriter(filePath.toFile())) {
-                gson.toJson(metrics, writer);
-                writer.flush();
-                cachedMetrics = metrics;
-                log.debug("Saved access metrics for {} comics", metrics.getComicMetrics().size());
-                return true;
-            }
+            // Use atomic write to prevent corruption on NFS
+            String json = gson.toJson(metrics);
+            NfsFileOperations.atomicWrite(filePath, json);
+            cachedMetrics = metrics;
+            log.debug("Saved access metrics for {} comics", metrics.getComicMetrics().size());
+            return true;
         } catch (IOException e) {
             log.error("Failed to save access metrics", e);
             return false;

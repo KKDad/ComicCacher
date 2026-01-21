@@ -23,7 +23,7 @@ The ComicCacher API is organized into the following endpoint groups:
 | Health             | /api/v1/health           | System health and status information                      |
 | Metrics            | /api/v1/metrics          | Storage and access statistics for comics                  |
 | Preferences        | /api/v1/preferences      | User preferences for comics and display settings          |
-| Retrieval Status   | /api/v1/retrieval-status | Comic retrieval operation monitoring and status records   |
+| Retrieval Status   | GraphQL                  | Comic retrieval operation monitoring and status records   |
 | Updates            | /api/v1/update           | Trigger comic updates and downloads                       |
 | Users              | /api/v1/users            | User profile and account management                       |
 
