@@ -8,10 +8,11 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicDateIndex;
 import org.stapledon.common.dto.ComicIdentifier;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -19,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
+
+import org.stapledon.common.util.NfsFileOperations;
 
 /**
  * Service to manage a persistent index of available comic dates. This avoids
@@ -352,22 +355,20 @@ public class ComicIndexService {
      */
     public void rebuildIndex(int comicId, String comicName, boolean validateMetadata) {
         String parsedName = sanitizeComicName(comicName, comicId);
-        File comicDir = new File(cacheProperties.getLocation(), parsedName);
+        Path comicDir = NfsFileOperations.resolvePath(cacheProperties.getLocation(), parsedName);
 
         Set<LocalDate> dateSet = new HashSet<>();
-        if (comicDir.exists() && comicDir.isDirectory()) {
-            File[] yearDirs = comicDir.listFiles(File::isDirectory);
-            if (yearDirs != null) {
-                for (File yearDir : yearDirs) {
+        if (Files.isDirectory(comicDir)) {
+            try (DirectoryStream<Path> yearDirs = Files.newDirectoryStream(comicDir, Files::isDirectory)) {
+                for (Path yearDir : yearDirs) {
                     // Skip Synology metadata directories
-                    if (yearDir.getName().startsWith(SYNOLOGY_METADATA_PREFIX)) {
+                    if (yearDir.getFileName().toString().startsWith(SYNOLOGY_METADATA_PREFIX)) {
                         continue;
                     }
 
-                    File[] images = yearDir.listFiles((dir, name) -> name.endsWith(".png"));
-                    if (images != null) {
-                        for (File image : images) {
-                            String name = image.getName();
+                    try (DirectoryStream<Path> images = Files.newDirectoryStream(yearDir, "*.png")) {
+                        for (Path image : images) {
+                            String name = image.getFileName().toString();
                             try {
                                 String dateStr = name.substring(0, name.lastIndexOf('.'));
                                 LocalDate date = LocalDate.parse(dateStr);
@@ -385,6 +386,8 @@ public class ComicIndexService {
                         }
                     }
                 }
+            } catch (IOException e) {
+                log.error("Failed to scan directory {}: {}", comicDir, e.getMessage());
             }
         }
 
@@ -454,9 +457,9 @@ public class ComicIndexService {
     }
 
     private ComicDateIndex loadIndex(int comicId, String comicName) {
-        File indexFile = getIndexFile(comicId, comicName);
-        if (indexFile.exists()) {
-            try (FileReader reader = new FileReader(indexFile)) {
+        Path indexFile = getIndexFile(comicId, comicName);
+        if (NfsFileOperations.exists(indexFile)) {
+            try (Reader reader = Files.newBufferedReader(indexFile)) {
                 ComicDateIndex index = gson.fromJson(reader, ComicDateIndex.class);
                 if (index != null && index.getAvailableDates() != null) {
                     return index;
@@ -493,34 +496,33 @@ public class ComicIndexService {
         }
     }
 
+    /**
+     * Saves index to disk using atomic write for NFS safety.
+     */
     private void saveIndex(ComicDateIndex index, String comicName) {
-        File indexFile = getIndexFile(index.getComicId(), comicName);
-        File parent = indexFile.getParentFile();
-        if (!parent.exists() && !parent.mkdirs()) {
-            log.error("Failed to create directory for index: {}", parent.getAbsolutePath());
-            return;
-        }
+        Path indexFile = getIndexFile(index.getComicId(), comicName);
 
-        try (FileWriter writer = new FileWriter(indexFile)) {
-            gson.toJson(index, writer);
-            writer.flush();
+        try {
+            String json = gson.toJson(index);
+            NfsFileOperations.atomicWrite(indexFile, json);
             log.debug("Saved index for {} with {} dates", comicName, index.getAvailableDates().size());
         } catch (IOException e) {
             log.error("Failed to save index for comic '{}': {}", comicName, e.getMessage());
         }
     }
 
-    private File getIndexFile(int comicId, String comicName) {
+    private Path getIndexFile(int comicId, String comicName) {
         String parsedName = sanitizeComicName(comicName, comicId);
-        return new File(String.format("%s/%s/%s", cacheProperties.getLocation(), parsedName, INDEX_FILENAME));
+        return NfsFileOperations.resolvePath(cacheProperties.getLocation(), parsedName, INDEX_FILENAME);
     }
 
     /**
      * Validates that an image's metadata matches the expected comic ID.
      */
-    private void validateImageMetadata(File image, int comicId, String comicName, LocalDate date) {
-        if (metadataRepository.metadataExists(image.getAbsolutePath())) {
-            metadataRepository.loadMetadata(image.getAbsolutePath()).ifPresent(md -> {
+    private void validateImageMetadata(Path image, int comicId, String comicName, LocalDate date) {
+        String imagePath = image.toAbsolutePath().toString();
+        if (metadataRepository.metadataExists(imagePath)) {
+            metadataRepository.loadMetadata(imagePath).ifPresent(md -> {
                 if (md.getComicId() != comicId) {
                     log.error("MISMATCH: Comic ID mismatch for '{}' on {}. Expected {}, found {}", comicName, date,
                             comicId, md.getComicId());

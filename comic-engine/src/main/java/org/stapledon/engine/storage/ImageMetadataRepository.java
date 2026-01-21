@@ -8,15 +8,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import org.stapledon.common.dto.ImageMetadata;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
+
+import org.stapledon.common.util.NfsFileOperations;
 
 /**
  * Repository for managing image metadata sidecar files.
- * Metadata is stored as JSON files with the same name as the image but with .json extension.
+ * Metadata is stored as JSON files with the same name as the image but with
+ * .json extension.
  * Example: 2023-01-15.png -> 2023-01-15.json
  */
 @Slf4j
@@ -28,11 +31,8 @@ public class ImageMetadataRepository {
     private final Gson gson;
 
     /**
-     * Saves metadata for an image file as a sidecar JSON file.
+     * Saves metadata for an image file as a sidecar JSON file using atomic write.
      * Only saves if metadata is valid (not empty/unknown).
-     *
-     * @param metadata The metadata to save
-     * @return true if saved successfully, false if metadata is invalid or save failed
      */
     public boolean saveMetadata(ImageMetadata metadata) {
         // Don't save invalid/empty metadata
@@ -43,11 +43,11 @@ public class ImageMetadataRepository {
             return false;
         }
 
-        File metadataFile = getMetadataFile(metadata.getFilePath());
+        Path metadataFile = getMetadataFile(metadata.getFilePath());
 
-        try (FileWriter writer = new FileWriter(metadataFile)) {
-            gson.toJson(metadata, writer);
-            writer.flush();
+        try {
+            String json = gson.toJson(metadata);
+            NfsFileOperations.atomicWrite(metadataFile, json);
             log.debug("Saved metadata for image: {}", metadata.getFilePath());
             return true;
         } catch (IOException e) {
@@ -95,18 +95,15 @@ public class ImageMetadataRepository {
 
     /**
      * Loads metadata for an image file from its sidecar JSON file.
-     *
-     * @param imageFilePath The path to the image file
-     * @return Optional containing the metadata if found, empty otherwise
      */
     public Optional<ImageMetadata> loadMetadata(String imageFilePath) {
-        File metadataFile = getMetadataFile(imageFilePath);
+        Path metadataFile = getMetadataFile(imageFilePath);
 
-        if (!metadataFile.exists()) {
+        if (!NfsFileOperations.exists(metadataFile)) {
             return Optional.empty();
         }
 
-        try (FileReader reader = new FileReader(metadataFile)) {
+        try (Reader reader = Files.newBufferedReader(metadataFile)) {
             ImageMetadata metadata = gson.fromJson(reader, ImageMetadata.class);
             return Optional.ofNullable(metadata);
         } catch (IOException e) {
@@ -117,46 +114,37 @@ public class ImageMetadataRepository {
 
     /**
      * Checks if metadata exists for an image file.
-     *
-     * @param imageFilePath The path to the image file
-     * @return true if metadata file exists, false otherwise
      */
     public boolean metadataExists(String imageFilePath) {
-        File metadataFile = getMetadataFile(imageFilePath);
-        return metadataFile.exists();
+        Path metadataFile = getMetadataFile(imageFilePath);
+        return NfsFileOperations.exists(metadataFile);
     }
 
     /**
      * Deletes metadata for an image file.
-     *
-     * @param imageFilePath The path to the image file
-     * @return true if deleted successfully, false otherwise
      */
     public boolean deleteMetadata(String imageFilePath) {
-        File metadataFile = getMetadataFile(imageFilePath);
+        Path metadataFile = getMetadataFile(imageFilePath);
 
-        if (!metadataFile.exists()) {
+        if (!NfsFileOperations.exists(metadataFile)) {
             return true; // Already deleted
         }
 
-        boolean deleted = metadataFile.delete();
-        if (deleted) {
+        try {
+            Files.delete(metadataFile);
             log.debug("Deleted metadata for image: {}", imageFilePath);
-        } else {
+            return true;
+        } catch (IOException e) {
             log.warn("Failed to delete metadata for image: {}", imageFilePath);
+            return false;
         }
-
-        return deleted;
     }
 
     /**
      * Gets the metadata file path for an image file.
      * Replaces the image extension with .json
-     *
-     * @param imageFilePath The path to the image file
-     * @return The corresponding metadata file
      */
-    private File getMetadataFile(String imageFilePath) {
+    private Path getMetadataFile(String imageFilePath) {
         // Remove the image extension and add .json
         String metadataPath = imageFilePath.replaceAll("\\.(png|jpg|jpeg|gif|tif|tiff|bmp|webp)$", ".json");
 
@@ -165,6 +153,6 @@ public class ImageMetadataRepository {
             metadataPath = imageFilePath + ".json";
         }
 
-        return new File(metadataPath);
+        return Path.of(metadataPath);
     }
 }

@@ -10,8 +10,10 @@ import org.stapledon.common.dto.ImageHashRecord;
 import org.stapledon.common.service.ImageHasher;
 import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Objects;
@@ -19,7 +21,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Service for managing duplicate hash cache, including backfilling existing images
+ * Service for managing duplicate hash cache, including backfilling existing
+ * images
  * and rebuilding cache when hash algorithm changes.
  */
 @Slf4j
@@ -33,11 +36,12 @@ public class DuplicateHashCacheService {
     private final CacheProperties cacheProperties;
 
     /**
-     * Loads hashes for a comic/year, with automatic backfill and algorithm change detection.
+     * Loads hashes for a comic/year, with automatic backfill and algorithm change
+     * detection.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year
+     * @param year      The year
      * @return Map of hash value to ImageHashRecord
      */
     public Map<String, ImageHashRecord> loadHashesWithBackfill(int comicId, String comicName, int year) {
@@ -49,14 +53,21 @@ public class DuplicateHashCacheService {
 
         if (hashes.isEmpty()) {
             // Check if there are existing images to backfill
-            File yearDir = hashRepository.getYearDirectory(comicId, comicName, year);
-            if (yearDir.exists() && yearDir.isDirectory()) {
-                File[] imageFiles = yearDir.listFiles((dir, name) -> name.endsWith(".png"));
-                if (imageFiles != null && imageFiles.length > 0) {
-                    needsRebuild = true;
-                    rebuildReason = "empty cache with existing images";
-                    log.info("No existing hash file for comic {} year {}, found {} images to backfill",
-                            comicName, year, imageFiles.length);
+            Path yearDir = hashRepository.getYearDirectory(comicId, comicName, year);
+            if (Files.isDirectory(yearDir)) {
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(yearDir, "*.png")) {
+                    int imageCount = 0;
+                    for (Path ignored : stream) {
+                        imageCount++;
+                    }
+                    if (imageCount > 0) {
+                        needsRebuild = true;
+                        rebuildReason = "empty cache with existing images";
+                        log.info("No existing hash file for comic {} year {}, found {} images to backfill",
+                                comicName, year, imageCount);
+                    }
+                } catch (IOException e) {
+                    log.warn("Failed to check for existing images: {}", e.getMessage());
                 }
             }
         } else {
@@ -88,62 +99,58 @@ public class DuplicateHashCacheService {
     /**
      * Backfills hash records from existing image files in the directory.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year
+     * @param year      The year
      * @return Map of hash value to ImageHashRecord
      */
     private Map<String, ImageHashRecord> backfillExistingImages(int comicId, String comicName, int year) {
         Map<String, ImageHashRecord> hashes = new ConcurrentHashMap<>();
-        File yearDir = hashRepository.getYearDirectory(comicId, comicName, year);
+        Path yearDir = hashRepository.getYearDirectory(comicId, comicName, year);
 
-        if (!yearDir.exists() || !yearDir.isDirectory()) {
+        if (!Files.isDirectory(yearDir)) {
             log.debug("No year directory exists for {} year {}", comicName, year);
             return hashes;
         }
-
-        File[] imageFiles = yearDir.listFiles((dir, name) -> name.endsWith(".png"));
-        if (imageFiles == null || imageFiles.length == 0) {
-            log.debug("No image files found in {} for backfill", yearDir.getAbsolutePath());
-            return hashes;
-        }
-
-        log.info("Backfilling {} existing images for {} year {}", imageFiles.length, comicName, year);
 
         ImageHasher hasher = imageHasherFactory.getImageHasher();
         int backfilled = 0;
         int failed = 0;
 
-        for (File imageFile : imageFiles) {
-            try {
-                // Extract date from filename (yyyy-MM-dd.png)
-                String filename = imageFile.getName();
-                String dateStr = filename.substring(0, filename.lastIndexOf('.'));
-                LocalDate date = LocalDate.parse(dateStr);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(yearDir, "*.png")) {
+            for (Path imageFile : stream) {
+                try {
+                    // Extract date from filename (yyyy-MM-dd.png)
+                    String filename = imageFile.getFileName().toString();
+                    String dateStr = filename.substring(0, filename.lastIndexOf('.'));
+                    LocalDate date = LocalDate.parse(dateStr);
 
-                // Read image and calculate hash
-                byte[] imageData = Files.readAllBytes(imageFile.toPath());
-                String hash = hasher.calculateHash(imageData);
+                    // Read image and calculate hash
+                    byte[] imageData = Files.readAllBytes(imageFile);
+                    String hash = hasher.calculateHash(imageData);
 
-                if (hash != null) {
-                    ImageHashRecord record = ImageHashRecord.builder()
-                            .hash(hash)
-                            .date(date)
-                            .filePath(imageFile.getAbsolutePath())
-                            .algorithm(cacheProperties.getHashAlgorithm())
-                            .build();
+                    if (hash != null) {
+                        ImageHashRecord record = ImageHashRecord.builder()
+                                .hash(hash)
+                                .date(date)
+                                .filePath(imageFile.toAbsolutePath().toString())
+                                .algorithm(cacheProperties.getHashAlgorithm())
+                                .build();
 
-                    hashes.put(hash, record);
-                    backfilled++;
-                    log.debug("Backfilled hash for {} on {}: {}", comicName, date, hash);
-                } else {
-                    log.warn("Failed to calculate hash for {}", imageFile.getName());
+                        hashes.put(hash, record);
+                        backfilled++;
+                        log.debug("Backfilled hash for {} on {}: {}", comicName, date, hash);
+                    } else {
+                        log.warn("Failed to calculate hash for {}", filename);
+                        failed++;
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to backfill hash for {}: {}", imageFile.getFileName(), e.getMessage());
                     failed++;
                 }
-            } catch (Exception e) {
-                log.warn("Failed to backfill hash for {}: {}", imageFile.getName(), e.getMessage());
-                failed++;
             }
+        } catch (IOException e) {
+            log.error("Failed to read directory {}: {}", yearDir.toAbsolutePath(), e.getMessage());
         }
 
         log.info("Backfilled {} hashes for {} year {} ({} successful, {} failed)",
@@ -156,10 +163,10 @@ public class DuplicateHashCacheService {
      * Finds an existing hash record for a comic/year.
      * Ensures cache is loaded with backfill before searching.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year
-     * @param hash The hash value to find
+     * @param year      The year
+     * @param hash      The hash value to find
      * @return Optional containing the matching record, or empty if not found
      */
     public Optional<ImageHashRecord> findByHash(int comicId, String comicName, int year, String hash) {
@@ -171,10 +178,10 @@ public class DuplicateHashCacheService {
     /**
      * Adds a new hash record to the cache.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year
-     * @param record The hash record to add
+     * @param year      The year
+     * @param record    The hash record to add
      */
     public void addHash(int comicId, String comicName, int year, ImageHashRecord record) {
         hashRepository.addHash(comicId, comicName, year, record);
@@ -184,11 +191,11 @@ public class DuplicateHashCacheService {
      * Adds an image to the hash cache after it has been saved to disk.
      * Calculates hash from image data and creates a hash record.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param date The date of the comic
+     * @param date      The date of the comic
      * @param imageData The raw image data
-     * @param filePath The file path where the image was saved
+     * @param filePath  The file path where the image was saved
      */
     public void addImageToCache(int comicId, String comicName, LocalDate date,
             byte[] imageData, String filePath) {

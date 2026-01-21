@@ -11,10 +11,12 @@ import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicErrorRecord;
 import org.stapledon.common.service.ErrorTrackingService;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.stapledon.common.util.NfsFileOperations;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -57,14 +59,14 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             return errorCache;
         }
 
-        File storageFile = new File(cacheProperties.getLocation(), STORAGE_FILE);
+        Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
-        if (!storageFile.exists()) {
+        if (!NfsFileOperations.exists(storageFile)) {
             errorCache = new HashMap<>();
             return errorCache;
         }
 
-        try (FileReader reader = new FileReader(storageFile)) {
+        try (Reader reader = Files.newBufferedReader(storageFile)) {
             Type mapType = new TypeToken<Map<String, List<ComicErrorRecord>>>() {
             }.getType();
             errorCache = gson.fromJson(reader, mapType);
@@ -82,18 +84,18 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
     }
 
     /**
-     * Save errors to storage file
+     * Save errors to storage file using atomic write for NFS safety
      */
     private synchronized void saveErrors() {
         if (errorCache == null) {
             return;
         }
 
-        File storageFile = new File(cacheProperties.getLocation(), STORAGE_FILE);
+        Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
-        try (FileWriter writer = new FileWriter(storageFile)) {
-            gson.toJson(errorCache, writer);
-            writer.flush();
+        try {
+            String json = gson.toJson(errorCache);
+            NfsFileOperations.atomicWrite(storageFile, json);
         } catch (IOException e) {
             log.error("Failed to save error records: {}", e.getMessage(), e);
         }

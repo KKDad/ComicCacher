@@ -17,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ImageHashRecord;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Map;
@@ -43,8 +42,10 @@ class DuplicateImageHashRepositoryTest {
     @BeforeEach
     void setUp() {
         Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDate.class, (JsonSerializer<LocalDate>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
-                .registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (json, typeOfT, context) -> LocalDate.parse(json.getAsString()))
+                .registerTypeAdapter(LocalDate.class,
+                        (JsonSerializer<LocalDate>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
+                .registerTypeAdapter(LocalDate.class,
+                        (JsonDeserializer<LocalDate>) (json, typeOfT, context) -> LocalDate.parse(json.getAsString()))
                 .create();
 
         lenient().when(cacheProperties.getLocation()).thenReturn(tempDir.toString());
@@ -169,12 +170,12 @@ class DuplicateImageHashRepositoryTest {
     @Test
     void shouldGetYearDirectory() {
         // Act
-        File yearDir = repository.getYearDirectory(comicId, comicName, year);
+        Path yearDir = repository.getYearDirectory(comicId, comicName, year);
 
         // Assert
         assertThat(yearDir).isNotNull();
-        assertThat(yearDir.getPath().contains("TestComic")).isTrue();
-        assertThat(yearDir.getPath().contains("2024")).isTrue();
+        assertThat(yearDir.toString().contains("TestComic")).isTrue();
+        assertThat(yearDir.toString().contains("2024")).isTrue();
     }
 
     @Test
@@ -235,12 +236,12 @@ class DuplicateImageHashRepositoryTest {
 
         // Act
         repository.addHash(comicId, comicNameWithSpaces, year, record);
-        File yearDir = repository.getYearDirectory(comicId, comicNameWithSpaces, year);
+        Path yearDir = repository.getYearDirectory(comicId, comicNameWithSpaces, year);
 
         // Assert
         assertThat(yearDir).isNotNull();
         // Spaces should be removed
-        assertThat(yearDir.getPath().contains(" ")).isFalse();
+        assertThat(yearDir.toString().contains(" ")).isFalse();
     }
 
     @Test

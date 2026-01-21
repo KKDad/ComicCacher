@@ -23,7 +23,6 @@ import org.stapledon.common.dto.ImageHashRecord;
 import org.stapledon.common.service.ImageHasher;
 import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -72,7 +71,7 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> emptyMap = new ConcurrentHashMap<>();
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
 
-        File yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR)).toFile();
+        Path yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR));
         when(hashRepository.getYearDirectory(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(yearDir);
 
         // When
@@ -94,12 +93,12 @@ class DuplicateHashCacheServiceTest {
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
 
         // Create test directory with images
-        File yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR)).toFile();
-        yearDir.mkdirs();
-        File image1 = new File(yearDir, "2023-01-15.png");
-        File image2 = new File(yearDir, "2023-01-16.png");
-        Files.write(image1.toPath(), "test image 1".getBytes());
-        Files.write(image2.toPath(), "test image 2".getBytes());
+        Path yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR));
+        Files.createDirectories(yearDir);
+        Path image1 = yearDir.resolve("2023-01-15.png");
+        Path image2 = yearDir.resolve("2023-01-16.png");
+        Files.write(image1, "test image 1".getBytes());
+        Files.write(image2, "test image 2".getBytes());
 
         when(hashRepository.getYearDirectory(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(yearDir);
         when(imageHasher.calculateHash(any(byte[].class))).thenReturn("hash1", "hash2");
@@ -125,17 +124,17 @@ class DuplicateHashCacheServiceTest {
                 .hash("old-hash")
                 .date(LocalDate.of(2023, 1, 15))
                 .filePath("/path/to/image.png")
-                .algorithm(HashAlgorithm.MD5)  // Different algorithm
+                .algorithm(HashAlgorithm.MD5) // Different algorithm
                 .build();
         existingMap.put("old-hash", oldRecord);
 
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(existingMap);
 
         // Create test directory with images
-        File yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR)).toFile();
-        yearDir.mkdirs();
-        File image1 = new File(yearDir, "2023-01-15.png");
-        Files.write(image1.toPath(), "test image 1".getBytes());
+        Path yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR));
+        Files.createDirectories(yearDir);
+        Path image1 = yearDir.resolve("2023-01-15.png");
+        Files.write(image1, "test image 1".getBytes());
 
         when(hashRepository.getYearDirectory(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(yearDir);
         when(imageHasher.calculateHash(any(byte[].class))).thenReturn("new-hash");
@@ -160,7 +159,7 @@ class DuplicateHashCacheServiceTest {
                 .hash(TEST_HASH)
                 .date(LocalDate.of(2023, 1, 15))
                 .filePath("/path/to/image.png")
-                .algorithm(CURRENT_ALGORITHM)  // Same algorithm
+                .algorithm(CURRENT_ALGORITHM) // Same algorithm
                 .build();
         existingMap.put(TEST_HASH, existingRecord);
 
@@ -208,7 +207,7 @@ class DuplicateHashCacheServiceTest {
         Map<String, ImageHashRecord> emptyMap = new ConcurrentHashMap<>();
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
 
-        File yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR)).toFile();
+        Path yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR));
         when(hashRepository.getYearDirectory(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(yearDir);
         when(hashRepository.findByHash(COMIC_ID, COMIC_NAME, YEAR, "nonexistent")).thenReturn(Optional.empty());
 
@@ -309,14 +308,14 @@ class DuplicateHashCacheServiceTest {
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
 
         // Create test directory with mixed files
-        File yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR)).toFile();
-        yearDir.mkdirs();
-        File pngFile = new File(yearDir, "2023-01-15.png");
-        File jpgFile = new File(yearDir, "2023-01-16.jpg");
-        File txtFile = new File(yearDir, "readme.txt");
-        Files.write(pngFile.toPath(), "test image".getBytes());
-        Files.write(jpgFile.toPath(), "test jpeg".getBytes());
-        Files.write(txtFile.toPath(), "test text".getBytes());
+        Path yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR));
+        Files.createDirectories(yearDir);
+        Path pngFile = yearDir.resolve("2023-01-15.png");
+        Path jpgFile = yearDir.resolve("2023-01-16.jpg");
+        Path txtFile = yearDir.resolve("readme.txt");
+        Files.write(pngFile, "test image".getBytes());
+        Files.write(jpgFile, "test jpeg".getBytes());
+        Files.write(txtFile, "test text".getBytes());
 
         when(hashRepository.getYearDirectory(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(yearDir);
         when(imageHasher.calculateHash(any(byte[].class))).thenReturn("hash1");
@@ -336,10 +335,10 @@ class DuplicateHashCacheServiceTest {
         when(hashRepository.loadHashes(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(emptyMap);
 
         // Create test directory with invalid filename
-        File yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR)).toFile();
-        yearDir.mkdirs();
-        File invalidFile = new File(yearDir, "invalid-date.png");
-        Files.write(invalidFile.toPath(), "test image".getBytes());
+        Path yearDir = tempDir.resolve(COMIC_NAME).resolve(String.valueOf(YEAR));
+        Files.createDirectories(yearDir);
+        Path invalidFile = yearDir.resolve("invalid-date.png");
+        Files.write(invalidFile, "test image".getBytes());
 
         when(hashRepository.getYearDirectory(COMIC_ID, COMIC_NAME, YEAR)).thenReturn(yearDir);
 
@@ -359,7 +358,7 @@ class DuplicateHashCacheServiceTest {
                 .hash(TEST_HASH)
                 .date(LocalDate.of(2023, 1, 15))
                 .filePath("/path/to/image.png")
-                .algorithm(null)  // Null algorithm
+                .algorithm(null) // Null algorithm
                 .build();
         existingMap.put(TEST_HASH, recordWithNullAlgorithm);
 
