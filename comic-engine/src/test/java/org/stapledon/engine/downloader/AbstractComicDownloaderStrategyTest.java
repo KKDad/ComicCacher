@@ -8,15 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
-
-import java.time.LocalDate;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class AbstractComicDownloaderStrategyTest {

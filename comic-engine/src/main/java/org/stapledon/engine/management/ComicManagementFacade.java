@@ -5,17 +5,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
-import org.stapledon.common.dto.*;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicIdentifier;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicNavigationResult;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.downloader.DownloaderFacade;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of the ManagementFacade interface. Acts as the central

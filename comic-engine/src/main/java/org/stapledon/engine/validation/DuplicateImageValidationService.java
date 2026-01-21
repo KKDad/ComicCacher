@@ -4,14 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageHashRecord;
 import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ImageHasher;
-
-import java.time.LocalDate;
-import java.util.Optional;
 
 /**
  * Implementation of DuplicateValidationService that detects duplicate images at download time.

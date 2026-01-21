@@ -7,8 +7,6 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ImageHashRecord;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -19,6 +17,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ImageHashRecord;
 import org.stapledon.common.util.NfsFileOperations;
 
 /**

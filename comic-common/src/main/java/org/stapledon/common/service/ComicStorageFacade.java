@@ -3,7 +3,7 @@ package org.stapledon.common.service;
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ImageDto;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +39,7 @@ public interface ComicStorageFacade {
 
     boolean purgeOldImages(ComicIdentifier comic, int daysToKeep);
 
-    File getCacheRoot();
+    Path getCacheRoot();
 
     String getComicCacheRoot(ComicIdentifier comic);
 

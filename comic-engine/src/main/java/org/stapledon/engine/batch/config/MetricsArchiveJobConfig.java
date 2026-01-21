@@ -17,11 +17,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.time.LocalDate;
+
+
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.metrics.service.MetricsArchiveService;
-
-import java.time.LocalDate;
 
 /**
  * Spring Batch configuration for metrics archive job. Archives yesterday's metrics to JSON for historical analysis.

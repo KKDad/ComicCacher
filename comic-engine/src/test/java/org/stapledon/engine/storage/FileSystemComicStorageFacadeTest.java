@@ -16,11 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.*;
-import org.stapledon.common.service.DuplicateValidationService;
-import org.stapledon.common.service.ValidationService;
-import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +28,13 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.*;
+import org.stapledon.common.service.DuplicateValidationService;
+import org.stapledon.common.service.ValidationService;
+import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 /**
  * Unit tests for FileSystemComicStorageFacade

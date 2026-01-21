@@ -4,9 +4,6 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicDateIndex;
-import org.stapledon.common.dto.ComicIdentifier;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -15,12 +12,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicDateIndex;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.util.NfsFileOperations;
 
 /**

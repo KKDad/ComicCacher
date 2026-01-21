@@ -6,14 +6,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
-import org.stapledon.engine.batch.BatchJobBaseConfig;
-import org.stapledon.engine.batch.scheduler.AbstractJobScheduler;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+
+import org.stapledon.engine.batch.BatchJobBaseConfig;
+import org.stapledon.engine.batch.scheduler.AbstractJobScheduler;
 
 /**
  * Health check component to verify all scheduler beans are loaded correctly.

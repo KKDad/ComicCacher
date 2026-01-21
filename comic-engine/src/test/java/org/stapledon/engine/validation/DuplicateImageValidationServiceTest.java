@@ -12,13 +12,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageHashRecord;
 import org.stapledon.common.service.ImageHasher;
-
-import java.time.LocalDate;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class DuplicateImageValidationServiceTest {

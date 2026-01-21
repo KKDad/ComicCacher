@@ -21,14 +21,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.time.LocalDate;
+import java.util.List;
+
+
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.LoggingJobExecutionListener;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
-
-import java.time.LocalDate;
-import java.util.List;
 
 /**
  * Spring Batch configuration for comic retrieval jobs. Provides comprehensive execution tracking, retry logic, and monitoring.

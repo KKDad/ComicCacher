@@ -1,7 +1,11 @@
 package org.stapledon.api.service;
 
 import org.springframework.stereotype.Service;
-import org.stapledon.api.dto.health.*;
+import org.stapledon.api.dto.health.BuildInfo;
+import org.stapledon.api.dto.health.CacheStatus;
+import org.stapledon.api.dto.health.ComponentHealth;
+import org.stapledon.api.dto.health.HealthStatus;
+import org.stapledon.api.dto.health.SystemResources;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
@@ -122,8 +126,8 @@ public class SystemHealthService implements HealthService {
                 .totalComics(cacheStats.getPerComicMetrics() != null ? cacheStats.getPerComicMetrics().size() : 0)
                 .totalImages(cacheStats.getPerComicMetrics() != null
                         ? cacheStats.getPerComicMetrics().values().stream()
-                        .mapToInt(ComicStorageMetrics::getImageCount)
-                        .sum()
+                                .mapToInt(ComicStorageMetrics::getImageCount)
+                                .sum()
                         : 0)
                 .totalStorageBytes(cacheStats.getTotalStorageBytes())
                 .oldestImage(cacheStats.getOldestImage())

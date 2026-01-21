@@ -20,16 +20,18 @@ import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.batch.infrastructure.item.ItemReader;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
 import org.stapledon.engine.batch.config.ComicBackfillJobConfig;
 import org.stapledon.engine.management.ManagementFacade;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class ComicBackfillJobConfigTest {

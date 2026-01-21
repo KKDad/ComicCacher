@@ -1,383 +1,204 @@
-# Comics Endpoints Documentation
+# Comics API Endpoints
 
-The ComicCacher API provides several endpoints for retrieving and managing comics and their associated images.
+This document describes the API endpoints for comic operations in ComicCacher.
 
-## Base Path
+> [!IMPORTANT]
+> **GraphQL Migration Complete**: All comic metadata operations now use GraphQL.
+> Only the avatar image endpoint remains as REST (binary data over HTTP).
 
-All Comics endpoints are under:
+## GraphQL Endpoint
 
+**Endpoint:** `POST /graphql`
+
+All comic metadata queries and mutations use the GraphQL endpoint. See the [GraphQL Schema](../comic-api/src/main/resources/graphql/comics-schema.graphql) for full details.
+
+### Comic Queries
+
+#### List Comics (with Pagination)
+
+```graphql
+query ListComics($first: Int, $after: String, $searchTerm: String) {
+  comics(first: $first, after: $after, searchTerm: $searchTerm) {
+    edges {
+      cursor
+      node {
+        id
+        name
+        description
+        oldest
+        newest
+        avatarUrl
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
 ```
-/api/v1/comics
+
+#### Get Single Comic
+
+```graphql
+query GetComic($id: ID!) {
+  comic(id: $id) {
+    id
+    name
+    description
+    source
+    sourceIdentifier
+    oldest
+    newest
+    avatarUrl
+    strip(date: "2024-01-15") {
+      imageUrl
+      date
+      previous
+      next
+    }
+    firstStrip {
+      imageUrl
+      date
+      next
+    }
+    lastStrip {
+      imageUrl
+      date
+      previous
+    }
+  }
+}
 ```
 
-## Endpoints
+### Comic Mutations
 
-### List All Comics
+#### Create Comic
 
+```graphql
+mutation CreateComic($input: CreateComicInput!) {
+  createComic(input: $input) {
+    id
+    name
+  }
+}
 ```
-GET /api/v1/comics
+
+#### Update Comic
+
+```graphql
+mutation UpdateComic($id: ID!, $input: UpdateComicInput!) {
+  updateComic(id: $id, input: $input) {
+    id
+    name
+    description
+  }
+}
 ```
 
-Returns a list of all available comics in the system.
+#### Delete Comic
 
-#### Response Format
+```graphql
+mutation DeleteComic($id: ID!) {
+  deleteComic(id: $id)
+}
+```
+
+---
+
+## REST Endpoints (Binary Data Only)
+
+### Get Comic Avatar
+
+Retrieves the avatar image for a comic.
+
+**Endpoint:** `GET /api/v1/comics/{comicId}/avatar`
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `comicId` | Path | Comic ID (integer) |
+
+**Response:**
+- **200 OK**: Returns the avatar image as binary data with appropriate `Content-Type` header (e.g., `image/png`)
+- **404 Not Found**: Avatar not available for this comic
+
+**Example:**
+```bash
+curl -X GET "http://localhost:8080/api/v1/comics/42/avatar" \
+  -H "Authorization: Bearer <token>" \
+  --output avatar.png
+```
+
+---
+
+## Pagination
+
+ComicCacher uses **Relay-style cursor pagination** for GraphQL:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `first` | Int | Number of items to fetch (max 100) |
+| `after` | String | Cursor to fetch items after |
+
+**Example Response:**
+```json
+{
+  "data": {
+    "comics": {
+      "edges": [
+        {
+          "cursor": "Y3Vyc29yOjQ1",
+          "node": {
+            "id": "45",
+            "name": "Garfield"
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": true,
+        "hasPreviousPage": false,
+        "startCursor": "Y3Vyc29yOjQ1",
+        "endCursor": "Y3Vyc29yOjU0"
+      },
+      "totalCount": 127
+    }
+  }
+}
+```
+
+---
+
+## Custom Scalars
+
+The GraphQL API uses these custom scalar types:
+
+| Scalar | Format | Example |
+|--------|--------|---------|
+| `Date` | ISO-8601 date | `"2024-01-15"` |
+| `DateTime` | ISO-8601 datetime | `"2024-01-15T10:30:00Z"` |
+| `JSON` | Arbitrary JSON | `{"key": "value"}` |
+
+---
+
+## Error Handling
+
+GraphQL errors are returned in the standard format:
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": [
+  "data": null,
+  "errors": [
     {
-      "id": 1,
-      "name": "Dilbert",
-      "author": "Scott Adams",
-      "description": "A comic strip about office politics",
-      "source": "gocomics",
-      "sourceIdentifier": "dilbert",
-      "oldest": "1989-04-16",
-      "newest": "2023-05-01",
-      "enabled": true,
-      "avatarAvailable": true
-    },
-    {
-      "id": 2,
-      "name": "Calvin and Hobbes",
-      "author": "Bill Watterson",
-      "description": "A comic strip about a boy and his tiger",
-      "source": "gocomics",
-      "sourceIdentifier": "calvinandhobbes",
-      "oldest": "1985-11-18",
-      "newest": "1995-12-31",
-      "enabled": true,
-      "avatarAvailable": true
+      "message": "Comic not found",
+      "path": ["comic"],
+      "extensions": {
+        "classification": "NOT_FOUND"
+      }
     }
   ]
 }
 ```
-
-### Get Comic Details
-
-```
-GET /api/v1/comics/{comic}
-```
-
-Returns details about a specific comic.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                |
-|-----------|---------|----------|----------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic to get |
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": {
-    "id": 1,
-    "name": "Dilbert",
-    "author": "Scott Adams",
-    "description": "A comic strip about office politics",
-    "source": "gocomics",
-    "sourceIdentifier": "dilbert",
-    "oldest": "1989-04-16",
-    "newest": "2023-05-01",
-    "enabled": true,
-    "avatarAvailable": true
-  }
-}
-```
-
-### Create or Update Comic
-
-```
-POST /api/v1/comics/{comic}
-```
-
-Creates a new comic with the specified ID.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                         |
-|-----------|---------|----------|-------------------------------------|
-| comic     | Integer | Yes      | The numeric ID to assign to the new comic   |
-
-#### Request Body
-
-```json
-{
-  "name": "Dilbert",
-  "author": "Scott Adams",
-  "description": "A comic strip about office politics",
-  "source": "gocomics",
-  "sourceIdentifier": "dilbert",
-  "enabled": true
-}
-```
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 201,
-  "message": "Comic created successfully",
-  "data": {
-    "id": 1,
-    "name": "Dilbert",
-    "author": "Scott Adams",
-    "description": "A comic strip about office politics",
-    "source": "gocomics",
-    "sourceIdentifier": "dilbert",
-    "oldest": null,
-    "newest": null,
-    "enabled": true,
-    "avatarAvailable": false
-  }
-}
-```
-
-### Update Comic Details
-
-```
-PATCH /api/v1/comics/{comic}
-```
-
-Updates details for an existing comic.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                      |
-|-----------|---------|----------|----------------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic to update    |
-
-#### Request Body
-
-```json
-{
-  "description": "Updated description for this comic"
-}
-```
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Comic updated successfully",
-  "data": {
-    "id": 1,
-    "name": "Dilbert",
-    "description": "Updated description for this comic",
-    "source": "gocomics",
-    "sourceIdentifier": "dilbert",
-    "startDate": "1989-04-16"
-  }
-}
-```
-
-### Delete Comic
-
-```
-DELETE /api/v1/comics/{comic}
-```
-
-Deletes a comic and all associated images.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                      |
-|-----------|---------|----------|----------------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic to delete    |
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Comic deleted successfully",
-  "data": null
-}
-```
-
-### Get Comic Avatar
-
-```
-GET /api/v1/comics/{comic}/avatar
-```
-
-Returns the avatar image for a comic.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                          |
-|-----------|---------|----------|--------------------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic to get avatar for|
-
-#### Response Format
-
-```json
-{
-  "mimeType": "image/png",
-  "imageData": "base64encodedimagedata",
-  "height": 200,
-  "width": 200,
-  "imageDate": null
-}
-```
-
-### Get First Comic Strip
-
-```
-GET /api/v1/comics/{comic}/strips/first
-```
-
-Returns the first available comic strip for a comic.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                          |
-|-----------|---------|----------|--------------------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic                  |
-
-#### Response Format
-
-```json
-{
-  "mimeType": "image/gif",
-  "imageData": "base64encodedimagedata",
-  "height": 300,
-  "width": 600,
-  "imageDate": "1989-04-16"
-}
-```
-
-### Get Next Comic Strip
-
-```
-GET /api/v1/comics/{comic}/next/{date}
-```
-
-Returns the next comic strip after the specified date.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                           |
-|-----------|---------|----------|---------------------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic                   |
-| date      | String  | Yes      | The date in format "yyyy-MM-dd"       |
-
-#### Response Format
-
-```json
-{
-  "mimeType": "image/gif",
-  "imageData": "base64encodedimagedata",
-  "height": 300,
-  "width": 600,
-  "imageDate": "1989-04-17"
-}
-```
-
-### Get Previous Comic Strip
-
-```
-GET /api/v1/comics/{comic}/previous/{date}
-```
-
-Returns the previous comic strip before the specified date.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                           |
-|-----------|---------|----------|---------------------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic                   |
-| date      | String  | Yes      | The date in format "yyyy-MM-dd"       |
-
-#### Response Format
-
-```json
-{
-  "mimeType": "image/gif",
-  "imageData": "base64encodedimagedata",
-  "height": 300,
-  "width": 600,
-  "imageDate": "1989-04-15"
-}
-```
-
-### Get Last Comic Strip
-
-```
-GET /api/v1/comics/{comic}/strips/last
-```
-
-Returns the most recent comic strip for a comic.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                           |
-|-----------|---------|----------|---------------------------------------|
-| comic     | Integer | Yes      | The numeric ID of the comic                   |
-
-#### Response Format
-
-```json
-{
-  "mimeType": "image/gif",
-  "imageData": "base64encodedimagedata",
-  "height": 300,
-  "width": 600,
-  "imageDate": "2023-05-01"
-}
-```
-
-## Error Responses
-
-All endpoints may return the following error responses:
-
-### Comic Not Found (404)
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 404,
-  "message": "Comic not found with ID: 999",
-  "data": null
-}
-```
-
-### Comic Image Not Found (404)
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 404,
-  "message": "Comic image not found for date: 1900-01-01",
-  "data": null
-}
-```
-
-### Internal Server Error (500)
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 500,
-  "message": "An unexpected error occurred",
-  "data": null
-}
-```
-
-## Use Cases
-
-1. **Comic Browser App**: Retrieve and display comics in a chronological order
-2. **Comic Archive**: Build a complete collection of comic strips
-3. **Reading Tracker**: Implement a system to track which comics a user has read
-4. **Comic Search**: Create a search interface for finding specific comics

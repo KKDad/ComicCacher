@@ -15,6 +15,15 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+
 import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.dto.*;
 import org.stapledon.common.infrastructure.config.ExecutionTracker;
@@ -23,13 +32,6 @@ import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.util.Bootstrap;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.downloader.DownloaderFacade;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ExtendWith(MockitoExtension.class)
 class ComicManagementFacadeTest {

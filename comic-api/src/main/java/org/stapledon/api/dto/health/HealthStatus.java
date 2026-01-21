@@ -1,6 +1,5 @@
 package org.stapledon.api.dto.health;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -17,14 +16,14 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @ToString(onlyExplicitlyIncluded = true)
 public class HealthStatus {
 
     /**
      * Overall status of the application
      */
-    @ToString.Include private Status status;
+    @ToString.Include
+    private Status status;
 
     /**
      * Current server time when check was performed

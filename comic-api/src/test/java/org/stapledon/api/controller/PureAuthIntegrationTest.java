@@ -105,28 +105,27 @@ class PureAuthIntegrationTest {
     @Test
     void authResponseStructure() {
         // Create auth response
-        AuthResponse authResponse = AuthResponse.builder()
-                .username("testuser")
-                .displayName("Test User")
-                .token("jwt.token.here")
-                .refreshToken("refresh.token.here")
-                .build();
+        AuthResponse authResponse = new AuthResponse(
+                "jwt.token.here",
+                "refresh.token.here",
+                "testuser",
+                "Test User");
 
         // Verify properties
-        assertThat(authResponse.getUsername()).isEqualTo("testuser");
-        assertThat(authResponse.getDisplayName()).isEqualTo("Test User");
-        assertThat(authResponse.getToken()).isEqualTo("jwt.token.here");
-        assertThat(authResponse.getRefreshToken()).isEqualTo("refresh.token.here");
+        assertThat(authResponse.username()).isEqualTo("testuser");
+        assertThat(authResponse.displayName()).isEqualTo("Test User");
+        assertThat(authResponse.token()).isEqualTo("jwt.token.here");
+        assertThat(authResponse.refreshToken()).isEqualTo("refresh.token.here");
 
         // Test JSON serialization
         try {
             String json = objectMapper.writeValueAsString(authResponse);
             AuthResponse deserialized = objectMapper.readValue(json, AuthResponse.class);
 
-            assertThat(deserialized.getUsername()).isEqualTo(authResponse.getUsername());
-            assertThat(deserialized.getDisplayName()).isEqualTo(authResponse.getDisplayName());
-            assertThat(deserialized.getToken()).isEqualTo(authResponse.getToken());
-            assertThat(deserialized.getRefreshToken()).isEqualTo(authResponse.getRefreshToken());
+            assertThat(deserialized.username()).isEqualTo(authResponse.username());
+            assertThat(deserialized.displayName()).isEqualTo(authResponse.displayName());
+            assertThat(deserialized.token()).isEqualTo(authResponse.token());
+            assertThat(deserialized.refreshToken()).isEqualTo(authResponse.refreshToken());
         } catch (Exception e) {
             fail("", "JSON serialization should not throw an exception: " + e.getMessage());
         }

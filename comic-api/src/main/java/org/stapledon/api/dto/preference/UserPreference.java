@@ -1,8 +1,17 @@
 package org.stapledon.api.dto.preference;
 
 import java.time.LocalDate;
-import java.util.*;
-import lombok.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
@@ -11,13 +20,17 @@ import lombok.*;
 @Builder
 @ToString(onlyExplicitlyIncluded = true)
 public class UserPreference {
-    @ToString.Include private String username;
+    @ToString.Include
+    private String username;
 
-    @Builder.Default private List<Integer> favoriteComics = new ArrayList<>();
+    @Builder.Default
+    private List<Integer> favoriteComics = new ArrayList<>();
 
-    @Builder.Default private Map<Integer, LocalDate> lastReadDates = new HashMap<>();
+    @Builder.Default
+    private Map<Integer, LocalDate> lastReadDates = new HashMap<>();
 
-    @Builder.Default private Map<String, Object> displaySettings = new HashMap<>();
+    @Builder.Default
+    private Map<String, Object> displaySettings = new HashMap<>();
 
     @Override
     public boolean equals(Object o) {

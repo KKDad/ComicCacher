@@ -14,16 +14,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.common.dto.ComicItem;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicItem;
 
 @ExtendWith(MockitoExtension.class)
 class ComicDownloaderFacadeTest {

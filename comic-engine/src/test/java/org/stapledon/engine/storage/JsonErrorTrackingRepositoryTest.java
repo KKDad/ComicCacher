@@ -11,9 +11,6 @@ import com.google.gson.stream.JsonWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicErrorRecord;
-import org.stapledon.common.dto.ComicRetrievalStatus;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,6 +21,11 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicErrorRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
 
 class JsonErrorTrackingRepositoryTest {
 

@@ -4,9 +4,6 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.stapledon.common.dto.ImageMetadata;
-import org.stapledon.common.dto.ImageValidationResult;
-import org.stapledon.common.service.AnalysisService;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -15,6 +12,11 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Random;
 import javax.imageio.ImageIO;
+
+
+import org.stapledon.common.dto.ImageMetadata;
+import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.service.AnalysisService;
 
 /**
  * Implementation of ImageAnalysisService that analyzes images for metadata.

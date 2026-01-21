@@ -50,15 +50,20 @@ public abstract class AbstractIntegrationTest {
     protected static final String TEST_USER = "testuser";
     protected static final String TEST_ADMIN_USER = "adminuser";
 
-    @Autowired protected MockMvc mockMvc;
+    @Autowired
+    protected MockMvc mockMvc;
 
-    @Autowired protected StapledonAccountGivens givens;
+    @Autowired
+    protected StapledonAccountGivens givens;
 
-    @Autowired protected ObjectMapper objectMapper;
+    @Autowired
+    protected ObjectMapper objectMapper;
 
-    @Autowired protected StorageMetricsCollector storageMetricsCollector;
+    @Autowired
+    protected StorageMetricsCollector storageMetricsCollector;
 
-    @Autowired protected JwtTokenUtil jwtTokenUtil;
+    @Autowired
+    protected JwtTokenUtil jwtTokenUtil;
 
     @BeforeAll
     static void setup() {
@@ -161,10 +166,7 @@ public abstract class AbstractIntegrationTest {
      */
     protected String authenticateAndGetToken(String username, String password) throws Exception {
         try {
-            AuthRequest authRequest = AuthRequest.builder()
-                    .username(username)
-                    .password(password)
-                    .build();
+            AuthRequest authRequest = new AuthRequest(username, password);
 
             log.debug("Authenticating with: {} / {}", username, password);
 

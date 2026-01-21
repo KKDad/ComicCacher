@@ -11,9 +11,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicDateIndex;
-import org.stapledon.common.util.GsonUtils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -22,6 +19,11 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicDateIndex;
+import org.stapledon.common.util.GsonUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ComicIndexServiceTest {

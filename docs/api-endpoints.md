@@ -97,7 +97,35 @@ X-RateLimit-Reset: 1620000000
 
 ## Pagination
 
-Endpoints that return collections support pagination using the following query parameters:
+### GraphQL Pagination (Relay-style Cursor)
+
+GraphQL queries use **Relay-style cursor pagination**:
+
+| Parameter | Type   | Description                        | Default |
+|-----------|--------|------------------------------------|---------|
+| `first`   | Int    | Number of items to fetch           | 20      |
+| `after`   | String | Cursor to fetch items after        | -       |
+
+Example GraphQL query:
+```graphql
+query {
+  comics(first: 10, after: "Y3Vyc29yOjEw") {
+    edges {
+      cursor
+      node { id, name }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+```
+
+### REST Pagination (Offset-based)
+
+REST endpoints use offset-based pagination:
 
 | Parameter | Description                              | Default | Max    |
 |-----------|------------------------------------------|---------|--------|
@@ -105,10 +133,9 @@ Endpoints that return collections support pagination using the following query p
 | size      | Number of items per page                 | 20      | 100    |
 | sort      | Sort field and direction (field,direction)| -       | -      |
 
-Example request with pagination:
-
+Example REST request:
 ```
-GET /api/v1/comics?page=0&size=10&sort=name,asc
+GET /api/v1/health?page=0&size=10&sort=name,asc
 ```
 
 ## API Versioning

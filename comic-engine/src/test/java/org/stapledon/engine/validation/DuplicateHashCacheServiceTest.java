@@ -17,11 +17,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.HashAlgorithm;
-import org.stapledon.common.dto.ImageHashRecord;
-import org.stapledon.common.service.ImageHasher;
-import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +24,13 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.HashAlgorithm;
+import org.stapledon.common.dto.ImageHashRecord;
+import org.stapledon.common.service.ImageHasher;
+import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
 /**
  * Unit tests for DuplicateHashCacheService.

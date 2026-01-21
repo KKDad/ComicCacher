@@ -1,10 +1,12 @@
 package org.stapledon.api.resolver;
 
+import org.dataloader.DataLoader;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
+import org.stapledon.api.resolver.dataloader.StripLoaderKey;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.model.ComicNotFoundException;
@@ -14,6 +16,7 @@ import org.stapledon.engine.management.ManagementFacade;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -129,18 +132,26 @@ public class ComicResolver {
 
     /**
      * Resolve strip field for Comic type - get strip for specific date.
+     * Uses DataLoader to batch multiple strip requests and prevent N+1 queries.
      */
     @SchemaMapping(typeName = "Comic", field = "strip")
-    public ComicStrip strip(ComicItem comic, @Argument LocalDate date) {
+    public CompletableFuture<ComicStrip> strip(
+            ComicItem comic,
+            @Argument LocalDate date,
+            DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
+
         LocalDate targetDate = date != null ? date : comic.getNewest();
         if (targetDate == null) {
-            return null;
+            return CompletableFuture.completedFuture(null);
         }
 
-        ComicNavigationResult result = comicManagementFacade.getComicStrip(
-                comic.getId(), Direction.FORWARD, targetDate);
+        StripLoaderKey key = new StripLoaderKey(
+                comic.getId(),
+                comic.getName(),
+                targetDate);
 
-        return toComicStrip(comic.getId(), result);
+        return stripLoader.load(key)
+                .thenApply(result -> toComicStrip(comic.getId(), result));
     }
 
     /**
@@ -269,17 +280,17 @@ public class ComicResolver {
     }
 
     public record ComicStrip(LocalDate date, boolean available, String imageUrl, LocalDate previousDate,
-                             LocalDate nextDate) {
+            LocalDate nextDate) {
     }
 
     public record SearchResults(List<ComicItem> comics, int totalCount, String query) {
     }
 
     public record CreateComicInput(String name, String author, String description, Boolean enabled, String source,
-                                   String sourceIdentifier) {
+            String sourceIdentifier) {
     }
 
     public record UpdateComicInput(String name, String author, String description, Boolean enabled, String source,
-                                   String sourceIdentifier) {
+            String sourceIdentifier) {
     }
 }

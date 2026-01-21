@@ -3,13 +3,15 @@ package org.stapledon.engine.downloader;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
+
+
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
-
-import java.util.Optional;
 
 /**
  * Abstract base class for comic downloader strategies.

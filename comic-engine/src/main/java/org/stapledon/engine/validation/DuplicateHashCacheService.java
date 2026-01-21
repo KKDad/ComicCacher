@@ -4,11 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.HashAlgorithm;
-import org.stapledon.common.dto.ImageHashRecord;
-import org.stapledon.common.service.ImageHasher;
-import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -19,6 +14,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.HashAlgorithm;
+import org.stapledon.common.dto.ImageHashRecord;
+import org.stapledon.common.service.ImageHasher;
+import org.stapledon.engine.storage.DuplicateImageHashRepository;
 
 /**
  * Service for managing duplicate hash cache, including backfilling existing

@@ -7,13 +7,15 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.infrastructure.web.InspectorService;
-import org.stapledon.common.service.ValidationService;
 
 import java.io.InputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
+
+
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.service.ValidationService;
 
 /**
  * Strategy implementation for downloading comics from Comics Kingdom.

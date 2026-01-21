@@ -13,9 +13,6 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.infrastructure.web.InspectorService;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -24,6 +21,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.infrastructure.web.InspectorService;
 
 @Slf4j
 @ToString

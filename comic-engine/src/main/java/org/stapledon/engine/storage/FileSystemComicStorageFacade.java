@@ -5,21 +5,31 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.*;
+import org.stapledon.common.dto.ComicIdentifier;
+import org.stapledon.common.dto.DuplicateValidationResult;
+import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.ImageMetadata;
+import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.AnalysisService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.common.util.ImageUtils;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 /**
  * Implementation of the Comic Storage Facade that abstracts all filesystem
@@ -78,7 +88,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         // Create directory structure if it doesn't exist
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         File directory = new File(
-                String.format("%s/%s/%s", getCacheRoot().getAbsolutePath(), comic.getDirectoryName(), yearPath));
+                String.format("%s/%s/%s", getCacheRoot().toAbsolutePath().toString(), comic.getDirectoryName(),
+                        yearPath));
         if (!directory.exists() && !directory.mkdirs()) {
             log.error("Failed to create directory: {}", directory.getAbsolutePath());
             return false;
@@ -142,7 +153,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                 validation.getWidth(), validation.getHeight());
 
         // Create directory structure if it doesn't exist
-        File directory = new File(String.format(COMBINE_PATH, getCacheRoot().getAbsolutePath(),
+        File directory = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));
         if (!directory.exists() && !directory.mkdirs()) {
             log.error("Failed to create directory: {}", directory.getAbsolutePath());
@@ -173,7 +184,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().getAbsolutePath(),
+        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName(), yearPath, filename));
 
         try {
@@ -188,7 +199,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     public Optional<ImageDto> getAvatar(ComicIdentifier comic) {
         Objects.requireNonNull(comic, "comic cannot be null");
 
-        File file = new File(String.format("%s/%s/%s", getCacheRoot().getAbsolutePath(),
+        File file = new File(String.format("%s/%s/%s", getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName(), AVATAR_FILE));
 
         if (!file.exists()) {
@@ -237,7 +248,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().getAbsolutePath(),
+        File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName(), yearPath, filename));
 
         return file.exists();
@@ -247,7 +258,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     public boolean deleteComic(ComicIdentifier comic) {
         Objects.requireNonNull(comic, "comic cannot be null");
 
-        File directory = new File(String.format(COMBINE_PATH, getCacheRoot().getAbsolutePath(),
+        File directory = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));
 
         if (!directory.exists()) {
@@ -292,7 +303,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         Objects.requireNonNull(comic, "comic cannot be null");
 
         LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
-        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().getAbsolutePath(),
+        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));
 
         if (!comicRoot.exists()) {
@@ -351,21 +362,21 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public File getCacheRoot() {
-        return new File(cacheProperties.getLocation());
+    public Path getCacheRoot() {
+        return Path.of(cacheProperties.getLocation());
     }
 
     @Override
     public String getComicCacheRoot(ComicIdentifier comic) {
         Objects.requireNonNull(comic, "comic cannot be null");
-        return String.format(COMBINE_PATH, getCacheRoot().getAbsolutePath(), comic.getDirectoryName());
+        return String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(), comic.getDirectoryName());
     }
 
     @Override
     public List<String> getYearsWithContent(ComicIdentifier comic) {
         Objects.requireNonNull(comic, "comic cannot be null");
 
-        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().getAbsolutePath(),
+        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));
 
         if (!comicRoot.exists()) {
@@ -388,7 +399,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     public long getStorageSize(ComicIdentifier comic) {
         Objects.requireNonNull(comic, "comic cannot be null");
 
-        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().getAbsolutePath(),
+        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));
 
         if (!comicRoot.exists()) {

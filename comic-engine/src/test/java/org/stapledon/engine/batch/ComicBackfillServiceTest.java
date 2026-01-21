@@ -13,15 +13,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.List;
+
+
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
 import org.stapledon.engine.management.ManagementFacade;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class ComicBackfillServiceTest {

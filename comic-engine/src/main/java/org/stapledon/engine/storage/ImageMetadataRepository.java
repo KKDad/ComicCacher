@@ -6,7 +6,6 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
-import org.stapledon.common.dto.ImageMetadata;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -14,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+
+import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.util.NfsFileOperations;
 
 /**

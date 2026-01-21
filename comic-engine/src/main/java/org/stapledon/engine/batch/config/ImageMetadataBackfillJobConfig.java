@@ -17,6 +17,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+
+
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageMetadata;
@@ -27,15 +38,6 @@ import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.storage.ImageMetadataRepository;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * Spring Batch configuration for image metadata backfill job. Backfills metadata for existing images that don't have metadata files.

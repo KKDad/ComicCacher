@@ -1,12 +1,13 @@
 package org.stapledon.engine.downloader;
 
-import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+
+
+import org.stapledon.common.dto.ComicConfig;
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.dto.ComicDownloadResult;
 
 /**
  * Facade interface for downloading comic images from various sources.
