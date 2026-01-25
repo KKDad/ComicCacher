@@ -1,7 +1,7 @@
 package org.stapledon.engine.batch.scheduler;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
 public class SchedulerTriggers {
 
@@ -29,6 +28,18 @@ public class SchedulerTriggers {
     private final DailyJobScheduler imageMetadataBackfillJobScheduler;
     private final DailyJobScheduler metricsArchiveJobScheduler;
     private final DailyJobScheduler retrievalRecordPurgeJobScheduler;
+
+    public SchedulerTriggers(@Qualifier("comicDownloadJobScheduler") DailyJobScheduler comicDownloadJobScheduler,
+                             @Qualifier("comicBackfillJobScheduler") DailyJobScheduler comicBackfillJobScheduler,
+                             @Qualifier("imageMetadataBackfillJobScheduler") DailyJobScheduler imageMetadataBackfillJobScheduler,
+                             @Qualifier("metricsArchiveJobScheduler") DailyJobScheduler metricsArchiveJobScheduler,
+                             @Qualifier("retrievalRecordPurgeJobScheduler") DailyJobScheduler retrievalRecordPurgeJobScheduler) {
+        this.comicDownloadJobScheduler = comicDownloadJobScheduler;
+        this.comicBackfillJobScheduler = comicBackfillJobScheduler;
+        this.imageMetadataBackfillJobScheduler = imageMetadataBackfillJobScheduler;
+        this.metricsArchiveJobScheduler = metricsArchiveJobScheduler;
+        this.retrievalRecordPurgeJobScheduler = retrievalRecordPurgeJobScheduler;
+    }
 
     // ==================== Daily Job Triggers ====================
     @Scheduled(cron = "${batch.comic-download.cron}", zone = "${batch.timezone}")
