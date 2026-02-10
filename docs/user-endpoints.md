@@ -1,195 +1,257 @@
-# User Endpoints Documentation
+# User Management API Documentation
 
-The ComicCacher API provides endpoints for managing user profiles and account settings.
+> [!IMPORTANT]
+> **GraphQL-Only**: All user profile operations use GraphQL.
+> There are no REST endpoints for user management.
 
-## Base Path
+## GraphQL Endpoint
 
-All user-related endpoints are under:
+**Endpoint:** `POST /graphql`
 
-```
-/api/v1/users
-```
-
-## Authentication
-
-All user endpoints require authentication. Include a valid JWT token in the Authorization header:
+All user operations require authentication. Include a valid JWT token in the Authorization header:
 
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-## Endpoints
+---
 
-### Get User Profile
+## Queries
 
-```
-GET /api/v1/users/profile
-```
+### Get Current User Profile
 
-Retrieves the profile information for the authenticated user.
+Retrieve the profile information for the authenticated user.
 
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Success",
-  "data": {
-    "username": "johndoe",
-    "passwordHash": null,
-    "email": "john.doe@example.com",
-    "displayName": "John Doe",
-    "created": "2023-01-15T08:30:45",
-    "lastLogin": "2023-05-01T09:20:15",
-    "roles": ["USER"],
-    "userToken": "550e8400-e29b-41d4-a716-446655440000"
+```graphql
+query GetMe {
+  me {
+    username
+    email
+    displayName
+    created
+    lastLogin
+    roles
   }
 }
 ```
+
+**Response:**
+```json
+{
+  "data": {
+    "me": {
+      "username": "johndoe",
+      "email": "john.doe@example.com",
+      "displayName": "John Doe",
+      "created": "2023-01-15T08:30:45Z",
+      "lastLogin": "2023-05-01T09:20:15Z",
+      "roles": ["USER"]
+    }
+  }
+}
+```
+
+---
+
+## Mutations
 
 ### Update User Profile
 
-```
-PUT /api/v1/users/profile
-```
+Update the current user's profile information.
 
-Updates the profile information for the authenticated user.
-
-#### Request Body
-
-```json
-{
-  "username": "johndoe",
-  "email": "new.email@example.com",
-  "displayName": "Johnny Doe"
-}
-```
-
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Profile updated successfully",
-  "data": {
-    "username": "johndoe",
-    "passwordHash": null,
-    "email": "new.email@example.com",
-    "displayName": "Johnny Doe",
-    "created": "2023-01-15T08:30:45",
-    "lastLogin": "2023-05-01T09:20:15",
-    "roles": ["USER"],
-    "userToken": "550e8400-e29b-41d4-a716-446655440000"
+```graphql
+mutation UpdateProfile($input: UpdateProfileInput!) {
+  updateProfile(input: $input) {
+    username
+    email
+    displayName
+    created
+    lastLogin
+    roles
   }
 }
 ```
 
-### Update Password
-
-```
-PUT /api/v1/users/password
-```
-
-Updates the password for the authenticated user.
-
-#### Request Body
-
+**Variables:**
 ```json
 {
+  "input": {
+    "email": "new.email@example.com",
+    "displayName": "Johnny Doe"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "updateProfile": {
+      "username": "johndoe",
+      "email": "new.email@example.com",
+      "displayName": "Johnny Doe",
+      "created": "2023-01-15T08:30:45Z",
+      "lastLogin": "2023-05-01T09:20:15Z",
+      "roles": ["USER"]
+    }
+  }
+}
+```
+
+---
+
+### Update Password
+
+Update the current user's password.
+
+```graphql
+mutation UpdatePassword($currentPassword: String!, $newPassword: String!) {
+  updatePassword(currentPassword: $currentPassword, newPassword: $newPassword)
+}
+```
+
+**Variables:**
+```json
+{
+  "currentPassword": "currentSecurePassword123",
   "newPassword": "newSecurePassword456"
 }
 ```
 
-#### Response Format
-
+**Response:**
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Password updated successfully",
   "data": {
-    "message": "Password updated successfully"
+    "updatePassword": true
   }
 }
 ```
 
-## Response Fields
+---
 
-### User Profile Fields
+### Delete Account
 
-| Field      | Description                                  |
-|------------|----------------------------------------------|
-| id         | Unique identifier for the user               |
-| username   | User's login name                            |
-| email      | User's email address                         |
-| firstName  | User's first name                            |
-| lastName   | User's last name                             |
-| createdAt  | When the account was created                 |
-| lastLogin  | Last time the user logged in                 |
-| roles      | User's assigned roles in the system          |
+Delete the current user's account (irreversible action).
 
-## Error Responses
-
-### Unauthorized (401)
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 401,
-  "message": "Authentication required",
-  "data": null
+```graphql
+mutation DeleteAccount($password: String!) {
+  deleteAccount(password: $password)
 }
 ```
 
-### Invalid Password (400)
-
+**Variables:**
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 400,
-  "message": "Current password is incorrect",
-  "data": null
+  "password": "currentPassword123"
 }
 ```
 
-### Password Complexity Error (400)
-
+**Response:**
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 400,
-  "message": "Password must be at least 8 characters and include uppercase, lowercase, and numbers",
-  "data": null
+  "data": {
+    "deleteAccount": true
+  }
 }
 ```
 
-### Email Already Exists (409)
+---
+
+## Types
+
+### User
+
+| Field       | Type       | Description                          |
+|-------------|------------|--------------------------------------|
+| username    | String!    | Unique username                      |
+| email       | String!    | User's email address                 |
+| displayName | String!    | User's display name                  |
+| created     | DateTime!  | Account creation timestamp           |
+| lastLogin   | DateTime   | Last login timestamp                 |
+| roles       | [String!]! | User's assigned roles (e.g., "USER", "ADMIN") |
+
+### UpdateProfileInput
+
+| Field       | Type    | Required | Description                    |
+|-------------|---------|----------|--------------------------------|
+| email       | String  | No       | New email address              |
+| displayName | String  | No       | New display name               |
+
+---
+
+## Error Handling
+
+GraphQL errors follow the standard format:
+
+### Unauthorized
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 409,
-  "message": "Email address is already in use",
-  "data": null
+  "data": null,
+  "errors": [
+    {
+      "message": "Authentication required",
+      "extensions": {
+        "classification": "UNAUTHORIZED"
+      }
+    }
+  ]
 }
 ```
 
-### Internal Server Error (500)
+### Invalid Current Password
 
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 500,
-  "message": "An unexpected error occurred",
-  "data": null
+  "data": null,
+  "errors": [
+    {
+      "message": "Current password is incorrect",
+      "extensions": {
+        "classification": "BAD_REQUEST"
+      }
+    }
+  ]
 }
 ```
+
+### Password Complexity Error
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Password must be at least 8 characters and include uppercase, lowercase, and numbers",
+      "extensions": {
+        "classification": "BAD_REQUEST"
+      }
+    }
+  ]
+}
+```
+
+### Email Already Exists
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Email address is already in use",
+      "extensions": {
+        "classification": "CONFLICT"
+      }
+    }
+  ]
+}
+```
+
+---
 
 ## Password Requirements
 
-When updating passwords, the following requirements must be met:
+When updating passwords via `updatePassword` mutation, the following requirements must be met:
 
 - Minimum length of 8 characters
 - At least one uppercase letter
@@ -197,9 +259,12 @@ When updating passwords, the following requirements must be met:
 - At least one number
 - Optional: at least one special character
 
+---
+
 ## Use Cases
 
-1. **Account Management**: Allow users to view and update their profile information
-2. **Security**: Enable users to change their password for improved security
-3. **User Administration**: Maintain accurate user contact information
-4. **Personalization**: Store user details for personalization across the application
+1. **Profile Viewing**: View user profile information via `me` query
+2. **Account Management**: Update profile details (email, displayName) via `updateProfile` mutation
+3. **Security**: Change password for improved security via `updatePassword` mutation
+4. **User Administration**: Maintain accurate user contact information
+5. **Account Removal**: Allow users to delete their account via `deleteAccount` mutation (requires password confirmation)

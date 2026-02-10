@@ -1,0 +1,223 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { AuthState, AuthTokens, LoginCredentials, RegisterData, User } from '@/types/auth';
+import * as authAPI from '@/lib/api/auth';
+import { setAuthToken, clearAuthToken } from '@/lib/graphql-client';
+
+interface AuthStore extends AuthState {
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshToken: () => Promise<void>;
+  validateSession: () => Promise<boolean>;
+  clearError: () => void;
+  setUser: (user: User | null) => void;
+}
+
+const REFRESH_BUFFER_MS = 5 * 60 * 1000; // Refresh 5 minutes before expiry
+
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      tokens: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+
+      login: async (credentials: LoginCredentials) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authAPI.login(credentials);
+
+          const tokens: AuthTokens = {
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresIn: response.expiresIn,
+            expiresAt: Date.now() + response.expiresIn * 1000,
+          };
+
+          setAuthToken(response.accessToken);
+
+          set({
+            user: response.user,
+            tokens,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Login failed';
+          set({
+            isLoading: false,
+            error: message,
+            isAuthenticated: false,
+          });
+          throw error;
+        }
+      },
+
+      register: async (data: RegisterData) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authAPI.register(data);
+
+          const tokens: AuthTokens = {
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresIn: response.expiresIn,
+            expiresAt: Date.now() + response.expiresIn * 1000,
+          };
+
+          setAuthToken(response.accessToken);
+
+          set({
+            user: response.user,
+            tokens,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Registration failed';
+          set({
+            isLoading: false,
+            error: message,
+            isAuthenticated: false,
+          });
+          throw error;
+        }
+      },
+
+      logout: async () => {
+        const { tokens } = get();
+
+        try {
+          if (tokens?.accessToken) {
+            await authAPI.logout(tokens.accessToken);
+          }
+        } catch (error) {
+          console.error('Logout API error:', error);
+        } finally {
+          clearAuthToken();
+          set({
+            user: null,
+            tokens: null,
+            isAuthenticated: false,
+            error: null,
+          });
+        }
+      },
+
+      refreshToken: async () => {
+        const { tokens } = get();
+
+        if (!tokens?.refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        try {
+          const response = await authAPI.refreshToken(tokens.refreshToken);
+
+          const newTokens: AuthTokens = {
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresIn: response.expiresIn,
+            expiresAt: Date.now() + response.expiresIn * 1000,
+          };
+
+          setAuthToken(response.accessToken);
+
+          set({
+            user: response.user,
+            tokens: newTokens,
+            isAuthenticated: true,
+            error: null,
+          });
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          await get().logout();
+          throw error;
+        }
+      },
+
+      validateSession: async () => {
+        const { tokens, isAuthenticated } = get();
+
+        if (!isAuthenticated || !tokens?.accessToken) {
+          return false;
+        }
+
+        // Check if token needs refresh
+        const timeUntilExpiry = tokens.expiresAt - Date.now();
+        if (timeUntilExpiry <= 0) {
+          // Token expired, try to refresh
+          try {
+            await get().refreshToken();
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
+        // Proactively refresh if close to expiry
+        if (timeUntilExpiry < REFRESH_BUFFER_MS) {
+          get().refreshToken().catch(console.error);
+        }
+
+        // Validate token with backend
+        try {
+          const isValid = await authAPI.validateToken(tokens.accessToken);
+          if (!isValid) {
+            await get().logout();
+            return false;
+          }
+          return true;
+        } catch {
+          return false;
+        }
+      },
+
+      clearError: () => set({ error: null }),
+
+      setUser: (user: User | null) => set({ user }),
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        tokens: state.tokens,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);
+
+// Auto-refresh token interval
+let refreshInterval: NodeJS.Timeout | null = null;
+
+export function startTokenRefresh() {
+  if (refreshInterval) return;
+
+  refreshInterval = setInterval(() => {
+    const { tokens, isAuthenticated, refreshToken } = useAuthStore.getState();
+
+    if (!isAuthenticated || !tokens) return;
+
+    const timeUntilExpiry = tokens.expiresAt - Date.now();
+
+    // Refresh if within buffer window
+    if (timeUntilExpiry < REFRESH_BUFFER_MS && timeUntilExpiry > 0) {
+      refreshToken().catch((error) => {
+        console.error('Auto-refresh failed:', error);
+      });
+    }
+  }, 60 * 1000); // Check every minute
+}
+
+export function stopTokenRefresh() {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
+}

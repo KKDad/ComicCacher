@@ -1,115 +1,283 @@
-# Update Endpoints Documentation
+# Batch Job / Update API Documentation
 
-The ComicCacher API provides endpoints for triggering comic updates to download the latest comic strips from their sources.
+> [!IMPORTANT]
+> **GraphQL-Only**: All comic update/batch job operations use GraphQL.
+> There are no REST endpoints for triggering updates.
 
-## Base Path
+## GraphQL Endpoint
 
-All update endpoints are under:
+**Endpoint:** `POST /graphql`
 
-```
-/api/v1
-```
-
-## Authentication
-
-Update operations can be configured to require authentication. If enabled, include a valid JWT token in the Authorization header:
+Update operations require authentication. Include a valid JWT token in the Authorization header:
 
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-## Endpoints
+---
 
-### Update All Comics
+## Mutations
 
-```
-GET /api/v1/update
-```
+### Trigger Batch Job
 
-Triggers an update for all configured comics, downloading the latest strips.
+Trigger a batch job for comic retrieval. Downloads the latest comic strips from configured sources.
 
-#### Response Format
-
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Comics update initiated successfully",
-  "data": "Update initiated for all comics"
+```graphql
+mutation TriggerBatchJob($jobName: String, $parameters: JSON) {
+  triggerBatchJob(jobName: $jobName, parameters: $parameters) {
+    id
+    jobName
+    status
+    startTime
+    endTime
+    parameters
+    steps {
+      stepName
+      status
+      startTime
+      endTime
+      recordsProcessed
+      errorMessage
+    }
+  }
 }
 ```
 
-### Update Specific Comic
-
-```
-GET /api/v1/update/{comicId}
-```
-
-Triggers an update for a specific comic, downloading the latest strip.
-
-#### Path Parameters
-
-| Parameter | Type    | Required | Description                           |
-|-----------|---------|----------|---------------------------------------|
-| comicId   | Integer | Yes      | The numeric ID of the comic to update |
-
-#### Response Format
-
+**Variables:**
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 200,
-  "message": "Comic update initiated successfully",
-  "data": "Update initiated for comic ID: 1"
+  "jobName": "dailyComicRetrieval",
+  "parameters": {
+    "targetDate": "2023-05-01",
+    "comicIds": [1, 2, 3]
+  }
 }
 ```
 
-## Error Responses
-
-### Update Failed (404)
-
+**Response:**
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 404,
-  "message": "Comic not found",
-  "data": null
+  "data": {
+    "triggerBatchJob": {
+      "id": "job-12345",
+      "jobName": "dailyComicRetrieval",
+      "status": "STARTED",
+      "startTime": "2023-05-01T10:15:30Z",
+      "endTime": null,
+      "parameters": {
+        "targetDate": "2023-05-01",
+        "comicIds": [1, 2, 3]
+      },
+      "steps": []
+    }
+  }
 }
 ```
 
-### Unauthorized (401)
+---
 
-If authentication is enabled and the request does not include a valid token, a 401 Unauthorized status code is returned.
+### Trigger Backfill Job
 
-```json
-{
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 401,
-  "message": "Authentication required",
-  "data": null
+Trigger a backfill job to retrieve missing comics from a date range.
+
+```graphql
+mutation TriggerBackfillJob($comicId: ID!, $startDate: Date!, $endDate: Date!) {
+  triggerBackfillJob(comicId: $comicId, startDate: $startDate, endDate: $endDate) {
+    id
+    jobName
+    status
+    startTime
+    parameters
+  }
 }
 ```
 
-### Internal Server Error (500)
-
-If an unexpected error occurs during the update process, a 500 Internal Server Error status code is returned.
-
+**Variables:**
 ```json
 {
-  "timestamp": "2023-05-01T10:15:30",
-  "status": 500,
-  "message": "An unexpected error occurred",
-  "data": null
+  "comicId": "1",
+  "startDate": "2023-04-01",
+  "endDate": "2023-04-30"
 }
 ```
 
-## Background Update Process
+**Response:**
+```json
+{
+  "data": {
+    "triggerBackfillJob": {
+      "id": "backfill-67890",
+      "jobName": "comicBackfill",
+      "status": "STARTED",
+      "startTime": "2023-05-01T10:20:00Z",
+      "parameters": {
+        "comicId": 1,
+        "startDate": "2023-04-01",
+        "endDate": "2023-04-30"
+      }
+    }
+  }
+}
+```
 
-In addition to these manual update endpoints, ComicCacher includes a daily scheduled update process that automatically downloads new comics. The schedule for this process can be configured in the application properties.
+---
 
-### Scheduled Updates Configuration
+## Queries
 
-The following properties control the scheduled updates:
+### Recent Batch Jobs
+
+Retrieve recent batch job executions.
+
+```graphql
+query GetRecentBatchJobs($limit: Int) {
+  recentBatchJobs(limit: $limit) {
+    id
+    jobName
+    status
+    startTime
+    endTime
+    parameters
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "limit": 10
+}
+```
+
+---
+
+### Batch Jobs by Date Range
+
+Retrieve batch jobs within a specific date range.
+
+```graphql
+query GetBatchJobsByDateRange($startDate: Date!, $endDate: Date!) {
+  batchJobsByDateRange(startDate: $startDate, endDate: $endDate) {
+    id
+    jobName
+    status
+    startTime
+    endTime
+    parameters
+  }
+}
+```
+
+---
+
+### Specific Batch Job
+
+Retrieve details of a specific batch job execution.
+
+```graphql
+query GetBatchJob($id: ID!) {
+  batchJob(id: $id) {
+    id
+    jobName
+    status
+    startTime
+    endTime
+    parameters
+    steps {
+      stepName
+      status
+      startTime
+      endTime
+      recordsProcessed
+      errorMessage
+    }
+  }
+}
+```
+
+---
+
+### Batch Job Summary
+
+Retrieve summary statistics for batch jobs.
+
+```graphql
+query GetBatchJobSummary($days: Int) {
+  batchJobSummary(days: $days) {
+    totalJobs
+    successfulJobs
+    failedJobs
+    averageDuration
+    dailyStats {
+      date
+      jobsRun
+      successRate
+    }
+  }
+}
+```
+
+---
+
+## Types
+
+### BatchJob
+
+| Field      | Type          | Description                                |
+|------------|---------------|--------------------------------------------|
+| id         | ID!           | Unique job execution ID                    |
+| jobName    | String!       | Name of the batch job                      |
+| status     | BatchStatus!  | Current status of the job                  |
+| startTime  | DateTime!     | When the job started                       |
+| endTime    | DateTime      | When the job completed (null if running)   |
+| parameters | JSON          | Job execution parameters                   |
+| steps      | [BatchStep!]! | Individual steps within the job            |
+
+### BatchStep
+
+| Field             | Type          | Description                          |
+|-------------------|---------------|--------------------------------------|
+| stepName          | String!       | Name of the batch step               |
+| status            | BatchStatus!  | Current status of the step           |
+| startTime         | DateTime!     | When the step started                |
+| endTime           | DateTime      | When the step completed              |
+| recordsProcessed  | Int           | Number of records processed          |
+| errorMessage      | String        | Error message if step failed         |
+
+### BatchStatus (Enum)
+
+| Value      | Description                     |
+|------------|---------------------------------|
+| PENDING    | Job is queued but not started   |
+| STARTED    | Job is currently running        |
+| COMPLETED  | Job completed successfully      |
+| FAILED     | Job failed with errors          |
+| STOPPED    | Job was manually stopped        |
+
+### BatchJobSummary
+
+| Field           | Type              | Description                        |
+|-----------------|-------------------|------------------------------------|
+| totalJobs       | Int!              | Total number of jobs               |
+| successfulJobs  | Int!              | Number of successful jobs          |
+| failedJobs      | Int!              | Number of failed jobs              |
+| averageDuration | Float             | Average job duration in ms         |
+| dailyStats      | [DailyJobStats!]! | Daily breakdown of job statistics  |
+
+### DailyJobStats
+
+| Field       | Type    | Description                        |
+|-------------|---------|------------------------------------|
+| date        | Date!   | Date of the stats                  |
+| jobsRun     | Int!    | Number of jobs run on this date    |
+| successRate | Float!  | Success rate percentage (0-100)    |
+
+---
+
+## Background Scheduled Updates
+
+ComicCacher includes a daily scheduled update process that automatically downloads new comics. The schedule is configured in the application properties.
+
+**Configuration Properties:**
 
 ```properties
 # Enable or disable scheduled updates
@@ -128,10 +296,51 @@ app.daily-runner.catch-up-enabled=true
 app.daily-runner.max-catch-up-days=7
 ```
 
+---
+
+## Error Handling
+
+GraphQL errors follow the standard format:
+
+### Job Not Found
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Batch job not found: job-12345",
+      "extensions": {
+        "classification": "NOT_FOUND"
+      }
+    }
+  ]
+}
+```
+
+### Job Execution Failed
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Failed to start batch job",
+      "extensions": {
+        "classification": "INTERNAL_ERROR"
+      }
+    }
+  ]
+}
+```
+
+---
+
 ## Use Cases
 
-1. **Manual Updates**: Trigger updates on demand for specific comics
+1. **Manual Updates**: Trigger updates on demand for specific comics via `triggerBatchJob` mutation
 2. **Batch Updates**: Update all comics in a single operation
-3. **Integration**: Allow external systems to trigger comic updates
-4. **Maintenance**: Refresh the comics cache after configuration changes
-5. **Troubleshooting**: Force an update when a specific comic fails to download automatically
+3. **Backfill Missing Data**: Retrieve missing comics for a date range via `triggerBackfillJob` mutation
+4. **Integration**: Allow external systems to trigger comic updates
+5. **Monitoring**: Track batch job status and history via `recentBatchJobs` and `batchJob` queries
+6. **Troubleshooting**: View job execution details and errors via `batchJob` query with steps

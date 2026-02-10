@@ -1,0 +1,79 @@
+# Dashboard queries for Comics Hub
+
+# Query for user preferences (favorites and last read dates)
+query GetUserPreferences {
+  preferences {
+    username
+    favoriteComics
+    displaySettings
+  }
+}
+
+# Query for comics list with pagination
+query GetComics($first: Int, $after: String) {
+  comics(first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        name
+        description
+        oldest
+        newest
+        avatarUrl
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Query for a single comic with its latest strip
+query GetComic($id: Int!) {
+  comic(id: $id) {
+    id
+    name
+    description
+    source
+    sourceIdentifier
+    oldest
+    newest
+    avatarUrl
+    lastStrip {
+      imageUrl
+      date
+    }
+    firstStrip {
+      imageUrl
+      date
+    }
+  }
+}
+
+# Query for a specific comic strip
+query GetComicStrip($comicId: Int!, $date: Date!) {
+  comic(id: $comicId) {
+    id
+    name
+    strip(date: $date) {
+      imageUrl
+      date
+    }
+  }
+}
+
+# Search comics
+query SearchComics($query: String!) {
+  search(query: $query) {
+    comics {
+      id
+      name
+      description
+    }
+  }
+}
