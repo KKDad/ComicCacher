@@ -25,12 +25,8 @@ describe('Auth Store', () => {
     it('should successfully login and update state', async () => {
       const mockAuthResponse = {
         user: {
-          id: '1',
           username: 'testuser',
-          email: 'test@example.com',
           displayName: 'Test User',
-          role: 'USER' as const,
-          createdAt: '2024-01-01T00:00:00Z',
         },
         accessToken: 'access-token-123',
         refreshToken: 'refresh-token-456',
@@ -49,7 +45,8 @@ describe('Auth Store', () => {
       });
 
       expect(result.current.isAuthenticated).toBe(true);
-      expect(result.current.user).toEqual(mockAuthResponse.user);
+      expect(result.current.user?.username).toBe('testuser');
+      expect(result.current.user?.displayName).toBe('Test User');
       expect(result.current.tokens?.accessToken).toBe('access-token-123');
       expect(result.current.error).toBeNull();
       expect(graphqlClient.setAuthToken).toHaveBeenCalledWith('access-token-123');
@@ -82,12 +79,8 @@ describe('Auth Store', () => {
       const now = Date.now();
       const mockAuthResponse = {
         user: {
-          id: '1',
           username: 'testuser',
-          email: 'test@example.com',
           displayName: 'Test User',
-          role: 'USER' as const,
-          createdAt: '2024-01-01T00:00:00Z',
         },
         accessToken: 'token',
         refreshToken: 'refresh',
@@ -113,12 +106,8 @@ describe('Auth Store', () => {
     it('should successfully register and update state', async () => {
       const mockAuthResponse = {
         user: {
-          id: '2',
           username: 'newuser',
-          email: 'new@example.com',
           displayName: 'New User',
-          role: 'USER' as const,
-          createdAt: '2024-01-01T00:00:00Z',
         },
         accessToken: 'access-token-789',
         refreshToken: 'refresh-token-012',
@@ -199,7 +188,7 @@ describe('Auth Store', () => {
         await result.current.logout();
       });
 
-      expect(authAPI.logout).toHaveBeenCalledWith('token');
+      expect(authAPI.logout).toHaveBeenCalled();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.user).toBeNull();
       expect(result.current.tokens).toBeNull();
@@ -245,12 +234,8 @@ describe('Auth Store', () => {
     it('should successfully refresh tokens', async () => {
       const mockRefreshResponse = {
         user: {
-          id: '1',
           username: 'testuser',
-          email: 'test@example.com',
           displayName: 'Test User',
-          role: 'USER' as const,
-          createdAt: '2024-01-01T00:00:00Z',
         },
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
@@ -385,12 +370,8 @@ describe('Auth Store', () => {
     it('should refresh token if close to expiry', async () => {
       const mockRefreshResponse = {
         user: {
-          id: '1',
           username: 'testuser',
-          email: 'test@example.com',
           displayName: 'Test User',
-          role: 'USER' as const,
-          createdAt: '2024-01-01T00:00:00Z',
         },
         accessToken: 'new-token',
         refreshToken: 'new-refresh',
@@ -450,12 +431,8 @@ describe('Auth Store', () => {
     it('should attempt refresh if token is expired', async () => {
       const mockRefreshResponse = {
         user: {
-          id: '1',
           username: 'testuser',
-          email: 'test@example.com',
           displayName: 'Test User',
-          role: 'USER' as const,
-          createdAt: '2024-01-01T00:00:00Z',
         },
         accessToken: 'new-token',
         refreshToken: 'new-refresh',

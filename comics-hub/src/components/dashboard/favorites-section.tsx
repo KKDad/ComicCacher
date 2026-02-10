@@ -5,11 +5,30 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FavoriteCard } from '@/components/comics/favorite-card';
+import { useGetUserPreferencesQuery, useGetComicsQuery } from '@/generated/graphql';
+import { useMemo } from 'react';
 
 export function FavoritesSection() {
-  // TODO: Replace with actual data from GraphQL
-  const isLoading = false;
-  const favorites: any[] = [];
+  // Fetch user preferences (contains favoriteComics array)
+  const { data: preferencesData, isLoading: preferencesLoading } = useGetUserPreferencesQuery();
+
+  // Fetch all comics (we'll filter to favorites)
+  const { data: comicsData, isLoading: comicsLoading } = useGetComicsQuery({
+    first: 100, // Fetch enough to cover all potential favorites
+  });
+
+  // Extract favorite comic IDs
+  const favoriteComicIds = preferencesData?.preferences?.favoriteComics || [];
+
+  // Filter comics to only favorites
+  const favorites = useMemo(() => {
+    if (!comicsData?.comics?.edges) return [];
+
+    const comicNodes = comicsData.comics.edges.map(edge => edge.node);
+    return comicNodes.filter(comic => favoriteComicIds.includes(comic.id));
+  }, [comicsData, favoriteComicIds]);
+
+  const isLoading = preferencesLoading || comicsLoading;
 
   if (isLoading) {
     return (

@@ -6,9 +6,8 @@ import { Badge } from '@/components/ui/badge';
 
 interface ComicTileProps {
   comic: {
-    id: string;
+    id: number;
     name: string;
-    slug: string;
     date: string;
     thumbnail?: string;
   };
@@ -21,7 +20,7 @@ export function ComicTile({ comic }: ComicTileProps) {
   });
 
   return (
-    <Link href={`/comics/${comic.slug}/${comic.date}`}>
+    <Link href={`/comics/${comic.id}/${comic.date}`}>
       <Card className="overflow-hidden hover:shadow-md transition-shadow group">
         <div className="aspect-[4/3] bg-canvas overflow-hidden">
           {comic.thumbnail ? (

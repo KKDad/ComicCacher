@@ -5,6 +5,10 @@ query GetUserPreferences {
   preferences {
     username
     favoriteComics
+    lastReadDates {
+      comicId
+      date
+    }
     displaySettings
   }
 }
@@ -21,6 +25,10 @@ query GetComics($first: Int, $after: String) {
         oldest
         newest
         avatarUrl
+        lastStrip {
+          imageUrl
+          date
+        }
       }
     }
     pageInfo {

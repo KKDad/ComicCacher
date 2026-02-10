@@ -1180,7 +1180,7 @@ export type GetMeQuery = { __typename?: 'Query', me?: { __typename?: 'User', use
 export type GetUserPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUserPreferencesQuery = { __typename?: 'Query', preferences?: { __typename?: 'UserPreference', username: string, favoriteComics: Array<number>, displaySettings?: any | null } | null };
+export type GetUserPreferencesQuery = { __typename?: 'Query', preferences?: { __typename?: 'UserPreference', username: string, favoriteComics: Array<number>, displaySettings?: any | null, lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } | null };
 
 export type GetComicsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1188,7 +1188,7 @@ export type GetComicsQueryVariables = Exact<{
 }>;
 
 
-export type GetComicsQuery = { __typename?: 'Query', comics: { __typename?: 'ComicConnection', totalCount: number, edges: Array<{ __typename?: 'ComicEdge', cursor: string, node: { __typename?: 'Comic', id: number, name: string, description?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetComicsQuery = { __typename?: 'Query', comics: { __typename?: 'ComicConnection', totalCount: number, edges: Array<{ __typename?: 'ComicEdge', cursor: string, node: { __typename?: 'Comic', id: number, name: string, description?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetComicQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -1231,9 +1231,11 @@ export const useLoginMutation = <
     >(options?: UseMutationOptions<LoginMutation, TError, LoginMutationVariables, TContext>) => {
     
     return useMutation<LoginMutation, TError, LoginMutationVariables, TContext>(
-      ['Login'],
-      (variables?: LoginMutationVariables) => fetcher<LoginMutation, LoginMutationVariables>(LoginDocument, variables)(),
-      options
+      {
+    mutationKey: ['Login'],
+    mutationFn: (variables?: LoginMutationVariables) => fetcher<LoginMutation, LoginMutationVariables>(LoginDocument, variables)(),
+    ...options
+  }
     )};
 
 export const RegisterDocument = `
@@ -1253,9 +1255,11 @@ export const useRegisterMutation = <
     >(options?: UseMutationOptions<RegisterMutation, TError, RegisterMutationVariables, TContext>) => {
     
     return useMutation<RegisterMutation, TError, RegisterMutationVariables, TContext>(
-      ['Register'],
-      (variables?: RegisterMutationVariables) => fetcher<RegisterMutation, RegisterMutationVariables>(RegisterDocument, variables)(),
-      options
+      {
+    mutationKey: ['Register'],
+    mutationFn: (variables?: RegisterMutationVariables) => fetcher<RegisterMutation, RegisterMutationVariables>(RegisterDocument, variables)(),
+    ...options
+  }
     )};
 
 export const RefreshTokenDocument = `
@@ -1275,9 +1279,11 @@ export const useRefreshTokenMutation = <
     >(options?: UseMutationOptions<RefreshTokenMutation, TError, RefreshTokenMutationVariables, TContext>) => {
     
     return useMutation<RefreshTokenMutation, TError, RefreshTokenMutationVariables, TContext>(
-      ['RefreshToken'],
-      (variables?: RefreshTokenMutationVariables) => fetcher<RefreshTokenMutation, RefreshTokenMutationVariables>(RefreshTokenDocument, variables)(),
-      options
+      {
+    mutationKey: ['RefreshToken'],
+    mutationFn: (variables?: RefreshTokenMutationVariables) => fetcher<RefreshTokenMutation, RefreshTokenMutationVariables>(RefreshTokenDocument, variables)(),
+    ...options
+  }
     )};
 
 export const ForgotPasswordDocument = `
@@ -1292,9 +1298,11 @@ export const useForgotPasswordMutation = <
     >(options?: UseMutationOptions<ForgotPasswordMutation, TError, ForgotPasswordMutationVariables, TContext>) => {
     
     return useMutation<ForgotPasswordMutation, TError, ForgotPasswordMutationVariables, TContext>(
-      ['ForgotPassword'],
-      (variables?: ForgotPasswordMutationVariables) => fetcher<ForgotPasswordMutation, ForgotPasswordMutationVariables>(ForgotPasswordDocument, variables)(),
-      options
+      {
+    mutationKey: ['ForgotPassword'],
+    mutationFn: (variables?: ForgotPasswordMutationVariables) => fetcher<ForgotPasswordMutation, ForgotPasswordMutationVariables>(ForgotPasswordDocument, variables)(),
+    ...options
+  }
     )};
 
 export const ResetPasswordDocument = `
@@ -1314,9 +1322,11 @@ export const useResetPasswordMutation = <
     >(options?: UseMutationOptions<ResetPasswordMutation, TError, ResetPasswordMutationVariables, TContext>) => {
     
     return useMutation<ResetPasswordMutation, TError, ResetPasswordMutationVariables, TContext>(
-      ['ResetPassword'],
-      (variables?: ResetPasswordMutationVariables) => fetcher<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument, variables)(),
-      options
+      {
+    mutationKey: ['ResetPassword'],
+    mutationFn: (variables?: ResetPasswordMutationVariables) => fetcher<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument, variables)(),
+    ...options
+  }
     )};
 
 export const ValidateTokenDocument = `
@@ -1330,13 +1340,15 @@ export const useValidateTokenQuery = <
       TError = unknown
     >(
       variables?: ValidateTokenQueryVariables,
-      options?: UseQueryOptions<ValidateTokenQuery, TError, TData>
+      options?: Omit<UseQueryOptions<ValidateTokenQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<ValidateTokenQuery, TError, TData>['queryKey'] }
     ) => {
     
     return useQuery<ValidateTokenQuery, TError, TData>(
-      variables === undefined ? ['ValidateToken'] : ['ValidateToken', variables],
-      fetcher<ValidateTokenQuery, ValidateTokenQueryVariables>(ValidateTokenDocument, variables),
-      options
+      {
+    queryKey: variables === undefined ? ['ValidateToken'] : ['ValidateToken', variables],
+    queryFn: fetcher<ValidateTokenQuery, ValidateTokenQueryVariables>(ValidateTokenDocument, variables),
+    ...options
+  }
     )};
 
 export const GetMeDocument = `
@@ -1357,13 +1369,15 @@ export const useGetMeQuery = <
       TError = unknown
     >(
       variables?: GetMeQueryVariables,
-      options?: UseQueryOptions<GetMeQuery, TError, TData>
+      options?: Omit<UseQueryOptions<GetMeQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetMeQuery, TError, TData>['queryKey'] }
     ) => {
     
     return useQuery<GetMeQuery, TError, TData>(
-      variables === undefined ? ['GetMe'] : ['GetMe', variables],
-      fetcher<GetMeQuery, GetMeQueryVariables>(GetMeDocument, variables),
-      options
+      {
+    queryKey: variables === undefined ? ['GetMe'] : ['GetMe', variables],
+    queryFn: fetcher<GetMeQuery, GetMeQueryVariables>(GetMeDocument, variables),
+    ...options
+  }
     )};
 
 export const GetUserPreferencesDocument = `
@@ -1371,6 +1385,10 @@ export const GetUserPreferencesDocument = `
   preferences {
     username
     favoriteComics
+    lastReadDates {
+      comicId
+      date
+    }
     displaySettings
   }
 }
@@ -1381,13 +1399,15 @@ export const useGetUserPreferencesQuery = <
       TError = unknown
     >(
       variables?: GetUserPreferencesQueryVariables,
-      options?: UseQueryOptions<GetUserPreferencesQuery, TError, TData>
+      options?: Omit<UseQueryOptions<GetUserPreferencesQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetUserPreferencesQuery, TError, TData>['queryKey'] }
     ) => {
     
     return useQuery<GetUserPreferencesQuery, TError, TData>(
-      variables === undefined ? ['GetUserPreferences'] : ['GetUserPreferences', variables],
-      fetcher<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>(GetUserPreferencesDocument, variables),
-      options
+      {
+    queryKey: variables === undefined ? ['GetUserPreferences'] : ['GetUserPreferences', variables],
+    queryFn: fetcher<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>(GetUserPreferencesDocument, variables),
+    ...options
+  }
     )};
 
 export const GetComicsDocument = `
@@ -1402,6 +1422,10 @@ export const GetComicsDocument = `
         oldest
         newest
         avatarUrl
+        lastStrip {
+          imageUrl
+          date
+        }
       }
     }
     pageInfo {
@@ -1420,13 +1444,15 @@ export const useGetComicsQuery = <
       TError = unknown
     >(
       variables?: GetComicsQueryVariables,
-      options?: UseQueryOptions<GetComicsQuery, TError, TData>
+      options?: Omit<UseQueryOptions<GetComicsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetComicsQuery, TError, TData>['queryKey'] }
     ) => {
     
     return useQuery<GetComicsQuery, TError, TData>(
-      variables === undefined ? ['GetComics'] : ['GetComics', variables],
-      fetcher<GetComicsQuery, GetComicsQueryVariables>(GetComicsDocument, variables),
-      options
+      {
+    queryKey: variables === undefined ? ['GetComics'] : ['GetComics', variables],
+    queryFn: fetcher<GetComicsQuery, GetComicsQueryVariables>(GetComicsDocument, variables),
+    ...options
+  }
     )};
 
 export const GetComicDocument = `
@@ -1457,13 +1483,15 @@ export const useGetComicQuery = <
       TError = unknown
     >(
       variables: GetComicQueryVariables,
-      options?: UseQueryOptions<GetComicQuery, TError, TData>
+      options?: Omit<UseQueryOptions<GetComicQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetComicQuery, TError, TData>['queryKey'] }
     ) => {
     
     return useQuery<GetComicQuery, TError, TData>(
-      ['GetComic', variables],
-      fetcher<GetComicQuery, GetComicQueryVariables>(GetComicDocument, variables),
-      options
+      {
+    queryKey: ['GetComic', variables],
+    queryFn: fetcher<GetComicQuery, GetComicQueryVariables>(GetComicDocument, variables),
+    ...options
+  }
     )};
 
 export const GetComicStripDocument = `
@@ -1484,13 +1512,15 @@ export const useGetComicStripQuery = <
       TError = unknown
     >(
       variables: GetComicStripQueryVariables,
-      options?: UseQueryOptions<GetComicStripQuery, TError, TData>
+      options?: Omit<UseQueryOptions<GetComicStripQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetComicStripQuery, TError, TData>['queryKey'] }
     ) => {
     
     return useQuery<GetComicStripQuery, TError, TData>(
-      ['GetComicStrip', variables],
-      fetcher<GetComicStripQuery, GetComicStripQueryVariables>(GetComicStripDocument, variables),
-      options
+      {
+    queryKey: ['GetComicStrip', variables],
+    queryFn: fetcher<GetComicStripQuery, GetComicStripQueryVariables>(GetComicStripDocument, variables),
+    ...options
+  }
     )};
 
 export const SearchComicsDocument = `
@@ -1510,11 +1540,13 @@ export const useSearchComicsQuery = <
       TError = unknown
     >(
       variables: SearchComicsQueryVariables,
-      options?: UseQueryOptions<SearchComicsQuery, TError, TData>
+      options?: Omit<UseQueryOptions<SearchComicsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<SearchComicsQuery, TError, TData>['queryKey'] }
     ) => {
     
     return useQuery<SearchComicsQuery, TError, TData>(
-      ['SearchComics', variables],
-      fetcher<SearchComicsQuery, SearchComicsQueryVariables>(SearchComicsDocument, variables),
-      options
+      {
+    queryKey: ['SearchComics', variables],
+    queryFn: fetcher<SearchComicsQuery, SearchComicsQueryVariables>(SearchComicsDocument, variables),
+    ...options
+  }
     )};

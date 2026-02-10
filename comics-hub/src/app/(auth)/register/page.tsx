@@ -59,7 +59,7 @@ export default function RegisterPage() {
         password: data.password,
       });
 
-      router.push('/');
+      router.push('/dashboard');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Registration failed';
       setErrorMessage(message);

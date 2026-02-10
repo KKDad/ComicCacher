@@ -39,8 +39,17 @@ export const useAuthStore = create<AuthStore>()(
 
           setAuthToken(response.accessToken);
 
+          // Map partial user data to full User type
+          const user: User = {
+            username: response.user.username,
+            displayName: response.user.displayName,
+            email: '', // Not provided by login response
+            roles: [], // Not provided by login response
+            created: new Date().toISOString(), // Not provided by login response
+          };
+
           set({
-            user: response.user,
+            user,
             tokens,
             isAuthenticated: true,
             isLoading: false,
@@ -71,8 +80,17 @@ export const useAuthStore = create<AuthStore>()(
 
           setAuthToken(response.accessToken);
 
+          // Map partial user data to full User type
+          const user: User = {
+            username: response.user.username,
+            displayName: response.user.displayName,
+            email: data.email, // Use email from registration data
+            roles: [], // Not provided by register response
+            created: new Date().toISOString(), // Not provided by register response
+          };
+
           set({
-            user: response.user,
+            user,
             tokens,
             isAuthenticated: true,
             isLoading: false,
@@ -90,12 +108,8 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
-        const { tokens } = get();
-
         try {
-          if (tokens?.accessToken) {
-            await authAPI.logout(tokens.accessToken);
-          }
+          await authAPI.logout();
         } catch (error) {
           console.error('Logout API error:', error);
         } finally {
@@ -110,7 +124,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       refreshToken: async () => {
-        const { tokens } = get();
+        const { tokens, user: currentUser } = get();
 
         if (!tokens?.refreshToken) {
           throw new Error('No refresh token available');
@@ -128,8 +142,17 @@ export const useAuthStore = create<AuthStore>()(
 
           setAuthToken(response.accessToken);
 
+          // Map partial user data to full User type, preserving existing data where possible
+          const user: User = {
+            username: response.user.username,
+            displayName: response.user.displayName,
+            email: currentUser?.email || '', // Preserve existing email
+            roles: currentUser?.roles || [], // Preserve existing roles
+            created: currentUser?.created || new Date().toISOString(), // Preserve existing created date
+          };
+
           set({
-            user: response.user,
+            user,
             tokens: newTokens,
             isAuthenticated: true,
             error: null,

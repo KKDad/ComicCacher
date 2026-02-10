@@ -51,4 +51,5 @@ export interface AuthResponse {
   };
   accessToken: string;
   refreshToken: string;
+  expiresIn: number; // seconds until token expiry
 }

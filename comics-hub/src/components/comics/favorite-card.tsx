@@ -5,9 +5,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface FavoriteCardProps {
   comic: {
-    id: string;
+    id: number;
     name: string;
-    slug: string;
   };
 }
 
@@ -21,7 +20,7 @@ export function FavoriteCard({ comic }: FavoriteCardProps) {
 
   return (
     <Link
-      href={`/comics/${comic.slug}`}
+      href={`/comics/${comic.id}`}
       className="flex-shrink-0 w-[140px] group"
     >
       <div className="space-y-2">

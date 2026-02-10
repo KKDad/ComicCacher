@@ -70,8 +70,30 @@ const VALIDATE_TOKEN_QUERY = gql`
   }
 `;
 
+// Helper to decode JWT and extract expiration time
+function getTokenExpiration(token: string): number {
+  try {
+    // JWT format: header.payload.signature
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload));
+
+    if (decoded.exp && decoded.iat) {
+      // Return seconds until expiration
+      return decoded.exp - decoded.iat;
+    }
+
+    // Fallback to 15 minutes if we can't decode
+    return 900;
+  } catch {
+    // Fallback to 15 minutes if decoding fails
+    return 900;
+  }
+}
+
 // Helper to map AuthPayload to AuthResponse
 function mapAuthPayload(payload: AuthPayload): AuthResponse {
+  const expiresIn = getTokenExpiration(payload.token);
+
   return {
     user: {
       username: payload.username,
@@ -79,6 +101,7 @@ function mapAuthPayload(payload: AuthPayload): AuthResponse {
     },
     accessToken: payload.token,
     refreshToken: payload.refreshToken,
+    expiresIn,
   };
 }
 

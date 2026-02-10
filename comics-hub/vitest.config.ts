@@ -18,6 +18,9 @@ export default defineConfig({
         '**/*.config.*',
         '**/mockData',
         'src/components/ui/**', // shadcn components
+        'src/generated/**', // Auto-generated GraphQL types
+        'src/types/**', // Type-only files
+        'src/proxy.ts', // Dev proxy utility
       ],
     },
   },

@@ -5,11 +5,42 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ComicTile } from '@/components/comics/comic-tile';
+import { useGetComicsQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
+import { useMemo } from 'react';
 
 export function TodaysComics() {
-  // TODO: Replace with actual data from GraphQL
-  const isLoading = false;
-  const comics: any[] = [];
+  // Fetch user preferences to see if we should filter to favorites
+  const { data: preferencesData } = useGetUserPreferencesQuery();
+  const favoriteComicIds = preferencesData?.preferences?.favoriteComics || [];
+
+  // Fetch all comics (or enough to cover favorites)
+  const { data: comicsData, isLoading } = useGetComicsQuery({
+    first: 100,
+  });
+
+  // Transform comics data to include today's strip
+  const comics = useMemo(() => {
+    if (!comicsData?.comics?.edges) return [];
+
+    const today = new Date().toISOString().split('T')[0];
+
+    return comicsData.comics.edges
+      .map(edge => edge.node)
+      .filter(comic => {
+        // Include if no favorites set, or if this comic is a favorite
+        return favoriteComicIds.length === 0 || favoriteComicIds.includes(comic.id);
+      })
+      .filter(comic => {
+        // Only include if there's a recent strip (assuming lastStrip is today's or recent)
+        return comic.lastStrip?.imageUrl;
+      })
+      .map(comic => ({
+        id: comic.id,
+        name: comic.name,
+        date: comic.lastStrip?.date || today,
+        thumbnail: comic.lastStrip?.imageUrl,
+      }));
+  }, [comicsData, favoriteComicIds]);
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
