@@ -8,11 +8,12 @@ export function useAuth() {
 
 export function useRequireAuth() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, validateSession } = useAuthStore();
+  const { isAuthenticated, isLoading, validateSession, _hasHydrated } = useAuthStore();
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (!isLoading) {
+      // Wait for hydration before checking
+      if (_hasHydrated && !isLoading) {
         const isValid = await validateSession();
         if (!isValid) {
           router.replace('/login');
@@ -21,7 +22,7 @@ export function useRequireAuth() {
     };
 
     checkAuth();
-  }, [isAuthenticated, isLoading, router, validateSession]);
+  }, [isAuthenticated, isLoading, _hasHydrated, router, validateSession]);
 
-  return { isAuthenticated, isLoading };
+  return { isAuthenticated, isLoading, _hasHydrated };
 }

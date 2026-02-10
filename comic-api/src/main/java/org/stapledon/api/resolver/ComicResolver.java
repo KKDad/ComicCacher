@@ -1,6 +1,7 @@
 package org.stapledon.api.resolver;
 
 import org.dataloader.DataLoader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
@@ -31,6 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 public class ComicResolver {
 
     private final ManagementFacade comicManagementFacade;
+
+    @Value("${app.external-base-url:}")
+    private String externalBaseUrl;
 
     // =========================================================================
     // Queries
@@ -126,7 +130,7 @@ public class ComicResolver {
     @SchemaMapping(typeName = "Comic", field = "avatarUrl")
     public String avatarUrl(ComicItem comic) {
         return comic.isAvatarAvailable()
-                ? "/api/v1/comics/" + comic.getId() + "/avatar"
+                ? externalBaseUrl + "/api/v1/comics/" + comic.getId() + "/avatar"
                 : null;
     }
 
@@ -255,7 +259,7 @@ public class ComicResolver {
             return null;
         }
         String imageUrl = result.getCurrentDate() != null
-                ? "/api/v1/comics/" + comicId + "/strip/" + result.getCurrentDate()
+                ? externalBaseUrl + "/api/v1/comics/" + comicId + "/strip/" + result.getCurrentDate()
                 : null;
 
         return new ComicStrip(

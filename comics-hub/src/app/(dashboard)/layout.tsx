@@ -12,10 +12,10 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoading } = useRequireAuth();
+  const { isLoading, _hasHydrated } = useRequireAuth();
   const { layout } = useResponsiveNav();
 
-  if (isLoading) {
+  if (!_hasHydrated || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-canvas">
         <div className="text-ink-subtle">Loading...</div>

@@ -3,8 +3,10 @@ import { persist } from 'zustand/middleware';
 import type { AuthState, AuthTokens, LoginCredentials, RegisterData, User } from '@/types/auth';
 import * as authAPI from '@/lib/api/auth';
 import { setAuthToken, clearAuthToken } from '@/lib/graphql-client';
+import Cookies from 'js-cookie';
 
 interface AuthStore extends AuthState {
+  _hasHydrated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -13,6 +15,17 @@ interface AuthStore extends AuthState {
   clearError: () => void;
   setUser: (user: User | null) => void;
 }
+
+// Helper to sync auth state to cookies for server-side middleware
+const syncAuthCookie = (isAuthenticated: boolean, tokens: AuthTokens | null) => {
+  if (isAuthenticated && tokens?.accessToken) {
+    Cookies.set('auth-storage', JSON.stringify({
+      state: { isAuthenticated: true, tokens }
+    }), { sameSite: 'lax' });
+  } else {
+    Cookies.remove('auth-storage');
+  }
+};
 
 const REFRESH_BUFFER_MS = 5 * 60 * 1000; // Refresh 5 minutes before expiry
 
@@ -24,6 +37,7 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      _hasHydrated: false,
 
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null });
@@ -55,6 +69,9 @@ export const useAuthStore = create<AuthStore>()(
             isLoading: false,
             error: null,
           });
+
+          // Sync to cookie for server-side middleware
+          syncAuthCookie(true, tokens);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Login failed';
           set({
@@ -96,6 +113,9 @@ export const useAuthStore = create<AuthStore>()(
             isLoading: false,
             error: null,
           });
+
+          // Sync to cookie for server-side middleware
+          syncAuthCookie(true, tokens);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Registration failed';
           set({
@@ -120,6 +140,9 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: false,
             error: null,
           });
+
+          // Remove auth cookie
+          syncAuthCookie(false, null);
         }
       },
 
@@ -157,6 +180,9 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: true,
             error: null,
           });
+
+          // Sync to cookie for server-side middleware
+          syncAuthCookie(true, newTokens);
         } catch (error) {
           console.error('Token refresh failed:', error);
           await get().logout();
@@ -212,6 +238,13 @@ export const useAuthStore = create<AuthStore>()(
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+          // Sync cookie on hydration
+          syncAuthCookie(state.isAuthenticated, state.tokens);
+        }
+      },
     }
   )
 );
