@@ -56,6 +56,12 @@ type Query {
     """
     comic(id: Int!): Comic
 
+    """
+    Get a comic strip directly by comic ID and date.
+    More efficient than querying comic.strip when you only need the strip.
+    """
+    strip(comicId: Int!, date: Date!): ComicStrip
+
     # =========================================================================
     # Search
     # =========================================================================
@@ -285,7 +291,7 @@ type Mutation {
     Create a new comic entry.
     Requires admin role.
     """
-    createComic(id: Int!, input: CreateComicInput!): Comic! @hasRole(role: "ADMIN")
+    createComic(input: CreateComicInput!): Comic! @hasRole(role: "ADMIN")
 
     """
     Update an existing comic's details.

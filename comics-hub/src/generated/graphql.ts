@@ -1195,7 +1195,7 @@ export type GetComicQueryVariables = Exact<{
 }>;
 
 
-export type GetComicQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, description?: string | null, source?: string | null, sourceIdentifier?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null, firstStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null } | null };
+export type GetComicQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, description?: string | null, author?: string | null, source?: string | null, sourceIdentifier?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null, firstStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null } | null };
 
 export type GetComicStripQueryVariables = Exact<{
   comicId: Scalars['Int']['input'];
@@ -1203,7 +1203,7 @@ export type GetComicStripQueryVariables = Exact<{
 }>;
 
 
-export type GetComicStripQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, strip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null } | null };
+export type GetComicStripQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, strip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any, previous?: { __typename?: 'ComicStrip', date: any } | null, next?: { __typename?: 'ComicStrip', date: any } | null } | null } | null };
 
 export type SearchComicsQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -1461,6 +1461,7 @@ export const GetComicDocument = `
     id
     name
     description
+    author
     source
     sourceIdentifier
     oldest
@@ -1502,6 +1503,12 @@ export const GetComicStripDocument = `
     strip(date: $date) {
       imageUrl
       date
+      previous {
+        date
+      }
+      next {
+        date
+      }
     }
   }
 }

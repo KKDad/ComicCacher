@@ -15,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.stapledon.common.config.CacheProperties;
@@ -24,6 +23,7 @@ import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.SaveResult;
 import org.stapledon.common.service.AnalysisService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.DuplicateValidationService;
@@ -56,10 +56,9 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     private final ComicIndexService comicIndexService;
 
     @Override
-    public boolean saveComicStrip(ComicIdentifier comic, LocalDate date, byte[] imageData) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        Objects.requireNonNull(date, "date cannot be null");
-        Objects.requireNonNull(imageData, "imageData cannot be null");
+    public SaveResult saveComicStripWithResult(@lombok.NonNull ComicIdentifier comic,
+                                               @lombok.NonNull LocalDate date,
+                                               @lombok.NonNull byte[] imageData) {
 
         // Validate image before saving
         ImageValidationResult validation = imageValidationService.validateWithMinDimensions(
@@ -68,7 +67,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         if (!validation.isValid()) {
             log.error("Refusing to save invalid comic strip for {} on {}: {}",
                     comic.getName(), date, validation.getErrorMessage());
-            return false;
+            return SaveResult.validationFailed(validation.getErrorMessage());
         }
 
         log.info("Saving validated {} image for {} on {}: {}x{} ({} bytes)",
@@ -82,7 +81,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         if (duplicateCheck.isDuplicate()) {
             log.warn("Skipping duplicate image for {} on {}, duplicate of {} (hash: {})",
                     comic.getName(), date, duplicateCheck.getDuplicateDate(), duplicateCheck.getHash());
-            return true; // Return true - download was successful, just didn't save
+            return SaveResult.duplicateSkipped(duplicateCheck.getDuplicateDate());
         }
 
         // Create directory structure if it doesn't exist
@@ -92,7 +91,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                         yearPath));
         if (!directory.exists() && !directory.mkdirs()) {
             log.error("Failed to create directory: {}", directory.getAbsolutePath());
-            return false;
+            return SaveResult.ioError("Failed to create directory: " + directory.getAbsolutePath());
         }
 
         // Create the file
@@ -103,16 +102,31 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             fos.write(imageData);
             log.info("Saved comic strip to: {}", file.getAbsolutePath());
 
-            // Add to hash cache after successful save
-            duplicateHashCacheService.addImageToCache(comic.getId(), comic.getName(), date, imageData,
-                    file.getAbsolutePath());
-
-            // Add to the persistent date index
-            comicIndexService.addDateToIndex(comic, date);
-
-            // After successfully saving the image, analyze and save metadata
+            // Add to hash cache after successful save (non-critical)
             try {
-                // Perform image analysis
+                duplicateHashCacheService.addImageToCache(comic.getId(), comic.getName(), date, imageData,
+                        file.getAbsolutePath());
+            } catch (Exception e) {
+                log.warn("Failed to update hash cache (non-critical): {}", e.getMessage());
+            }
+
+            // Add to the persistent date index - CRITICAL operation
+            log.info("Calling comicIndexService.addDateToIndex for comic {} (id={}) on date {}",
+                     comic.getName(), comic.getId(), date);
+            try {
+                comicIndexService.addDateToIndex(comic.getId(), comic.getName(), date);
+            } catch (Exception e) {
+                // Index update is CRITICAL - if it fails, the file becomes an orphan
+                // We should delete the file to maintain consistency
+                log.error("Index update failed for {} on {}, rolling back file write", comic.getName(), date, e);
+                if (!file.delete()) {
+                    log.error("CRITICAL: Failed to delete orphan file: {}", file.getAbsolutePath());
+                }
+                return SaveResult.ioError("Index update failed: " + e.getMessage());
+            }
+
+            // After successfully saving the image, analyze and save metadata (non-critical)
+            try {
                 ImageMetadata metadata = imageAnalysisService.analyzeImage(comic.getId(), comic.getName(), imageData,
                         file.getAbsolutePath(), validation, null);
                 boolean saved = imageMetadataRepository.saveMetadata(metadata);
@@ -124,21 +138,19 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                             comic.getName(), date);
                 }
             } catch (Exception e) {
-                // Log but don't fail the save operation if metadata capture fails
-                log.error("Exception while capturing metadata for comic strip {} on {}: {}",
-                        comic.getName(), date, e.getMessage(), e);
+                // Log but don't fail the save operation if metadata capture fails (non-critical)
+                log.warn("Failed to save metadata (non-critical): {}", e.getMessage());
             }
-            return true;
+
+            return SaveResult.saved();
         } catch (IOException e) {
-            log.error("Failed to save comic strip for {} on {}: {}", comic.getName(), date, e.getMessage());
-            return false;
+            log.error("Failed to write comic strip file for {} on {}: {}", comic.getName(), date, e.getMessage());
+            return SaveResult.ioError("File write failed: " + e.getMessage());
         }
     }
 
     @Override
-    public boolean saveAvatar(ComicIdentifier comic, byte[] imageData) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        Objects.requireNonNull(imageData, "imageData cannot be null");
+    public boolean saveAvatar(@lombok.NonNull ComicIdentifier comic, @lombok.NonNull byte[] imageData) {
 
         // Validate avatar image
         ImageValidationResult validation = imageValidationService.validate(imageData);
@@ -173,9 +185,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public Optional<ImageDto> getComicStrip(ComicIdentifier comic, LocalDate date) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        Objects.requireNonNull(date, "date cannot be null");
+    public Optional<ImageDto> getComicStrip(@lombok.NonNull ComicIdentifier comic, @lombok.NonNull LocalDate date) {
 
         // Check if the image exists in cache
         if (!comicStripExists(comic, date)) {
@@ -196,8 +206,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public Optional<ImageDto> getAvatar(ComicIdentifier comic) {
-        Objects.requireNonNull(comic, "comic cannot be null");
+    public Optional<ImageDto> getAvatar(@lombok.NonNull ComicIdentifier comic) {
 
         File file = new File(String.format("%s/%s/%s", getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName(), AVATAR_FILE));
@@ -216,35 +225,29 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public Optional<LocalDate> getNextDateWithComic(ComicIdentifier comic, LocalDate fromDate) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        Objects.requireNonNull(fromDate, "fromDate cannot be null");
-        return comicIndexService.getNextDate(comic, fromDate);
+    public Optional<LocalDate> getNextDateWithComic(@lombok.NonNull ComicIdentifier comic,
+                                                     @lombok.NonNull LocalDate fromDate) {
+        return comicIndexService.getNextDate(comic.getId(), comic.getName(), fromDate);
     }
 
     @Override
-    public Optional<LocalDate> getPreviousDateWithComic(ComicIdentifier comic, LocalDate fromDate) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        Objects.requireNonNull(fromDate, "fromDate cannot be null");
-        return comicIndexService.getPreviousDate(comic, fromDate);
+    public Optional<LocalDate> getPreviousDateWithComic(@lombok.NonNull ComicIdentifier comic,
+                                                         @lombok.NonNull LocalDate fromDate) {
+        return comicIndexService.getPreviousDate(comic.getId(), comic.getName(), fromDate);
     }
 
     @Override
-    public Optional<LocalDate> getNewestDateWithComic(ComicIdentifier comic) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        return comicIndexService.getNewestDate(comic);
+    public Optional<LocalDate> getNewestDateWithComic(@lombok.NonNull ComicIdentifier comic) {
+        return comicIndexService.getNewestDate(comic.getId(), comic.getName());
     }
 
     @Override
-    public Optional<LocalDate> getOldestDateWithComic(ComicIdentifier comic) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        return comicIndexService.getOldestDate(comic);
+    public Optional<LocalDate> getOldestDateWithComic(@lombok.NonNull ComicIdentifier comic) {
+        return comicIndexService.getOldestDate(comic.getId(), comic.getName());
     }
 
     @Override
-    public boolean comicStripExists(ComicIdentifier comic, LocalDate date) {
-        Objects.requireNonNull(comic, "comic cannot be null");
-        Objects.requireNonNull(date, "date cannot be null");
+    public boolean comicStripExists(@lombok.NonNull ComicIdentifier comic, @lombok.NonNull LocalDate date) {
 
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
@@ -255,8 +258,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public boolean deleteComic(ComicIdentifier comic) {
-        Objects.requireNonNull(comic, "comic cannot be null");
+    public boolean deleteComic(@lombok.NonNull ComicIdentifier comic) {
 
         File directory = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));
@@ -299,8 +301,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
      * retention policies change.
      */
     @Override
-    public boolean purgeOldImages(ComicIdentifier comic, int daysToKeep) {
-        Objects.requireNonNull(comic, "comic cannot be null");
+    public boolean purgeOldImages(@lombok.NonNull ComicIdentifier comic, int daysToKeep) {
 
         LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
         File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
@@ -337,7 +338,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                     if (comicDate.isBefore(cutoffDate)) {
                         if (comicFile.delete()) {
                             // Update the index to remove the deleted date
-                            comicIndexService.removeDateFromIndex(comic, comicDate);
+                            comicIndexService.removeDateFromIndex(comic.getId(), comic.getName(), comicDate);
                         } else {
                             log.error("Failed to delete old comic file: {}", comicFile.getAbsolutePath());
                             success = false;
@@ -367,14 +368,12 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public String getComicCacheRoot(ComicIdentifier comic) {
-        Objects.requireNonNull(comic, "comic cannot be null");
+    public String getComicCacheRoot(@lombok.NonNull ComicIdentifier comic) {
         return String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(), comic.getDirectoryName());
     }
 
     @Override
-    public List<String> getYearsWithContent(ComicIdentifier comic) {
-        Objects.requireNonNull(comic, "comic cannot be null");
+    public List<String> getYearsWithContent(@lombok.NonNull ComicIdentifier comic) {
 
         File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));
@@ -396,8 +395,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public long getStorageSize(ComicIdentifier comic) {
-        Objects.requireNonNull(comic, "comic cannot be null");
+    public long getStorageSize(@lombok.NonNull ComicIdentifier comic) {
 
         File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath().toString(),
                 comic.getDirectoryName()));

@@ -116,7 +116,6 @@ class BootstrapTest {
 
         // Then: active should be true
         ComicItem comic = comicConfig.getComics().get(0);
-        assertThat(comic.getActive()).isTrue();
         assertThat(comic.isActive()).isTrue();
     }
 
@@ -141,7 +140,6 @@ class BootstrapTest {
 
         // Then: active should be false
         ComicItem comic = comicConfig.getComics().get(0);
-        assertThat(comic.getActive()).isFalse();
         assertThat(comic.isActive()).isFalse();
     }
 
@@ -192,7 +190,7 @@ class BootstrapTest {
         ComicItem comic = comicConfig.getComics().get(0);
         assertThat(comic.getSourceIdentifier()).isEqualTo("foxtrot");
         assertThat(comic.getPublicationDays()).containsExactly(DayOfWeek.SUNDAY);
-        assertThat(comic.getActive()).isTrue();
+        assertThat(comic.isActive()).isTrue();
     }
 
     @Test

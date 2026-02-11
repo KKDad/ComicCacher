@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
@@ -11,6 +12,7 @@ import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.StripLoaderKey;
 import org.stapledon.common.util.Direction;
 
 /**
@@ -81,6 +83,28 @@ public interface ManagementFacade {
      * requested.
      */
     Optional<ImageDto> getComicStripOnDate(String comicName, LocalDate date);
+
+    /**
+     * Gets a comic strip for the specified comic on the exact date requested,
+     * including navigation boundaries (previous/next dates).
+     * This differs from getComicStripOnDate which returns only the image data
+     * without navigation information.
+     *
+     * @param comicId The comic ID
+     * @param date The exact date to retrieve the strip for
+     * @return ComicNavigationResult with image data and navigation boundaries
+     */
+    ComicNavigationResult getComicStripWithNavigation(int comicId, LocalDate date);
+
+    /**
+     * Batch loads comic strips with navigation info for multiple keys.
+     * More efficient than individual calls when loading multiple strips.
+     * This method groups requests by comic and processes them efficiently.
+     *
+     * @param keys Set of strip loader keys to batch load
+     * @return Map of keys to their corresponding navigation results
+     */
+    Map<StripLoaderKey, ComicNavigationResult> getComicStripsWithNavigation(Set<StripLoaderKey> keys);
 
     /**
      * Gets the avatar image for the specified comic.

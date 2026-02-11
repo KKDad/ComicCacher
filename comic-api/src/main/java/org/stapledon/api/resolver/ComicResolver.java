@@ -7,16 +7,20 @@ import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
-import org.stapledon.api.resolver.dataloader.StripLoaderKey;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.StripLoaderKey;
+import org.stapledon.common.dto.StripLoaderKey.DateStripKey;
+import org.stapledon.common.dto.StripLoaderKey.BoundaryStripKey;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.model.ComicNotFoundException;
+import org.stapledon.common.model.ComicOperationException;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -106,6 +110,25 @@ public class ComicResolver {
     }
 
     /**
+     * Get a comic strip directly by comic ID and date.
+     * More efficient than querying comic.strip when you only need the strip.
+     */
+    @QueryMapping
+    public CompletableFuture<ComicStrip> strip(
+            @Argument int comicId,
+            @Argument LocalDate date,
+            DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
+
+        return comicManagementFacade.getComic(comicId)
+                .map(comic -> {
+                    StripLoaderKey key = new DateStripKey(comicId, comic.getName(), date);
+                    return stripLoader.load(key)
+                            .thenApply(result -> toComicStrip(comicId, result));
+                })
+                .orElse(CompletableFuture.completedFuture(null));
+    }
+
+    /**
      * Search comics by query string.
      */
     @QueryMapping
@@ -149,7 +172,7 @@ public class ComicResolver {
             return CompletableFuture.completedFuture(null);
         }
 
-        StripLoaderKey key = new StripLoaderKey(
+        StripLoaderKey key = new DateStripKey(
                 comic.getId(),
                 comic.getName(),
                 targetDate);
@@ -160,22 +183,28 @@ public class ComicResolver {
 
     /**
      * Resolve firstStrip field for Comic type.
+     * Uses DataLoader for efficient batching when multiple comics are queried.
      */
     @SchemaMapping(typeName = "Comic", field = "firstStrip")
-    public ComicStrip firstStrip(ComicItem comic) {
-        ComicNavigationResult result = comicManagementFacade.getComicStrip(
-                comic.getId(), Direction.FORWARD);
-        return toComicStrip(comic.getId(), result);
+    public CompletableFuture<ComicStrip> firstStrip(
+            ComicItem comic,
+            DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
+        StripLoaderKey key = BoundaryStripKey.first(comic.getId(), comic.getName());
+        return stripLoader.load(key)
+                .thenApply(result -> toComicStrip(comic.getId(), result));
     }
 
     /**
      * Resolve lastStrip field for Comic type.
+     * Uses DataLoader for efficient batching when multiple comics are queried.
      */
     @SchemaMapping(typeName = "Comic", field = "lastStrip")
-    public ComicStrip lastStrip(ComicItem comic) {
-        ComicNavigationResult result = comicManagementFacade.getComicStrip(
-                comic.getId(), Direction.BACKWARD);
-        return toComicStrip(comic.getId(), result);
+    public CompletableFuture<ComicStrip> lastStrip(
+            ComicItem comic,
+            DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
+        StripLoaderKey key = BoundaryStripKey.last(comic.getId(), comic.getName());
+        return stripLoader.load(key)
+                .thenApply(result -> toComicStrip(comic.getId(), result));
     }
 
     // =========================================================================
@@ -191,13 +220,13 @@ public class ComicResolver {
                 .name(input.name())
                 .author(input.author())
                 .description(input.description())
-                .enabled(input.enabled() != null ? input.enabled() : true)
+                .enabled(Optional.ofNullable(input.enabled()).orElse(true))
                 .source(input.source())
                 .sourceIdentifier(input.sourceIdentifier())
                 .build();
 
         return comicManagementFacade.createComic(newComic)
-                .orElseThrow(() -> new RuntimeException("Failed to create comic"));
+                .orElseThrow(ComicOperationException::createFailed);
     }
 
     /**
@@ -208,22 +237,17 @@ public class ComicResolver {
         ComicItem existing = comicManagementFacade.getComic(id)
                 .orElseThrow(() -> new ComicNotFoundException(id));
 
-        ComicItem updated = ComicItem.builder()
-                .id(id)
-                .name(input.name() != null ? input.name() : existing.getName())
-                .author(input.author() != null ? input.author() : existing.getAuthor())
-                .description(input.description() != null ? input.description() : existing.getDescription())
-                .enabled(input.enabled() != null ? input.enabled() : existing.isEnabled())
-                .source(input.source() != null ? input.source() : existing.getSource())
-                .sourceIdentifier(
-                        input.sourceIdentifier() != null ? input.sourceIdentifier() : existing.getSourceIdentifier())
-                .oldest(existing.getOldest())
-                .newest(existing.getNewest())
-                .avatarAvailable(existing.isAvatarAvailable())
-                .build();
+        ComicItem.ComicItemBuilder builder = existing.toBuilder().id(id);
+        Optional.ofNullable(input.name()).ifPresent(builder::name);
+        Optional.ofNullable(input.author()).ifPresent(builder::author);
+        Optional.ofNullable(input.description()).ifPresent(builder::description);
+        Optional.ofNullable(input.enabled()).ifPresent(builder::enabled);
+        Optional.ofNullable(input.source()).ifPresent(builder::source);
+        Optional.ofNullable(input.sourceIdentifier()).ifPresent(builder::sourceIdentifier);
+        ComicItem updated = builder.build();
 
         return comicManagementFacade.updateComic(id, updated)
-                .orElseThrow(() -> new RuntimeException("Failed to update comic"));
+                .orElseThrow(() -> ComicOperationException.updateFailed(id));
     }
 
     /**
@@ -240,17 +264,26 @@ public class ComicResolver {
 
     private boolean matchesSearch(ComicItem comic, String query) {
         String lowerQuery = query.toLowerCase();
-        return (comic.getName() != null && comic.getName().toLowerCase().contains(lowerQuery))
-                || (comic.getAuthor() != null && comic.getAuthor().toLowerCase().contains(lowerQuery))
-                || (comic.getDescription() != null && comic.getDescription().toLowerCase().contains(lowerQuery));
+        return Optional.ofNullable(comic.getName())
+                       .map(String::toLowerCase)
+                       .map(s -> s.contains(lowerQuery))
+                       .orElse(false)
+            || Optional.ofNullable(comic.getAuthor())
+                       .map(String::toLowerCase)
+                       .map(s -> s.contains(lowerQuery))
+                       .orElse(false)
+            || Optional.ofNullable(comic.getDescription())
+                       .map(String::toLowerCase)
+                       .map(s -> s.contains(lowerQuery))
+                       .orElse(false);
     }
 
     private String encodeCursor(int id) {
-        return Base64.getEncoder().encodeToString(("comic:" + id).getBytes());
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(("comic:" + id).getBytes());
     }
 
     private int decodeCursor(String cursor) {
-        String decoded = new String(Base64.getDecoder().decode(cursor));
+        String decoded = new String(Base64.getUrlDecoder().decode(cursor));
         return Integer.parseInt(decoded.replace("comic:", ""));
     }
 

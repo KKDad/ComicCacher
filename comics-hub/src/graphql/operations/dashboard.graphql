@@ -47,6 +47,7 @@ query GetComic($id: Int!) {
     id
     name
     description
+    author
     source
     sourceIdentifier
     oldest
@@ -64,12 +65,15 @@ query GetComic($id: Int!) {
 }
 
 # Query for a specific comic strip
+# Uses the direct strip query for better performance
 query GetComicStrip($comicId: Int!, $date: Date!) {
-  comic(id: $comicId) {
-    id
-    name
-    strip(date: $date) {
-      imageUrl
+  strip(comicId: $comicId, date: $date) {
+    imageUrl
+    date
+    previous {
+      date
+    }
+    next {
       date
     }
   }
