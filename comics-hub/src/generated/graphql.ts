@@ -1,4 +1,5 @@
 import { useMutation, useQuery, UseMutationOptions, UseQueryOptions } from '@tanstack/react-query';
+import { fetcher } from '../lib/graphql-client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -6,26 +7,6 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: 
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
 export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-
-function fetcher<TData, TVariables>(query: string, variables?: TVariables) {
-  return async (): Promise<TData> => {
-    const res = await fetch("http://10.0.0.47:8087/graphql", {
-    method: "POST",
-    ...({"headers":{"Content-Type":"application/json"}}),
-      body: JSON.stringify({ query, variables }),
-    });
-
-    const json = await res.json();
-
-    if (json.errors) {
-      const { message } = json.errors[0];
-
-      throw new Error(message);
-    }
-
-    return json.data;
-  }
-}
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: { input: string; output: string; }
@@ -575,7 +556,6 @@ export type MutationAddFavoriteArgs = {
  *  -----------------------------------------------------------------------------
  */
 export type MutationCreateComicArgs = {
-  id: Scalars['Int']['input'];
   input: CreateComicInput;
 };
 
@@ -804,6 +784,11 @@ export type Query = {
   /** Get storage metrics for the comic cache. */
   storageMetrics?: Maybe<StorageMetrics>;
   /**
+   * Get a comic strip directly by comic ID and date.
+   * More efficient than querying comic.strip when you only need the strip.
+   */
+  strip?: Maybe<ComicStrip>;
+  /**
    * Validate the current JWT token from Authorization header.
    * Returns true if the token is valid, false otherwise.
    */
@@ -940,6 +925,17 @@ export type QueryRetrievalSummaryArgs = {
 export type QuerySearchArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   query: Scalars['String']['input'];
+};
+
+
+/**
+ *  -----------------------------------------------------------------------------
+ *  Root Query Type
+ *  -----------------------------------------------------------------------------
+ */
+export type QueryStripArgs = {
+  comicId: Scalars['Int']['input'];
+  date: Scalars['Date']['input'];
 };
 
 /** Input for new user registration. */
@@ -1203,7 +1199,7 @@ export type GetComicStripQueryVariables = Exact<{
 }>;
 
 
-export type GetComicStripQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, strip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any, previous?: { __typename?: 'ComicStrip', date: any } | null, next?: { __typename?: 'ComicStrip', date: any } | null } | null } | null };
+export type GetComicStripQuery = { __typename?: 'Query', strip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any, previous?: { __typename?: 'ComicStrip', date: any } | null, next?: { __typename?: 'ComicStrip', date: any } | null } | null };
 
 export type SearchComicsQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -1497,18 +1493,14 @@ export const useGetComicQuery = <
 
 export const GetComicStripDocument = `
     query GetComicStrip($comicId: Int!, $date: Date!) {
-  comic(id: $comicId) {
-    id
-    name
-    strip(date: $date) {
-      imageUrl
+  strip(comicId: $comicId, date: $date) {
+    imageUrl
+    date
+    previous {
       date
-      previous {
-        date
-      }
-      next {
-        date
-      }
+    }
+    next {
+      date
     }
   }
 }

@@ -8,8 +8,4 @@ generates:
       - typescript-react-query
     config:
       reactQueryVersion: 5
-      fetcher:
-        endpoint: 'http://10.0.0.47:8087/graphql'
-        fetchParams:
-          headers:
-            Content-Type: application/json
+      fetcher: '../lib/graphql-client#fetcher'

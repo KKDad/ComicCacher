@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useGetComicStripQuery } from '@/generated/graphql';
+import { useGetComicStripQuery, useGetComicQuery } from '@/generated/graphql';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,10 +14,17 @@ export default function ComicStripPage() {
   const comicId = parseInt(params.id as string);
   const date = params.date as string;
 
-  const { data, isLoading, error } = useGetComicStripQuery({
+  const { data: stripData, isLoading: stripLoading, error: stripError } = useGetComicStripQuery({
     comicId,
     date,
   });
+
+  const { data: comicData } = useGetComicQuery({ id: comicId });
+
+  const isLoading = stripLoading;
+  const error = stripError;
+  const comicName = comicData?.comic?.name ?? '';
+  const strip = stripData?.strip;
 
   if (isLoading) {
     return (
@@ -36,7 +43,7 @@ export default function ComicStripPage() {
     );
   }
 
-  if (error || !data?.comic) {
+  if (error || !strip) {
     return (
       <div className="space-y-6">
         <Card>
@@ -49,10 +56,7 @@ export default function ComicStripPage() {
     );
   }
 
-  const comic = data.comic;
-  const strip = comic.strip;
-
-  if (!strip?.imageUrl) {
+  if (!strip.imageUrl) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -61,7 +65,7 @@ export default function ComicStripPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-ink">{comic.name}</h1>
+          <h1 className="text-2xl font-bold text-ink">{comicName}</h1>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
@@ -91,7 +95,7 @@ export default function ComicStripPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-ink">{comic.name}</h1>
+          <h1 className="text-2xl font-bold text-ink">{comicName}</h1>
           <p className="text-sm text-ink-subtle">{formattedDate}</p>
         </div>
       </div>
@@ -101,7 +105,7 @@ export default function ComicStripPage() {
           <div className="bg-canvas rounded-lg mb-6 overflow-hidden">
             <img
               src={strip.imageUrl}
-              alt={`${comic.name} - ${formattedDate}`}
+              alt={`${comicName} - ${formattedDate}`}
               className="w-full h-auto"
             />
           </div>

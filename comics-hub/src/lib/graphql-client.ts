@@ -22,3 +22,7 @@ export function setAuthToken(token: string) {
 export function clearAuthToken() {
   graphqlClient.setHeader('Authorization', '');
 }
+
+export function fetcher<TData, TVariables>(query: string, variables?: TVariables): () => Promise<TData> {
+  return () => graphqlClient.request<TData>(query, variables as Record<string, unknown>);
+}
