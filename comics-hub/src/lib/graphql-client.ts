@@ -8,11 +8,19 @@ export const graphqlClient = new GraphQLClient(GRAPHQL_ENDPOINT, {
   },
 });
 
-export function getAuthHeaders(token?: string | null) {
-  if (!token) return {};
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+// Read the persisted auth token directly from localStorage at request time.
+// This avoids any timing dependency on setAuthToken() being called before
+// queries fire, and survives page refreshes automatically.
+function getPersistedToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('auth-storage');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.state?.tokens?.accessToken ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function setAuthToken(token: string) {
@@ -24,5 +32,9 @@ export function clearAuthToken() {
 }
 
 export function fetcher<TData, TVariables>(query: string, variables?: TVariables): () => Promise<TData> {
-  return () => graphqlClient.request<TData>(query, variables as Record<string, unknown>);
+  return () => {
+    const token = getPersistedToken();
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : undefined;
+    return graphqlClient.request<TData>(query, variables as Record<string, unknown>, authHeaders);
+  };
 }

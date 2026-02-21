@@ -183,17 +183,11 @@ export async function logout(): Promise<void> {
 
 export async function validateToken(accessToken: string): Promise<boolean> {
   try {
-    // Temporarily set the token for validation
-    const originalHeaders = graphqlClient.requestConfig.headers;
-    graphqlClient.setHeader('Authorization', `Bearer ${accessToken}`);
-
     const response = await graphqlClient.request<{ validateToken: boolean }>(
-      VALIDATE_TOKEN_QUERY
+      VALIDATE_TOKEN_QUERY,
+      undefined,
+      { Authorization: `Bearer ${accessToken}` }
     );
-
-    // Restore original headers
-    graphqlClient.requestConfig.headers = originalHeaders;
-
     return response.validateToken;
   } catch {
     return false;
