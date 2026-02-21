@@ -241,7 +241,11 @@ export const useAuthStore = create<AuthStore>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state._hasHydrated = true;
-          // Sync cookie on hydration
+          // Restore token to GraphQL client immediately on hydration so
+          // queries fired before AuthProvider's useEffect have the token.
+          if (state.isAuthenticated && state.tokens?.accessToken) {
+            setAuthToken(state.tokens.accessToken);
+          }
           syncAuthCookie(state.isAuthenticated, state.tokens);
         }
       },
