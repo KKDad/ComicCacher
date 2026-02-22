@@ -7,6 +7,7 @@ import Cookies from 'js-cookie';
 
 interface AuthStore extends AuthState {
   _hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -38,6 +39,7 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       error: null,
       _hasHydrated: false,
+      setHasHydrated: (value: boolean) => set({ _hasHydrated: value }),
 
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null });
@@ -240,13 +242,15 @@ export const useAuthStore = create<AuthStore>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          state._hasHydrated = true;
           // Restore token to GraphQL client immediately on hydration so
           // queries fired before AuthProvider's useEffect have the token.
           if (state.isAuthenticated && state.tokens?.accessToken) {
             setAuthToken(state.tokens.accessToken);
           }
           syncAuthCookie(state.isAuthenticated, state.tokens);
+          // Must call set() via the action — direct mutation (`state._hasHydrated = true`)
+          // happens after Zustand already notified subscribers, so React never sees it.
+          state.setHasHydrated(true);
         }
       },
     }
