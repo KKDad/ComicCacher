@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -16,8 +14,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ErrorBanner } from '@/components/auth/error-banner';
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const { register: registerUser, clearError } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -46,25 +42,11 @@ export default function RegisterPage() {
     watchedFields.password &&
     watchedFields.confirmPassword;
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (_data: RegisterFormData) => {
     setIsSubmitting(true);
     setErrorMessage(null);
-    clearError();
-
-    try {
-      await registerUser({
-        username: data.username,
-        email: data.email,
-        displayName: data.displayName,
-        password: data.password,
-      });
-
-      router.push('/dashboard');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Registration failed';
-      setErrorMessage(message);
-      setIsSubmitting(false);
-    }
+    // TODO: wire up auth register
+    setIsSubmitting(false);
   };
 
   return (

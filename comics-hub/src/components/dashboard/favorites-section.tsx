@@ -5,31 +5,19 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FavoriteCard } from '@/components/comics/favorite-card';
-import { useGetUserPreferencesQuery, useGetComicsQuery } from '@/generated/graphql';
-import { useMemo } from 'react';
 
-export function FavoritesSection() {
-  // Fetch user preferences (contains favoriteComics array)
-  const { data: preferencesData, isLoading: preferencesLoading } = useGetUserPreferencesQuery();
+interface FavoriteComic {
+  id: number;
+  name: string;
+  avatarUrl?: string | null;
+}
 
-  // Fetch all comics (we'll filter to favorites)
-  const { data: comicsData, isLoading: comicsLoading } = useGetComicsQuery({
-    first: 100, // Fetch enough to cover all potential favorites
-  });
+interface FavoritesSectionProps {
+  favorites?: FavoriteComic[] | null;
+  isLoading?: boolean;
+}
 
-  // Extract favorite comic IDs
-  const favoriteComicIds = preferencesData?.preferences?.favoriteComics || [];
-
-  // Filter comics to only favorites
-  const favorites = useMemo(() => {
-    if (!comicsData?.comics?.edges) return [];
-
-    const comicNodes = comicsData.comics.edges.map(edge => edge.node);
-    return comicNodes.filter(comic => favoriteComicIds.includes(comic.id));
-  }, [comicsData, favoriteComicIds]);
-
-  const isLoading = preferencesLoading || comicsLoading;
-
+export function FavoritesSection({ favorites = null, isLoading = false }: FavoritesSectionProps) {
   if (isLoading) {
     return (
       <section>
@@ -46,7 +34,7 @@ export function FavoritesSection() {
     );
   }
 
-  if (favorites.length === 0) {
+  if (!favorites || favorites.length === 0) {
     return (
       <section>
         <h2 className="text-xl font-semibold mb-4 text-ink">Your Favorites</h2>
@@ -68,7 +56,7 @@ export function FavoritesSection() {
     <section>
       <h2 className="text-xl font-semibold mb-4 text-ink">Your Favorites</h2>
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
-        {favorites.map((comic: any) => (
+        {favorites.map((comic) => (
           <FavoriteCard key={comic.id} comic={comic} />
         ))}
       </div>

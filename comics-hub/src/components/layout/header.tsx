@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/use-auth';
 import { useSidebarStore } from '@/stores/sidebar-store';
 
 interface HeaderProps {
@@ -20,17 +19,10 @@ interface HeaderProps {
 }
 
 export function Header({ showMenuButton = false }: HeaderProps) {
-  const { user, logout } = useAuth();
   const { toggle } = useSidebarStore();
 
-  const initials = user?.displayName
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U';
-
   const handleLogout = async () => {
-    await logout();
+    // TODO: wire up auth logout
   };
 
   return (
@@ -90,7 +82,7 @@ export function Header({ showMenuButton = false }: HeaderProps) {
               <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary text-primary-foreground">
-                    {initials}
+                    U
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -98,8 +90,8 @@ export function Header({ showMenuButton = false }: HeaderProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user?.displayName}</p>
-                  <p className="text-xs text-ink-muted">@{user?.username}</p>
+                  <p className="text-sm font-medium">—</p>
+                  <p className="text-xs text-ink-muted">—</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

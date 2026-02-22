@@ -5,43 +5,20 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ComicTile } from '@/components/comics/comic-tile';
-import { useGetComicsQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
-import { useMemo } from 'react';
 
-export function TodaysComics() {
-  // Fetch user preferences to see if we should filter to favorites
-  const { data: preferencesData } = useGetUserPreferencesQuery();
-  const favoriteComicIds = preferencesData?.preferences?.favoriteComics || [];
+interface TodaysComic {
+  id: number;
+  name: string;
+  date: string;
+  thumbnail?: string;
+}
 
-  // Fetch all comics (or enough to cover favorites)
-  const { data: comicsData, isLoading } = useGetComicsQuery({
-    first: 100,
-  });
+interface TodaysComicsProps {
+  comics?: TodaysComic[] | null;
+  isLoading?: boolean;
+}
 
-  // Transform comics data to include today's strip
-  const comics = useMemo(() => {
-    if (!comicsData?.comics?.edges) return [];
-
-    const today = new Date().toISOString().split('T')[0];
-
-    return comicsData.comics.edges
-      .map(edge => edge.node)
-      .filter(comic => {
-        // Include if no favorites set, or if this comic is a favorite
-        return favoriteComicIds.length === 0 || favoriteComicIds.includes(comic.id);
-      })
-      .filter(comic => {
-        // Only include if there's a recent strip (assuming lastStrip is today's or recent)
-        return comic.lastStrip?.imageUrl;
-      })
-      .map(comic => ({
-        id: comic.id,
-        name: comic.name,
-        date: comic.lastStrip?.date || today,
-        thumbnail: comic.lastStrip?.imageUrl,
-      }));
-  }, [comicsData, favoriteComicIds]);
-
+export function TodaysComics({ comics = null, isLoading = false }: TodaysComicsProps) {
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -73,7 +50,7 @@ export function TodaysComics() {
     );
   }
 
-  if (comics.length === 0) {
+  if (!comics || comics.length === 0) {
     return (
       <section>
         <div className="flex items-center justify-between mb-4">
@@ -108,7 +85,7 @@ export function TodaysComics() {
         </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {comics.map((comic: any) => (
+        {comics.map((comic) => (
           <ComicTile key={comic.id} comic={comic} />
         ))}
       </div>

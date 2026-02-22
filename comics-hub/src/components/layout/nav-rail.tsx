@@ -19,7 +19,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -32,10 +31,9 @@ const navItems = [
 
 export function NavRail() {
   const pathname = usePathname();
-  const { logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
+    // TODO: wire up auth logout
   };
 
   return (

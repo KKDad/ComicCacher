@@ -1,6 +1,5 @@
 'use client';
 
-import { useRequireAuth } from '@/hooks/use-auth';
 import { useResponsiveNav } from '@/hooks/use-responsive-nav';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -12,16 +11,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoading, _hasHydrated } = useRequireAuth();
   const { layout } = useResponsiveNav();
-
-  if (!_hasHydrated || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-canvas">
-        <div className="text-ink-subtle">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-canvas">

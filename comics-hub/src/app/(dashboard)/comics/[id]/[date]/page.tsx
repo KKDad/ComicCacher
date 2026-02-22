@@ -1,30 +1,37 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useGetComicStripQuery, useGetComicQuery } from '@/generated/graphql';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ComicStripPage() {
+interface StripNav {
+  date: string;
+}
+
+interface Strip {
+  date: string;
+  imageUrl?: string | null;
+  previous?: StripNav | null;
+  next?: StripNav | null;
+}
+
+interface ComicStripPageProps {
+  strip?: Strip | null;
+  comicName?: string;
+  isLoading?: boolean;
+}
+
+export default function ComicStripPage({
+  strip = null,
+  comicName = '',
+  isLoading = false,
+}: ComicStripPageProps) {
   const params = useParams();
   const router = useRouter();
   const comicId = parseInt(params.id as string);
-  const date = params.date as string;
-
-  const { data: stripData, isLoading: stripLoading, error: stripError } = useGetComicStripQuery({
-    comicId,
-    date,
-  });
-
-  const { data: comicData } = useGetComicQuery({ id: comicId });
-
-  const isLoading = stripLoading;
-  const error = stripError;
-  const comicName = comicData?.comic?.name ?? '';
-  const strip = stripData?.strip;
 
   if (isLoading) {
     return (
@@ -43,7 +50,7 @@ export default function ComicStripPage() {
     );
   }
 
-  if (error || !strip) {
+  if (!strip) {
     return (
       <div className="space-y-6">
         <Card>

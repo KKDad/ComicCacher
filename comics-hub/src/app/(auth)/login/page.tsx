@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,9 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ErrorBanner } from '@/components/auth/error-banner';
 
 function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { login, clearError } = useAuth();
+  useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -37,22 +34,11 @@ function LoginForm() {
   const watchedFields = watch();
   const hasInput = watchedFields.username && watchedFields.password;
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (_data: LoginFormData) => {
     setIsSubmitting(true);
     setErrorMessage(null);
-    clearError();
-
-    try {
-      await login(data);
-
-      // Redirect to the page they were trying to access, or dashboard
-      const redirectTo = searchParams.get('from') || '/';
-      router.push(redirectTo);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed';
-      setErrorMessage(message);
-      setIsSubmitting(false);
-    }
+    // TODO: wire up auth login
+    setIsSubmitting(false);
   };
 
   return (

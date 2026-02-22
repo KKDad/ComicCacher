@@ -1,27 +1,36 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useGetComicQuery } from '@/generated/graphql';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect } from 'react';
 
-export default function ComicDetailPage() {
+interface ComicDetail {
+  id: number;
+  name: string;
+  author?: string | null;
+  description?: string | null;
+  source?: string | null;
+  avatarUrl?: string | null;
+  oldest?: string | null;
+  newest?: string | null;
+  lastStrip?: {
+    date: string;
+    imageUrl?: string | null;
+  } | null;
+}
+
+interface ComicDetailPageProps {
+  comic?: ComicDetail | null;
+  isLoading?: boolean;
+}
+
+export default function ComicDetailPage({ comic = null, isLoading = false }: ComicDetailPageProps) {
   const params = useParams();
   const router = useRouter();
   const comicId = parseInt(params.id as string);
-
-  const { data, isLoading, error } = useGetComicQuery({ id: comicId });
-
-  // Redirect to latest strip if available
-  useEffect(() => {
-    if (data?.comic?.newest) {
-      router.replace(`/comics/${comicId}/${data.comic.newest}`);
-    }
-  }, [data, comicId, router]);
 
   if (isLoading) {
     return (
@@ -49,7 +58,7 @@ export default function ComicDetailPage() {
     );
   }
 
-  if (error || !data?.comic) {
+  if (!comic) {
     return (
       <div className="space-y-6">
         <Card>
@@ -61,8 +70,6 @@ export default function ComicDetailPage() {
       </div>
     );
   }
-
-  const comic = data.comic;
 
   return (
     <div className="space-y-6">
