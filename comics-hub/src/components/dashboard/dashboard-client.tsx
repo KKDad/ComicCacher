@@ -1,98 +1,24 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { fetcher } from '@/lib/graphql-client';
+import { useGetComicsQuery, useGetMeQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ContinueReading } from '@/components/dashboard/continue-reading';
 import { FavoritesSection } from '@/components/dashboard/favorites-section';
 import { TodaysComics } from '@/components/dashboard/todays-comics';
 
-const GET_COMICS = `
-  query GetComics($first: Int) {
-    comics(first: $first) {
-      edges {
-        node {
-          id
-          name
-          newest
-          avatarUrl
-          lastStrip {
-            imageUrl
-            date
-          }
-        }
-      }
-    }
-  }
-`;
-
-const GET_ME = `
-  query GetMe {
-    me {
-      displayName
-    }
-  }
-`;
-
-const GET_USER_PREFERENCES = `
-  query GetUserPreferences {
-    preferences {
-      favoriteComics
-      lastReadDates {
-        comicId
-        date
-      }
-    }
-  }
-`;
-
-interface ComicNode {
-  id: number;
-  name: string;
-  newest: string;
-  avatarUrl?: string | null;
-  lastStrip?: { imageUrl?: string | null; date?: string | null } | null;
-}
-
-interface ComicsResult {
-  comics: {
-    edges: { node: ComicNode }[];
-  };
-}
-
-interface PreferencesResult {
-  preferences: {
-    favoriteComics: number[];
-    lastReadDates: { comicId: number; date: string }[];
-  };
-}
-
-interface MeResult {
-  me: { displayName: string };
-}
-
 export function DashboardClient() {
-  const { data: meData } = useQuery({
-    queryKey: ['me'],
-    queryFn: fetcher<MeResult, never>(GET_ME),
-  });
+  const { data: meData } = useGetMeQuery();
 
-  const { data: comicsData, isLoading: comicsLoading, error: comicsError } = useQuery({
-    queryKey: ['comics'],
-    queryFn: fetcher<ComicsResult, { first: number }>(GET_COMICS, { first: 20 }),
-  });
+  const { data: comicsData, isLoading: comicsLoading, error: comicsError } = useGetComicsQuery({ first: 20 });
 
-  const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useQuery({
-    queryKey: ['preferences'],
-    queryFn: fetcher<PreferencesResult, never>(GET_USER_PREFERENCES),
-  });
+  const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useGetUserPreferencesQuery();
 
   if (comicsError || prefsError) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <h2 className="text-xl font-semibold text-destructive">Failed to load dashboard</h2>
         <p className="mt-2 text-muted-foreground">
-          {comicsError?.message || prefsError?.message || 'An unexpected error occurred.'}
+          {comicsError instanceof Error ? comicsError.message : prefsError instanceof Error ? prefsError.message : 'An unexpected error occurred.'}
         </p>
       </div>
     );
