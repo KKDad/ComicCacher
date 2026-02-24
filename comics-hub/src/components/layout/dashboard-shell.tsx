@@ -5,19 +5,17 @@ import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { NavRail } from '@/components/layout/nav-rail';
 import { MobileNav } from '@/components/layout/mobile-nav';
-import type { User } from '@/types/auth';
 
 interface DashboardShellProps {
-  user: User | null;
   children: React.ReactNode;
 }
 
-export function DashboardShell({ user, children }: DashboardShellProps) {
+export function DashboardShell({ children }: DashboardShellProps) {
   const { layout } = useResponsiveNav();
 
   return (
     <div className="min-h-screen bg-canvas">
-      <Header user={user} showMenuButton={layout === 'mobile'} />
+      <Header showMenuButton={layout === 'mobile'} />
 
       {/* Desktop Sidebar */}
       {layout === 'desktop' && <Sidebar />}

@@ -19,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useLogout } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,10 +32,7 @@ const navItems = [
 
 export function NavRail() {
   const pathname = usePathname();
-
-  const handleLogout = async () => {
-    // TODO: wire up auth logout
-  };
+  const { logout, isLoggingOut } = useLogout();
 
   return (
     <aside className="fixed left-0 top-[var(--header-height)] h-[calc(100vh-var(--header-height))] w-[var(--sidebar-collapsed)] bg-surface border-r border-border flex flex-col">
@@ -77,7 +75,8 @@ export function NavRail() {
                 variant="ghost"
                 size="sm"
                 className="w-full h-12 justify-center text-error hover:text-error hover:bg-error-subtle"
-                onClick={handleLogout}
+                onClick={logout}
+                disabled={isLoggingOut}
               >
                 <LogOut className="h-5 w-5" />
               </Button>

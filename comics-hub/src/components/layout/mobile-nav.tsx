@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
+import { useLogout } from '@/hooks/use-auth';
 
 const bottomNavItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -35,10 +36,11 @@ const menuItems = [
 export function MobileNav() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const { logout, isLoggingOut } = useLogout();
 
   const handleLogout = async () => {
     setIsOpen(false);
-    // TODO: wire up auth logout
+    await logout();
   };
 
   return (

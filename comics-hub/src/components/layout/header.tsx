@@ -1,7 +1,6 @@
 'use client';
 
 import { Search, Bell, Menu } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -14,26 +13,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSidebarStore } from '@/stores/sidebar-store';
-import type { User } from '@/types/auth';
+import { useUser } from '@/contexts/user-context';
+import { useLogout } from '@/hooks/use-auth';
 
 interface HeaderProps {
-  user?: User | null;
   showMenuButton?: boolean;
 }
 
-export function Header({ user = null, showMenuButton = false }: HeaderProps) {
+export function Header({ showMenuButton = false }: HeaderProps) {
   const { toggle } = useSidebarStore();
-  const router = useRouter();
+  const user = useUser();
+  const { logout } = useLogout();
 
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : 'U';
-
-  const handleLogout = async () => {
-    await fetch('/api/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
-  };
 
   return (
     <header className="sticky top-0 z-sticky h-[var(--header-height)] bg-surface border-b border-border">
@@ -109,7 +103,7 @@ export function Header({ user = null, showMenuButton = false }: HeaderProps) {
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Preferences</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-error">
+              <DropdownMenuItem onClick={logout} className="text-error">
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>

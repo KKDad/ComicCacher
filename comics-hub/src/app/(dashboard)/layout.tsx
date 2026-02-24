@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth/session';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
+import { UserProvider } from '@/contexts/user-context';
 
 export default async function DashboardLayout({
   children,
@@ -8,5 +9,9 @@ export default async function DashboardLayout({
 }) {
   const user = await getSession();
 
-  return <DashboardShell user={user}>{children}</DashboardShell>;
+  return (
+    <UserProvider user={user}>
+      <DashboardShell>{children}</DashboardShell>
+    </UserProvider>
+  );
 }

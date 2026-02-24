@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { useLogout } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,10 +26,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-
-  const handleLogout = async () => {
-    // TODO: wire up auth logout
-  };
+  const { logout, isLoggingOut } = useLogout();
 
   return (
     <aside className="fixed left-0 top-[var(--header-height)] h-[calc(100vh-var(--header-height))] w-[var(--sidebar-width)] bg-surface border-r border-border flex flex-col">
@@ -61,10 +58,11 @@ export function Sidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-error hover:text-error hover:bg-error-subtle"
-          onClick={handleLogout}
+          onClick={logout}
+          disabled={isLoggingOut}
         >
           <LogOut className="h-5 w-5" />
-          Logout
+          {isLoggingOut ? 'Signing out...' : 'Logout'}
         </Button>
       </div>
     </aside>
