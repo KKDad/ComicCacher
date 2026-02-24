@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -15,7 +15,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ErrorBanner } from '@/components/auth/error-banner';
 
 function LoginForm() {
-  useSearchParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -34,11 +35,31 @@ function LoginForm() {
   const watchedFields = watch();
   const hasInput = watchedFields.username && watchedFields.password;
 
-  const onSubmit = async (_data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
     setErrorMessage(null);
-    // TODO: wire up auth login
-    setIsSubmitting(false);
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        setErrorMessage(json.error ?? 'Login failed');
+        return;
+      }
+
+      const redirectTo = searchParams.get('from') ?? '/';
+      router.push(redirectTo);
+      router.refresh();
+    } catch {
+      setErrorMessage('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

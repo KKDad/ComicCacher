@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
@@ -14,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ErrorBanner } from '@/components/auth/error-banner';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -42,11 +44,30 @@ export default function RegisterPage() {
     watchedFields.password &&
     watchedFields.confirmPassword;
 
-  const onSubmit = async (_data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
     setErrorMessage(null);
-    // TODO: wire up auth register
-    setIsSubmitting(false);
+
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        setErrorMessage(json.error ?? 'Registration failed');
+        return;
+      }
+
+      router.push('/');
+      router.refresh();
+    } catch {
+      setErrorMessage('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

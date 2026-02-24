@@ -97,107 +97,83 @@ public class ComicIndexService {
      * Get the next available date with a comic strip.
      */
     public Optional<LocalDate> getNextDate(int comicId, String comicName, LocalDate fromDate) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-
-            int pos = Collections.binarySearch(dates, fromDate);
-
-            // If fromDate is found, the next one is at index + 1
-            // If fromDate is NOT found, binarySearch returns (-(insertion point) - 1)
-            int nextIndex = pos >= 0 ? pos + 1 : -(pos + 1);
-
-            if (nextIndex < dates.size()) {
-                return Optional.of(dates.get(nextIndex));
-            }
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
             return Optional.empty();
-        } finally {
-            lock.readLock().unlock();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+
+        int pos = Collections.binarySearch(dates, fromDate);
+
+        // If fromDate is found, the next one is at index + 1
+        // If fromDate is NOT found, binarySearch returns (-(insertion point) - 1)
+        int nextIndex = pos >= 0 ? pos + 1 : -(pos + 1);
+
+        if (nextIndex < dates.size()) {
+            return Optional.of(dates.get(nextIndex));
+        }
+        return Optional.empty();
     }
 
     /**
      * Get the previous available date with a comic strip.
      */
     public Optional<LocalDate> getPreviousDate(int comicId, String comicName, LocalDate fromDate) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-
-            int pos = Collections.binarySearch(dates, fromDate);
-
-            // If found, previous is at index - 1.
-            // If not found, pos is (-(insertion point) - 1).
-            // Insertion point is the first element greater than the key.
-            // We want the element immediately before the insertion point.
-            int insertionPoint = pos >= 0 ? pos : -(pos + 1);
-            int prevIndex = insertionPoint - 1;
-
-            if (prevIndex >= 0 && prevIndex < dates.size()) {
-                return Optional.of(dates.get(prevIndex));
-            }
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
             return Optional.empty();
-        } finally {
-            lock.readLock().unlock();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+
+        int pos = Collections.binarySearch(dates, fromDate);
+
+        // If found, previous is at index - 1.
+        // If not found, pos is (-(insertion point) - 1).
+        // Insertion point is the first element greater than the key.
+        // We want the element immediately before the insertion point.
+        int insertionPoint = pos >= 0 ? pos : -(pos + 1);
+        int prevIndex = insertionPoint - 1;
+
+        if (prevIndex >= 0 && prevIndex < dates.size()) {
+            return Optional.of(dates.get(prevIndex));
+        }
+        return Optional.empty();
     }
 
     /**
      * Get the newest available date for a comic.
      */
     public Optional<LocalDate> getNewestDate(int comicId, String comicName) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-            return Optional.of(dates.get(dates.size() - 1));
-        } finally {
-            lock.readLock().unlock();
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
+            return Optional.empty();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(dates.get(dates.size() - 1));
     }
 
     /**
      * Get the oldest available date for a comic.
      */
     public Optional<LocalDate> getOldestDate(int comicId, String comicName) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-            return Optional.of(dates.get(0));
-        } finally {
-            lock.readLock().unlock();
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
+            return Optional.empty();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(dates.get(0));
     }
 
     /**

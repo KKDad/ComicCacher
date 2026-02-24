@@ -1,6 +1,7 @@
 'use client';
 
 import { Search, Bell, Menu } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -13,16 +14,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSidebarStore } from '@/stores/sidebar-store';
+import type { User } from '@/types/auth';
 
 interface HeaderProps {
+  user?: User | null;
   showMenuButton?: boolean;
 }
 
-export function Header({ showMenuButton = false }: HeaderProps) {
+export function Header({ user = null, showMenuButton = false }: HeaderProps) {
   const { toggle } = useSidebarStore();
+  const router = useRouter();
+
+  const initials = user?.displayName
+    ? user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U';
 
   const handleLogout = async () => {
-    // TODO: wire up auth logout
+    await fetch('/api/logout', { method: 'POST' });
+    router.push('/login');
+    router.refresh();
   };
 
   return (
@@ -82,7 +92,7 @@ export function Header({ showMenuButton = false }: HeaderProps) {
               <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary text-primary-foreground">
-                    U
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -90,8 +100,8 @@ export function Header({ showMenuButton = false }: HeaderProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">—</p>
-                  <p className="text-xs text-ink-muted">—</p>
+                  <p className="text-sm font-medium">{user?.displayName ?? '—'}</p>
+                  <p className="text-xs text-ink-muted">{user?.email ?? '—'}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
