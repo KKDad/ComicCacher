@@ -22,6 +22,8 @@ export default defineConfig({
         'src/types/**', // Type-only files
         'src/proxy.ts', // Dev proxy utility
       ],
+      all: true,
+      include: ['src/**/*.{ts,tsx}'],
       thresholds: {
         statements: 90,
         branches: 90,
