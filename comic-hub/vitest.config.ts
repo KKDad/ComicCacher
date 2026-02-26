@@ -22,6 +22,12 @@ export default defineConfig({
         'src/types/**', // Type-only files
         'src/proxy.ts', // Dev proxy utility
       ],
+      thresholds: {
+        statements: 90,
+        branches: 90,
+        functions: 90,
+        lines: 90,
+      },
     },
   },
   resolve: {
