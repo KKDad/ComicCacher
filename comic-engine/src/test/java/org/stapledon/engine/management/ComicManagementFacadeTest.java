@@ -85,6 +85,9 @@ class ComicManagementFacadeTest {
 
         // Configure the minimal mocks needed for basic setup
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);
+        // Return a present avatar for the test comic so refreshComicList() doesn't flag avatarAvailable as stale
+        when(storageFacade.getAvatar(ComicIdentifier.from(testComic)))
+                .thenReturn(Optional.of(ImageDto.builder().mimeType("image/png").imageData("").build()));
 
         // Initialize facade
         facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,

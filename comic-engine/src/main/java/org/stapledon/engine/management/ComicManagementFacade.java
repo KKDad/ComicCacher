@@ -561,6 +561,35 @@ public class ComicManagementFacade implements ManagementFacade {
                 comics.putAll(comicConfig.getItems());
             }
 
+            // Sync oldest/newest dates and avatarAvailable flag from the actual index
+            boolean configDirty = false;
+            for (Map.Entry<Integer, ComicItem> entry : comics.entrySet()) {
+                ComicItem comic = entry.getValue();
+                ComicIdentifier id = ComicIdentifier.from(comic);
+                Optional<LocalDate> actualOldest = storageFacade.getOldestDateWithComic(id);
+                Optional<LocalDate> actualNewest = storageFacade.getNewestDateWithComic(id);
+                boolean avatarExists = storageFacade.getAvatar(id).isPresent();
+
+                boolean datesStale = actualOldest.isPresent() && !actualOldest.get().equals(comic.getOldest())
+                        || actualNewest.isPresent() && !actualNewest.get().equals(comic.getNewest());
+                boolean avatarStale = avatarExists != comic.isAvatarAvailable();
+
+                if (datesStale || avatarStale) {
+                    ComicItem updated = comic.toBuilder()
+                            .oldest(actualOldest.orElse(comic.getOldest()))
+                            .newest(actualNewest.orElse(comic.getNewest()))
+                            .avatarAvailable(avatarExists)
+                            .build();
+                    entry.setValue(updated);
+                    comicConfig.getItems().put(updated.getId(), updated);
+                    configDirty = true;
+                }
+            }
+            if (configDirty) {
+                configFacade.saveComicConfig(comicConfig);
+                log.info("Synced comic metadata from index for {} comics", comics.size());
+            }
+
             long duration = System.currentTimeMillis() - startTime;
             log.info("Refreshed comic list: loaded {} comics in {}ms", comics.size(), duration);
         } catch (Exception e) {
@@ -617,5 +646,60 @@ public class ComicManagementFacade implements ManagementFacade {
     @Override
     public int purgeOldRetrievalRecords(int daysToKeep) {
         return retrievalStatusService.purgeOldRecords(daysToKeep);
+    }
+
+    @Override
+    @CacheEvict(value = "comicMetadata", allEntries = true)
+    public int downloadMissingAvatars() {
+        int downloaded = 0;
+        int skipped = 0;
+        int failed = 0;
+
+        for (ComicItem comic : comics.values()) {
+            ComicIdentifier identifier = ComicIdentifier.from(comic);
+
+            // Skip if avatar already exists on disk
+            if (storageFacade.getAvatar(identifier).isPresent()) {
+                skipped++;
+                continue;
+            }
+
+            // Skip if no source configured
+            if (comic.getSource() == null || comic.getSource().isEmpty()) {
+                log.debug("Skipping avatar download for '{}' - no source configured", comic.getName());
+                continue;
+            }
+
+            log.info("Downloading missing avatar for '{}'", comic.getName());
+            Optional<byte[]> avatarData = downloaderFacade.downloadAvatar(
+                    comic.getId(), comic.getName(), comic.getSource(), comic.getSourceIdentifier());
+
+            if (avatarData.isPresent()) {
+                boolean saved = storageFacade.saveAvatar(identifier, avatarData.get());
+                if (saved) {
+                    if (!comic.isAvatarAvailable()) {
+                        ComicItem updated = comic.toBuilder().avatarAvailable(true).build();
+                        updateComic(comic.getId(), updated);
+                    }
+                    downloaded++;
+                    log.info("Successfully downloaded avatar for '{}'", comic.getName());
+                } else {
+                    failed++;
+                    log.error("Failed to save avatar for '{}'", comic.getName());
+                }
+            } else {
+                // Download failed — ensure flag reflects reality
+                if (comic.isAvatarAvailable()) {
+                    ComicItem updated = comic.toBuilder().avatarAvailable(false).build();
+                    updateComic(comic.getId(), updated);
+                }
+                failed++;
+                log.warn("Could not download avatar for '{}'", comic.getName());
+            }
+        }
+
+        log.info("Avatar backfill complete: {} downloaded, {} skipped (already exist), {} failed",
+                downloaded, skipped, failed);
+        return downloaded;
     }
 }

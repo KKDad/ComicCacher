@@ -205,4 +205,12 @@ public interface ManagementFacade {
      * Purges old retrieval records
      */
     int purgeOldRetrievalRecords(int daysToKeep);
+
+    /**
+     * Downloads missing avatars for all comics that have a source configured
+     * but no avatar on disk. Updates the avatarAvailable flag accordingly.
+     *
+     * @return The number of avatars successfully downloaded
+     */
+    int downloadMissingAvatars();
 }

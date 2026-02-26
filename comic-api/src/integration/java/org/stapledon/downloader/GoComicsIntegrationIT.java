@@ -165,7 +165,7 @@ class GoComicsIntegrationIT {
 
             // Assert that we get basic metadata regardless of website changes
             assertThat(item.getDescription()).isNotNull();
-            assertThat(item.getAvatarAvailable()).isTrue();
+            assertThat(item.isAvatarAvailable()).isTrue();
             assertThat(item.getAuthor()).isNotNull();
 
             // Log the actual author for verification
