@@ -1,223 +1,94 @@
-# Comics Hub - Web Frontend
+# Comic Hub
 
-Modern web application for caching, organizing, and viewing comic strips.
+Next.js web frontend for ComicCacher — browse, read, and manage comic strip subscriptions.
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Data Fetching**: TanStack Query + graphql-request
-- **Forms**: react-hook-form + zod
-- **State**: Zustand (minimal - theme & sidebar only)
-- **Icons**: Lucide React
-- **Type Safety**: GraphQL Code Generator
+- **Framework:** Next.js 16 (App Router), React 19, TypeScript (strict)
+- **Styling:** Tailwind CSS 4, Radix UI / shadcn components
+- **Data Fetching:** TanStack Query v5, graphql-request v7, GraphQL Codegen
+- **Forms:** react-hook-form + Zod
+- **State:** Zustand v5 (theme & sidebar only — auth uses httpOnly cookies)
+- **Testing:** Vitest, React Testing Library, MSW
+
+## Prerequisites
+
+- Node 22 (see `.nvmrc`)
+- Backend GraphQL endpoint (default: `http://10.0.0.47:8087/graphql`)
+
+## Getting Started
+
+```bash
+cp .env.example .env.local   # configure NEXT_PUBLIC_GRAPHQL_ENDPOINT
+npm install
+npm run dev                   # http://localhost:3000
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build (standalone output) |
+| `npm run codegen` | Generate TypeScript types + hooks from GraphQL schema |
+| `npm run codegen:watch` | Codegen in watch mode |
+| `npm test` | Run tests (Vitest) |
+| `npm run test:ui` | Vitest with browser UI |
+| `npm run test:coverage` | Coverage report |
 
 ## Project Structure
 
 ```
 src/
-├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Unauthenticated routes
-│   │   ├── login/
-│   │   ├── register/
-│   │   └── forgot-password/
-│   ├── (dashboard)/              # Authenticated routes
-│   │   ├── comics/
-│   │   ├── metrics/
-│   │   ├── retrieval-status/
-│   │   └── preferences/
-│   ├── layout.tsx                # Root layout (fonts, providers)
-│   └── globals.css               # Design tokens + Tailwind
+├── app/
+│   ├── api/
+│   │   ├── graphql/route.ts      # Server proxy: cookie → Bearer, token refresh
+│   │   ├── login/route.ts        # Login → set httpOnly cookies
+│   │   ├── register/route.ts     # Register → set httpOnly cookies
+│   │   └── logout/route.ts       # Clear cookies
+│   ├── (auth)/                   # Login, register, forgot-password
+│   └── (dashboard)/              # Dashboard, comics list, strip viewer
 ├── components/
 │   ├── ui/                       # shadcn components
-│   ├── comics/                   # Comic-specific components
-│   ├── layout/                   # Sidebar, Header, Navigation
-│   ├── forms/                    # Form components
-│   └── feedback/                 # EmptyState, ErrorBanner
+│   ├── comics/                   # ComicTile, FavoriteCard
+│   ├── dashboard/                # Dashboard sections
+│   └── layout/                   # Sidebar, Header, NavRail, MobileNav
+├── contexts/
+│   └── user-context.tsx          # Server-fetched user data
+├── hooks/
+│   ├── use-auth.ts               # Login/logout/register (calls API routes)
+│   └── use-responsive-nav.ts     # Breakpoint detection
 ├── lib/
-│   ├── graphql-client.ts         # GraphQL client setup
-│   ├── providers.tsx             # React Query provider
-│   └── utils.ts                  # cn() helper
+│   ├── auth/
+│   │   ├── constants.ts          # Cookie names, endpoints, public paths
+│   │   ├── session.ts            # getSession() — server-side user fetch
+│   │   └── graphql-server.ts     # getAuthenticatedClient() — server-side
+│   ├── graphql-client.ts         # Client fetcher for codegen (no auth logic)
+│   ├── providers.tsx             # QueryClientProvider
+│   └── validations/auth.ts       # Zod schemas
 ├── stores/
-│   ├── theme-store.ts            # Theme state (light/dark/system)
-│   └── sidebar-store.ts          # Sidebar state
-├── generated/                    # GraphQL codegen output
-└── graphql/                      # .graphql query files
+│   ├── theme-store.ts            # Light/dark/system theme
+│   └── sidebar-store.ts          # Sidebar open/collapsed
+├── graphql/operations/           # .graphql query/mutation files
+├── generated/graphql.ts          # Codegen output (do not edit)
+├── types/auth.ts                 # Auth type definitions
+└── proxy.ts                      # UX-only route redirect (not a security boundary)
 ```
 
-## Getting Started
+## Auth Architecture
 
-### Prerequisites
+Tokens are stored in **httpOnly cookies** (never accessible to JavaScript):
 
-- Node.js 18+
-- npm or yarn
-- Running Comics Hub backend at `http://comics.stapledon.local/graphql`
+1. `/api/login` and `/api/register` call the backend and set httpOnly cookies
+2. Client components fetch data via generated hooks → fetcher POSTs to `/api/graphql`
+3. The server proxy reads the cookie, attaches the Bearer header, and forwards to the backend
+4. On 401, the proxy attempts a token refresh server-side before returning an error
+5. `proxy.ts` handles UX redirects (unauthenticated → `/login`) but is not a security boundary
 
-### Installation
+## Docker
 
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+./build-docker.sh    # builds and tags the image
 ```
 
-Visit [http://localhost:3000](http://localhost:3000)
-
-### GraphQL Code Generation
-
-Generate TypeScript types from GraphQL schema:
-
-```bash
-# One-time generation
-npm run codegen
-
-# Watch mode (regenerate on schema changes)
-npm run codegen:watch
-```
-
-## Design System
-
-### Colors
-
-- **Canvas**: `bg-canvas` - App background (#F9FAFB light, #111827 dark)
-- **Surface**: `bg-surface` - Cards, panels (#FFFFFF light, #1F2937 dark)
-- **Ink**: `text-ink` - Primary text (#1F2937 light, #F9FAFB dark)
-- **Primary**: `text-primary` - Comic Blue (#3EAEFF light, #60A5FA dark)
-
-### Typography
-
-- **Primary**: Inter (body text, UI elements)
-- **Display**: DynaPuff Bold (h1, branding)
-- **Mono**: JetBrains Mono (code)
-
-### Component Library
-
-shadcn/ui components are installed and customized with Comics Hub design tokens:
-
-```bash
-# Add new components
-npx shadcn@latest add [component-name]
-```
-
-Installed components: button, input, select, checkbox, radio-group, switch, dialog, sheet, sonner, tooltip, dropdown-menu, skeleton, avatar, form, label, card, badge, separator
-
-## Development Guidelines
-
-### Adding GraphQL Queries
-
-1. Create `.graphql` file in `src/graphql/`:
-
-```graphql
-# src/graphql/comics.graphql
-query GetComics($first: Int!, $after: String) {
-  comics(first: $first, after: $after) {
-    edges {
-      node {
-        id
-        title
-        imageUrl
-      }
-    }
-    pageInfo {
-      hasNextPage
-      endCursor
-    }
-  }
-}
-```
-
-2. Run codegen:
-
-```bash
-npm run codegen
-```
-
-3. Use generated hook:
-
-```tsx
-import { useGetComicsQuery } from '@/generated/graphql';
-
-function ComicsList() {
-  const { data, isLoading } = useGetComicsQuery({ first: 10 });
-  // ...
-}
-```
-
-### Theme Toggle
-
-```tsx
-import { useThemeStore } from '@/stores/theme-store';
-
-function ThemeToggle() {
-  const { theme, setTheme } = useThemeStore();
-
-  return (
-    <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-      Toggle Theme
-    </button>
-  );
-}
-```
-
-### Forms with Validation
-
-```tsx
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
-
-function LoginForm() {
-  const form = useForm({
-    resolver: zodResolver(schema),
-    mode: 'onBlur', // Validate on blur per spec
-  });
-
-  // ...
-}
-```
-
-## Environment Variables
-
-Create `.env.local`:
-
-```env
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://comics.stapledon.local/graphql
-NEXT_PUBLIC_API_BASE_URL=http://comics.stapledon.local/api/v1
-```
-
-## Build & Deploy
-
-```bash
-# Production build
-npm run build
-
-# Start production server
-npm start
-```
-
-## Documentation
-
-Full specifications in `/docs/2026-ui-refactor/`:
-
-- `component_specs.md` - UI component specifications
-- `visual_style_guide.md` - Design system details
-- `design_tokens.css` - Complete token reference
-- `*_screens.md` - Screen-by-screen layouts and queries
-- `TODO.md` - Implementation roadmap
-
-## Future Mobile Support
-
-When mobile becomes a priority:
-
-- **Option A**: Expo with shared logic (TanStack Query, Zustand, Zod)
-- **Option B**: Capacitor wrapper
-- **Option C**: PWA (already Next.js native)
-
-Domain logic is kept portable for cross-platform reuse.
+Exposes port 8080. Uses multi-stage Node 22 Alpine build with standalone output.
