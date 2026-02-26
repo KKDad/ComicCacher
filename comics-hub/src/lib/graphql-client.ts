@@ -14,7 +14,7 @@ export function fetcher<TData, TVariables>(query: string, variables?: TVariables
     }
 
     const json = await res.json();
-    if (json.errors) {
+    if (json.errors && !json.data) {
       throw new Error(json.errors[0]?.message ?? 'GraphQL error');
     }
     return json.data;

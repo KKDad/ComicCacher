@@ -30,7 +30,7 @@ export function DashboardClient() {
   const todaysComics = comics.map((c) => ({
     id: c.id,
     name: c.name,
-    date: c.newest,
+    date: c.lastStrip?.date ?? c.newest,
     thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl ?? undefined,
   }));
 

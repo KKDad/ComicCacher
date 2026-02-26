@@ -6,31 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 import Link from 'next/link';
+import { useGetComicQuery } from '@/generated/graphql';
 
-interface ComicDetail {
-  id: number;
-  name: string;
-  author?: string | null;
-  description?: string | null;
-  source?: string | null;
-  avatarUrl?: string | null;
-  oldest?: string | null;
-  newest?: string | null;
-  lastStrip?: {
-    date: string;
-    imageUrl?: string | null;
-  } | null;
-}
-
-interface ComicDetailPageProps {
-  comic?: ComicDetail | null;
-  isLoading?: boolean;
-}
-
-export default function ComicDetailPage({ comic = null, isLoading = false }: ComicDetailPageProps) {
+export default function ComicDetailPage() {
   const params = useParams();
   const router = useRouter();
   const comicId = parseInt(params.id as string);
+
+  const { data, isLoading } = useGetComicQuery({ id: comicId });
+  const comic = data?.comic ?? null;
 
   if (isLoading) {
     return (

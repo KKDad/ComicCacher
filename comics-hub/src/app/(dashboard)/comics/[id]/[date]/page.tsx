@@ -6,32 +6,24 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useGetComicStripQuery, useGetComicQuery } from '@/generated/graphql';
 
-interface StripNav {
-  date: string;
-}
-
-interface Strip {
-  date: string;
-  imageUrl?: string | null;
-  previous?: StripNav | null;
-  next?: StripNav | null;
-}
-
-interface ComicStripPageProps {
-  strip?: Strip | null;
-  comicName?: string;
-  isLoading?: boolean;
-}
-
-export default function ComicStripPage({
-  strip = null,
-  comicName = '',
-  isLoading = false,
-}: ComicStripPageProps) {
+export default function ComicStripPage() {
   const params = useParams();
   const router = useRouter();
   const comicId = parseInt(params.id as string);
+  const date = params.date as string;
+
+  const { data: stripData, isLoading: stripLoading } = useGetComicStripQuery(
+    { comicId, date },
+  );
+  const { data: comicData, isLoading: comicLoading } = useGetComicQuery(
+    { id: comicId },
+  );
+
+  const strip = stripData?.strip ?? null;
+  const comicName = comicData?.comic?.name ?? '';
+  const isLoading = stripLoading || comicLoading;
 
   if (isLoading) {
     return (
@@ -63,7 +55,7 @@ export default function ComicStripPage({
     );
   }
 
-  if (!strip.imageUrl) {
+  if (!strip.imageUrl || strip.available === false) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -76,10 +68,32 @@ export default function ComicStripPage({
         </div>
         <Card>
           <CardContent className="p-12 text-center">
-            <p className="text-ink-subtle mb-4">No strip available for this date</p>
-            <Button onClick={() => router.push(`/comics/${comicId}`)}>
-              View Comic Details
-            </Button>
+            <p className="text-ink-subtle mb-4">
+              No strip available for {new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+            <div className="flex justify-center gap-4">
+              {strip.previous?.date && (
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/comics/${comicId}/${strip.previous!.date}`)}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+              )}
+              <Button onClick={() => router.push(`/comics/${comicId}`)}>
+                View Comic Details
+              </Button>
+              {strip.next?.date && (
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/comics/${comicId}/${strip.next!.date}`)}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

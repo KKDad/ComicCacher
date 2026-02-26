@@ -148,6 +148,24 @@ public class ComicResolver {
     // =========================================================================
 
     /**
+     * Resolve oldest field for Comic type from the authoritative index.
+     */
+    @SchemaMapping(typeName = "Comic", field = "oldest")
+    public LocalDate oldest(ComicItem comic) {
+        return comicManagementFacade.getOldestDateWithComic(comic.getId())
+                .orElse(comic.getOldest());
+    }
+
+    /**
+     * Resolve newest field for Comic type from the authoritative index.
+     */
+    @SchemaMapping(typeName = "Comic", field = "newest")
+    public LocalDate newest(ComicItem comic) {
+        return comicManagementFacade.getNewestDateWithComic(comic.getId())
+                .orElse(comic.getNewest());
+    }
+
+    /**
      * Resolve avatarUrl field for Comic type.
      */
     @SchemaMapping(typeName = "Comic", field = "avatarUrl")
@@ -289,7 +307,13 @@ public class ComicResolver {
 
     private ComicStrip toComicStrip(int comicId, ComicNavigationResult result) {
         if (!result.isFound()) {
-            return null;
+            // Return navigation hints even when strip not found
+            return new ComicStrip(
+                    result.getCurrentDate(),
+                    false,
+                    null,
+                    ComicStrip.navStub(result.getNearestPreviousDate()),
+                    ComicStrip.navStub(result.getNearestNextDate()));
         }
         String imageUrl = result.getCurrentDate() != null
                 ? externalBaseUrl + "/api/v1/comics/" + comicId + "/strip/" + result.getCurrentDate()
@@ -299,8 +323,8 @@ public class ComicResolver {
                 result.getCurrentDate(),
                 result.isFound(),
                 imageUrl,
-                result.getNearestPreviousDate(),
-                result.getNearestNextDate());
+                ComicStrip.navStub(result.getNearestPreviousDate()),
+                ComicStrip.navStub(result.getNearestNextDate()));
     }
 
     // =========================================================================
@@ -316,8 +340,13 @@ public class ComicResolver {
     public record PageInfo(boolean hasNextPage, boolean hasPreviousPage, String startCursor, String endCursor) {
     }
 
-    public record ComicStrip(LocalDate date, boolean available, String imageUrl, LocalDate previousDate,
-            LocalDate nextDate) {
+    public record ComicStrip(LocalDate date, boolean available, String imageUrl, ComicStrip previous,
+            ComicStrip next) {
+
+        /** Navigation-only stub with just a date (used for previous/next links). */
+        static ComicStrip navStub(LocalDate date) {
+            return date != null ? new ComicStrip(date, false, null, null, null) : null;
+        }
     }
 
     public record SearchResults(List<ComicItem> comics, int totalCount, String query) {

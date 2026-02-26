@@ -68,6 +68,7 @@ query GetComic($id: Int!) {
 # Uses the direct strip query for better performance
 query GetComicStrip($comicId: Int!, $date: Date!) {
   strip(comicId: $comicId, date: $date) {
+    available
     imageUrl
     date
     previous {
