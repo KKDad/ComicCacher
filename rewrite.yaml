@@ -4,7 +4,7 @@ name: com.comiccacher.StyleGuide
 displayName: ComicCacher 2026 Style Guide
 recipeList:
   - org.openrewrite.java.OrderImports:
-      # Matches your ANTIGRAVITY_RULES: Static > com > org > java > javax/jakarta
+      # Import order: Static > com > org > java > javax/jakarta
       layout:
         - static *
         - com.**
