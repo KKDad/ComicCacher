@@ -14,9 +14,12 @@ vi.mock('next/navigation', () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
     back: vi.fn(),
+    refresh: vi.fn(),
+    forward: vi.fn(),
   })),
   usePathname: vi.fn(() => '/'),
   useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
 }));
 
 // Mock window.matchMedia
