@@ -42,3 +42,5 @@ jobs:
 
     - name: Build production
       run: npm run build
+      env:
+        NEXT_PUBLIC_GRAPHQL_ENDPOINT: http://10.0.0.47:8087/graphql

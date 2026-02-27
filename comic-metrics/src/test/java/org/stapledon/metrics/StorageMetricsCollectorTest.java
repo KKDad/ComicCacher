@@ -160,14 +160,15 @@ class StorageMetricsCollectorTest {
 
         ImageCacheStats stats = cacheStatsUpdater.cacheStats();
 
-        // Should contain the comic name in the path (bug fix verification)
+        // Oldest image is from CalvinAndHobbes (earliest year: 2010)
         assertThat(stats.getOldestImage()).contains("CalvinAndHobbes");
         assertThat(stats.getOldestImage()).contains("2010");
         assertThat(stats.getOldestImage()).contains("2010-01-01.png");
 
-        assertThat(stats.getNewestImage()).contains("CalvinAndHobbes");
-        assertThat(stats.getNewestImage()).contains("2011");
-        assertThat(stats.getNewestImage()).contains("2011-06-15.png");
+        // Newest image is from Garfield (latest year: 2020)
+        assertThat(stats.getNewestImage()).contains("Garfield");
+        assertThat(stats.getNewestImage()).contains("2020");
+        assertThat(stats.getNewestImage()).contains("2020-12-31.png");
     }
 
     private void deleteDirectory(File dir) {

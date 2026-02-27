@@ -71,13 +71,20 @@ public class StorageMetricsCollector {
             totalStorageBytes += metrics.getStorageBytes();
         }
 
-        // Images are stored by year, gather a list of all years that we have stored
-        // (from the first comic)
-        String[] yearFolders = comicDirs[0]
-                .list((dir, name) -> new File(dir, name).isDirectory() && !"@eaDir".equals(name));
-        if (yearFolders != null && yearFolders.length > 0) {
-            var years = Arrays.asList(yearFolders);
-            Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
+        // Gather all years across all comics
+        java.util.Set<String> allYearsSet = new java.util.TreeSet<>();
+        for (File comicDir : comicDirs) {
+            String[] years = comicDir
+                    .list((dir, name) -> new File(dir, name).isDirectory() && !"@eaDir".equals(name));
+            if (years != null) {
+                allYearsSet.addAll(Arrays.asList(years));
+            }
+        }
+
+        if (!allYearsSet.isEmpty()) {
+            String[] allYearsSorted = allYearsSet.toArray(new String[0]);
+            Arrays.sort(allYearsSorted, Comparator.comparing(Integer::valueOf));
+            var years = Arrays.asList(allYearsSorted);
 
             // Aggregate year-based statistics across all comics
             Map<String, Integer> imageCountByYear = new HashMap<>();
@@ -106,14 +113,37 @@ public class StorageMetricsCollector {
                 imageCountByYear.put(year, yearImageCount);
             }
 
-            // Find oldest and newest images (fixed: include comic name in path)
-            String oldestComicName = comicDirs[0].getName();
-            String newestComicName = comicDirs[0].getName();
-            String oldestYear = yearFolders[0];
-            String newestYear = yearFolders[yearFolders.length - 1];
+            // Find oldest and newest images across all comics
+            String oldestComicName = null;
+            String oldestYear = allYearsSorted[0];
+            String oldestImage = null;
+            String newestComicName = null;
+            String newestYear = allYearsSorted[allYearsSorted.length - 1];
+            String newestImage = null;
 
-            String oldestImage = firstImage(comicDirs[0].getAbsolutePath() + "/" + oldestYear);
-            String newestImage = lastImage(comicDirs[0].getAbsolutePath() + "/" + newestYear);
+            // Scan all comics to find the one with the oldest image
+            for (File comicDir : comicDirs) {
+                File yearDir = new File(comicDir, oldestYear);
+                if (yearDir.exists()) {
+                    String first = firstImage(yearDir.getAbsolutePath());
+                    if (first != null && (oldestImage == null || first.compareTo(oldestImage) < 0)) {
+                        oldestImage = first;
+                        oldestComicName = comicDir.getName();
+                    }
+                }
+            }
+
+            // Scan all comics to find the one with the newest image
+            for (File comicDir : comicDirs) {
+                File yearDir = new File(comicDir, newestYear);
+                if (yearDir.exists()) {
+                    String last = lastImage(yearDir.getAbsolutePath());
+                    if (last != null && (newestImage == null || last.compareTo(newestImage) > 0)) {
+                        newestImage = last;
+                        newestComicName = comicDir.getName();
+                    }
+                }
+            }
 
             cacheStats = ImageCacheStats.builder().years(years)
                     .oldestImage(buildImagePath(oldestComicName, oldestYear, oldestImage))
