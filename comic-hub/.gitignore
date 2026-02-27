@@ -37,8 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# generated
-src/generated/
+# generated (keep graphql.ts stub for test imports)
+src/generated/*
+!src/generated/graphql.ts
 
 # typescript
 *.tsbuildinfo
