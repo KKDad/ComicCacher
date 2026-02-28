@@ -35,7 +35,7 @@ export function NavRail() {
   const { logout, isLoggingOut } = useLogout();
 
   return (
-    <aside className="fixed left-0 top-[var(--header-height)] h-[calc(100vh-var(--header-height))] w-[var(--sidebar-collapsed)] bg-surface border-r border-border flex flex-col">
+    <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100vh-var(--header-height))] w-[var(--sidebar-collapsed)] bg-surface border-r border-border flex flex-col">
       <TooltipProvider delayDuration={0}>
         <nav className="flex-1 overflow-y-auto p-2">
           <div className="space-y-1">
