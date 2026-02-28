@@ -16,7 +16,8 @@ describe('FavoritesSection', () => {
   it('renders empty state when no favorites', () => {
     render(<FavoritesSection />);
     expect(screen.getByText('No favorite comics yet')).toBeInTheDocument();
-    expect(screen.getByText('Browse Comics')).toBeInTheDocument();
+    const browseLink = screen.getByRole('link', { name: /browse comics/i });
+    expect(browseLink).toHaveAttribute('href', '/comics');
   });
 
   it('renders empty state for empty array', () => {

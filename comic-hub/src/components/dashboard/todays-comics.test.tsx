@@ -39,9 +39,10 @@ describe('TodaysComics', () => {
     expect(screen.getByText('Peanuts')).toBeInTheDocument();
   });
 
-  it('shows View All button when comics exist', () => {
+  it('shows View All button as link to /comics', () => {
     render(<TodaysComics comics={comics} />);
-    expect(screen.getByText('View All')).toBeInTheDocument();
+    const viewAllLink = screen.getByRole('link', { name: /view all/i });
+    expect(viewAllLink).toHaveAttribute('href', '/comics');
   });
 
   it('displays formatted date', () => {

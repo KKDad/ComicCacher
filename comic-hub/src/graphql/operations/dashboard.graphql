@@ -90,3 +90,27 @@ query SearchComics($query: String!) {
     }
   }
 }
+
+# Add a comic to favorites
+mutation AddFavorite($comicId: Int!) {
+  addFavorite(comicId: $comicId) {
+    favoriteComics
+  }
+}
+
+# Remove a comic from favorites
+mutation RemoveFavorite($comicId: Int!) {
+  removeFavorite(comicId: $comicId) {
+    favoriteComics
+  }
+}
+
+# Update last read date for a comic
+mutation UpdateLastRead($comicId: Int!, $date: Date!) {
+  updateLastRead(comicId: $comicId, date: $date) {
+    lastReadDates {
+      comicId
+      date
+    }
+  }
+}

@@ -1,18 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import { DashboardClient } from './dashboard-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useGetComicsQuery, useGetMeQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
+import { useGetComicsQuery, useGetMeQuery, useGetUserPreferencesQuery, useAddFavoriteMutation, useRemoveFavoriteMutation } from '@/generated/graphql';
 
 vi.mock('@/generated/graphql', () => ({
   useGetComicsQuery: vi.fn(),
   useGetMeQuery: vi.fn(),
   useGetUserPreferencesQuery: vi.fn(),
+  useAddFavoriteMutation: vi.fn(),
+  useRemoveFavoriteMutation: vi.fn(),
 }));
 
 function renderWithQuery(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
 }
+
+const mockMutate = vi.fn();
+const mockMutation = { mutate: mockMutate, isLoading: false };
 
 const mockComics = {
   comics: {
@@ -53,6 +58,8 @@ describe('DashboardClient', () => {
       isLoading: false,
       error: null,
     } as any);
+    vi.mocked(useAddFavoriteMutation).mockReturnValue(mockMutation as any);
+    vi.mocked(useRemoveFavoriteMutation).mockReturnValue(mockMutation as any);
   });
 
   afterEach(() => {

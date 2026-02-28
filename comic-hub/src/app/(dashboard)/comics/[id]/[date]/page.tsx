@@ -1,12 +1,14 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useGetComicStripQuery, useGetComicQuery } from '@/generated/graphql';
+import { useGetComicStripQuery, useGetComicQuery, useUpdateLastReadMutation } from '@/generated/graphql';
 
 export default function ComicStripPage() {
   const params = useParams();
@@ -21,9 +23,27 @@ export default function ComicStripPage() {
     { id: comicId },
   );
 
+  const queryClient = useQueryClient();
+  const updateLastRead = useUpdateLastReadMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
+    },
+  });
+
   const strip = stripData?.strip ?? null;
   const comicName = comicData?.comic?.name ?? '';
   const isLoading = stripLoading || comicLoading;
+
+  const lastReadUpdated = useRef<string | null>(null);
+  useEffect(() => {
+    if (strip?.imageUrl && strip.available !== false) {
+      const key = `${comicId}:${strip.date}`;
+      if (lastReadUpdated.current !== key) {
+        lastReadUpdated.current = key;
+        updateLastRead.mutate({ comicId, date: strip.date });
+      }
+    }
+  }, [strip, comicId, updateLastRead]);
 
   if (isLoading) {
     return (

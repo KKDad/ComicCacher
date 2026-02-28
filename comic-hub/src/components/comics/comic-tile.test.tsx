@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ComicTile } from './comic-tile';
 
 describe('ComicTile', () => {
@@ -67,9 +68,43 @@ describe('ComicTile', () => {
     expect(link).toHaveAttribute('href', '/comics/42/2024-12-25');
   });
 
-  it('renders New badge', () => {
-    render(<ComicTile comic={mockComic} />);
+  it('renders New badge when isNew is true', () => {
+    render(<ComicTile comic={mockComic} isNew />);
     expect(screen.getByText('New')).toBeInTheDocument();
+  });
+
+  it('does not render New badge when isNew is false', () => {
+    render(<ComicTile comic={mockComic} isNew={false} />);
+    expect(screen.queryByText('New')).not.toBeInTheDocument();
+  });
+
+  it('does not render New badge when isNew is not provided', () => {
+    render(<ComicTile comic={mockComic} />);
+    expect(screen.queryByText('New')).not.toBeInTheDocument();
+  });
+
+  it('renders heart button when onToggleFavorite is provided', () => {
+    const handler = vi.fn();
+    render(<ComicTile comic={mockComic} onToggleFavorite={handler} />);
+    expect(screen.getByRole('button', { name: /add to favorites/i })).toBeInTheDocument();
+  });
+
+  it('renders filled heart when isFavorite', () => {
+    const handler = vi.fn();
+    render(<ComicTile comic={mockComic} isFavorite onToggleFavorite={handler} />);
+    expect(screen.getByRole('button', { name: /remove from favorites/i })).toBeInTheDocument();
+  });
+
+  it('does not render heart button when onToggleFavorite is not provided', () => {
+    render(<ComicTile comic={mockComic} />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('calls onToggleFavorite when heart is clicked', async () => {
+    const handler = vi.fn();
+    render(<ComicTile comic={mockComic} onToggleFavorite={handler} />);
+    await userEvent.click(screen.getByRole('button', { name: /add to favorites/i }));
+    expect(handler).toHaveBeenCalledOnce();
   });
 
   it('formats different dates correctly', () => {

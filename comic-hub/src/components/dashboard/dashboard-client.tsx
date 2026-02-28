@@ -1,17 +1,37 @@
 'use client';
 
-import { useGetComicsQuery, useGetMeQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useGetComicsQuery,
+  useGetMeQuery,
+  useGetUserPreferencesQuery,
+  useAddFavoriteMutation,
+  useRemoveFavoriteMutation,
+} from '@/generated/graphql';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ContinueReading } from '@/components/dashboard/continue-reading';
 import { FavoritesSection } from '@/components/dashboard/favorites-section';
 import { TodaysComics } from '@/components/dashboard/todays-comics';
 
 export function DashboardClient() {
+  const queryClient = useQueryClient();
   const { data: meData } = useGetMeQuery();
 
   const { data: comicsData, isLoading: comicsLoading, error: comicsError } = useGetComicsQuery({ first: 20 });
 
   const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useGetUserPreferencesQuery();
+
+  const addFavorite = useAddFavoriteMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
+    },
+  });
+
+  const removeFavorite = useRemoveFavoriteMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
+    },
+  });
 
   if (comicsError || prefsError) {
     return (
@@ -27,14 +47,33 @@ export function DashboardClient() {
   const comics = comicsData?.comics?.edges?.map((e) => e.node) ?? [];
   const prefs = prefsData?.preferences ?? null;
 
-  const todaysComics = comics.map((c) => ({
-    id: c.id,
-    name: c.name,
-    date: c.lastStrip?.date ?? c.newest,
-    thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl ?? undefined,
-  }));
-
   const favoriteIds = new Set(prefs?.favoriteComics ?? []);
+  const lastReadMap = new Map(
+    (prefs?.lastReadDates ?? []).map((entry) => [entry.comicId, entry.date]),
+  );
+
+  const todaysComics = comics.map((c) => {
+    const latestDate = c.lastStrip?.date ?? c.newest;
+    const lastRead = lastReadMap.get(c.id);
+    const isNew = !lastRead || latestDate > lastRead;
+
+    return {
+      id: c.id,
+      name: c.name,
+      date: latestDate,
+      thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl ?? undefined,
+      isNew,
+      isFavorite: favoriteIds.has(c.id),
+      onToggleFavorite: () => {
+        if (favoriteIds.has(c.id)) {
+          removeFavorite.mutate({ comicId: c.id });
+        } else {
+          addFavorite.mutate({ comicId: c.id });
+        }
+      },
+    };
+  });
+
   const favorites = comics
     .filter((c) => favoriteIds.has(c.id))
     .map((c) => ({

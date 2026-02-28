@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,9 @@ export function FavoritesSection({ favorites = null, isLoading = false }: Favori
             <p className="text-sm text-ink-muted mb-4">
               Mark comics as favorites to see them here
             </p>
-            <Button>Browse Comics</Button>
+            <Link href="/comics">
+              <Button>Browse Comics</Button>
+            </Link>
           </div>
         </Card>
       </section>

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,9 @@ interface TodaysComic {
   name: string;
   date: string;
   thumbnail?: string;
+  isNew?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (e: React.MouseEvent) => void;
 }
 
 interface TodaysComicsProps {
@@ -80,13 +84,21 @@ export function TodaysComics({ comics = null, isLoading = false }: TodaysComicsP
           <h2 className="text-xl font-semibold text-ink">Today's Comics</h2>
           <p className="text-sm text-ink-subtle">{today}</p>
         </div>
-        <Button variant="outline" size="sm">
-          View All
-        </Button>
+        <Link href="/comics">
+          <Button variant="outline" size="sm">
+            View All
+          </Button>
+        </Link>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {comics.map((comic) => (
-          <ComicTile key={comic.id} comic={comic} />
+          <ComicTile
+            key={comic.id}
+            comic={comic}
+            isNew={comic.isNew}
+            isFavorite={comic.isFavorite}
+            onToggleFavorite={comic.onToggleFavorite}
+          />
         ))}
       </div>
     </section>

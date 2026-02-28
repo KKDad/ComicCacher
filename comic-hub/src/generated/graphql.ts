@@ -1747,3 +1747,100 @@ useInfiniteSearchComicsQuery.getKey = (variables: SearchComicsQueryVariables) =>
 
 
 useSearchComicsQuery.fetcher = (variables: SearchComicsQueryVariables, options?: RequestInit['headers']) => fetcher<SearchComicsQuery, SearchComicsQueryVariables>(SearchComicsDocument, variables, options);
+
+export type AddFavoriteMutationVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+}>;
+
+
+export type AddFavoriteMutation = { __typename?: 'Mutation', addFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
+
+export type RemoveFavoriteMutationVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+}>;
+
+
+export type RemoveFavoriteMutation = { __typename?: 'Mutation', removeFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
+
+export type UpdateLastReadMutationVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+  date: Scalars['Date']['input'];
+}>;
+
+
+export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: { __typename?: 'UserPreference', lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } };
+
+export const AddFavoriteDocument = `
+    mutation AddFavorite($comicId: Int!) {
+  addFavorite(comicId: $comicId) {
+    favoriteComics
+  }
+}
+    `;
+
+export const useAddFavoriteMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<AddFavoriteMutation, TError, AddFavoriteMutationVariables, TContext>) => {
+
+    return useMutation<AddFavoriteMutation, TError, AddFavoriteMutationVariables, TContext>(
+      {
+    mutationKey: ['AddFavorite'],
+    mutationFn: (variables?: AddFavoriteMutationVariables) => fetcher<AddFavoriteMutation, AddFavoriteMutationVariables>(AddFavoriteDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useAddFavoriteMutation.fetcher = (variables: AddFavoriteMutationVariables, options?: RequestInit['headers']) => fetcher<AddFavoriteMutation, AddFavoriteMutationVariables>(AddFavoriteDocument, variables, options);
+
+export const RemoveFavoriteDocument = `
+    mutation RemoveFavorite($comicId: Int!) {
+  removeFavorite(comicId: $comicId) {
+    favoriteComics
+  }
+}
+    `;
+
+export const useRemoveFavoriteMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<RemoveFavoriteMutation, TError, RemoveFavoriteMutationVariables, TContext>) => {
+
+    return useMutation<RemoveFavoriteMutation, TError, RemoveFavoriteMutationVariables, TContext>(
+      {
+    mutationKey: ['RemoveFavorite'],
+    mutationFn: (variables?: RemoveFavoriteMutationVariables) => fetcher<RemoveFavoriteMutation, RemoveFavoriteMutationVariables>(RemoveFavoriteDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useRemoveFavoriteMutation.fetcher = (variables: RemoveFavoriteMutationVariables, options?: RequestInit['headers']) => fetcher<RemoveFavoriteMutation, RemoveFavoriteMutationVariables>(RemoveFavoriteDocument, variables, options);
+
+export const UpdateLastReadDocument = `
+    mutation UpdateLastRead($comicId: Int!, $date: Date!) {
+  updateLastRead(comicId: $comicId, date: $date) {
+    lastReadDates {
+      comicId
+      date
+    }
+  }
+}
+    `;
+
+export const useUpdateLastReadMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UpdateLastReadMutation, TError, UpdateLastReadMutationVariables, TContext>) => {
+
+    return useMutation<UpdateLastReadMutation, TError, UpdateLastReadMutationVariables, TContext>(
+      {
+    mutationKey: ['UpdateLastRead'],
+    mutationFn: (variables?: UpdateLastReadMutationVariables) => fetcher<UpdateLastReadMutation, UpdateLastReadMutationVariables>(UpdateLastReadDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useUpdateLastReadMutation.fetcher = (variables: UpdateLastReadMutationVariables, options?: RequestInit['headers']) => fetcher<UpdateLastReadMutation, UpdateLastReadMutationVariables>(UpdateLastReadDocument, variables, options);
