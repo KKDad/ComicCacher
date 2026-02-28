@@ -5,9 +5,14 @@ import { useLogout } from '@/hooks/use-auth';
 import { UserProvider } from '@/contexts/user-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMockUser } from '@/test/test-utils';
+import * as gravatar from '@/lib/gravatar';
 
 vi.mock('@/hooks/use-auth', () => ({
   useLogout: vi.fn(),
+}));
+
+vi.mock('@/lib/gravatar', () => ({
+  getGravatarUrl: vi.fn(),
 }));
 
 function renderHeader(props: { showMenuButton?: boolean } = {}, user = createMockUser()) {
@@ -26,6 +31,9 @@ describe('Header', () => {
 
   beforeEach(() => {
     vi.mocked(useLogout).mockReturnValue({ logout: mockLogout, isLoggingOut: false });
+    vi.mocked(gravatar.getGravatarUrl).mockResolvedValue(
+      'https://www.gravatar.com/avatar/abc123?s=80&d=404',
+    );
   });
 
   afterEach(() => {
@@ -72,6 +80,14 @@ describe('Header', () => {
   it('does not render menu button by default', () => {
     renderHeader();
     // Default is showMenuButton=false, so no toggle button for sidebar
+  });
+
+  it('computes gravatar URL when user has email', async () => {
+    renderHeader({}, createMockUser({ email: 'avatar@test.com' }));
+    // Wait for the async effect to resolve
+    await vi.waitFor(() => {
+      expect(gravatar.getGravatarUrl).toHaveBeenCalledWith('avatar@test.com');
+    });
   });
 
   it('calls logout when Sign out is clicked', async () => {

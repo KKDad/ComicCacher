@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Search, Bell, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,7 @@ import {
 import { useSidebarStore } from '@/stores/sidebar-store';
 import { useUser } from '@/contexts/user-context';
 import { useLogout } from '@/hooks/use-auth';
+import { getGravatarUrl } from '@/lib/gravatar';
 
 interface HeaderProps {
   showMenuButton?: boolean;
@@ -24,6 +26,16 @@ export function Header({ showMenuButton = false }: HeaderProps) {
   const { toggle } = useSidebarStore();
   const user = useUser();
   const { logout } = useLogout();
+  const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    let cancelled = false;
+    getGravatarUrl(user.email).then((url) => {
+      if (!cancelled) setGravatarUrl(url);
+    });
+    return () => { cancelled = true; };
+  }, [user?.email]);
 
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -85,6 +97,9 @@ export function Header({ showMenuButton = false }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
+                  {gravatarUrl && (
+                    <AvatarImage src={gravatarUrl} alt={user?.displayName ?? 'User avatar'} />
+                  )}
                   <AvatarFallback className="bg-primary text-primary-foreground">
                     {initials}
                   </AvatarFallback>
