@@ -1,26 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { JWT_COOKIE, PUBLIC_PATHS } from '@/lib/auth/constants';
 
-const authPaths = ['/login', '/register', '/forgot-password'];
-
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  const hasToken = !!request.cookies.get(JWT_COOKIE)?.value;
-
-  // Redirect authenticated users away from auth pages
-  if (hasToken && authPaths.includes(pathname)) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  // Redirect unauthenticated users to login (except for public paths)
-  if (!hasToken && !PUBLIC_PATHS.includes(pathname)) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+// Proxy is a passthrough — auth redirects are handled by server layouts
+// (dashboard layout validates session via getSession, not cookie presence).
+// Kept for future non-auth proxy use (geo-routing, A/B testing, etc.).
+export function proxy(_request: NextRequest) {
   return NextResponse.next();
 }
 

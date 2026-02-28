@@ -89,6 +89,11 @@ Controllers (ComicController, UpdateController, BatchJobController), Services (U
 ### comic-hub
 Next.js 16 App Router with httpOnly cookie auth, server-side GraphQL proxy, codegen-generated hooks. See `comic-hub/README.md`.
 
+**Next.js 16 Proxy (replaces middleware):**
+- `middleware.ts` is **deprecated** in Next.js 16 — use `proxy.ts` instead (same level as `app/`).
+- Export a named `proxy` function (or default export) and an optional `config` with `matcher`.
+- Proxy files must **not** import shared modules or globals — inline any constants they need. See [Next.js proxy docs](https://nextjs.org/docs/app/api-reference/file-conventions/proxy).
+
 ## Image Validation
 
 - **comic-common:** `ImageFormat` enum, `ImageValidationResult` DTO, `ImageValidationService` interface

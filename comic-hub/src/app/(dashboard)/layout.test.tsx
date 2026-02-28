@@ -1,9 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { getSession } from '@/lib/auth/session';
+import { redirect } from 'next/navigation';
 import { createMockUser } from '@/test/test-utils';
 
 vi.mock('@/lib/auth/session', () => ({
   getSession: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
 }));
 
 vi.mock('@/components/layout/dashboard-shell', () => ({
@@ -39,13 +44,12 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('dashboard content')).toBeInTheDocument();
   });
 
-  it('passes null user when session returns null', async () => {
+  it('redirects to /login when session returns null', async () => {
     vi.mocked(getSession).mockResolvedValue(null);
 
     const { default: DashboardLayout } = await import('./layout');
-    const result = await DashboardLayout({ children: <div>content</div> });
-    render(result);
+    await DashboardLayout({ children: <div>content</div> });
 
-    expect(screen.getByTestId('user-provider')).toHaveAttribute('data-user', 'null');
+    expect(redirect).toHaveBeenCalledWith('/login');
   });
 });
