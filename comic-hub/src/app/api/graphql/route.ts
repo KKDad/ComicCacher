@@ -2,9 +2,6 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
 
-// Module-level dedup for concurrent refresh attempts
-let refreshPromise: Promise<{ token: string; refreshToken: string } | null> | null = null;
-
 async function refreshTokens(refreshToken: string): Promise<{ token: string; refreshToken: string } | null> {
   const res = await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
@@ -80,14 +77,7 @@ export async function POST(request: NextRequest) {
       return res;
     }
 
-    // Dedup concurrent refresh requests
-    if (!refreshPromise) {
-      refreshPromise = refreshTokens(refresh).finally(() => {
-        refreshPromise = null;
-      });
-    }
-
-    const newTokens = await refreshPromise;
+    const newTokens = await refreshTokens(refresh);
 
     if (!newTokens) {
       const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

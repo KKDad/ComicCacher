@@ -26,6 +26,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       {/* Main content */}
       <main
         className={`
+          relative z-0
           pt-[var(--header-height)]
           ${layout === 'desktop' ? 'pl-[var(--sidebar-width)]' : ''}
           ${layout === 'tablet' ? 'pl-[var(--sidebar-collapsed)]' : ''}
