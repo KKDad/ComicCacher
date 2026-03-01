@@ -5,17 +5,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.stapledon.common.dto.ImageFormat;
-import org.stapledon.common.dto.ImageMetadata;
-import org.stapledon.common.dto.ImageValidationResult;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import javax.imageio.ImageIO;
+
+import org.stapledon.common.dto.ImageFormat;
+import org.stapledon.common.dto.ImageMetadata;
+import org.stapledon.common.dto.ImageValidationResult;
 
 class ImageAnalysisServiceTest {
 
@@ -232,7 +234,7 @@ class ImageAnalysisServiceTest {
         // Checkerboard pattern of black and white
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                Color color = ((x + y) % 2 == 0) ? Color.BLACK : Color.WHITE;
+                Color color = (x + y) % 2 == 0 ? Color.BLACK : Color.WHITE;
                 image.setRGB(x, y, color.getRGB());
             }
         }

@@ -1,6 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.stapledon.api.dto.user.User;
@@ -17,6 +16,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
  * Configuration writer for user-related data.
@@ -28,8 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class UserConfigWriter {
-    @Qualifier("gsonWithLocalDate")
-    private final Gson gson;
+    @Qualifier("gsonWithLocalDate") private final Gson gson;
     private final CacheProperties cacheProperties;
     private final ConfigurationFacade configurationFacade;
 

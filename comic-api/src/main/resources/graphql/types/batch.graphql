@@ -1,0 +1,199 @@
+# =============================================================================
+# Batch Job Types
+# =============================================================================
+# Types for batch job monitoring and management.
+# =============================================================================
+
+"""
+Batch job execution information.
+"""
+type BatchJob {
+    """
+    Unique execution ID.
+    """
+    executionId: Int!
+    
+    """
+    Job name (e.g., "comicRetrievalJob").
+    """
+    jobName: String!
+    
+    """
+    Job execution status.
+    """
+    status: BatchStatusEnum!
+    
+    """
+    When the job started.
+    """
+    startTime: DateTime!
+    
+    """
+    When the job ended (null if still running).
+    """
+    endTime: DateTime
+    
+    """
+    Duration of the job in milliseconds.
+    """
+    durationMs: Float
+    
+    """
+    Exit status code.
+    """
+    exitCode: String
+    
+    """
+    Exit description.
+    """
+    exitDescription: String
+    
+    """
+    Job parameters (key-value pairs).
+    """
+    parameters: JSON
+    
+    """
+    Step execution details.
+    """
+    steps: [BatchStep!]
+}
+
+"""
+Step execution within a batch job.
+"""
+type BatchStep {
+    """
+    Step name.
+    """
+    stepName: String!
+    
+    """
+    Step execution status.
+    """
+    status: BatchStatusEnum!
+    
+    """
+    Number of items read.
+    """
+    readCount: Int!
+    
+    """
+    Number of items written.
+    """
+    writeCount: Int!
+    
+    """
+    Number of items filtered/skipped.
+    """
+    filterCount: Int!
+    
+    """
+    Number of items that failed.
+    """
+    skipCount: Int!
+    
+    """
+    Number of commits.
+    """
+    commitCount: Int!
+    
+    """
+    Number of rollbacks.
+    """
+    rollbackCount: Int!
+    
+    """
+    Step start time.
+    """
+    startTime: DateTime
+    
+    """
+    Step end time.
+    """
+    endTime: DateTime
+}
+
+"""
+Summary statistics for batch job executions.
+"""
+type BatchJobSummary {
+    """
+    Number of days included in the summary.
+    """
+    daysIncluded: Int!
+    
+    """
+    Total number of job executions.
+    """
+    totalExecutions: Int!
+    
+    """
+    Number of successful executions.
+    """
+    successCount: Int!
+    
+    """
+    Number of failed executions.
+    """
+    failureCount: Int!
+    
+    """
+    Number of currently running jobs.
+    """
+    runningCount: Int!
+    
+    """
+    Average job duration in milliseconds.
+    """
+    averageDurationMs: Float
+    
+    """
+    Total items processed (read) across all jobs.
+    """
+    totalItemsProcessed: Int
+    
+    """
+    Daily breakdown of job executions.
+    """
+    dailyBreakdown: [DailyJobStats!]
+}
+
+"""
+Daily job execution statistics.
+"""
+type DailyJobStats {
+    """
+    Date.
+    """
+    date: Date!
+    
+    """
+    Number of job executions on this date.
+    """
+    executionCount: Int!
+    
+    """
+    Number of successful executions.
+    """
+    successCount: Int!
+    
+    """
+    Number of failed executions.
+    """
+    failureCount: Int!
+}
+
+"""
+Possible batch job status values.
+"""
+enum BatchStatusEnum {
+    STARTING
+    STARTED
+    STOPPING
+    STOPPED
+    COMPLETED
+    FAILED
+    ABANDONED
+    UNKNOWN
+}

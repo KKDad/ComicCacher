@@ -1,5 +1,8 @@
 package org.stapledon.engine.downloader;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,11 +13,7 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.infrastructure.web.InspectorService;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -22,8 +21,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.infrastructure.web.InspectorService;
 
 @Slf4j
 @ToString
@@ -343,31 +345,31 @@ public class GoComics extends DailyComic implements AutoCloseable {
 
             // Get all img tags with their attributes
             Object imgResult = jsExecutor.executeScript(
-                    "var imgs = document.querySelectorAll('img');" +
-                            "var result = [];" +
-                            "for(var i = 0; i < imgs.length; i++) {" +
-                            "  result.push({" +
-                            "    src: imgs[i].src," +
-                            "    className: imgs[i].className," +
-                            "    id: imgs[i].id," +
-                            "    alt: imgs[i].alt" +
-                            "  });" +
-                            "}" +
-                            "return JSON.stringify(result);");
+                    "var imgs = document.querySelectorAll('img');"
+                            + "var result = [];"
+                            + "for(var i = 0; i < imgs.length; i++) {"
+                            + "  result.push({"
+                            + "    src: imgs[i].src,"
+                            + "    className: imgs[i].className,"
+                            + "    id: imgs[i].id,"
+                            + "    alt: imgs[i].alt"
+                            + "  });"
+                            + "}"
+                            + "return JSON.stringify(result);");
             log.info("All img tags found: {}", imgResult);
 
             // Get all meta tags
             Object metaResult = jsExecutor.executeScript(
-                    "var metas = document.querySelectorAll('meta[property], meta[name]');" +
-                            "var result = [];" +
-                            "for(var i = 0; i < metas.length; i++) {" +
-                            "  result.push({" +
-                            "    property: metas[i].getAttribute('property')," +
-                            "    name: metas[i].getAttribute('name')," +
-                            "    content: metas[i].content" +
-                            "  });" +
-                            "}" +
-                            "return JSON.stringify(result);");
+                    "var metas = document.querySelectorAll('meta[property], meta[name]');"
+                            + "var result = [];"
+                            + "for(var i = 0; i < metas.length; i++) {"
+                            + "  result.push({"
+                            + "    property: metas[i].getAttribute('property'),"
+                            + "    name: metas[i].getAttribute('name'),"
+                            + "    content: metas[i].content"
+                            + "  });"
+                            + "}"
+                            + "return JSON.stringify(result);");
             log.info("All meta tags found: {}", metaResult);
 
             // Extract comic image using CSS selector for current GoComics structure

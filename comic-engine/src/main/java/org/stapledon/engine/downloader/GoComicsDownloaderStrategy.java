@@ -1,19 +1,21 @@
 package org.stapledon.engine.downloader;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.infrastructure.web.InspectorService;
-import org.stapledon.common.service.ValidationService;
 
 import java.io.InputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
+
+import org.stapledon.common.dto.ComicDownloadRequest;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.service.ValidationService;
 
 /**
  * Strategy implementation for downloading comics from GoComics.
@@ -137,16 +139,16 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
         // First try: Look for the main comic image using specific selectors
         // GoComics uses a specific class or data attribute for the main strip
         for (Element src : media) {
-            if (src.tagName().equals("img")) {
+            if ("img".equals(src.tagName())) {
                 // Check for main comic image indicators
                 Element parent = src.parent();
                 if (parent != null) {
                     // Look for the picture element that contains the main strip
-                    if (parent.tagName().equals("picture")
+                    if ("picture".equals(parent.tagName())
                             && parent.parent() != null
                             && (parent.parent().className().contains("ComicImage")
-                                    || parent.parent().className().contains("comic__image")
-                                    || parent.parent().className().contains("item__image"))) {
+                            || parent.parent().className().contains("comic__image")
+                            || parent.parent().className().contains("item__image"))) {
                         elements.add(src);
                         break; // Found the main comic, stop looking
                     }
@@ -158,9 +160,9 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
         // The main comic strip is typically the first one on the page
         if (elements.isEmpty()) {
             for (Element src : media) {
-                if (src.tagName().equals("img")
+                if ("img".equals(src.tagName())
                         && (src.attr("abs:src").contains("assets.amuniversal.com")
-                                || src.attr("abs:src").contains("featureassets.gocomics.com"))) {
+                        || src.attr("abs:src").contains("featureassets.gocomics.com"))) {
                     elements.add(src);
                     break; // Take only the first matching image
                 }
@@ -170,14 +172,13 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
         // Second try: Look for images with certain classes or in specific containers
         if (elements.isEmpty()) {
             for (Element src : media) {
-                if (src.tagName().equals("img")) {
+                if ("img".equals(src.tagName())) {
                     // Check for images in containers with specific class names
                     if (src.parent() != null
                             && (src.parent().className().contains("comic")
-                                    || src.parent().className().contains("ShowComicViewer"))) {
+                            || src.parent().className().contains("ShowComicViewer"))) {
                         elements.add(src);
-                    }
-                    // Check for images that are large enough to likely be the comic
+                    }// Check for images that are large enough to likely be the comic
                     else if (src.hasAttr("width") && src.hasAttr("height")) {
                         try {
                             int width = Integer.parseInt(src.attr("width"));

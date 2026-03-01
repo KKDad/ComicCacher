@@ -6,18 +6,11 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.stapledon.api.dto.health.HealthStatus;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.infrastructure.config.BuildVersion;
-
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 
 import java.io.IOException;
@@ -26,6 +19,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Tests for the SystemHealthService
@@ -33,19 +29,15 @@ import java.util.Map;
 @ExtendWith(MockitoExtension.class)
 class SystemHealthServiceTest {
 
-    @Mock
-    private BuildVersion mockBuildVersion;
+    @Mock private BuildVersion mockBuildVersion;
 
-    @Mock
-    private StorageMetricsCollector mockCacheStatsUpdater;
+    @Mock private StorageMetricsCollector mockCacheStatsUpdater;
 
     // Removed unused AccessMetricsCollector mock
 
-    @Mock
-    private CacheProperties mockCacheProperties;
+    @Mock private CacheProperties mockCacheProperties;
 
-    @InjectMocks
-    private SystemHealthService healthService;
+    @InjectMocks private SystemHealthService healthService;
 
     private Path tempDir;
 

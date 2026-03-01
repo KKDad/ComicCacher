@@ -21,12 +21,12 @@ class BootstrapTest {
     void convertBootstrapToComicItemBasicFields() {
         // Given: A test bootstrap with basic fields
         TestBootstrap bootstrap = new TestBootstrap(
-            "TestComic",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "test-comic",
-            null,
-            true
+                "TestComic",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "test-comic",
+                null,
+                true
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -50,12 +50,12 @@ class BootstrapTest {
     void convertBootstrapWithPublicationDays() {
         // Given: A bootstrap with Sunday-only publication
         TestBootstrap bootstrap = new TestBootstrap(
-            "FoxTrot",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "foxtrot",
-            List.of(DayOfWeek.SUNDAY),
-            true
+                "FoxTrot",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "foxtrot",
+                List.of(DayOfWeek.SUNDAY),
+                true
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -75,12 +75,12 @@ class BootstrapTest {
     void convertBootstrapWithNullPublicationDays() {
         // Given: A bootstrap with null publicationDays (daily publication)
         TestBootstrap bootstrap = new TestBootstrap(
-            "Garfield",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "garfield",
-            null,
-            true
+                "Garfield",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "garfield",
+                null,
+                true
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -99,12 +99,12 @@ class BootstrapTest {
     void convertBootstrapWithActiveTrue() {
         // Given: An active comic
         TestBootstrap bootstrap = new TestBootstrap(
-            "Garfield",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "garfield",
-            null,
-            true
+                "Garfield",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "garfield",
+                null,
+                true
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -116,7 +116,6 @@ class BootstrapTest {
 
         // Then: active should be true
         ComicItem comic = comicConfig.getComics().get(0);
-        assertThat(comic.getActive()).isTrue();
         assertThat(comic.isActive()).isTrue();
     }
 
@@ -124,12 +123,12 @@ class BootstrapTest {
     void convertBootstrapWithActiveFalse() {
         // Given: An inactive comic
         TestBootstrap bootstrap = new TestBootstrap(
-            "Committed",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "committed",
-            null,
-            false
+                "Committed",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "committed",
+                null,
+                false
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -141,7 +140,6 @@ class BootstrapTest {
 
         // Then: active should be false
         ComicItem comic = comicConfig.getComics().get(0);
-        assertThat(comic.getActive()).isFalse();
         assertThat(comic.isActive()).isFalse();
     }
 
@@ -149,12 +147,12 @@ class BootstrapTest {
     void convertBootstrapWithNullActive() {
         // Given: A comic with null active (should default to true)
         TestBootstrap bootstrap = new TestBootstrap(
-            "TestComic",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "test-comic",
-            null,
-            null
+                "TestComic",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "test-comic",
+                null,
+                null
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -173,12 +171,12 @@ class BootstrapTest {
     void convertBootstrapWithAllNewFeatures() {
         // Given: A bootstrap with all new features
         TestBootstrap bootstrap = new TestBootstrap(
-            "FoxTrot",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "foxtrot",
-            List.of(DayOfWeek.SUNDAY),
-            true
+                "FoxTrot",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "foxtrot",
+                List.of(DayOfWeek.SUNDAY),
+                true
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -192,37 +190,37 @@ class BootstrapTest {
         ComicItem comic = comicConfig.getComics().get(0);
         assertThat(comic.getSourceIdentifier()).isEqualTo("foxtrot");
         assertThat(comic.getPublicationDays()).containsExactly(DayOfWeek.SUNDAY);
-        assertThat(comic.getActive()).isTrue();
+        assertThat(comic.isActive()).isTrue();
     }
 
     @Test
     void convertMultipleBootstraps() {
         // Given: Multiple bootstraps with different configurations
         TestBootstrap active = new TestBootstrap(
-            "Active Comic",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "active-comic",
-            null,
-            true
+                "Active Comic",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "active-comic",
+                null,
+                true
         );
 
         TestBootstrap inactive = new TestBootstrap(
-            "Inactive Comic",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "inactive-comic",
-            null,
-            false
+                "Inactive Comic",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "inactive-comic",
+                null,
+                false
         );
 
         TestBootstrap sundayOnly = new TestBootstrap(
-            "Sunday Only",
-            LocalDate.of(2019, 4, 1),
-            "gocomics",
-            "sunday-only",
-            List.of(DayOfWeek.SUNDAY),
-            true
+                "Sunday Only",
+                LocalDate.of(2019, 4, 1),
+                "gocomics",
+                "sunday-only",
+                List.of(DayOfWeek.SUNDAY),
+                true
         );
 
         Bootstrap config = Bootstrap.builder()
@@ -267,7 +265,7 @@ class BootstrapTest {
         private final Boolean active;
 
         public TestBootstrap(String name, LocalDate startDate, String source, String sourceIdentifier,
-                           List<DayOfWeek> publicationDays, Boolean active) {
+                             List<DayOfWeek> publicationDays, Boolean active) {
             this.name = name;
             this.startDate = startDate;
             this.source = source;

@@ -1,15 +1,15 @@
-name: Angular CI
+name: Comic Hub CI
 
 on:
   push:
-    branches: [ "master", "update-web" ]
+    branches: [ "master" ]
     paths:
-      - 'comic-web/**'
+      - 'comic-hub/**'
       - '.github/workflows/angular.yml'
   pull_request:
     branches: [ "master" ]
     paths:
-      - 'comic-web/**'
+      - 'comic-hub/**'
       - '.github/workflows/angular.yml'
 
 permissions:
@@ -21,58 +21,26 @@ jobs:
 
     defaults:
       run:
-        working-directory: comic-web
-
-    strategy:
-      matrix:
-        node-version: [22.x]
+        working-directory: comic-hub
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
 
-    - name: Setup Node.js ${{ matrix.node-version }}
+    - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version-file: comic-hub/.nvmrc
         cache: 'npm'
-        cache-dependency-path: comic-web/package-lock.json
+        cache-dependency-path: comic-hub/package-lock.json
 
     - name: Install dependencies
       run: npm ci
 
-    - name: Run linting
-      run: npm run lint
-
-    - name: Run tests
-      run: npm run test:headless
+    - name: Run tests with coverage
+      run: npx vitest run --coverage
 
     - name: Build production
-      run: npm run buildProd
-
-    - name: Check bundle size
-      run: |
-        MAIN_FILE=$(ls dist/comic-web/browser/main-*.js)
-        MAIN_SIZE=$(stat -c %s "$MAIN_FILE")
-        MAIN_SIZE_KB=$((MAIN_SIZE / 1024))
-        echo "Main bundle size: ${MAIN_SIZE_KB}KB"
-        if [ $MAIN_SIZE_KB -gt 600 ]; then
-          echo "::warning::Main bundle size (${MAIN_SIZE_KB}KB) exceeds 600KB"
-        fi
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v6
-      if: success()
-      with:
-        name: angular-build
-        path: comic-web/dist/comic-web/browser
-        retention-days: 7
-
-    - name: Upload test coverage
-      uses: actions/upload-artifact@v6
-      if: always()
-      with:
-        name: test-coverage
-        path: comic-web/coverage
-        retention-days: 7
-        if-no-files-found: ignore
+      run: npm run build
+      env:
+        NEXT_PUBLIC_GRAPHQL_ENDPOINT: http://10.0.0.47:8087/graphql

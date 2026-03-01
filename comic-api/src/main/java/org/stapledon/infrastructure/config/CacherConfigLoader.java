@@ -17,8 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @RequiredArgsConstructor
 public class CacherConfigLoader {
-    @Qualifier("gsonWithLocalDate")
-    private final Gson gson;
+    @Qualifier("gsonWithLocalDate") private final Gson gson;
 
     /**
      * Load the configuration from the default resources

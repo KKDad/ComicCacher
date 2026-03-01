@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch.config;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -15,6 +17,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+
+
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageMetadata;
@@ -26,21 +39,13 @@ import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Stream;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Spring Batch configuration for image metadata backfill job. Backfills metadata for existing images that don't have metadata files.
  */
-@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j
+@Configuration
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ImageMetadataBackfillJobConfig {
 
     private static final int UNKNOWN_COMIC_ID = 0;
@@ -62,7 +67,7 @@ public class ImageMetadataBackfillJobConfig {
     @Value("${batch.timezone:America/Toronto}")
     private String timezone;
 
-    private volatile boolean initialized = false;
+    private volatile boolean initialized;
 
     /**
      * Lazily initializes the comic directory map on first use. Avoids blocking application startup.
@@ -127,26 +132,26 @@ public class ImageMetadataBackfillJobConfig {
 
             // Process in streaming fashion with configurable max limit
             int maxToProcess = batchSize * 100; // Process up to 100 batches per run
-            int[] counters = { 0, 0, 0 }; // processed, successful, failed
+            int[] counters = {0, 0, 0}; // processed, successful, failed
 
             try (Stream<Path> paths = Files.walk(cacheRoot.toPath())) {
-                paths.filter(Files::isRegularFile).filter(this::isImageFile).filter(path -> !path.getFileName().toString().equals("avatar.png"))
+                paths.filter(Files::isRegularFile).filter(this::isImageFile).filter(path -> !"avatar.png".equals(path.getFileName().toString()))
                         .filter(path -> !imageMetadataRepository.metadataExists(path.toString())).limit(maxToProcess).forEach(path -> {
-                            try {
-                                backfillImageMetadata(path.toFile());
-                                counters[1]++;
-                            } catch (Exception e) {
-                                counters[2]++;
-                                log.error("Failed to backfill metadata for {}: {}", path.toAbsolutePath(), e.getMessage());
-                            }
+                    try {
+                        backfillImageMetadata(path.toFile());
+                        counters[1]++;
+                    } catch (Exception e) {
+                        counters[2]++;
+                        log.error("Failed to backfill metadata for {}: {}", path.toAbsolutePath(), e.getMessage());
+                    }
 
-                            counters[0]++;
+                    counters[0]++;
 
-                            // Log progress every batch
-                            if (counters[0] % batchSize == 0) {
-                                log.info("Progress: {} images processed ({} successful, {} failed)", counters[0], counters[1], counters[2]);
-                            }
-                        });
+                    // Log progress every batch
+                    if (counters[0] % batchSize == 0) {
+                        log.info("Progress: {} images processed ({} successful, {} failed)", counters[0], counters[1], counters[2]);
+                    }
+                });
             }
 
             if (counters[0] == 0) {

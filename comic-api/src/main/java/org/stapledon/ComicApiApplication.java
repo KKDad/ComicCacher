@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 public class ComicApiApplication {
-        public static void main(String[] args) {
-                SpringApplication.run(ComicApiApplication.class, args);
-        }
+    public static void main(String[] args) {
+        SpringApplication.run(ComicApiApplication.class, args);
+    }
 }

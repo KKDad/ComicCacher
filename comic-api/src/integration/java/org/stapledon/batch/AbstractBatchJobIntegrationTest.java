@@ -23,9 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
-import tools.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base class for batch job integration tests.
@@ -37,18 +37,13 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public abstract class AbstractBatchJobIntegrationTest {
 
-    @Autowired
-    protected CacheProperties cacheProperties;
+    @Autowired protected CacheProperties cacheProperties;
 
-    @Autowired
-    protected ImageMetadataRepository imageMetadataRepository;
+    @Autowired protected ImageMetadataRepository imageMetadataRepository;
 
-    @Autowired
-    @Qualifier("gsonWithLocalDate")
-    protected Gson gson;
+    @Autowired @Qualifier("gsonWithLocalDate") protected Gson gson;
 
-    @Autowired
-    protected ObjectMapper objectMapper;
+    @Autowired protected ObjectMapper objectMapper;
 
     protected static final String BATCH_CACHE_DIR = "./batch-integration-cache";
 
@@ -176,7 +171,7 @@ public abstract class AbstractBatchJobIntegrationTest {
      * @throws IOException if reading metadata fails
      */
     protected void assertMetadataValid(String imageFilePath, ImageFormat expectedFormat,
-            int expectedWidth, int expectedHeight) throws IOException {
+                                       int expectedWidth, int expectedHeight) throws IOException {
         assertMetadataExists(imageFilePath);
 
         File metadataFile = getMetadataFile(imageFilePath);

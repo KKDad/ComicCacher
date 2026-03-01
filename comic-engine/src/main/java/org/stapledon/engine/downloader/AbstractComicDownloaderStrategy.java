@@ -1,15 +1,17 @@
 package org.stapledon.engine.downloader;
 
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
+
+
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
-
-import java.util.Optional;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract base class for comic downloader strategies.
@@ -32,8 +34,8 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
      * @param imageValidationService The service for validating downloaded images
      */
     protected AbstractComicDownloaderStrategy(String source,
-                                             InspectorService webInspector,
-                                             ValidationService imageValidationService) {
+            InspectorService webInspector,
+            ValidationService imageValidationService) {
         this.source = source;
         this.webInspector = webInspector;
         this.imageValidationService = imageValidationService;
@@ -46,7 +48,7 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
         try {
             log.info("Downloading comic {} for date {} from {}",
-                      request.getComicName(), request.getDate(), source);
+                    request.getComicName(), request.getDate(), source);
 
             byte[] imageData = downloadComicImage(request);
             if (imageData == null || imageData.length == 0) {
@@ -58,13 +60,13 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
             if (!validation.isValid()) {
                 String error = String.format("Invalid image downloaded: %s", validation.getErrorMessage());
                 log.error("Validation failed for {} on {}: {}",
-                         request.getComicName(), request.getDate(), error);
+                        request.getComicName(), request.getDate(), error);
                 return ComicDownloadResult.failure(request, error);
             }
 
             log.debug("Validated {} image for {} on {}: {}x{} ({} bytes)",
-                     validation.getFormat(), request.getComicName(), request.getDate(),
-                     validation.getWidth(), validation.getHeight(), validation.getSizeInBytes());
+                    validation.getFormat(), request.getComicName(), request.getDate(),
+                    validation.getWidth(), validation.getHeight(), validation.getSizeInBytes());
 
             return ComicDownloadResult.success(request, imageData);
         } catch (Exception e) {
@@ -96,8 +98,8 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
             }
 
             log.debug("Validated {} avatar for {}: {}x{}",
-                     validation.getFormat(), comicName,
-                     validation.getWidth(), validation.getHeight());
+                    validation.getFormat(), comicName,
+                    validation.getWidth(), validation.getHeight());
 
             return Optional.of(avatarData);
         } catch (Exception e) {

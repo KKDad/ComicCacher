@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch.scheduler;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
@@ -7,8 +9,6 @@ import org.springframework.batch.core.launch.JobOperator;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Abstract base class for job schedulers. Provides common functionality for all batch job schedulers using the modern JobOperator API.
@@ -28,7 +28,8 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Handle exceptions gracefully</li>
  * </ul>
  */
-@Slf4j @RequiredArgsConstructor
+@Slf4j
+@RequiredArgsConstructor
 public abstract class AbstractJobScheduler {
 
     protected final Job job;
@@ -38,9 +39,13 @@ public abstract class AbstractJobScheduler {
      * Schedule type for categorization and health checks.
      */
     public enum ScheduleType {
-        /** Runs once per day at a scheduled cron time */
+        /**
+         * Runs once per day at a scheduled cron time
+         */
         DAILY,
-        /** Runs periodically with a fixed delay between executions */
+        /**
+         * Runs periodically with a fixed delay between executions
+         */
         PERIODIC
     }
 

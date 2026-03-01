@@ -1,18 +1,15 @@
 package org.stapledon.metrics.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
 import com.google.gson.Gson;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -68,10 +65,10 @@ public class JsonMetricsRepository implements MetricsRepository {
     public CombinedMetricsData load() {
         lock.writeLock().lock();
         try {
-            Path filePath = Paths.get(cacheLocation, COMBINED_METRICS_FILE);
+            Path filePath = NfsFileOperations.resolvePath(cacheLocation, COMBINED_METRICS_FILE);
 
             if (Files.exists(filePath)) {
-                try (Reader reader = new FileReader(filePath.toFile())) {
+                try (Reader reader = Files.newBufferedReader(filePath)) {
                     CombinedMetricsData loadedData = gson.fromJson(reader, CombinedMetricsData.class);
 
                     if (loadedData != null) {
@@ -103,25 +100,24 @@ public class JsonMetricsRepository implements MetricsRepository {
         lock.writeLock().lock();
         try {
             // Update timestamp
-            metrics.setLastUpdated(LocalDateTime.now());
+            metrics.setLastUpdated(OffsetDateTime.now());
 
-            Path directory = Paths.get(cacheLocation);
+            Path directory = NfsFileOperations.resolvePath(cacheLocation);
             if (!Files.exists(directory)) {
                 Files.createDirectories(directory);
             }
 
             Path filePath = directory.resolve(COMBINED_METRICS_FILE);
 
-            try (Writer writer = new FileWriter(filePath.toFile())) {
-                gson.toJson(metrics, writer);
-                writer.flush();
-                cachedMetrics = metrics;
-                int comicCount = metrics.getPerComicMetrics() != null
-                        ? metrics.getPerComicMetrics().size()
-                        : 0;
-                log.debug("Saved combined metrics for {} comics", comicCount);
-                return true;
-            }
+            // Use atomic write to prevent corruption on NFS
+            String json = gson.toJson(metrics);
+            NfsFileOperations.atomicWrite(filePath, json);
+            cachedMetrics = metrics;
+            int comicCount = metrics.getPerComicMetrics() != null
+                    ? metrics.getPerComicMetrics().size()
+                    : 0;
+            log.debug("Saved combined metrics for {} comics", comicCount);
+            return true;
         } catch (IOException e) {
             log.error("Failed to save combined metrics", e);
             return false;
@@ -137,7 +133,7 @@ public class JsonMetricsRepository implements MetricsRepository {
      */
     private CombinedMetricsData createEmpty() {
         return CombinedMetricsData.builder()
-                .lastUpdated(LocalDateTime.now())
+                .lastUpdated(OffsetDateTime.now())
                 .build();
     }
 }

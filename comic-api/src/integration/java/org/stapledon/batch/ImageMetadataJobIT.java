@@ -25,232 +25,230 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
-        @Autowired
-        private JobOperator jobOperator;
+    @Autowired private JobOperator jobOperator;
 
-        @Autowired @Qualifier("imageMetadataBackfillJob")
-        private Job imageMetadataBackfillJob;
+    @Autowired @Qualifier("imageMetadataBackfillJob") private Job imageMetadataBackfillJob;
 
-        private File testImage1;
-        private File testImage2;
-        private File testImage3;
+    private File testImage1;
+    private File testImage2;
+    private File testImage3;
 
-        /**
-         * Runs the job manually for testing.
-         */
-        private JobExecution runJob() throws Exception {
-                JobParameters params = new JobParametersBuilder().addString("runId", String.valueOf(System.currentTimeMillis())).addString("trigger", "TEST").toJobParameters();
+    /**
+     * Runs the job manually for testing.
+     */
+    private JobExecution runJob() throws Exception {
+        JobParameters params = new JobParametersBuilder().addString("runId", String.valueOf(System.currentTimeMillis())).addString("trigger", "TEST").toJobParameters();
 
-                return jobOperator.start(imageMetadataBackfillJob, params);
-        }
+        return jobOperator.start(imageMetadataBackfillJob, params);
+    }
 
-        @BeforeEach
-        void setupTestImages() throws IOException {
-                log.info("Setting up test images for ImageMetadataJob tests");
+    @BeforeEach
+    void setupTestImages() throws IOException {
+        log.info("Setting up test images for ImageMetadataJob tests");
 
-                // Create test images in different formats
-                testImage1 = createTestImage("TestComic/2024/2024-01-15.png", 800, 600, ImageFormat.PNG);
-                testImage2 = createTestImage("TestComic/2024/2024-01-16.jpg", 1024, 768, ImageFormat.JPEG);
-                testImage3 = createTestImage("TestComic/2024/2024-01-17.gif", 400, 300, ImageFormat.GIF);
+        // Create test images in different formats
+        testImage1 = createTestImage("TestComic/2024/2024-01-15.png", 800, 600, ImageFormat.PNG);
+        testImage2 = createTestImage("TestComic/2024/2024-01-16.jpg", 1024, 768, ImageFormat.JPEG);
+        testImage3 = createTestImage("TestComic/2024/2024-01-17.gif", 400, 300, ImageFormat.GIF);
 
-                // Ensure no metadata files exist before test
-                deleteMetadataFile(testImage1.getAbsolutePath());
-                deleteMetadataFile(testImage2.getAbsolutePath());
-                deleteMetadataFile(testImage3.getAbsolutePath());
+        // Ensure no metadata files exist before test
+        deleteMetadataFile(testImage1.getAbsolutePath());
+        deleteMetadataFile(testImage2.getAbsolutePath());
+        deleteMetadataFile(testImage3.getAbsolutePath());
 
-                log.info("Created {} test images without metadata", 3);
-        }
+        log.info("Created {} test images without metadata", 3);
+    }
 
-        /**
-         * Test: ImageMetadataJob processes all images without metadata and creates valid metadata files.
-         */
-        @Test
-        void imageMetadataJobProcessesImagesWithoutMetadata() throws Exception {
-                log.info("TEST: ImageMetadataJob processes images without metadata");
+    /**
+     * Test: ImageMetadataJob processes all images without metadata and creates valid metadata files.
+     */
+    @Test
+    void imageMetadataJobProcessesImagesWithoutMetadata() throws Exception {
+        log.info("TEST: ImageMetadataJob processes images without metadata");
 
-                // Verify before state - no metadata files
-                assertMetadataNotExists(testImage1.getAbsolutePath());
-                assertMetadataNotExists(testImage2.getAbsolutePath());
-                assertMetadataNotExists(testImage3.getAbsolutePath());
+        // Verify before state - no metadata files
+        assertMetadataNotExists(testImage1.getAbsolutePath());
+        assertMetadataNotExists(testImage2.getAbsolutePath());
+        assertMetadataNotExists(testImage3.getAbsolutePath());
 
-                // Execute the job
-                log.info("Executing ImageMetadataJob");
-                JobExecution jobExecution = runJob();
+        // Execute the job
+        log.info("Executing ImageMetadataJob");
+        JobExecution jobExecution = runJob();
 
-                // Assert job completed successfully
-                assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
-                assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
-                log.info("Job completed with status: {}", jobExecution.getStatus());
+        // Assert job completed successfully
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        log.info("Job completed with status: {}", jobExecution.getStatus());
 
-                // Verify after state - all metadata files exist with correct data
-                assertMetadataValid(testImage1.getAbsolutePath(), ImageFormat.PNG, 800, 600);
-                assertMetadataValid(testImage2.getAbsolutePath(), ImageFormat.JPEG, 1024, 768);
-                assertMetadataValid(testImage3.getAbsolutePath(), ImageFormat.GIF, 400, 300);
+        // Verify after state - all metadata files exist with correct data
+        assertMetadataValid(testImage1.getAbsolutePath(), ImageFormat.PNG, 800, 600);
+        assertMetadataValid(testImage2.getAbsolutePath(), ImageFormat.JPEG, 1024, 768);
+        assertMetadataValid(testImage3.getAbsolutePath(), ImageFormat.GIF, 400, 300);
 
-                // Verify metadata content in detail for first image
-                ImageMetadata metadata1 = loadMetadata(testImage1.getAbsolutePath());
-                assertThat(metadata1.getColorMode()).as("ColorMode should not be null").isNotNull();
-                assertThat(metadata1.getColorMode()).as("ColorMode should be detected (not UNKNOWN)").isNotEqualTo(ImageMetadata.ColorMode.UNKNOWN);
-                assertThat(metadata1.getSizeInBytes() > 0).as("File size should be > 0").isTrue();
-                assertThat(metadata1.getFilePath().endsWith("2024-01-15.png")).as("File path should be correct").isTrue();
-                assertThat(ImageFormat.PNG).as("Format should match").isEqualTo(metadata1.getFormat());
+        // Verify metadata content in detail for first image
+        ImageMetadata metadata1 = loadMetadata(testImage1.getAbsolutePath());
+        assertThat(metadata1.getColorMode()).as("ColorMode should not be null").isNotNull();
+        assertThat(metadata1.getColorMode()).as("ColorMode should be detected (not UNKNOWN)").isNotEqualTo(ImageMetadata.ColorMode.UNKNOWN);
+        assertThat(metadata1.getSizeInBytes() > 0).as("File size should be > 0").isTrue();
+        assertThat(metadata1.getFilePath().endsWith("2024-01-15.png")).as("File path should be correct").isTrue();
+        assertThat(ImageFormat.PNG).as("Format should match").isEqualTo(metadata1.getFormat());
 
-                // Verify job execution details
-                assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
-                assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
+        // Verify job execution details
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
 
-                // Verify JsonBatchExecutionTracker recorded the execution
-                assertBatchExecutionTracked("ImageMetadataBackfillJob");
-                assertBatchExecutionValid("ImageMetadataBackfillJob", "COMPLETED");
+        // Verify JsonBatchExecutionTracker recorded the execution
+        assertBatchExecutionTracked("ImageMetadataBackfillJob");
+        assertBatchExecutionValid("ImageMetadataBackfillJob", "COMPLETED");
 
-                log.info("SUCCESS: All 3 images have valid metadata and execution tracked");
-        }
+        log.info("SUCCESS: All 3 images have valid metadata and execution tracked");
+    }
 
-        /**
-         * Test: ImageMetadataJob skips images that already have metadata.
-         */
-        @Test
-        void imageMetadataJobSkipsImagesWithExistingMetadata() throws Exception {
-                log.info("TEST: ImageMetadataJob skips images with existing metadata");
+    /**
+     * Test: ImageMetadataJob skips images that already have metadata.
+     */
+    @Test
+    void imageMetadataJobSkipsImagesWithExistingMetadata() throws Exception {
+        log.info("TEST: ImageMetadataJob skips images with existing metadata");
 
-                // Setup: Create metadata for image1, leave image2 without metadata
-                ImageMetadata existingMetadata = ImageMetadata.builder().filePath(testImage1.getAbsolutePath()).format(ImageFormat.PNG).width(800).height(600).sizeInBytes(12345L)
-                                .colorMode(ImageMetadata.ColorMode.COLOR).build();
+        // Setup: Create metadata for image1, leave image2 without metadata
+        ImageMetadata existingMetadata = ImageMetadata.builder().filePath(testImage1.getAbsolutePath()).format(ImageFormat.PNG).width(800).height(600).sizeInBytes(12345L)
+                .colorMode(ImageMetadata.ColorMode.COLOR).build();
 
-                boolean saved = imageMetadataRepository.saveMetadata(existingMetadata);
-                assertThat(saved).as("Should save existing metadata for test setup").isTrue();
+        boolean saved = imageMetadataRepository.saveMetadata(existingMetadata);
+        assertThat(saved).as("Should save existing metadata for test setup").isTrue();
 
-                // Verify before state
-                assertMetadataExists(testImage1.getAbsolutePath());
-                assertMetadataNotExists(testImage2.getAbsolutePath());
+        // Verify before state
+        assertMetadataExists(testImage1.getAbsolutePath());
+        assertMetadataNotExists(testImage2.getAbsolutePath());
 
-                // Execute the job
-                JobExecution jobExecution = runJob();
+        // Execute the job
+        JobExecution jobExecution = runJob();
 
-                // Assert job completed successfully
-                assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
-                assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
-                assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
-                assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
+        // Assert job completed successfully
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
 
-                // Verify image1 metadata was NOT changed (still has test size)
-                ImageMetadata metadata1After = loadMetadata(testImage1.getAbsolutePath());
-                assertThat(metadata1After).as("Metadata should exist").isNotNull();
-                assertThat(metadata1After.getSizeInBytes()).as("Existing metadata should not be overwritten").isEqualTo(12345L);
-                assertThat(metadata1After.getFormat()).as("Format should remain unchanged").isEqualTo(ImageFormat.PNG);
-                assertThat(metadata1After.getWidth()).as("Width should remain unchanged").isEqualTo(800);
-                assertThat(metadata1After.getHeight()).as("Height should remain unchanged").isEqualTo(600);
+        // Verify image1 metadata was NOT changed (still has test size)
+        ImageMetadata metadata1After = loadMetadata(testImage1.getAbsolutePath());
+        assertThat(metadata1After).as("Metadata should exist").isNotNull();
+        assertThat(metadata1After.getSizeInBytes()).as("Existing metadata should not be overwritten").isEqualTo(12345L);
+        assertThat(metadata1After.getFormat()).as("Format should remain unchanged").isEqualTo(ImageFormat.PNG);
+        assertThat(metadata1After.getWidth()).as("Width should remain unchanged").isEqualTo(800);
+        assertThat(metadata1After.getHeight()).as("Height should remain unchanged").isEqualTo(600);
 
-                // Verify image2 got new metadata
-                assertMetadataValid(testImage2.getAbsolutePath(), ImageFormat.JPEG, 1024, 768);
+        // Verify image2 got new metadata
+        assertMetadataValid(testImage2.getAbsolutePath(), ImageFormat.JPEG, 1024, 768);
 
-                log.info("SUCCESS: Job skipped image with existing metadata");
-        }
+        log.info("SUCCESS: Job skipped image with existing metadata");
+    }
 
-        /**
-         * Test: ImageMetadataJob handles invalid images gracefully.
-         */
-        @Test
-        void imageMetadataJobHandlesInvalidImages() throws Exception {
-                log.info("TEST: ImageMetadataJob handles invalid images");
+    /**
+     * Test: ImageMetadataJob handles invalid images gracefully.
+     */
+    @Test
+    void imageMetadataJobHandlesInvalidImages() throws Exception {
+        log.info("TEST: ImageMetadataJob handles invalid images");
 
-                // Create an invalid image
-                File invalidImage = createInvalidImage("TestComic/2024/invalid.png");
+        // Create an invalid image
+        File invalidImage = createInvalidImage("TestComic/2024/invalid.png");
 
-                // Verify before state
-                assertMetadataNotExists(testImage1.getAbsolutePath());
-                assertMetadataNotExists(invalidImage.getAbsolutePath());
+        // Verify before state
+        assertMetadataNotExists(testImage1.getAbsolutePath());
+        assertMetadataNotExists(invalidImage.getAbsolutePath());
 
-                // Execute the job
-                JobExecution jobExecution = runJob();
+        // Execute the job
+        JobExecution jobExecution = runJob();
 
-                // Assert job completed successfully even with invalid images
-                assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
-                assertThat(jobExecution.getStatus()).as("Job should complete even with invalid images").isEqualTo(BatchStatus.COMPLETED);
-                assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
-                assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
+        // Assert job completed successfully even with invalid images
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete even with invalid images").isEqualTo(BatchStatus.COMPLETED);
+        assertThat(jobExecution.getExitStatus()).as("Exit status should not be null").isNotNull();
+        assertThat(jobExecution.getExitStatus().getExitCode()).as("Exit code should be COMPLETED").isEqualTo("COMPLETED");
 
-                // Valid image should have metadata with correct values
-                assertMetadataValid(testImage1.getAbsolutePath(), ImageFormat.PNG, 800, 600);
-                ImageMetadata validMetadata = loadMetadata(testImage1.getAbsolutePath());
-                assertThat(validMetadata.getColorMode()).as("ColorMode should not be null").isNotNull();
-                assertThat(validMetadata.getSizeInBytes() > 0).as("File size should be > 0").isTrue();
+        // Valid image should have metadata with correct values
+        assertMetadataValid(testImage1.getAbsolutePath(), ImageFormat.PNG, 800, 600);
+        ImageMetadata validMetadata = loadMetadata(testImage1.getAbsolutePath());
+        assertThat(validMetadata.getColorMode()).as("ColorMode should not be null").isNotNull();
+        assertThat(validMetadata.getSizeInBytes() > 0).as("File size should be > 0").isTrue();
 
-                // Invalid image should NOT have metadata
-                assertMetadataNotExists(invalidImage.getAbsolutePath());
+        // Invalid image should NOT have metadata
+        assertMetadataNotExists(invalidImage.getAbsolutePath());
 
-                log.info("SUCCESS: Job handled invalid image gracefully");
-        }
+        log.info("SUCCESS: Job handled invalid image gracefully");
+    }
 
-        /**
-         * Test: ImageMetadataJob processes images with various formats correctly.
-         */
-        @Test
-        void imageMetadataJobDetectsFormatsCorrectly() throws Exception {
-                log.info("TEST: ImageMetadataJob format detection");
+    /**
+     * Test: ImageMetadataJob processes images with various formats correctly.
+     */
+    @Test
+    void imageMetadataJobDetectsFormatsCorrectly() throws Exception {
+        log.info("TEST: ImageMetadataJob format detection");
 
-                // Execute the job
-                JobExecution jobExecution = runJob();
-                assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
-                assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        // Execute the job
+        JobExecution jobExecution = runJob();
+        assertThat(jobExecution).as("JobExecution should not be null").isNotNull();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
-                // Load and verify format for PNG image
-                ImageMetadata pngMetadata = loadMetadata(testImage1.getAbsolutePath());
-                assertThat(pngMetadata).as("PNG metadata should exist").isNotNull();
-                assertThat(pngMetadata.getFormat()).as("PNG format should be detected").isEqualTo(ImageFormat.PNG);
-                assertThat(pngMetadata.getWidth()).as("PNG width should be correct").isEqualTo(800);
-                assertThat(pngMetadata.getHeight()).as("PNG height should be correct").isEqualTo(600);
+        // Load and verify format for PNG image
+        ImageMetadata pngMetadata = loadMetadata(testImage1.getAbsolutePath());
+        assertThat(pngMetadata).as("PNG metadata should exist").isNotNull();
+        assertThat(pngMetadata.getFormat()).as("PNG format should be detected").isEqualTo(ImageFormat.PNG);
+        assertThat(pngMetadata.getWidth()).as("PNG width should be correct").isEqualTo(800);
+        assertThat(pngMetadata.getHeight()).as("PNG height should be correct").isEqualTo(600);
 
-                // Load and verify format for JPEG image
-                ImageMetadata jpegMetadata = loadMetadata(testImage2.getAbsolutePath());
-                assertThat(jpegMetadata).as("JPEG metadata should exist").isNotNull();
-                assertThat(jpegMetadata.getFormat()).as("JPEG format should be detected").isEqualTo(ImageFormat.JPEG);
-                assertThat(jpegMetadata.getWidth()).as("JPEG width should be correct").isEqualTo(1024);
-                assertThat(jpegMetadata.getHeight()).as("JPEG height should be correct").isEqualTo(768);
+        // Load and verify format for JPEG image
+        ImageMetadata jpegMetadata = loadMetadata(testImage2.getAbsolutePath());
+        assertThat(jpegMetadata).as("JPEG metadata should exist").isNotNull();
+        assertThat(jpegMetadata.getFormat()).as("JPEG format should be detected").isEqualTo(ImageFormat.JPEG);
+        assertThat(jpegMetadata.getWidth()).as("JPEG width should be correct").isEqualTo(1024);
+        assertThat(jpegMetadata.getHeight()).as("JPEG height should be correct").isEqualTo(768);
 
-                // Load and verify format for GIF image
-                ImageMetadata gifMetadata = loadMetadata(testImage3.getAbsolutePath());
-                assertThat(gifMetadata).as("GIF metadata should exist").isNotNull();
-                assertThat(gifMetadata.getFormat()).as("GIF format should be detected").isEqualTo(ImageFormat.GIF);
-                assertThat(gifMetadata.getWidth()).as("GIF width should be correct").isEqualTo(400);
-                assertThat(gifMetadata.getHeight()).as("GIF height should be correct").isEqualTo(300);
+        // Load and verify format for GIF image
+        ImageMetadata gifMetadata = loadMetadata(testImage3.getAbsolutePath());
+        assertThat(gifMetadata).as("GIF metadata should exist").isNotNull();
+        assertThat(gifMetadata.getFormat()).as("GIF format should be detected").isEqualTo(ImageFormat.GIF);
+        assertThat(gifMetadata.getWidth()).as("GIF width should be correct").isEqualTo(400);
+        assertThat(gifMetadata.getHeight()).as("GIF height should be correct").isEqualTo(300);
 
-                log.info("SUCCESS: All image formats detected correctly");
-        }
+        log.info("SUCCESS: All image formats detected correctly");
+    }
 
-        /**
-         * Test: ImageMetadataJob can be run multiple times safely (idempotent).
-         */
-        @Test
-        void imageMetadataJobIsIdempotent() throws Exception {
-                log.info("TEST: ImageMetadataJob idempotency");
+    /**
+     * Test: ImageMetadataJob can be run multiple times safely (idempotent).
+     */
+    @Test
+    void imageMetadataJobIsIdempotent() throws Exception {
+        log.info("TEST: ImageMetadataJob idempotency");
 
-                // Run job first time
-                JobExecution execution1 = runJob();
-                assertThat(execution1).as("First execution should not be null").isNotNull();
-                assertThat(execution1.getStatus()).as("First execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        // Run job first time
+        JobExecution execution1 = runJob();
+        assertThat(execution1).as("First execution should not be null").isNotNull();
+        assertThat(execution1.getStatus()).as("First execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
-                // Verify metadata exists after first run
-                ImageMetadata metadataAfterFirst = loadMetadata(testImage1.getAbsolutePath());
-                assertThat(metadataAfterFirst).as("Metadata should exist after first run").isNotNull();
-                long firstSize = metadataAfterFirst.getSizeInBytes();
-                ImageFormat firstFormat = metadataAfterFirst.getFormat();
-                int firstWidth = metadataAfterFirst.getWidth();
-                int firstHeight = metadataAfterFirst.getHeight();
+        // Verify metadata exists after first run
+        ImageMetadata metadataAfterFirst = loadMetadata(testImage1.getAbsolutePath());
+        assertThat(metadataAfterFirst).as("Metadata should exist after first run").isNotNull();
+        long firstSize = metadataAfterFirst.getSizeInBytes();
+        ImageFormat firstFormat = metadataAfterFirst.getFormat();
+        int firstWidth = metadataAfterFirst.getWidth();
+        int firstHeight = metadataAfterFirst.getHeight();
 
-                // Run job second time
-                JobExecution execution2 = runJob();
-                assertThat(execution2).as("Second execution should not be null").isNotNull();
-                assertThat(execution2.getStatus()).as("Second execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+        // Run job second time
+        JobExecution execution2 = runJob();
+        assertThat(execution2).as("Second execution should not be null").isNotNull();
+        assertThat(execution2.getStatus()).as("Second execution should complete successfully").isEqualTo(BatchStatus.COMPLETED);
 
-                // Verify metadata still exists and hasn't changed
-                ImageMetadata metadataAfterSecond = loadMetadata(testImage1.getAbsolutePath());
-                assertThat(metadataAfterSecond).as("Metadata should still exist after second run").isNotNull();
-                assertThat(metadataAfterSecond.getSizeInBytes()).as("File size should not change on second run").isEqualTo(firstSize);
-                assertThat(metadataAfterSecond.getFormat()).as("Format should not change on second run").isEqualTo(firstFormat);
-                assertThat(metadataAfterSecond.getWidth()).as("Width should not change on second run").isEqualTo(firstWidth);
-                assertThat(metadataAfterSecond.getHeight()).as("Height should not change on second run").isEqualTo(firstHeight);
+        // Verify metadata still exists and hasn't changed
+        ImageMetadata metadataAfterSecond = loadMetadata(testImage1.getAbsolutePath());
+        assertThat(metadataAfterSecond).as("Metadata should still exist after second run").isNotNull();
+        assertThat(metadataAfterSecond.getSizeInBytes()).as("File size should not change on second run").isEqualTo(firstSize);
+        assertThat(metadataAfterSecond.getFormat()).as("Format should not change on second run").isEqualTo(firstFormat);
+        assertThat(metadataAfterSecond.getWidth()).as("Width should not change on second run").isEqualTo(firstWidth);
+        assertThat(metadataAfterSecond.getHeight()).as("Height should not change on second run").isEqualTo(firstHeight);
 
-                log.info("SUCCESS: Job is idempotent");
-        }
+        log.info("SUCCESS: Job is idempotent");
+    }
 }

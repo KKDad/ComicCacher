@@ -21,14 +21,12 @@ public class CacheStatus {
     /**
      * Total comics cached
      */
-    @ToString.Include
-    private int totalComics;
+    @ToString.Include private int totalComics;
 
     /**
      * Total cached images
      */
-    @ToString.Include
-    private int totalImages;
+    @ToString.Include private int totalImages;
 
     /**
      * Total storage used in bytes

@@ -1,29 +1,31 @@
 package org.stapledon.engine.storage;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalRecordStorage;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.repository.RetrievalStatusRepository;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+import org.stapledon.common.util.NfsFileOperations;
 
 @Slf4j
 @ToString
@@ -54,14 +56,14 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
             return recordStorage;
         }
 
-        File storageFile = new File(cacheProperties.getLocation(), STORAGE_FILE);
+        Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
-        if (!storageFile.exists()) {
+        if (!NfsFileOperations.exists(storageFile)) {
             recordStorage = new ComicRetrievalRecordStorage();
             return recordStorage;
         }
 
-        try (FileReader reader = new FileReader(storageFile)) {
+        try (Reader reader = Files.newBufferedReader(storageFile)) {
             Type storageType = new TypeToken<ComicRetrievalRecordStorage>() {
             }.getType();
             recordStorage = gson.fromJson(reader, storageType);
@@ -79,20 +81,20 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
     }
 
     /**
-     * Save records to storage file
+     * Save records to storage file using atomic write for NFS safety
      */
     private synchronized void saveRecords() {
         if (recordStorage == null) {
             return;
         }
 
-        recordStorage.setLastUpdated(LocalDateTime.now());
+        recordStorage.setLastUpdated(java.time.OffsetDateTime.now());
 
-        File storageFile = new File(cacheProperties.getLocation(), STORAGE_FILE);
+        Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
-        try (FileWriter writer = new FileWriter(storageFile)) {
-            gson.toJson(recordStorage, writer);
-            writer.flush();
+        try {
+            String json = gson.toJson(recordStorage);
+            NfsFileOperations.atomicWrite(storageFile, json);
         } catch (IOException e) {
             log.error("Failed to save retrieval records: {}", e.getMessage(), e);
         }

@@ -12,8 +12,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.stapledon.api.dto.auth.AuthRequest;
@@ -28,6 +26,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthServiceTest {
@@ -61,12 +61,13 @@ class JwtAuthServiceTest {
                 .displayName("New User")
                 .build();
 
-        // Create a test user with specific display name that matches expected test value
+        // Create a test user with specific display name that matches expected test
+        // value
         User newUser = User.builder()
                 .username("newuser")
                 .passwordHash("hashedPassword")
                 .email("newuser@example.com")
-                .displayName("New User")  // Explicit display name that matches test
+                .displayName("New User") // Explicit display name that matches test
                 .created(LocalDateTime.now())
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
@@ -81,10 +82,10 @@ class JwtAuthServiceTest {
 
         // Then
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get().getUsername()).isEqualTo("newuser");
-        assertThat(result.get().getDisplayName()).isEqualTo("New User");
-        assertThat(result.get().getToken()).isEqualTo("jwtToken");
-        assertThat(result.get().getRefreshToken()).isEqualTo("refreshToken");
+        assertThat(result.get().username()).isEqualTo("newuser");
+        assertThat(result.get().displayName()).isEqualTo("New User");
+        assertThat(result.get().token()).isEqualTo("jwtToken");
+        assertThat(result.get().refreshToken()).isEqualTo("refreshToken");
 
         verify(userService).registerUser(registrationDto);
         verify(jwtTokenUtil).generateToken(newUser);
@@ -115,13 +116,11 @@ class JwtAuthServiceTest {
     @Test
     void loginShouldReturnAuthResponseForValidCredentials() {
         // Given
-        AuthRequest authRequest = AuthRequest.builder()
-                .username("user")
-                .password("password")
-                .build();
+        AuthRequest authRequest = new AuthRequest("user", "password");
 
         User user = createTestUser("user");
-        when(userService.authenticateUser(authRequest.getUsername(), authRequest.getPassword())).thenReturn(Optional.of(user));
+        when(userService.authenticateUser(authRequest.username(), authRequest.password()))
+                .thenReturn(Optional.of(user));
         when(jwtTokenUtil.generateToken(user)).thenReturn("jwtToken");
         when(jwtTokenUtil.generateRefreshToken(user)).thenReturn("refreshToken");
 
@@ -130,11 +129,11 @@ class JwtAuthServiceTest {
 
         // Then
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get().getUsername()).isEqualTo("user");
-        assertThat(result.get().getToken()).isEqualTo("jwtToken");
-        assertThat(result.get().getRefreshToken()).isEqualTo("refreshToken");
+        assertThat(result.get().username()).isEqualTo("user");
+        assertThat(result.get().token()).isEqualTo("jwtToken");
+        assertThat(result.get().refreshToken()).isEqualTo("refreshToken");
 
-        verify(userService).authenticateUser(authRequest.getUsername(), authRequest.getPassword());
+        verify(userService).authenticateUser(authRequest.username(), authRequest.password());
         verify(jwtTokenUtil).generateToken(user);
         verify(jwtTokenUtil).generateRefreshToken(user);
     }
@@ -142,17 +141,14 @@ class JwtAuthServiceTest {
     @Test
     void loginShouldThrowExceptionForInvalidCredentials() {
         // Given
-        AuthRequest authRequest = AuthRequest.builder()
-                .username("user")
-                .password("wrongpassword")
-                .build();
+        AuthRequest authRequest = new AuthRequest("user", "wrongpassword");
 
-        when(userService.authenticateUser(authRequest.getUsername(), authRequest.getPassword())).thenReturn(Optional.empty());
+        when(userService.authenticateUser(authRequest.username(), authRequest.password())).thenReturn(Optional.empty());
 
         // When/Then
         assertThatExceptionOfType(BadCredentialsException.class).isThrownBy(() -> authService.login(authRequest));
 
-        verify(userService).authenticateUser(authRequest.getUsername(), authRequest.getPassword());
+        verify(userService).authenticateUser(authRequest.username(), authRequest.password());
         verifyNoInteractions(jwtTokenUtil);
     }
 
@@ -178,9 +174,9 @@ class JwtAuthServiceTest {
 
         // Then
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get().getUsername()).isEqualTo(username);
-        assertThat(result.get().getToken()).isEqualTo("newJwtToken");
-        assertThat(result.get().getRefreshToken()).isEqualTo("newRefreshToken");
+        assertThat(result.get().username()).isEqualTo(username);
+        assertThat(result.get().token()).isEqualTo("newJwtToken");
+        assertThat(result.get().refreshToken()).isEqualTo("newRefreshToken");
 
         verify(jwtTokenUtil).extractUsername(refreshToken);
         verify(userService).getUser(username);

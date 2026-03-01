@@ -1,6 +1,6 @@
 package org.stapledon.metrics.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -24,7 +24,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class AccessMetricsData {
     @ToString.Include
-    private LocalDateTime lastUpdated;
+    private OffsetDateTime lastUpdated;
 
     @ToString.Include
     @Builder.Default

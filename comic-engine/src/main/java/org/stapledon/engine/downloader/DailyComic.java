@@ -1,11 +1,9 @@
 package org.stapledon.engine.downloader;
 
-import org.stapledon.common.infrastructure.caching.ICachable;
-import org.stapledon.common.infrastructure.web.InspectorService;
-import org.stapledon.common.infrastructure.web.JsoupInspectorService;
-import org.stapledon.common.model.ComicCachingException;
-
 import com.google.common.base.Preconditions;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -19,8 +17,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
+
+import org.stapledon.common.infrastructure.caching.ICachable;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.JsoupInspectorService;
+import org.stapledon.common.model.ComicCachingException;
 
 /**
  * Base class for all ComicCachers.
@@ -45,7 +47,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     protected abstract Optional<String> extractComicImage(String comicUrl);
 
     DailyComic(InspectorService inspector, String elementSelector) {
-        this.webInspector = (inspector == null) ? new JsoupInspectorService() : inspector;
+        this.webInspector = inspector == null ? new JsoupInspectorService() : inspector;
         this.elementSelector = elementSelector;
     }
 
@@ -93,7 +95,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
             log.info("Downloading Image from: {}", urlImage);
 
             try (InputStream in = urlImage.openStream();
-                    OutputStream os = new FileOutputStream(destinationFile)) {
+                 OutputStream os = new FileOutputStream(destinationFile)) {
                 var buffer = new byte[4096];
                 int n;
                 while ((n = in.read(buffer)) != -1) {

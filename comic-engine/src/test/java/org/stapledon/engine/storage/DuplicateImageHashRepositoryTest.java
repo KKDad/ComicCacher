@@ -3,26 +3,27 @@ package org.stapledon.engine.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.lenient;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ImageHashRecord;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
-import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ImageHashRecord;
 
 @ExtendWith(MockitoExtension.class)
 class DuplicateImageHashRepositoryTest {
@@ -43,8 +44,10 @@ class DuplicateImageHashRepositoryTest {
     @BeforeEach
     void setUp() {
         Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDate.class, (JsonSerializer<LocalDate>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
-                .registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (json, typeOfT, context) -> LocalDate.parse(json.getAsString()))
+                .registerTypeAdapter(LocalDate.class,
+                        (JsonSerializer<LocalDate>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
+                .registerTypeAdapter(LocalDate.class,
+                        (JsonDeserializer<LocalDate>) (json, typeOfT, context) -> LocalDate.parse(json.getAsString()))
                 .create();
 
         lenient().when(cacheProperties.getLocation()).thenReturn(tempDir.toString());
@@ -169,12 +172,12 @@ class DuplicateImageHashRepositoryTest {
     @Test
     void shouldGetYearDirectory() {
         // Act
-        File yearDir = repository.getYearDirectory(comicId, comicName, year);
+        Path yearDir = repository.getYearDirectory(comicId, comicName, year);
 
         // Assert
         assertThat(yearDir).isNotNull();
-        assertThat(yearDir.getPath().contains("TestComic")).isTrue();
-        assertThat(yearDir.getPath().contains("2024")).isTrue();
+        assertThat(yearDir.toString().contains("TestComic")).isTrue();
+        assertThat(yearDir.toString().contains("2024")).isTrue();
     }
 
     @Test
@@ -235,12 +238,12 @@ class DuplicateImageHashRepositoryTest {
 
         // Act
         repository.addHash(comicId, comicNameWithSpaces, year, record);
-        File yearDir = repository.getYearDirectory(comicId, comicNameWithSpaces, year);
+        Path yearDir = repository.getYearDirectory(comicId, comicNameWithSpaces, year);
 
         // Assert
         assertThat(yearDir).isNotNull();
         // Spaces should be removed
-        assertThat(yearDir.getPath().contains(" ")).isFalse();
+        assertThat(yearDir.toString().contains(" ")).isFalse();
     }
 
     @Test

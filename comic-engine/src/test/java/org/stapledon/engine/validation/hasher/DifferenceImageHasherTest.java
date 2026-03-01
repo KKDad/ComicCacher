@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -66,8 +67,10 @@ class DifferenceImageHasherTest {
 
     @Test
     void calculateHashSimilarImagesMayProduceSameHash() throws Exception {
-        // dHash is perceptual - it should produce the same hash for visually similar images
-        // Create two slightly different red images (different sizes but same visual content)
+        // dHash is perceptual - it should produce the same hash for visually similar
+        // images
+        // Create two slightly different red images (different sizes but same visual
+        // content)
         byte[] small = createTestImage(100, 100, Color.RED);
         byte[] large = createTestImage(200, 200, Color.RED);
 
@@ -76,7 +79,8 @@ class DifferenceImageHasherTest {
 
         // For solid color images, dHash should produce the same hash regardless of size
         // (because there are no horizontal gradients in a solid color image)
-        assertThat(largeHash).as("dHash should produce same hash for solid color images of different sizes").isEqualTo(smallHash);
+        assertThat(largeHash).as("dHash should produce same hash for solid color images of different sizes")
+                .isEqualTo(smallHash);
     }
 
     @Test
@@ -94,7 +98,7 @@ class DifferenceImageHasherTest {
     @Test
     void calculateHashInvalidImageDataReturnsNull() {
         // Random bytes that don't represent a valid image
-        byte[] invalidData = new byte[]{0x01, 0x02, 0x03, 0x04};
+        byte[] invalidData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
         String hash = hasher.calculateHash(invalidData);
 
@@ -115,7 +119,8 @@ class DifferenceImageHasherTest {
         g1.dispose();
 
         // Create a vertical gradient (dark on top, light on bottom)
-        // Note: Vertical gradient will produce all zeros in dHash (no horizontal variation)
+        // Note: Vertical gradient will produce all zeros in dHash (no horizontal
+        // variation)
         BufferedImage vertical = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = vertical.createGraphics();
         for (int y = 0; y < 100; y++) {
@@ -133,8 +138,10 @@ class DifferenceImageHasherTest {
 
         // dHash is based on horizontal gradients
         // Vertical gradient should be all zeros (no horizontal variation)
-        // Horizontal gradient behavior depends on image resizing during hash calculation
-        assertThat(verticalHash).as("Vertical gradient should produce all zeros (no horizontal variation)").isEqualTo("0000000000000000");
+        // Horizontal gradient behavior depends on image resizing during hash
+        // calculation
+        assertThat(verticalHash).as("Vertical gradient should produce all zeros (no horizontal variation)")
+                .isEqualTo("0000000000000000");
 
         // Verify we can calculate hashes for both
         assertThat(horizontalHash).as("Horizontal gradient hash should not be null").isNotNull();
@@ -162,7 +169,7 @@ class DifferenceImageHasherTest {
             g2.fillRect(x, 0, 1, 100);
         }
         g2.setColor(Color.WHITE);
-        g2.fillRect(45, 45, 2, 2);  // Tiny 2x2 white square
+        g2.fillRect(45, 45, 2, 2); // Tiny 2x2 white square
         g2.dispose();
 
         byte[] imageData1 = imageToBytes(img1);
@@ -180,7 +187,8 @@ class DifferenceImageHasherTest {
         int hammingDistance = calculateHammingDistance(hash1, hash2);
 
         // Small modifications should result in low Hamming distance
-        assertThat(hammingDistance <= 10).as("Small modification should result in low Hamming distance (was: " + hammingDistance + ")").isTrue();
+        assertThat(hammingDistance <= 10)
+                .as("Small modification should result in low Hamming distance (was: " + hammingDistance + ")").isTrue();
     }
 
     @Test
@@ -211,7 +219,8 @@ class DifferenceImageHasherTest {
         String checkerboardHash = hasher.calculateHash(checkerboardData);
         String stripesHash = hasher.calculateHash(stripesData);
 
-        assertThat(stripesHash).as("Different patterns should produce different dHashes").isNotEqualTo(checkerboardHash);
+        assertThat(stripesHash).as("Different patterns should produce different dHashes")
+                .isNotEqualTo(checkerboardHash);
     }
 
     @Test

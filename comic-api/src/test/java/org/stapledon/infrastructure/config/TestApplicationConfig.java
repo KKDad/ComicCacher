@@ -1,6 +1,5 @@
 package org.stapledon.infrastructure.config;
 
-import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -21,6 +20,7 @@ import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 
+import org.mockito.Mockito;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 

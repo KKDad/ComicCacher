@@ -15,9 +15,13 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * JSON-based implementation of MetricsService. Delegates to collectors and repositories to provide unified metrics access.
+ * JSON-based implementation of MetricsService. Delegates to collectors and
+ * repositories to provide unified metrics access.
  */
-@Slf4j @ToString @Service @RequiredArgsConstructor
+@Slf4j
+@ToString
+@Service
+@RequiredArgsConstructor
 public class JsonMetricsService implements MetricsService {
 
     private final StorageMetricsCollector storageMetricsCollector;

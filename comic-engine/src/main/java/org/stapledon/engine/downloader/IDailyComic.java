@@ -1,8 +1,9 @@
 package org.stapledon.engine.downloader;
 
-import org.stapledon.common.dto.ComicItem;
-
 import java.time.LocalDate;
+
+
+import org.stapledon.common.dto.ComicItem;
 
 /**
  * Interface that all Daily Comic retrievers must implement

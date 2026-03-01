@@ -1,27 +1,30 @@
 package org.stapledon.engine.storage;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicErrorRecord;
-import org.stapledon.common.service.ErrorTrackingService;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicErrorRecord;
+import org.stapledon.common.service.ErrorTrackingService;
+import org.stapledon.common.util.NfsFileOperations;
 
 /**
  * JSON file-based implementation of ErrorTrackingService.
@@ -57,15 +60,16 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             return errorCache;
         }
 
-        File storageFile = new File(cacheProperties.getLocation(), STORAGE_FILE);
+        Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
-        if (!storageFile.exists()) {
+        if (!NfsFileOperations.exists(storageFile)) {
             errorCache = new HashMap<>();
             return errorCache;
         }
 
-        try (FileReader reader = new FileReader(storageFile)) {
-            Type mapType = new TypeToken<Map<String, List<ComicErrorRecord>>>(){}.getType();
+        try (Reader reader = Files.newBufferedReader(storageFile)) {
+            Type mapType = new TypeToken<Map<String, List<ComicErrorRecord>>>() {
+            }.getType();
             errorCache = gson.fromJson(reader, mapType);
 
             if (errorCache == null) {
@@ -81,18 +85,18 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
     }
 
     /**
-     * Save errors to storage file
+     * Save errors to storage file using atomic write for NFS safety
      */
     private synchronized void saveErrors() {
         if (errorCache == null) {
             return;
         }
 
-        File storageFile = new File(cacheProperties.getLocation(), STORAGE_FILE);
+        Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
-        try (FileWriter writer = new FileWriter(storageFile)) {
-            gson.toJson(errorCache, writer);
-            writer.flush();
+        try {
+            String json = gson.toJson(errorCache);
+            NfsFileOperations.atomicWrite(storageFile, json);
         } catch (IOException e) {
             log.error("Failed to save error records: {}", e.getMessage(), e);
         }
@@ -143,8 +147,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
                         Map.Entry::getKey,
                         entry -> entry.getValue().stream()
                                 .sorted(Comparator.comparing(ComicErrorRecord::getTimestamp).reversed())
-                                .collect(Collectors.toList())
-                ));
+                                .collect(Collectors.toList())));
     }
 
     @Override
@@ -156,7 +159,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
     @Override
     public void clearOldErrors(int hoursToKeep) {
         Map<String, List<ComicErrorRecord>> errors = loadErrors();
-        java.time.LocalDateTime cutoff = java.time.LocalDateTime.now().minusHours(hoursToKeep);
+        java.time.OffsetDateTime cutoff = java.time.OffsetDateTime.now().minusHours(hoursToKeep);
 
         boolean modified = false;
         for (Map.Entry<String, List<ComicErrorRecord>> entry : errors.entrySet()) {
@@ -166,8 +169,8 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             // Remove errors older than cutoff
             comicErrors.removeIf(error -> {
                 try {
-                    // timestamp is already a LocalDateTime, no parsing needed
-                    java.time.LocalDateTime errorTime = error.getTimestamp();
+                    // timestamp is already an OffsetDateTime, no parsing needed
+                    java.time.OffsetDateTime errorTime = error.getTimestamp();
                     return errorTime != null && errorTime.isBefore(cutoff);
                 } catch (Exception e) {
                     log.warn("Error checking timestamp for comic {}: {}", entry.getKey(), e.getMessage());
@@ -178,7 +181,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             if (comicErrors.size() < originalSize) {
                 modified = true;
                 log.debug("Cleared {} old errors for comic {}",
-                         originalSize - comicErrors.size(), entry.getKey());
+                        originalSize - comicErrors.size(), entry.getKey());
             }
         }
 

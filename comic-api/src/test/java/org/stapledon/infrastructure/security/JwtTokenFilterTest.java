@@ -8,8 +8,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -17,27 +15,23 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JwtTokenFilterTest {
 
-    @Mock
-    private JwtTokenUtil jwtTokenUtil;
+    @Mock private JwtTokenUtil jwtTokenUtil;
 
-    @Mock
-    private JwtUserDetailsService userDetailsService;
+    @Mock private JwtUserDetailsService userDetailsService;
 
-    @Mock
-    private HttpServletRequest request;
+    @Mock private HttpServletRequest request;
 
-    @Mock
-    private HttpServletResponse response;
+    @Mock private HttpServletResponse response;
 
-    @Mock
-    private FilterChain filterChain;
+    @Mock private FilterChain filterChain;
 
-    @Mock
-    private UserDetails userDetails;
+    @Mock private UserDetails userDetails;
 
     private JwtTokenFilter jwtTokenFilter;
 

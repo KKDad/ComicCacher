@@ -1,0 +1,53 @@
+# =============================================================================
+# Error Code Types
+# =============================================================================
+# Metadata type for application error codes.
+# =============================================================================
+
+"""
+Standard error codes returned by the API.
+These codes appear in error responses to help clients handle errors programmatically.
+"""
+enum ErrorCode {
+    """Authentication required but not provided."""
+    UNAUTHENTICATED
+
+    """User does not have permission for this operation."""
+    FORBIDDEN
+
+    """Requested resource was not found."""
+    NOT_FOUND
+
+    """Input validation failed."""
+    VALIDATION_ERROR
+
+    """Comic with the specified ID does not exist."""
+    COMIC_NOT_FOUND
+
+    """Comic strip not available for the requested date."""
+    STRIP_NOT_FOUND
+
+    """User account not found."""
+    USER_NOT_FOUND
+
+    """Username or email already exists."""
+    USER_ALREADY_EXISTS
+
+    """Invalid credentials provided."""
+    INVALID_CREDENTIALS
+
+    """Token has expired."""
+    TOKEN_EXPIRED
+
+    """Token is invalid or malformed."""
+    INVALID_TOKEN
+
+    """Password does not meet requirements."""
+    INVALID_PASSWORD
+
+    """Rate limit exceeded."""
+    RATE_LIMITED
+
+    """Internal server error."""
+    INTERNAL_ERROR
+}

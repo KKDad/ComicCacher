@@ -1,0 +1,145 @@
+# =============================================================================
+# Metrics Types
+# =============================================================================
+# Types for storage and access metrics.
+# =============================================================================
+
+"""
+Storage metrics for the comic cache.
+"""
+type StorageMetrics {
+    """
+    Total storage used in bytes across all comics.
+    """
+    totalBytes: Float
+    
+    """
+    Total number of comics being tracked.
+    """
+    comicCount: Int
+    
+    """
+    Per-comic storage breakdown.
+    """
+    comics: [ComicStorageMetric!]
+    
+    """
+    Last time metrics were calculated.
+    """
+    lastUpdated: DateTime
+}
+
+"""
+Storage metrics for a single comic.
+"""
+type ComicStorageMetric {
+    """
+    Comic ID.
+    """
+    comicId: Int!
+    
+    """
+    Comic name.
+    """
+    comicName: String!
+    
+    """
+    Total storage used by this comic in bytes.
+    """
+    totalBytes: Float!
+    
+    """
+    Number of cached images for this comic.
+    """
+    imageCount: Int!
+    
+    """
+    Yearly breakdown of storage.
+    """
+    yearlyBreakdown: [YearlyStorageMetric!]
+}
+
+"""
+Storage metrics for a specific year.
+"""
+type YearlyStorageMetric {
+    """
+    Year.
+    """
+    year: Int!
+    
+    """
+    Storage used in bytes for this year.
+    """
+    bytes: Float!
+    
+    """
+    Number of images for this year.
+    """
+    imageCount: Int!
+}
+
+"""
+Access metrics for all comics.
+"""
+type AccessMetrics {
+    """
+    Total number of access events tracked.
+    """
+    totalAccesses: Int
+    
+    """
+    Per-comic access breakdown.
+    """
+    comics: [ComicAccessMetric!]
+    
+    """
+    Last time metrics were updated.
+    """
+    lastUpdated: DateTime
+}
+
+"""
+Access metrics for a single comic.
+"""
+type ComicAccessMetric {
+    """
+    Comic name.
+    """
+    comicName: String!
+    
+    """
+    Total number of accesses for this comic.
+    """
+    accessCount: Int!
+    
+    """
+    Average access time in milliseconds.
+    """
+    averageAccessTimeMs: Float
+    
+    """
+    Last access timestamp.
+    """
+    lastAccessed: DateTime
+}
+
+"""
+Combined storage and access metrics.
+"""
+type CombinedMetrics {
+    """
+    Storage metrics.
+    """
+    storage: StorageMetrics
+    
+    """
+    Access metrics.
+    """
+    access: AccessMetrics
+    
+    """
+    Last time combined metrics were calculated.
+    """
+    lastUpdated: DateTime
+}

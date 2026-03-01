@@ -1,10 +1,8 @@
 package org.stapledon.engine.batch;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.stapledon.common.dto.ComicIdentifier;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.service.ComicStorageFacade;
-import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -12,8 +10,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+
+import org.stapledon.common.dto.ComicIdentifier;
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.service.ComicStorageFacade;
+import org.stapledon.engine.management.ManagementFacade;
 
 /**
  * Service for identifying missing comic strips that need to be backfilled.

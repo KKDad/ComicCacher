@@ -20,8 +20,7 @@ import java.util.Optional;
 
 class PreferenceConfigWriterTest {
 
-    @TempDir
-    Path tempDir;
+    @TempDir Path tempDir;
 
     // Test subclass that avoids facade issues
     private static class TestPreferenceConfigWriter extends PreferenceConfigWriter {
@@ -48,8 +47,8 @@ class PreferenceConfigWriterTest {
             // Create default if not exists
             if (!inMemoryConfig.getPreferences().containsKey(username)) {
                 UserPreference newPref = UserPreference.builder()
-                    .username(username)
-                    .build();
+                        .username(username)
+                        .build();
                 inMemoryConfig.getPreferences().put(username, newPref);
                 return Optional.of(newPref);
             }

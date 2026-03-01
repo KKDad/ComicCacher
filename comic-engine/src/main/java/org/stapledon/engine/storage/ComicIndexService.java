@@ -4,14 +4,12 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ComicDateIndex;
-import org.stapledon.common.dto.ComicIdentifier;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -26,10 +24,17 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicDateIndex;
+import org.stapledon.common.util.NfsFileOperations;
+
 /**
- * Service to manage a persistent index of available comic dates. This avoids expensive day-by-day directory scans on NFS/RAID storage.
+ * Service to manage a persistent index of available comic dates. This avoids
+ * expensive day-by-day directory scans on NFS/RAID storage.
  */
-@Slf4j @Service
+@Slf4j
+@Service
+@lombok.RequiredArgsConstructor
 public class ComicIndexService {
     public static final String INDEX_FILENAME = "available-dates.json";
 
@@ -37,13 +42,12 @@ public class ComicIndexService {
     private static final String SYNOLOGY_METADATA_PREFIX = "@";
 
     /**
-     * Pattern to validate comic names - alphanumeric, spaces, hyphens, underscores only
+     * Pattern to validate comic names - alphanumeric, spaces, hyphens, underscores
+     * only
      */
     private static final Pattern VALID_COMIC_NAME = Pattern.compile("^[a-zA-Z0-9 _-]+$");
 
-    /** Marker for comics that have been verified as legitimately empty */
-    private static final Set<Integer> VERIFIED_EMPTY_COMICS = ConcurrentHashMap.newKeySet();
-
+    @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
     private final ImageMetadataRepository metadataRepository;
@@ -51,20 +55,18 @@ public class ComicIndexService {
     // In-memory cache of the indexes to avoid repeated disk reads.
     private final Map<Integer, ComicDateIndex> indexCache = new ConcurrentHashMap<>();
 
+    /** Marker for comics that have been verified as legitimately empty */
+    private final Set<Integer> verifiedEmptyComics = ConcurrentHashMap.newKeySet();
+
     // Per-comic locks for thread-safe index updates
     private final Map<Integer, ReadWriteLock> comicLocks = new ConcurrentHashMap<>();
 
-    public ComicIndexService(@Qualifier("gsonWithLocalDate") Gson gson, CacheProperties cacheProperties, ImageMetadataRepository metadataRepository) {
-        this.gson = gson;
-        this.cacheProperties = cacheProperties;
-        this.metadataRepository = metadataRepository;
-    }
-
     /**
-     * Sanitizes a comic name to prevent path traversal attacks. Removes any characters that could be used for directory traversal.
+     * Sanitizes a comic name to prevent path traversal attacks. Removes any
+     * characters that could be used for directory traversal.
      *
      * @param comicName the comic name to sanitize
-     * @param comicId fallback ID if name is invalid
+     * @param comicId   fallback ID if name is invalid
      * @return sanitized name safe for filesystem operations
      */
     private String sanitizeComicName(String comicName, int comicId) {
@@ -95,126 +97,108 @@ public class ComicIndexService {
      * Get the next available date with a comic strip.
      */
     public Optional<LocalDate> getNextDate(int comicId, String comicName, LocalDate fromDate) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-
-            int pos = Collections.binarySearch(dates, fromDate);
-
-            // If fromDate is found, the next one is at index + 1
-            // If fromDate is NOT found, binarySearch returns (-(insertion point) - 1)
-            int nextIndex = (pos >= 0) ? pos + 1 : -(pos + 1);
-
-            if (nextIndex < dates.size()) {
-                return Optional.of(dates.get(nextIndex));
-            }
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
             return Optional.empty();
-        } finally {
-            lock.readLock().unlock();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+
+        int pos = Collections.binarySearch(dates, fromDate);
+
+        // If fromDate is found, the next one is at index + 1
+        // If fromDate is NOT found, binarySearch returns (-(insertion point) - 1)
+        int nextIndex = pos >= 0 ? pos + 1 : -(pos + 1);
+
+        if (nextIndex < dates.size()) {
+            return Optional.of(dates.get(nextIndex));
+        }
+        return Optional.empty();
     }
 
     /**
      * Get the previous available date with a comic strip.
      */
     public Optional<LocalDate> getPreviousDate(int comicId, String comicName, LocalDate fromDate) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-
-            int pos = Collections.binarySearch(dates, fromDate);
-
-            // If found, previous is at index - 1.
-            // If not found, pos is (-(insertion point) - 1).
-            // Insertion point is the first element greater than the key.
-            // We want the element immediately before the insertion point.
-            int insertionPoint = (pos >= 0) ? pos : -(pos + 1);
-            int prevIndex = insertionPoint - 1;
-
-            if (prevIndex >= 0 && prevIndex < dates.size()) {
-                return Optional.of(dates.get(prevIndex));
-            }
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
             return Optional.empty();
-        } finally {
-            lock.readLock().unlock();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+
+        int pos = Collections.binarySearch(dates, fromDate);
+
+        // If found, previous is at index - 1.
+        // If not found, pos is (-(insertion point) - 1).
+        // Insertion point is the first element greater than the key.
+        // We want the element immediately before the insertion point.
+        int insertionPoint = pos >= 0 ? pos : -(pos + 1);
+        int prevIndex = insertionPoint - 1;
+
+        if (prevIndex >= 0 && prevIndex < dates.size()) {
+            return Optional.of(dates.get(prevIndex));
+        }
+        return Optional.empty();
     }
 
     /**
      * Get the newest available date for a comic.
      */
     public Optional<LocalDate> getNewestDate(int comicId, String comicName) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-            return Optional.of(dates.get(dates.size() - 1));
-        } finally {
-            lock.readLock().unlock();
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
+            return Optional.empty();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(dates.get(dates.size() - 1));
     }
 
     /**
      * Get the oldest available date for a comic.
      */
     public Optional<LocalDate> getOldestDate(int comicId, String comicName) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.readLock().lock();
-        try {
-            ComicDateIndex index = getOrLoadIndex(comicId, comicName);
-            if (index == null) {
-                return Optional.empty();
-            }
-            List<LocalDate> dates = index.getAvailableDates();
-            if (dates == null || dates.isEmpty()) {
-                return Optional.empty();
-            }
-            return Optional.of(dates.get(0));
-        } finally {
-            lock.readLock().unlock();
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
+            return Optional.empty();
         }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(dates.get(0));
     }
 
     /**
-     * Mark a date as available and update the index. Thread-safe: uses write lock to prevent concurrent modification.
+     * Mark a date as available and update the index. Thread-safe: uses write lock
+     * to prevent concurrent modification.
      */
     public void addDateToIndex(int comicId, String comicName, LocalDate date) {
+        log.debug("addDateToIndex called: comicId={}, comicName={}, date={}", comicId, comicName, date);
         ReadWriteLock lock = getLock(comicId);
         lock.writeLock().lock();
         try {
             ComicDateIndex index = getOrLoadIndexUnsafe(comicId, comicName);
             if (index == null) {
+                log.debug("Index is null, creating new index for comic {} (id={})", comicName, comicId);
                 // Create new index
-                index = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
+                index = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>())
+                        .lastUpdated(LocalDate.now()).build();
             }
 
             List<LocalDate> dates = index.getAvailableDates();
             if (dates == null) {
                 dates = new ArrayList<>();
             }
+
+            log.debug("Index before update: {} dates", dates.size());
 
             // Use binary search for O(log n) existence check
             int pos = Collections.binarySearch(dates, date);
@@ -226,12 +210,26 @@ public class ComicIndexService {
                 index.setAvailableDates(newDates);
                 index.setLastUpdated(LocalDate.now());
 
-                // Update cache and persist
+                log.debug("Index after update: {} dates", newDates.size());
+
+                // Write to disk FIRST - this may throw IOException
+                try {
+                    saveIndex(index, comicName);
+                } catch (IOException e) {
+                    log.error("Failed to persist index for {}, cache NOT updated", comicName, e);
+                    // Don't update cache - keep old state consistent with disk
+                    throw new RuntimeException("Failed to persist index to disk", e);
+                }
+
+                // Only update cache if disk write succeeded
                 indexCache.put(comicId, index);
-                saveIndex(index, comicName);
 
                 // Clear verified empty marker since we now have data
-                VERIFIED_EMPTY_COMICS.remove(comicId);
+                verifiedEmptyComics.remove(comicId);
+
+                log.info("Added date {} to index for comic {}", date, comicName);
+            } else {
+                log.debug("Date {} already exists in index at position {}, skipping", date, pos);
             }
         } finally {
             lock.writeLock().unlock();
@@ -254,7 +252,13 @@ public class ComicIndexService {
             if (dates.remove(date)) {
                 index.setAvailableDates(dates);
                 index.setLastUpdated(LocalDate.now());
-                saveIndex(index, comicName);
+                try {
+                    saveIndex(index, comicName);
+                } catch (IOException e) {
+                    log.error("Failed to persist index after removing date {} for {}", date, comicName, e);
+                    // Note: Cache will be out of sync with disk until next rebuild
+                    throw new RuntimeException("Failed to persist index to disk", e);
+                }
             }
         } finally {
             lock.writeLock().unlock();
@@ -269,72 +273,13 @@ public class ComicIndexService {
         lock.writeLock().lock();
         try {
             indexCache.remove(comicId);
-            VERIFIED_EMPTY_COMICS.remove(comicId);
+            verifiedEmptyComics.remove(comicId);
             log.debug("Invalidated cache for comic {}", comicId);
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    // ==================== ComicIdentifier overloads ====================
-    // These methods accept ComicIdentifier instead of primitive (int, String) pairs
-    // to reduce primitive obsession. They delegate to the existing implementations.
-
-    /**
-     * Get the next available date with a comic strip.
-     */
-    public Optional<LocalDate> getNextDate(ComicIdentifier comic, LocalDate fromDate) {
-        return getNextDate(comic.getId(), comic.getName(), fromDate);
-    }
-
-    /**
-     * Get the previous available date with a comic strip.
-     */
-    public Optional<LocalDate> getPreviousDate(ComicIdentifier comic, LocalDate fromDate) {
-        return getPreviousDate(comic.getId(), comic.getName(), fromDate);
-    }
-
-    /**
-     * Get the newest available date for a comic.
-     */
-    public Optional<LocalDate> getNewestDate(ComicIdentifier comic) {
-        return getNewestDate(comic.getId(), comic.getName());
-    }
-
-    /**
-     * Get the oldest available date for a comic.
-     */
-    public Optional<LocalDate> getOldestDate(ComicIdentifier comic) {
-        return getOldestDate(comic.getId(), comic.getName());
-    }
-
-    /**
-     * Mark a date as available and update the index.
-     */
-    public void addDateToIndex(ComicIdentifier comic, LocalDate date) {
-        addDateToIndex(comic.getId(), comic.getName(), date);
-    }
-
-    /**
-     * Remove a date from the index.
-     */
-    public void removeDateFromIndex(ComicIdentifier comic, LocalDate date) {
-        removeDateFromIndex(comic.getId(), comic.getName(), date);
-    }
-
-    /**
-     * Rebuild the entire index from scratch.
-     */
-    public void rebuildIndex(ComicIdentifier comic) {
-        rebuildIndex(comic.getId(), comic.getName());
-    }
-
-    /**
-     * Rebuild the entire index with optional metadata validation.
-     */
-    public void rebuildIndex(ComicIdentifier comic, boolean validateMetadata) {
-        rebuildIndex(comic.getId(), comic.getName(), validateMetadata);
-    }
 
     /**
      * Rebuild the entire index from scratch by scanning the filesystem.
@@ -346,26 +291,60 @@ public class ComicIndexService {
     /**
      * Rebuild the entire index from scratch by scanning the filesystem.
      *
-     * @param validateMetadata If true, reads each sidecar JSON to verify the comicId matches.
+     * @param validateMetadata If true, reads each sidecar JSON to verify the
+     *                         comicId matches.
      */
     public void rebuildIndex(int comicId, String comicName, boolean validateMetadata) {
+        ReadWriteLock lock = getLock(comicId);
+        lock.writeLock().lock();
+        try {
+            ComicDateIndex index = rebuildIndexInternal(comicId, comicName, validateMetadata);
+
+            // Write to disk first, then update cache
+            try {
+                saveIndex(index, comicName);
+            } catch (IOException e) {
+                log.error("Failed to persist rebuilt index for {}, cache NOT updated", comicName, e);
+                throw new RuntimeException("Failed to persist rebuilt index to disk", e);
+            }
+
+            indexCache.put(comicId, index);
+            log.info("Rebuilt index for '{}' with {} available dates on disk", comicName, index.getAvailableDates().size());
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Internal rebuild method that does not acquire locks.
+     * Caller must hold write lock.
+     */
+    private ComicDateIndex rebuildIndexInternal(int comicId, String comicName) {
+        return rebuildIndexInternal(comicId, comicName, false);
+    }
+
+    /**
+     * Internal rebuild method that does not acquire locks.
+     * Caller must hold write lock.
+     *
+     * @param validateMetadata If true, reads each sidecar JSON to verify the comicId matches.
+     */
+    private ComicDateIndex rebuildIndexInternal(int comicId, String comicName, boolean validateMetadata) {
         String parsedName = sanitizeComicName(comicName, comicId);
-        File comicDir = new File(cacheProperties.getLocation(), parsedName);
+        Path comicDir = NfsFileOperations.resolvePath(cacheProperties.getLocation(), parsedName);
 
         Set<LocalDate> dateSet = new HashSet<>();
-        if (comicDir.exists() && comicDir.isDirectory()) {
-            File[] yearDirs = comicDir.listFiles(File::isDirectory);
-            if (yearDirs != null) {
-                for (File yearDir : yearDirs) {
+        if (Files.isDirectory(comicDir)) {
+            try (DirectoryStream<Path> yearDirs = Files.newDirectoryStream(comicDir, Files::isDirectory)) {
+                for (Path yearDir : yearDirs) {
                     // Skip Synology metadata directories
-                    if (yearDir.getName().startsWith(SYNOLOGY_METADATA_PREFIX)) {
+                    if (yearDir.getFileName().toString().startsWith(SYNOLOGY_METADATA_PREFIX)) {
                         continue;
                     }
 
-                    File[] images = yearDir.listFiles((dir, name) -> name.endsWith(".png"));
-                    if (images != null) {
-                        for (File image : images) {
-                            String name = image.getName();
+                    try (DirectoryStream<Path> images = Files.newDirectoryStream(yearDir, "*.png")) {
+                        for (Path image : images) {
+                            String name = image.getFileName().toString();
                             try {
                                 String dateStr = name.substring(0, name.lastIndexOf('.'));
                                 LocalDate date = LocalDate.parse(dateStr);
@@ -383,53 +362,68 @@ public class ComicIndexService {
                         }
                     }
                 }
+            } catch (IOException e) {
+                log.error("Failed to scan directory {}: {}", comicDir, e.getMessage());
             }
         }
 
         List<LocalDate> sortedDates = new ArrayList<>(dateSet);
         Collections.sort(sortedDates);
 
-        ComicDateIndex index = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(sortedDates).lastUpdated(LocalDate.now()).build();
-
-        indexCache.put(comicId, index);
-        saveIndex(index, comicName);
-        log.info("Rebuilt index for '{}' with {} available dates on disk", comicName, sortedDates.size());
+        return ComicDateIndex.builder()
+                .comicId(comicId)
+                .comicName(comicName)
+                .availableDates(sortedDates)
+                .lastUpdated(LocalDate.now())
+                .build();
     }
 
     private ComicDateIndex getOrLoadIndex(int comicId, String comicName) {
-        // Check if this comic was verified as legitimately empty
-        if (VERIFIED_EMPTY_COMICS.contains(comicId)) {
+        ReadWriteLock lock = getLock(comicId);
+
+        // First try with read lock (fast path for already-cached case)
+        lock.readLock().lock();
+        try {
             ComicDateIndex cached = indexCache.get(comicId);
             if (cached != null) {
                 return cached;
             }
+        } finally {
+            lock.readLock().unlock();
         }
 
-        // Use get+putIfAbsent pattern to avoid ConcurrentHashMap recursive update issue
-        // (computeIfAbsent doesn't allow modifications during computation)
-        ComicDateIndex cached = indexCache.get(comicId);
-        if (cached != null) {
-            return cached;
-        }
-
-        // Load and potentially rebuild
-        ComicDateIndex index = loadIndex(comicId, comicName);
-        if (index.getAvailableDates().isEmpty()) {
-            // Try to rebuild once
-            ComicDateIndex rebuilt = rebuildAndGetIndex(comicId, comicName);
-            if (rebuilt != null) {
-                if (rebuilt.getAvailableDates().isEmpty()) {
-                    // Mark as verified empty to prevent future rebuilds
-                    VERIFIED_EMPTY_COMICS.add(comicId);
-                    log.debug("Comic {} verified as empty, will not attempt rebuild again", comicName);
-                }
-                return rebuilt;
+        // Need to load/rebuild - acquire write lock
+        lock.writeLock().lock();
+        try {
+            // Double-check after acquiring write lock (another thread may have loaded it)
+            ComicDateIndex cached = indexCache.get(comicId);
+            if (cached != null) {
+                return cached;
             }
-        }
 
-        // Cache and return
-        indexCache.putIfAbsent(comicId, index);
-        return indexCache.get(comicId);
+            // Load index from disk
+            ComicDateIndex index = loadIndex(comicId, comicName);
+
+            // If empty, try to rebuild from filesystem
+            if (index.getAvailableDates().isEmpty()) {
+                // Check if this comic was already verified as empty
+                if (!verifiedEmptyComics.contains(comicId)) {
+                    index = rebuildIndexInternal(comicId, comicName);
+
+                    // If still empty after rebuild, mark as verified empty
+                    if (index.getAvailableDates().isEmpty()) {
+                        verifiedEmptyComics.add(comicId);
+                        log.debug("Comic {} verified as empty, will not attempt rebuild again", comicName);
+                    }
+                }
+            }
+
+            // Update cache and return
+            indexCache.put(comicId, index);
+            return index;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -451,9 +445,9 @@ public class ComicIndexService {
     }
 
     private ComicDateIndex loadIndex(int comicId, String comicName) {
-        File indexFile = getIndexFile(comicId, comicName);
-        if (indexFile.exists()) {
-            try (FileReader reader = new FileReader(indexFile)) {
+        Path indexFile = getIndexFile(comicId, comicName);
+        if (NfsFileOperations.exists(indexFile)) {
+            try (Reader reader = Files.newBufferedReader(indexFile)) {
                 ComicDateIndex index = gson.fromJson(reader, ComicDateIndex.class);
                 if (index != null && index.getAvailableDates() != null) {
                     return index;
@@ -463,59 +457,44 @@ public class ComicIndexService {
             }
         }
 
-        return ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
+        return ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>())
+                .lastUpdated(LocalDate.now()).build();
     }
 
-    private ComicDateIndex rebuildAndGetIndex(int comicId, String comicName) {
-        try {
-            rebuildIndex(comicId, comicName);
-            ComicDateIndex result = indexCache.get(comicId);
-            if (result == null) {
-                // Rebuild didn't populate cache - return empty index
-                log.warn("Rebuild for comic '{}' (id={}) did not populate cache, returning empty index", comicName, comicId);
-                result = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
-                indexCache.put(comicId, result);
-            }
-            return result;
-        } catch (Exception e) {
-            log.error("Failed to rebuild index for comic '{}' (id={}): {}", comicName, comicId, e.getMessage(), e);
-            // Return empty index rather than null to prevent NPE
-            ComicDateIndex emptyIndex = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>()).lastUpdated(LocalDate.now()).build();
-            indexCache.put(comicId, emptyIndex);
-            return emptyIndex;
-        }
+    /**
+     * Saves index to disk using atomic write for NFS safety.
+     *
+     * @throws IOException if the index cannot be written to disk
+     */
+    private void saveIndex(ComicDateIndex index, String comicName) throws IOException {
+        Path indexFile = getIndexFile(index.getComicId(), comicName);
+
+        log.info("Saving index to: {}", indexFile);
+        log.info("Index contains {} dates: {}", index.getAvailableDates().size(),
+                 index.getAvailableDates().isEmpty() ? "[]" :
+                 "[" + index.getAvailableDates().get(0) + "..." +
+                 index.getAvailableDates().get(index.getAvailableDates().size() - 1) + "]");
+
+        String json = gson.toJson(index);
+        NfsFileOperations.atomicWrite(indexFile, json);
+        log.info("Successfully saved index for {} with {} dates", comicName, index.getAvailableDates().size());
     }
 
-    private void saveIndex(ComicDateIndex index, String comicName) {
-        File indexFile = getIndexFile(index.getComicId(), comicName);
-        File parent = indexFile.getParentFile();
-        if (!parent.exists() && !parent.mkdirs()) {
-            log.error("Failed to create directory for index: {}", parent.getAbsolutePath());
-            return;
-        }
-
-        try (FileWriter writer = new FileWriter(indexFile)) {
-            gson.toJson(index, writer);
-            writer.flush();
-            log.debug("Saved index for {} with {} dates", comicName, index.getAvailableDates().size());
-        } catch (IOException e) {
-            log.error("Failed to save index for comic '{}': {}", comicName, e.getMessage());
-        }
-    }
-
-    private File getIndexFile(int comicId, String comicName) {
+    private Path getIndexFile(int comicId, String comicName) {
         String parsedName = sanitizeComicName(comicName, comicId);
-        return new File(String.format("%s/%s/%s", cacheProperties.getLocation(), parsedName, INDEX_FILENAME));
+        return NfsFileOperations.resolvePath(cacheProperties.getLocation(), parsedName, INDEX_FILENAME);
     }
 
     /**
      * Validates that an image's metadata matches the expected comic ID.
      */
-    private void validateImageMetadata(File image, int comicId, String comicName, LocalDate date) {
-        if (metadataRepository.metadataExists(image.getAbsolutePath())) {
-            metadataRepository.loadMetadata(image.getAbsolutePath()).ifPresent(md -> {
+    private void validateImageMetadata(Path image, int comicId, String comicName, LocalDate date) {
+        String imagePath = image.toAbsolutePath().toString();
+        if (metadataRepository.metadataExists(imagePath)) {
+            metadataRepository.loadMetadata(imagePath).ifPresent(md -> {
                 if (md.getComicId() != comicId) {
-                    log.error("MISMATCH: Comic ID mismatch for '{}' on {}. Expected {}, found {}", comicName, date, comicId, md.getComicId());
+                    log.error("MISMATCH: Comic ID mismatch for '{}' on {}. Expected {}, found {}", comicName, date,
+                            comicId, md.getComicId());
                 }
             });
         } else {

@@ -4,15 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.stapledon.common.dto.ImageFormat;
-import org.stapledon.common.dto.ImageValidationResult;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import javax.imageio.ImageIO;
+
+import org.stapledon.common.dto.ImageFormat;
+import org.stapledon.common.dto.ImageValidationResult;
 
 /**
  * Unit tests for ImageValidationService.
@@ -30,7 +32,7 @@ class ImageValidationServiceTest {
     /**
      * Helper method to create a test image in the specified format.
      *
-     * @param width Width in pixels
+     * @param width  Width in pixels
      * @param height Height in pixels
      * @param format Image format (e.g., "PNG", "JPEG", "GIF")
      * @return The image as a byte array

@@ -1,30 +1,35 @@
 package org.stapledon.engine.storage;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Repository;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.ImageHashRecord;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ImageHashRecord;
+import org.stapledon.common.util.NfsFileOperations;
 
 /**
  * Repository for managing image hash records used in duplicate detection.
- * Hash data is stored per-comic/per-year in JSON files named "image-hashes.json".
+ * Hash data is stored per-comic/per-year in JSON files named
+ * "image-hashes.json".
  * Example: cache/AdamAtHome/2025/image-hashes.json
  *
- * Uses an in-memory cache for performance - loaded on first access per comic/year.
+ * Uses an in-memory cache for performance - loaded on first access per
+ * comic/year.
  */
 @Slf4j
 @ToString
@@ -40,17 +45,18 @@ public class DuplicateImageHashRepository {
     private final CacheProperties cacheProperties;
 
     /**
-     * In-memory cache of loaded hash records: key is "comicId:year", value is hash map.
+     * In-memory cache of loaded hash records: key is "comicId:year", value is hash
+     * map.
      */
     private final Map<String, Map<String, ImageHashRecord>> cache = new ConcurrentHashMap<>();
 
     /**
      * Finds an image hash record by hash value for a specific comic and year.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year to search in
-     * @param hash The hash value to find
+     * @param year      The year to search in
+     * @param hash      The hash value to find
      * @return Optional containing the matching record, or empty if not found
      */
     public Optional<ImageHashRecord> findByHash(int comicId, String comicName, int year, String hash) {
@@ -62,10 +68,10 @@ public class DuplicateImageHashRepository {
      * Adds a new hash record for a comic image.
      * Updates both the in-memory cache and the JSON file.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year
-     * @param record The hash record to add
+     * @param year      The year
+     * @param record    The hash record to add
      */
     public void addHash(int comicId, String comicName, int year, ImageHashRecord record) {
         Map<String, ImageHashRecord> yearHashes = loadHashes(comicId, comicName, year);
@@ -81,9 +87,9 @@ public class DuplicateImageHashRepository {
      * Loads all hash records for a specific comic and year.
      * Returns from cache if available, otherwise loads from disk.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year
+     * @param year      The year
      * @return Map of hash value to ImageHashRecord
      */
     public Map<String, ImageHashRecord> loadHashes(int comicId, String comicName, int year) {
@@ -95,19 +101,21 @@ public class DuplicateImageHashRepository {
         }
 
         // Load from disk
-        File hashFile = getHashFile(comicId, comicName, year);
+        Path hashFile = getHashFile(comicId, comicName, year);
         Map<String, ImageHashRecord> hashes = new ConcurrentHashMap<>();
 
-        if (hashFile.exists()) {
-            try (FileReader reader = new FileReader(hashFile)) {
-                Type type = new TypeToken<Map<String, ImageHashRecord>>() {}.getType();
+        if (NfsFileOperations.exists(hashFile)) {
+            try (Reader reader = Files.newBufferedReader(hashFile)) {
+                Type type = new TypeToken<Map<String, ImageHashRecord>>() {
+                }.getType();
                 Map<String, ImageHashRecord> loaded = gson.fromJson(reader, type);
                 if (loaded != null) {
                     hashes.putAll(loaded);
                 }
-                log.info("Loaded {} hash records for comic {} year {} from {}", hashes.size(), comicName, year, hashFile.getAbsolutePath());
+                log.info("Loaded {} hash records for comic {} year {} from {}", hashes.size(), comicName, year,
+                        hashFile.toAbsolutePath());
             } catch (IOException e) {
-                log.error("Failed to load hash file {}: {}", hashFile.getAbsolutePath(), e.getMessage(), e);
+                log.error("Failed to load hash file {}: {}", hashFile.toAbsolutePath(), e.getMessage(), e);
             }
         } else {
             log.info("No existing hash file for comic {} year {}, creating new hash cache", comicName, year);
@@ -120,53 +128,35 @@ public class DuplicateImageHashRepository {
     }
 
     /**
-     * Saves hash records to disk for a specific comic and year.
-     *
-     * @param comicId The comic ID
-     * @param comicName The comic name
-     * @param year The year
-     * @param hashes The hash records to save
+     * Saves hash records to disk for a specific comic and year using atomic write
+     * for NFS safety.
      */
     private void saveHashes(int comicId, String comicName, int year, Map<String, ImageHashRecord> hashes) {
-        File hashFile = getHashFile(comicId, comicName, year);
+        Path hashFile = getHashFile(comicId, comicName, year);
 
-        // Ensure parent directory exists
-        File parentDir = hashFile.getParentFile();
-        if (!parentDir.exists() && !parentDir.mkdirs()) {
-            log.error("Failed to create directory: {}", parentDir.getAbsolutePath());
-            return;
-        }
-
-        try (FileWriter writer = new FileWriter(hashFile)) {
-            gson.toJson(hashes, writer);
-            writer.flush();
-            log.info("Saved {} hash records to {}", hashes.size(), hashFile.getAbsolutePath());
+        try {
+            String json = gson.toJson(hashes);
+            NfsFileOperations.atomicWrite(hashFile, json);
+            log.info("Saved {} hash records to {}", hashes.size(), hashFile.toAbsolutePath());
         } catch (IOException e) {
-            log.error("Failed to save hash file {}: {}", hashFile.getAbsolutePath(), e.getMessage(), e);
+            log.error("Failed to save hash file {}: {}", hashFile.toAbsolutePath(), e.getMessage(), e);
         }
     }
 
     /**
-     * Gets the File object for the hash JSON file.
-     *
-     * @param comicId The comic ID
-     * @param comicName The comic name
-     * @param year The year
-     * @return The File object for the hash JSON file
+     * Gets the Path for the hash JSON file.
      */
-    private File getHashFile(int comicId, String comicName, int year) {
+    private Path getHashFile(int comicId, String comicName, int year) {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
         String yearPath = String.valueOf(year);
-        String cacheRoot = cacheProperties.getLocation();
-
-        return new File(String.format("%s/%s/%s/%s", cacheRoot, comicNameParsed, yearPath, HASH_FILE_NAME));
+        return NfsFileOperations.resolvePath(cacheProperties.getLocation(), comicNameParsed, yearPath, HASH_FILE_NAME);
     }
 
     /**
      * Gets a directory name for a comic - uses the comic name if available,
      * otherwise falls back to the comic ID.
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name (can be null)
      * @return A string to use as the directory name
      */
@@ -181,7 +171,7 @@ public class DuplicateImageHashRepository {
      * Creates a cache key from comic ID and year.
      *
      * @param comicId The comic ID
-     * @param year The year
+     * @param year    The year
      * @return The cache key
      */
     private String getCacheKey(int comicId, int year) {
@@ -190,25 +180,19 @@ public class DuplicateImageHashRepository {
 
     /**
      * Gets the year directory for a comic.
-     *
-     * @param comicId The comic ID
-     * @param comicName The comic name
-     * @param year The year
-     * @return The year directory File object
      */
-    public File getYearDirectory(int comicId, String comicName, int year) {
+    public Path getYearDirectory(int comicId, String comicName, int year) {
         String comicNameParsed = getComicNameParsed(comicId, comicName);
-        String cacheRoot = cacheProperties.getLocation();
-        return new File(String.format("%s/%s/%d", cacheRoot, comicNameParsed, year));
+        return NfsFileOperations.resolvePath(cacheProperties.getLocation(), comicNameParsed, String.valueOf(year));
     }
 
     /**
      * Replaces all hashes for a comic/year (used for rebuilding cache).
      *
-     * @param comicId The comic ID
+     * @param comicId   The comic ID
      * @param comicName The comic name
-     * @param year The year
-     * @param hashes The new hash map to store
+     * @param year      The year
+     * @param hashes    The new hash map to store
      */
     public void replaceHashes(int comicId, String comicName, int year, Map<String, ImageHashRecord> hashes) {
         String cacheKey = getCacheKey(comicId, year);

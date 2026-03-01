@@ -155,7 +155,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
         }
 
         try (InputStream inputStream = new FileInputStream(configFile);
-                Reader reader = new InputStreamReader(inputStream)) {
+             Reader reader = new InputStreamReader(inputStream)) {
 
             userConfig = gson.fromJson(reader, UserConfig.class);
 
@@ -208,7 +208,7 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
         }
 
         try (InputStream inputStream = new FileInputStream(configFile);
-                Reader reader = new InputStreamReader(inputStream)) {
+             Reader reader = new InputStreamReader(inputStream)) {
 
             preferenceConfig = gson.fromJson(reader, PreferenceConfig.class);
 

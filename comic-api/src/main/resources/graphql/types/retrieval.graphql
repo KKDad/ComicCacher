@@ -1,0 +1,152 @@
+# =============================================================================
+# Retrieval Status Types
+# =============================================================================
+# Types for comic retrieval status tracking.
+# =============================================================================
+
+"""
+Record of a comic retrieval attempt.
+"""
+type RetrievalRecord {
+    """
+    Unique identifier (format: "ComicName_YYYY-MM-DD").
+    """
+    id: String!
+    
+    """
+    Name of the comic.
+    """
+    comicName: String!
+    
+    """
+    Date for which the comic was retrieved.
+    """
+    comicDate: Date!
+    
+    """
+    Source provider (e.g., "gocomics", "comicskingdom").
+    """
+    source: String
+    
+    """
+    Retrieval status.
+    """
+    status: RetrievalStatusEnum!
+    
+    """
+    Error message if retrieval failed.
+    """
+    errorMessage: String
+    
+    """
+    Duration of the retrieval operation in milliseconds.
+    """
+    retrievalDurationMs: Float
+    
+    """
+    Size of the retrieved image in bytes (if successful).
+    """
+    imageSize: Float
+    
+    """
+    HTTP status code from the comic source.
+    """
+    httpStatusCode: Int
+}
+
+"""
+Summary statistics for retrieval operations.
+"""
+type RetrievalSummary {
+    """
+    Total number of retrieval attempts.
+    """
+    totalAttempts: Int!
+    
+    """
+    Number of successful retrievals.
+    """
+    successCount: Int!
+    
+    """
+    Number of failed retrievals.
+    """
+    failureCount: Int!
+    
+    """
+    Number of skipped retrievals.
+    """
+    skippedCount: Int!
+    
+    """
+    Success rate as a percentage (0-100).
+    """
+    successRate: Float!
+    
+    """
+    Average retrieval duration in milliseconds.
+    """
+    averageDurationMs: Float
+    
+    """
+    Breakdown by comic.
+    """
+    byComic: [ComicRetrievalSummary!]
+    
+    """
+    Breakdown by status.
+    """
+    byStatus: [StatusCount!]
+}
+
+"""
+Retrieval summary for a specific comic.
+"""
+type ComicRetrievalSummary {
+    """
+    Comic name.
+    """
+    comicName: String!
+    
+    """
+    Total attempts for this comic.
+    """
+    totalAttempts: Int!
+    
+    """
+    Successful retrievals.
+    """
+    successCount: Int!
+    
+    """
+    Failed retrievals.
+    """
+    failureCount: Int!
+}
+
+"""
+Count of retrievals by status.
+"""
+type StatusCount {
+    """
+    Retrieval status.
+    """
+    status: RetrievalStatusEnum!
+    
+    """
+    Number of records with this status.
+    """
+    count: Int!
+}
+
+"""
+Possible retrieval status values.
+"""
+enum RetrievalStatusEnum {
+    SUCCESS
+    FAILURE
+    SKIPPED
+    ERROR
+    NOT_FOUND
+    RATE_LIMITED
+}

@@ -1,0 +1,17 @@
+overwrite: true
+schema: ${NEXT_PUBLIC_GRAPHQL_ENDPOINT}
+documents: 'src/graphql/operations/**/*.graphql'
+generates:
+  src/generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-react-query
+    config:
+      reactQueryVersion: 5
+      addInfiniteQuery: true
+      exposeQueryKeys: true
+      exposeFetcher: true
+      fetcher:
+        func: '../lib/graphql-client#fetcher'
+        isReactHook: false

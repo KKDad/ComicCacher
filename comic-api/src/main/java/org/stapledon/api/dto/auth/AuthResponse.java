@@ -1,25 +1,18 @@
 package org.stapledon.api.dto.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+/**
+ * Response object for successful authentication containing tokens and user
+ * info.
+ */
+public record AuthResponse(
+        String token,
+        String refreshToken,
+        String username,
+        String displayName) {
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-@ToString(onlyExplicitlyIncluded = true)
-public class AuthResponse {
-    private String token;
-    private String refreshToken;
-
-    @ToString.Include
-    private String username;
-
-    @ToString.Include
-    private String displayName;
+    @Override
+    public String toString() {
+        // Exclude tokens from toString for security
+        return "AuthResponse[username=" + username + ", displayName=" + displayName + "]";
+    }
 }

@@ -29,8 +29,7 @@ import java.util.Map;
  */
 class ApplicationConfigurationFacadeTest {
 
-    @TempDir
-    Path tempDir;
+    @TempDir Path tempDir;
 
     private ApplicationConfigurationFacade configFacade;
     private File configRoot;

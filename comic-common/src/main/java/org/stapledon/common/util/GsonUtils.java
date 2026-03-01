@@ -1,19 +1,20 @@
 package org.stapledon.common.util;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class GsonUtils {
+public final class GsonUtils {
     private GsonUtils() {
     }
 
@@ -21,6 +22,7 @@ public class GsonUtils {
         return new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeAdapter())
                 .setPrettyPrinting();
     }
 
@@ -97,6 +99,29 @@ public class GsonUtils {
             }
             String dateTimeStr = jsonReader.nextString();
             return LocalDateTime.parse(dateTimeStr, FORMATTER);
+        }
+    }
+
+    public static class OffsetDateTimeAdapter extends TypeAdapter<OffsetDateTime> {
+        private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+        @Override
+        public void write(JsonWriter jsonWriter, OffsetDateTime offsetDateTime) throws IOException {
+            if (offsetDateTime == null) {
+                jsonWriter.nullValue();
+            } else {
+                jsonWriter.value(FORMATTER.format(offsetDateTime));
+            }
+        }
+
+        @Override
+        public OffsetDateTime read(JsonReader jsonReader) throws IOException {
+            if (jsonReader.peek() == JsonToken.NULL) {
+                jsonReader.nextNull();
+                return null;
+            }
+            String dateTimeStr = jsonReader.nextString();
+            return OffsetDateTime.parse(dateTimeStr, FORMATTER);
         }
     }
 }

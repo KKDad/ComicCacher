@@ -21,8 +21,7 @@ public class KingComicsBootStrap implements IComicsBootstrap {
     List<DayOfWeek> publicationDays; // Optional: days comic publishes (null/empty = daily)
     Boolean active; // Optional: whether comic is actively publishing (null/true = active)
 
-    @Autowired
-    private InspectorService webInspector;
+    @Autowired private InspectorService webInspector;
 
     public KingComicsBootStrap() {
         // No args constructor for required for Gson deserialize

@@ -2,24 +2,28 @@ package org.stapledon.engine.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.stapledon.common.dto.ImageFormat;
-import org.stapledon.common.dto.ImageMetadata;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+
+
+import org.stapledon.common.dto.ImageFormat;
+import org.stapledon.common.dto.ImageMetadata;
 
 class ImageMetadataRepositoryTest {
 
@@ -33,6 +37,7 @@ class ImageMetadataRepositoryTest {
     void setUp() {
         gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeAdapter())
                 .setPrettyPrinting()
                 .create();
 
@@ -254,7 +259,7 @@ class ImageMetadataRepositoryTest {
                 .sizeInBytes(524288)
                 .colorMode(ImageMetadata.ColorMode.COLOR)
                 .samplePercentage(5.0)
-                .captureTimestamp(LocalDateTime.of(2023, 1, 15, 10, 30, 45))
+                .captureTimestamp(OffsetDateTime.of(2023, 1, 15, 10, 30, 45, 0, java.time.ZoneOffset.UTC))
                 .sourceUrl("http://example.com/image.png")
                 .build();
 
@@ -267,7 +272,8 @@ class ImageMetadataRepositoryTest {
         ImageMetadata loadedMetadata = loaded.get();
         assertThat(loadedMetadata.getSourceUrl()).isEqualTo("http://example.com/image.png");
         assertThat(loadedMetadata.getSamplePercentage()).isEqualTo(5.0);
-        assertThat(loadedMetadata.getCaptureTimestamp()).isEqualTo(LocalDateTime.of(2023, 1, 15, 10, 30, 45));
+        assertThat(loadedMetadata.getCaptureTimestamp())
+                .isEqualTo(OffsetDateTime.of(2023, 1, 15, 10, 30, 45, 0, java.time.ZoneOffset.UTC));
     }
 
     @Test
@@ -284,7 +290,7 @@ class ImageMetadataRepositoryTest {
                 .sizeInBytes(1000)
                 .colorMode(ImageMetadata.ColorMode.GRAYSCALE)
                 .samplePercentage(5.0)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl(null)
                 .build();
 
@@ -311,7 +317,7 @@ class ImageMetadataRepositoryTest {
                 .sizeInBytes(0)
                 .colorMode(ImageMetadata.ColorMode.UNKNOWN)
                 .samplePercentage(0.0)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl(null)
                 .build();
 
@@ -337,7 +343,7 @@ class ImageMetadataRepositoryTest {
                 .sizeInBytes(1000)
                 .colorMode(ImageMetadata.ColorMode.UNKNOWN)
                 .samplePercentage(5.0)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl(null)
                 .build();
 
@@ -366,7 +372,7 @@ class ImageMetadataRepositoryTest {
                 .sizeInBytes(1000)
                 .colorMode(ImageMetadata.ColorMode.COLOR)
                 .samplePercentage(5.0)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl(null)
                 .build();
 
@@ -392,7 +398,7 @@ class ImageMetadataRepositoryTest {
                 .sizeInBytes(0)
                 .colorMode(ImageMetadata.ColorMode.COLOR)
                 .samplePercentage(5.0)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl(null)
                 .build();
 
@@ -415,7 +421,7 @@ class ImageMetadataRepositoryTest {
                 .sizeInBytes(1024)
                 .colorMode(ImageMetadata.ColorMode.COLOR)
                 .samplePercentage(5.0)
-                .captureTimestamp(LocalDateTime.now())
+                .captureTimestamp(OffsetDateTime.now())
                 .sourceUrl("http://example.com/test.png")
                 .build();
     }
@@ -447,6 +453,29 @@ class ImageMetadataRepositoryTest {
             }
             String dateTimeStr = jsonReader.nextString();
             return LocalDateTime.parse(dateTimeStr, formatter);
+        }
+    }
+
+    static class OffsetDateTimeAdapter extends TypeAdapter<OffsetDateTime> {
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+        @Override
+        public void write(JsonWriter jsonWriter, OffsetDateTime offsetDateTime) throws IOException {
+            if (offsetDateTime == null) {
+                jsonWriter.nullValue();
+            } else {
+                jsonWriter.value(formatter.format(offsetDateTime));
+            }
+        }
+
+        @Override
+        public OffsetDateTime read(JsonReader jsonReader) throws IOException {
+            if (jsonReader.peek() == JsonToken.NULL) {
+                jsonReader.nextNull();
+                return null;
+            }
+            String dateTimeStr = jsonReader.nextString();
+            return OffsetDateTime.parse(dateTimeStr, formatter);
         }
     }
 }

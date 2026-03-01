@@ -1,7 +1,8 @@
 package org.stapledon.common.dto;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -45,7 +46,7 @@ public class ComicErrorRecord {
     /**
      * Timestamp when the error occurred
      */
-    private final LocalDateTime timestamp;
+    private final OffsetDateTime timestamp;
 
     /**
      * Duration of the failed retrieval operation in milliseconds
@@ -63,7 +64,7 @@ public class ComicErrorRecord {
                 .status(record.getStatus())
                 .errorMessage(record.getErrorMessage())
                 .httpStatusCode(record.getHttpStatusCode())
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now())
                 .retrievalDurationMs(record.getRetrievalDurationMs())
                 .build();
     }

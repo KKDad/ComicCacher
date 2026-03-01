@@ -2,7 +2,8 @@ package org.stapledon.batch;
 
 import org.stapledon.common.dto.ImageFormat;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -13,7 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Utility class for generating test images for batch integration tests.
- * Creates realistic images in various formats for testing image metadata processing.
+ * Creates realistic images in various formats for testing image metadata
+ * processing.
  */
 @Slf4j
 public class TestImageGenerator {
@@ -22,9 +24,9 @@ public class TestImageGenerator {
      * Creates a test image with specified dimensions and format.
      *
      * @param outputFile The file to write the image to
-     * @param width Image width in pixels
-     * @param height Image height in pixels
-     * @param format Image format (PNG, JPEG, GIF)
+     * @param width      Image width in pixels
+     * @param height     Image height in pixels
+     * @param format     Image format (PNG, JPEG, GIF)
      * @throws IOException if image creation or writing fails
      */
     public static void createTestImage(File outputFile, int width, int height, ImageFormat format) throws IOException {
@@ -36,16 +38,16 @@ public class TestImageGenerator {
     /**
      * Creates a BufferedImage with a gradient pattern for testing.
      *
-     * @param width Image width
+     * @param width  Image width
      * @param height Image height
      * @param format Image format (determines if grayscale or color)
      * @return BufferedImage with test pattern
      */
     private static BufferedImage createBufferedImage(int width, int height, ImageFormat format) {
         // Use RGB for color formats, GRAY for efficiency where possible
-        int imageType = (format == ImageFormat.JPEG || format == ImageFormat.PNG)
-            ? BufferedImage.TYPE_INT_RGB
-            : BufferedImage.TYPE_INT_RGB;
+        int imageType = format == ImageFormat.JPEG || format == ImageFormat.PNG
+                ? BufferedImage.TYPE_INT_RGB
+                : BufferedImage.TYPE_INT_RGB;
 
         BufferedImage image = new BufferedImage(width, height, imageType);
         Graphics2D g2d = image.createGraphics();
@@ -75,9 +77,9 @@ public class TestImageGenerator {
     /**
      * Writes a BufferedImage to a file in the specified format.
      *
-     * @param image The image to write
+     * @param image      The image to write
      * @param outputFile The output file
-     * @param format The image format
+     * @param format     The image format
      * @throws IOException if writing fails
      */
     private static void writeImage(BufferedImage image, File outputFile, ImageFormat format) throws IOException {

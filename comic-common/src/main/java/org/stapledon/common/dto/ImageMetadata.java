@@ -1,6 +1,7 @@
 package org.stapledon.common.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -64,7 +65,7 @@ public class ImageMetadata {
     /**
      * Timestamp when this metadata was captured
      */
-    private final LocalDateTime captureTimestamp;
+    private final OffsetDateTime captureTimestamp;
 
     /**
      * Source URL from which the image was downloaded (if available)

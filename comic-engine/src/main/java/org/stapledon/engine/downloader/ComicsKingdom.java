@@ -1,20 +1,22 @@
 package org.stapledon.engine.downloader;
 
+import com.google.common.base.Preconditions;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.infrastructure.web.InspectorService;
 
-import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
+
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.infrastructure.web.InspectorService;
 
 @Slf4j
 @ToString

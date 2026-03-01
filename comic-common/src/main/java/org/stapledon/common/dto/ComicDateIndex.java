@@ -1,8 +1,14 @@
 package org.stapledon.common.dto;
 
-import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Persistent index of available comic dates for a specific comic.

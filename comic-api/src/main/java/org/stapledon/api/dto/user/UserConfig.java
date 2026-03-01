@@ -13,6 +13,5 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 @Component
 public class UserConfig {
-    @ToString.Include
-    private Map<String, User> users = new ConcurrentHashMap<>();
+    @ToString.Include private Map<String, User> users = new ConcurrentHashMap<>();
 }

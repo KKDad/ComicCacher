@@ -1,5 +1,7 @@
 package org.stapledon.engine.batch.config;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -15,18 +17,21 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.time.LocalDate;
+
+
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.metrics.service.MetricsArchiveService;
 
-import java.time.LocalDate;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Spring Batch configuration for metrics archive job. Archives yesterday's metrics to JSON for historical analysis.
  */
-@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j
+@Configuration
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "true", matchIfMissing = true)
 public class MetricsArchiveJobConfig {
 
     private final MetricsArchiveService metricsArchiveService;

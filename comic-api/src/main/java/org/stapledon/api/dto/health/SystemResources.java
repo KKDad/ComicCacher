@@ -21,20 +21,17 @@ public class SystemResources {
     /**
      * Available processors
      */
-    @ToString.Include
-    private int availableProcessors;
+    @ToString.Include private int availableProcessors;
 
     /**
      * Memory usage in MB
      */
-    @ToString.Include
-    private MemoryInfo memory;
+    @ToString.Include private MemoryInfo memory;
 
     /**
      * Disk space information in MB
      */
-    @ToString.Include
-    private DiskSpace diskSpace;
+    @ToString.Include private DiskSpace diskSpace;
 
     /**
      * Memory metrics
@@ -45,16 +42,13 @@ public class SystemResources {
     @AllArgsConstructor
     @ToString(onlyExplicitlyIncluded = true)
     public static class MemoryInfo {
-        @ToString.Include
-        private long totalMemory;
+        @ToString.Include private long totalMemory;
 
-        @ToString.Include
-        private long freeMemory;
+        @ToString.Include private long freeMemory;
 
         private long maxMemory;
 
-        @ToString.Include
-        private double usedPercentage;
+        @ToString.Include private double usedPercentage;
     }
 
     /**
@@ -66,15 +60,12 @@ public class SystemResources {
     @AllArgsConstructor
     @ToString(onlyExplicitlyIncluded = true)
     public static class DiskSpace {
-        @ToString.Include
-        private long total;
+        @ToString.Include private long total;
 
-        @ToString.Include
-        private long free;
+        @ToString.Include private long free;
 
         private long usable;
 
-        @ToString.Include
-        private double usedPercentage;
+        @ToString.Include private double usedPercentage;
     }
 }

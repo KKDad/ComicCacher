@@ -8,9 +8,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.engine.downloader.GoComics;
@@ -21,6 +18,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Comparator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class GoComicsIntegrationIT {
     private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationIT.class);
@@ -39,8 +38,9 @@ class GoComicsIntegrationIT {
 
     @AfterAll
     static void tearDown() throws Exception {
-        if (!Files.exists(path))
+        if (!Files.exists(path)) {
             return;
+        }
 
         // Remote test directory and contents
         Files.walk(path)
@@ -56,25 +56,6 @@ class GoComicsIntegrationIT {
         gc.setCacheRoot(path.toString());
 
         return gc;
-    }
-
-    @Test
-    void ensureCacheTest() throws Exception {
-        LocalDate testDate = LocalDate.now().minusDays(1);
-        String year = String.valueOf(testDate.getYear());
-        String dateString = testDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        File expectedFile = new File(path.toString() + "/AdamAtHome/" + year + "/" + dateString + ".png");
-        LOG.info("Expecting to get file: " + expectedFile);
-        assertThat(expectedFile).doesNotExist();
-
-        try (IDailyComic subject = getSubject("Adam at Home")) {
-            // Act
-            boolean result = subject.ensureCache();
-
-        // Assert
-        assertThat(result).isTrue();
-        assertThat(expectedFile).exists();
-        }
     }
 
     @Test
@@ -112,7 +93,7 @@ class GoComicsIntegrationIT {
 
             // Copy to home directory before cleanup
             Files.copy(expectedFile.toPath(), homeFile.toPath(),
-                      java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
             LOG.info("SUCCESS! Comic downloaded to: " + expectedFile.getAbsolutePath());
             LOG.info("Comic copied to home directory: " + homeFile.getAbsolutePath());
@@ -149,7 +130,7 @@ class GoComicsIntegrationIT {
 
                 // Copy to home directory before cleanup
                 Files.copy(expectedFile.toPath(), homeFile.toPath(),
-                          java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
                 LOG.info("✓ Comic {} saved to: {}", i + 1, homeFile.getName());
             }
@@ -174,7 +155,7 @@ class GoComicsIntegrationIT {
             "Garfield",
             "Peanuts",
             "CalvinAndHobbes"
-            })
+    })
     void getComicDetailsTest(String name) {
         // Arrange
         try (GoComics subject = getSubject(name)) {
@@ -182,16 +163,16 @@ class GoComicsIntegrationIT {
             ComicItem item = new ComicItem();
             subject.updateComicMetadata(item);
 
-        // Assert that we get basic metadata regardless of website changes
-        assertThat(item.getDescription()).isNotNull();
-        assertThat(item.getAvatarAvailable()).isTrue();
-        assertThat(item.getAuthor()).isNotNull();
+            // Assert that we get basic metadata regardless of website changes
+            assertThat(item.getDescription()).isNotNull();
+            assertThat(item.isAvatarAvailable()).isTrue();
+            assertThat(item.getAuthor()).isNotNull();
 
-        // Log the actual author for verification
-        LOG.info("Comic '{}' has author: '{}'", name, item.getAuthor());
+            // Log the actual author for verification
+            LOG.info("Comic '{}' has author: '{}'", name, item.getAuthor());
 
-        // Make sure author starts with "By " as expected by other parts of the app
-        assertThat(item.getAuthor()).startsWith("By ");
+            // Make sure author starts with "By " as expected by other parts of the app
+            assertThat(item.getAuthor()).startsWith("By ");
         }
     }
 

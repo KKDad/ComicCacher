@@ -7,8 +7,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.api.dto.preference.UserPreference;
 import org.stapledon.infrastructure.config.PreferenceConfigWriter;
 
@@ -16,12 +14,13 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JsonPreferenceServiceTest {
 
-    @Mock
-    private PreferenceConfigWriter preferenceConfigWriter;
+    @Mock private PreferenceConfigWriter preferenceConfigWriter;
 
     private JsonPreferenceService preferenceService;
 

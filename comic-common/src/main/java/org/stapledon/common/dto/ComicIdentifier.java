@@ -1,25 +1,15 @@
 package org.stapledon.common.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-
 /**
  * Value object representing a comic's identity.
  * Encapsulates the (comicId, comicName) pair that is passed throughout the
  * system.
- * 
+ *
+ * <p>
  * Immutable and suitable for use as a cache key.
+ * </p>
  */
-@Getter
-@AllArgsConstructor
-@EqualsAndHashCode
-@ToString
-public final class ComicIdentifier {
-
-    private final int id;
-    private final String name;
+public record ComicIdentifier(int id, String name) {
 
     /**
      * Creates a ComicIdentifier from a ComicItem.
@@ -37,5 +27,21 @@ public final class ComicIdentifier {
             return "comic_" + id;
         }
         return name.replace(" ", "");
+    }
+
+    /**
+     * Returns the comic ID.
+     * Provided for backward compatibility with code expecting getId().
+     */
+    public int getId() {
+        return id;
+    }
+
+    /**
+     * Returns the comic name.
+     * Provided for backward compatibility with code expecting getName().
+     */
+    public String getName() {
+        return name;
     }
 }

@@ -1,8 +1,7 @@
 package org.stapledon.engine.batch;
 
-import org.springframework.context.annotation.Configuration;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Base configuration for Spring Batch jobs. Provides shared configuration, utilities, and conventions for all batch jobs.
@@ -33,7 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  * }
  * </pre>
  */
-@Slf4j @Configuration
+@Slf4j
+@Configuration
 public class BatchJobBaseConfig {
 
     /**
@@ -44,7 +44,7 @@ public class BatchJobBaseConfig {
     /**
      * Canonical set of known batch job names. Used by SchedulerHealthCheck to detect missing or unexpected schedulers. When adding a new batch job, add its name here.
      */
-    public static final java.util.Set<String> KNOWN_JOBS = java.util.Set.of("ComicBackfillJob", "ComicDownloadJob", "ImageMetadataBackfillJob", "MetricsArchiveJob",
+    public static final java.util.Set<String> KNOWN_JOBS = java.util.Set.of("AvatarBackfillJob", "ComicBackfillJob", "ComicDownloadJob", "ImageMetadataBackfillJob", "MetricsArchiveJob",
             "RetrievalRecordPurgeJob");
 
     /**
@@ -68,6 +68,9 @@ public class BatchJobBaseConfig {
 
         /** Daily at 7:00 AM EST - Comic backfill */
         public static final String COMIC_BACKFILL = "0 0 7 * * ? " + BATCH_TIMEZONE;
+
+        /** Daily at 7:15 AM EST - Avatar backfill */
+        public static final String AVATAR_BACKFILL = "0 15 7 * * ? " + BATCH_TIMEZONE;
 
         private CronSchedules() {
             // Utility class
@@ -95,6 +98,9 @@ public class BatchJobBaseConfig {
 
         public static final String COMIC_BACKFILL_ENABLED = "batch.comic-backfill.enabled";
         public static final String COMIC_BACKFILL_CRON = "batch.comic-backfill.cron";
+
+        public static final String AVATAR_BACKFILL_ENABLED = "batch.avatar-backfill.enabled";
+        public static final String AVATAR_BACKFILL_CRON = "batch.avatar-backfill.cron";
 
         private PropertyKeys() {
             // Utility class

@@ -1,14 +1,15 @@
 package org.stapledon.engine.validation;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.dto.HashAlgorithm;
-import org.stapledon.common.service.ImageHasher;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+
+import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.HashAlgorithm;
+import org.stapledon.common.service.ImageHasher;
 
 /**
  * Factory for creating the appropriate ImageHasher implementation based on configuration.

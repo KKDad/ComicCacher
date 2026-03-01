@@ -13,6 +13,18 @@ max_line_length = 190
 indent_style = space
 indent_size = 4
 
+[*.java]
+# Standard IntelliJ IDEA names for these properties
+ij_java_chained_method_calls_wrap = 2
+ij_java_keep_line_breaks = true
+ij_java_line_comment_at_first_column = false
+# This handles the dot placement
+ij_java_dot_indentation_on_new_line = true
+# This ensures that when it wraps, it aligns with the first call
+ij_java_align_multiline_chained_methods = true
+# 2 is the internal value for "Chop down if long"
+ij_java_method_parameters_wrap = 2
+
 [*.{json,yaml,yml,md}]
 indent_size = 2
 

@@ -11,9 +11,6 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.config.CaffeineCacheProperties;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ImageDto;
@@ -22,6 +19,9 @@ import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Unit tests for PredictiveCacheService.
@@ -31,8 +31,7 @@ import java.util.List;
 @ExtendWith(MockitoExtension.class)
 class PredictiveCacheServiceTest {
 
-    @Mock
-    private ManagementFacade comicManagementFacade;
+    @Mock private ManagementFacade comicManagementFacade;
 
     private CaffeineCacheProperties cacheProperties;
     private PredictiveCacheService service;
@@ -62,34 +61,34 @@ class PredictiveCacheServiceTest {
 
         // Mock successful navigation results - each call returns the next date
         ImageDto mockImage = ImageDto.builder()
-            .imageData("mock-data")
-            .mimeType("image/png")
-            .build();
+                .imageData("mock-data")
+                .mimeType("image/png")
+                .build();
 
         when(comicManagementFacade.getComicStrip(eq(comicId), eq(Direction.FORWARD), any(LocalDate.class)))
-            .thenReturn(
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.plusDays(1))
-                    .nearestPreviousDate(startDate)
-                    .nearestNextDate(startDate.plusDays(2))
-                    .build(),
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.plusDays(2))
-                    .nearestPreviousDate(startDate.plusDays(1))
-                    .nearestNextDate(startDate.plusDays(3))
-                    .build(),
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.plusDays(3))
-                    .nearestPreviousDate(startDate.plusDays(2))
-                    .nearestNextDate(null)
-                    .build()
-            );
+                .thenReturn(
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.plusDays(1))
+                                .nearestPreviousDate(startDate)
+                                .nearestNextDate(startDate.plusDays(2))
+                                .build(),
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.plusDays(2))
+                                .nearestPreviousDate(startDate.plusDays(1))
+                                .nearestNextDate(startDate.plusDays(3))
+                                .build(),
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.plusDays(3))
+                                .nearestPreviousDate(startDate.plusDays(2))
+                                .nearestNextDate(null)
+                                .build()
+                );
 
         // Execute prefetch
         service.prefetchAdjacentComics(comicId, startDate, Direction.FORWARD);
@@ -97,7 +96,7 @@ class PredictiveCacheServiceTest {
         // Capture the arguments
         ArgumentCaptor<LocalDate> dateCaptor = ArgumentCaptor.forClass(LocalDate.class);
         verify(comicManagementFacade, atLeast(3))
-            .getComicStrip(eq(comicId), eq(Direction.FORWARD), dateCaptor.capture());
+                .getComicStrip(eq(comicId), eq(Direction.FORWARD), dateCaptor.capture());
 
         // Verify dates are sequential
         List<LocalDate> capturedDates = dateCaptor.getAllValues();
@@ -120,34 +119,34 @@ class PredictiveCacheServiceTest {
 
         // Mock successful navigation results going backward
         ImageDto mockImage = ImageDto.builder()
-            .imageData("mock-data")
-            .mimeType("image/png")
-            .build();
+                .imageData("mock-data")
+                .mimeType("image/png")
+                .build();
 
         when(comicManagementFacade.getComicStrip(eq(comicId), eq(Direction.BACKWARD), any(LocalDate.class)))
-            .thenReturn(
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.minusDays(1))
-                    .nearestPreviousDate(startDate.minusDays(2))
-                    .nearestNextDate(startDate)
-                    .build(),
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.minusDays(2))
-                    .nearestPreviousDate(startDate.minusDays(3))
-                    .nearestNextDate(startDate.minusDays(1))
-                    .build(),
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.minusDays(3))
-                    .nearestPreviousDate(null)
-                    .nearestNextDate(startDate.minusDays(2))
-                    .build()
-            );
+                .thenReturn(
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.minusDays(1))
+                                .nearestPreviousDate(startDate.minusDays(2))
+                                .nearestNextDate(startDate)
+                                .build(),
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.minusDays(2))
+                                .nearestPreviousDate(startDate.minusDays(3))
+                                .nearestNextDate(startDate.minusDays(1))
+                                .build(),
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.minusDays(3))
+                                .nearestPreviousDate(null)
+                                .nearestNextDate(startDate.minusDays(2))
+                                .build()
+                );
 
         // Execute prefetch
         service.prefetchAdjacentComics(comicId, startDate, Direction.BACKWARD);
@@ -155,7 +154,7 @@ class PredictiveCacheServiceTest {
         // Capture the arguments
         ArgumentCaptor<LocalDate> dateCaptor = ArgumentCaptor.forClass(LocalDate.class);
         verify(comicManagementFacade, atLeast(3))
-            .getComicStrip(eq(comicId), eq(Direction.BACKWARD), dateCaptor.capture());
+                .getComicStrip(eq(comicId), eq(Direction.BACKWARD), dateCaptor.capture());
 
         // Verify dates are going backward
         List<LocalDate> capturedDates = dateCaptor.getAllValues();
@@ -180,7 +179,7 @@ class PredictiveCacheServiceTest {
 
         // Verify no calls were made when lookahead is disabled
         verify(comicManagementFacade, never())
-            .getComicStrip(any(Integer.class), any(Direction.class), any(LocalDate.class));
+                .getComicStrip(any(Integer.class), any(Direction.class), any(LocalDate.class));
     }
 
     @Test
@@ -190,27 +189,27 @@ class PredictiveCacheServiceTest {
 
         // Mock successful first result, then hit end
         ImageDto mockImage = ImageDto.builder()
-            .imageData("mock-data")
-            .mimeType("image/png")
-            .build();
+                .imageData("mock-data")
+                .mimeType("image/png")
+                .build();
 
         when(comicManagementFacade.getComicStrip(eq(comicId), eq(Direction.FORWARD), any(LocalDate.class)))
-            .thenReturn(
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.plusDays(1))
-                    .nearestPreviousDate(startDate)
-                    .nearestNextDate(null)
-                    .build(),
-                ComicNavigationResult.builder()
-                    .found(false)
-                    .reason("AT_END")
-                    .requestedDate(startDate.plusDays(1))
-                    .nearestPreviousDate(startDate.plusDays(1))
-                    .nearestNextDate(null)
-                    .build()
-            );
+                .thenReturn(
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.plusDays(1))
+                                .nearestPreviousDate(startDate)
+                                .nearestNextDate(null)
+                                .build(),
+                        ComicNavigationResult.builder()
+                                .found(false)
+                                .reason("AT_END")
+                                .requestedDate(startDate.plusDays(1))
+                                .nearestPreviousDate(startDate.plusDays(1))
+                                .nearestNextDate(null)
+                                .build()
+                );
 
         // Execute prefetch
         service.prefetchAdjacentComics(comicId, startDate, Direction.FORWARD);
@@ -218,7 +217,7 @@ class PredictiveCacheServiceTest {
         // Capture the arguments
         ArgumentCaptor<LocalDate> dateCaptor = ArgumentCaptor.forClass(LocalDate.class);
         verify(comicManagementFacade, atLeast(1))
-            .getComicStrip(eq(comicId), eq(Direction.FORWARD), dateCaptor.capture());
+                .getComicStrip(eq(comicId), eq(Direction.FORWARD), dateCaptor.capture());
 
         // Should have stopped after hitting the end (no more than 2 calls)
         List<LocalDate> capturedDates = dateCaptor.getAllValues();
@@ -235,23 +234,23 @@ class PredictiveCacheServiceTest {
 
         // Mock successful navigation results
         ImageDto mockImage = ImageDto.builder()
-            .imageData("mock-data")
-            .mimeType("image/png")
-            .build();
+                .imageData("mock-data")
+                .mimeType("image/png")
+                .build();
 
         when(comicManagementFacade.getComicStrip(eq(comicId), eq(Direction.FORWARD), any(LocalDate.class)))
-            .thenReturn(
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.plusDays(1))
-                    .build(),
-                ComicNavigationResult.builder()
-                    .found(true)
-                    .image(mockImage)
-                    .currentDate(startDate.plusDays(2))
-                    .build()
-            );
+                .thenReturn(
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.plusDays(1))
+                                .build(),
+                        ComicNavigationResult.builder()
+                                .found(true)
+                                .image(mockImage)
+                                .currentDate(startDate.plusDays(2))
+                                .build()
+                );
 
         // Execute prefetch
         service.prefetchAdjacentComics(comicId, startDate, Direction.FORWARD);
@@ -259,7 +258,7 @@ class PredictiveCacheServiceTest {
         // Capture the arguments
         ArgumentCaptor<LocalDate> dateCaptor = ArgumentCaptor.forClass(LocalDate.class);
         verify(comicManagementFacade, atLeast(2))
-            .getComicStrip(eq(comicId), eq(Direction.FORWARD), dateCaptor.capture());
+                .getComicStrip(eq(comicId), eq(Direction.FORWARD), dateCaptor.capture());
 
         // Should have fetched exactly 2 comics (respecting the count)
         List<LocalDate> capturedDates = dateCaptor.getAllValues();

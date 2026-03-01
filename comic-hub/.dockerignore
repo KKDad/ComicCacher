@@ -1,0 +1,9 @@
+node_modules
+.next
+.env.local
+.env*.local
+vitest.config.ts
+src/test/
+**/*.test.ts
+**/*.test.tsx
+coverage/

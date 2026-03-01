@@ -12,6 +12,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.stapledon.api.dto.auth.AuthRequest;
+import org.stapledon.infrastructure.security.JwtTokenUtil;
+import org.stapledon.metrics.collector.StorageMetricsCollector;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,10 +22,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.stream.Stream;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base class for all integration tests
@@ -32,11 +34,36 @@ import lombok.extern.slf4j.Slf4j;
  * Provides common test utilities and helper methods
  */
 @Slf4j
-@SpringBootTest(classes = ComicApiApplication.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("integration")
 @Getter
 public abstract class AbstractIntegrationTest {
+
+    // Integration test comics
+    protected static final int TEST_COMIC_ID = 1;
+    protected static final String TEST_COMIC_NAME = "Test Comic";
+    protected static final LocalDate TEST_COMIC_OLDEST_DATE = LocalDate.of(2023, 1, 1);
+    protected static final LocalDate TEST_COMIC_NEWEST_DATE = LocalDate.of(2024, 5, 19);
+
+    // Integration test users
+    protected static final String TEST_USER = "testuser";
+    protected static final String TEST_ADMIN_USER = "adminuser";
+
+    @Autowired
+    protected MockMvc mockMvc;
+
+    @Autowired
+    protected StapledonAccountGivens givens;
+
+    @Autowired
+    protected ObjectMapper objectMapper;
+
+    @Autowired
+    protected StorageMetricsCollector storageMetricsCollector;
+
+    @Autowired
+    protected JwtTokenUtil jwtTokenUtil;
 
     @BeforeAll
     static void setup() {
@@ -100,7 +127,7 @@ public abstract class AbstractIntegrationTest {
                 java.nio.file.Files.createDirectories(testComicDir);
                 java.nio.file.Files.write(testComicDir.resolve("avatar.png"), java.util.Base64.getDecoder().decode(
                         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); // dummy
-                                                                                                                          // avatar
+                // avatar
                 java.nio.file.Files.createDirectories(testComicDir.resolve("2023"));
                 java.nio.file.Files.createDirectories(testComicDir.resolve("2024"));
             } catch (java.io.IOException e) {
@@ -118,29 +145,9 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    // Integration test comics
-    protected static final int TEST_COMIC_ID = 1;
-    protected static final String TEST_COMIC_NAME = "Test Comic";
-    protected static final LocalDate TEST_COMIC_OLDEST_DATE = LocalDate.of(2023, 1, 1);
-    protected static final LocalDate TEST_COMIC_NEWEST_DATE = LocalDate.of(2024, 5, 19);
-
-    // Integration test users
-    protected static final String TEST_USER = "testuser";
-    protected static final String TEST_ADMIN_USER = "adminuser";
-
-    @Autowired
-    protected MockMvc mockMvc;
-
-    @Autowired
-    protected StapledonAccountGivens givens;
-
-    @Autowired
-    protected ObjectMapper objectMapper;
-
     /**
      * Create a test user with the given username and attempt to authenticate
      * Handles errors gracefully
-     *
      */
     protected String authenticateUser() {
         try {
@@ -156,14 +163,10 @@ public abstract class AbstractIntegrationTest {
 
     /**
      * Authenticate with the given credentials and extract JWT token from response
-     *
      */
     protected String authenticateAndGetToken(String username, String password) throws Exception {
         try {
-            AuthRequest authRequest = AuthRequest.builder()
-                    .username(username)
-                    .password(password)
-                    .build();
+            AuthRequest authRequest = new AuthRequest(username, password);
 
             log.debug("Authenticating with: {} / {}", username, password);
 
@@ -190,7 +193,6 @@ public abstract class AbstractIntegrationTest {
 
     /**
      * Extract a value from a JSON response by path
-     *
      */
     @SuppressWarnings("unchecked")
     protected <T> T extractFromResponse(String responseContent, String path, Class<T> clazz) {

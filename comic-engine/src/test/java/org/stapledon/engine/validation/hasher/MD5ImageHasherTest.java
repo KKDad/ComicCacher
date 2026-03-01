@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,7 +61,8 @@ class MD5ImageHasherTest {
 
     @Test
     void calculateHashSinglePixelDifferenceProducesDifferentHash() throws Exception {
-        // MD5 is byte-exact, so even a single pixel difference should produce a different hash
+        // MD5 is byte-exact, so even a single pixel difference should produce a
+        // different hash
         BufferedImage img1 = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
         BufferedImage img2 = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
 
@@ -84,7 +86,8 @@ class MD5ImageHasherTest {
         String hash1 = hasher.calculateHash(imageData1);
         String hash2 = hasher.calculateHash(imageData2);
 
-        assertThat(hash2).as("Images with single pixel difference should have different MD5 hashes").isNotEqualTo(hash1);
+        assertThat(hash2).as("Images with single pixel difference should have different MD5 hashes")
+                .isNotEqualTo(hash1);
     }
 
     @Test
@@ -102,7 +105,7 @@ class MD5ImageHasherTest {
     @Test
     void calculateHashInvalidImageDataReturnsNull() {
         // Random bytes that don't represent a valid image
-        byte[] invalidData = new byte[]{0x01, 0x02, 0x03, 0x04};
+        byte[] invalidData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
 
         String hash = hasher.calculateHash(invalidData);
 
@@ -121,7 +124,8 @@ class MD5ImageHasherTest {
         String smallHash = hasher.calculateHash(small);
         String largeHash = hasher.calculateHash(large);
 
-        assertThat(largeHash).as("Images with different dimensions should have different hashes, even if same color").isNotEqualTo(smallHash);
+        assertThat(largeHash).as("Images with different dimensions should have different hashes, even if same color")
+                .isNotEqualTo(smallHash);
     }
 
     /**

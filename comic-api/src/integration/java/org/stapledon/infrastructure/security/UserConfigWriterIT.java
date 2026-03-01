@@ -15,8 +15,7 @@ import org.stapledon.infrastructure.config.UserConfigWriter;
  */
 class UserConfigWriterIT extends AbstractIntegrationTest {
 
-    @Autowired
-    private UserConfigWriter userConfigWriter;
+    @Autowired private UserConfigWriter userConfigWriter;
 
     @Test
     @DisplayName("Should be able to register and retrieve users")

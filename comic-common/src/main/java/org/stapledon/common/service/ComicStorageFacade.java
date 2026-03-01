@@ -2,8 +2,9 @@ package org.stapledon.common.service;
 
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.SaveResult;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,36 @@ import java.util.Optional;
  */
 public interface ComicStorageFacade {
     // Basic file operations
-    boolean saveComicStrip(ComicIdentifier comic, LocalDate date, byte[] imageData);
+
+    /**
+     * Saves a comic strip image with detailed result information.
+     * <p>
+     * This method provides comprehensive feedback about the save operation including
+     * validation failures, duplicate detection, and I/O errors.
+     * </p>
+     *
+     * @param comic The comic identifier
+     * @param date The publication date
+     * @param imageData The image data to save
+     * @return A SaveResult containing the outcome and any relevant details
+     */
+    SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData);
+
+    /**
+     * Saves a comic strip image (legacy method).
+     * <p>
+     * This method provides backward compatibility by wrapping the new saveComicStripWithResult method.
+     * Consider using saveComicStripWithResult for more detailed outcome information.
+     * </p>
+     *
+     * @param comic The comic identifier
+     * @param date The publication date
+     * @param imageData The image data to save
+     * @return true if the operation was successful (saved or duplicate properly detected), false otherwise
+     */
+    default boolean saveComicStrip(ComicIdentifier comic, LocalDate date, byte[] imageData) {
+        return saveComicStripWithResult(comic, date, imageData).isSuccess();
+    }
 
     boolean saveAvatar(ComicIdentifier comic, byte[] imageData);
 
@@ -39,7 +69,7 @@ public interface ComicStorageFacade {
 
     boolean purgeOldImages(ComicIdentifier comic, int daysToKeep);
 
-    File getCacheRoot();
+    Path getCacheRoot();
 
     String getComicCacheRoot(ComicIdentifier comic);
 

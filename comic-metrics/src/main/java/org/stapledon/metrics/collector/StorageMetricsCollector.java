@@ -13,10 +13,13 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Collector for storage metrics. Scans the cache directory and computes storage utilization statistics. This collector only computes metrics in-memory; persistence is handled by
+ * Collector for storage metrics. Scans the cache directory and computes storage
+ * utilization statistics. This collector only computes metrics in-memory;
+ * persistence is handled by
  * MetricsRepository.
  */
-@Slf4j @ToString
+@Slf4j
+@ToString
 public class StorageMetricsCollector {
     private final String cacheDirectory;
 
@@ -52,7 +55,7 @@ public class StorageMetricsCollector {
         cacheStats = new ImageCacheStats();
 
         // Get all comic directories (one level down from root)
-        File[] comicDirs = root.listFiles(file -> file.isDirectory() && !file.getName().equals("@eaDir"));
+        File[] comicDirs = root.listFiles(file -> file.isDirectory() && !"@eaDir".equals(file.getName()));
         if (comicDirs == null || comicDirs.length == 0) {
             log.warn("No comic directories found in {}", cacheDirectory);
             return true;
@@ -68,12 +71,20 @@ public class StorageMetricsCollector {
             totalStorageBytes += metrics.getStorageBytes();
         }
 
-        // Images are stored by year, gather a list of all years that we have stored
-        // (from the first comic)
-        String[] yearFolders = comicDirs[0].list((dir, name) -> new File(dir, name).isDirectory() && !name.equals("@eaDir"));
-        if (yearFolders != null && yearFolders.length > 0) {
-            var years = Arrays.asList(yearFolders);
-            Arrays.sort(yearFolders, Comparator.comparing(Integer::valueOf));
+        // Gather all years across all comics
+        java.util.Set<String> allYearsSet = new java.util.TreeSet<>();
+        for (File comicDir : comicDirs) {
+            String[] years = comicDir
+                    .list((dir, name) -> new File(dir, name).isDirectory() && !"@eaDir".equals(name));
+            if (years != null) {
+                allYearsSet.addAll(Arrays.asList(years));
+            }
+        }
+
+        if (!allYearsSet.isEmpty()) {
+            String[] allYearsSorted = allYearsSet.toArray(new String[0]);
+            Arrays.sort(allYearsSorted, Comparator.comparing(Integer::valueOf));
+            var years = Arrays.asList(allYearsSorted);
 
             // Aggregate year-based statistics across all comics
             Map<String, Integer> imageCountByYear = new HashMap<>();
@@ -81,9 +92,8 @@ public class StorageMetricsCollector {
 
             for (ComicStorageMetrics metrics : perComicMetrics.values()) {
                 if (metrics.getStorageByYear() != null) {
-                    metrics.getStorageByYear().forEach((year, bytes) -> {
-                        storageBytesByYear.merge(year, bytes, Long::sum);
-                    });
+                    metrics.getStorageByYear().forEach((year, bytes) ->
+                            storageBytesByYear.merge(year, bytes, Long::sum));
                 }
             }
 
@@ -93,7 +103,8 @@ public class StorageMetricsCollector {
                 for (File comicDir : comicDirs) {
                     File yearDir = new File(comicDir, year);
                     if (yearDir.exists() && yearDir.isDirectory()) {
-                        File[] images = yearDir.listFiles(file -> file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
+                        File[] images = yearDir.listFiles(file -> file.isFile()
+                                && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
                         if (images != null) {
                             yearImageCount += images.length;
                         }
@@ -102,22 +113,48 @@ public class StorageMetricsCollector {
                 imageCountByYear.put(year, yearImageCount);
             }
 
-            // Find oldest and newest images (fixed: include comic name in path)
-            String oldestComicName = comicDirs[0].getName();
-            String newestComicName = comicDirs[0].getName();
-            String oldestYear = yearFolders[0];
-            String newestYear = yearFolders[yearFolders.length - 1];
+            // Find oldest and newest images across all comics
+            String oldestComicName = null;
+            String oldestYear = allYearsSorted[0];
+            String oldestImage = null;
+            String newestComicName = null;
+            String newestYear = allYearsSorted[allYearsSorted.length - 1];
+            String newestImage = null;
 
-            String oldestImage = firstImage(comicDirs[0].getAbsolutePath() + "/" + oldestYear);
-            String newestImage = lastImage(comicDirs[0].getAbsolutePath() + "/" + newestYear);
+            // Scan all comics to find the one with the oldest image
+            for (File comicDir : comicDirs) {
+                File yearDir = new File(comicDir, oldestYear);
+                if (yearDir.exists()) {
+                    String first = firstImage(yearDir.getAbsolutePath());
+                    if (first != null && (oldestImage == null || first.compareTo(oldestImage) < 0)) {
+                        oldestImage = first;
+                        oldestComicName = comicDir.getName();
+                    }
+                }
+            }
 
-            cacheStats = ImageCacheStats.builder().years(years).oldestImage(buildImagePath(oldestComicName, oldestYear, oldestImage))
-                    .newestImage(buildImagePath(newestComicName, newestYear, newestImage)).totalStorageBytes(totalStorageBytes).perComicMetrics(perComicMetrics)
+            // Scan all comics to find the one with the newest image
+            for (File comicDir : comicDirs) {
+                File yearDir = new File(comicDir, newestYear);
+                if (yearDir.exists()) {
+                    String last = lastImage(yearDir.getAbsolutePath());
+                    if (last != null && (newestImage == null || last.compareTo(newestImage) > 0)) {
+                        newestImage = last;
+                        newestComicName = comicDir.getName();
+                    }
+                }
+            }
+
+            cacheStats = ImageCacheStats.builder().years(years)
+                    .oldestImage(buildImagePath(oldestComicName, oldestYear, oldestImage))
+                    .newestImage(buildImagePath(newestComicName, newestYear, newestImage))
+                    .totalStorageBytes(totalStorageBytes).perComicMetrics(perComicMetrics)
                     .imageCountByYear(imageCountByYear).storageBytesByYear(storageBytesByYear).build();
         }
 
         long duration = System.currentTimeMillis() - startTime;
-        log.info("Storage metrics scan completed in {}ms: {} comics, {} total bytes", duration, perComicMetrics.size(), totalStorageBytes);
+        log.info("Storage metrics scan completed in {}ms: {} comics, {} total bytes", duration, perComicMetrics.size(),
+                totalStorageBytes);
         return true;
     }
 
@@ -133,11 +170,12 @@ public class StorageMetricsCollector {
         Map<String, Long> yearStorage = new HashMap<>();
 
         // Process each year directory
-        File[] yearDirs = comicDir.listFiles(file -> file.isDirectory() && !file.getName().equals("@eaDir"));
+        File[] yearDirs = comicDir.listFiles(file -> file.isDirectory() && !"@eaDir".equals(file.getName()));
         if (yearDirs != null) {
             for (File yearDir : yearDirs) {
                 long yearSize = 0;
-                File[] images = yearDir.listFiles(file -> file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
+                File[] images = yearDir.listFiles(
+                        file -> file.isFile() && (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")));
 
                 if (images != null) {
                     for (File image : images) {
@@ -152,15 +190,17 @@ public class StorageMetricsCollector {
             }
         }
 
-        return ComicStorageMetrics.builder().comicName(comicDir.getName()).storageBytes(totalSize).imageCount(imageCount)
-                .averageImageSize(imageCount > 0 ? (double) totalSize / imageCount : 0).storageByYear(yearStorage).build();
+        return ComicStorageMetrics.builder().comicName(comicDir.getName()).storageBytes(totalSize)
+                .imageCount(imageCount)
+                .averageImageSize(imageCount > 0 ? (double) totalSize / imageCount : 0).storageByYear(yearStorage)
+                .build();
     }
 
     /**
      * Build a proper image path including comic name, year, and filename.
      *
      * @param comicName The comic directory name
-     * @param year The year directory name
+     * @param year      The year directory name
      * @param imageName The image filename (or null if no images)
      * @return Full path string, or empty string if imageName is null
      */
@@ -207,10 +247,11 @@ public class StorageMetricsCollector {
      */
     private String[] images(String location) {
         var folder = new File(location);
-        var cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile() && (name.endsWith(".png") || name.endsWith(".jpg")) && !name.equals("@eaDir"));
+        var cachedStrips = folder.list((dir, name) -> new File(dir, name).isFile()
+                && (name.endsWith(".png") || name.endsWith(".jpg")) && !"@eaDir".equals(name));
 
         if (cachedStrips == null || cachedStrips.length == 0) {
-            return new String[] {};
+            return new String[]{};
         }
         Arrays.sort(cachedStrips, String::compareTo);
         return cachedStrips;

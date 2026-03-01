@@ -1,0 +1,116 @@
+# Dashboard queries for Comics Hub
+
+# Query for user preferences (favorites and last read dates)
+query GetUserPreferences {
+  preferences {
+    username
+    favoriteComics
+    lastReadDates {
+      comicId
+      date
+    }
+    displaySettings
+  }
+}
+
+# Query for comics list with pagination
+query GetComics($first: Int, $after: String) {
+  comics(first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        name
+        description
+        oldest
+        newest
+        avatarUrl
+        lastStrip {
+          imageUrl
+          date
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Query for a single comic with its latest strip
+query GetComic($id: Int!) {
+  comic(id: $id) {
+    id
+    name
+    description
+    author
+    source
+    sourceIdentifier
+    oldest
+    newest
+    avatarUrl
+    lastStrip {
+      imageUrl
+      date
+    }
+    firstStrip {
+      imageUrl
+      date
+    }
+  }
+}
+
+# Query for a specific comic strip
+# Uses the direct strip query for better performance
+query GetComicStrip($comicId: Int!, $date: Date!) {
+  strip(comicId: $comicId, date: $date) {
+    available
+    imageUrl
+    date
+    previous {
+      date
+    }
+    next {
+      date
+    }
+  }
+}
+
+# Search comics
+query SearchComics($query: String!) {
+  search(query: $query) {
+    comics {
+      id
+      name
+      description
+    }
+  }
+}
+
+# Add a comic to favorites
+mutation AddFavorite($comicId: Int!) {
+  addFavorite(comicId: $comicId) {
+    favoriteComics
+  }
+}
+
+# Remove a comic from favorites
+mutation RemoveFavorite($comicId: Int!) {
+  removeFavorite(comicId: $comicId) {
+    favoriteComics
+  }
+}
+
+# Update last read date for a comic
+mutation UpdateLastRead($comicId: Int!, $date: Date!) {
+  updateLastRead(comicId: $comicId, date: $date) {
+    lastReadDates {
+      comicId
+      date
+    }
+  }
+}

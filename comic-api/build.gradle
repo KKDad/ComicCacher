@@ -1,11 +1,11 @@
 plugins {
-	id "java"
-	id "jacoco"
+    id "java"
+    id "jacoco"
 
-	id "com.coditory.integration-test" version '2.2.5'
-	id "io.spring.dependency-management"
-	id "org.springframework.boot"
-	id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+    id "com.coditory.integration-test" version '2.2.5'
+    id "io.spring.dependency-management"
+    id "org.springframework.boot"
+    id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
 }
 
 // Integration test configuration
@@ -17,85 +17,110 @@ integrationTest {
     systemProperty 'spring.profiles.active', 'integration'
 }
 
+// Ensure main resources (including graphql schema files) are on integration test classpath
+// The coditory plugin creates an 'integration' source set but doesn't include main resources by default
+sourceSets {
+    integration {
+        // Add main resources AFTER integration test resources so integration overrides main
+        resources.srcDirs = ['src/integration/resources', 'src/main/resources']
+    }
+}
+
+// Handle duplicate resources - use EXCLUDE to skip duplicates (integration resources take precedence since they're listed first)
+processIntegrationResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-	integrationTestImplementation {
-	    extendsFrom implementation
-	}
-	integrationTestCompileOnly {
-	    extendsFrom compileOnly
-	}
-	integrationTestAnnotationProcessor {
-	    extendsFrom annotationProcessor
-	}
-	integrationTestRuntimeOnly {
-	    extendsFrom runtimeOnly
-	}
-	// Prevent version conflicts
-	all*.exclude group: 'com.vaadin.external.google', module: 'android-json'
-	all*.exclude group: 'commons-logging', module: 'commons-logging'
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    integrationTestImplementation {
+        extendsFrom implementation
+    }
+    integrationTestCompileOnly {
+        extendsFrom compileOnly
+    }
+    integrationTestAnnotationProcessor {
+        extendsFrom testAnnotationProcessor
+        extendsFrom annotationProcessor
+    }
+    integrationTestRuntimeOnly {
+        extendsFrom runtimeOnly
+    }
+    // Prevent version conflicts
+    all*.exclude group: 'com.vaadin.external.google', module: 'android-json'
+    all*.exclude group: 'commons-logging', module: 'commons-logging'
 }
 
 // repositories inherited from root build.gradle
 
 dependencies {
-	// Module dependencies
-	implementation project(':comic-common')
-	implementation project(':comic-metrics')
-	implementation project(':comic-engine')
+    // Module dependencies
+    implementation project(':comic-common')
+    implementation project(':comic-metrics')
+    implementation project(':comic-engine')
 
-	// Core dependencies
-	implementation "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
-	implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
-	implementation "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
+    // Core dependencies
+    implementation "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
+    implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
+    implementation "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
 
-	// Selenium dependencies
-	implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
-	implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
+    // Selenium dependencies
+    implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
+    implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
 
-	// Spring Boot starters - use managed versions
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'
-	implementation 'org.springframework.boot:spring-boot-starter-cache'
+    // Spring Boot starters - use managed versions
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-graphql'
 
-	// Caffeine cache
-	implementation "com.github.ben-manes.caffeine:caffeine:${rootProject.ext.caffeineVersion}"
+    // GraphQL extended scalars for Date, DateTime, JSON
+    implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
 
-	// JDBC and H2 database for Spring Batch job repository (use Spring Boot managed versions)
-	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-	runtimeOnly 'com.h2database:h2'
+    // Caffeine cache
+    implementation "com.github.ben-manes.caffeine:caffeine:${rootProject.ext.caffeineVersion}"
 
-	// OpenAPI documentation
-	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${rootProject.ext.springdocVersion}"
+    // JDBC and H2 database for Spring Batch job repository (use Spring Boot managed versions)
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    runtimeOnly 'com.h2database:h2'
 
-	// JWT dependencies - use consistent versions
-	implementation "io.jsonwebtoken:jjwt-api:${rootProject.ext.jjwtVersion}"
-	runtimeOnly "io.jsonwebtoken:jjwt-impl:${rootProject.ext.jjwtVersion}"
-	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${rootProject.ext.jjwtVersion}"
+    // OpenAPI documentation
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${rootProject.ext.springdocVersion}"
 
-	// Other dependencies
-	implementation "org.mindrot:jbcrypt:${rootProject.ext.bcryptVersion}"
+    // JWT dependencies - use consistent versions
+    implementation "io.jsonwebtoken:jjwt-api:${rootProject.ext.jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${rootProject.ext.jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:${rootProject.ext.jjwtVersion}"
 
-	// Lombok
-	compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-	annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-	testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-	testImplementation "org.assertj:assertj-core:3.27.6"
+    // Other dependencies
+    implementation "org.mindrot:jbcrypt:${rootProject.ext.bcryptVersion}"
+
+    // Lombok
+    compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+    testImplementation "org.assertj:assertj-core:3.27.6"
     testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
 
-	// Annotation processors
-	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    // Annotation processors
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
-	// Test dependencies
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-    testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
+// Required for Spring Boot 4 Test Autoconfiguration
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-graphql-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 
+    // Explicitly add them to integrationTest to bypass plugin isolation issues
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-graphql-test'
 }
 
 tasks.withType(Test).configureEach {
@@ -108,15 +133,15 @@ bootRun {
 
     // Allow command-line arguments to override system properties
     // This ensures bootRun will respect spring.profiles.active when specified via --args
-	if (project.hasProperty('args')) {
-		args project.args.split(',' as Closure)
-	} else {
-		systemProperty('spring.profiles.active', 'production')
-	}
+    if (project.hasProperty('args')) {
+        args project.args.split(',' as Closure)
+    } else {
+        systemProperty('spring.profiles.active', 'production')
+    }
 }
 
 springBoot {
-	buildInfo()
+    buildInfo()
 }
 
 // JaCoCo configuration
@@ -175,7 +200,7 @@ openApi {
     outputDir.set(file("${project.buildDir}"))
     outputFileName.set("openapi.json")
     waitTimeInSeconds.set(30)
-    
+
     // Configure the Spring Boot application to use the 'apidocs' profile
     // This will disable comic caching during API docs generation
     customBootRun {
@@ -202,7 +227,7 @@ tasks.register('bootRunApiDocs') {
     dependsOn 'classes'
     group = 'application'
     description = 'Runs the Spring Boot application with the apidocs profile (caching disabled)'
-    
+
     doLast {
         exec {
             workingDir project.projectDir

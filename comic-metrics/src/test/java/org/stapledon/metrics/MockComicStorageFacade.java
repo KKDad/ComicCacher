@@ -2,9 +2,10 @@ package org.stapledon.metrics;
 
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.SaveResult;
 import org.stapledon.common.service.ComicStorageFacade;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,7 +107,7 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public boolean saveComicStrip(ComicIdentifier comic, LocalDate date, byte[] imageData) {
+    public SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData) {
         String key = getComicKey(comic);
         Map<LocalDate, byte[]> strips = comicStrips.computeIfAbsent(key, k -> new HashMap<>());
         strips.put(date, imageData);
@@ -120,7 +121,7 @@ public class MockComicStorageFacade implements ComicStorageFacade {
             newestDates.put(key, date);
         }
 
-        return true;
+        return SaveResult.saved();
     }
 
     @Override
@@ -160,9 +161,9 @@ public class MockComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
-    public File getCacheRoot() {
-        // Return the root cache directory as a File
-        return new File("/mock/cache/root");
+    public Path getCacheRoot() {
+        // Return the root cache directory as a Path
+        return Path.of("/mock/cache/root");
     }
 
     @Override

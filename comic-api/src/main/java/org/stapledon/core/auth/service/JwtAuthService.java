@@ -45,22 +45,21 @@ public class JwtAuthService implements AuthService {
         String token = jwtTokenUtil.generateToken(user);
         String refreshToken = jwtTokenUtil.generateRefreshToken(user);
 
-        return Optional.of(AuthResponse.builder()
-                .token(token)
-                .refreshToken(refreshToken)
-                .username(user.getUsername())
-                .displayName(user.getDisplayName())
-                .build());
+        return Optional.of(new AuthResponse(
+                token,
+                refreshToken,
+                user.getUsername(),
+                user.getDisplayName()));
     }
 
     @Override
     public Optional<AuthResponse> login(AuthRequest authRequest) {
-        log.info("User login: {}", authRequest.getUsername());
+        log.info("User login: {}", authRequest.username());
 
-        Optional<User> userOpt = userService.authenticateUser(authRequest.getUsername(), authRequest.getPassword());
+        Optional<User> userOpt = userService.authenticateUser(authRequest.username(), authRequest.password());
 
         if (userOpt.isEmpty()) {
-            log.warn("Authentication failed for user: {}", authRequest.getUsername());
+            log.warn("Authentication failed for user: {}", authRequest.username());
             throw new BadCredentialsException("Invalid username or password");
         }
 
@@ -68,12 +67,11 @@ public class JwtAuthService implements AuthService {
         String token = jwtTokenUtil.generateToken(user);
         String refreshToken = jwtTokenUtil.generateRefreshToken(user);
 
-        return Optional.of(AuthResponse.builder()
-                .token(token)
-                .refreshToken(refreshToken)
-                .username(user.getUsername())
-                .displayName(user.getDisplayName())
-                .build());
+        return Optional.of(new AuthResponse(
+                token,
+                refreshToken,
+                user.getUsername(),
+                user.getDisplayName()));
     }
 
     @Override
@@ -102,12 +100,11 @@ public class JwtAuthService implements AuthService {
                 String newToken = jwtTokenUtil.generateToken(user);
                 String newRefreshToken = jwtTokenUtil.generateRefreshToken(user);
 
-                return Optional.of(AuthResponse.builder()
-                        .token(newToken)
-                        .refreshToken(newRefreshToken)
-                        .username(user.getUsername())
-                        .displayName(user.getDisplayName())
-                        .build());
+                return Optional.of(new AuthResponse(
+                        newToken,
+                        newRefreshToken,
+                        user.getUsername(),
+                        user.getDisplayName()));
             }
 
             return Optional.empty();

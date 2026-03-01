@@ -3,9 +3,6 @@ package org.stapledon.metrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
@@ -16,6 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class StorageMetricsCollectorTest {
 
@@ -160,14 +160,15 @@ class StorageMetricsCollectorTest {
 
         ImageCacheStats stats = cacheStatsUpdater.cacheStats();
 
-        // Should contain the comic name in the path (bug fix verification)
+        // Oldest image is from CalvinAndHobbes (earliest year: 2010)
         assertThat(stats.getOldestImage()).contains("CalvinAndHobbes");
         assertThat(stats.getOldestImage()).contains("2010");
         assertThat(stats.getOldestImage()).contains("2010-01-01.png");
 
-        assertThat(stats.getNewestImage()).contains("CalvinAndHobbes");
-        assertThat(stats.getNewestImage()).contains("2011");
-        assertThat(stats.getNewestImage()).contains("2011-06-15.png");
+        // Newest image is from Garfield (latest year: 2020)
+        assertThat(stats.getNewestImage()).contains("Garfield");
+        assertThat(stats.getNewestImage()).contains("2020");
+        assertThat(stats.getNewestImage()).contains("2020-12-31.png");
     }
 
     private void deleteDirectory(File dir) {

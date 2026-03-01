@@ -1,11 +1,13 @@
 package org.stapledon.engine.batch.config;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
@@ -18,6 +20,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.ComicBackfillService;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
@@ -26,13 +30,13 @@ import org.stapledon.engine.batch.LoggingJobExecutionListener;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips for a configurable target year.
  */
-@Slf4j @Configuration @RequiredArgsConstructor @ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "true", matchIfMissing = true)
+@Slf4j
+@Configuration
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicBackfillJobConfig {
 
     private final ManagementFacade managementFacade;
@@ -61,17 +65,22 @@ public class ComicBackfillJobConfig {
     /**
      * Main job for comic backfill
      */
-    @Bean @Qualifier("comicBackfillJob")
+    @Bean
+    @Qualifier("comicBackfillJob")
     public Job comicBackfillJob(JobRepository jobRepository, @Qualifier("comicBackfillStep") Step comicBackfillStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ComicBackfillJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).listener(new LoggingJobExecutionListener())
+        return new JobBuilder("ComicBackfillJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .listener(jsonBatchExecutionTracker)
+                .listener(new LoggingJobExecutionListener())
                 .start(comicBackfillStep).build();
     }
 
     /**
      * Step for processing comic backfill tasks
      */
-    @Bean @Qualifier("comicBackfillStep")
+    @Bean
+    @Qualifier("comicBackfillStep")
     public Step comicBackfillStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, @Qualifier("backfillTaskReader") ItemReader<BackfillTask> backfillTaskReader,
             @Qualifier("backfillTaskProcessor") ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor,
             @Qualifier("backfillTaskWriter") ItemWriter<ComicDownloadResult> backfillTaskWriter) {
@@ -83,7 +92,9 @@ public class ComicBackfillJobConfig {
     /**
      * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup.
      */
-    @Bean @StepScope @Qualifier("backfillTaskReader")
+    @Bean
+    @StepScope
+    @Qualifier("backfillTaskReader")
     public ItemReader<BackfillTask> backfillTaskReader() {
         log.info("Building backfill task list for job execution");
         return new ListItemReader<>(backfillService.findMissingStrips());
@@ -93,7 +104,8 @@ public class ComicBackfillJobConfig {
      * Processor that downloads a comic for a specific date. Uses downloadComicForDate for efficient single-comic downloads - the comic has already been validated and filtered by
      * ComicBackfillService.
      */
-    @Bean @Qualifier("backfillTaskProcessor")
+    @Bean
+    @Qualifier("backfillTaskProcessor")
     public ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor() {
         return task -> {
             log.debug("Backfilling {} for date: {}", task.comic().getName(), task.date());
@@ -123,7 +135,8 @@ public class ComicBackfillJobConfig {
     /**
      * Writer that logs the backfill results
      */
-    @Bean @Qualifier("backfillTaskWriter")
+    @Bean
+    @Qualifier("backfillTaskWriter")
     public ItemWriter<ComicDownloadResult> backfillTaskWriter() {
         return chunk -> {
             int successCount = 0;

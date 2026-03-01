@@ -1,0 +1,63 @@
+# Authentication mutations and queries
+
+# Login mutation
+mutation Login($input: LoginInput!) {
+  login(input: $input) {
+    token
+    refreshToken
+    username
+    displayName
+  }
+}
+
+# Register mutation
+mutation Register($input: RegisterInput!) {
+  register(input: $input) {
+    token
+    refreshToken
+    username
+    displayName
+  }
+}
+
+# Refresh token mutation
+mutation RefreshToken($refreshToken: String!) {
+  refreshToken(refreshToken: $refreshToken) {
+    token
+    refreshToken
+    username
+    displayName
+  }
+}
+
+# Forgot password mutation
+mutation ForgotPassword($email: String!) {
+  forgotPassword(email: $email)
+}
+
+# Reset password mutation
+mutation ResetPassword($token: String!, $newPassword: String!) {
+  resetPassword(token: $token, newPassword: $newPassword) {
+    token
+    refreshToken
+    username
+    displayName
+  }
+}
+
+# Validate token query
+query ValidateToken {
+  validateToken
+}
+
+# Get current user query
+query GetMe {
+  me {
+    username
+    email
+    displayName
+    created
+    lastLogin
+    roles
+  }
+}
