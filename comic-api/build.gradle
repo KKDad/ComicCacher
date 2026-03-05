@@ -80,7 +80,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-graphql'
 
     // GraphQL extended scalars for Date, DateTime, JSON
-    implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
+    implementation 'com.graphql-java:graphql-java-extended-scalars:24.0'
 
     // Caffeine cache
     implementation "com.github.ben-manes.caffeine:caffeine:${rootProject.ext.caffeineVersion}"
