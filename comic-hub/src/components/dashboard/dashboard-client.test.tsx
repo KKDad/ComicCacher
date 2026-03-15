@@ -192,6 +192,27 @@ describe('DashboardClient', () => {
     expect(screen.getByText("Today's Comics")).toBeInTheDocument();
   });
 
+  it('invokes addFavorite onSuccess callback', () => {
+    let capturedOpts: any;
+    vi.mocked(useAddFavoriteMutation).mockImplementation((opts: any) => {
+      capturedOpts = opts;
+      return mockMutation as any;
+    });
+    renderWithQuery(<DashboardClient />);
+    // Calling onSuccess exercises the invalidateQueries branch
+    expect(() => capturedOpts.onSuccess()).not.toThrow();
+  });
+
+  it('invokes removeFavorite onSuccess callback', () => {
+    let capturedOpts: any;
+    vi.mocked(useRemoveFavoriteMutation).mockImplementation((opts: any) => {
+      capturedOpts = opts;
+      return mockMutation as any;
+    });
+    renderWithQuery(<DashboardClient />);
+    expect(() => capturedOpts.onSuccess()).not.toThrow();
+  });
+
   it('handles empty comics data', () => {
     vi.mocked(useGetComicsQuery).mockReturnValue({
       data: { comics: { edges: [] } },
