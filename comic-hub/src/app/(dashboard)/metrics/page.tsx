@@ -181,7 +181,7 @@ export default function MetricsPage() {
               </thead>
               <tbody>
                 {storageComics.map((comic) => (
-                  <tr key={comic.comicId} className="border-t border-border hover:bg-surface-hover">
+                  <tr key={comic.comicName} className="border-t border-border hover:bg-surface-hover">
                     <td className="px-6 py-3 text-ink">{comic.comicName}</td>
                     <td className="px-6 py-3 text-right text-ink-subtle">{comic.imageCount.toLocaleString()}</td>
                     <td className="px-6 py-3 text-right text-ink-subtle">{formatBytes(comic.totalBytes)}</td>

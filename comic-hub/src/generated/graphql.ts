@@ -283,7 +283,7 @@ export type ComicRetrievalSummary = {
 export type ComicStorageMetric = {
   __typename?: 'ComicStorageMetric';
   /** Comic ID. */
-  comicId: Scalars['Int']['output'];
+  comicId?: Maybe<Scalars['Int']['output']>;
   /** Comic name. */
   comicName: Scalars['String']['output'];
   /** Number of cached images for this comic. */
@@ -1233,7 +1233,7 @@ export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: 
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCombinedMetricsQuery = { __typename?: 'Query', combinedMetrics?: { __typename?: 'CombinedMetrics', lastUpdated?: any | null, storage?: { __typename?: 'StorageMetrics', totalBytes?: number | null, comicCount?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicStorageMetric', comicId: number, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown?: Array<{ __typename?: 'YearlyStorageMetric', year: number, bytes: number, imageCount: number }> | null }> | null } | null, access?: { __typename?: 'AccessMetrics', totalAccesses?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicAccessMetric', comicName: string, accessCount: number, averageAccessTimeMs?: number | null, lastAccessed?: any | null }> | null } | null } | null };
+export type GetCombinedMetricsQuery = { __typename?: 'Query', combinedMetrics?: { __typename?: 'CombinedMetrics', lastUpdated?: any | null, storage?: { __typename?: 'StorageMetrics', totalBytes?: number | null, comicCount?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicStorageMetric', comicId?: number | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown?: Array<{ __typename?: 'YearlyStorageMetric', year: number, bytes: number, imageCount: number }> | null }> | null } | null, access?: { __typename?: 'AccessMetrics', totalAccesses?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicAccessMetric', comicName: string, accessCount: number, averageAccessTimeMs?: number | null, lastAccessed?: any | null }> | null } | null } | null };
 
 
 
