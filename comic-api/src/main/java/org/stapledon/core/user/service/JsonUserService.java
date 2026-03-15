@@ -52,4 +52,18 @@ public class JsonUserService implements UserService {
     public boolean existsByUsername(String username) {
         return userConfigWriter.existsByUsername(username);
     }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        log.info("Finding user by email: {}", email);
+        return userConfigWriter.loadUsers().getUsers().values().stream()
+                .filter(user -> email.equalsIgnoreCase(user.getEmail()))
+                .findFirst();
+    }
+
+    @Override
+    public boolean deleteUser(String username) {
+        log.info("Deleting user: {}", username);
+        return userConfigWriter.deleteUser(username);
+    }
 }

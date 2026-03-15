@@ -60,4 +60,9 @@ public interface UserRepository {
      * Returns the created user if registration is successful, empty if username already exists.
      */
     Optional<User> registerUser(String username, String password, String email, String displayName);
+
+    /**
+     * Finds a user by their email address.
+     */
+    Optional<User> findByEmail(String email);
 }

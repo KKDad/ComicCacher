@@ -249,11 +249,11 @@ type Mutation {
     updatePassword(newPassword: String!): Boolean! @authenticated
 
     """
-    Delete the current user's account.
+    Delete a user account (admin only).
     This action is irreversible.
-    Requires authentication.
+    Requires admin role.
     """
-    deleteAccount: Boolean! @authenticated
+    deleteAccount(username: String!): Boolean! @hasRole(role: "ADMIN")
 
     # =========================================================================
     # Preferences (Authenticated)

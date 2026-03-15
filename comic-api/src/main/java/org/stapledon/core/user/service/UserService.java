@@ -50,4 +50,14 @@ public interface UserService {
     Optional<User> updatePassword(String username, String newPassword);
 
     boolean existsByUsername(String username);
+
+    /**
+     * Find a user by their email address.
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
+     * Delete a user by username.
+     */
+    boolean deleteUser(String username);
 }

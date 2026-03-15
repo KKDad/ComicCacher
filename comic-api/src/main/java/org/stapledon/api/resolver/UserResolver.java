@@ -101,6 +101,15 @@ public class UserResolver {
                 .isPresent();
     }
 
+    /**
+     * Delete a user account (admin only).
+     */
+    @MutationMapping
+    public boolean deleteAccount(@Argument String username) {
+        log.info("Deleting user account: {}", username);
+        return userService.deleteUser(username);
+    }
+
     // =========================================================================
     // Record Types for GraphQL Input
     // =========================================================================

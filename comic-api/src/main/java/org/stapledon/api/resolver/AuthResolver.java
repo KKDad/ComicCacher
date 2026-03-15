@@ -91,6 +91,27 @@ public class AuthResolver {
     }
 
     /**
+     * Request a password reset email.
+     * Always returns true to prevent email enumeration.
+     */
+    @MutationMapping
+    public boolean forgotPassword(@Argument String email) {
+        log.info("GraphQL: Password reset requested for email: {}", email);
+        authService.forgotPassword(email);
+        return true;
+    }
+
+    /**
+     * Reset password using a token from the password reset email.
+     */
+    @MutationMapping
+    public AuthResponse resetPassword(@Argument String token, @Argument String newPassword) {
+        log.info("GraphQL: Password reset with token");
+        return authService.resetPassword(token, newPassword)
+                .orElseThrow(() -> new AuthenticationException("Password reset failed"));
+    }
+
+    /**
      * Input record for user registration.
      */
     public record RegisterInput(String username, String password, String email, String displayName) {

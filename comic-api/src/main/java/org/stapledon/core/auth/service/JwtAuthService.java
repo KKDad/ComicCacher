@@ -8,6 +8,7 @@ import org.stapledon.api.dto.auth.AuthResponse;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.core.auth.model.AuthenticationException;
+import org.stapledon.core.mail.service.MailService;
 import org.stapledon.core.user.service.UserService;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
@@ -26,6 +27,7 @@ public class JwtAuthService implements AuthService {
     private final UserService userService;
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtUserDetailsService userDetailsService;
+    private final MailService mailService;
 
     @Override
     public Optional<AuthResponse> register(UserRegistrationDto registrationDto) {
@@ -129,5 +131,47 @@ public class JwtAuthService implements AuthService {
             log.error("Token validation error: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+        log.info("Password reset requested for email: {}", email);
+
+        // Always return silently to prevent email enumeration
+        Optional<User> userOpt = userService.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.debug("No user found for email: {}", email);
+            return;
+        }
+
+        User user = userOpt.get();
+        String resetToken = jwtTokenUtil.generatePasswordResetToken(user.getUsername());
+        mailService.sendPasswordResetEmail(email, resetToken);
+    }
+
+    @Override
+    public Optional<AuthResponse> resetPassword(String token, String newPassword) {
+        log.info("Password reset attempt with token");
+
+        Optional<String> usernameOpt = jwtTokenUtil.validatePasswordResetToken(token);
+        if (usernameOpt.isEmpty()) {
+            throw new AuthenticationException("Invalid or expired password reset token");
+        }
+
+        String username = usernameOpt.get();
+        Optional<User> userOpt = userService.updatePassword(username, newPassword);
+        if (userOpt.isEmpty()) {
+            throw new AuthenticationException("Failed to reset password");
+        }
+
+        User user = userOpt.get();
+        String accessToken = jwtTokenUtil.generateToken(user);
+        String refreshToken = jwtTokenUtil.generateRefreshToken(user);
+
+        return Optional.of(new AuthResponse(
+                accessToken,
+                refreshToken,
+                user.getUsername(),
+                user.getDisplayName()));
     }
 }

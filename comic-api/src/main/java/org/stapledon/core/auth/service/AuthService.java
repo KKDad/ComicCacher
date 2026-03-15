@@ -39,4 +39,15 @@ public interface AuthService {
      * @return true if token is valid, false otherwise
      */
     boolean validateToken(String token);
+
+    /**
+     * Initiate a password reset by sending a reset email.
+     * Always succeeds silently to prevent email enumeration.
+     */
+    void forgotPassword(String email);
+
+    /**
+     * Reset a user's password using a password-reset token.
+     */
+    Optional<AuthResponse> resetPassword(String token, String newPassword);
 }

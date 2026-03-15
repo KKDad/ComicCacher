@@ -18,6 +18,7 @@ import org.stapledon.api.dto.auth.AuthRequest;
 import org.stapledon.api.dto.auth.AuthResponse;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.core.mail.service.MailService;
 import org.stapledon.core.user.service.UserService;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
@@ -42,13 +43,16 @@ class JwtAuthServiceTest {
     private JwtUserDetailsService userDetailsService;
 
     @Mock
+    private MailService mailService;
+
+    @Mock
     private UserDetails userDetails;
 
     private JwtAuthService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new JwtAuthService(userService, jwtTokenUtil, userDetailsService);
+        authService = new JwtAuthService(userService, jwtTokenUtil, userDetailsService, mailService);
     }
 
     @Test

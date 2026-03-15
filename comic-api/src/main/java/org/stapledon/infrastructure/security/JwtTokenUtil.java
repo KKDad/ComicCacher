@@ -144,6 +144,52 @@ public class JwtTokenUtil {
         return claimsResolver.apply(claims);
     }
 
+    private static final String PURPOSE_CLAIM = "purpose";
+    private static final String PASSWORD_RESET_PURPOSE = "password_reset";
+    private static final long PASSWORD_RESET_EXPIRATION_MS = 15 * 60 * 1000L; // 15 minutes
+
+    /**
+     * Generate a short-lived password reset token.
+     */
+    public String generatePasswordResetToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(PURPOSE_CLAIM, PASSWORD_RESET_PURPOSE);
+
+        Instant now = Instant.now();
+        Instant expiration = now.plusMillis(PASSWORD_RESET_EXPIRATION_MS);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(username)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    /**
+     * Validate a password reset token and extract the username.
+     * Returns empty if the token is invalid, expired, or not a password reset token.
+     */
+    public java.util.Optional<String> validatePasswordResetToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            String purpose = claims.get(PURPOSE_CLAIM, String.class);
+            if (!PASSWORD_RESET_PURPOSE.equals(purpose)) {
+                log.warn("Token is not a password reset token");
+                return java.util.Optional.empty();
+            }
+            if (isTokenExpired(token)) {
+                log.warn("Password reset token has expired");
+                return java.util.Optional.empty();
+            }
+            return java.util.Optional.ofNullable(claims.getSubject());
+        } catch (Exception e) {
+            log.error("Invalid password reset token: {}", e.getMessage());
+            return java.util.Optional.empty();
+        }
+    }
+
     /**
      * Check if token is expired
      *
