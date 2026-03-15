@@ -42,7 +42,7 @@ export function Header({ showMenuButton = false }: HeaderProps) {
     : 'U';
 
   return (
-    <header className="sticky top-0 z-sticky h-[var(--header-height)] bg-surface border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-sticky h-[var(--header-height)] bg-surface border-b border-border">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
         {/* Left section */}
         <div className="flex items-center gap-4 flex-1">

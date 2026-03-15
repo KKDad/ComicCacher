@@ -2,20 +2,18 @@ package org.stapledon.api.resolver;
 
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
-import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.service.MetricsService;
 
-import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * GraphQL resolver for Metrics operations.
- * Provides queries for storage, access, and combined metrics.
+ * GraphQL resolver for Metrics queries and mutations.
+ * Schema mappings for individual types are in dedicated type resolver classes.
  */
 @Slf4j
 @Controller
@@ -53,19 +51,6 @@ public class MetricsResolver {
     public CombinedMetricsData combinedMetrics() {
         log.debug("Getting combined metrics");
         return metricsService.getCombinedMetrics();
-    }
-
-    // =========================================================================
-    // Schema Mappings - Type Conversions
-    // =========================================================================
-
-    /**
-     * Return lastUpdated as OffsetDateTime for GraphQL DateTime scalar.
-     * DTOs now use OffsetDateTime directly.
-     */
-    @SchemaMapping(typeName = "CombinedMetrics", field = "lastUpdated")
-    public OffsetDateTime combinedMetricsLastUpdated(CombinedMetricsData data) {
-        return data.getLastUpdated();
     }
 
     // =========================================================================

@@ -1,43 +1,29 @@
 package org.stapledon.metrics.collector;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.stapledon.common.dto.ComicIdentifier;
-import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 
-import com.google.common.base.Stopwatch;
-import java.io.File;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Collector for access metrics and comic cache operations. This class delegates
- * storage operations to ComicStorageFacade while tracking access patterns for
- * metrics and performance
- * monitoring.
+ * Collector for access metrics. Tracks comic access patterns for metrics and
+ * performance monitoring. Access is recorded via {@link #trackAccess} and
+ * persisted to disk after a configurable number of accesses.
  *
- * Note: This class is configured as a @Bean in CacheConfiguration, not
+ * Note: This class is configured as a @Bean in MetricsConfiguration, not
  * as @Component
  */
 @Slf4j
 @ToString
 public class AccessMetricsCollector {
-    private static final int WARNING_TIME_MS = 100;
-    public static final String COMBINE_PATH = "%s/%s";
-    private final String cacheHome;
-    private final ComicStorageFacade storageFacade;
     private final AccessMetricsRepository accessMetricsRepository;
 
     // Access tracking metrics (in-memory for performance)
@@ -52,20 +38,13 @@ public class AccessMetricsCollector {
     private final int persistThreshold;
 
     /**
-     * Primary constructor with StorageFacade and AccessMetricsRepository
-     * dependencies
+     * Primary constructor with AccessMetricsRepository dependency.
      *
-     * @param cacheHome               Cache directory location
-     * @param storageFacade           Facade for comic storage operations
      * @param accessMetricsRepository Repository for persisting access metrics
-     * @param persistThreshold        Number of accesses before persisting (default
-     *                                50)
+     * @param persistThreshold        Number of accesses before persisting (default 50)
      */
-    public AccessMetricsCollector(@Qualifier("cacheLocation") String cacheHome, ComicStorageFacade storageFacade,
-            AccessMetricsRepository accessMetricsRepository,
+    public AccessMetricsCollector(AccessMetricsRepository accessMetricsRepository,
             @org.springframework.beans.factory.annotation.Value("${comics.metrics.persist-threshold:50}") int persistThreshold) {
-        this.cacheHome = Objects.requireNonNull(cacheHome, "cacheHome must be specified");
-        this.storageFacade = Objects.requireNonNull(storageFacade, "storageFacade must be specified");
         this.accessMetricsRepository = Objects.requireNonNull(accessMetricsRepository,
                 "accessMetricsRepository must be specified");
         this.persistThreshold = persistThreshold;
@@ -85,7 +64,7 @@ public class AccessMetricsCollector {
      */
     @jakarta.annotation.PreDestroy
     public void shutdown() {
-        log.info("Shutting down CacheUtils, persisting access metrics");
+        log.info("Shutting down AccessMetricsCollector, persisting access metrics");
         persistAccessMetrics();
     }
 
@@ -202,93 +181,5 @@ public class AccessMetricsCollector {
             result.put(comic, totalCount.get() > 0 ? (double) hits / totalCount.get() : 0.0);
         });
         return result;
-    }
-
-    public File findOldest(ComicItem comic) {
-        var timer = Stopwatch.createStarted();
-        File result = null;
-
-        // Use the facade
-        Optional<LocalDate> oldestDate = storageFacade.getOldestDateWithComic(ComicIdentifier.from(comic));
-        if (oldestDate.isPresent()) {
-            LocalDate date = oldestDate.get();
-            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            result = new File(
-                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-        }
-
-        timer.stop();
-        trackAccess(comic.getName(), result != null, timer.elapsed(TimeUnit.MILLISECONDS));
-        return result;
-    }
-
-    public File findNewest(ComicItem comic) {
-        var timer = Stopwatch.createStarted();
-        File result = null;
-
-        // Use the facade
-        Optional<LocalDate> newestDate = storageFacade.getNewestDateWithComic(ComicIdentifier.from(comic));
-        if (newestDate.isPresent()) {
-            LocalDate date = newestDate.get();
-            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            result = new File(
-                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-        }
-
-        timer.stop();
-        trackAccess(comic.getName(), result != null, timer.elapsed(TimeUnit.MILLISECONDS));
-        return result;
-    }
-
-    public File findNext(ComicItem comic, LocalDate from) {
-        var timer = Stopwatch.createStarted();
-        File resultFile = null;
-        boolean found = false;
-
-        // Use the facade
-        Optional<LocalDate> nextDate = storageFacade.getNextDateWithComic(ComicIdentifier.from(comic), from);
-        if (nextDate.isPresent()) {
-            LocalDate date = nextDate.get();
-            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            resultFile = new File(
-                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-            found = true;
-        }
-
-        timer.stop();
-        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled()) {
-            log.info(String.format("findNext took: %s for %s", timer, comic.getName()));
-        }
-
-        trackAccess(comic.getName(), found, timer.elapsed(TimeUnit.MILLISECONDS));
-        return resultFile;
-    }
-
-    public File findPrevious(ComicItem comic, LocalDate from) {
-        var timer = Stopwatch.createStarted();
-        File resultFile = null;
-        boolean found = false;
-
-        // Use the facade
-        Optional<LocalDate> prevDate = storageFacade.getPreviousDateWithComic(ComicIdentifier.from(comic), from);
-        if (prevDate.isPresent()) {
-            LocalDate date = prevDate.get();
-            String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
-            String datePath = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            resultFile = new File(
-                    String.format("%s/%s/%s/%s.png", cacheHome, comic.getName().replace(" ", ""), yearPath, datePath));
-            found = true;
-        }
-
-        timer.stop();
-        if (timer.elapsed(TimeUnit.MILLISECONDS) > WARNING_TIME_MS && log.isInfoEnabled()) {
-            log.info(String.format("findPrevious took: %s for %s", timer, comic.getName()));
-        }
-
-        trackAccess(comic.getName(), found, timer.elapsed(TimeUnit.MILLISECONDS));
-        return resultFile;
     }
 }

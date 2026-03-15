@@ -32,7 +32,7 @@ describe('getAuthenticatedClient', () => {
   });
 
   it('creates client with Bearer header when JWT exists', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'test-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     const client = await getAuthenticatedClient() as any;
     expect(client.options.headers).toEqual({ Authorization: 'Bearer test-jwt' });
   });

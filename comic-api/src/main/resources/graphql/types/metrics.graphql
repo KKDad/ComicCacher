@@ -36,7 +36,7 @@ type ComicStorageMetric {
     """
     Comic ID.
     """
-    comicId: Int!
+    comicId: Int
     
     """
     Comic name.

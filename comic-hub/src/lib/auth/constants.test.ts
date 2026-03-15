@@ -2,11 +2,11 @@ import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE, PUBLIC_PATHS } from './cons
 
 describe('auth constants', () => {
   it('exports JWT cookie name', () => {
-    expect(JWT_COOKIE).toBe('comics-hub-jwt');
+    expect(JWT_COOKIE).toBe('comic-hub-jwt');
   });
 
   it('exports refresh cookie name', () => {
-    expect(REFRESH_COOKIE).toBe('comics-hub-refresh');
+    expect(REFRESH_COOKIE).toBe('comic-hub-refresh');
   });
 
   it('sets cookie max age to 7 days', () => {

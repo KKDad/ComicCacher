@@ -89,8 +89,8 @@ describe('POST /api/register', () => {
     const request = createRequest(validInput);
     const response = await POST(request);
     expect(response.status).toBe(200);
-    expect(response.cookies.get('comics-hub-jwt')?.value).toBe('jwt-token');
-    expect(response.cookies.get('comics-hub-refresh')?.value).toBe('refresh-token');
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('jwt-token');
+    expect(response.cookies.get('comic-hub-refresh')?.value).toBe('refresh-token');
   });
 
   it('returns user data on success', async () => {

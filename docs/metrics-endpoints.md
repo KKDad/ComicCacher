@@ -25,19 +25,19 @@ Retrieve storage metrics for all cached comics, including disk usage and image c
 ```graphql
 query GetStorageMetrics {
   storageMetrics {
-    totalComics
-    totalImages
-    totalStorageBytes
-    averageImageSize
-    comicMetrics {
-      comicId
+    totalBytes
+    comicCount
+    comics {
+      comicName
+      totalBytes
       imageCount
-      storageBytes
-      oldestImage
-      newestImage
-      averageImageSize
-      storageByYear
+      yearlyBreakdown {
+        year
+        bytes
+        imageCount
+      }
     }
+    lastUpdated
   }
 }
 ```
@@ -47,25 +47,20 @@ query GetStorageMetrics {
 {
   "data": {
     "storageMetrics": {
-      "totalComics": 10,
-      "totalImages": 5000,
-      "totalStorageBytes": 125000000,
-      "averageImageSize": 25000,
-      "comicMetrics": [
+      "totalBytes": 125000000,
+      "comicCount": 10,
+      "comics": [
         {
-          "comicId": 1,
+          "comicName": "Garfield",
+          "totalBytes": 40000000,
           "imageCount": 1500,
-          "storageBytes": 40000000,
-          "oldestImage": "1989-04-16",
-          "newestImage": "2023-05-01",
-          "averageImageSize": 26666,
-          "storageByYear": {
-            "1989": 5000000,
-            "1990": 8000000,
-            "2023": 2000000
-          }
+          "yearlyBreakdown": [
+            { "year": 1989, "bytes": 5000000, "imageCount": 0 },
+            { "year": 2023, "bytes": 2000000, "imageCount": 0 }
+          ]
         }
-      ]
+      ],
+      "lastUpdated": "2024-01-15T10:30:00Z"
     }
   }
 }
@@ -80,14 +75,14 @@ Retrieve metrics about how comics are being accessed, including frequency and pa
 ```graphql
 query GetAccessMetrics {
   accessMetrics {
-    comicMetrics {
-      comicId
+    totalAccesses
+    comics {
       comicName
       accessCount
-      lastAccess
-      averageAccessTime
-      hitRatio
+      averageAccessTimeMs
+      lastAccessed
     }
+    lastUpdated
   }
 }
 ```
@@ -97,24 +92,22 @@ query GetAccessMetrics {
 {
   "data": {
     "accessMetrics": {
-      "comicMetrics": [
+      "totalAccesses": 7700,
+      "comics": [
         {
-          "comicId": 1,
           "comicName": "Dilbert",
           "accessCount": 2500,
-          "lastAccess": "2023-05-01T09:45:12Z",
-          "averageAccessTime": 45.7,
-          "hitRatio": 0.98
+          "averageAccessTimeMs": 45.7,
+          "lastAccessed": "2024-01-15T09:45:12Z"
         },
         {
-          "comicId": 2,
           "comicName": "Calvin and Hobbes",
           "accessCount": 5200,
-          "lastAccess": "2023-05-01T10:12:33Z",
-          "averageAccessTime": 38.2,
-          "hitRatio": 0.99
+          "averageAccessTimeMs": 38.2,
+          "lastAccessed": "2024-01-15T10:12:33Z"
         }
-      ]
+      ],
+      "lastUpdated": "2024-01-15T10:30:00Z"
     }
   }
 }
@@ -124,23 +117,30 @@ query GetAccessMetrics {
 
 ### Combined Metrics
 
-Retrieve comprehensive metrics combining both storage and access data for all comics.
+Retrieve comprehensive metrics combining both storage and access data.
 
 ```graphql
 query GetCombinedMetrics {
   combinedMetrics {
-    comicMetrics {
-      comicId
-      comicName
-      storageBytes
-      imageCount
-      averageImageSize
-      storageByYear
-      accessCount
-      lastAccess
-      averageAccessTime
-      hitRatio
+    storage {
+      totalBytes
+      comicCount
+      comics {
+        comicName
+        totalBytes
+        imageCount
+      }
     }
+    access {
+      totalAccesses
+      comics {
+        comicName
+        accessCount
+        averageAccessTimeMs
+        lastAccessed
+      }
+    }
+    lastUpdated
   }
 }
 ```
@@ -150,24 +150,29 @@ query GetCombinedMetrics {
 {
   "data": {
     "combinedMetrics": {
-      "comicMetrics": [
-        {
-          "comicId": 1,
-          "comicName": "Dilbert",
-          "storageBytes": 40000000,
-          "imageCount": 1500,
-          "averageImageSize": 26666,
-          "storageByYear": {
-            "1989": 5000000,
-            "1990": 8000000,
-            "2023": 2000000
-          },
-          "accessCount": 2500,
-          "lastAccess": "2023-05-01T09:45:12Z",
-          "averageAccessTime": 45.7,
-          "hitRatio": 0.98
-        }
-      ]
+      "storage": {
+        "totalBytes": 125000000,
+        "comicCount": 10,
+        "comics": [
+          {
+            "comicName": "Garfield",
+            "totalBytes": 40000000,
+            "imageCount": 1500
+          }
+        ]
+      },
+      "access": {
+        "totalAccesses": 7700,
+        "comics": [
+          {
+            "comicName": "Garfield",
+            "accessCount": 2500,
+            "averageAccessTimeMs": 45.7,
+            "lastAccessed": "2024-01-15T09:45:12Z"
+          }
+        ]
+      },
+      "lastUpdated": "2024-01-15T10:30:00Z"
     }
   }
 }
@@ -184,10 +189,9 @@ Force an update of storage metrics, useful after large changes to the cache.
 ```graphql
 mutation RefreshStorageMetrics {
   refreshStorageMetrics {
-    totalComics
-    totalImages
-    totalStorageBytes
-    averageImageSize
+    totalBytes
+    comicCount
+    lastUpdated
   }
 }
 ```
@@ -197,10 +201,9 @@ mutation RefreshStorageMetrics {
 {
   "data": {
     "refreshStorageMetrics": {
-      "totalComics": 10,
-      "totalImages": 5050,
-      "totalStorageBytes": 126000000,
-      "averageImageSize": 24950
+      "totalBytes": 126000000,
+      "comicCount": 10,
+      "lastUpdated": "2024-01-15T11:00:00Z"
     }
   }
 }
@@ -233,52 +236,54 @@ mutation RefreshAllMetrics {
 
 ### StorageMetrics
 
-| Field             | Type                    | Description                          |
-|-------------------|-------------------------|--------------------------------------|
-| totalComics       | Int!                    | Number of comics in the cache        |
-| totalImages       | Int!                    | Total number of comic images stored  |
-| totalStorageBytes | Float!                  | Total storage used (in bytes)        |
-| averageImageSize  | Float!                  | Average size per image (in bytes)    |
-| comicMetrics      | [ComicStorageMetric!]!  | Per-comic storage metrics            |
+| Field       | Type                   | Description                           |
+|-------------|------------------------|---------------------------------------|
+| totalBytes  | Float                  | Total storage used (in bytes)         |
+| comicCount  | Int                    | Number of comics being tracked        |
+| comics      | [ComicStorageMetric!]  | Per-comic storage breakdown           |
+| lastUpdated | DateTime               | Last time metrics were calculated     |
 
 ### ComicStorageMetric
 
-| Field            | Type    | Description                                      |
-|------------------|---------|--------------------------------------------------|
-| comicId          | Int!    | Numeric identifier for the comic                 |
-| imageCount       | Int!    | Number of images for this comic                  |
-| storageBytes     | Float!  | Total storage used for this comic (in bytes)     |
-| oldestImage      | Date    | Date of the oldest image (yyyy-MM-dd)            |
-| newestImage      | Date    | Date of the newest image (yyyy-MM-dd)            |
-| averageImageSize | Float!  | Average size per image for this comic (in bytes) |
-| storageByYear    | JSON    | Map of storage usage broken down by year         |
+| Field           | Type                    | Description                              |
+|-----------------|-------------------------|------------------------------------------|
+| comicName       | String!                 | Name of the comic                        |
+| totalBytes      | Float!                  | Total storage used for this comic        |
+| imageCount      | Int!                    | Number of cached images for this comic   |
+| yearlyBreakdown | [YearlyStorageMetric!]  | Storage broken down by year              |
+
+### YearlyStorageMetric
+
+| Field      | Type  | Description                          |
+|------------|-------|--------------------------------------|
+| year       | Int!  | Year                                 |
+| bytes      | Float!| Storage used in bytes for this year  |
+| imageCount | Int!  | Number of images for this year       |
 
 ### AccessMetrics
 
-| Field         | Type                    | Description               |
-|---------------|-------------------------|---------------------------|
-| comicMetrics  | [ComicAccessMetric!]!   | Per-comic access metrics  |
+| Field         | Type                   | Description                          |
+|---------------|------------------------|--------------------------------------|
+| totalAccesses | Int                    | Total number of access events        |
+| comics        | [ComicAccessMetric!]   | Per-comic access breakdown           |
+| lastUpdated   | DateTime               | Last time metrics were updated       |
 
 ### ComicAccessMetric
 
-| Field             | Type      | Description                                      |
-|-------------------|-----------|--------------------------------------------------|
-| comicId           | Int!      | Numeric identifier for the comic                 |
-| comicName         | String!   | Name of the comic                                |
-| accessCount       | Int!      | Total number of times images were accessed       |
-| lastAccess        | DateTime  | Timestamp of the most recent access              |
-| averageAccessTime | Float     | Average time in milliseconds to access images    |
-| hitRatio          | Float     | Ratio of cache hits to total access attempts     |
+| Field              | Type     | Description                                   |
+|--------------------|----------|-----------------------------------------------|
+| comicName          | String!  | Name of the comic                             |
+| accessCount        | Int!     | Total number of accesses for this comic       |
+| averageAccessTimeMs| Float    | Average access time in milliseconds           |
+| lastAccessed       | DateTime | Timestamp of the most recent access           |
 
 ### CombinedMetrics
 
-| Field         | Type                     | Description                            |
-|---------------|--------------------------|----------------------------------------|
-| comicMetrics  | [CombinedComicMetric!]!  | Combined storage and access metrics    |
-
-### CombinedComicMetric
-
-Combines all fields from both `ComicStorageMetric` and `ComicAccessMetric`.
+| Field       | Type           | Description                          |
+|-------------|----------------|--------------------------------------|
+| storage     | StorageMetrics | Storage metrics                      |
+| access      | AccessMetrics  | Access metrics                       |
+| lastUpdated | DateTime       | Last time combined metrics were calculated |
 
 ---
 

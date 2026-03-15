@@ -114,3 +114,36 @@ mutation UpdateLastRead($comicId: Int!, $date: Date!) {
     }
   }
 }
+
+# Query for combined storage and access metrics
+query GetCombinedMetrics {
+  combinedMetrics {
+    storage {
+      totalBytes
+      comicCount
+      comics {
+        comicId
+        comicName
+        totalBytes
+        imageCount
+        yearlyBreakdown {
+          year
+          bytes
+          imageCount
+        }
+      }
+      lastUpdated
+    }
+    access {
+      totalAccesses
+      comics {
+        comicName
+        accessCount
+        averageAccessTimeMs
+        lastAccessed
+      }
+      lastUpdated
+    }
+    lastUpdated
+  }
+}

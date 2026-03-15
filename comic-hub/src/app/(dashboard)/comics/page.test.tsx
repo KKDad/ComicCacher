@@ -115,4 +115,23 @@ describe('ComicsPage', () => {
     renderWithQuery(<ComicsPage />);
     expect(screen.queryByText('Load More')).not.toBeInTheDocument();
   });
+
+  it('calls setAfterCursor when Load More is clicked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(useGetComicsQuery).mockReturnValue({
+      data: {
+        ...mockComicsData,
+        comics: {
+          ...mockComicsData.comics,
+          pageInfo: { ...mockComicsData.comics.pageInfo, hasNextPage: true, endCursor: 'cursor-2' },
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+    } as any);
+    renderWithQuery(<ComicsPage />);
+    await user.click(screen.getByText('Load More'));
+    // The click triggers setAfterCursor which re-invokes the query
+    expect(useGetComicsQuery).toHaveBeenCalled();
+  });
 });

@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
@@ -77,11 +76,10 @@ public class MetricsConfiguration {
      */
     @Bean
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public AccessMetricsCollector accessMetricsCollector(@Qualifier("cacheLocation") String cacheLocation,
-            ComicStorageFacade storageFacade, AccessMetricsRepository accessMetricsRepository,
+    public AccessMetricsCollector accessMetricsCollector(AccessMetricsRepository accessMetricsRepository,
             @org.springframework.beans.factory.annotation.Value("${comics.metrics.persist-threshold:50}") int persistThreshold) {
         log.debug("Creating AccessMetricsCollector with persist threshold: {}", persistThreshold);
-        return new AccessMetricsCollector(cacheLocation, storageFacade, accessMetricsRepository, persistThreshold);
+        return new AccessMetricsCollector(accessMetricsRepository, persistThreshold);
     }
 
     /**

@@ -283,7 +283,7 @@ export type ComicRetrievalSummary = {
 export type ComicStorageMetric = {
   __typename?: 'ComicStorageMetric';
   /** Comic ID. */
-  comicId: Scalars['Int']['output'];
+  comicId?: Maybe<Scalars['Int']['output']>;
   /** Comic name. */
   comicName: Scalars['String']['output'];
   /** Number of cached images for this comic. */
@@ -1208,6 +1208,33 @@ export type SearchComicsQueryVariables = Exact<{
 
 export type SearchComicsQuery = { __typename?: 'Query', search: { __typename?: 'SearchResults', comics: Array<{ __typename?: 'Comic', id: number, name: string, description?: string | null }> } };
 
+export type AddFavoriteMutationVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+}>;
+
+
+export type AddFavoriteMutation = { __typename?: 'Mutation', addFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
+
+export type RemoveFavoriteMutationVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+}>;
+
+
+export type RemoveFavoriteMutation = { __typename?: 'Mutation', removeFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
+
+export type UpdateLastReadMutationVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+  date: Scalars['Date']['input'];
+}>;
+
+
+export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: { __typename?: 'UserPreference', lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } };
+
+export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetCombinedMetricsQuery = { __typename?: 'Query', combinedMetrics?: { __typename?: 'CombinedMetrics', lastUpdated?: any | null, storage?: { __typename?: 'StorageMetrics', totalBytes?: number | null, comicCount?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicStorageMetric', comicId?: number | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown?: Array<{ __typename?: 'YearlyStorageMetric', year: number, bytes: number, imageCount: number }> | null }> | null } | null, access?: { __typename?: 'AccessMetrics', totalAccesses?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicAccessMetric', comicName: string, accessCount: number, averageAccessTimeMs?: number | null, lastAccessed?: any | null }> | null } | null } | null };
+
 
 
 export const LoginDocument = `
@@ -1748,28 +1775,6 @@ useInfiniteSearchComicsQuery.getKey = (variables: SearchComicsQueryVariables) =>
 
 useSearchComicsQuery.fetcher = (variables: SearchComicsQueryVariables, options?: RequestInit['headers']) => fetcher<SearchComicsQuery, SearchComicsQueryVariables>(SearchComicsDocument, variables, options);
 
-export type AddFavoriteMutationVariables = Exact<{
-  comicId: Scalars['Int']['input'];
-}>;
-
-
-export type AddFavoriteMutation = { __typename?: 'Mutation', addFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
-
-export type RemoveFavoriteMutationVariables = Exact<{
-  comicId: Scalars['Int']['input'];
-}>;
-
-
-export type RemoveFavoriteMutation = { __typename?: 'Mutation', removeFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
-
-export type UpdateLastReadMutationVariables = Exact<{
-  comicId: Scalars['Int']['input'];
-  date: Scalars['Date']['input'];
-}>;
-
-
-export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: { __typename?: 'UserPreference', lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } };
-
 export const AddFavoriteDocument = `
     mutation AddFavorite($comicId: Int!) {
   addFavorite(comicId: $comicId) {
@@ -1782,7 +1787,7 @@ export const useAddFavoriteMutation = <
       TError = unknown,
       TContext = unknown
     >(options?: UseMutationOptions<AddFavoriteMutation, TError, AddFavoriteMutationVariables, TContext>) => {
-
+    
     return useMutation<AddFavoriteMutation, TError, AddFavoriteMutationVariables, TContext>(
       {
     mutationKey: ['AddFavorite'],
@@ -1806,7 +1811,7 @@ export const useRemoveFavoriteMutation = <
       TError = unknown,
       TContext = unknown
     >(options?: UseMutationOptions<RemoveFavoriteMutation, TError, RemoveFavoriteMutationVariables, TContext>) => {
-
+    
     return useMutation<RemoveFavoriteMutation, TError, RemoveFavoriteMutationVariables, TContext>(
       {
     mutationKey: ['RemoveFavorite'],
@@ -1833,7 +1838,7 @@ export const useUpdateLastReadMutation = <
       TError = unknown,
       TContext = unknown
     >(options?: UseMutationOptions<UpdateLastReadMutation, TError, UpdateLastReadMutationVariables, TContext>) => {
-
+    
     return useMutation<UpdateLastReadMutation, TError, UpdateLastReadMutationVariables, TContext>(
       {
     mutationKey: ['UpdateLastRead'],
@@ -1844,3 +1849,79 @@ export const useUpdateLastReadMutation = <
 
 
 useUpdateLastReadMutation.fetcher = (variables: UpdateLastReadMutationVariables, options?: RequestInit['headers']) => fetcher<UpdateLastReadMutation, UpdateLastReadMutationVariables>(UpdateLastReadDocument, variables, options);
+
+export const GetCombinedMetricsDocument = `
+    query GetCombinedMetrics {
+  combinedMetrics {
+    storage {
+      totalBytes
+      comicCount
+      comics {
+        comicId
+        comicName
+        totalBytes
+        imageCount
+        yearlyBreakdown {
+          year
+          bytes
+          imageCount
+        }
+      }
+      lastUpdated
+    }
+    access {
+      totalAccesses
+      comics {
+        comicName
+        accessCount
+        averageAccessTimeMs
+        lastAccessed
+      }
+      lastUpdated
+    }
+    lastUpdated
+  }
+}
+    `;
+
+export const useGetCombinedMetricsQuery = <
+      TData = GetCombinedMetricsQuery,
+      TError = unknown
+    >(
+      variables?: GetCombinedMetricsQueryVariables,
+      options?: Omit<UseQueryOptions<GetCombinedMetricsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetCombinedMetricsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetCombinedMetricsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetCombinedMetrics'] : ['GetCombinedMetrics', variables],
+    queryFn: fetcher<GetCombinedMetricsQuery, GetCombinedMetricsQueryVariables>(GetCombinedMetricsDocument, variables),
+    ...options
+  }
+    )};
+
+useGetCombinedMetricsQuery.getKey = (variables?: GetCombinedMetricsQueryVariables) => variables === undefined ? ['GetCombinedMetrics'] : ['GetCombinedMetrics', variables];
+
+export const useInfiniteGetCombinedMetricsQuery = <
+      TData = InfiniteData<GetCombinedMetricsQuery>,
+      TError = unknown
+    >(
+      variables: GetCombinedMetricsQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetCombinedMetricsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetCombinedMetricsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetCombinedMetricsQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetCombinedMetrics.infinite'] : ['GetCombinedMetrics.infinite', variables],
+      queryFn: (metaData) => fetcher<GetCombinedMetricsQuery, GetCombinedMetricsQueryVariables>(GetCombinedMetricsDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetCombinedMetricsQuery.getKey = (variables?: GetCombinedMetricsQueryVariables) => variables === undefined ? ['GetCombinedMetrics.infinite'] : ['GetCombinedMetrics.infinite', variables];
+
+
+useGetCombinedMetricsQuery.fetcher = (variables?: GetCombinedMetricsQueryVariables, options?: RequestInit['headers']) => fetcher<GetCombinedMetricsQuery, GetCombinedMetricsQueryVariables>(GetCombinedMetricsDocument, variables, options);
