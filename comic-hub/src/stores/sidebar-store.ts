@@ -21,7 +21,7 @@ export const useSidebarStore = create<SidebarState>()(
       setCollapsed: (collapsed) => set({ isCollapsed: collapsed }),
     }),
     {
-      name: 'comics-hub-sidebar',
+      name: 'comic-hub-sidebar',
     }
   )
 );

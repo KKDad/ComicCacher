@@ -43,7 +43,7 @@ describe('getSession', () => {
   });
 
   it('fetches user with Bearer token', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'test-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     await getSession();
     expect(global.fetch).toHaveBeenCalled();
     const [, fetchOptions] = vi.mocked(global.fetch).mock.calls[0];
@@ -51,20 +51,20 @@ describe('getSession', () => {
   });
 
   it('returns user on success', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'test-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     const result = await getSession();
     expect(result).toEqual(mockUser);
   });
 
   it('returns null on non-ok response', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'test-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     vi.mocked(global.fetch).mockResolvedValue(new Response('Error', { status: 500 }));
     const result = await getSession();
     expect(result).toBeNull();
   });
 
   it('returns null on fetch error', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'test-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'));
     const result = await getSession();
     expect(result).toBeNull();

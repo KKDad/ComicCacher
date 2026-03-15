@@ -30,7 +30,7 @@ export const useThemeStore = create<ThemeState>()(
       },
     }),
     {
-      name: 'comics-hub-theme',
+      name: 'comic-hub-theme',
     }
   )
 );

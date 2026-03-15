@@ -51,7 +51,7 @@ describe('POST /api/graphql', () => {
   });
 
   it('forwards request with Bearer token', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'test-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     const { POST } = await importRoute();
     await POST(createRequest());
     expect(global.fetch).toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe('POST /api/graphql', () => {
   });
 
   it('returns backend response on success', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'test-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     const { POST } = await importRoute();
     const response = await POST(createRequest());
     const json = await response.json();
@@ -69,8 +69,8 @@ describe('POST /api/graphql', () => {
 
   it('attempts token refresh on 401 from backend', async () => {
     mockCookieStore({
-      'comics-hub-jwt': 'expired-jwt',
-      'comics-hub-refresh': 'valid-refresh',
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'valid-refresh',
     });
 
     vi.mocked(global.fetch)
@@ -91,12 +91,12 @@ describe('POST /api/graphql', () => {
     const response = await POST(createRequest());
     const json = await response.json();
     expect(json).toEqual({ data: { comics: [{ id: 1 }] } });
-    expect(response.cookies.get('comics-hub-jwt')?.value).toBe('new-jwt');
-    expect(response.cookies.get('comics-hub-refresh')?.value).toBe('new-refresh');
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('new-jwt');
+    expect(response.cookies.get('comic-hub-refresh')?.value).toBe('new-refresh');
   });
 
   it('returns 401 when no refresh token available', async () => {
-    mockCookieStore({ 'comics-hub-jwt': 'expired-jwt' });
+    mockCookieStore({ 'comic-hub-jwt': 'expired-jwt' });
 
     vi.mocked(global.fetch).mockResolvedValueOnce(
       new Response('Unauthorized', { status: 401 }),
@@ -109,8 +109,8 @@ describe('POST /api/graphql', () => {
 
   it('returns 401 when refresh fails', async () => {
     mockCookieStore({
-      'comics-hub-jwt': 'expired-jwt',
-      'comics-hub-refresh': 'invalid-refresh',
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'invalid-refresh',
     });
 
     vi.mocked(global.fetch)
@@ -124,8 +124,8 @@ describe('POST /api/graphql', () => {
 
   it('returns 401 when refresh returns no token', async () => {
     mockCookieStore({
-      'comics-hub-jwt': 'expired-jwt',
-      'comics-hub-refresh': 'valid-refresh',
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'valid-refresh',
     });
 
     vi.mocked(global.fetch)

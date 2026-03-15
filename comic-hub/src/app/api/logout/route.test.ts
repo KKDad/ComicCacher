@@ -9,13 +9,13 @@ describe('POST /api/logout', () => {
 
   it('clears JWT cookie with maxAge 0', async () => {
     const response = await POST();
-    const jwtCookie = response.cookies.get('comics-hub-jwt');
+    const jwtCookie = response.cookies.get('comic-hub-jwt');
     expect(jwtCookie?.value).toBe('');
   });
 
   it('clears refresh cookie with maxAge 0', async () => {
     const response = await POST();
-    const refreshCookie = response.cookies.get('comics-hub-refresh');
+    const refreshCookie = response.cookies.get('comic-hub-refresh');
     expect(refreshCookie?.value).toBe('');
   });
 });

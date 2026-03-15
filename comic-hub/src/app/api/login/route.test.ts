@@ -76,8 +76,8 @@ describe('POST /api/login', () => {
     const request = createRequest({ username: 'testuser', password: 'Password1!' });
     const response = await POST(request);
     expect(response.status).toBe(200);
-    expect(response.cookies.get('comics-hub-jwt')?.value).toBe('jwt-token');
-    expect(response.cookies.get('comics-hub-refresh')?.value).toBe('refresh-token');
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('jwt-token');
+    expect(response.cookies.get('comic-hub-refresh')?.value).toBe('refresh-token');
   });
 
   it('returns user data on success', async () => {
@@ -91,6 +91,6 @@ describe('POST /api/login', () => {
     const request = createRequest({ username: 'testuser', password: 'Password1!', rememberMe: true });
     const response = await POST(request);
     // Cookie is set — we can verify the value exists
-    expect(response.cookies.get('comics-hub-jwt')?.value).toBe('jwt-token');
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('jwt-token');
   });
 });
