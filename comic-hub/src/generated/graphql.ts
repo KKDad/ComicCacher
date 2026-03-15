@@ -1235,6 +1235,25 @@ export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetCombinedMetricsQuery = { __typename?: 'Query', combinedMetrics?: { __typename?: 'CombinedMetrics', lastUpdated?: any | null, storage?: { __typename?: 'StorageMetrics', totalBytes?: number | null, comicCount?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicStorageMetric', comicId?: number | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown?: Array<{ __typename?: 'YearlyStorageMetric', year: number, bytes: number, imageCount: number }> | null }> | null } | null, access?: { __typename?: 'AccessMetrics', totalAccesses?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicAccessMetric', comicName: string, accessCount: number, averageAccessTimeMs?: number | null, lastAccessed?: any | null }> | null } | null } | null };
 
+export type GetRetrievalSummaryQueryVariables = Exact<{
+  fromDate?: InputMaybe<Scalars['Date']['input']>;
+  toDate?: InputMaybe<Scalars['Date']['input']>;
+}>;
+
+
+export type GetRetrievalSummaryQuery = { __typename?: 'Query', retrievalSummary: { __typename?: 'RetrievalSummary', totalAttempts: number, successCount: number, failureCount: number, skippedCount: number, successRate: number, averageDurationMs?: number | null, byStatus?: Array<{ __typename?: 'StatusCount', status: RetrievalStatusEnum, count: number }> | null, byComic?: Array<{ __typename?: 'ComicRetrievalSummary', comicName: string, totalAttempts: number, successCount: number, failureCount: number }> | null } };
+
+export type GetRetrievalRecordsQueryVariables = Exact<{
+  comicName?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<RetrievalStatusEnum>;
+  fromDate?: InputMaybe<Scalars['Date']['input']>;
+  toDate?: InputMaybe<Scalars['Date']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetRetrievalRecordsQuery = { __typename?: 'Query', retrievalRecords: Array<{ __typename?: 'RetrievalRecord', id: string, comicName: string, comicDate: any, source?: string | null, status: RetrievalStatusEnum, retrievalDurationMs?: number | null, imageSize?: number | null, httpStatusCode?: number | null, errorMessage?: string | null }> };
+
 
 
 export const LoginDocument = `
@@ -1925,3 +1944,132 @@ useInfiniteGetCombinedMetricsQuery.getKey = (variables?: GetCombinedMetricsQuery
 
 
 useGetCombinedMetricsQuery.fetcher = (variables?: GetCombinedMetricsQueryVariables, options?: RequestInit['headers']) => fetcher<GetCombinedMetricsQuery, GetCombinedMetricsQueryVariables>(GetCombinedMetricsDocument, variables, options);
+
+export const GetRetrievalSummaryDocument = `
+    query GetRetrievalSummary($fromDate: Date, $toDate: Date) {
+  retrievalSummary(fromDate: $fromDate, toDate: $toDate) {
+    totalAttempts
+    successCount
+    failureCount
+    skippedCount
+    successRate
+    averageDurationMs
+    byStatus {
+      status
+      count
+    }
+    byComic {
+      comicName
+      totalAttempts
+      successCount
+      failureCount
+    }
+  }
+}
+    `;
+
+export const useGetRetrievalSummaryQuery = <
+      TData = GetRetrievalSummaryQuery,
+      TError = unknown
+    >(
+      variables?: GetRetrievalSummaryQueryVariables,
+      options?: Omit<UseQueryOptions<GetRetrievalSummaryQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetRetrievalSummaryQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetRetrievalSummaryQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetRetrievalSummary'] : ['GetRetrievalSummary', variables],
+    queryFn: fetcher<GetRetrievalSummaryQuery, GetRetrievalSummaryQueryVariables>(GetRetrievalSummaryDocument, variables),
+    ...options
+  }
+    )};
+
+useGetRetrievalSummaryQuery.getKey = (variables?: GetRetrievalSummaryQueryVariables) => variables === undefined ? ['GetRetrievalSummary'] : ['GetRetrievalSummary', variables];
+
+export const useInfiniteGetRetrievalSummaryQuery = <
+      TData = InfiniteData<GetRetrievalSummaryQuery>,
+      TError = unknown
+    >(
+      variables: GetRetrievalSummaryQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetRetrievalSummaryQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetRetrievalSummaryQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetRetrievalSummaryQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetRetrievalSummary.infinite'] : ['GetRetrievalSummary.infinite', variables],
+      queryFn: (metaData) => fetcher<GetRetrievalSummaryQuery, GetRetrievalSummaryQueryVariables>(GetRetrievalSummaryDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetRetrievalSummaryQuery.getKey = (variables?: GetRetrievalSummaryQueryVariables) => variables === undefined ? ['GetRetrievalSummary.infinite'] : ['GetRetrievalSummary.infinite', variables];
+
+
+useGetRetrievalSummaryQuery.fetcher = (variables?: GetRetrievalSummaryQueryVariables, options?: RequestInit['headers']) => fetcher<GetRetrievalSummaryQuery, GetRetrievalSummaryQueryVariables>(GetRetrievalSummaryDocument, variables, options);
+
+export const GetRetrievalRecordsDocument = `
+    query GetRetrievalRecords($comicName: String, $status: RetrievalStatusEnum, $fromDate: Date, $toDate: Date, $limit: Int) {
+  retrievalRecords(
+    comicName: $comicName
+    status: $status
+    fromDate: $fromDate
+    toDate: $toDate
+    limit: $limit
+  ) {
+    id
+    comicName
+    comicDate
+    source
+    status
+    retrievalDurationMs
+    imageSize
+    httpStatusCode
+    errorMessage
+  }
+}
+    `;
+
+export const useGetRetrievalRecordsQuery = <
+      TData = GetRetrievalRecordsQuery,
+      TError = unknown
+    >(
+      variables?: GetRetrievalRecordsQueryVariables,
+      options?: Omit<UseQueryOptions<GetRetrievalRecordsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetRetrievalRecordsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetRetrievalRecordsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetRetrievalRecords'] : ['GetRetrievalRecords', variables],
+    queryFn: fetcher<GetRetrievalRecordsQuery, GetRetrievalRecordsQueryVariables>(GetRetrievalRecordsDocument, variables),
+    ...options
+  }
+    )};
+
+useGetRetrievalRecordsQuery.getKey = (variables?: GetRetrievalRecordsQueryVariables) => variables === undefined ? ['GetRetrievalRecords'] : ['GetRetrievalRecords', variables];
+
+export const useInfiniteGetRetrievalRecordsQuery = <
+      TData = InfiniteData<GetRetrievalRecordsQuery>,
+      TError = unknown
+    >(
+      variables: GetRetrievalRecordsQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetRetrievalRecordsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetRetrievalRecordsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetRetrievalRecordsQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetRetrievalRecords.infinite'] : ['GetRetrievalRecords.infinite', variables],
+      queryFn: (metaData) => fetcher<GetRetrievalRecordsQuery, GetRetrievalRecordsQueryVariables>(GetRetrievalRecordsDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetRetrievalRecordsQuery.getKey = (variables?: GetRetrievalRecordsQueryVariables) => variables === undefined ? ['GetRetrievalRecords.infinite'] : ['GetRetrievalRecords.infinite', variables];
+
+
+useGetRetrievalRecordsQuery.fetcher = (variables?: GetRetrievalRecordsQueryVariables, options?: RequestInit['headers']) => fetcher<GetRetrievalRecordsQuery, GetRetrievalRecordsQueryVariables>(GetRetrievalRecordsDocument, variables, options);
