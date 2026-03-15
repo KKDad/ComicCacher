@@ -14,7 +14,6 @@ import org.stapledon.common.dto.StripLoaderKey.BoundaryStripKey;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.model.ComicNotFoundException;
 import org.stapledon.common.model.ComicOperationException;
-import org.stapledon.common.util.Direction;
 import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
@@ -129,6 +128,30 @@ public class ComicResolver {
     }
 
     /**
+     * Resolve strip field for Comic type - get strip for specific date.
+     * Uses DataLoader to batch multiple strip requests and prevent N+1 queries.
+     */
+    @SchemaMapping(typeName = "Comic", field = "strip")
+    public CompletableFuture<ComicStrip> strip(
+            ComicItem comic,
+            @Argument LocalDate date,
+            DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
+
+        LocalDate targetDate = date != null ? date : comic.getNewest();
+        if (targetDate == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        StripLoaderKey key = new DateStripKey(
+                comic.getId(),
+                comic.getName(),
+                targetDate);
+
+        return stripLoader.load(key)
+                .thenApply(result -> toComicStrip(comic.getId(), result));
+    }
+
+    /**
      * Search comics by query string.
      */
     @QueryMapping
@@ -173,30 +196,6 @@ public class ComicResolver {
         return comic.isAvatarAvailable()
                 ? externalBaseUrl + "/api/v1/comics/" + comic.getId() + "/avatar"
                 : null;
-    }
-
-    /**
-     * Resolve strip field for Comic type - get strip for specific date.
-     * Uses DataLoader to batch multiple strip requests and prevent N+1 queries.
-     */
-    @SchemaMapping(typeName = "Comic", field = "strip")
-    public CompletableFuture<ComicStrip> strip(
-            ComicItem comic,
-            @Argument LocalDate date,
-            DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
-
-        LocalDate targetDate = date != null ? date : comic.getNewest();
-        if (targetDate == null) {
-            return CompletableFuture.completedFuture(null);
-        }
-
-        StripLoaderKey key = new DateStripKey(
-                comic.getId(),
-                comic.getName(),
-                targetDate);
-
-        return stripLoader.load(key)
-                .thenApply(result -> toComicStrip(comic.getId(), result));
     }
 
     /**

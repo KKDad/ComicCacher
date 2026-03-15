@@ -133,6 +133,29 @@ curl -X GET "http://localhost:8080/api/v1/comics/42/avatar" \
   --output avatar.png
 ```
 
+### Get Comic Strip
+
+Retrieves the comic strip image for a specific date.
+
+**Endpoint:** `GET /api/v1/comics/{comicId}/strip/{date}`
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `comicId` | Path | Comic ID (integer) |
+| `date`    | Path | Strip date in ISO-8601 format (`yyyy-MM-dd`) |
+
+**Response:**
+- **200 OK**: Returns the strip image as binary data with appropriate `Content-Type` header (e.g., `image/jpeg`) and 7-day cache control
+- **404 Not Found**: Strip not available for this comic on the given date
+
+**Example:**
+```bash
+curl -X GET "http://localhost:8080/api/v1/comics/42/strip/2024-01-15" \
+  -H "Authorization: Bearer <token>" \
+  --output strip.jpg
+```
+
 ---
 
 ## Pagination
