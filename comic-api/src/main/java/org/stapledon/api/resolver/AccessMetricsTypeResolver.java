@@ -1,25 +1,23 @@
 package org.stapledon.api.resolver;
 
+import static org.stapledon.common.util.DateTimeUtils.parseDateTime;
+
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.AccessMetricsData.ComicAccessMetrics;
 
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Schema mappings for the AccessMetrics GraphQL type.
  * Bridges AccessMetricsData to the GraphQL schema.
  */
-@Slf4j
 @Controller
 public class AccessMetricsTypeResolver {
 
@@ -65,15 +63,4 @@ public class AccessMetricsTypeResolver {
         return data.getLastUpdated();
     }
 
-    private OffsetDateTime parseDateTime(String dateStr) {
-        if (dateStr == null || dateStr.isBlank()) {
-            return null;
-        }
-        try {
-            return OffsetDateTime.parse(dateStr);
-        } catch (DateTimeParseException e) {
-            log.debug("Could not parse date string: {}", dateStr);
-            return null;
-        }
-    }
 }
