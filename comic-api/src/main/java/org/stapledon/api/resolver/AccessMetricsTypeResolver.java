@@ -13,10 +13,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Schema mappings for the AccessMetrics GraphQL type.
- * Bridges AccessMetricsData to the GraphQL schema.
+ * Bridges AccessMetricsData (standalone query) and Map (from CombinedMetrics) to the schema.
  */
 @Controller
 public class AccessMetricsTypeResolver {
@@ -25,23 +26,55 @@ public class AccessMetricsTypeResolver {
      * Compute AccessMetrics.totalAccesses by summing all comic access counts.
      */
     @SchemaMapping(typeName = "AccessMetrics", field = "totalAccesses")
-    public int totalAccesses(AccessMetricsData data) {
-        Map<String, ComicAccessMetrics> metrics = data.getComicMetrics();
-        if (metrics == null) {
-            return 0;
+    public int totalAccesses(Object source) {
+        if (source instanceof AccessMetricsData data) {
+            return Optional.ofNullable(data.getComicMetrics())
+                    .map(m -> m.values().stream().mapToInt(ComicAccessMetrics::getAccessCount).sum())
+                    .orElse(0);
         }
-        return metrics.values().stream().mapToInt(ComicAccessMetrics::getAccessCount).sum();
+        return Optional.ofNullable(source)
+                .filter(Map.class::isInstance)
+                .map(s -> ((Map<?, ?>) s).get("totalAccesses"))
+                .map(v -> ((Number) v).intValue())
+                .orElse(0);
     }
 
     /**
      * Convert AccessMetricsData.comicMetrics Map to AccessMetrics.comics List.
      */
+    @SuppressWarnings("unchecked")
     @SchemaMapping(typeName = "AccessMetrics", field = "comics")
-    public List<Map<String, Object>> comics(AccessMetricsData data) {
-        Map<String, ComicAccessMetrics> metrics = data.getComicMetrics();
-        if (metrics == null) {
-            return Collections.emptyList();
+    public List<Map<String, Object>> comics(Object source) {
+        if (source instanceof AccessMetricsData data) {
+            return Optional.ofNullable(data.getComicMetrics())
+                    .map(AccessMetricsTypeResolver::buildComicsList)
+                    .orElse(Collections.emptyList());
         }
+        return Optional.ofNullable(source)
+                .filter(Map.class::isInstance)
+                .map(s -> ((Map<?, ?>) s).get("comics"))
+                .filter(List.class::isInstance)
+                .map(c -> (List<Map<String, Object>>) c)
+                .orElse(Collections.emptyList());
+    }
+
+    /**
+     * Return lastUpdated for AccessMetrics.
+     */
+    @SchemaMapping(typeName = "AccessMetrics", field = "lastUpdated")
+    public OffsetDateTime lastUpdated(Object source) {
+        if (source instanceof AccessMetricsData data) {
+            return data.getLastUpdated();
+        }
+        return Optional.ofNullable(source)
+                .filter(Map.class::isInstance)
+                .map(s -> ((Map<?, ?>) s).get("lastUpdated"))
+                .filter(OffsetDateTime.class::isInstance)
+                .map(OffsetDateTime.class::cast)
+                .orElse(null);
+    }
+
+    private static List<Map<String, Object>> buildComicsList(Map<String, ComicAccessMetrics> metrics) {
         List<Map<String, Object>> result = new ArrayList<>(metrics.size());
         for (Map.Entry<String, ComicAccessMetrics> entry : metrics.entrySet()) {
             ComicAccessMetrics m = entry.getValue();
@@ -54,13 +87,4 @@ public class AccessMetricsTypeResolver {
         }
         return result;
     }
-
-    /**
-     * Return lastUpdated for AccessMetrics.
-     */
-    @SchemaMapping(typeName = "AccessMetrics", field = "lastUpdated")
-    public OffsetDateTime lastUpdated(AccessMetricsData data) {
-        return data.getLastUpdated();
-    }
-
 }
