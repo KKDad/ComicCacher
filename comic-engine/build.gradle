@@ -12,10 +12,6 @@ dependencies {
 	// comic-metrics dependency for metrics-related batch jobs
 	implementation project(':comic-metrics')
 
-	// Core dependencies
-	implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
-	implementation "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
-
 	// TwelveMonkeys ImageIO for enhanced image format support (WebP, TIFF, BMP, etc.)
 	implementation "com.twelvemonkeys.imageio:imageio-core:${rootProject.ext.twelvemonkeysVersion}"
 	implementation "com.twelvemonkeys.imageio:imageio-jpeg:${rootProject.ext.twelvemonkeysVersion}"
@@ -27,8 +23,7 @@ dependencies {
 	implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
 	implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
 
-	// Spring Boot for dependency injection and configuration
-	implementation 'org.springframework.boot:spring-boot-starter'
+	// Spring Boot for web and batch
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'
 	// Actuator for health check endpoints

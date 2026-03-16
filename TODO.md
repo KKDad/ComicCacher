@@ -13,3 +13,17 @@
 - Expected benefit: Reduce redundant network requests, improve load times for repeat visits
 - Priority: Medium
 - Estimated effort: 2-4 hours
+
+
+### Revisit OpenAPI/Swagger Generation
+- With the move to GraphQL, only 2 REST endpoints remain (binary image streaming)
+- Evaluate whether the openapi-gradle-plugin, `generate-openapi-docs.sh`, and `openapi.json` are still worth maintaining
+- If not needed, remove the springdoc dependency, openApi task config, and related tasks from comic-api/build.gradle
+
+### Remove Jackson BOM Overrides When Spring Boot Catches Up
+- `ext['jackson-2-bom.version']` and `ext['jackson-bom.version']` in root build.gradle override Spring Boot 4.0.3's Jackson to fix CVEs
+- Check with each Spring Boot upgrade whether the bundled Jackson versions include the fixes, and remove the overrides if so
+
+### Improve API Tests
+- Extract WebDriver handling to a common class
+- Make the WebDriver reusable between IT tests

@@ -1,7 +1,4 @@
 plugins {
-    id "java"
-    id "jacoco"
-
     id "com.coditory.integration-test" version '2.2.5'
     id "io.spring.dependency-management"
     id "org.springframework.boot"
@@ -58,10 +55,6 @@ dependencies {
     implementation project(':comic-common')
     implementation project(':comic-metrics')
     implementation project(':comic-engine')
-
-    // Core dependencies
-    implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
-    implementation "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
 
     // Selenium dependencies
     implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
@@ -159,7 +152,7 @@ jacocoTestReport {
 // Integration test coverage
 tasks.register('jacocoIntegrationTestReport', JacocoReport) {
     dependsOn integrationTest
-    executionData fileTree(project.buildDir).include("/jacoco/integrationTest.exec")
+    executionData fileTree(project.layout.buildDirectory).include("/jacoco/integrationTest.exec")
     sourceSets sourceSets.main
     reports {
         xml.required = true
@@ -174,7 +167,7 @@ integrationTest {
 // Combined coverage report
 tasks.register('jacocoAllReport', JacocoReport) {
     dependsOn test, integrationTest
-    executionData fileTree(project.buildDir).include("/jacoco/*.exec")
+    executionData fileTree(project.layout.buildDirectory).include("/jacoco/*.exec")
     sourceSets sourceSets.main
     reports {
         xml.required = true
@@ -185,7 +178,7 @@ tasks.register('jacocoAllReport', JacocoReport) {
 // OpenAPI documentation configuration
 openApi {
     apiDocsUrl.set("http://localhost:8888/v3/api-docs")
-    outputDir.set(file("${project.buildDir}"))
+    outputDir.set(file("${project.layout.buildDirectory}"))
     outputFileName.set("openapi.json")
     waitTimeInSeconds.set(30)
 
