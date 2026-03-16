@@ -188,24 +188,52 @@ class GoComicsBootstrapTest {
     @Test
     void interfaceCompatibility() {
         // Given: A GoComicsBootstrap instance
-        GoComicsBootstrap bootstrap = GoComicsBootstrap.builder()
-                .name("TestComic")
-                .sourceIdentifier("test-comic")
-                .publicationDays(List.of(DayOfWeek.SUNDAY))
-                .active(false)
-                .startDate(LocalDate.of(2019, 4, 1))
-                .build();
 
         // When: Treating it as IComicsBootstrap interface
-        IComicsBootstrap iBootstrap = bootstrap;
 
         // Then: All interface methods should work correctly
-        assertThat(iBootstrap.stripName()).isEqualTo("TestComic");
-        assertThat(iBootstrap.getSource()).isEqualTo("gocomics");
-        assertThat(iBootstrap.getSourceIdentifier()).isEqualTo("test-comic");
-        assertThat(iBootstrap.getPublicationDays()).containsExactly(DayOfWeek.SUNDAY);
-        assertThat(iBootstrap.getActive()).isFalse();
-        assertThat(iBootstrap.startDate()).isEqualTo(LocalDate.of(2019, 4, 1));
+        assertThat(GoComicsBootstrap.builder()
+                                    .name("TestComic")
+                                    .sourceIdentifier("test-comic")
+                                    .publicationDays(List.of(DayOfWeek.SUNDAY))
+                                    .active(false)
+                                    .startDate(LocalDate.of(2019, 4, 1))
+                                    .build().stripName()).isEqualTo("TestComic");
+        assertThat(GoComicsBootstrap.builder()
+                                    .name("TestComic")
+                                    .sourceIdentifier("test-comic")
+                                    .publicationDays(List.of(DayOfWeek.SUNDAY))
+                                    .active(false)
+                                    .startDate(LocalDate.of(2019, 4, 1))
+                                    .build().getSource()).isEqualTo("gocomics");
+        assertThat(GoComicsBootstrap.builder()
+                                    .name("TestComic")
+                                    .sourceIdentifier("test-comic")
+                                    .publicationDays(List.of(DayOfWeek.SUNDAY))
+                                    .active(false)
+                                    .startDate(LocalDate.of(2019, 4, 1))
+                                    .build().getSourceIdentifier()).isEqualTo("test-comic");
+        assertThat(GoComicsBootstrap.builder()
+                                    .name("TestComic")
+                                    .sourceIdentifier("test-comic")
+                                    .publicationDays(List.of(DayOfWeek.SUNDAY))
+                                    .active(false)
+                                    .startDate(LocalDate.of(2019, 4, 1))
+                                    .build().getPublicationDays()).containsExactly(DayOfWeek.SUNDAY);
+        assertThat(GoComicsBootstrap.builder()
+                                    .name("TestComic")
+                                    .sourceIdentifier("test-comic")
+                                    .publicationDays(List.of(DayOfWeek.SUNDAY))
+                                    .active(false)
+                                    .startDate(LocalDate.of(2019, 4, 1))
+                                    .build().getActive()).isFalse();
+        assertThat(GoComicsBootstrap.builder()
+                                    .name("TestComic")
+                                    .sourceIdentifier("test-comic")
+                                    .publicationDays(List.of(DayOfWeek.SUNDAY))
+                                    .active(false)
+                                    .startDate(LocalDate.of(2019, 4, 1))
+                                    .build().startDate()).isEqualTo(LocalDate.of(2019, 4, 1));
     }
 
     @Test

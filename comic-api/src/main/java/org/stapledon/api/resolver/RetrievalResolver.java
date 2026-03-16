@@ -3,18 +3,18 @@ package org.stapledon.api.resolver;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.stapledon.api.dto.payload.MutationPayloads.DeleteRetrievalRecordPayload;
+import org.stapledon.api.dto.payload.MutationPayloads.PurgeRetrievalRecordsPayload;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +37,9 @@ public class RetrievalResolver {
      * Get retrieval records with optional filtering.
      */
     @QueryMapping
-    public List<Map<String, Object>> retrievalRecords(
+    public List<RetrievalRecordDto> retrievalRecords(
             @Argument String comicName,
-            @Argument String status,
+            @Argument ComicRetrievalStatus status,
             @Argument LocalDate fromDate,
             @Argument LocalDate toDate,
             @Argument Integer limit) {
@@ -47,25 +47,24 @@ public class RetrievalResolver {
         log.debug("Getting retrieval records: comicName={}, status={}, fromDate={}, toDate={}, limit={}",
                 comicName, status, fromDate, toDate, limit);
 
-        ComicRetrievalStatus javaStatus = mapGraphqlStatusToJava(status);
         int effectiveLimit = Optional.ofNullable(limit).orElse(100);
 
         List<ComicRetrievalRecord> records = retrievalStatusService.getRetrievalRecords(
-                comicName, javaStatus, fromDate, toDate, effectiveLimit);
+                comicName, status, fromDate, toDate, effectiveLimit);
 
         return records.stream()
-                .map(this::mapRecordToGraphql)
-                .collect(Collectors.toList());
+                .map(RetrievalResolver::toDto)
+                .toList();
     }
 
     /**
      * Get a specific retrieval record by ID.
      */
     @QueryMapping
-    public Map<String, Object> retrievalRecord(@Argument String id) {
+    public RetrievalRecordDto retrievalRecord(@Argument String id) {
         log.debug("Getting retrieval record: id={}", id);
         return retrievalStatusService.getRetrievalRecord(id)
-                .map(this::mapRecordToGraphql)
+                .map(RetrievalResolver::toDto)
                 .orElse(null);
     }
 
@@ -73,7 +72,7 @@ public class RetrievalResolver {
      * Get retrieval records for a specific comic.
      */
     @QueryMapping
-    public List<Map<String, Object>> retrievalRecordsForComic(
+    public List<RetrievalRecordDto> retrievalRecordsForComic(
             @Argument String comicName,
             @Argument Integer limit) {
 
@@ -85,23 +84,22 @@ public class RetrievalResolver {
                 comicName, null, null, null, effectiveLimit);
 
         return records.stream()
-                .map(this::mapRecordToGraphql)
-                .collect(Collectors.toList());
+                .map(RetrievalResolver::toDto)
+                .toList();
     }
 
     /**
      * Get summary statistics of retrieval operations.
      */
     @QueryMapping
-    public Map<String, Object> retrievalSummary(
+    public RetrievalSummaryDto retrievalSummary(
             @Argument LocalDate fromDate,
             @Argument LocalDate toDate) {
 
         log.debug("Getting retrieval summary: fromDate={}, toDate={}", fromDate, toDate);
 
-        Map<String, Object> rawSummary = retrievalStatusService.getRetrievalSummary(fromDate, toDate);
-
-        return buildGraphqlSummary(rawSummary);
+        Map<String, Object> raw = retrievalStatusService.getRetrievalSummary(fromDate, toDate);
+        return buildSummary(raw);
     }
 
     // =========================================================================
@@ -112,45 +110,45 @@ public class RetrievalResolver {
      * Delete a specific retrieval record.
      */
     @MutationMapping
-    public boolean deleteRetrievalRecord(@Argument String id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public DeleteRetrievalRecordPayload deleteRetrievalRecord(@Argument String id) {
         log.info("Deleting retrieval record: id={}", id);
-        return retrievalStatusService.deleteRetrievalRecord(id);
+        boolean deleted = retrievalStatusService.deleteRetrievalRecord(id);
+        return new DeleteRetrievalRecordPayload(deleted, List.of());
     }
 
     /**
      * Purge retrieval records older than specified days.
      */
     @MutationMapping
-    public int purgeRetrievalRecords(@Argument Integer daysToKeep) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public PurgeRetrievalRecordsPayload purgeRetrievalRecords(@Argument Integer daysToKeep) {
         int days = Optional.ofNullable(daysToKeep).orElse(7);
         log.info("Purging retrieval records older than {} days", days);
-        return retrievalStatusService.purgeOldRecords(days);
+        int purged = retrievalStatusService.purgeOldRecords(days);
+        return new PurgeRetrievalRecordsPayload(purged, List.of());
     }
 
     // =========================================================================
     // Mapping helpers
     // =========================================================================
 
-    private Map<String, Object> mapRecordToGraphql(ComicRetrievalRecord record) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("id", record.getId());
-        map.put("comicName", record.getComicName());
-        map.put("comicDate", record.getComicDate());
-        map.put("source", record.getSource());
-        map.put("status", mapJavaStatusToGraphql(record.getStatus()));
-        map.put("errorMessage", record.getErrorMessage());
-        map.put("retrievalDurationMs", (double) record.getRetrievalDurationMs());
-        map.put("imageSize", record.getImageSize() != null ? record.getImageSize().doubleValue() : null);
-        map.put("httpStatusCode", record.getHttpStatusCode());
-        return map;
+    private static RetrievalRecordDto toDto(ComicRetrievalRecord record) {
+        return new RetrievalRecordDto(
+                record.getId(),
+                record.getComicName(),
+                record.getComicDate(),
+                record.getSource(),
+                record.getStatus(),
+                record.getErrorMessage(),
+                (double) record.getRetrievalDurationMs(),
+                record.getImageSize() != null ? record.getImageSize().doubleValue() : null,
+                record.getHttpStatusCode());
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> buildGraphqlSummary(Map<String, Object> raw) {
-        Map<String, Object> summary = new LinkedHashMap<>();
-
+    private static RetrievalSummaryDto buildSummary(Map<String, Object> raw) {
         int totalCount = (int) raw.getOrDefault("totalCount", 0);
-        summary.put("totalAttempts", totalCount);
 
         Map<ComicRetrievalStatus, Long> countsByStatus =
                 (Map<ComicRetrievalStatus, Long>) raw.getOrDefault("countsByStatus", Map.of());
@@ -162,70 +160,61 @@ public class RetrievalResolver {
                 .sum();
         long skippedCount = countsByStatus.getOrDefault(ComicRetrievalStatus.COMIC_UNAVAILABLE, 0L);
 
-        summary.put("successCount", (int) successCount);
-        summary.put("failureCount", (int) (failureCount - skippedCount));
-        summary.put("skippedCount", (int) skippedCount);
-
         double successRate = (double) raw.getOrDefault("successRate", 0.0);
-        summary.put("successRate", successRate * 100.0);
-
         double avgDuration = (double) raw.getOrDefault("averageDurationMillis", 0.0);
-        summary.put("averageDurationMs", avgDuration > 0 ? avgDuration : null);
 
-        // byStatus breakdown
-        List<Map<String, Object>> byStatus = new ArrayList<>();
-        for (Map.Entry<ComicRetrievalStatus, Long> entry : countsByStatus.entrySet()) {
-            Map<String, Object> statusCount = new LinkedHashMap<>();
-            statusCount.put("status", mapJavaStatusToGraphql(entry.getKey()));
-            statusCount.put("count", entry.getValue().intValue());
-            byStatus.add(statusCount);
-        }
-        summary.put("byStatus", byStatus);
+        List<StatusCountDto> byStatus = countsByStatus.entrySet().stream()
+                .map(e -> new StatusCountDto(e.getKey(), e.getValue().intValue()))
+                .toList();
 
-        // byComic breakdown
         Map<String, Long> failuresByComic =
                 (Map<String, Long>) raw.getOrDefault("comicsWithMostFailures", Map.of());
-        List<Map<String, Object>> byComic = new ArrayList<>();
 
-        // We need per-comic totals from countsByStatus — but the raw summary only has failure counts per comic.
-        // Reconstruct from available data: we have total failures by comic.
-        for (Map.Entry<String, Long> entry : failuresByComic.entrySet()) {
-            Map<String, Object> comicSummary = new LinkedHashMap<>();
-            comicSummary.put("comicName", entry.getKey());
-            comicSummary.put("failureCount", entry.getValue().intValue());
-            comicSummary.put("successCount", 0);
-            comicSummary.put("totalAttempts", entry.getValue().intValue());
-            byComic.add(comicSummary);
-        }
-        summary.put("byComic", byComic);
+        List<ComicRetrievalSummaryDto> byComic = failuresByComic.entrySet().stream()
+                .map(e -> new ComicRetrievalSummaryDto(e.getKey(), e.getValue().intValue(), 0, e.getValue().intValue()))
+                .toList();
 
-        return summary;
+        return new RetrievalSummaryDto(
+                totalCount,
+                (int) successCount,
+                (int) (failureCount - skippedCount),
+                (int) skippedCount,
+                successRate * 100.0,
+                avgDuration > 0 ? avgDuration : null,
+                byComic,
+                byStatus);
     }
 
-    private String mapJavaStatusToGraphql(ComicRetrievalStatus status) {
-        return switch (status) {
-            case SUCCESS -> "SUCCESS";
-            case NETWORK_ERROR -> "ERROR";
-            case PARSING_ERROR -> "FAILURE";
-            case COMIC_UNAVAILABLE -> "NOT_FOUND";
-            case AUTHENTICATION_ERROR -> "ERROR";
-            case STORAGE_ERROR -> "FAILURE";
-            case UNKNOWN_ERROR -> "ERROR";
-        };
+    // =========================================================================
+    // Record Types for GraphQL
+    // =========================================================================
+
+    public record RetrievalRecordDto(
+            String id,
+            String comicName,
+            LocalDate comicDate,
+            String source,
+            ComicRetrievalStatus status,
+            String errorMessage,
+            Double retrievalDurationMs,
+            Double imageSize,
+            Integer httpStatusCode) {
     }
 
-    private ComicRetrievalStatus mapGraphqlStatusToJava(String graphqlStatus) {
-        if (graphqlStatus == null) {
-            return null;
-        }
-        return switch (graphqlStatus) {
-            case "SUCCESS" -> ComicRetrievalStatus.SUCCESS;
-            case "FAILURE" -> ComicRetrievalStatus.PARSING_ERROR;
-            case "ERROR" -> ComicRetrievalStatus.NETWORK_ERROR;
-            case "NOT_FOUND" -> ComicRetrievalStatus.COMIC_UNAVAILABLE;
-            case "SKIPPED" -> ComicRetrievalStatus.COMIC_UNAVAILABLE;
-            case "RATE_LIMITED" -> ComicRetrievalStatus.NETWORK_ERROR;
-            default -> null;
-        };
+    public record RetrievalSummaryDto(
+            int totalAttempts,
+            int successCount,
+            int failureCount,
+            int skippedCount,
+            double successRate,
+            Double averageDurationMs,
+            List<ComicRetrievalSummaryDto> byComic,
+            List<StatusCountDto> byStatus) {
+    }
+
+    public record ComicRetrievalSummaryDto(String comicName, int totalAttempts, int successCount, int failureCount) {
+    }
+
+    public record StatusCountDto(ComicRetrievalStatus status, int count) {
     }
 }

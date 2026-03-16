@@ -29,8 +29,11 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
     private static final String MUTATION_ADD_FAVORITE = """
             mutation AddFavorite($comicId: Int!) {
                 addFavorite(comicId: $comicId) {
-                    username
-                    favoriteComics
+                    preference {
+                        username
+                        favoriteComics
+                    }
+                    errors { message }
                 }
             }
             """;
@@ -38,8 +41,11 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
     private static final String MUTATION_REMOVE_FAVORITE = """
             mutation RemoveFavorite($comicId: Int!) {
                 removeFavorite(comicId: $comicId) {
-                    username
-                    favoriteComics
+                    preference {
+                        username
+                        favoriteComics
+                    }
+                    errors { message }
                 }
             }
             """;
@@ -47,11 +53,14 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
     private static final String MUTATION_UPDATE_LAST_READ = """
             mutation UpdateLastRead($comicId: Int!, $date: Date!) {
                 updateLastRead(comicId: $comicId, date: $date) {
-                    username
-                    lastReadDates {
-                        comicId
-                        date
+                    preference {
+                        username
+                        lastReadDates {
+                            comicId
+                            date
+                        }
                     }
+                    errors { message }
                 }
             }
             """;
@@ -66,7 +75,7 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .document(QUERY_PREFERENCES)
                 .execute()
                 .errors()
-                .expect(e -> e.getMessage().contains("Unauthorized"))
+                .expect(e -> e.getMessage().contains("permission") || e.getMessage().contains("Unauthorized"))
                 .verify();
     }
 
@@ -102,7 +111,7 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .variable("comicId", TEST_COMIC_ID)
                 .execute()
                 .errors().verify()
-                .path("addFavorite.favoriteComics")
+                .path("addFavorite.preference.favoriteComics")
                 .entityList(Integer.class)
                 .satisfies(favorites -> assertThat(favorites).contains(TEST_COMIC_ID));
     }
@@ -130,7 +139,7 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .variable("comicId", TEST_COMIC_ID)
                 .execute()
                 .errors().verify()
-                .path("removeFavorite.favoriteComics")
+                .path("removeFavorite.preference.favoriteComics")
                 .entityList(Integer.class)
                 .satisfies(favorites -> assertThat(favorites).doesNotContain(TEST_COMIC_ID));
     }
@@ -149,7 +158,7 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .variable("date", today.toString())
                 .execute()
                 .errors().verify()
-                .path("updateLastRead.lastReadDates")
+                .path("updateLastRead.preference.lastReadDates")
                 .entityList(Object.class)
                 .hasSizeGreaterThan(0);
     }

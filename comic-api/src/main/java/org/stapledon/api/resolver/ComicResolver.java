@@ -14,6 +14,9 @@ import org.stapledon.common.dto.StripLoaderKey.BoundaryStripKey;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.model.ComicNotFoundException;
 import org.stapledon.common.model.ComicOperationException;
+import org.stapledon.api.dto.payload.MutationPayloads.CreateComicPayload;
+import org.stapledon.api.dto.payload.MutationPayloads.DeleteComicPayload;
+import org.stapledon.api.dto.payload.MutationPayloads.UpdateComicPayload;
 import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
@@ -21,9 +24,9 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * GraphQL resolver for Comic operations.
@@ -31,13 +34,18 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Controller
-@RequiredArgsConstructor
 public class ComicResolver {
 
     private final ManagementFacade comicManagementFacade;
+    private final String externalBaseUrl;
 
-    @Value("${app.external-base-url:}")
-    private String externalBaseUrl;
+    /**
+     * Constructs a ComicResolver with required dependencies.
+     */
+    public ComicResolver(ManagementFacade comicManagementFacade, @Value("${app.external-base-url:}") String externalBaseUrl) {
+        this.comicManagementFacade = comicManagementFacade;
+        this.externalBaseUrl = externalBaseUrl;
+    }
 
     // =========================================================================
     // Queries
@@ -62,7 +70,7 @@ public class ComicResolver {
         List<ComicItem> filtered = allComics.stream()
                 .filter(c -> enabled == null || c.isEnabled() == enabled)
                 .filter(c -> search == null || matchesSearch(c, search))
-                .collect(Collectors.toList());
+                .toList();
 
         // Apply cursor-based pagination
         int startIndex = 0;
@@ -78,8 +86,8 @@ public class ComicResolver {
 
         List<ComicItem> page = filtered.stream()
                 .skip(startIndex)
-                .limit(limit + 1) // Fetch one extra to check hasNextPage
-                .collect(Collectors.toList());
+                .limit(limit + 1L) // Fetch one extra to check hasNextPage
+                .toList();
 
         boolean hasNextPage = page.size() > limit;
         if (hasNextPage) {
@@ -88,13 +96,13 @@ public class ComicResolver {
 
         List<ComicEdge> edges = page.stream()
                 .map(c -> new ComicEdge(c, encodeCursor(c.getId())))
-                .collect(Collectors.toList());
+                .toList();
 
         PageInfo pageInfo = new PageInfo(
                 hasNextPage,
                 startIndex > 0,
-                edges.isEmpty() ? null : edges.get(0).cursor(),
-                edges.isEmpty() ? null : edges.get(edges.size() - 1).cursor());
+                edges.isEmpty() ? null : edges.getFirst().cursor(),
+                edges.isEmpty() ? null : edges.getLast().cursor());
 
         return new ComicConnection(edges, pageInfo, filtered.size());
     }
@@ -161,7 +169,7 @@ public class ComicResolver {
         List<ComicItem> matched = comicManagementFacade.getAllComics().stream()
                 .filter(c -> matchesSearch(c, query))
                 .limit(maxResults)
-                .collect(Collectors.toList());
+                .toList();
 
         return new SearchResults(matched, matched.size(), query);
     }
@@ -171,7 +179,7 @@ public class ComicResolver {
     // =========================================================================
 
     /**
-     * Resolve oldest field for Comic type from the authoritative index.
+     * Resolves oldest field for Comic type from the authoritative index.
      */
     @SchemaMapping(typeName = "Comic", field = "oldest")
     public LocalDate oldest(ComicItem comic) {
@@ -180,7 +188,7 @@ public class ComicResolver {
     }
 
     /**
-     * Resolve newest field for Comic type from the authoritative index.
+     * Resolves newest field for Comic type from the authoritative index.
      */
     @SchemaMapping(typeName = "Comic", field = "newest")
     public LocalDate newest(ComicItem comic) {
@@ -232,7 +240,8 @@ public class ComicResolver {
      * Create a new comic.
      */
     @MutationMapping
-    public ComicItem createComic(@Argument CreateComicInput input) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public CreateComicPayload createComic(@Argument CreateComicInput input) {
         ComicItem newComic = ComicItem.builder()
                 .name(input.name())
                 .author(input.author())
@@ -242,15 +251,17 @@ public class ComicResolver {
                 .sourceIdentifier(input.sourceIdentifier())
                 .build();
 
-        return comicManagementFacade.createComic(newComic)
+        ComicItem created = comicManagementFacade.createComic(newComic)
                 .orElseThrow(ComicOperationException::createFailed);
+        return new CreateComicPayload(created, List.of());
     }
 
     /**
      * Update an existing comic.
      */
     @MutationMapping
-    public ComicItem updateComic(@Argument int id, @Argument UpdateComicInput input) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public UpdateComicPayload updateComic(@Argument int id, @Argument UpdateComicInput input) {
         ComicItem existing = comicManagementFacade.getComic(id)
                 .orElseThrow(() -> new ComicNotFoundException(id));
 
@@ -263,16 +274,19 @@ public class ComicResolver {
         Optional.ofNullable(input.sourceIdentifier()).ifPresent(builder::sourceIdentifier);
         ComicItem updated = builder.build();
 
-        return comicManagementFacade.updateComic(id, updated)
+        ComicItem result = comicManagementFacade.updateComic(id, updated)
                 .orElseThrow(() -> ComicOperationException.updateFailed(id));
+        return new UpdateComicPayload(result, List.of());
     }
 
     /**
      * Delete a comic.
      */
     @MutationMapping
-    public boolean deleteComic(@Argument int id) {
-        return comicManagementFacade.deleteComic(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public DeleteComicPayload deleteComic(@Argument int id) {
+        boolean deleted = comicManagementFacade.deleteComic(id);
+        return new DeleteComicPayload(deleted, List.of());
     }
 
     // =========================================================================

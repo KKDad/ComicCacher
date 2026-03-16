@@ -29,7 +29,7 @@ class GoComicsIntegrationIT {
     @BeforeAll
     static void setUp() throws Exception {
         path = Files.createTempDirectory("GoComicsTest");
-        LOG.info("Using TempDirectory: " + path.toString());
+        LOG.info("Using TempDirectory: {}", path.toString());
 
         // Create CacheProperties for tests with headless=true
         cacheProperties = new CacheProperties();
@@ -79,7 +79,7 @@ class GoComicsIntegrationIT {
         File expectedFile = new File(path.toString() + "/AdamAtHome/" + year + "/" + dateString + ".png");
         File homeFile = new File(System.getProperty("user.home") + "/adam-at-home-2025-10-20.png");
         LOG.info("Downloading Adam@Home for October 20, 2025");
-        LOG.info("Expected file path: " + expectedFile.getAbsolutePath());
+        LOG.info("Expected file path: {}", expectedFile.getAbsolutePath());
 
         try (GoComics subject = getSubject("Adam at Home")) {
             subject.setDate(testDate);
@@ -95,8 +95,8 @@ class GoComicsIntegrationIT {
             Files.copy(expectedFile.toPath(), homeFile.toPath(),
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            LOG.info("SUCCESS! Comic downloaded to: " + expectedFile.getAbsolutePath());
-            LOG.info("Comic copied to home directory: " + homeFile.getAbsolutePath());
+            LOG.info("SUCCESS! Comic downloaded to: {}", expectedFile.getAbsolutePath());
+            LOG.info("Comic copied to home directory: {}", homeFile.getAbsolutePath());
             LOG.info("You can verify at: https://www.gocomics.com/adamathome/2025/10/20");
         }
     }

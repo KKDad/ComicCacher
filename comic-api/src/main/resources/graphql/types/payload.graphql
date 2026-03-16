@@ -1,0 +1,259 @@
+# =============================================================================
+# Mutation Payload Types
+# =============================================================================
+# Standard Relay-style mutation payloads with result object and user errors.
+# =============================================================================
+
+"""
+A user-facing error from a mutation.
+"""
+type UserError {
+    """
+    Error message.
+    """
+    message: String!
+
+    """
+    Field path that caused the error (e.g., "input.email").
+    """
+    field: String
+
+    """
+    Machine-readable error code.
+    """
+    code: ErrorCode
+}
+
+# =============================================================================
+# Comic Mutation Payloads
+# =============================================================================
+
+"""
+Payload for createComic mutation.
+"""
+type CreateComicPayload {
+    """
+    The created comic, or null if errors occurred.
+    """
+    comic: Comic
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for updateComic mutation.
+"""
+type UpdateComicPayload {
+    """
+    The updated comic, or null if errors occurred.
+    """
+    comic: Comic
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for deleteComic mutation.
+"""
+type DeleteComicPayload {
+    """
+    Whether the deletion was successful.
+    """
+    success: Boolean!
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+# =============================================================================
+# User Mutation Payloads
+# =============================================================================
+
+"""
+Payload for updateProfile mutation.
+"""
+type UpdateProfilePayload {
+    """
+    The updated user, or null if errors occurred.
+    """
+    user: User
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for updatePassword mutation.
+"""
+type UpdatePasswordPayload {
+    """
+    Whether the password was updated successfully.
+    """
+    success: Boolean!
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for deleteAccount mutation.
+"""
+type DeleteAccountPayload {
+    """
+    Whether the deletion was successful.
+    """
+    success: Boolean!
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+# =============================================================================
+# Preference Mutation Payloads
+# =============================================================================
+
+"""
+Payload for addFavorite and removeFavorite mutations.
+"""
+type FavoritePayload {
+    """
+    The updated preferences, or null if errors occurred.
+    """
+    preference: UserPreference
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for updateLastRead mutation.
+"""
+type UpdateLastReadPayload {
+    """
+    The updated preferences, or null if errors occurred.
+    """
+    preference: UserPreference
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for updateDisplaySettings mutation.
+"""
+type UpdateDisplaySettingsPayload {
+    """
+    The updated preferences, or null if errors occurred.
+    """
+    preference: UserPreference
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+# =============================================================================
+# Metrics Mutation Payloads
+# =============================================================================
+
+"""
+Payload for refreshStorageMetrics mutation.
+"""
+type RefreshStorageMetricsPayload {
+    """
+    The refreshed storage metrics.
+    """
+    storageMetrics: StorageMetrics
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for refreshAllMetrics mutation.
+"""
+type RefreshAllMetricsPayload {
+    """
+    Whether the refresh was successful.
+    """
+    success: Boolean!
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+# =============================================================================
+# Retrieval Mutation Payloads
+# =============================================================================
+
+"""
+Payload for deleteRetrievalRecord mutation.
+"""
+type DeleteRetrievalRecordPayload {
+    """
+    Whether the deletion was successful.
+    """
+    success: Boolean!
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
+Payload for purgeRetrievalRecords mutation.
+"""
+type PurgeRetrievalRecordsPayload {
+    """
+    Number of records purged.
+    """
+    purgedCount: Int!
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+# =============================================================================
+# Batch Job Mutation Payloads
+# =============================================================================
+
+"""
+Payload for triggerBatchJob and triggerBackfillJob mutations.
+"""
+type TriggerBatchJobPayload {
+    """
+    The triggered batch job, or null if errors occurred.
+    """
+    batchJob: BatchJob
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}

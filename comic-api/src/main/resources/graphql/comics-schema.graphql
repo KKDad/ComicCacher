@@ -240,20 +240,20 @@ type Mutation {
     Update the current user's profile.
     Requires authentication.
     """
-    updateProfile(input: UpdateProfileInput!): User! @authenticated
+    updateProfile(input: UpdateProfileInput!): UpdateProfilePayload! @authenticated
 
     """
     Update the current user's password.
     Requires authentication.
     """
-    updatePassword(newPassword: String!): Boolean! @authenticated
+    updatePassword(newPassword: String!): UpdatePasswordPayload! @authenticated
 
     """
     Delete a user account (admin only).
     This action is irreversible.
     Requires admin role.
     """
-    deleteAccount(username: String!): Boolean! @hasRole(role: "ADMIN")
+    deleteAccount(username: String!): DeleteAccountPayload! @hasRole(role: "ADMIN")
 
     # =========================================================================
     # Preferences (Authenticated)
@@ -263,25 +263,25 @@ type Mutation {
     Add a comic to the user's favorites.
     Requires authentication.
     """
-    addFavorite(comicId: Int!): UserPreference! @authenticated
+    addFavorite(comicId: Int!): FavoritePayload! @authenticated
 
     """
     Remove a comic from the user's favorites.
     Requires authentication.
     """
-    removeFavorite(comicId: Int!): UserPreference! @authenticated
+    removeFavorite(comicId: Int!): FavoritePayload! @authenticated
 
     """
     Update the last read date for a comic.
     Requires authentication.
     """
-    updateLastRead(comicId: Int!, date: Date!): UserPreference! @authenticated
+    updateLastRead(comicId: Int!, date: Date!): UpdateLastReadPayload! @authenticated
 
     """
     Update display settings (theme, layout, etc.).
     Requires authentication.
     """
-    updateDisplaySettings(settings: JSON!): UserPreference! @authenticated
+    updateDisplaySettings(settings: JSON!): UpdateDisplaySettingsPayload! @authenticated
 
     # =========================================================================
     # Comic Management (Admin)
@@ -291,19 +291,19 @@ type Mutation {
     Create a new comic entry.
     Requires admin role.
     """
-    createComic(input: CreateComicInput!): Comic! @hasRole(role: "ADMIN")
+    createComic(input: CreateComicInput!): CreateComicPayload! @hasRole(role: "ADMIN")
 
     """
     Update an existing comic's details.
     Requires admin role.
     """
-    updateComic(id: Int!, input: UpdateComicInput!): Comic! @hasRole(role: "ADMIN")
+    updateComic(id: Int!, input: UpdateComicInput!): UpdateComicPayload! @hasRole(role: "ADMIN")
 
     """
     Delete a comic and its cached strips.
     Requires admin role.
     """
-    deleteComic(id: Int!): Boolean! @hasRole(role: "ADMIN")
+    deleteComic(id: Int!): DeleteComicPayload! @hasRole(role: "ADMIN")
 
     # =========================================================================
     # Metrics (Admin)
@@ -312,12 +312,12 @@ type Mutation {
     """
     Force a refresh of storage metrics.
     """
-    refreshStorageMetrics: StorageMetrics! @hasRole(role: "ADMIN")
+    refreshStorageMetrics: RefreshStorageMetricsPayload! @hasRole(role: "ADMIN")
 
     """
     Force a refresh of all metrics (storage, access, combined).
     """
-    refreshAllMetrics: Boolean! @hasRole(role: "ADMIN")
+    refreshAllMetrics: RefreshAllMetricsPayload! @hasRole(role: "ADMIN")
 
     # =========================================================================
     # Retrieval Status (Admin)
@@ -326,13 +326,13 @@ type Mutation {
     """
     Delete a specific retrieval record.
     """
-    deleteRetrievalRecord(id: String!): Boolean! @hasRole(role: "ADMIN")
+    deleteRetrievalRecord(id: String!): DeleteRetrievalRecordPayload! @hasRole(role: "ADMIN")
 
     """
     Purge retrieval records older than specified days.
     Returns the number of records purged.
     """
-    purgeRetrievalRecords(daysToKeep: Int = 7): Int! @hasRole(role: "ADMIN")
+    purgeRetrievalRecords(daysToKeep: Int = 7): PurgeRetrievalRecordsPayload! @hasRole(role: "ADMIN")
 
     # =========================================================================
     # Batch Jobs (Admin)
@@ -341,10 +341,10 @@ type Mutation {
     """
     Trigger a batch job for comic retrieval.
     """
-    triggerBatchJob(targetDate: Date): BatchJob! @hasRole(role: "ADMIN")
+    triggerBatchJob: TriggerBatchJobPayload! @hasRole(role: "ADMIN")
 
     """
     Trigger a backfill job to retrieve missing comics.
     """
-    triggerBackfillJob: BatchJob! @hasRole(role: "ADMIN")
+    triggerBackfillJob: TriggerBatchJobPayload! @hasRole(role: "ADMIN")
 }

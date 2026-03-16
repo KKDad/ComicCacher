@@ -4,10 +4,12 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
+import org.stapledon.api.dto.ErrorCode;
 import org.stapledon.api.dto.health.ComponentHealth;
 import org.stapledon.api.dto.health.HealthStatus;
 import org.stapledon.api.service.SystemHealthService;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +41,9 @@ public class HealthResolver {
      */
     @QueryMapping
     public List<String> errorCodes() {
-        return List.of(
-                "UNAUTHENTICATED", "FORBIDDEN", "NOT_FOUND", "VALIDATION_ERROR",
-                "COMIC_NOT_FOUND", "STRIP_NOT_FOUND", "USER_NOT_FOUND",
-                "USER_ALREADY_EXISTS", "INVALID_CREDENTIALS", "TOKEN_EXPIRED",
-                "INVALID_TOKEN", "INVALID_PASSWORD", "RATE_LIMITED", "INTERNAL_ERROR");
+        return Arrays.stream(ErrorCode.values())
+                .map(ErrorCode::name)
+                .toList();
     }
 
     // =========================================================================

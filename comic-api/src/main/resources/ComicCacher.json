@@ -43,7 +43,7 @@
   "kingComics":[
     {  "name":"Beetle Bailey",  "website":"https://www.comicskingdom.com/beetle-bailey-1", "startDate":{ "year":2019, "month":4, "day":1 } },
     {  "name":"Dustin",  "website":"https://www.comicskingdom.com/dustin", "startDate":{ "year":2019, "month":4, "day":1 } },
-    {  "name":"Hagar",  "website":"http://comicskingdom.com/hagar-the-horrible", "startDate":{ "year":2019, "month":4, "day":1 } },
-    {  "name":"Zits",  "website":"http://comicskingdom.com/zits", "startDate":{ "year":2019, "month":4, "day":1 } }
+    {  "name":"Hagar",  "website":"https://comicskingdom.com/hagar-the-horrible", "startDate":{ "year":2019, "month":4, "day":1 } },
+    {  "name":"Zits",  "website":"https://comicskingdom.com/zits", "startDate":{ "year":2019, "month":4, "day":1 } }
   ]
 }

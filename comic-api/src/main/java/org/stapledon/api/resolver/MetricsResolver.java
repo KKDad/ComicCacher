@@ -2,11 +2,16 @@ package org.stapledon.api.resolver;
 
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.stapledon.api.dto.payload.MutationPayloads.RefreshAllMetricsPayload;
+import org.stapledon.api.dto.payload.MutationPayloads.RefreshStorageMetricsPayload;
 import org.stapledon.common.dto.ImageCacheStats;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.service.MetricsService;
+
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,18 +66,21 @@ public class MetricsResolver {
      * Force a refresh of storage metrics.
      */
     @MutationMapping
-    public ImageCacheStats refreshStorageMetrics() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public RefreshStorageMetricsPayload refreshStorageMetrics() {
         log.info("Refreshing storage metrics");
-        return metricsService.refreshStorageMetrics();
+        ImageCacheStats stats = metricsService.refreshStorageMetrics();
+        return new RefreshStorageMetricsPayload(stats, List.of());
     }
 
     /**
      * Force a refresh of all metrics.
      */
     @MutationMapping
-    public boolean refreshAllMetrics() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public RefreshAllMetricsPayload refreshAllMetrics() {
         log.info("Refreshing all metrics");
         metricsService.refreshAllMetrics();
-        return true;
+        return new RefreshAllMetricsPayload(true, List.of());
     }
 }

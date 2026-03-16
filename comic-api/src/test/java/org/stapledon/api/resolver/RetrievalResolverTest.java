@@ -1,8 +1,6 @@
 package org.stapledon.api.resolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
@@ -51,7 +49,7 @@ class RetrievalResolverTest {
         when(retrievalStatusService.getRetrievalRecords(isNull(), isNull(), isNull(), isNull(), eq(100)))
                 .thenReturn(List.of());
 
-        List<Map<String, Object>> result = resolver.retrievalRecords(null, null, null, null, null);
+        List<RetrievalResolver.RetrievalRecordDto> result = resolver.retrievalRecords(null, null, null, null, null);
 
         assertThat(result).isEmpty();
     }
@@ -64,16 +62,16 @@ class RetrievalResolverTest {
         when(retrievalStatusService.getRetrievalRecords(isNull(), isNull(), isNull(), isNull(), eq(100)))
                 .thenReturn(List.of(record));
 
-        List<Map<String, Object>> result = resolver.retrievalRecords(null, null, null, null, null);
+        List<RetrievalResolver.RetrievalRecordDto> result = resolver.retrievalRecords(null, null, null, null, null);
 
         assertThat(result).hasSize(1);
-        Map<String, Object> mapped = result.getFirst();
-        assertThat(mapped.get("comicName")).isEqualTo("Garfield");
-        assertThat(mapped.get("comicDate")).isEqualTo(LocalDate.of(2024, 1, 15));
-        assertThat(mapped.get("source")).isEqualTo("gocomics");
-        assertThat(mapped.get("status")).isEqualTo("SUCCESS");
-        assertThat(mapped.get("retrievalDurationMs")).isEqualTo(150.0);
-        assertThat(mapped.get("imageSize")).isEqualTo(52428.0);
+        RetrievalResolver.RetrievalRecordDto mapped = result.getFirst();
+        assertThat(mapped.comicName()).isEqualTo("Garfield");
+        assertThat(mapped.comicDate()).isEqualTo(LocalDate.of(2024, 1, 15));
+        assertThat(mapped.source()).isEqualTo("gocomics");
+        assertThat(mapped.status()).isEqualTo(ComicRetrievalStatus.SUCCESS);
+        assertThat(mapped.retrievalDurationMs()).isEqualTo(150.0);
+        assertThat(mapped.imageSize()).isEqualTo(52428.0);
     }
 
     @Test
@@ -104,7 +102,7 @@ class RetrievalResolverTest {
     void retrievalRecordReturnsNullWhenNotFound() {
         when(retrievalStatusService.getRetrievalRecord("nonexistent")).thenReturn(Optional.empty());
 
-        Map<String, Object> result = resolver.retrievalRecord("nonexistent");
+        RetrievalResolver.RetrievalRecordDto result = resolver.retrievalRecord("nonexistent");
 
         assertThat(result).isNull();
     }
@@ -116,11 +114,11 @@ class RetrievalResolverTest {
 
         when(retrievalStatusService.getRetrievalRecord("Peanuts_2024-03-10")).thenReturn(Optional.of(record));
 
-        Map<String, Object> result = resolver.retrievalRecord("Peanuts_2024-03-10");
+        RetrievalResolver.RetrievalRecordDto result = resolver.retrievalRecord("Peanuts_2024-03-10");
 
         assertThat(result).isNotNull();
-        assertThat(result.get("comicName")).isEqualTo("Peanuts");
-        assertThat(result.get("status")).isEqualTo("SUCCESS");
+        assertThat(result.comicName()).isEqualTo("Peanuts");
+        assertThat(result.status()).isEqualTo(ComicRetrievalStatus.SUCCESS);
     }
 
     // =========================================================================
@@ -156,12 +154,12 @@ class RetrievalResolverTest {
 
         when(retrievalStatusService.getRetrievalSummary(isNull(), isNull())).thenReturn(rawSummary);
 
-        Map<String, Object> result = resolver.retrievalSummary(null, null);
+        RetrievalResolver.RetrievalSummaryDto result = resolver.retrievalSummary(null, null);
 
-        assertThat(result.get("totalAttempts")).isEqualTo(100);
-        assertThat(result.get("successCount")).isEqualTo(90);
-        assertThat(result.get("successRate")).isEqualTo(90.0);
-        assertThat(result.get("averageDurationMs")).isEqualTo(250.0);
+        assertThat(result.totalAttempts()).isEqualTo(100);
+        assertThat(result.successCount()).isEqualTo(90);
+        assertThat(result.successRate()).isEqualTo(90.0);
+        assertThat(result.averageDurationMs()).isEqualTo(250.0);
     }
 
     @Test
@@ -175,29 +173,29 @@ class RetrievalResolverTest {
 
         when(retrievalStatusService.getRetrievalSummary(isNull(), isNull())).thenReturn(rawSummary);
 
-        Map<String, Object> result = resolver.retrievalSummary(null, null);
+        RetrievalResolver.RetrievalSummaryDto result = resolver.retrievalSummary(null, null);
 
-        assertThat(result.get("totalAttempts")).isEqualTo(0);
-        assertThat(result.get("successCount")).isEqualTo(0);
-        assertThat(result.get("averageDurationMs")).isNull();
+        assertThat(result.totalAttempts()).isEqualTo(0);
+        assertThat(result.successCount()).isEqualTo(0);
+        assertThat(result.averageDurationMs()).isNull();
     }
 
     // =========================================================================
-    // Status enum mapping
+    // Status enum mapping (now 1:1 — no lossy mapping)
     // =========================================================================
 
-    record StatusMappingCase(String label, ComicRetrievalStatus javaStatus, String expectedGraphql) {
+    record StatusMappingCase(String label, ComicRetrievalStatus javaStatus, ComicRetrievalStatus expectedGraphql) {
     }
 
     static Stream<StatusMappingCase> statusMappingCases() {
         return Stream.of(
-                new StatusMappingCase("SUCCESS maps to SUCCESS", ComicRetrievalStatus.SUCCESS, "SUCCESS"),
-                new StatusMappingCase("NETWORK_ERROR maps to ERROR", ComicRetrievalStatus.NETWORK_ERROR, "ERROR"),
-                new StatusMappingCase("PARSING_ERROR maps to FAILURE", ComicRetrievalStatus.PARSING_ERROR, "FAILURE"),
-                new StatusMappingCase("COMIC_UNAVAILABLE maps to NOT_FOUND", ComicRetrievalStatus.COMIC_UNAVAILABLE, "NOT_FOUND"),
-                new StatusMappingCase("AUTHENTICATION_ERROR maps to ERROR", ComicRetrievalStatus.AUTHENTICATION_ERROR, "ERROR"),
-                new StatusMappingCase("STORAGE_ERROR maps to FAILURE", ComicRetrievalStatus.STORAGE_ERROR, "FAILURE"),
-                new StatusMappingCase("UNKNOWN_ERROR maps to ERROR", ComicRetrievalStatus.UNKNOWN_ERROR, "ERROR")
+                new StatusMappingCase("SUCCESS maps to SUCCESS", ComicRetrievalStatus.SUCCESS, ComicRetrievalStatus.SUCCESS),
+                new StatusMappingCase("NETWORK_ERROR maps to NETWORK_ERROR", ComicRetrievalStatus.NETWORK_ERROR, ComicRetrievalStatus.NETWORK_ERROR),
+                new StatusMappingCase("PARSING_ERROR maps to PARSING_ERROR", ComicRetrievalStatus.PARSING_ERROR, ComicRetrievalStatus.PARSING_ERROR),
+                new StatusMappingCase("COMIC_UNAVAILABLE maps to COMIC_UNAVAILABLE", ComicRetrievalStatus.COMIC_UNAVAILABLE, ComicRetrievalStatus.COMIC_UNAVAILABLE),
+                new StatusMappingCase("AUTHENTICATION_ERROR maps to AUTHENTICATION_ERROR", ComicRetrievalStatus.AUTHENTICATION_ERROR, ComicRetrievalStatus.AUTHENTICATION_ERROR),
+                new StatusMappingCase("STORAGE_ERROR maps to STORAGE_ERROR", ComicRetrievalStatus.STORAGE_ERROR, ComicRetrievalStatus.STORAGE_ERROR),
+                new StatusMappingCase("UNKNOWN_ERROR maps to UNKNOWN_ERROR", ComicRetrievalStatus.UNKNOWN_ERROR, ComicRetrievalStatus.UNKNOWN_ERROR)
         );
     }
 
@@ -214,9 +212,9 @@ class RetrievalResolverTest {
         when(retrievalStatusService.getRetrievalRecords(isNull(), isNull(), isNull(), isNull(), eq(100)))
                 .thenReturn(List.of(record));
 
-        List<Map<String, Object>> result = resolver.retrievalRecords(null, null, null, null, null);
+        List<RetrievalResolver.RetrievalRecordDto> result = resolver.retrievalRecords(null, null, null, null, null);
 
-        assertThat(result.getFirst().get("status")).isEqualTo(tc.expectedGraphql);
+        assertThat(result.getFirst().status()).isEqualTo(tc.expectedGraphql);
     }
 
     // =========================================================================
@@ -227,9 +225,9 @@ class RetrievalResolverTest {
     void deleteRetrievalRecordDelegatesToService() {
         when(retrievalStatusService.deleteRetrievalRecord("test_id")).thenReturn(true);
 
-        boolean result = resolver.deleteRetrievalRecord("test_id");
+        var result = resolver.deleteRetrievalRecord("test_id");
 
-        assertThat(result).isTrue();
+        assertThat(result.success()).isTrue();
         verify(retrievalStatusService).deleteRetrievalRecord("test_id");
     }
 
@@ -238,9 +236,9 @@ class RetrievalResolverTest {
     void purgeRetrievalRecordsUsesCorrectDays(Integer input, int expectedDays) {
         when(retrievalStatusService.purgeOldRecords(expectedDays)).thenReturn(5);
 
-        int result = resolver.purgeRetrievalRecords(input);
+        var result = resolver.purgeRetrievalRecords(input);
 
-        assertThat(result).isEqualTo(5);
+        assertThat(result.purgedCount()).isEqualTo(5);
         verify(retrievalStatusService).purgeOldRecords(expectedDays);
     }
 }

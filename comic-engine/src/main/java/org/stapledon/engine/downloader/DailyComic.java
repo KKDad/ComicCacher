@@ -78,7 +78,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     /**
      * Download the image to the specified location.
      *
-     * @param sourceImageElement - HTML element for the image to download
+     * @param imageUrl - URL for the image to download
      * @param destinationFile    - Fully qualified name of the file to save
      * @return True if successful
      */

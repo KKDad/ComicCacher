@@ -11,6 +11,7 @@ import org.stapledon.api.dto.batch.BatchJobDto;
 import org.stapledon.api.dto.batch.BatchJobSummaryDto;
 import org.stapledon.api.dto.batch.BatchStepDto;
 import org.stapledon.api.dto.batch.DailyJobStatsDto;
+import org.stapledon.api.dto.payload.MutationPayloads.TriggerBatchJobPayload;
 import org.stapledon.engine.batch.BatchJobBaseConfig;
 import org.stapledon.engine.batch.BatchJobMonitoringService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
@@ -22,21 +23,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * GraphQL resolver for batch job queries and mutations.
  */
 @Slf4j
 @Controller
-@RequiredArgsConstructor
 public class BatchJobResolver {
 
     private final BatchJobMonitoringService monitoringService;
+    private final List<DailyJobScheduler> schedulers;
 
-    @Autowired(required = false)
-    private List<DailyJobScheduler> schedulers = List.of();
+    /**
+     * Constructs a BatchJobResolver with required dependencies.
+     */
+    public BatchJobResolver(BatchJobMonitoringService monitoringService, @Autowired(required = false) List<DailyJobScheduler> schedulers) {
+        this.monitoringService = monitoringService;
+        this.schedulers = schedulers != null ? schedulers : List.of();
+    }
 
     // =========================================================================
     // Queries
@@ -135,22 +141,24 @@ public class BatchJobResolver {
      * Trigger a batch job for comic retrieval.
      */
     @MutationMapping
-    public BatchJobDto triggerBatchJob(@Argument LocalDate targetDate) {
-        log.info("GraphQL: Triggering ComicDownloadJob, targetDate={}", targetDate);
+    @PreAuthorize("hasRole('ADMIN')")
+    public TriggerBatchJobPayload triggerBatchJob() {
+        log.info("GraphQL: Triggering ComicDownloadJob");
         DailyJobScheduler scheduler = findScheduler("ComicDownloadJob");
         Long executionId = scheduler.triggerManually();
         if (executionId == null) {
             throw new IllegalStateException("Failed to trigger ComicDownloadJob");
         }
         JobExecution execution = monitoringService.getJobExecution(executionId);
-        return mapJobExecution(execution);
+        return new TriggerBatchJobPayload(mapJobExecution(execution), List.of());
     }
 
     /**
      * Trigger a backfill job to retrieve missing comics.
      */
     @MutationMapping
-    public BatchJobDto triggerBackfillJob() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public TriggerBatchJobPayload triggerBackfillJob() {
         log.info("GraphQL: Triggering ComicBackfillJob");
         DailyJobScheduler scheduler = findScheduler("ComicBackfillJob");
         Long executionId = scheduler.triggerManually();
@@ -158,7 +166,7 @@ public class BatchJobResolver {
             throw new IllegalStateException("Failed to trigger ComicBackfillJob");
         }
         JobExecution execution = monitoringService.getJobExecution(executionId);
-        return mapJobExecution(execution);
+        return new TriggerBatchJobPayload(mapJobExecution(execution), List.of());
     }
 
     // =========================================================================

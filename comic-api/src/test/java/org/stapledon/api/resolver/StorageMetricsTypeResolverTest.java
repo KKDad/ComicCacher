@@ -5,11 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.stapledon.api.dto.metrics.ComicStorageMetricView;
+import org.stapledon.api.dto.metrics.StorageMetricsView;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
 
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +40,9 @@ class StorageMetricsTypeResolverTest {
                 new TotalBytesCase("ImageCacheStats",
                         ImageCacheStats.builder().totalStorageBytes(5000L).build(),
                         5000.0),
-                new TotalBytesCase("Map with totalBytes",
-                        Map.of("totalBytes", 123.4),
+                new TotalBytesCase("StorageMetricsView",
+                        new StorageMetricsView(123.4, 1, List.of(), null),
                         123.4),
-                new TotalBytesCase("Map without totalBytes",
-                        Map.of("other", "value"),
-                        0.0),
                 new TotalBytesCase("Unknown type",
                         "unknown",
                         0.0)
@@ -76,12 +74,9 @@ class StorageMetricsTypeResolverTest {
                 new ComicCountCase("ImageCacheStats with null perComicMetrics",
                         ImageCacheStats.builder().build(),
                         0),
-                new ComicCountCase("Map with comicCount",
-                        Map.of("comicCount", 7),
+                new ComicCountCase("StorageMetricsView",
+                        new StorageMetricsView(0, 7, List.of(), null),
                         7),
-                new ComicCountCase("Map without comicCount",
-                        Map.of("other", "value"),
-                        0),
                 new ComicCountCase("Unknown type",
                         42,
                         0)
@@ -107,7 +102,7 @@ class StorageMetricsTypeResolverTest {
                 .storageBytes(1000L).imageCount(10)
                 .storageByYear(Map.of("2023", 500L)).build());
 
-        var preBuiltList = List.of(Map.<String, Object>of("comicName", "Dilbert"));
+        var preBuiltList = List.of(new ComicStorageMetricView("Dilbert", 500.0, 5, Map.of()));
 
         return Stream.of(
                 new ComicsCase("ImageCacheStats with perComicMetrics",
@@ -116,12 +111,9 @@ class StorageMetricsTypeResolverTest {
                 new ComicsCase("ImageCacheStats with null perComicMetrics",
                         ImageCacheStats.builder().build(),
                         0),
-                new ComicsCase("Map with comics list",
-                        Map.of("comics", preBuiltList),
+                new ComicsCase("StorageMetricsView with comics",
+                        new StorageMetricsView(0, 1, preBuiltList, null),
                         1),
-                new ComicsCase("Map without comics",
-                        Map.of("other", "value"),
-                        0),
                 new ComicsCase("Unknown type",
                         "unknown",
                         0)
@@ -133,21 +125,6 @@ class StorageMetricsTypeResolverTest {
     void comics(ComicsCase tc) {
         var result = resolver.comics(tc.source);
         assertThat(result).hasSize(tc.expectedSize);
-    }
-
-    void comics_fromImageCacheStats_containsExpectedFields() {
-        var metrics = new LinkedHashMap<String, ComicStorageMetrics>();
-        metrics.put("Garfield", ComicStorageMetrics.builder()
-                .storageBytes(2000L).imageCount(20)
-                .storageByYear(Map.of("2023", 1500L)).build());
-
-        var result = resolver.comics(ImageCacheStats.builder().perComicMetrics(metrics).build());
-        assertThat(result).hasSize(1);
-        var comic = result.get(0);
-        assertThat(comic.get("comicName")).isEqualTo("Garfield");
-        assertThat(comic.get("totalBytes")).isEqualTo(2000.0);
-        assertThat(comic.get("imageCount")).isEqualTo(20);
-        assertThat(comic.get("_storageByYear")).isEqualTo(Map.of("2023", 1500L));
     }
 
     // =========================================================================
@@ -164,11 +141,11 @@ class StorageMetricsTypeResolverTest {
                 new LastUpdatedCase("ImageCacheStats returns null",
                         ImageCacheStats.builder().build(),
                         null),
-                new LastUpdatedCase("Map with _lastUpdated",
-                        Map.of("_lastUpdated", now),
+                new LastUpdatedCase("StorageMetricsView with lastUpdated",
+                        new StorageMetricsView(0, 0, List.of(), now),
                         now),
-                new LastUpdatedCase("Map without _lastUpdated",
-                        Map.of("other", "value"),
+                new LastUpdatedCase("StorageMetricsView without lastUpdated",
+                        new StorageMetricsView(0, 0, List.of(), null),
                         null),
                 new LastUpdatedCase("Unknown type",
                         "unknown",
