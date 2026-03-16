@@ -22,14 +22,18 @@ export function DashboardClient() {
   const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useGetUserPreferencesQuery();
 
   const addFavorite = useAddFavoriteMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
+    onSuccess: (data) => {
+      if (data.addFavorite.errors.length === 0) {
+        queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
+      }
     },
   });
 
   const removeFavorite = useRemoveFavoriteMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
+    onSuccess: (data) => {
+      if (data.removeFavorite.errors.length === 0) {
+        queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
+      }
     },
   });
 

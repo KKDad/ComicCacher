@@ -8,12 +8,13 @@ vi.mock('@/generated/graphql', () => ({
   useGetRetrievalSummaryQuery: vi.fn(),
   useGetRetrievalRecordsQuery: vi.fn(),
   RetrievalStatusEnum: {
+    AuthenticationError: 'AUTHENTICATION_ERROR',
+    ComicUnavailable: 'COMIC_UNAVAILABLE',
+    NetworkError: 'NETWORK_ERROR',
+    ParsingError: 'PARSING_ERROR',
+    StorageError: 'STORAGE_ERROR',
     Success: 'SUCCESS',
-    Failure: 'FAILURE',
-    Error: 'ERROR',
-    Skipped: 'SKIPPED',
-    RateLimited: 'RATE_LIMITED',
-    NotFound: 'NOT_FOUND',
+    UnknownError: 'UNKNOWN_ERROR',
   },
 }));
 
@@ -27,9 +28,9 @@ const mockSummary = {
     averageDurationMs: 245.5,
     byStatus: [
       { status: RetrievalStatusEnum.Success, count: 1350 },
-      { status: RetrievalStatusEnum.Failure, count: 100 },
-      { status: RetrievalStatusEnum.Skipped, count: 30 },
-      { status: RetrievalStatusEnum.NotFound, count: 20 },
+      { status: RetrievalStatusEnum.NetworkError, count: 100 },
+      { status: RetrievalStatusEnum.ComicUnavailable, count: 30 },
+      { status: RetrievalStatusEnum.UnknownError, count: 20 },
     ],
     byComic: [
       { comicName: 'Garfield', totalAttempts: 500, successCount: 490, failureCount: 10 },
@@ -56,7 +57,7 @@ const mockRecords = {
       comicName: 'Peanuts',
       comicDate: '2024-01-15',
       source: 'gocomics',
-      status: RetrievalStatusEnum.Failure,
+      status: RetrievalStatusEnum.NetworkError,
       retrievalDurationMs: 3200,
       imageSize: null,
       httpStatusCode: 500,
@@ -67,7 +68,7 @@ const mockRecords = {
       comicName: 'Calvin and Hobbes',
       comicDate: '2024-01-14',
       source: 'gocomics',
-      status: RetrievalStatusEnum.NotFound,
+      status: RetrievalStatusEnum.ComicUnavailable,
       retrievalDurationMs: null,
       imageSize: null,
       httpStatusCode: 404,
@@ -173,8 +174,8 @@ describe('RetrievalStatusPage', () => {
     renderWithQuery(<RetrievalStatusPage />);
     const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
     expect(within(table).getByText('SUCCESS')).toBeInTheDocument();
-    expect(within(table).getByText('FAILURE')).toBeInTheDocument();
-    expect(within(table).getByText('NOT FOUND')).toBeInTheDocument();
+    expect(within(table).getByText('NETWORK ERROR')).toBeInTheDocument();
+    expect(within(table).getByText('COMIC UNAVAILABLE')).toBeInTheDocument();
   });
 
   it('shows error message in record row', () => {
@@ -239,7 +240,7 @@ describe('RetrievalStatusPage', () => {
 
     await user.click(statusSortBtn);
     const rows = within(table).getAllByRole('row').slice(1);
-    // desc: SUCCESS, NOT_FOUND, FAILURE
+    // desc: SUCCESS, NETWORK_ERROR, COMIC_UNAVAILABLE
     expect(rows[0]).toHaveTextContent('Garfield');
   });
 

@@ -200,7 +200,7 @@ describe('DashboardClient', () => {
     });
     renderWithQuery(<DashboardClient />);
     // Calling onSuccess exercises the invalidateQueries branch
-    expect(() => capturedOpts.onSuccess()).not.toThrow();
+    expect(() => capturedOpts.onSuccess({ addFavorite: { errors: [] } })).not.toThrow();
   });
 
   it('invokes removeFavorite onSuccess callback', () => {
@@ -210,7 +210,7 @@ describe('DashboardClient', () => {
       return mockMutation as any;
     });
     renderWithQuery(<DashboardClient />);
-    expect(() => capturedOpts.onSuccess()).not.toThrow();
+    expect(() => capturedOpts.onSuccess({ removeFavorite: { errors: [] } })).not.toThrow();
   });
 
   it('handles empty comics data', () => {

@@ -21,17 +21,18 @@ function formatBytes(bytes: number): string {
 
 const statusColors: Record<RetrievalStatusEnum, string> = {
   [RetrievalStatusEnum.Success]: 'bg-green-100 text-green-800',
-  [RetrievalStatusEnum.Failure]: 'bg-red-100 text-red-800',
-  [RetrievalStatusEnum.Error]: 'bg-red-100 text-red-800',
-  [RetrievalStatusEnum.Skipped]: 'bg-yellow-100 text-yellow-800',
-  [RetrievalStatusEnum.RateLimited]: 'bg-yellow-100 text-yellow-800',
-  [RetrievalStatusEnum.NotFound]: 'bg-gray-100 text-gray-800',
+  [RetrievalStatusEnum.AuthenticationError]: 'bg-red-100 text-red-800',
+  [RetrievalStatusEnum.NetworkError]: 'bg-red-100 text-red-800',
+  [RetrievalStatusEnum.ParsingError]: 'bg-red-100 text-red-800',
+  [RetrievalStatusEnum.StorageError]: 'bg-red-100 text-red-800',
+  [RetrievalStatusEnum.ComicUnavailable]: 'bg-yellow-100 text-yellow-800',
+  [RetrievalStatusEnum.UnknownError]: 'bg-gray-100 text-gray-800',
 };
 
 function StatusBadge({ status }: { status: RetrievalStatusEnum }) {
   return (
     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[status]}`}>
-      {status.replace('_', ' ')}
+      {status.replace(/_/g, ' ')}
     </span>
   );
 }
@@ -109,7 +110,7 @@ export default function RetrievalStatusPage() {
   const summaryCards = [
     { label: 'Total Attempts', value: summary.totalAttempts.toLocaleString(), icon: Activity },
     { label: 'Success Rate', value: `${summary.successRate.toFixed(1)}%`, icon: CheckCircle },
-    { label: 'Failures', value: (summary.failureCount + (summary.totalAttempts - summary.successCount - summary.failureCount - summary.skippedCount)).toLocaleString(), icon: XCircle },
+    { label: 'Failures', value: (summary.totalAttempts - summary.successCount).toLocaleString(), icon: XCircle },
     { label: 'Avg Duration', value: summary.averageDurationMs != null ? formatDuration(summary.averageDurationMs) : '—', icon: Timer },
   ];
 

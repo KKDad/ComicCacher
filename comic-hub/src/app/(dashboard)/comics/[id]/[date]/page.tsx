@@ -25,7 +25,10 @@ export default function ComicStripPage() {
 
   const queryClient = useQueryClient();
   const updateLastRead = useUpdateLastReadMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.updateLastRead.errors.length > 0) {
+        console.warn('updateLastRead errors:', data.updateLastRead.errors);
+      }
       queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
     },
   });
