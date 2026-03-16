@@ -9,16 +9,15 @@ ext {
     // Project version (can be overridden via -PbuildVersion=X.Y.Z)
     projectVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : '2.3.1'
 
-    // Core dependency versions
-    springBootVersion = '4.0.1'
-    springDependencyManagementVersion = '1.1.8'
+    // Core dependency versions — keep in sync with plugin version above
+    springBootVersion = '4.0.3'
 
     // Library versions
     bcryptVersion = '0.4'
     caffeineVersion = '3.2.3'
-    gsonVersion = '2.13.2'
+    jackson2BomVersion = '2.21.1'
+    jackson3BomVersion = '3.1.0'
     guavaVersion = '33.5.0-jre'
-    h2Version = 'managed'
     jjwtVersion = '0.13.0'
     jsoupVersion = '1.21.2'
     lombokVersion = '1.18.42'
@@ -78,27 +77,57 @@ subprojects {
         enabled = false  // Skip checkstyle on test code initially
     }
 
-    // Add JUnit Platform Launcher for all subprojects (required by Gradle 8.5+)
-    dependencies {
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.29.0")
-        // OpenRewrite Recipes for Style and Checkstyle alignment
-        rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.29.0")
-        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.29.0")
+    // Override Jackson BOM versions to fix CVEs (Spring Boot 4.0.3 ships older Jackson)
+    ext['jackson-2-bom.version'] = rootProject.ext.jackson2BomVersion
+    ext['jackson-bom.version'] = rootProject.ext.jackson3BomVersion
+
+    // Apply Spring Boot BOM to all modules using dependency-management plugin
+    pluginManager.withPlugin('io.spring.dependency-management') {
+        dependencyManagement {
+            imports {
+                mavenBom "org.springframework.boot:spring-boot-dependencies:${rootProject.ext.springBootVersion}"
+            }
+        }
     }
 
-rewrite {
-    configFile = rootProject.file('rewrite.yaml')
-    // You only need the custom recipe name from your rewrite.yml
-    // This recipe acts as a container for all the others
-    activeRecipe("com.comiccacher.StyleGuide")
-}
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencies {
+        // JUnit Platform Launcher for all subprojects (required by Gradle 8.5+)
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+        // Lombok
+        compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+        annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+        testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+        testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
+
+        // Common test dependencies
+        testImplementation "org.assertj:assertj-core"
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+        // OpenRewrite Recipes
+        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.29.0")
+        rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.29.0")
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+
+    rewrite {
+        configFile = rootProject.file('rewrite.yaml')
+        activeRecipe("com.comiccacher.StyleGuide")
+    }
 }
 
-// Add testAll task to run all tests in all subprojects
-task testAll {
-    // TEMPORARY: Only run unit tests until integration tests are fixed with facade pattern
+// Run all tests across all subprojects (integration tests run via coditory plugin finalizer on :test)
+tasks.register('testAll') {
     dependsOn subprojects.collect { it.path + ':test' }
-    description = 'Runs all tests in all subprojects (currently only unit tests)'
+    description = 'Runs all tests in all subprojects'
     group = 'verification'
 }
