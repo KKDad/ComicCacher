@@ -65,7 +65,7 @@ export function DashboardClient() {
       id: c.id,
       name: c.name,
       date: latestDate,
-      thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl,
+      thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl ?? undefined,
       isNew,
       isFavorite: favoriteIds.has(c.id),
       onToggleFavorite: () => {

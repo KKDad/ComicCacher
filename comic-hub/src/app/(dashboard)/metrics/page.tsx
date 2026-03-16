@@ -106,7 +106,7 @@ export default function MetricsPage() {
   const storage = metrics.storage;
   const access = metrics.access;
 
-  const totalImages = storage?.comics.reduce((sum, c) => sum + c.imageCount, 0) ?? 0;
+  const totalImages = storage?.comics?.reduce((sum, c) => sum + c.imageCount, 0) ?? 0;
 
   const storageComics = [...(storage?.comics ?? [])].sort((a, b) => {
     const dir = storageSortDir === 'asc' ? 1 : -1;
