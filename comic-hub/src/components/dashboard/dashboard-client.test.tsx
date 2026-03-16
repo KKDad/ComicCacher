@@ -124,7 +124,10 @@ describe('DashboardClient', () => {
       error: null,
     } as any);
     renderWithQuery(<DashboardClient />);
-    expect(screen.getByText('Continue Where You Left Off')).toBeInTheDocument();
+    // Most recent date is comicId 1 (2024-01-14) → Garfield should appear in continue-reading
+    expect(screen.getByText('Continue Reading')).toBeInTheDocument();
+    // Garfield appears in both sections; the "Continue Reading" button confirms lastRead was resolved
+    expect(screen.queryByText('No recent reading history')).not.toBeInTheDocument();
   });
 
   it('handles null preferences', () => {
@@ -134,7 +137,8 @@ describe('DashboardClient', () => {
       error: null,
     } as any);
     renderWithQuery(<DashboardClient />);
-    expect(screen.getByText("Today's Comics")).toBeInTheDocument();
+    expect(screen.getByText('No favorite comics yet')).toBeInTheDocument();
+    expect(screen.getByText('No recent reading history')).toBeInTheDocument();
   });
 
   it('handles lastReadDates with no matching comic', () => {
@@ -149,7 +153,7 @@ describe('DashboardClient', () => {
       error: null,
     } as any);
     renderWithQuery(<DashboardClient />);
-    expect(screen.getByText("Today's Comics")).toBeInTheDocument();
+    expect(screen.getByText('No recent reading history')).toBeInTheDocument();
   });
 
   it('falls back to "there" when me query has no displayName', () => {
@@ -189,7 +193,8 @@ describe('DashboardClient', () => {
       error: null,
     } as any);
     renderWithQuery(<DashboardClient />);
-    expect(screen.getByText("Today's Comics")).toBeInTheDocument();
+    const img = screen.getByAltText('Peanuts');
+    expect(img).toHaveAttribute('src', 'https://example.com/peanuts.png');
   });
 
   it('invokes addFavorite onSuccess callback', () => {

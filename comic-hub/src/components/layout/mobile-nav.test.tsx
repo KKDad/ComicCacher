@@ -58,7 +58,9 @@ describe('MobileNav', () => {
     await userEvent.click(screen.getByText('More'));
     expect(screen.getByText('Retrieval Status')).toBeInTheDocument();
     await userEvent.click(screen.getByText('Retrieval Status'));
-    // The sheet should close (setIsOpen(false) is called)
+    await vi.waitFor(() => {
+      expect(screen.queryByText('Menu')).not.toBeInTheDocument();
+    });
   });
 
   it('calls logout when logout is clicked in sheet', async () => {

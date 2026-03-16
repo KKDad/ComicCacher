@@ -80,7 +80,10 @@ describe('Header', () => {
 
   it('does not render menu button by default', () => {
     renderHeader();
-    // Default is showMenuButton=false, so no toggle button for sidebar
+    const buttons = screen.getAllByRole('button');
+    // When showMenuButton=false, no button should contain the Menu icon's sr-only text or toggle behavior
+    // The only buttons should be: search (mobile), notifications, and avatar
+    expect(buttons).toHaveLength(3);
   });
 
   it('computes gravatar URL when user has email', async () => {

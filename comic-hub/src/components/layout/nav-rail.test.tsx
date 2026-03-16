@@ -30,7 +30,7 @@ describe('NavRail', () => {
     render(<NavRail />);
     // 6 nav buttons + 1 logout button
     const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBeGreaterThanOrEqual(7);
+    expect(buttons).toHaveLength(7);
   });
 
   it('calls logout when logout button is clicked', async () => {
