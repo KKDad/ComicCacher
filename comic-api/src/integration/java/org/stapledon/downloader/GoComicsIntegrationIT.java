@@ -29,7 +29,7 @@ class GoComicsIntegrationIT {
     @BeforeAll
     static void setUp() throws Exception {
         path = Files.createTempDirectory("GoComicsTest");
-        LOG.info("Using TempDirectory: {}", path.toString());
+        LOG.info("Using TempDirectory: {}", path);
 
         // Create CacheProperties for tests with headless=true
         cacheProperties = new CacheProperties();
