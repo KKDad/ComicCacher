@@ -4,18 +4,21 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.stapledon.api.dto.payload.MutationPayloads.FavoritePayload;
+import org.stapledon.api.dto.payload.MutationPayloads.UpdateDisplaySettingsPayload;
+import org.stapledon.api.dto.payload.MutationPayloads.UpdateLastReadPayload;
 import org.stapledon.api.dto.preference.UserPreference;
-import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.preference.service.PreferenceService;
 
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,11 +42,8 @@ public class PreferenceResolver {
      * Maps to the "preferences" query in the schema.
      */
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public UserPreference preferences(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            throw new AuthenticationException("Authentication required");
-        }
-
         log.info("Getting preferences for user: {}", userDetails.getUsername());
         return preferenceService.getPreference(userDetails.getUsername())
                 .orElse(null);
@@ -63,7 +63,7 @@ public class PreferenceResolver {
         }
         return preference.getLastReadDates().entrySet().stream()
                 .map(e -> new LastReadEntry(e.getKey(), e.getValue()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // =========================================================================
@@ -74,74 +74,65 @@ public class PreferenceResolver {
      * Add a comic to the user's favorites.
      */
     @MutationMapping
-    public UserPreference addFavorite(
+    @PreAuthorize("isAuthenticated()")
+    public FavoritePayload addFavorite(
             @AuthenticationPrincipal UserDetails userDetails,
             @Argument int comicId) {
 
-        if (userDetails == null) {
-            throw new AuthenticationException("Authentication required");
-        }
-
         log.info("Adding comic {} to favorites for user: {}", comicId, userDetails.getUsername());
 
-        return preferenceService.addFavorite(userDetails.getUsername(), comicId)
+        UserPreference pref = preferenceService.addFavorite(userDetails.getUsername(), comicId)
                 .orElseThrow(() -> new RuntimeException("Failed to add favorite"));
+        return new FavoritePayload(pref, List.of());
     }
 
     /**
      * Remove a comic from the user's favorites.
      */
     @MutationMapping
-    public UserPreference removeFavorite(
+    @PreAuthorize("isAuthenticated()")
+    public FavoritePayload removeFavorite(
             @AuthenticationPrincipal UserDetails userDetails,
             @Argument int comicId) {
 
-        if (userDetails == null) {
-            throw new AuthenticationException("Authentication required");
-        }
-
         log.info("Removing comic {} from favorites for user: {}", comicId, userDetails.getUsername());
 
-        return preferenceService.removeFavorite(userDetails.getUsername(), comicId)
+        UserPreference pref = preferenceService.removeFavorite(userDetails.getUsername(), comicId)
                 .orElseThrow(() -> new RuntimeException("Failed to remove favorite"));
+        return new FavoritePayload(pref, List.of());
     }
 
     /**
      * Update the last read date for a comic.
      */
     @MutationMapping
-    public UserPreference updateLastRead(
+    @PreAuthorize("isAuthenticated()")
+    public UpdateLastReadPayload updateLastRead(
             @AuthenticationPrincipal UserDetails userDetails,
             @Argument int comicId,
             @Argument LocalDate date) {
 
-        if (userDetails == null) {
-            throw new AuthenticationException("Authentication required");
-        }
-
         log.info("Updating last read date for comic {} to {} for user: {}", comicId, date, userDetails.getUsername());
 
-        return preferenceService.updateLastRead(userDetails.getUsername(), comicId, date)
+        UserPreference pref = preferenceService.updateLastRead(userDetails.getUsername(), comicId, date)
                 .orElseThrow(() -> new RuntimeException("Failed to update last read date"));
+        return new UpdateLastReadPayload(pref, List.of());
     }
 
     /**
      * Update display settings (theme, layout, etc.).
      */
     @MutationMapping
-    @SuppressWarnings("unchecked")
-    public UserPreference updateDisplaySettings(
+    @PreAuthorize("isAuthenticated()")
+    public UpdateDisplaySettingsPayload updateDisplaySettings(
             @AuthenticationPrincipal UserDetails userDetails,
             @Argument Map<String, Object> settings) {
 
-        if (userDetails == null) {
-            throw new AuthenticationException("Authentication required");
-        }
-
         log.info("Updating display settings for user: {}", userDetails.getUsername());
 
-        return preferenceService.updateDisplaySettings(userDetails.getUsername(), new HashMap<>(settings))
+        UserPreference pref = preferenceService.updateDisplaySettings(userDetails.getUsername(), new HashMap<>(settings))
                 .orElseThrow(() -> new RuntimeException("Failed to update display settings"));
+        return new UpdateDisplaySettingsPayload(pref, List.of());
     }
 
     // =========================================================================

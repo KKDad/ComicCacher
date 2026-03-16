@@ -15,6 +15,7 @@ vi.mock('@/lib/gravatar', () => ({
   getGravatarUrl: vi.fn(),
 }));
 
+
 function renderHeader(props: { showMenuButton?: boolean } = {}, user = createMockUser()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -88,6 +89,12 @@ describe('Header', () => {
     await vi.waitFor(() => {
       expect(gravatar.getGravatarUrl).toHaveBeenCalledWith('avatar@test.com');
     });
+  });
+
+  it('does not compute gravatar when no email', () => {
+    vi.mocked(gravatar.getGravatarUrl).mockClear();
+    renderHeader({}, createMockUser({ email: '' }));
+    expect(gravatar.getGravatarUrl).not.toHaveBeenCalled();
   });
 
   it('calls logout when Sign out is clicked', async () => {

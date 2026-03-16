@@ -4,6 +4,11 @@ import ComicStripPage from './page';
 import { useParams, useRouter } from 'next/navigation';
 import { useGetComicStripQuery, useGetComicQuery, useUpdateLastReadMutation } from '@/generated/graphql';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+vi.mock('sonner', () => ({
+  toast: { warning: vi.fn() },
+}));
 
 vi.mock('@/generated/graphql', () => ({
   useGetComicStripQuery: vi.fn(),
@@ -174,5 +179,16 @@ describe('ComicStripPage', () => {
   it('renders View Details link', () => {
     renderWithQuery(<ComicStripPage />);
     expect(screen.getByRole('link', { name: /view details/i })).toHaveAttribute('href', '/comics/1');
+  });
+
+  it('shows toast warning when updateLastRead has errors', () => {
+    let capturedOpts: any;
+    vi.mocked(useUpdateLastReadMutation).mockImplementation((opts: any) => {
+      capturedOpts = opts;
+      return { mutate: mockMutate } as any;
+    });
+    renderWithQuery(<ComicStripPage />);
+    capturedOpts.onSuccess({ updateLastRead: { errors: ['something went wrong'] } });
+    expect(toast.warning).toHaveBeenCalledWith('Reading progress could not be saved');
   });
 });

@@ -260,7 +260,7 @@ class ImageMetadataRepositoryTest {
                 .colorMode(ImageMetadata.ColorMode.COLOR)
                 .samplePercentage(5.0)
                 .captureTimestamp(OffsetDateTime.of(2023, 1, 15, 10, 30, 45, 0, java.time.ZoneOffset.UTC))
-                .sourceUrl("http://example.com/image.png")
+                .sourceUrl("https://example.com/image.png")
                 .build();
 
         // When
@@ -270,7 +270,7 @@ class ImageMetadataRepositoryTest {
         // Then
         assertThat(loaded.isPresent()).isTrue();
         ImageMetadata loadedMetadata = loaded.get();
-        assertThat(loadedMetadata.getSourceUrl()).isEqualTo("http://example.com/image.png");
+        assertThat(loadedMetadata.getSourceUrl()).isEqualTo("https://example.com/image.png");
         assertThat(loadedMetadata.getSamplePercentage()).isEqualTo(5.0);
         assertThat(loadedMetadata.getCaptureTimestamp())
                 .isEqualTo(OffsetDateTime.of(2023, 1, 15, 10, 30, 45, 0, java.time.ZoneOffset.UTC));
@@ -422,7 +422,7 @@ class ImageMetadataRepositoryTest {
                 .colorMode(ImageMetadata.ColorMode.COLOR)
                 .samplePercentage(5.0)
                 .captureTimestamp(OffsetDateTime.now())
-                .sourceUrl("http://example.com/test.png")
+                .sourceUrl("https://example.com/test.png")
                 .build();
     }
 

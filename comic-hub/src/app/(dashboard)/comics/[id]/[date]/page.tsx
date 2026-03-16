@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useGetComicStripQuery, useGetComicQuery, useUpdateLastReadMutation } from '@/generated/graphql';
+import { toast } from 'sonner';
 
 export default function ComicStripPage() {
   const params = useParams();
@@ -25,7 +26,10 @@ export default function ComicStripPage() {
 
   const queryClient = useQueryClient();
   const updateLastRead = useUpdateLastReadMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.updateLastRead.errors.length > 0) {
+        toast.warning('Reading progress could not be saved');
+      }
       queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
     },
   });

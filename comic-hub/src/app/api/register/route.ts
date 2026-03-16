@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? 'Invalid input' },
+      { error: parsed.error.issues[0].message },
       { status: 400 },
     );
   }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
   if (json.errors) {
     return NextResponse.json(
-      { error: json.errors[0]?.message ?? 'Registration failed' },
+      { error: json.errors[0].message },
       { status: 400 },
     );
   }

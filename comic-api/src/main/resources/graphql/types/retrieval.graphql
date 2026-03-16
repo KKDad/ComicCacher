@@ -141,12 +141,14 @@ type StatusCount {
 
 """
 Possible retrieval status values.
+Mirrors the Java ComicRetrievalStatus enum 1:1.
 """
 enum RetrievalStatusEnum {
+    AUTHENTICATION_ERROR
+    COMIC_UNAVAILABLE
+    NETWORK_ERROR
+    PARSING_ERROR
+    STORAGE_ERROR
     SUCCESS
-    FAILURE
-    SKIPPED
-    ERROR
-    NOT_FOUND
-    RATE_LIMITED
+    UNKNOWN_ERROR
 }

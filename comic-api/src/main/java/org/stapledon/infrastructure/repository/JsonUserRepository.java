@@ -92,4 +92,11 @@ public class JsonUserRepository implements UserRepository {
 
         return userConfigWriter.registerUser(registrationDto);
     }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return findAllUsers().stream()
+                .filter(user -> email.equalsIgnoreCase(user.getEmail()))
+                .findFirst();
+    }
 }

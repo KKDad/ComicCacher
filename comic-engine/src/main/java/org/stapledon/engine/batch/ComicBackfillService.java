@@ -181,10 +181,9 @@ public class ComicBackfillService {
      *         no valid range
      */
     private DateRange calculateScanRange(ComicItem comic) {
-        LocalDate today = LocalDate.now();
 
         // Start from today (scan backwards from most recent)
-        LocalDate scanStart = today;
+        LocalDate scanStart = LocalDate.now();
 
         // If comic is discontinued and has a newest date, don't scan after it
         if (!comic.isActive() && comic.getNewest() != null
@@ -193,10 +192,9 @@ public class ComicBackfillService {
         }
 
         // Calculate the earliest allowed date based on source limits
-        LocalDate sourceEarliestAllowed = config.getEarliestAllowedDate(comic.getSource());
 
         // End at the earliest of: comic's oldest date OR source limit
-        LocalDate scanEnd = sourceEarliestAllowed;
+        LocalDate scanEnd = config.getEarliestAllowedDate(comic.getSource());
 
         if (comic.getOldest() != null && comic.getOldest().isAfter(scanEnd)) {
             scanEnd = comic.getOldest();

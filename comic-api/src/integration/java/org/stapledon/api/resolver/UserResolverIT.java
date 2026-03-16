@@ -29,16 +29,22 @@ class UserResolverIT extends AbstractHttpGraphQlIntegrationTest {
     private static final String MUTATION_UPDATE_PROFILE = """
             mutation UpdateProfile($input: UpdateProfileInput!) {
                 updateProfile(input: $input) {
-                    username
-                    email
-                    displayName
+                    user {
+                        username
+                        email
+                        displayName
+                    }
+                    errors { message }
                 }
             }
             """;
 
     private static final String MUTATION_UPDATE_PASSWORD = """
             mutation UpdatePassword($newPassword: String!) {
-                updatePassword(newPassword: $newPassword)
+                updatePassword(newPassword: $newPassword) {
+                    success
+                    errors { message }
+                }
             }
             """;
 
@@ -54,7 +60,7 @@ class UserResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .document(QUERY_ME)
                 .execute()
                 .errors()
-                .expect(e -> e.getMessage().contains("Unauthorized"))
+                .expect(e -> e.getMessage().contains("permission") || e.getMessage().contains("Unauthorized"))
                 .verify();
     }
 
@@ -97,7 +103,7 @@ class UserResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .variable("input", input)
                 .execute()
                 .errors().verify()
-                .path("updateProfile.displayName")
+                .path("updateProfile.user.displayName")
                 .entity(String.class)
                 .isEqualTo("Updated Display Name");
     }
@@ -115,7 +121,7 @@ class UserResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .variable("newPassword", "newSecurePassword123!")
                 .execute()
                 .errors().verify()
-                .path("updatePassword")
+                .path("updatePassword.success")
                 .entity(Boolean.class)
                 .isEqualTo(true);
     }

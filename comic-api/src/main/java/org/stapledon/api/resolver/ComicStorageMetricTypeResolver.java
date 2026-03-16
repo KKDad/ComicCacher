@@ -2,6 +2,7 @@ package org.stapledon.api.resolver;
 
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
+import org.stapledon.api.dto.metrics.ComicStorageMetricView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,9 +21,8 @@ public class ComicStorageMetricTypeResolver {
      * Convert storageByYear Map to yearlyBreakdown List.
      */
     @SchemaMapping(typeName = "ComicStorageMetric", field = "yearlyBreakdown")
-    public List<Map<String, Object>> yearlyBreakdown(Map<String, Object> comic) {
-        @SuppressWarnings("unchecked")
-        Map<String, Long> storageByYear = (Map<String, Long>) comic.get("_storageByYear");
+    public List<Map<String, Object>> yearlyBreakdown(ComicStorageMetricView comic) {
+        Map<String, Long> storageByYear = comic.storageByYear();
         if (storageByYear == null) {
             return Collections.emptyList();
         }

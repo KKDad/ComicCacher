@@ -343,6 +343,15 @@ export type CreateComicInput = {
   sourceIdentifier?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Payload for createComic mutation. */
+export type CreateComicPayload = {
+  __typename?: 'CreateComicPayload';
+  /** The created comic, or null if errors occurred. */
+  comic?: Maybe<Comic>;
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+};
+
 /** Daily job execution statistics. */
 export type DailyJobStats = {
   __typename?: 'DailyJobStats';
@@ -366,6 +375,33 @@ export enum DayOfWeek {
   Tuesday = 'TUESDAY',
   Wednesday = 'WEDNESDAY'
 }
+
+/** Payload for deleteAccount mutation. */
+export type DeleteAccountPayload = {
+  __typename?: 'DeleteAccountPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** Whether the deletion was successful. */
+  success: Scalars['Boolean']['output'];
+};
+
+/** Payload for deleteComic mutation. */
+export type DeleteComicPayload = {
+  __typename?: 'DeleteComicPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** Whether the deletion was successful. */
+  success: Scalars['Boolean']['output'];
+};
+
+/** Payload for deleteRetrievalRecord mutation. */
+export type DeleteRetrievalRecordPayload = {
+  __typename?: 'DeleteRetrievalRecordPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** Whether the deletion was successful. */
+  success: Scalars['Boolean']['output'];
+};
 
 /**
  * Standard error codes returned by the API.
@@ -401,6 +437,15 @@ export enum ErrorCode {
   /** Input validation failed. */
   ValidationError = 'VALIDATION_ERROR'
 }
+
+/** Payload for addFavorite and removeFavorite mutations. */
+export type FavoritePayload = {
+  __typename?: 'FavoritePayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** The updated preferences, or null if errors occurred. */
+  preference?: Maybe<UserPreference>;
+};
 
 /** Overall system health status. */
 export type HealthStatus = {
@@ -445,36 +490,31 @@ export type LoginInput = {
   username: Scalars['String']['input'];
 };
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type Mutation = {
   __typename?: 'Mutation';
   /**
    * Add a comic to the user's favorites.
    * Requires authentication.
    */
-  addFavorite: UserPreference;
+  addFavorite: FavoritePayload;
   /**
    * Create a new comic entry.
    * Requires admin role.
    */
-  createComic: Comic;
+  createComic: CreateComicPayload;
   /**
-   * Delete the current user's account.
+   * Delete a user account (admin only).
    * This action is irreversible.
-   * Requires authentication.
+   * Requires admin role.
    */
-  deleteAccount: Scalars['Boolean']['output'];
+  deleteAccount: DeleteAccountPayload;
   /**
    * Delete a comic and its cached strips.
    * Requires admin role.
    */
-  deleteComic: Scalars['Boolean']['output'];
+  deleteComic: DeleteComicPayload;
   /** Delete a specific retrieval record. */
-  deleteRetrievalRecord: Scalars['Boolean']['output'];
+  deleteRetrievalRecord: DeleteRetrievalRecordPayload;
   /**
    * Request a password reset email.
    * Returns true if the email was sent (always returns true to prevent email enumeration).
@@ -489,11 +529,11 @@ export type Mutation = {
    * Purge retrieval records older than specified days.
    * Returns the number of records purged.
    */
-  purgeRetrievalRecords: Scalars['Int']['output'];
+  purgeRetrievalRecords: PurgeRetrievalRecordsPayload;
   /** Force a refresh of all metrics (storage, access, combined). */
-  refreshAllMetrics: Scalars['Boolean']['output'];
+  refreshAllMetrics: RefreshAllMetricsPayload;
   /** Force a refresh of storage metrics. */
-  refreshStorageMetrics: StorageMetrics;
+  refreshStorageMetrics: RefreshStorageMetricsPayload;
   /** Refresh an expired JWT token using a refresh token. */
   refreshToken: AuthPayload;
   /**
@@ -505,209 +545,124 @@ export type Mutation = {
    * Remove a comic from the user's favorites.
    * Requires authentication.
    */
-  removeFavorite: UserPreference;
+  removeFavorite: FavoritePayload;
   /** Reset password using a token from the password reset email. */
   resetPassword: AuthPayload;
   /** Trigger a backfill job to retrieve missing comics. */
-  triggerBackfillJob: BatchJob;
+  triggerBackfillJob: TriggerBatchJobPayload;
   /** Trigger a batch job for comic retrieval. */
-  triggerBatchJob: BatchJob;
+  triggerBatchJob: TriggerBatchJobPayload;
   /**
    * Update an existing comic's details.
    * Requires admin role.
    */
-  updateComic: Comic;
+  updateComic: UpdateComicPayload;
   /**
    * Update display settings (theme, layout, etc.).
    * Requires authentication.
    */
-  updateDisplaySettings: UserPreference;
+  updateDisplaySettings: UpdateDisplaySettingsPayload;
   /**
    * Update the last read date for a comic.
    * Requires authentication.
    */
-  updateLastRead: UserPreference;
+  updateLastRead: UpdateLastReadPayload;
   /**
    * Update the current user's password.
    * Requires authentication.
    */
-  updatePassword: Scalars['Boolean']['output'];
+  updatePassword: UpdatePasswordPayload;
   /**
    * Update the current user's profile.
    * Requires authentication.
    */
-  updateProfile: User;
+  updateProfile: UpdateProfilePayload;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationAddFavoriteArgs = {
   comicId: Scalars['Int']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationCreateComicArgs = {
   input: CreateComicInput;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
+export type MutationDeleteAccountArgs = {
+  username: Scalars['String']['input'];
+};
+
+
 export type MutationDeleteComicArgs = {
   id: Scalars['Int']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationDeleteRetrievalRecordArgs = {
   id: Scalars['String']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationForgotPasswordArgs = {
   email: Scalars['String']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationLoginArgs = {
   input: LoginInput;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationPurgeRetrievalRecordsArgs = {
   daysToKeep?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationRefreshTokenArgs = {
   refreshToken: Scalars['String']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationRegisterArgs = {
   input: RegisterInput;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationRemoveFavoriteArgs = {
   comicId: Scalars['Int']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationResetPasswordArgs = {
   newPassword: Scalars['String']['input'];
   token: Scalars['String']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
-export type MutationTriggerBatchJobArgs = {
-  targetDate?: InputMaybe<Scalars['Date']['input']>;
-};
-
-
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationUpdateComicArgs = {
   id: Scalars['Int']['input'];
   input: UpdateComicInput;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationUpdateDisplaySettingsArgs = {
   settings: Scalars['JSON']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationUpdateLastReadArgs = {
   comicId: Scalars['Int']['input'];
   date: Scalars['Date']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationUpdatePasswordArgs = {
   newPassword: Scalars['String']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Mutation Type
- *  -----------------------------------------------------------------------------
- */
 export type MutationUpdateProfileArgs = {
   input: UpdateProfileInput;
 };
@@ -725,11 +680,15 @@ export type PageInfo = {
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
+/** Payload for purgeRetrievalRecords mutation. */
+export type PurgeRetrievalRecordsPayload = {
+  __typename?: 'PurgeRetrievalRecordsPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** Number of records purged. */
+  purgedCount: Scalars['Int']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   /** Get access metrics for all comics. */
@@ -796,52 +755,27 @@ export type Query = {
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryBatchJobArgs = {
   executionId: Scalars['Int']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryBatchJobSummaryArgs = {
   days?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryBatchJobsByDateRangeArgs = {
   endDate: Scalars['Date']['input'];
   startDate: Scalars['Date']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryComicArgs = {
   id: Scalars['Int']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryComicsArgs = {
   active?: InputMaybe<Scalars['Boolean']['input']>;
   after?: InputMaybe<Scalars['String']['input']>;
@@ -851,41 +785,21 @@ export type QueryComicsArgs = {
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryHealthArgs = {
   detailed?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryRecentBatchJobsArgs = {
   count?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryRetrievalRecordArgs = {
   id: Scalars['String']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryRetrievalRecordsArgs = {
   comicName?: InputMaybe<Scalars['String']['input']>;
   fromDate?: InputMaybe<Scalars['Date']['input']>;
@@ -895,47 +809,45 @@ export type QueryRetrievalRecordsArgs = {
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryRetrievalRecordsForComicArgs = {
   comicName: Scalars['String']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryRetrievalSummaryArgs = {
   fromDate?: InputMaybe<Scalars['Date']['input']>;
   toDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QuerySearchArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   query: Scalars['String']['input'];
 };
 
 
-/**
- *  -----------------------------------------------------------------------------
- *  Root Query Type
- *  -----------------------------------------------------------------------------
- */
 export type QueryStripArgs = {
   comicId: Scalars['Int']['input'];
   date: Scalars['Date']['input'];
+};
+
+/** Payload for refreshAllMetrics mutation. */
+export type RefreshAllMetricsPayload = {
+  __typename?: 'RefreshAllMetricsPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** Whether the refresh was successful. */
+  success: Scalars['Boolean']['output'];
+};
+
+/** Payload for refreshStorageMetrics mutation. */
+export type RefreshStorageMetricsPayload = {
+  __typename?: 'RefreshStorageMetricsPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** The refreshed storage metrics. */
+  storageMetrics?: Maybe<StorageMetrics>;
 };
 
 /** Input for new user registration. */
@@ -973,14 +885,18 @@ export type RetrievalRecord = {
   status: RetrievalStatusEnum;
 };
 
-/** Possible retrieval status values. */
+/**
+ * Possible retrieval status values.
+ * Mirrors the Java ComicRetrievalStatus enum 1:1.
+ */
 export enum RetrievalStatusEnum {
-  Error = 'ERROR',
-  Failure = 'FAILURE',
-  NotFound = 'NOT_FOUND',
-  RateLimited = 'RATE_LIMITED',
-  Skipped = 'SKIPPED',
-  Success = 'SUCCESS'
+  AuthenticationError = 'AUTHENTICATION_ERROR',
+  ComicUnavailable = 'COMIC_UNAVAILABLE',
+  NetworkError = 'NETWORK_ERROR',
+  ParsingError = 'PARSING_ERROR',
+  StorageError = 'STORAGE_ERROR',
+  Success = 'SUCCESS',
+  UnknownError = 'UNKNOWN_ERROR'
 }
 
 /** Summary statistics for retrieval operations. */
@@ -1052,6 +968,15 @@ export type SystemResources = {
   totalMemory?: Maybe<Scalars['Float']['output']>;
 };
 
+/** Payload for triggerBatchJob and triggerBackfillJob mutations. */
+export type TriggerBatchJobPayload = {
+  __typename?: 'TriggerBatchJobPayload';
+  /** The triggered batch job, or null if errors occurred. */
+  batchJob?: Maybe<BatchJob>;
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+};
+
 /**
  * Input for updating an existing comic.
  * All fields are optional - only provided fields will be updated.
@@ -1075,6 +1000,42 @@ export type UpdateComicInput = {
   sourceIdentifier?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Payload for updateComic mutation. */
+export type UpdateComicPayload = {
+  __typename?: 'UpdateComicPayload';
+  /** The updated comic, or null if errors occurred. */
+  comic?: Maybe<Comic>;
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+};
+
+/** Payload for updateDisplaySettings mutation. */
+export type UpdateDisplaySettingsPayload = {
+  __typename?: 'UpdateDisplaySettingsPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** The updated preferences, or null if errors occurred. */
+  preference?: Maybe<UserPreference>;
+};
+
+/** Payload for updateLastRead mutation. */
+export type UpdateLastReadPayload = {
+  __typename?: 'UpdateLastReadPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** The updated preferences, or null if errors occurred. */
+  preference?: Maybe<UserPreference>;
+};
+
+/** Payload for updatePassword mutation. */
+export type UpdatePasswordPayload = {
+  __typename?: 'UpdatePasswordPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** Whether the password was updated successfully. */
+  success: Scalars['Boolean']['output'];
+};
+
 /**
  * Input for updating user profile.
  * All fields are optional - only provided fields will be updated.
@@ -1084,6 +1045,15 @@ export type UpdateProfileInput = {
   displayName?: InputMaybe<Scalars['String']['input']>;
   /** New email address. */
   email?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Payload for updateProfile mutation. */
+export type UpdateProfilePayload = {
+  __typename?: 'UpdateProfilePayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** The updated user, or null if errors occurred. */
+  user?: Maybe<User>;
 };
 
 /** User account information. */
@@ -1101,6 +1071,17 @@ export type User = {
   roles: Array<Scalars['String']['output']>;
   /** Unique username. */
   username: Scalars['String']['output'];
+};
+
+/** A user-facing error from a mutation. */
+export type UserError = {
+  __typename?: 'UserError';
+  /** Machine-readable error code. */
+  code?: Maybe<ErrorCode>;
+  /** Field path that caused the error (e.g., "input.email"). */
+  field?: Maybe<Scalars['String']['output']>;
+  /** Error message. */
+  message: Scalars['String']['output'];
 };
 
 /** User preferences including favorites and display settings. */
@@ -1213,14 +1194,14 @@ export type AddFavoriteMutationVariables = Exact<{
 }>;
 
 
-export type AddFavoriteMutation = { __typename?: 'Mutation', addFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
+export type AddFavoriteMutation = { __typename?: 'Mutation', addFavorite: { __typename?: 'FavoritePayload', preference?: { __typename?: 'UserPreference', favoriteComics: Array<number> } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
 
 export type RemoveFavoriteMutationVariables = Exact<{
   comicId: Scalars['Int']['input'];
 }>;
 
 
-export type RemoveFavoriteMutation = { __typename?: 'Mutation', removeFavorite: { __typename?: 'UserPreference', favoriteComics: Array<number> } };
+export type RemoveFavoriteMutation = { __typename?: 'Mutation', removeFavorite: { __typename?: 'FavoritePayload', preference?: { __typename?: 'UserPreference', favoriteComics: Array<number> } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
 
 export type UpdateLastReadMutationVariables = Exact<{
   comicId: Scalars['Int']['input'];
@@ -1228,12 +1209,31 @@ export type UpdateLastReadMutationVariables = Exact<{
 }>;
 
 
-export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: { __typename?: 'UserPreference', lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } };
+export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: { __typename?: 'UpdateLastReadPayload', preference?: { __typename?: 'UserPreference', lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
 
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetCombinedMetricsQuery = { __typename?: 'Query', combinedMetrics?: { __typename?: 'CombinedMetrics', lastUpdated?: any | null, storage?: { __typename?: 'StorageMetrics', totalBytes?: number | null, comicCount?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicStorageMetric', comicId?: number | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown?: Array<{ __typename?: 'YearlyStorageMetric', year: number, bytes: number, imageCount: number }> | null }> | null } | null, access?: { __typename?: 'AccessMetrics', totalAccesses?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicAccessMetric', comicName: string, accessCount: number, averageAccessTimeMs?: number | null, lastAccessed?: any | null }> | null } | null } | null };
+
+export type GetRetrievalSummaryQueryVariables = Exact<{
+  fromDate?: InputMaybe<Scalars['Date']['input']>;
+  toDate?: InputMaybe<Scalars['Date']['input']>;
+}>;
+
+
+export type GetRetrievalSummaryQuery = { __typename?: 'Query', retrievalSummary: { __typename?: 'RetrievalSummary', totalAttempts: number, successCount: number, failureCount: number, skippedCount: number, successRate: number, averageDurationMs?: number | null, byStatus?: Array<{ __typename?: 'StatusCount', status: RetrievalStatusEnum, count: number }> | null, byComic?: Array<{ __typename?: 'ComicRetrievalSummary', comicName: string, totalAttempts: number, successCount: number, failureCount: number }> | null } };
+
+export type GetRetrievalRecordsQueryVariables = Exact<{
+  comicName?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<RetrievalStatusEnum>;
+  fromDate?: InputMaybe<Scalars['Date']['input']>;
+  toDate?: InputMaybe<Scalars['Date']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetRetrievalRecordsQuery = { __typename?: 'Query', retrievalRecords: Array<{ __typename?: 'RetrievalRecord', id: string, comicName: string, comicDate: any, source?: string | null, status: RetrievalStatusEnum, retrievalDurationMs?: number | null, imageSize?: number | null, httpStatusCode?: number | null, errorMessage?: string | null }> };
 
 
 
@@ -1778,7 +1778,14 @@ useSearchComicsQuery.fetcher = (variables: SearchComicsQueryVariables, options?:
 export const AddFavoriteDocument = `
     mutation AddFavorite($comicId: Int!) {
   addFavorite(comicId: $comicId) {
-    favoriteComics
+    preference {
+      favoriteComics
+    }
+    errors {
+      message
+      field
+      code
+    }
   }
 }
     `;
@@ -1802,7 +1809,14 @@ useAddFavoriteMutation.fetcher = (variables: AddFavoriteMutationVariables, optio
 export const RemoveFavoriteDocument = `
     mutation RemoveFavorite($comicId: Int!) {
   removeFavorite(comicId: $comicId) {
-    favoriteComics
+    preference {
+      favoriteComics
+    }
+    errors {
+      message
+      field
+      code
+    }
   }
 }
     `;
@@ -1826,9 +1840,16 @@ useRemoveFavoriteMutation.fetcher = (variables: RemoveFavoriteMutationVariables,
 export const UpdateLastReadDocument = `
     mutation UpdateLastRead($comicId: Int!, $date: Date!) {
   updateLastRead(comicId: $comicId, date: $date) {
-    lastReadDates {
-      comicId
-      date
+    preference {
+      lastReadDates {
+        comicId
+        date
+      }
+    }
+    errors {
+      message
+      field
+      code
     }
   }
 }
@@ -1925,3 +1946,132 @@ useInfiniteGetCombinedMetricsQuery.getKey = (variables?: GetCombinedMetricsQuery
 
 
 useGetCombinedMetricsQuery.fetcher = (variables?: GetCombinedMetricsQueryVariables, options?: RequestInit['headers']) => fetcher<GetCombinedMetricsQuery, GetCombinedMetricsQueryVariables>(GetCombinedMetricsDocument, variables, options);
+
+export const GetRetrievalSummaryDocument = `
+    query GetRetrievalSummary($fromDate: Date, $toDate: Date) {
+  retrievalSummary(fromDate: $fromDate, toDate: $toDate) {
+    totalAttempts
+    successCount
+    failureCount
+    skippedCount
+    successRate
+    averageDurationMs
+    byStatus {
+      status
+      count
+    }
+    byComic {
+      comicName
+      totalAttempts
+      successCount
+      failureCount
+    }
+  }
+}
+    `;
+
+export const useGetRetrievalSummaryQuery = <
+      TData = GetRetrievalSummaryQuery,
+      TError = unknown
+    >(
+      variables?: GetRetrievalSummaryQueryVariables,
+      options?: Omit<UseQueryOptions<GetRetrievalSummaryQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetRetrievalSummaryQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetRetrievalSummaryQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetRetrievalSummary'] : ['GetRetrievalSummary', variables],
+    queryFn: fetcher<GetRetrievalSummaryQuery, GetRetrievalSummaryQueryVariables>(GetRetrievalSummaryDocument, variables),
+    ...options
+  }
+    )};
+
+useGetRetrievalSummaryQuery.getKey = (variables?: GetRetrievalSummaryQueryVariables) => variables === undefined ? ['GetRetrievalSummary'] : ['GetRetrievalSummary', variables];
+
+export const useInfiniteGetRetrievalSummaryQuery = <
+      TData = InfiniteData<GetRetrievalSummaryQuery>,
+      TError = unknown
+    >(
+      variables: GetRetrievalSummaryQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetRetrievalSummaryQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetRetrievalSummaryQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetRetrievalSummaryQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetRetrievalSummary.infinite'] : ['GetRetrievalSummary.infinite', variables],
+      queryFn: (metaData) => fetcher<GetRetrievalSummaryQuery, GetRetrievalSummaryQueryVariables>(GetRetrievalSummaryDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetRetrievalSummaryQuery.getKey = (variables?: GetRetrievalSummaryQueryVariables) => variables === undefined ? ['GetRetrievalSummary.infinite'] : ['GetRetrievalSummary.infinite', variables];
+
+
+useGetRetrievalSummaryQuery.fetcher = (variables?: GetRetrievalSummaryQueryVariables, options?: RequestInit['headers']) => fetcher<GetRetrievalSummaryQuery, GetRetrievalSummaryQueryVariables>(GetRetrievalSummaryDocument, variables, options);
+
+export const GetRetrievalRecordsDocument = `
+    query GetRetrievalRecords($comicName: String, $status: RetrievalStatusEnum, $fromDate: Date, $toDate: Date, $limit: Int) {
+  retrievalRecords(
+    comicName: $comicName
+    status: $status
+    fromDate: $fromDate
+    toDate: $toDate
+    limit: $limit
+  ) {
+    id
+    comicName
+    comicDate
+    source
+    status
+    retrievalDurationMs
+    imageSize
+    httpStatusCode
+    errorMessage
+  }
+}
+    `;
+
+export const useGetRetrievalRecordsQuery = <
+      TData = GetRetrievalRecordsQuery,
+      TError = unknown
+    >(
+      variables?: GetRetrievalRecordsQueryVariables,
+      options?: Omit<UseQueryOptions<GetRetrievalRecordsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetRetrievalRecordsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetRetrievalRecordsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetRetrievalRecords'] : ['GetRetrievalRecords', variables],
+    queryFn: fetcher<GetRetrievalRecordsQuery, GetRetrievalRecordsQueryVariables>(GetRetrievalRecordsDocument, variables),
+    ...options
+  }
+    )};
+
+useGetRetrievalRecordsQuery.getKey = (variables?: GetRetrievalRecordsQueryVariables) => variables === undefined ? ['GetRetrievalRecords'] : ['GetRetrievalRecords', variables];
+
+export const useInfiniteGetRetrievalRecordsQuery = <
+      TData = InfiniteData<GetRetrievalRecordsQuery>,
+      TError = unknown
+    >(
+      variables: GetRetrievalRecordsQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetRetrievalRecordsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetRetrievalRecordsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetRetrievalRecordsQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetRetrievalRecords.infinite'] : ['GetRetrievalRecords.infinite', variables],
+      queryFn: (metaData) => fetcher<GetRetrievalRecordsQuery, GetRetrievalRecordsQueryVariables>(GetRetrievalRecordsDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetRetrievalRecordsQuery.getKey = (variables?: GetRetrievalRecordsQueryVariables) => variables === undefined ? ['GetRetrievalRecords.infinite'] : ['GetRetrievalRecords.infinite', variables];
+
+
+useGetRetrievalRecordsQuery.fetcher = (variables?: GetRetrievalRecordsQueryVariables, options?: RequestInit['headers']) => fetcher<GetRetrievalRecordsQuery, GetRetrievalRecordsQueryVariables>(GetRetrievalRecordsDocument, variables, options);

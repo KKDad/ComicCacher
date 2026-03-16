@@ -32,14 +32,14 @@ public class MD5ImageHasher implements ImageHasher {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] messageDigest = md.digest(imageData);
             BigInteger no = new BigInteger(1, messageDigest);
-            String hashtext = no.toString(16);
+            StringBuilder hashtext = new StringBuilder(no.toString(16));
 
             // Pad with leading zeros to 32 characters
             while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
+                hashtext.insert(0, "0");
             }
 
-            return hashtext;
+            return hashtext.toString();
         } catch (NoSuchAlgorithmException e) {
             log.error("MD5 algorithm not available: {}", e.getMessage(), e);
             return null;

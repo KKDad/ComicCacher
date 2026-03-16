@@ -1,5 +1,5 @@
 overwrite: true
-schema: ${NEXT_PUBLIC_GRAPHQL_ENDPOINT}
+schema: '../comic-api/src/main/resources/graphql/**/*.graphql'
 documents: 'src/graphql/operations/**/*.graphql'
 generates:
   src/generated/graphql.ts:

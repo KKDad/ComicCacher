@@ -93,6 +93,16 @@ describe('MetricsPage', () => {
     expect(screen.getByText('No metrics available')).toBeInTheDocument();
   });
 
+  it('renders empty state when storage and access are both null', () => {
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+      data: { combinedMetrics: { lastUpdated: null, storage: null, access: null } },
+      isLoading: false,
+      error: null,
+    } as any);
+    renderWithQuery(<MetricsPage />);
+    expect(screen.getByText('No metrics available')).toBeInTheDocument();
+  });
+
   it('renders summary cards with correct values', () => {
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Total Storage')).toBeInTheDocument();

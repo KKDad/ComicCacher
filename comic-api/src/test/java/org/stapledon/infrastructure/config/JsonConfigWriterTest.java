@@ -56,7 +56,7 @@ class JsonConfigWriterTest {
 
         var uuid = UUID.randomUUID().toString();
         String fileName = String.format("%s/%s.json", path.toString(), uuid);
-        LOG.info(String.format("Writing to %s", fileName));
+        LOG.info("Writing to {}", fileName);
 
         // Act
         CacheProperties cacheProperties = new CacheProperties();

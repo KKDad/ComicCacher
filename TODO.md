@@ -1,5 +1,10 @@
 # ComicCacher TODO
 
+## Forgot Password Flow
+- Wire up `requestPasswordReset` mutation in `comic-hub/src/app/(auth)/forgot-password/page.tsx`
+- Currently the form submission is a no-op that immediately shows the success view
+- Priority: Medium
+
 ## Performance Improvements
 
 ### API Response Caching

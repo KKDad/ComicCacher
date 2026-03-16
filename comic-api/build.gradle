@@ -78,6 +78,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-graphql'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     // GraphQL extended scalars for Date, DateTime, JSON
     implementation 'com.graphql-java:graphql-java-extended-scalars:24.0'

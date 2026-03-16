@@ -64,7 +64,7 @@ class ImageAnalysisServiceTest {
 
         // When
         ImageMetadata metadata = service.analyzeImage(1, "TestComic", imageFile, validation,
-                "http://example.com/image.png");
+                "https://example.com/image.png");
 
         // Then
         assertThat(metadata).isNotNull();
@@ -74,7 +74,7 @@ class ImageAnalysisServiceTest {
         assertThat(metadata.getHeight()).isEqualTo(100);
         assertThat(metadata.getColorMode()).isEqualTo(ImageMetadata.ColorMode.COLOR);
         assertThat(metadata.getSamplePercentage()).isEqualTo(5.0);
-        assertThat(metadata.getSourceUrl()).isEqualTo("http://example.com/image.png");
+        assertThat(metadata.getSourceUrl()).isEqualTo("https://example.com/image.png");
         assertThat(metadata.getCaptureTimestamp()).isNotNull();
     }
 

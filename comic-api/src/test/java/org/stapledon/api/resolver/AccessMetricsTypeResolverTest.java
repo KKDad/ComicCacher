@@ -5,13 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.stapledon.api.dto.metrics.AccessMetricsView;
+import org.stapledon.api.dto.metrics.ComicAccessMetricView;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.dto.AccessMetricsData.ComicAccessMetrics;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -45,12 +46,9 @@ class AccessMetricsTypeResolverTest {
                 new TotalAccessesCase("AccessMetricsData with null comicMetrics",
                         AccessMetricsData.builder().comicMetrics(null).build(),
                         0),
-                new TotalAccessesCase("Map with totalAccesses",
-                        Map.of("totalAccesses", 42),
+                new TotalAccessesCase("AccessMetricsView",
+                        new AccessMetricsView(42, List.of(), null),
                         42),
-                new TotalAccessesCase("Map without totalAccesses",
-                        Map.of("other", "value"),
-                        0),
                 new TotalAccessesCase("Unknown type",
                         "unknown",
                         0)
@@ -79,7 +77,7 @@ class AccessMetricsTypeResolverTest {
                 .accessCount(3).lastAccess("2024-01-14T09:00:00Z")
                 .totalAccessTimeMs(300L).build());
 
-        var preBuiltList = List.of(Map.<String, Object>of("comicName", "Calvin"));
+        var preBuiltList = List.of(new ComicAccessMetricView("Calvin", 1, 10.0, null));
 
         return Stream.of(
                 new ComicsCase("AccessMetricsData with comicMetrics",
@@ -88,12 +86,9 @@ class AccessMetricsTypeResolverTest {
                 new ComicsCase("AccessMetricsData with null comicMetrics",
                         AccessMetricsData.builder().comicMetrics(null).build(),
                         0),
-                new ComicsCase("Map with comics list",
-                        Map.of("comics", preBuiltList),
+                new ComicsCase("AccessMetricsView with comics",
+                        new AccessMetricsView(1, preBuiltList, null),
                         1),
-                new ComicsCase("Map without comics",
-                        Map.of("other", "value"),
-                        0),
                 new ComicsCase("Unknown type",
                         "unknown",
                         0)
@@ -124,11 +119,11 @@ class AccessMetricsTypeResolverTest {
                 new LastUpdatedCase("AccessMetricsData with null lastUpdated",
                         AccessMetricsData.builder().build(),
                         null),
-                new LastUpdatedCase("Map with lastUpdated",
-                        Map.of("lastUpdated", now),
+                new LastUpdatedCase("AccessMetricsView with lastUpdated",
+                        new AccessMetricsView(0, List.of(), now),
                         now),
-                new LastUpdatedCase("Map without lastUpdated",
-                        Map.of("other", "value"),
+                new LastUpdatedCase("AccessMetricsView without lastUpdated",
+                        new AccessMetricsView(0, List.of(), null),
                         null),
                 new LastUpdatedCase("Unknown type",
                         "unknown",

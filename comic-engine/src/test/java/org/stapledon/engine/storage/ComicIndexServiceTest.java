@@ -108,7 +108,7 @@ class ComicIndexServiceTest {
         LocalDate d1 = LocalDate.of(2023, 1, 1);
         LocalDate d2 = LocalDate.of(2023, 1, 10);
 
-        setupIndex(comicId, comicName, Arrays.asList(d1));
+        setupIndex(comicId, comicName, List.of(d1));
 
         // Act
         indexService.addDateToIndex(comicId, comicName, d2);
@@ -148,7 +148,7 @@ class ComicIndexServiceTest {
         String comicName = "TestComic";
         LocalDate baseDate = LocalDate.of(2023, 1, 1);
 
-        setupIndex(comicId, comicName, Arrays.asList(baseDate));
+        setupIndex(comicId, comicName, List.of(baseDate));
 
         // Act - add 50 dates concurrently
         int numThreads = 10;
@@ -232,7 +232,7 @@ class ComicIndexServiceTest {
         String comicName = "TestComic";
         LocalDate d1 = LocalDate.of(2023, 1, 1);
 
-        setupIndex(comicId, comicName, Arrays.asList(d1));
+        setupIndex(comicId, comicName, List.of(d1));
 
         // Load it into cache
         indexService.getNextDate(comicId, comicName, d1.minusDays(1));

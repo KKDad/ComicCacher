@@ -28,7 +28,8 @@ import org.mindrot.jbcrypt.BCrypt;
 @Component
 @RequiredArgsConstructor
 public class UserConfigWriter {
-    @Qualifier("gsonWithLocalDate") private final Gson gson;
+    @Qualifier("gsonWithLocalDate")
+    private final Gson gson;
     private final CacheProperties cacheProperties;
     private final ConfigurationFacade configurationFacade;
 
@@ -314,5 +315,28 @@ public class UserConfigWriter {
     public boolean existsByUsername(String username) {
         loadUsers();
         return userConfig.getUsers().containsKey(username);
+    }
+
+    /**
+     * Delete a user by username
+     */
+    public boolean deleteUser(String username) {
+        if (username == null || username.isEmpty()) {
+            log.error("Cannot delete user: Username is null/empty");
+            return false;
+        }
+
+        try {
+            loadUsers();
+            if (!userConfig.getUsers().containsKey(username)) {
+                log.warn("User not found for deletion: {}", username);
+                return false;
+            }
+            userConfig.getUsers().remove(username);
+            return configurationFacade.saveUserConfig(userConfig);
+        } catch (Exception e) {
+            log.error("Failed to delete user: {}", e.getMessage(), e);
+            return false;
+        }
     }
 }

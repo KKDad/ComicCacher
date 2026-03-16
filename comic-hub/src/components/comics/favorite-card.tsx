@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface FavoriteCardProps {
   comic: {
     id: number;
     name: string;
+    avatarUrl?: string | null;
   };
 }
 
@@ -25,6 +26,9 @@ export function FavoriteCard({ comic }: FavoriteCardProps) {
     >
       <div className="space-y-2">
         <Avatar className="h-[140px] w-[140px] ring-2 ring-border group-hover:ring-primary transition-all">
+          {comic.avatarUrl && (
+            <AvatarImage src={comic.avatarUrl} alt={comic.name} />
+          )}
           <AvatarFallback className="bg-primary-subtle text-primary text-2xl font-semibold">
             {initials}
           </AvatarFallback>

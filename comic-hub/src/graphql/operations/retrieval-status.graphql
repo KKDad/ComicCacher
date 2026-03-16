@@ -1,0 +1,50 @@
+# Retrieval status queries for Comics Hub
+
+# Summary statistics for retrieval operations
+query GetRetrievalSummary($fromDate: Date, $toDate: Date) {
+  retrievalSummary(fromDate: $fromDate, toDate: $toDate) {
+    totalAttempts
+    successCount
+    failureCount
+    skippedCount
+    successRate
+    averageDurationMs
+    byStatus {
+      status
+      count
+    }
+    byComic {
+      comicName
+      totalAttempts
+      successCount
+      failureCount
+    }
+  }
+}
+
+# Individual retrieval records with optional filtering
+query GetRetrievalRecords(
+  $comicName: String
+  $status: RetrievalStatusEnum
+  $fromDate: Date
+  $toDate: Date
+  $limit: Int
+) {
+  retrievalRecords(
+    comicName: $comicName
+    status: $status
+    fromDate: $fromDate
+    toDate: $toDate
+    limit: $limit
+  ) {
+    id
+    comicName
+    comicDate
+    source
+    status
+    retrievalDurationMs
+    imageSize
+    httpStatusCode
+    errorMessage
+  }
+}
