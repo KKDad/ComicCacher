@@ -3,21 +3,11 @@ plugins {
 	id "java"
 }
 
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
 // repositories inherited from root build.gradle
 
 dependencies {
 	// comic-common dependency for shared types
 	implementation project(':comic-common')
-
-	// Gson for JSON serialization
-	implementation "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
 
 	// Guava for utilities
 	implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
@@ -25,25 +15,4 @@ dependencies {
 	// Spring Boot for dependency injection and configuration
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-
-	// Lombok
-	compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-	annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-	testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-	testImplementation "org.assertj:assertj-core:3.27.7"
-    testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-
-	// Test dependencies
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-}
-
-// Spring Boot dependency management (without the plugin)
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.boot:spring-boot-dependencies:${rootProject.ext.springBootVersion}"
-	}
-}
-
-tasks.withType(Test).configureEach {
-	useJUnitPlatform()
 }

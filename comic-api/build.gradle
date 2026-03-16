@@ -33,9 +33,6 @@ processIntegrationResources {
 
 
 configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
     integrationTestImplementation {
         extendsFrom implementation
     }
@@ -63,7 +60,6 @@ dependencies {
     implementation project(':comic-engine')
 
     // Core dependencies
-    implementation "com.google.code.gson:gson:${rootProject.ext.gsonVersion}"
     implementation "com.google.guava:guava:${rootProject.ext.guavaVersion}"
     implementation "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
 
@@ -101,18 +97,10 @@ dependencies {
     // Other dependencies
     implementation "org.mindrot:jbcrypt:${rootProject.ext.bcryptVersion}"
 
-    // Lombok
-    compileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-    annotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-    testCompileOnly "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-    testImplementation "org.assertj:assertj-core:3.27.7"
-    testAnnotationProcessor "org.projectlombok:lombok:${rootProject.ext.lombokVersion}"
-
     // Annotation processors
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 // Required for Spring Boot 4 Test Autoconfiguration
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-graphql-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
@@ -125,7 +113,6 @@ dependencies {
 }
 
 tasks.withType(Test).configureEach {
-    useJUnitPlatform()
     systemProperty 'spring.profiles.active', 'test'
 }
 
