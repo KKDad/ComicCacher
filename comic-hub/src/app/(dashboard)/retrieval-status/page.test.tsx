@@ -259,6 +259,21 @@ describe('RetrievalStatusPage', () => {
     expect(rows[2]).toHaveTextContent('Calvin and Hobbes');
   });
 
+  it('sorts records by date when header clicked', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<RetrievalStatusPage />);
+    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const dateSortBtn = within(table).getAllByRole('button').find(
+      (btn) => btn.textContent?.includes('Date')
+    )!;
+
+    // Default is comicDate desc — already sorted desc. Click to toggle to asc.
+    await user.click(dateSortBtn);
+    const rows = within(table).getAllByRole('row').slice(1);
+    // asc: Calvin (2024-01-14), Garfield (2024-01-15), Peanuts (2024-01-15)
+    expect(rows[0]).toHaveTextContent('Calvin and Hobbes');
+  });
+
   it('shows dash for null averageDurationMs in summary', () => {
     vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue({
       data: {

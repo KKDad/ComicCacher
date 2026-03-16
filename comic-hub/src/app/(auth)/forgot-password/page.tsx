@@ -10,11 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ErrorBanner } from '@/components/auth/error-banner';
 
 export default function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const {
@@ -32,19 +30,11 @@ export default function ForgotPasswordPage() {
 
   const email = watch('email');
 
-  const onSubmit = async (data: ForgotPasswordFormData) => {
+  const onSubmit = (data: ForgotPasswordFormData) => {
     setIsSubmitting(true);
-    setErrorMessage(null);
-
-    try {
-      // TODO: wire up requestPasswordReset
-      void data;
-      setIsSuccess(true);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to send reset email';
-      setErrorMessage(message);
-      setIsSubmitting(false);
-    }
+    // TODO: wire up requestPasswordReset
+    void data;
+    setIsSuccess(true);
   };
 
   if (isSuccess) {
@@ -98,13 +88,6 @@ export default function ForgotPasswordPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {errorMessage && (
-            <ErrorBanner
-              message={errorMessage}
-              onDismiss={() => setErrorMessage(null)}
-            />
-          )}
-
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

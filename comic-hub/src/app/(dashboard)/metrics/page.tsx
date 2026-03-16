@@ -85,10 +85,8 @@ export default function MetricsPage() {
   }
 
   const metrics = data?.combinedMetrics;
-  const storage = metrics?.storage;
-  const access = metrics?.access;
 
-  if (!metrics) {
+  if (!metrics || (!metrics.storage && !metrics.access)) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-ink">Metrics</h1>
@@ -105,7 +103,10 @@ export default function MetricsPage() {
     );
   }
 
-  const totalImages = storage?.comics?.reduce((sum, c) => sum + c.imageCount, 0) ?? 0;
+  const storage = metrics.storage;
+  const access = metrics.access;
+
+  const totalImages = storage?.comics.reduce((sum, c) => sum + c.imageCount, 0) ?? 0;
 
   const storageComics = [...(storage?.comics ?? [])].sort((a, b) => {
     const dir = storageSortDir === 'asc' ? 1 : -1;
