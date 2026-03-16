@@ -125,10 +125,9 @@ subprojects {
     }
 }
 
-// Add testAll task to run all tests in all subprojects
-task testAll {
-    // TEMPORARY: Only run unit tests until integration tests are fixed with facade pattern
+// Run all tests across all subprojects (integration tests run via coditory plugin finalizer on :test)
+tasks.register('testAll') {
     dependsOn subprojects.collect { it.path + ':test' }
-    description = 'Runs all tests in all subprojects (currently only unit tests)'
+    description = 'Runs all tests in all subprojects'
     group = 'verification'
 }
