@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
-import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
+import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
 
 async function refreshTokens(refreshToken: string): Promise<{ token: string; refreshToken: string } | null> {
   const res = await fetch(GRAPHQL_ENDPOINT, {
@@ -37,21 +37,42 @@ async function forwardToBackend(body: string, jwt: string): Promise<Response> {
   });
 }
 
-function setCookies(response: NextResponse, token: string, refresh: string) {
-  response.cookies.set(JWT_COOKIE, token, {
+function setCookies(response: NextResponse, token: string, refresh: string, rememberMe: boolean) {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     path: '/',
-    maxAge: COOKIE_MAX_AGE,
-  });
-  response.cookies.set(REFRESH_COOKIE, refresh, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: COOKIE_MAX_AGE,
-  });
+    ...(rememberMe ? { maxAge: COOKIE_MAX_AGE } : {}),
+  };
+  response.cookies.set(JWT_COOKIE, token, cookieOptions);
+  response.cookies.set(REFRESH_COOKIE, refresh, cookieOptions);
+}
+
+function clearAuthCookies(): NextResponse {
+  const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  res.cookies.delete(JWT_COOKIE);
+  res.cookies.delete(REFRESH_COOKIE);
+  res.cookies.delete(REMEMBER_COOKIE);
+  return res;
+}
+
+async function attemptRefresh(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+  body: string,
+): Promise<NextResponse> {
+  const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
+  if (!refresh) return clearAuthCookies();
+
+  const newTokens = await refreshTokens(refresh);
+  if (!newTokens) return clearAuthCookies();
+
+  const retryRes = await forwardToBackend(body, newTokens.token);
+  const retryData = await retryRes.json();
+  const rememberMe = cookieStore.get(REMEMBER_COOKIE)?.value === '1';
+  const response = NextResponse.json(retryData, { status: retryRes.status });
+  setCookies(response, newTokens.token, newTokens.refreshToken, rememberMe);
+  return response;
 }
 
 export async function POST(request: NextRequest) {
@@ -65,63 +86,18 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
 
   // Forward request to backend
-  let backendRes = await forwardToBackend(body, jwt);
+  const backendRes = await forwardToBackend(body, jwt);
 
   // On 401, attempt token refresh
   if (backendRes.status === 401) {
-    const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
-    if (!refresh) {
-      const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      res.cookies.delete(JWT_COOKIE);
-      res.cookies.delete(REFRESH_COOKIE);
-      return res;
-    }
-
-    const newTokens = await refreshTokens(refresh);
-
-    if (!newTokens) {
-      const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      res.cookies.delete(JWT_COOKIE);
-      res.cookies.delete(REFRESH_COOKIE);
-      return res;
-    }
-
-    // Retry the original request with new token
-    backendRes = await forwardToBackend(body, newTokens.token);
-
-    // Return response with updated cookies
-    const data = await backendRes.json();
-    const response = NextResponse.json(data, { status: backendRes.status });
-    setCookies(response, newTokens.token, newTokens.refreshToken);
-    return response;
+    return attemptRefresh(cookieStore, body);
   }
 
   const data = await backendRes.json();
 
   // Detect GraphQL-level auth errors (backend returns 200 with "Access Denied" errors)
   if (hasAuthError(data)) {
-    const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
-    if (!refresh) {
-      const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      res.cookies.delete(JWT_COOKIE);
-      res.cookies.delete(REFRESH_COOKIE);
-      return res;
-    }
-
-    const newTokens = await refreshTokens(refresh);
-
-    if (!newTokens) {
-      const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      res.cookies.delete(JWT_COOKIE);
-      res.cookies.delete(REFRESH_COOKIE);
-      return res;
-    }
-
-    const retryRes = await forwardToBackend(body, newTokens.token);
-    const retryData = await retryRes.json();
-    const response = NextResponse.json(retryData, { status: retryRes.status });
-    setCookies(response, newTokens.token, newTokens.refreshToken);
-    return response;
+    return attemptRefresh(cookieStore, body);
   }
 
   return NextResponse.json(data, { status: backendRes.status });

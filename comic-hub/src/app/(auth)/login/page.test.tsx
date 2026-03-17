@@ -162,12 +162,12 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     const checkbox = screen.getByRole('checkbox', { name: /keep me signed in/i });
-    expect(checkbox).not.toBeChecked();
+    expect(checkbox).toBeChecked();
 
     await user.click(checkbox);
 
     await waitFor(() => {
-      expect(screen.getByRole('checkbox', { name: /keep me signed in/i })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: /keep me signed in/i })).not.toBeChecked();
     });
   });
 

@@ -90,7 +90,14 @@ describe('POST /api/login', () => {
   it('sets maxAge on cookies when rememberMe is true', async () => {
     const request = createRequest({ username: 'testuser', password: 'Password1!', rememberMe: true });
     const response = await POST(request);
-    // Cookie is set — we can verify the value exists
     expect(response.cookies.get('comic-hub-jwt')?.value).toBe('jwt-token');
+    expect(response.cookies.get('comic-hub-remember')?.value).toBe('1');
+  });
+
+  it('does not set remember cookie when rememberMe is false', async () => {
+    const request = createRequest({ username: 'testuser', password: 'Password1!', rememberMe: false });
+    const response = await POST(request);
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('jwt-token');
+    expect(response.cookies.get('comic-hub-remember')).toBeUndefined();
   });
 });

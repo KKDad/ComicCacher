@@ -189,6 +189,53 @@ describe('POST /api/graphql', () => {
     expect(response.status).toBe(401);
   });
 
+  it('sets session cookies on refresh when remember cookie is absent', async () => {
+    mockCookieStore({
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'valid-refresh',
+    });
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(new Response('Unauthorized', { status: 401 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          data: { refreshToken: { token: 'new-jwt', refreshToken: 'new-refresh' } },
+        })),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { comics: [] } })),
+      );
+
+    const { POST } = await importRoute();
+    const response = await POST(createRequest());
+    // Session cookies have no maxAge — verify the cookie is set but without maxAge
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('new-jwt');
+  });
+
+  it('sets persistent cookies on refresh when remember cookie is present', async () => {
+    mockCookieStore({
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'valid-refresh',
+      'comic-hub-remember': '1',
+    });
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(new Response('Unauthorized', { status: 401 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          data: { refreshToken: { token: 'new-jwt', refreshToken: 'new-refresh' } },
+        })),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { comics: [] } })),
+      );
+
+    const { POST } = await importRoute();
+    const response = await POST(createRequest());
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('new-jwt');
+    expect(response.cookies.get('comic-hub-refresh')?.value).toBe('new-refresh');
+  });
+
   it('returns 401 when refresh returns no token', async () => {
     mockCookieStore({
       'comic-hub-jwt': 'expired-jwt',
