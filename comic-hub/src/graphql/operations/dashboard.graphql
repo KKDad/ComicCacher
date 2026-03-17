@@ -136,6 +136,20 @@ mutation UpdateLastRead($comicId: Int!, $date: Date!) {
   }
 }
 
+# Update display settings (theme, layout, dashboard visibility, etc.)
+mutation UpdateDisplaySettings($settings: JSON!) {
+  updateDisplaySettings(settings: $settings) {
+    preference {
+      displaySettings
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+
 # Query for combined storage and access metrics
 query GetCombinedMetrics {
   combinedMetrics {

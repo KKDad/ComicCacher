@@ -1301,6 +1301,13 @@ export type UpdateLastReadMutationVariables = Exact<{
 
 export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: { __typename?: 'UpdateLastReadPayload', preference?: { __typename?: 'UserPreference', lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
 
+export type UpdateDisplaySettingsMutationVariables = Exact<{
+  settings: Scalars['JSON']['input'];
+}>;
+
+
+export type UpdateDisplaySettingsMutation = { __typename?: 'Mutation', updateDisplaySettings: { __typename?: 'UpdateDisplaySettingsPayload', preference?: { __typename?: 'UserPreference', displaySettings?: any | null } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -2202,6 +2209,37 @@ export const useUpdateLastReadMutation = <
 
 
 useUpdateLastReadMutation.fetcher = (variables: UpdateLastReadMutationVariables, options?: RequestInit['headers']) => fetcher<UpdateLastReadMutation, UpdateLastReadMutationVariables>(UpdateLastReadDocument, variables, options);
+
+export const UpdateDisplaySettingsDocument = `
+    mutation UpdateDisplaySettings($settings: JSON!) {
+  updateDisplaySettings(settings: $settings) {
+    preference {
+      displaySettings
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+    `;
+
+export const useUpdateDisplaySettingsMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UpdateDisplaySettingsMutation, TError, UpdateDisplaySettingsMutationVariables, TContext>) => {
+    
+    return useMutation<UpdateDisplaySettingsMutation, TError, UpdateDisplaySettingsMutationVariables, TContext>(
+      {
+    mutationKey: ['UpdateDisplaySettings'],
+    mutationFn: (variables?: UpdateDisplaySettingsMutationVariables) => fetcher<UpdateDisplaySettingsMutation, UpdateDisplaySettingsMutationVariables>(UpdateDisplaySettingsDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useUpdateDisplaySettingsMutation.fetcher = (variables: UpdateDisplaySettingsMutationVariables, options?: RequestInit['headers']) => fetcher<UpdateDisplaySettingsMutation, UpdateDisplaySettingsMutationVariables>(UpdateDisplaySettingsDocument, variables, options);
 
 export const GetCombinedMetricsDocument = `
     query GetCombinedMetrics {
