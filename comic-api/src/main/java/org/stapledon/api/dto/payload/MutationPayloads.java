@@ -1,8 +1,9 @@
 package org.stapledon.api.dto.payload;
 
+import org.stapledon.api.dto.batch.BatchJobDto;
+import org.stapledon.api.dto.batch.BatchSchedulerInfoDto;
 import org.stapledon.api.dto.preference.UserPreference;
 import org.stapledon.api.dto.user.User;
-import org.stapledon.api.dto.batch.BatchJobDto;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageCacheStats;
 
@@ -63,5 +64,8 @@ public final class MutationPayloads {
 
     // Batch job payloads
     public record TriggerBatchJobPayload(BatchJobDto batchJob, List<UserError> errors) {
+    }
+
+    public record ToggleJobSchedulerPayload(BatchSchedulerInfoDto scheduler, List<UserError> errors) {
     }
 }

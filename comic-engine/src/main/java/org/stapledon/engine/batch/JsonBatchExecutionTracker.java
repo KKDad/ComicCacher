@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.MDC;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 
@@ -40,6 +41,15 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     private final Gson gson;
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
+    private static final String MDC_EXECUTION_ID = "batchJobExecutionId";
+    private static final String MDC_JOB_NAME = "batchJobName";
+
+    @Override
+    public void beforeJob(JobExecution jobExecution) {
+        super.beforeJob(jobExecution);
+        MDC.put(MDC_EXECUTION_ID, String.valueOf(jobExecution.getId()));
+        MDC.put(MDC_JOB_NAME, jobExecution.getJobInstance().getJobName());
+    }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
@@ -62,6 +72,9 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
 
         } catch (Exception e) {
             log.error("Failed to export batch execution to JSON", e);
+        } finally {
+            MDC.remove(MDC_EXECUTION_ID);
+            MDC.remove(MDC_JOB_NAME);
         }
     }
 

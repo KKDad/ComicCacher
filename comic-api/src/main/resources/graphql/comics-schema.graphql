@@ -186,6 +186,16 @@ type Query {
     """
     batchJobSummary(days: Int = 7): BatchJobSummary!
 
+    """
+    Get scheduler info for all batch jobs, including pause state.
+    """
+    batchSchedulers: [BatchSchedulerInfo!]! @hasRole(role: "ADMIN")
+
+    """
+    Get the execution log for a specific batch job run.
+    """
+    batchJobLog(executionId: Int!, jobName: String!): String @hasRole(role: "ADMIN")
+
     # =========================================================================
     # Error Codes (Metadata)
     # =========================================================================
@@ -347,4 +357,14 @@ type Mutation {
     Trigger a backfill job to retrieve missing comics.
     """
     triggerBackfillJob: TriggerBatchJobPayload! @hasRole(role: "ADMIN")
+
+    """
+    Trigger any batch job by name.
+    """
+    triggerJob(jobName: String!): TriggerBatchJobPayload! @hasRole(role: "ADMIN")
+
+    """
+    Pause or resume a batch job scheduler.
+    """
+    toggleJobScheduler(jobName: String!, paused: Boolean!): ToggleJobSchedulerPayload! @hasRole(role: "ADMIN")
 }

@@ -10,10 +10,12 @@ import {
   Code,
   Settings,
   LogOut,
+  Cog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLogout } from '@/hooks/use-auth';
+import { useUser } from '@/contexts/user-context';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,9 +26,15 @@ const navItems = [
   { href: '/preferences', label: 'Preferences', icon: Settings },
 ];
 
+const adminNavItems = [
+  { href: '/batch-jobs', label: 'Batch Jobs', icon: Cog },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
   const { logout, isLoggingOut } = useLogout();
+  const user = useUser();
+  const isAdmin = user?.roles.includes('ADMIN') ?? false;
 
   return (
     <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100vh-var(--header-height))] w-[var(--sidebar-width)] bg-surface border-r border-border flex flex-col">
@@ -52,6 +60,35 @@ export function Sidebar() {
             );
           })}
         </div>
+
+        {isAdmin && (
+          <div className="mt-6">
+            <div className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Admin
+            </div>
+            <div className="space-y-1">
+              {adminNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <Button
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      className={cn(
+                        'w-full justify-start gap-3',
+                        isActive && 'bg-primary-subtle text-primary font-medium'
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.label}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </nav>
 
       <div className="p-4 border-t border-border">

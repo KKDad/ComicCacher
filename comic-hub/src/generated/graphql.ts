@@ -95,6 +95,27 @@ export type BatchJobSummary = {
   totalItemsProcessed?: Maybe<Scalars['Int']['output']>;
 };
 
+/** Scheduler information for a batch job, including runtime pause state. */
+export type BatchSchedulerInfo = {
+  __typename?: 'BatchSchedulerInfo';
+  /** Cron expression for scheduling. */
+  cronExpression: Scalars['String']['output'];
+  /** Whether the job is enabled in configuration. */
+  enabled: Scalars['Boolean']['output'];
+  /** Job name (e.g., "ComicDownloadJob"). */
+  jobName: Scalars['String']['output'];
+  /** When the pause state was last toggled. */
+  lastToggled?: Maybe<Scalars['DateTime']['output']>;
+  /** Next scheduled run time. */
+  nextRunTime?: Maybe<Scalars['DateTime']['output']>;
+  /** Whether the job is currently paused at runtime. */
+  paused: Scalars['Boolean']['output'];
+  /** Timezone for cron evaluation. */
+  timezone: Scalars['String']['output'];
+  /** Who toggled the pause state. */
+  toggledBy?: Maybe<Scalars['String']['output']>;
+};
+
 /** Possible batch job status values. */
 export enum BatchStatusEnum {
   Abandoned = 'ABANDONED',
@@ -548,10 +569,14 @@ export type Mutation = {
   removeFavorite: FavoritePayload;
   /** Reset password using a token from the password reset email. */
   resetPassword: AuthPayload;
+  /** Pause or resume a batch job scheduler. */
+  toggleJobScheduler: ToggleJobSchedulerPayload;
   /** Trigger a backfill job to retrieve missing comics. */
   triggerBackfillJob: TriggerBatchJobPayload;
   /** Trigger a batch job for comic retrieval. */
   triggerBatchJob: TriggerBatchJobPayload;
+  /** Trigger any batch job by name. */
+  triggerJob: TriggerBatchJobPayload;
   /**
    * Update an existing comic's details.
    * Requires admin role.
@@ -641,6 +666,17 @@ export type MutationResetPasswordArgs = {
 };
 
 
+export type MutationToggleJobSchedulerArgs = {
+  jobName: Scalars['String']['input'];
+  paused: Scalars['Boolean']['input'];
+};
+
+
+export type MutationTriggerJobArgs = {
+  jobName: Scalars['String']['input'];
+};
+
+
 export type MutationUpdateComicArgs = {
   id: Scalars['Int']['input'];
   input: UpdateComicInput;
@@ -695,10 +731,14 @@ export type Query = {
   accessMetrics?: Maybe<AccessMetrics>;
   /** Get a specific batch job execution by ID. */
   batchJob?: Maybe<BatchJob>;
+  /** Get the execution log for a specific batch job run. */
+  batchJobLog?: Maybe<Scalars['String']['output']>;
   /** Get summary statistics for batch jobs. */
   batchJobSummary: BatchJobSummary;
   /** Get batch jobs within a date range. */
   batchJobsByDateRange: Array<BatchJob>;
+  /** Get scheduler info for all batch jobs, including pause state. */
+  batchSchedulers: Array<BatchSchedulerInfo>;
   /** Get combined storage and access metrics. */
   combinedMetrics?: Maybe<CombinedMetrics>;
   /** Get a specific comic by its ID. */
@@ -757,6 +797,12 @@ export type Query = {
 
 export type QueryBatchJobArgs = {
   executionId: Scalars['Int']['input'];
+};
+
+
+export type QueryBatchJobLogArgs = {
+  executionId: Scalars['Int']['input'];
+  jobName: Scalars['String']['input'];
 };
 
 
@@ -968,6 +1014,15 @@ export type SystemResources = {
   totalMemory?: Maybe<Scalars['Float']['output']>;
 };
 
+/** Payload for toggleJobScheduler mutation. */
+export type ToggleJobSchedulerPayload = {
+  __typename?: 'ToggleJobSchedulerPayload';
+  /** List of user-facing errors. */
+  errors: Array<UserError>;
+  /** The updated scheduler info, or null if errors occurred. */
+  scheduler?: Maybe<BatchSchedulerInfo>;
+};
+
 /** Payload for triggerBatchJob and triggerBackfillJob mutations. */
 export type TriggerBatchJobPayload = {
   __typename?: 'TriggerBatchJobPayload';
@@ -1153,6 +1208,41 @@ export type GetMeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetMeQuery = { __typename?: 'Query', me?: { __typename?: 'User', username: string, email?: string | null, displayName?: string | null, created?: any | null, lastLogin?: any | null, roles: Array<string> } | null };
+
+export type GetBatchSchedulersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetBatchSchedulersQuery = { __typename?: 'Query', batchSchedulers: Array<{ __typename?: 'BatchSchedulerInfo', jobName: string, cronExpression: string, timezone: string, nextRunTime?: any | null, enabled: boolean, paused: boolean, lastToggled?: any | null, toggledBy?: string | null }> };
+
+export type GetRecentBatchJobsQueryVariables = Exact<{
+  count?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetRecentBatchJobsQuery = { __typename?: 'Query', recentBatchJobs: Array<{ __typename?: 'BatchJob', executionId: number, jobName: string, status: BatchStatusEnum, startTime: any, endTime?: any | null, durationMs?: number | null, exitCode?: string | null, exitDescription?: string | null, steps?: Array<{ __typename?: 'BatchStep', stepName: string, status: BatchStatusEnum, readCount: number, writeCount: number, filterCount: number, skipCount: number, commitCount: number, rollbackCount: number, startTime?: any | null, endTime?: any | null }> | null }> };
+
+export type GetBatchJobLogQueryVariables = Exact<{
+  executionId: Scalars['Int']['input'];
+  jobName: Scalars['String']['input'];
+}>;
+
+
+export type GetBatchJobLogQuery = { __typename?: 'Query', batchJobLog?: string | null };
+
+export type TriggerJobMutationVariables = Exact<{
+  jobName: Scalars['String']['input'];
+}>;
+
+
+export type TriggerJobMutation = { __typename?: 'Mutation', triggerJob: { __typename?: 'TriggerBatchJobPayload', batchJob?: { __typename?: 'BatchJob', executionId: number, jobName: string, status: BatchStatusEnum, startTime: any } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+
+export type ToggleJobSchedulerMutationVariables = Exact<{
+  jobName: Scalars['String']['input'];
+  paused: Scalars['Boolean']['input'];
+}>;
+
+
+export type ToggleJobSchedulerMutation = { __typename?: 'Mutation', toggleJobScheduler: { __typename?: 'ToggleJobSchedulerPayload', scheduler?: { __typename?: 'BatchSchedulerInfo', jobName: string, paused: boolean, lastToggled?: any | null, toggledBy?: string | null } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
 
 export type GetUserPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1469,6 +1559,248 @@ useInfiniteGetMeQuery.getKey = (variables?: GetMeQueryVariables) => variables ==
 
 
 useGetMeQuery.fetcher = (variables?: GetMeQueryVariables, options?: RequestInit['headers']) => fetcher<GetMeQuery, GetMeQueryVariables>(GetMeDocument, variables, options);
+
+export const GetBatchSchedulersDocument = `
+    query GetBatchSchedulers {
+  batchSchedulers {
+    jobName
+    cronExpression
+    timezone
+    nextRunTime
+    enabled
+    paused
+    lastToggled
+    toggledBy
+  }
+}
+    `;
+
+export const useGetBatchSchedulersQuery = <
+      TData = GetBatchSchedulersQuery,
+      TError = unknown
+    >(
+      variables?: GetBatchSchedulersQueryVariables,
+      options?: Omit<UseQueryOptions<GetBatchSchedulersQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetBatchSchedulersQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetBatchSchedulersQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetBatchSchedulers'] : ['GetBatchSchedulers', variables],
+    queryFn: fetcher<GetBatchSchedulersQuery, GetBatchSchedulersQueryVariables>(GetBatchSchedulersDocument, variables),
+    ...options
+  }
+    )};
+
+useGetBatchSchedulersQuery.getKey = (variables?: GetBatchSchedulersQueryVariables) => variables === undefined ? ['GetBatchSchedulers'] : ['GetBatchSchedulers', variables];
+
+export const useInfiniteGetBatchSchedulersQuery = <
+      TData = InfiniteData<GetBatchSchedulersQuery>,
+      TError = unknown
+    >(
+      variables: GetBatchSchedulersQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetBatchSchedulersQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetBatchSchedulersQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetBatchSchedulersQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetBatchSchedulers.infinite'] : ['GetBatchSchedulers.infinite', variables],
+      queryFn: (metaData) => fetcher<GetBatchSchedulersQuery, GetBatchSchedulersQueryVariables>(GetBatchSchedulersDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetBatchSchedulersQuery.getKey = (variables?: GetBatchSchedulersQueryVariables) => variables === undefined ? ['GetBatchSchedulers.infinite'] : ['GetBatchSchedulers.infinite', variables];
+
+
+useGetBatchSchedulersQuery.fetcher = (variables?: GetBatchSchedulersQueryVariables, options?: RequestInit['headers']) => fetcher<GetBatchSchedulersQuery, GetBatchSchedulersQueryVariables>(GetBatchSchedulersDocument, variables, options);
+
+export const GetRecentBatchJobsDocument = `
+    query GetRecentBatchJobs($count: Int = 10) {
+  recentBatchJobs(count: $count) {
+    executionId
+    jobName
+    status
+    startTime
+    endTime
+    durationMs
+    exitCode
+    exitDescription
+    steps {
+      stepName
+      status
+      readCount
+      writeCount
+      filterCount
+      skipCount
+      commitCount
+      rollbackCount
+      startTime
+      endTime
+    }
+  }
+}
+    `;
+
+export const useGetRecentBatchJobsQuery = <
+      TData = GetRecentBatchJobsQuery,
+      TError = unknown
+    >(
+      variables?: GetRecentBatchJobsQueryVariables,
+      options?: Omit<UseQueryOptions<GetRecentBatchJobsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetRecentBatchJobsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetRecentBatchJobsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetRecentBatchJobs'] : ['GetRecentBatchJobs', variables],
+    queryFn: fetcher<GetRecentBatchJobsQuery, GetRecentBatchJobsQueryVariables>(GetRecentBatchJobsDocument, variables),
+    ...options
+  }
+    )};
+
+useGetRecentBatchJobsQuery.getKey = (variables?: GetRecentBatchJobsQueryVariables) => variables === undefined ? ['GetRecentBatchJobs'] : ['GetRecentBatchJobs', variables];
+
+export const useInfiniteGetRecentBatchJobsQuery = <
+      TData = InfiniteData<GetRecentBatchJobsQuery>,
+      TError = unknown
+    >(
+      variables: GetRecentBatchJobsQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetRecentBatchJobsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetRecentBatchJobsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetRecentBatchJobsQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetRecentBatchJobs.infinite'] : ['GetRecentBatchJobs.infinite', variables],
+      queryFn: (metaData) => fetcher<GetRecentBatchJobsQuery, GetRecentBatchJobsQueryVariables>(GetRecentBatchJobsDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetRecentBatchJobsQuery.getKey = (variables?: GetRecentBatchJobsQueryVariables) => variables === undefined ? ['GetRecentBatchJobs.infinite'] : ['GetRecentBatchJobs.infinite', variables];
+
+
+useGetRecentBatchJobsQuery.fetcher = (variables?: GetRecentBatchJobsQueryVariables, options?: RequestInit['headers']) => fetcher<GetRecentBatchJobsQuery, GetRecentBatchJobsQueryVariables>(GetRecentBatchJobsDocument, variables, options);
+
+export const GetBatchJobLogDocument = `
+    query GetBatchJobLog($executionId: Int!, $jobName: String!) {
+  batchJobLog(executionId: $executionId, jobName: $jobName)
+}
+    `;
+
+export const useGetBatchJobLogQuery = <
+      TData = GetBatchJobLogQuery,
+      TError = unknown
+    >(
+      variables: GetBatchJobLogQueryVariables,
+      options?: Omit<UseQueryOptions<GetBatchJobLogQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetBatchJobLogQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetBatchJobLogQuery, TError, TData>(
+      {
+    queryKey: ['GetBatchJobLog', variables],
+    queryFn: fetcher<GetBatchJobLogQuery, GetBatchJobLogQueryVariables>(GetBatchJobLogDocument, variables),
+    ...options
+  }
+    )};
+
+useGetBatchJobLogQuery.getKey = (variables: GetBatchJobLogQueryVariables) => ['GetBatchJobLog', variables];
+
+export const useInfiniteGetBatchJobLogQuery = <
+      TData = InfiniteData<GetBatchJobLogQuery>,
+      TError = unknown
+    >(
+      variables: GetBatchJobLogQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetBatchJobLogQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetBatchJobLogQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetBatchJobLogQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? ['GetBatchJobLog.infinite', variables],
+      queryFn: (metaData) => fetcher<GetBatchJobLogQuery, GetBatchJobLogQueryVariables>(GetBatchJobLogDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetBatchJobLogQuery.getKey = (variables: GetBatchJobLogQueryVariables) => ['GetBatchJobLog.infinite', variables];
+
+
+useGetBatchJobLogQuery.fetcher = (variables: GetBatchJobLogQueryVariables, options?: RequestInit['headers']) => fetcher<GetBatchJobLogQuery, GetBatchJobLogQueryVariables>(GetBatchJobLogDocument, variables, options);
+
+export const TriggerJobDocument = `
+    mutation TriggerJob($jobName: String!) {
+  triggerJob(jobName: $jobName) {
+    batchJob {
+      executionId
+      jobName
+      status
+      startTime
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+    `;
+
+export const useTriggerJobMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<TriggerJobMutation, TError, TriggerJobMutationVariables, TContext>) => {
+    
+    return useMutation<TriggerJobMutation, TError, TriggerJobMutationVariables, TContext>(
+      {
+    mutationKey: ['TriggerJob'],
+    mutationFn: (variables?: TriggerJobMutationVariables) => fetcher<TriggerJobMutation, TriggerJobMutationVariables>(TriggerJobDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useTriggerJobMutation.fetcher = (variables: TriggerJobMutationVariables, options?: RequestInit['headers']) => fetcher<TriggerJobMutation, TriggerJobMutationVariables>(TriggerJobDocument, variables, options);
+
+export const ToggleJobSchedulerDocument = `
+    mutation ToggleJobScheduler($jobName: String!, $paused: Boolean!) {
+  toggleJobScheduler(jobName: $jobName, paused: $paused) {
+    scheduler {
+      jobName
+      paused
+      lastToggled
+      toggledBy
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+    `;
+
+export const useToggleJobSchedulerMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<ToggleJobSchedulerMutation, TError, ToggleJobSchedulerMutationVariables, TContext>) => {
+    
+    return useMutation<ToggleJobSchedulerMutation, TError, ToggleJobSchedulerMutationVariables, TContext>(
+      {
+    mutationKey: ['ToggleJobScheduler'],
+    mutationFn: (variables?: ToggleJobSchedulerMutationVariables) => fetcher<ToggleJobSchedulerMutation, ToggleJobSchedulerMutationVariables>(ToggleJobSchedulerDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useToggleJobSchedulerMutation.fetcher = (variables: ToggleJobSchedulerMutationVariables, options?: RequestInit['headers']) => fetcher<ToggleJobSchedulerMutation, ToggleJobSchedulerMutationVariables>(ToggleJobSchedulerDocument, variables, options);
 
 export const GetUserPreferencesDocument = `
     query GetUserPreferences {

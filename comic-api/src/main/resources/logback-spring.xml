@@ -7,8 +7,37 @@
     <property name="CONSOLE_LOG_PATTERN"
               value="%clr(%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, America/Toronto}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx{50,org.springframework,org.apache,sun.reflect,java.lang.reflect,io.netty}"/>
 
+    <!-- Batch log directory from Spring property, with fallback -->
+    <springProperty name="BATCH_LOG_DIR" source="comics.cache.location" defaultValue="/tmp/comic-cache"/>
+
+    <!-- SiftingAppender: routes batch job logs to per-execution files when MDC keys are present -->
+    <appender name="BATCH_SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>batchJobExecutionId</key>
+            <defaultValue>NONE</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="BATCH-${batchJobExecutionId}" class="ch.qos.logback.core.FileAppender">
+                <file>${BATCH_LOG_DIR}/batch-logs/${batchJobName:-unknown}/${batchJobExecutionId}.log</file>
+                <append>true</append>
+                <encoder>
+                    <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS, America/Toronto} %-5level [%thread] %logger{39} : %msg%n%xEx</pattern>
+                </encoder>
+            </appender>
+        </sift>
+        <!-- Only activate when a real execution ID is present -->
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.JaninoEventEvaluator">
+                <expression>return mdc != null &amp;&amp; mdc.get("batchJobExecutionId") != null &amp;&amp; !"NONE".equals(mdc.get("batchJobExecutionId"));</expression>
+            </evaluator>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="BATCH_SIFT"/>
     </root>
 
     <logger name="org.stapledon" level="INFO"/>
