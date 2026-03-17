@@ -24,6 +24,19 @@
 - `ext['jackson-2-bom.version']` and `ext['jackson-bom.version']` in root build.gradle override Spring Boot 4.0.3's Jackson to fix CVEs
 - Check with each Spring Boot upgrade whether the bundled Jackson versions include the fixes, and remove the overrides if so
 
+### Upgrade to Java 25
+- Upgrade from Java 21 to Java 25 when available
+- Update `build.gradle` Java toolchain/sourceCompatibility settings
+- Update CI/CD pipeline and Docker base images
+- Clean up deprecated API usage first (see below)
+
+### Clean Up Deprecated Java APIs
+Audit complete. Remaining items (JJWT builder migration done):
+- **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — 8 instances across `GoComics`, `GoComicsDownloaderStrategy`, `ComicsKingdom`, `ComicsKingdomDownloaderStrategy` in comic-engine
+- **Guava `@VisibleForTesting` → remove or replace** — 3 instances (`ComicBackfillService`, `DailyJobScheduler`, `SchedulerHealthCheck`)
+- **Guava `Files.getNameWithoutExtension()` → plain Java** — 1 instance in `ImageUtils`
+- Priority: Medium (do before Java 25 upgrade)
+
 ### Reduce WebDriver Startup Overhead in GoComics IT Tests
 - **Root cause:** `GoComicsIntegrationIT.getSubject()` creates a new `GoComics` instance per test method, each of which lazy-inits a new `ChromeDriver` process (~2-5s startup cost per test)
 - **Where:** `GoComicsIntegrationIT` (lines 52-59) uses try-with-resources per test; `GoComics.initializeWebDriver()` (lines 67-95) does `WebDriverManager.chromedriver().setup()` + `new ChromeDriver()`

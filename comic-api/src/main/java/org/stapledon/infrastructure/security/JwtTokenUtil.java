@@ -42,10 +42,10 @@ public class JwtTokenUtil {
         Instant expiration = now.plusMillis(jwtProperties.getExpiration());
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(user.getUsername())
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiration))
+                .claims().add(claims).and()
+                .subject(user.getUsername())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -61,9 +61,9 @@ public class JwtTokenUtil {
         Instant expiration = now.plusMillis(jwtProperties.getRefreshExpiration());
 
         return Jwts.builder()
-                .setSubject(user.getUsername())
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiration))
+                .subject(user.getUsername())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -159,10 +159,10 @@ public class JwtTokenUtil {
         Instant expiration = now.plusMillis(PASSWORD_RESET_EXPIRATION_MS);
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiration))
+                .claims().add(claims).and()
+                .subject(username)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
                 .signWith(getSigningKey())
                 .compact();
     }
