@@ -52,6 +52,18 @@ public interface ManagementFacade {
     Optional<ComicItem> updateComic(int comicId, ComicItem comicItem);
 
     /**
+     * Updates a specific comic by downloading its latest strip.
+     * Returns true if the comic was successfully updated, false otherwise.
+     */
+    boolean updateComic(int comicId);
+
+    /**
+     * Updates a specific comic by downloading its latest strip.
+     * Returns true if the comic was successfully updated, false otherwise.
+     */
+    boolean updateComic(String comicName);
+
+    /**
      * Deletes a comic by its ID.
      * Returns true if the comic was successfully deleted, false otherwise.
      */
@@ -141,18 +153,6 @@ public interface ManagementFacade {
      * @return The download result, or empty if the comic couldn't be downloaded
      */
     Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date);
-
-    /**
-     * Updates a specific comic by downloading its latest strip.
-     * Returns true if the comic was successfully updated, false otherwise.
-     */
-    boolean updateComic(int comicId);
-
-    /**
-     * Updates a specific comic by downloading its latest strip.
-     * Returns true if the comic was successfully updated, false otherwise.
-     */
-    boolean updateComic(String comicName);
 
     /**
      * Refreshes the comic list from storage and configuration.

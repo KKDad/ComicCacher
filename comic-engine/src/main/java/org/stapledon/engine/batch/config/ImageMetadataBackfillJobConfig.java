@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageMetadata;
@@ -137,21 +136,21 @@ public class ImageMetadataBackfillJobConfig {
             try (Stream<Path> paths = Files.walk(cacheRoot.toPath())) {
                 paths.filter(Files::isRegularFile).filter(this::isImageFile).filter(path -> !"avatar.png".equals(path.getFileName().toString()))
                         .filter(path -> !imageMetadataRepository.metadataExists(path.toString())).limit(maxToProcess).forEach(path -> {
-                    try {
-                        backfillImageMetadata(path.toFile());
-                        counters[1]++;
-                    } catch (Exception e) {
-                        counters[2]++;
-                        log.error("Failed to backfill metadata for {}: {}", path.toAbsolutePath(), e.getMessage());
-                    }
+                            try {
+                                backfillImageMetadata(path.toFile());
+                                counters[1]++;
+                            } catch (Exception e) {
+                                counters[2]++;
+                                log.error("Failed to backfill metadata for {}: {}", path.toAbsolutePath(), e.getMessage());
+                            }
 
-                    counters[0]++;
+                            counters[0]++;
 
-                    // Log progress every batch
-                    if (counters[0] % batchSize == 0) {
-                        log.info("Progress: {} images processed ({} successful, {} failed)", counters[0], counters[1], counters[2]);
-                    }
-                });
+                            // Log progress every batch
+                            if (counters[0] % batchSize == 0) {
+                                log.info("Progress: {} images processed ({} successful, {} failed)", counters[0], counters[1], counters[2]);
+                            }
+                        });
             }
 
             if (counters[0] == 0) {

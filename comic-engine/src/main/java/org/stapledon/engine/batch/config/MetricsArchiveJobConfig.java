@@ -20,7 +20,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
 
-
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.metrics.service.MetricsArchiveService;

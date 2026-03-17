@@ -149,6 +149,59 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
+    public boolean updateComic(int comicId) {
+        // Check if comic exists, return false if not
+        Optional<ComicItem> comicOpt = getComic(comicId);
+        if (comicOpt.isEmpty()) {
+            log.warn("Comic with ID {} not found, cannot update", comicId);
+            return false;
+        }
+
+        try {
+            ComicItem comic = comicOpt.get();
+            // Create download request
+            ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(comic.getId())
+                    .comicName(comic.getName()).source(comic.getSource())
+                    .sourceIdentifier(comic.getSourceIdentifier()).date(LocalDate.now()).build();
+
+            // Download the comic
+            ComicDownloadResult result = downloaderFacade.downloadComic(request);
+
+            if (result.isSuccessful()) {
+                // Save the comic to storage
+                boolean saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), request.getDate(),
+                        result.getImageData());
+
+                if (saved) {
+                    // Update comic item metadata
+                    ComicItem updated = comic.toBuilder().newest(request.getDate()).build();
+
+                    updateComic(comic.getId(), updated);
+                } else {
+                    log.error("Failed to save comic {} to storage", comic.getName());
+                }
+            } else {
+                log.error("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
+            }
+
+            // Always return true if the comic exists and we attempted to update it,
+            // regardless of whether the update succeeded
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error occurred while updating comic with ID {}", comicId, e);
+            // Still return true since we successfully triggered the update for an existing
+            // comic
+            return true;
+        }
+    }
+
+    @Override
+    public boolean updateComic(String comicName) {
+        return getComicByName(comicName).map(comic -> updateComic(comic.getId())).orElse(false);
+    }
+
+    @Override
     @CacheEvict(value = "comicMetadata", allEntries = true)
     public boolean deleteComic(int comicId) {
         ComicItem removed = comics.remove(comicId);
@@ -174,6 +227,13 @@ public class ComicManagementFacade implements ManagementFacade {
                 .orElseGet(() -> ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", null, null, null));
     }
 
+    @Override
+    public ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from) {
+        return getComic(comicId)
+                .map(comic -> getComicStripInternal(comicId, comic.getName(), direction, from))
+                .orElseGet(() -> ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", from, null, null));
+    }
+
     private ComicNavigationResult getComicStripForDirection(ComicItem comic, Direction direction) {
         try {
             ComicIdentifier identifier = ComicIdentifier.from(comic);
@@ -197,13 +257,6 @@ public class ComicManagementFacade implements ManagementFacade {
             log.error("Error retrieving comic strip: {}", e.getMessage(), e);
             return ComicNavigationResult.notFound("ERROR", null, null, null);
         }
-    }
-
-    @Override
-    public ComicNavigationResult getComicStrip(int comicId, Direction direction, LocalDate from) {
-        return getComic(comicId)
-                .map(comic -> getComicStripInternal(comicId, comic.getName(), direction, from))
-                .orElseGet(() -> ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", from, null, null));
     }
 
     /**
@@ -493,59 +546,6 @@ public class ComicManagementFacade implements ManagementFacade {
         }
 
         return Optional.of(result);
-    }
-
-    @Override
-    public boolean updateComic(int comicId) {
-        // Check if comic exists, return false if not
-        Optional<ComicItem> comicOpt = getComic(comicId);
-        if (comicOpt.isEmpty()) {
-            log.warn("Comic with ID {} not found, cannot update", comicId);
-            return false;
-        }
-
-        try {
-            ComicItem comic = comicOpt.get();
-            // Create download request
-            ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(comic.getId())
-                    .comicName(comic.getName()).source(comic.getSource())
-                    .sourceIdentifier(comic.getSourceIdentifier()).date(LocalDate.now()).build();
-
-            // Download the comic
-            ComicDownloadResult result = downloaderFacade.downloadComic(request);
-
-            if (result.isSuccessful()) {
-                // Save the comic to storage
-                boolean saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), request.getDate(),
-                        result.getImageData());
-
-                if (saved) {
-                    // Update comic item metadata
-                    ComicItem updated = comic.toBuilder().newest(request.getDate()).build();
-
-                    updateComic(comic.getId(), updated);
-                } else {
-                    log.error("Failed to save comic {} to storage", comic.getName());
-                }
-            } else {
-                log.error("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
-            }
-
-            // Always return true if the comic exists and we attempted to update it,
-            // regardless of whether the update succeeded
-            return true;
-
-        } catch (Exception e) {
-            log.error("Error occurred while updating comic with ID {}", comicId, e);
-            // Still return true since we successfully triggered the update for an existing
-            // comic
-            return true;
-        }
-    }
-
-    @Override
-    public boolean updateComic(String comicName) {
-        return getComicByName(comicName).map(comic -> updateComic(comic.getId())).orElse(false);
     }
 
     @Override

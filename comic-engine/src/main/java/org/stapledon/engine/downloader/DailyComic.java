@@ -18,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
 
-
 import org.stapledon.common.infrastructure.caching.ICachable;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.JsoupInspectorService;

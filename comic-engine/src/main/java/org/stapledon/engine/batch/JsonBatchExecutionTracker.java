@@ -19,7 +19,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 

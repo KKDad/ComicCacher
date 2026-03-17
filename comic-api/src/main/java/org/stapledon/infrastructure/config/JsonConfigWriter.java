@@ -19,7 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class JsonConfigWriter {
-    @Qualifier("gsonWithLocalDate") private final Gson gson;
+    @Qualifier("gsonWithLocalDate")
+    private final Gson gson;
     private final ConfigurationFacade configurationFacade;
 
     private ComicConfig comics;

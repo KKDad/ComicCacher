@@ -1,11 +1,6 @@
 package org.stapledon.infrastructure.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.common.config.IComicsBootstrap;
-import org.stapledon.common.infrastructure.web.InspectorService;
-import org.stapledon.common.infrastructure.web.JsoupInspectorService;
-import org.stapledon.engine.downloader.ComicsKingdom;
-import org.stapledon.engine.downloader.IDailyComic;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -21,8 +16,6 @@ public class KingComicsBootStrap implements IComicsBootstrap {
     List<DayOfWeek> publicationDays; // Optional: days comic publishes (null/empty = daily)
     Boolean active; // Optional: whether comic is actively publishing (null/true = active)
 
-    @Autowired private InspectorService webInspector;
-
     public KingComicsBootStrap() {
         // No args constructor for required for Gson deserialize
     }
@@ -35,11 +28,6 @@ public class KingComicsBootStrap implements IComicsBootstrap {
     @Override
     public LocalDate startDate() {
         return this.getStartDate();
-    }
-
-    @Override
-    public IDailyComic getDownloader() {
-        return new ComicsKingdom(webInspector != null ? webInspector : new JsoupInspectorService(), this.getWebsite());
     }
 
     @Override

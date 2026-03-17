@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.HashAlgorithm;
 import org.stapledon.common.dto.ImageHashRecord;

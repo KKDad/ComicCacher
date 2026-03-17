@@ -11,7 +11,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
-
 import org.stapledon.common.service.ImageHasher;
 
 /**
