@@ -1,36 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { ComicTile } from '@/components/comics/comic-tile';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BookOpen, Loader2 } from 'lucide-react';
-import { useGetComicsQuery } from '@/generated/graphql';
-import type { GetComicsQuery } from '@/generated/graphql';
+import { useInfiniteGetComicsQuery } from '@/generated/graphql';
 
-type ComicNode = GetComicsQuery['comics']['edges'][number]['node'];
+const PAGE_SIZE = 20;
 
 export default function ComicsPage() {
-  const [comics, setComics] = useState<ComicNode[]>([]);
-  const [afterCursor, setAfterCursor] = useState<string | undefined>(undefined);
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const { data, isLoading, isFetching } = useGetComicsQuery(
-    { first: 20, after: afterCursor },
-  );
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useInfiniteGetComicsQuery(
+      { first: PAGE_SIZE },
+      {
+        getNextPageParam: (lastPage) =>
+          lastPage.comics.pageInfo.hasNextPage
+            ? { after: lastPage.comics.pageInfo.endCursor }
+            : undefined,
+        initialPageParam: {},
+      },
+    );
 
   useEffect(() => {
-    if (data?.comics) {
-      const newNodes = data.comics.edges.map((e) => e.node);
-      setComics((prev) =>
-        afterCursor ? [...prev, ...newNodes] : newNodes,
-      );
-      setHasNextPage(data.comics.pageInfo.hasNextPage);
-    }
-  }, [data, afterCursor]);
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
-  if (isLoading && comics.length === 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const comics = useMemo(
+    () => data?.pages.flatMap((page) => page.comics.edges.map((e) => e.node)) ?? [],
+    [data],
+  );
+
+  const totalCount = data?.pages[0]?.comics.totalCount ?? 0;
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -54,7 +72,7 @@ export default function ComicsPage() {
     );
   }
 
-  if (!isLoading && comics.length === 0) {
+  if (comics.length === 0) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-ink">Browse Comics</h1>
@@ -77,7 +95,7 @@ export default function ComicsPage() {
         <div>
           <h1 className="text-3xl font-bold text-ink">Browse Comics</h1>
           <p className="text-ink-subtle mt-1">
-            Explore all {comics.length} available comics
+            Explore all {totalCount} available comics
           </p>
         </div>
       </div>
@@ -96,27 +114,11 @@ export default function ComicsPage() {
         ))}
       </div>
 
-      {hasNextPage && (
-        <div className="flex justify-center pt-4">
-          <Button
-            variant="outline"
-            disabled={isFetching}
-            onClick={() => {
-              const endCursor = data?.comics.pageInfo.endCursor;
-              if (endCursor) {
-                setAfterCursor(endCursor);
-              }
-            }}
-          >
-            {isFetching ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              'Load More'
-            )}
-          </Button>
+      <div ref={sentinelRef} className="h-1" />
+
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
     </div>

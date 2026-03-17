@@ -122,6 +122,73 @@ describe('POST /api/graphql', () => {
     expect(response.status).toBe(401);
   });
 
+  it('detects GraphQL Access Denied and attempts refresh', async () => {
+    mockCookieStore({
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'valid-refresh',
+    });
+
+    vi.mocked(global.fetch)
+      // First call: backend returns 200 with Access Denied GraphQL error
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          errors: [{ message: 'Access Denied', extensions: { classification: 'UNAUTHORIZED' } }],
+          data: { batchSchedulers: null },
+        })),
+      )
+      // Second call: refresh succeeds
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          data: { refreshToken: { token: 'new-jwt', refreshToken: 'new-refresh' } },
+        })),
+      )
+      // Third call: retry with new token succeeds
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { batchSchedulers: [] } })),
+      );
+
+    const { POST } = await importRoute();
+    const response = await POST(createRequest());
+    const json = await response.json();
+    expect(json).toEqual({ data: { batchSchedulers: [] } });
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('new-jwt');
+  });
+
+  it('returns 401 on GraphQL Access Denied when no refresh token', async () => {
+    mockCookieStore({ 'comic-hub-jwt': 'expired-jwt' });
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        errors: [{ message: 'Access Denied' }],
+        data: { preferences: null },
+      })),
+    );
+
+    const { POST } = await importRoute();
+    const response = await POST(createRequest());
+    expect(response.status).toBe(401);
+  });
+
+  it('returns 401 on GraphQL Access Denied when refresh fails', async () => {
+    mockCookieStore({
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'bad-refresh',
+    });
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          errors: [{ message: 'Access Denied' }],
+          data: null,
+        })),
+      )
+      .mockResolvedValueOnce(new Response('Server Error', { status: 500 }));
+
+    const { POST } = await importRoute();
+    const response = await POST(createRequest());
+    expect(response.status).toBe(401);
+  });
+
   it('returns 401 when refresh returns no token', async () => {
     mockCookieStore({
       'comic-hub-jwt': 'expired-jwt',

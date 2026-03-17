@@ -97,5 +97,41 @@ export async function POST(request: NextRequest) {
   }
 
   const data = await backendRes.json();
+
+  // Detect GraphQL-level auth errors (backend returns 200 with "Access Denied" errors)
+  if (hasAuthError(data)) {
+    const refresh = cookieStore.get(REFRESH_COOKIE)?.value;
+    if (!refresh) {
+      const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      res.cookies.delete(JWT_COOKIE);
+      res.cookies.delete(REFRESH_COOKIE);
+      return res;
+    }
+
+    const newTokens = await refreshTokens(refresh);
+
+    if (!newTokens) {
+      const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      res.cookies.delete(JWT_COOKIE);
+      res.cookies.delete(REFRESH_COOKIE);
+      return res;
+    }
+
+    const retryRes = await forwardToBackend(body, newTokens.token);
+    const retryData = await retryRes.json();
+    const response = NextResponse.json(retryData, { status: retryRes.status });
+    setCookies(response, newTokens.token, newTokens.refreshToken);
+    return response;
+  }
+
   return NextResponse.json(data, { status: backendRes.status });
+}
+
+function hasAuthError(data: any): boolean {
+  if (!data?.errors?.length) return false;
+  return data.errors.some(
+    (e: any) =>
+      e.message === 'Access Denied' ||
+      e.extensions?.classification === 'UNAUTHORIZED',
+  );
 }
