@@ -90,9 +90,6 @@ dependencies {
     // Other dependencies
     implementation "org.mindrot:jbcrypt:${rootProject.ext.bcryptVersion}"
 
-    // Janino for Logback conditional SiftingAppender filter
-    runtimeOnly 'org.codehaus.janino:janino'
-
     // Annotation processors
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 

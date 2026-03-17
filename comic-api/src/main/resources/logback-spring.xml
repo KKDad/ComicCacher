@@ -25,13 +25,9 @@
                 </encoder>
             </appender>
         </sift>
-        <!-- Only activate when a real execution ID is present -->
-        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-            <evaluator class="ch.qos.logback.classic.boolex.JaninoEventEvaluator">
-                <expression>return mdc != null &amp;&amp; mdc.get("batchJobExecutionId") != null &amp;&amp; !"NONE".equals(mdc.get("batchJobExecutionId"));</expression>
-            </evaluator>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
+        <filter class="org.stapledon.infrastructure.logging.MdcPresentFilter">
+            <key>batchJobExecutionId</key>
+            <defaultValue>NONE</defaultValue>
         </filter>
     </appender>
 
