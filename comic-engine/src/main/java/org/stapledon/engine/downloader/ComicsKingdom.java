@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.infrastructure.web.InspectorService;
 

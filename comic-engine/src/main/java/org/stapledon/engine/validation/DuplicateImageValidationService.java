@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.Optional;
 
-
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageHashRecord;

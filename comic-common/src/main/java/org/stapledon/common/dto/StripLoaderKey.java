@@ -16,6 +16,7 @@ import java.time.LocalDate;
  */
 public sealed interface StripLoaderKey permits StripLoaderKey.DateStripKey, StripLoaderKey.BoundaryStripKey {
     int comicId();
+
     String comicName();
 
     /**
@@ -25,7 +26,7 @@ public sealed interface StripLoaderKey permits StripLoaderKey.DateStripKey, Stri
             int comicId,
             String comicName,
             LocalDate date
-    ) implements StripLoaderKey {}
+    ) implements StripLoaderKey { }
 
     /**
      * Strip lookup by boundary direction (first/last).

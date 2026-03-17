@@ -280,7 +280,6 @@ public class ComicIndexService {
         }
     }
 
-
     /**
      * Rebuild the entire index from scratch by scanning the filesystem.
      */
@@ -471,9 +470,9 @@ public class ComicIndexService {
 
         log.info("Saving index to: {}", indexFile);
         log.info("Index contains {} dates: {}", index.getAvailableDates().size(),
-                 index.getAvailableDates().isEmpty() ? "[]" :
-                 "[" + index.getAvailableDates().get(0) + "..." +
-                 index.getAvailableDates().get(index.getAvailableDates().size() - 1) + "]");
+                 index.getAvailableDates().isEmpty() ? "[]"
+                 : "[" + index.getAvailableDates().get(0) + "..."
+                 + index.getAvailableDates().get(index.getAvailableDates().size() - 1) + "]");
 
         String json = gson.toJson(index);
         NfsFileOperations.atomicWrite(indexFile, json);

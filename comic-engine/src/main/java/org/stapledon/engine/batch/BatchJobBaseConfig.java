@@ -1,8 +1,5 @@
 package org.stapledon.engine.batch;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
-
 /**
  * Base configuration for Spring Batch jobs. Provides shared configuration, utilities, and conventions for all batch jobs.
  *
@@ -32,9 +29,11 @@ import org.springframework.context.annotation.Configuration;
  * }
  * </pre>
  */
-@Slf4j
-@Configuration
-public class BatchJobBaseConfig {
+public final class BatchJobBaseConfig {
+
+    private BatchJobBaseConfig() {
+        // Utility class
+    }
 
     /**
      * Standard timezone for all batch jobs
@@ -107,8 +106,4 @@ public class BatchJobBaseConfig {
         }
     }
 
-    public BatchJobBaseConfig() {
-        log.info("Initializing Spring Batch configuration with timezone: {}", BATCH_TIMEZONE);
-        log.info("Batch execution tracking enabled - summaries will be exported to JSON");
-    }
 }

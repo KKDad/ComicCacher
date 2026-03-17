@@ -13,7 +13,6 @@ import java.time.OffsetDateTime;
 import java.util.Random;
 import javax.imageio.ImageIO;
 
-
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.service.AnalysisService;

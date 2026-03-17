@@ -2,7 +2,6 @@ package org.stapledon.engine.downloader;
 
 import java.time.LocalDate;
 
-
 import org.stapledon.common.dto.ComicItem;
 
 /**

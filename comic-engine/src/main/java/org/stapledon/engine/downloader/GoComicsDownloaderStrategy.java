@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
 
-
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
@@ -178,8 +177,8 @@ public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy 
                             && (src.parent().className().contains("comic")
                             || src.parent().className().contains("ShowComicViewer"))) {
                         elements.add(src);
-                    }// Check for images that are large enough to likely be the comic
-                    else if (src.hasAttr("width") && src.hasAttr("height")) {
+                    } else if (src.hasAttr("width") && src.hasAttr("height")) {
+                        // Check for images that are large enough to likely be the comic
                         try {
                             int width = Integer.parseInt(src.attr("width"));
                             int height = Integer.parseInt(src.attr("height"));

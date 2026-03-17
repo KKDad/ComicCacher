@@ -13,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.util.NfsFileOperations;
 

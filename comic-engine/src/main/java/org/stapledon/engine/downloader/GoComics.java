@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.infrastructure.web.InspectorService;
@@ -193,9 +192,9 @@ public class GoComics extends DailyComic implements AutoCloseable {
             comicItem.setAuthor("By " + inferAuthorFromComicName(this.comicNameParsed));
 
             // Try multiple extraction methods in order of preference
-            boolean authorFound = extractFromJsonLd(doc, comicItem) ||
-                    extractFromMetaTags(doc, comicItem) ||
-                    extractFromPageTitle(doc, comicItem);
+            boolean authorFound = extractFromJsonLd(doc, comicItem)
+                    || extractFromMetaTags(doc, comicItem)
+                    || extractFromPageTitle(doc, comicItem);
 
             // Set avatar available regardless
             comicItem.setAvatarAvailable(true);
