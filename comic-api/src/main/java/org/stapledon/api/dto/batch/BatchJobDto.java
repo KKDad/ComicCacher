@@ -1,6 +1,6 @@
 package org.stapledon.api.dto.batch;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -11,8 +11,8 @@ public record BatchJobDto(
         long executionId,
         String jobName,
         String status,
-        LocalDateTime startTime,
-        LocalDateTime endTime,
+        OffsetDateTime startTime,
+        OffsetDateTime endTime,
         Double durationMs,
         String exitCode,
         String exitDescription,

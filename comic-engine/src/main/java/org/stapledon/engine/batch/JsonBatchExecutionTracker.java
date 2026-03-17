@@ -1,13 +1,15 @@
 package org.stapledon.engine.batch;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -16,12 +18,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.MDC;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
+import org.stapledon.engine.batch.dto.BatchStepSummary;
 
 /**
  * Exports Spring Batch job execution data to JSON file for monitoring and
@@ -29,20 +39,34 @@ import org.stapledon.engine.batch.dto.BatchExecutionSummary;
  * Implements JobExecutionListener to automatically export after each job
  * completion.
  * Uses gsonWithLocalDate bean for proper LocalDateTime serialization.
+ *
+ * <p>Stores a capped list of executions per job (configurable via
+ * {@code batch.tracking.max-history-per-job}). Handles migration from
+ * the legacy single-entry format automatically on read.
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class JsonBatchExecutionTracker extends LoggingJobExecutionListener implements JobExecutionListener {
 
     private final CacheProperties cacheProperties;
-
-    @Qualifier("gsonWithLocalDate")
     private final Gson gson;
+    private final int maxHistoryPerJob;
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
     private static final String MDC_EXECUTION_ID = "batchJobExecutionId";
     private static final String MDC_JOB_NAME = "batchJobName";
+
+    /**
+     * Constructor with configurable max history per job.
+     */
+    public JsonBatchExecutionTracker(
+            CacheProperties cacheProperties,
+            @Qualifier("gsonWithLocalDate") Gson gson,
+            @Value("${batch.tracking.max-history-per-job:30}") int maxHistoryPerJob) {
+        this.cacheProperties = cacheProperties;
+        this.gson = gson;
+        this.maxHistoryPerJob = maxHistoryPerJob;
+    }
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
@@ -52,22 +76,22 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     @Override
-    public void afterJob(JobExecution jobExecution) {
+    public synchronized void afterJob(JobExecution jobExecution) {
         try {
-            // Create execution summary
             BatchExecutionSummary summary = createSummary(jobExecution);
 
-            // Read existing executions
-            Map<String, BatchExecutionSummary> executions = readExecutions();
+            Map<String, List<BatchExecutionSummary>> executions = readExecutions();
 
-            // Update with current execution
             String jobName = jobExecution.getJobInstance().getJobName();
-            executions.put(jobName, summary);
+            List<BatchExecutionSummary> jobHistory = executions.computeIfAbsent(jobName, k -> new ArrayList<>());
 
-            // Write back to file
+            // Prepend new execution and trim to cap
+            jobHistory.addFirst(summary);
+            if (jobHistory.size() > maxHistoryPerJob) {
+                executions.put(jobName, new ArrayList<>(jobHistory.subList(0, maxHistoryPerJob)));
+            }
+
             writeExecutions(executions);
-
-            // Log completion
             logExecutionSummary(jobName, summary);
 
         } catch (Exception e) {
@@ -79,20 +103,42 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     /**
-     * Create execution summary from JobExecution
+     * Create execution summary from JobExecution.
      */
     private BatchExecutionSummary createSummary(JobExecution jobExecution) {
+        String jobName = jobExecution.getJobInstance().getJobName();
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        jobExecution.getJobParameters().parameters()
+                .forEach(p -> params.put(p.name(), p.value()));
+
+        List<BatchStepSummary> steps = jobExecution.getStepExecutions().stream()
+                .map(step -> new BatchStepSummary(
+                        step.getStepName(),
+                        step.getStatus().name(),
+                        (int) step.getReadCount(),
+                        (int) step.getWriteCount(),
+                        (int) step.getFilterCount(),
+                        (int) step.getSkipCount(),
+                        (int) step.getCommitCount(),
+                        (int) step.getRollbackCount(),
+                        step.getStartTime(),
+                        step.getEndTime()))
+                .toList();
+
         BatchExecutionSummary summary = BatchExecutionSummary.builder()
-                .lastExecutionId(jobExecution.getId())
-                .lastExecutionTime(jobExecution.getEndTime())
+                .executionId(jobExecution.getId())
+                .jobName(jobName)
+                .executionTime(jobExecution.getEndTime())
                 .status(jobExecution.getStatus().name())
                 .exitCode(jobExecution.getExitStatus().getExitCode())
                 .exitMessage(jobExecution.getExitStatus().getExitDescription())
                 .startTime(jobExecution.getStartTime())
                 .endTime(jobExecution.getEndTime())
+                .parameters(params)
+                .steps(steps)
                 .build();
 
-        // Capture error message if failed
         if (jobExecution.getStatus() == BatchStatus.FAILED && !jobExecution.getAllFailureExceptions().isEmpty()) {
             Throwable firstException = jobExecution.getAllFailureExceptions().getFirst();
             summary.setErrorMessage(firstException.getMessage());
@@ -102,9 +148,9 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     /**
-     * Read existing executions from JSON file
+     * Read existing executions from JSON file, handling migration from legacy single-entry format.
      */
-    private Map<String, BatchExecutionSummary> readExecutions() {
+    private Map<String, List<BatchExecutionSummary>> readExecutions() {
         Path filePath = getExecutionsFilePath();
 
         if (!Files.exists(filePath)) {
@@ -113,10 +159,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
 
         try {
             String json = Files.readString(filePath);
-            Type type = new TypeToken<Map<String, BatchExecutionSummary>>() {
-            }.getType();
-            Map<String, BatchExecutionSummary> executions = gson.fromJson(json, type);
-            return executions != null ? executions : new HashMap<>();
+            return parseWithMigration(json);
         } catch (IOException e) {
             log.error("Failed to read batch executions from JSON file", e);
             return new HashMap<>();
@@ -124,30 +167,66 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     /**
-     * Write executions to JSON file
+     * Parse JSON, detecting legacy single-entry format and migrating to list format.
      */
-    private void writeExecutions(Map<String, BatchExecutionSummary> executions) throws IOException {
+    Map<String, List<BatchExecutionSummary>> parseWithMigration(String json) {
+        JsonElement parsed = gson.fromJson(json, JsonElement.class);
+        if (parsed == null || !parsed.isJsonObject()) {
+            return new HashMap<>();
+        }
+        JsonObject root = parsed.getAsJsonObject();
+
+        // Detect format: if any top-level value is an array, it's the new format
+        boolean isNewFormat = root.entrySet().stream()
+                .anyMatch(entry -> entry.getValue().isJsonArray());
+
+        if (isNewFormat) {
+            Type type = new TypeToken<Map<String, List<BatchExecutionSummary>>>() {
+            }.getType();
+            Map<String, List<BatchExecutionSummary>> result = gson.fromJson(root, type);
+            // Ensure mutable lists
+            Map<String, List<BatchExecutionSummary>> mutable = new HashMap<>();
+            if (result != null) {
+                result.forEach((k, v) -> mutable.put(k, new ArrayList<>(v)));
+            }
+            return mutable;
+        }
+
+        // Legacy format: Map<String, BatchExecutionSummary> — wrap each in a list
+        log.info("Migrating batch-executions.json from legacy single-entry format to list format");
+        Map<String, List<BatchExecutionSummary>> migrated = new HashMap<>();
+        for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+            BatchExecutionSummary legacy = gson.fromJson(entry.getValue(), BatchExecutionSummary.class);
+            if (legacy != null) {
+                // Backfill jobName if missing in legacy data
+                if (legacy.getJobName() == null) {
+                    legacy.setJobName(entry.getKey());
+                }
+                migrated.put(entry.getKey(), new ArrayList<>(List.of(legacy)));
+            }
+        }
+        return migrated;
+    }
+
+    /**
+     * Write executions to JSON file using atomic write for NFS safety.
+     */
+    private void writeExecutions(Map<String, List<BatchExecutionSummary>> executions) throws IOException {
         Path filePath = getExecutionsFilePath();
-
-        // Ensure parent directory exists
-        Files.createDirectories(filePath.getParent());
-
-        // Write JSON
         String json = gson.toJson(executions);
-        Files.writeString(filePath, json);
-
+        NfsFileOperations.atomicWrite(filePath, json);
         log.debug("Batch executions exported to: {}", filePath);
     }
 
     /**
-     * Get path to batch executions JSON file
+     * Get path to batch executions JSON file.
      */
     private Path getExecutionsFilePath() {
         return Paths.get(cacheProperties.getLocation(), BATCH_EXECUTIONS_FILENAME);
     }
 
     /**
-     * Log execution summary
+     * Log execution summary.
      */
     private void logExecutionSummary(String jobName, BatchExecutionSummary summary) {
         Duration duration = Duration.between(
@@ -164,36 +243,104 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
 
     /**
      * Gets the last execution summary for a specific job.
-     *
-     * @param jobName the job name to look up
-     * @return the last execution summary, or empty if not found
      */
-    public java.util.Optional<BatchExecutionSummary> getLastExecution(String jobName) {
-        Map<String, BatchExecutionSummary> executions = readExecutions();
-        return java.util.Optional.ofNullable(executions.get(jobName));
+    public Optional<BatchExecutionSummary> getLastExecution(String jobName) {
+        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+        return Optional.ofNullable(executions.get(jobName))
+                .filter(list -> !list.isEmpty())
+                .map(List::getFirst);
+    }
+
+    /**
+     * Gets execution history for a specific job.
+     */
+    public List<BatchExecutionSummary> getExecutionHistory(String jobName, int count) {
+        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+        List<BatchExecutionSummary> history = executions.getOrDefault(jobName, List.of());
+        return history.stream()
+                .limit(count)
+                .toList();
+    }
+
+    /**
+     * Gets execution history for a specific job within a date range.
+     */
+    public List<BatchExecutionSummary> getExecutionHistoryForDateRange(String jobName, LocalDate start, LocalDate end) {
+        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+        List<BatchExecutionSummary> history = executions.getOrDefault(jobName, List.of());
+        return history.stream()
+                .filter(s -> s.getStartTime() != null)
+                .filter(s -> {
+                    LocalDate executionDate = s.getStartTime().toLocalDate();
+                    return !executionDate.isBefore(start) && !executionDate.isAfter(end);
+                })
+                .toList();
+    }
+
+    /**
+     * Gets a specific execution by ID, scanning all jobs. Returns the most recent match.
+     */
+    public Optional<BatchExecutionSummary> getExecution(long executionId) {
+        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+        return executions.values().stream()
+                .flatMap(List::stream)
+                .filter(s -> s.getExecutionId() != null && s.getExecutionId() == executionId)
+                .findFirst();
+    }
+
+    /**
+     * Gets all execution history across all jobs, sorted most recent first.
+     */
+    public List<BatchExecutionSummary> getAllExecutionHistory(int count) {
+        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+        return executions.values().stream()
+                .flatMap(List::stream)
+                .sorted((a, b) -> {
+                    if (a.getStartTime() == null && b.getStartTime() == null) {
+                        return 0;
+                    }
+                    if (a.getStartTime() == null) {
+                        return 1;
+                    }
+                    if (b.getStartTime() == null) {
+                        return -1;
+                    }
+                    return b.getStartTime().compareTo(a.getStartTime());
+                })
+                .limit(count)
+                .toList();
+    }
+
+    /**
+     * Gets all execution history for a date range across all jobs, sorted most recent first.
+     */
+    public List<BatchExecutionSummary> getAllExecutionHistoryForDateRange(LocalDate start, LocalDate end) {
+        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+        return executions.values().stream()
+                .flatMap(List::stream)
+                .filter(s -> s.getStartTime() != null)
+                .filter(s -> {
+                    LocalDate executionDate = s.getStartTime().toLocalDate();
+                    return !executionDate.isBefore(start) && !executionDate.isAfter(end);
+                })
+                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
+                .toList();
     }
 
     /**
      * Checks if a job has already run today (based on recorded end time).
-     *
-     * @param jobName the job name to check
-     * @return true if the job completed today, false otherwise
      */
     public boolean hasJobRunToday(String jobName) {
         return getLastExecution(jobName)
                 .filter(summary -> summary.getEndTime() != null)
-                .filter(summary -> summary.getEndTime().toLocalDate().equals(java.time.LocalDate.now()))
+                .filter(summary -> summary.getEndTime().toLocalDate().equals(LocalDate.now()))
                 .isPresent();
     }
 
     /**
      * Checks if a job has run since the specified time.
-     *
-     * @param jobName the job name to check
-     * @param since   the time to check against
-     * @return true if the job completed after the specified time
      */
-    public boolean hasJobRunSince(String jobName, java.time.LocalDateTime since) {
+    public boolean hasJobRunSince(String jobName, LocalDateTime since) {
         return getLastExecution(jobName)
                 .filter(summary -> summary.getEndTime() != null)
                 .filter(summary -> summary.getEndTime().isAfter(since))

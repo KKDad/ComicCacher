@@ -1,6 +1,5 @@
 package org.stapledon.api.resolver;
 
-import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -19,6 +18,8 @@ import org.stapledon.api.dto.payload.MutationPayloads.TriggerBatchJobPayload;
 import org.stapledon.api.dto.payload.UserError;
 import org.stapledon.engine.batch.BatchJobBaseConfig;
 import org.stapledon.engine.batch.BatchJobMonitoringService;
+import org.stapledon.engine.batch.dto.BatchExecutionSummary;
+import org.stapledon.engine.batch.dto.BatchStepSummary;
 import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.SchedulerStateService;
@@ -64,9 +65,20 @@ public class BatchJobResolver {
         log.debug("GraphQL: Getting {} recent batch jobs", count);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getRecentJobExecutions(jobName, count).stream())
-                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
+                .sorted((a, b) -> {
+                    if (a.getStartTime() == null && b.getStartTime() == null) {
+                        return 0;
+                    }
+                    if (a.getStartTime() == null) {
+                        return 1;
+                    }
+                    if (b.getStartTime() == null) {
+                        return -1;
+                    }
+                    return b.getStartTime().compareTo(a.getStartTime());
+                })
                 .limit(count)
-                .map(this::mapJobExecution)
+                .map(this::mapSummary)
                 .toList();
     }
 
@@ -78,8 +90,19 @@ public class BatchJobResolver {
         log.debug("GraphQL: Getting batch jobs from {} to {}", startDate, endDate);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getJobExecutionsForDateRange(jobName, startDate, endDate).stream())
-                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
-                .map(this::mapJobExecution)
+                .sorted((a, b) -> {
+                    if (a.getStartTime() == null && b.getStartTime() == null) {
+                        return 0;
+                    }
+                    if (a.getStartTime() == null) {
+                        return 1;
+                    }
+                    if (b.getStartTime() == null) {
+                        return -1;
+                    }
+                    return b.getStartTime().compareTo(a.getStartTime());
+                })
+                .map(this::mapSummary)
                 .toList();
     }
 
@@ -102,17 +125,17 @@ public class BatchJobResolver {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
 
-        List<JobExecution> allExecutions = BatchJobBaseConfig.KNOWN_JOBS.stream()
+        List<BatchExecutionSummary> allExecutions = BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getJobExecutionsForDateRange(jobName, startDate, endDate).stream())
                 .toList();
 
         int total = allExecutions.size();
         int success = (int) allExecutions.stream()
-                .filter(e -> e.getStatus() == BatchStatus.COMPLETED).count();
+                .filter(e -> "COMPLETED".equals(e.getStatus())).count();
         int failure = (int) allExecutions.stream()
-                .filter(e -> e.getStatus() == BatchStatus.FAILED).count();
+                .filter(e -> "FAILED".equals(e.getStatus())).count();
         int running = (int) allExecutions.stream()
-                .filter(e -> e.getStatus().isRunning()).count();
+                .filter(e -> "STARTED".equals(e.getStatus()) || "STARTING".equals(e.getStatus())).count();
 
         OptionalDouble avgOpt = allExecutions.stream()
                 .filter(e -> e.getStartTime() != null && e.getEndTime() != null)
@@ -121,11 +144,12 @@ public class BatchJobResolver {
         Double averageDurationMs = avgOpt.isPresent() ? avgOpt.getAsDouble() : null;
 
         int totalItemsProcessed = allExecutions.stream()
-                .flatMap(e -> e.getStepExecutions().stream())
-                .mapToInt(s -> (int) s.getReadCount())
+                .filter(e -> e.getSteps() != null)
+                .flatMap(e -> e.getSteps().stream())
+                .mapToInt(BatchStepSummary::readCount)
                 .sum();
 
-        Map<LocalDate, List<JobExecution>> byDate = allExecutions.stream()
+        Map<LocalDate, List<BatchExecutionSummary>> byDate = allExecutions.stream()
                 .filter(e -> e.getStartTime() != null)
                 .collect(Collectors.groupingBy(e -> e.getStartTime().toLocalDate()));
 
@@ -134,8 +158,8 @@ public class BatchJobResolver {
                 .map(entry -> new DailyJobStatsDto(
                         entry.getKey(),
                         entry.getValue().size(),
-                        (int) entry.getValue().stream().filter(e -> e.getStatus() == BatchStatus.COMPLETED).count(),
-                        (int) entry.getValue().stream().filter(e -> e.getStatus() == BatchStatus.FAILED).count()))
+                        (int) entry.getValue().stream().filter(e -> "COMPLETED".equals(e.getStatus())).count(),
+                        (int) entry.getValue().stream().filter(e -> "FAILED".equals(e.getStatus())).count()))
                 .toList();
 
         return new BatchJobSummaryDto(days, total, success, failure, running, averageDurationMs, totalItemsProcessed, dailyBreakdown);
@@ -240,6 +264,48 @@ public class BatchJobResolver {
     // Mapping Helpers
     // =========================================================================
 
+    /**
+     * Map a persisted BatchExecutionSummary to the GraphQL BatchJobDto.
+     */
+    private BatchJobDto mapSummary(BatchExecutionSummary summary) {
+        Double durationMs = null;
+        if (summary.getStartTime() != null && summary.getEndTime() != null) {
+            durationMs = (double) Duration.between(summary.getStartTime(), summary.getEndTime()).toMillis();
+        }
+
+        List<BatchStepDto> steps = List.of();
+        if (summary.getSteps() != null) {
+            steps = summary.getSteps().stream()
+                    .map(step -> new BatchStepDto(
+                            step.stepName(),
+                            step.status(),
+                            step.readCount(),
+                            step.writeCount(),
+                            step.filterCount(),
+                            step.skipCount(),
+                            step.commitCount(),
+                            step.rollbackCount(),
+                            toOffset(step.startTime()),
+                            toOffset(step.endTime())))
+                    .toList();
+        }
+
+        return new BatchJobDto(
+                summary.getExecutionId() != null ? summary.getExecutionId() : 0L,
+                summary.getJobName(),
+                summary.getStatus(),
+                toOffset(summary.getStartTime()),
+                toOffset(summary.getEndTime()),
+                durationMs,
+                summary.getExitCode(),
+                summary.getExitMessage(),
+                summary.getParameters() != null ? summary.getParameters() : Map.of(),
+                steps);
+    }
+
+    /**
+     * Map a live JobExecution (from H2) to the GraphQL BatchJobDto. Used for in-flight jobs.
+     */
     private BatchJobDto mapJobExecution(JobExecution execution) {
         Double durationMs = null;
         if (execution.getStartTime() != null && execution.getEndTime() != null) {
@@ -260,21 +326,27 @@ public class BatchJobResolver {
                         (int) step.getSkipCount(),
                         (int) step.getCommitCount(),
                         (int) step.getRollbackCount(),
-                        step.getStartTime(),
-                        step.getEndTime()))
+                        toOffset(step.getStartTime()),
+                        toOffset(step.getEndTime())))
                 .toList();
 
         return new BatchJobDto(
                 execution.getId(),
                 execution.getJobInstance().getJobName(),
                 execution.getStatus().name(),
-                execution.getStartTime(),
-                execution.getEndTime(),
+                toOffset(execution.getStartTime()),
+                toOffset(execution.getEndTime()),
                 durationMs,
                 execution.getExitStatus().getExitCode(),
                 execution.getExitStatus().getExitDescription(),
                 params,
                 steps);
+    }
+
+    private OffsetDateTime toOffset(java.time.LocalDateTime ldt) {
+        return Optional.ofNullable(ldt)
+                .map(t -> t.atOffset(ZoneOffset.UTC))
+                .orElse(null);
     }
 
     private BatchSchedulerInfoDto mapSchedulerInfo(DailyJobScheduler scheduler) {
@@ -309,12 +381,5 @@ public class BatchJobResolver {
             log.error("Failed to compute next run time for {}: {}", scheduler.getJobName(), e.getMessage());
             return null;
         }
-    }
-
-    private DailyJobScheduler findScheduler(String jobName) {
-        return schedulers.stream()
-                .filter(s -> s.getJobName().equals(jobName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Scheduler not found for job: " + jobName));
     }
 }

@@ -176,14 +176,37 @@ Metadata associated with specific content. Located in **Comic/Year Directories**
 ### 5. batch-executions.json
 ```json
 {
-  "[jobName]": {
-    "lastExecutionId": "Long",
-    "status": "COMPLETED|FAILED",
-    "startTime": "LocalDateTime",
-    "endTime": "LocalDateTime"
-  }
+  "[jobName]": [
+    {
+      "executionId": "Long",
+      "jobName": "String",
+      "executionTime": "LocalDateTime",
+      "status": "COMPLETED|FAILED",
+      "exitCode": "String",
+      "exitMessage": "String",
+      "startTime": "LocalDateTime",
+      "endTime": "LocalDateTime",
+      "errorMessage": "String (nullable)",
+      "parameters": { "key": "value" },
+      "steps": [
+        {
+          "stepName": "String",
+          "status": "COMPLETED|FAILED",
+          "readCount": "int",
+          "writeCount": "int",
+          "filterCount": "int",
+          "skipCount": "int",
+          "commitCount": "int",
+          "rollbackCount": "int",
+          "startTime": "LocalDateTime",
+          "endTime": "LocalDateTime"
+        }
+      ]
+    }
+  ]
 }
 ```
+> Capped to `batch.tracking.max-history-per-job` entries per job (default 30). Most recent first.
 
 ### 6. combined-metrics.json
 ```json
