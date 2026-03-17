@@ -55,7 +55,9 @@ public class StorageMetricsCollector {
         cacheStats = new ImageCacheStats();
 
         // Get all comic directories (one level down from root)
-        File[] comicDirs = root.listFiles(file -> file.isDirectory() && !"@eaDir".equals(file.getName()));
+        File[] comicDirs = root.listFiles(file -> file.isDirectory()
+                && !"@eaDir".equals(file.getName())
+                && !"batch-logs".equals(file.getName()));
         if (comicDirs == null || comicDirs.length == 0) {
             log.warn("No comic directories found in {}", cacheDirectory);
             return true;
@@ -75,7 +77,9 @@ public class StorageMetricsCollector {
         java.util.Set<String> allYearsSet = new java.util.TreeSet<>();
         for (File comicDir : comicDirs) {
             String[] years = comicDir
-                    .list((dir, name) -> new File(dir, name).isDirectory() && !"@eaDir".equals(name));
+                    .list((dir, name) -> new File(dir, name).isDirectory()
+                            && !"@eaDir".equals(name)
+                            && name.matches("\\d{4}"));
             if (years != null) {
                 allYearsSet.addAll(Arrays.asList(years));
             }
