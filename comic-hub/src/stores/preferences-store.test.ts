@@ -60,6 +60,28 @@ describe('preferences-store', () => {
       expect(mockClassList.add).toHaveBeenCalledWith('dark');
       expect(mockSetAttribute).toHaveBeenCalledWith('data-theme', 'dark');
     });
+
+    it('applies system theme as dark when prefers-color-scheme is dark', () => {
+      Object.defineProperty(window, 'matchMedia', {
+        value: vi.fn().mockReturnValue({ matches: true }),
+        writable: true,
+        configurable: true,
+      });
+
+      const { hydrate } = usePreferencesStore.getState();
+      hydrate({ theme: 'system' });
+
+      expect(mockClassList.add).toHaveBeenCalledWith('dark');
+      expect(mockSetAttribute).toHaveBeenCalledWith('data-theme', 'dark');
+    });
+
+    it('applies system theme as light when prefers-color-scheme is light', () => {
+      const { hydrate } = usePreferencesStore.getState();
+      hydrate({ theme: 'system' });
+
+      expect(mockClassList.add).toHaveBeenCalledWith('light');
+      expect(mockSetAttribute).toHaveBeenCalledWith('data-theme', 'light');
+    });
   });
 
   describe('setSettings', () => {

@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { DashboardClient } from './dashboard-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useGetComicsQuery, useGetMeQuery, useGetUserPreferencesQuery, useAddFavoriteMutation, useRemoveFavoriteMutation } from '@/generated/graphql';
+import { usePreferencesStore } from '@/stores/preferences-store';
+import { DEFAULT_DISPLAY_SETTINGS } from '@/lib/preferences-defaults';
 
 vi.mock('@/generated/graphql', () => ({
   useGetComicsQuery: vi.fn(),
@@ -46,6 +48,10 @@ const mockComics = {
 
 describe('DashboardClient', () => {
   beforeEach(() => {
+    usePreferencesStore.setState({
+      settings: DEFAULT_DISPLAY_SETTINGS,
+      isHydrated: true,
+    });
     vi.mocked(useGetMeQuery).mockReturnValue({ data: { me: { displayName: 'Test User' } } } as any);
     vi.mocked(useGetComicsQuery).mockReturnValue({ data: mockComics, isLoading: false, error: null } as any);
     vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
@@ -232,5 +238,81 @@ describe('DashboardClient', () => {
     renderWithQuery(<DashboardClient />);
     // Should show empty states
     expect(screen.getByText('No comics for today')).toBeInTheDocument();
+  });
+
+  it('hides continue reading when showContinueReading is false', () => {
+    usePreferencesStore.setState({
+      settings: { ...DEFAULT_DISPLAY_SETTINGS, showContinueReading: false },
+      isHydrated: true,
+    });
+    renderWithQuery(<DashboardClient />);
+    expect(screen.queryByText('Continue Where You Left Off')).not.toBeInTheDocument();
+  });
+
+  it('hides favorites when showFavorites is false', () => {
+    usePreferencesStore.setState({
+      settings: { ...DEFAULT_DISPLAY_SETTINGS, showFavorites: false },
+      isHydrated: true,
+    });
+    renderWithQuery(<DashboardClient />);
+    expect(screen.queryByText('Your Favorites')).not.toBeInTheDocument();
+  });
+
+  it('hides todays comics when showRecentlyAdded is false', () => {
+    usePreferencesStore.setState({
+      settings: { ...DEFAULT_DISPLAY_SETTINGS, showRecentlyAdded: false },
+      isHydrated: true,
+    });
+    renderWithQuery(<DashboardClient />);
+    expect(screen.queryByText("Today's Comics")).not.toBeInTheDocument();
+  });
+
+  it('calls removeFavorite when toggling an existing favorite', () => {
+    const removeMutate = vi.fn();
+    vi.mocked(useRemoveFavoriteMutation).mockReturnValue({ mutate: removeMutate, isLoading: false } as any);
+    vi.mocked(useAddFavoriteMutation).mockReturnValue({ mutate: vi.fn(), isLoading: false } as any);
+
+    renderWithQuery(<DashboardClient />);
+
+    // Garfield (id: 1) is a favorite — clicking its favorite button should call removeFavorite
+    const favoriteButtons = screen.getAllByRole('button', { name: /favorite/i });
+    // Find the one for Garfield (first comic)
+    favoriteButtons[0].click();
+
+    expect(removeMutate).toHaveBeenCalledWith({ comicId: 1 });
+  });
+
+  it('calls addFavorite when toggling a non-favorite', () => {
+    const addMutate = vi.fn();
+    vi.mocked(useAddFavoriteMutation).mockReturnValue({ mutate: addMutate, isLoading: false } as any);
+    vi.mocked(useRemoveFavoriteMutation).mockReturnValue({ mutate: vi.fn(), isLoading: false } as any);
+
+    renderWithQuery(<DashboardClient />);
+
+    // Peanuts (id: 2) is not a favorite — clicking its favorite button should call addFavorite
+    const favoriteButtons = screen.getAllByRole('button', { name: /favorite/i });
+    // Peanuts is the second comic
+    favoriteButtons[1].click();
+
+    expect(addMutate).toHaveBeenCalledWith({ comicId: 2 });
+  });
+
+  it('hydrates preferences store from displaySettings', () => {
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+      data: {
+        preferences: {
+          favoriteComics: [],
+          lastReadDates: [],
+          displaySettings: { theme: 'dark', showFavorites: false },
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    renderWithQuery(<DashboardClient />);
+    const { settings, isHydrated } = usePreferencesStore.getState();
+    expect(isHydrated).toBe(true);
+    expect(settings.theme).toBe('dark');
+    expect(settings.showFavorites).toBe(false);
   });
 });

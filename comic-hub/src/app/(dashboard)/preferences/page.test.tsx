@@ -110,4 +110,123 @@ describe('PreferencesPage', () => {
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
+
+  it('shows success toast on mutation success without errors', async () => {
+    const { toast } = await import('sonner');
+    let capturedOpts: any;
+    vi.mocked(useUpdateDisplaySettingsMutation).mockImplementation((opts: any) => {
+      capturedOpts = opts;
+      return { mutate: mockMutate } as any;
+    });
+
+    renderWithQuery(<PreferencesPage />);
+
+    capturedOpts.onSuccess({ updateDisplaySettings: { errors: [] } });
+    expect(toast.success).toHaveBeenCalledWith('Preferences saved');
+  });
+
+  it('shows error toast on mutation success with errors', async () => {
+    const { toast } = await import('sonner');
+    let capturedOpts: any;
+    vi.mocked(useUpdateDisplaySettingsMutation).mockImplementation((opts: any) => {
+      capturedOpts = opts;
+      return { mutate: mockMutate } as any;
+    });
+
+    renderWithQuery(<PreferencesPage />);
+
+    capturedOpts.onSuccess({ updateDisplaySettings: { errors: [{ message: 'bad' }] } });
+    expect(toast.error).toHaveBeenCalledWith('Failed to save preferences');
+  });
+
+  it('shows error toast on mutation error', async () => {
+    const { toast } = await import('sonner');
+    let capturedOpts: any;
+    vi.mocked(useUpdateDisplaySettingsMutation).mockImplementation((opts: any) => {
+      capturedOpts = opts;
+      return { mutate: mockMutate } as any;
+    });
+
+    renderWithQuery(<PreferencesPage />);
+
+    capturedOpts.onError(new Error('network'));
+    expect(toast.error).toHaveBeenCalledWith('Failed to save preferences');
+  });
+
+  it('toggles dashboard switch and fires mutation', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<PreferencesPage />);
+
+    // The switches are rendered as radix switches — click the first one (Continue Reading)
+    const switches = screen.getAllByRole('switch');
+    await user.click(switches[0]);
+
+    expect(usePreferencesStore.getState().settings.showContinueReading).toBe(false);
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({
+        settings: expect.objectContaining({ showContinueReading: false }),
+      });
+    });
+  });
+
+  it('toggles reading direction', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<PreferencesPage />);
+
+    await user.click(screen.getByRole('button', { name: /oldest first/i }));
+
+    expect(usePreferencesStore.getState().settings.readingDirection).toBe('oldest-first');
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({
+        settings: expect.objectContaining({ readingDirection: 'oldest-first' }),
+      });
+    });
+  });
+
+  it('renders comics per page and zoom selects', () => {
+    renderWithQuery(<PreferencesPage />);
+
+    const comboboxes = screen.getAllByRole('combobox');
+    expect(comboboxes).toHaveLength(2);
+    expect(screen.getByText('Comics per page')).toBeInTheDocument();
+    expect(screen.getByText('Default zoom')).toBeInTheDocument();
+  });
+
+  it('toggles favorites switch', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<PreferencesPage />);
+
+    const switches = screen.getAllByRole('switch');
+    await user.click(switches[1]); // Favorites is the second switch
+
+    expect(usePreferencesStore.getState().settings.showFavorites).toBe(false);
+  });
+
+  it('toggles recently added switch', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<PreferencesPage />);
+
+    const switches = screen.getAllByRole('switch');
+    await user.click(switches[2]); // Recently Added is the third switch
+
+    expect(usePreferencesStore.getState().settings.showRecentlyAdded).toBe(false);
+  });
+
+  it('selects newest-first reading direction', async () => {
+    usePreferencesStore.setState({
+      settings: { ...DEFAULT_DISPLAY_SETTINGS, readingDirection: 'oldest-first' },
+      isHydrated: true,
+    });
+
+    const user = userEvent.setup();
+    renderWithQuery(<PreferencesPage />);
+
+    await user.click(screen.getByRole('button', { name: /newest first/i }));
+
+    expect(usePreferencesStore.getState().settings.readingDirection).toBe('newest-first');
+  });
+
+
 });
