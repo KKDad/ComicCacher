@@ -119,15 +119,63 @@ subprojects {
         useJUnitPlatform()
     }
 
+    test {
+        finalizedBy jacocoTestReport
+    }
+
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            xml.required = true
+            html.required = true
+        }
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                    "**/dto/**",
+                    "**/config/properties/**",
+                    "**/*Exception.class"
+                ])
+            }))
+        }
+    }
+
+    // Per-module coverage thresholds — ratchet towards 0.80
+    // Override in module build.gradle: ext.jacocoCoverageMinimum = X.XX
+    ext.jacocoCoverageMinimum = 0.80
+
+    afterEvaluate {
+        jacocoTestCoverageVerification {
+            dependsOn jacocoTestReport
+            violationRules {
+                rule {
+                    limit {
+                        counter = 'LINE'
+                        value = 'COVEREDRATIO'
+                        minimum = project.ext.jacocoCoverageMinimum
+                    }
+                }
+            }
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                    "**/dto/**",
+                    "**/config/properties/**",
+                    "**/*Exception.class"
+                ])
+            }))
+        }
+    }
+
     rewrite {
         configFile = rootProject.file('rewrite.yaml')
         activeRecipe("com.comiccacher.StyleGuide")
     }
 }
 
-// Run all tests across all subprojects (integration tests run via coditory plugin finalizer on :test)
+// Run all tests across all subprojects and enforce coverage
 tasks.register('testAll') {
     dependsOn subprojects.collect { it.path + ':test' }
-    description = 'Runs all tests in all subprojects'
+    dependsOn subprojects.collect { it.path + ':jacocoTestCoverageVerification' }
+    description = 'Runs all tests and enforces coverage in all subprojects'
     group = 'verification'
 }

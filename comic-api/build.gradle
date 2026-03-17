@@ -125,29 +125,8 @@ springBoot {
     buildInfo()
 }
 
-// JaCoCo configuration
-test {
-    finalizedBy jacocoTestReport
-}
-
-jacocoTestReport {
-    dependsOn test
-    reports {
-        xml.required = true
-        html.required = true
-    }
-
-    // Add coverage verification rules
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: [
-                "org/stapledon/config/properties/**",  // Configuration classes
-                "**/dto/**",                           // Data transport objects
-                "**/*Exception.class"                  // Exception classes
-            ])
-        }))
-    }
-}
+// Override coverage threshold — ratchet towards 0.80 as tests improve
+ext.jacocoCoverageMinimum = 0.40
 
 // Integration test coverage
 tasks.register('jacocoIntegrationTestReport', JacocoReport) {

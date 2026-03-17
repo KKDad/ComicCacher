@@ -127,6 +127,45 @@ class JwtTokenUtilTest {
         assertThat(expiration.after(new Date())).isTrue();
     }
 
+    @Test
+    void generatePasswordResetTokenShouldRoundTrip() {
+        // Given
+        String username = "resetuser";
+
+        // When
+        String resetToken = jwtTokenUtil.generatePasswordResetToken(username);
+        java.util.Optional<String> result = jwtTokenUtil.validatePasswordResetToken(resetToken);
+
+        // Then
+        assertThat(result).isPresent().contains(username);
+    }
+
+    @Test
+    void validatePasswordResetTokenShouldRejectNonResetToken() {
+        // Given — a regular access token, not a password reset token
+        User user = createTestUser("testuser");
+        String accessToken = jwtTokenUtil.generateToken(user);
+
+        // When
+        java.util.Optional<String> result = jwtTokenUtil.validatePasswordResetToken(accessToken);
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void extractRolesShouldReturnEmptyListWhenNoRolesClaim() {
+        // Given — a refresh token has no roles claim
+        User user = createTestUser("testuser");
+        String refreshToken = jwtTokenUtil.generateRefreshToken(user);
+
+        // When
+        List<String> roles = jwtTokenUtil.extractRoles(refreshToken);
+
+        // Then
+        assertThat(roles).isEmpty();
+    }
+
     private User createTestUser(String username) {
         return User.builder()
                 .username(username)

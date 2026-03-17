@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -15,6 +17,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
+import java.util.stream.Stream;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -126,5 +129,28 @@ class JwtTokenFilterTest {
 
         // Authentication should not be set in security context
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidAuthorizationHeaders")
+    void doFilterInternalShouldSkipAuthForInvalidHeaders(String headerValue) throws Exception {
+        // Given
+        when(request.getHeader("Authorization")).thenReturn(headerValue);
+
+        // When
+        jwtTokenFilter.doFilterInternal(request, response, filterChain);
+
+        // Then
+        verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(jwtTokenUtil, userDetailsService);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    static Stream<String> invalidAuthorizationHeaders() {
+        return Stream.of(
+                "",                    // empty header
+                "Basic dXNlcjpwYXNz", // Basic auth, not Bearer
+                "Bearertoken"          // no space after Bearer
+        );
     }
 }

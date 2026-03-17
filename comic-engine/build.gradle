@@ -3,6 +3,9 @@ plugins {
 	id "java"
 }
 
+// Override coverage threshold — ratchet towards 0.80 as tests improve
+ext.jacocoCoverageMinimum = 0.47
+
 // repositories inherited from root build.gradle
 
 dependencies {

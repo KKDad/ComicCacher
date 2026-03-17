@@ -27,14 +27,6 @@ public interface IComicsBootstrap {
     LocalDate startDate();
 
     /**
-     * Gets the downloader for this comic.
-     * Returns Object to avoid importing IDailyComic and creating circular dependencies.
-     *
-     * @return The downloader implementation (will be cast to IDailyComic by caller)
-     */
-    Object getDownloader();
-
-    /**
      * Gets the source identifier for the comic (e.g., "gocomics", "comicskingdom").
      *
      * @return The source identifier
