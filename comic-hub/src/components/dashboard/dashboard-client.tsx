@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetComicsQuery,
@@ -12,6 +13,7 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { ContinueReading } from '@/components/dashboard/continue-reading';
 import { FavoritesSection } from '@/components/dashboard/favorites-section';
 import { TodaysComics } from '@/components/dashboard/todays-comics';
+import { usePreferencesStore } from '@/stores/preferences-store';
 
 export function DashboardClient() {
   const queryClient = useQueryClient();
@@ -20,6 +22,15 @@ export function DashboardClient() {
   const { data: comicsData, isLoading: comicsLoading, error: comicsError } = useGetComicsQuery({ first: 20 });
 
   const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useGetUserPreferencesQuery();
+
+  const hydrate = usePreferencesStore((s) => s.hydrate);
+  const { showContinueReading, showFavorites, showRecentlyAdded } = usePreferencesStore((s) => s.settings);
+
+  useEffect(() => {
+    if (prefsData?.preferences?.displaySettings !== undefined) {
+      hydrate(prefsData.preferences.displaySettings);
+    }
+  }, [prefsData?.preferences?.displaySettings, hydrate]);
 
   const addFavorite = useAddFavoriteMutation({
     onSuccess: (data) => {
@@ -112,9 +123,15 @@ export function DashboardClient() {
   return (
     <div className="space-y-8">
       <PageHeader displayName={meData?.me?.displayName ?? 'there'} />
-      <ContinueReading lastRead={lastRead} isLoading={isLoading} />
-      <FavoritesSection favorites={favorites.length > 0 ? favorites : null} isLoading={isLoading} />
-      <TodaysComics comics={todaysComics.length > 0 ? todaysComics : null} isLoading={comicsLoading} />
+      {showContinueReading && (
+        <ContinueReading lastRead={lastRead} isLoading={isLoading} />
+      )}
+      {showFavorites && (
+        <FavoritesSection favorites={favorites.length > 0 ? favorites : null} isLoading={isLoading} />
+      )}
+      {showRecentlyAdded && (
+        <TodaysComics comics={todaysComics.length > 0 ? todaysComics : null} isLoading={comicsLoading} />
+      )}
     </div>
   );
 }

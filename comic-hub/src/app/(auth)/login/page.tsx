@@ -26,7 +26,7 @@ function LoginForm() {
     defaultValues: {
       username: '',
       password: '',
-      rememberMe: false,
+      rememberMe: true,
     },
   });
 

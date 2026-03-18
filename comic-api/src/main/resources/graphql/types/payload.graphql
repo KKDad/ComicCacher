@@ -244,6 +244,21 @@ type PurgeRetrievalRecordsPayload {
 # =============================================================================
 
 """
+Payload for toggleJobScheduler mutation.
+"""
+type ToggleJobSchedulerPayload {
+    """
+    The updated scheduler info, or null if errors occurred.
+    """
+    scheduler: BatchSchedulerInfo
+
+    """
+    List of user-facing errors.
+    """
+    errors: [UserError!]!
+}
+
+"""
 Payload for triggerBatchJob and triggerBackfillJob mutations.
 """
 type TriggerBatchJobPayload {

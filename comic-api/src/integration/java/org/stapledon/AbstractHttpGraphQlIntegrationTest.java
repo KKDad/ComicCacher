@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.graphql.test.autoconfigure.tester.AutoConfigureHttpGraphQlTester;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.graphql.test.tester.HttpGraphQlTester;
 import org.springframework.test.context.ActiveProfiles;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
@@ -43,15 +44,20 @@ public abstract class AbstractHttpGraphQlIntegrationTest {
     protected static final String TEST_USER = "testuser";
     protected static final String TEST_ADMIN_USER = "adminuser";
 
-    @Autowired protected HttpGraphQlTester graphQlTester;
+    @Autowired
+    protected HttpGraphQlTester graphQlTester;
 
-    @Autowired protected StapledonAccountGivens givens;
+    @Autowired
+    protected StapledonAccountGivens givens;
 
-    @Autowired protected ObjectMapper objectMapper;
+    @Autowired
+    protected ObjectMapper objectMapper;
 
-    @Autowired protected StorageMetricsCollector storageMetricsCollector;
+    @Autowired
+    protected StorageMetricsCollector storageMetricsCollector;
 
-    @Autowired protected JwtTokenUtil jwtTokenUtil;
+    @Autowired
+    protected JwtTokenUtil jwtTokenUtil;
 
     @BeforeAll
     static void setup() {
@@ -150,6 +156,27 @@ public abstract class AbstractHttpGraphQlIntegrationTest {
             return jwtToken;
         } catch (Exception e) {
             log.error("Error authenticating user: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Authenticate as an admin user with ADMIN role for @hasRole-protected operations.
+     */
+    protected String authenticateAsAdmin() {
+        try {
+            StapledonAccountGivens.GivenAccountContext context = givens.givenAdministrator();
+            context.setRoles(java.util.List.of("USER", "ADMIN"));
+            String jwtToken = context.authenticate();
+            log.info("Using admin user: {}", context.getUsername());
+            graphQlTester = getGraphQlTester()
+                    .mutate()
+                    .headers(h -> h.setBearerAuth(jwtToken))
+                    .build();
+
+            return jwtToken;
+        } catch (Exception e) {
+            log.error("Error authenticating admin: {}", e.getMessage());
             return null;
         }
     }

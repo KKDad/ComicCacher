@@ -267,15 +267,17 @@ public abstract class AbstractBatchJobIntegrationTest {
 
         String content = Files.readString(trackingFile.toPath());
 
-        // Parse the entire map
-        java.util.Map<String, BatchExecutionSummary> executions = objectMapper.readValue(content,
+        // Parse the map of job name -> list of executions (new list format)
+        java.util.Map<String, java.util.List<BatchExecutionSummary>> executions = objectMapper.readValue(content,
                 objectMapper.getTypeFactory().constructMapType(
-                        java.util.HashMap.class, String.class, BatchExecutionSummary.class));
+                        java.util.HashMap.class,
+                        objectMapper.getTypeFactory().constructType(String.class),
+                        objectMapper.getTypeFactory().constructCollectionType(java.util.ArrayList.class, BatchExecutionSummary.class)));
 
-        BatchExecutionSummary summary = executions.get(jobName);
-        assertThat(summary).as("Should have execution summary for job: " + jobName).isNotNull();
+        java.util.List<BatchExecutionSummary> history = executions.get(jobName);
+        assertThat(history).as("Should have execution history for job: " + jobName).isNotNull().isNotEmpty();
 
-        return summary;
+        return history.getFirst();
     }
 
     /**
@@ -293,7 +295,7 @@ public abstract class AbstractBatchJobIntegrationTest {
         assertThat(summary.getExitCode()).as("Exit code should be " + expectedStatus).isEqualTo(expectedStatus);
 
         // Validate execution metadata
-        assertThat(summary.getLastExecutionId()).as("Execution ID should not be null").isNotNull();
+        assertThat(summary.getExecutionId()).as("Execution ID should not be null").isNotNull();
         assertThat(summary.getStartTime()).as("Start time should not be null").isNotNull();
         assertThat(summary.getEndTime()).as("End time should not be null").isNotNull();
 

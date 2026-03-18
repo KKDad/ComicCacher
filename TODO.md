@@ -37,6 +37,10 @@ Audit complete. Remaining items (JJWT builder migration done):
 - **Guava `Files.getNameWithoutExtension()` → plain Java** — 1 instance in `ImageUtils`
 - Priority: Medium (do before Java 25 upgrade)
 
+### Consolidate Root JSON Files into a Data Folder
+- Move the loose JSON files in the project root into a single `data/` folder
+- Update all code references to the new paths
+
 ### Reduce WebDriver Startup Overhead in GoComics IT Tests
 - **Root cause:** `GoComicsIntegrationIT.getSubject()` creates a new `GoComics` instance per test method, each of which lazy-inits a new `ChromeDriver` process (~2-5s startup cost per test)
 - **Where:** `GoComicsIntegrationIT` (lines 52-59) uses try-with-resources per test; `GoComics.initializeWebDriver()` (lines 67-95) does `WebDriverManager.chromedriver().setup()` + `new ChromeDriver()`

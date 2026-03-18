@@ -185,6 +185,51 @@ type DailyJobStats {
 }
 
 """
+Scheduler information for a batch job, including runtime pause state.
+"""
+type BatchSchedulerInfo {
+    """
+    Job name (e.g., "ComicDownloadJob").
+    """
+    jobName: String!
+
+    """
+    Cron expression for scheduling.
+    """
+    cronExpression: String!
+
+    """
+    Timezone for cron evaluation.
+    """
+    timezone: String!
+
+    """
+    Next scheduled run time.
+    """
+    nextRunTime: DateTime
+
+    """
+    Whether the job is enabled in configuration.
+    """
+    enabled: Boolean!
+
+    """
+    Whether the job is currently paused at runtime.
+    """
+    paused: Boolean!
+
+    """
+    When the pause state was last toggled.
+    """
+    lastToggled: DateTime
+
+    """
+    Who toggled the pause state.
+    """
+    toggledBy: String
+}
+
+"""
 Possible batch job status values.
 """
 enum BatchStatusEnum {

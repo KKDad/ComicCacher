@@ -39,6 +39,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     private final String cronExpression;
     private final String timezone;
     private final JsonBatchExecutionTracker executionTracker;
+    private SchedulerStateService schedulerStateService;
 
     /**
      * Creates a new DailyJobScheduler.
@@ -56,6 +57,13 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         this.executionTracker = executionTracker;
     }
 
+    /**
+     * Sets the scheduler state service for runtime pause/resume support.
+     */
+    public void setSchedulerStateService(SchedulerStateService schedulerStateService) {
+        this.schedulerStateService = schedulerStateService;
+    }
+
     @Override
     public ScheduleType getScheduleType() {
         return ScheduleType.DAILY;
@@ -70,9 +78,14 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     }
 
     /**
-     * Scheduled execution method - to be called by @Scheduled in config beans. Checks if already run today to prevent duplicate executions.
+     * Scheduled execution method - to be called by @Scheduled in config beans. Checks pause state and duplicate execution before running.
      */
     public void executeScheduled() {
+        if (schedulerStateService != null && schedulerStateService.isPaused(getJobName())) {
+            log.info("{} is paused, skipping scheduled execution", getJobName());
+            return;
+        }
+
         if (executionTracker.hasJobRunToday(getJobName())) {
             log.info("{} already ran today, skipping scheduled execution", getJobName());
             return;

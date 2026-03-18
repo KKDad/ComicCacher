@@ -87,6 +87,13 @@ query SearchComics($query: String!) {
       id
       name
       description
+      oldest
+      newest
+      avatarUrl
+      lastStrip {
+        imageUrl
+        date
+      }
     }
   }
 }
@@ -127,6 +134,20 @@ mutation UpdateLastRead($comicId: Int!, $date: Date!) {
         comicId
         date
       }
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+
+# Update display settings (theme, layout, dashboard visibility, etc.)
+mutation UpdateDisplaySettings($settings: JSON!) {
+  updateDisplaySettings(settings: $settings) {
+    preference {
+      displaySettings
     }
     errors {
       message

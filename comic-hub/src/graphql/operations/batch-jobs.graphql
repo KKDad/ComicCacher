@@ -1,0 +1,73 @@
+query GetBatchSchedulers {
+  batchSchedulers {
+    jobName
+    cronExpression
+    timezone
+    nextRunTime
+    enabled
+    paused
+    lastToggled
+    toggledBy
+  }
+}
+
+query GetRecentBatchJobs($count: Int = 10) {
+  recentBatchJobs(count: $count) {
+    executionId
+    jobName
+    status
+    startTime
+    endTime
+    durationMs
+    exitCode
+    exitDescription
+    steps {
+      stepName
+      status
+      readCount
+      writeCount
+      filterCount
+      skipCount
+      commitCount
+      rollbackCount
+      startTime
+      endTime
+    }
+  }
+}
+
+query GetBatchJobLog($executionId: Int!, $jobName: String!) {
+  batchJobLog(executionId: $executionId, jobName: $jobName)
+}
+
+mutation TriggerJob($jobName: String!) {
+  triggerJob(jobName: $jobName) {
+    batchJob {
+      executionId
+      jobName
+      status
+      startTime
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+
+mutation ToggleJobScheduler($jobName: String!, $paused: Boolean!) {
+  toggleJobScheduler(jobName: $jobName, paused: $paused) {
+    scheduler {
+      jobName
+      paused
+      lastToggled
+      toggledBy
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Bell, Menu } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Search, Bell, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -26,7 +28,40 @@ export function Header({ showMenuButton = false }: HeaderProps) {
   const { toggle } = useSidebarStore();
   const user = useUser();
   const { logout } = useLogout();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchValue, setSearchValue] = useState(
+    pathname === '/comics' ? (searchParams.get('q') ?? '') : '',
+  );
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
+
+  // Sync search input when URL changes (e.g. clearing via back button)
+  useEffect(() => {
+    if (pathname === '/comics') {
+      setSearchValue(searchParams.get('q') ?? '');
+    } else {
+      setSearchValue('');
+    }
+  }, [pathname, searchParams]);
+
+  const navigateSearch = useCallback((value: string) => {
+    const trimmed = value.trim();
+    if (trimmed) {
+      router.push(`/comics?q=${encodeURIComponent(trimmed)}`);
+    } else if (pathname === '/comics') {
+      router.push('/comics');
+    }
+  }, [router, pathname]);
+
+  // Debounced live search — pushes URL 300ms after the user stops typing
+  useEffect(() => {
+    const currentQuery = (pathname === '/comics' ? searchParams.get('q') : null) ?? '';
+    if (searchValue.trim() === currentQuery) return;
+    const timer = setTimeout(() => navigateSearch(searchValue), 300);
+    return () => clearTimeout(timer);
+  }, [searchValue, navigateSearch, pathname, searchParams]);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -74,7 +109,18 @@ export function Header({ showMenuButton = false }: HeaderProps) {
                 type="search"
                 placeholder="Search comics..."
                 className="pl-9 bg-canvas"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
               />
+              {searchValue && (
+                <button
+                  type="button"
+                  onClick={() => setSearchValue('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -82,8 +128,13 @@ export function Header({ showMenuButton = false }: HeaderProps) {
         {/* Right section */}
         <div className="flex items-center gap-2">
           {/* Search button - mobile only */}
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <Search className="h-5 w-5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setMobileSearchOpen((v) => !v)}
+          >
+            {mobileSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </Button>
 
           {/* Notifications */}
@@ -114,9 +165,9 @@ export function Header({ showMenuButton = false }: HeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Preferences</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/preferences">Preferences</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-error">
                 Sign out
@@ -125,6 +176,32 @@ export function Header({ showMenuButton = false }: HeaderProps) {
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Mobile search bar */}
+      {mobileSearchOpen && (
+        <div className="md:hidden px-4 py-2 border-t border-border">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
+            <Input
+              type="search"
+              placeholder="Search comics..."
+              className="pl-9 bg-canvas"
+              autoFocus
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+            />
+            {searchValue && (
+              <button
+                type="button"
+                onClick={() => { setSearchValue(''); setMobileSearchOpen(false); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -18,6 +18,7 @@ import org.stapledon.api.dto.payload.MutationPayloads.CreateComicPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.DeleteComicPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.UpdateComicPayload;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.metrics.collector.AccessMetricsCollector;
 
 import java.time.LocalDate;
 import java.util.Base64;
@@ -37,13 +38,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 public class ComicResolver {
 
     private final ManagementFacade comicManagementFacade;
+    private final AccessMetricsCollector accessMetricsCollector;
     private final String externalBaseUrl;
 
     /**
      * Constructs a ComicResolver with required dependencies.
      */
-    public ComicResolver(ManagementFacade comicManagementFacade, @Value("${app.external-base-url:}") String externalBaseUrl) {
+    public ComicResolver(ManagementFacade comicManagementFacade,
+                         AccessMetricsCollector accessMetricsCollector,
+                         @Value("${app.external-base-url:}") String externalBaseUrl) {
         this.comicManagementFacade = comicManagementFacade;
+        this.accessMetricsCollector = accessMetricsCollector;
         this.externalBaseUrl = externalBaseUrl;
     }
 
@@ -119,6 +124,7 @@ public class ComicResolver {
     /**
      * Get a comic strip directly by comic ID and date.
      * More efficient than querying comic.strip when you only need the strip.
+     * Also tracks access metrics for the comic.
      */
     @QueryMapping
     public CompletableFuture<ComicStrip> strip(
@@ -126,11 +132,16 @@ public class ComicResolver {
             @Argument LocalDate date,
             DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
 
+        long start = System.currentTimeMillis();
         return comicManagementFacade.getComic(comicId)
                 .map(comic -> {
                     StripLoaderKey key = new DateStripKey(comicId, comic.getName(), date);
                     return stripLoader.load(key)
-                            .thenApply(result -> toComicStrip(comicId, result));
+                            .thenApply(result -> {
+                                accessMetricsCollector.trackAccess(
+                                        comic.getName(), result.isFound(), System.currentTimeMillis() - start);
+                                return toComicStrip(comicId, result);
+                            });
                 })
                 .orElse(CompletableFuture.completedFuture(null));
     }

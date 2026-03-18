@@ -1,48 +1,57 @@
 package org.stapledon.api.resolver;
 
-import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.scheduling.support.CronExpression;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.stapledon.api.dto.batch.BatchJobDto;
 import org.stapledon.api.dto.batch.BatchJobSummaryDto;
+import org.stapledon.api.dto.batch.BatchSchedulerInfoDto;
 import org.stapledon.api.dto.batch.BatchStepDto;
 import org.stapledon.api.dto.batch.DailyJobStatsDto;
+import org.stapledon.api.dto.payload.MutationPayloads.ToggleJobSchedulerPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.TriggerBatchJobPayload;
+import org.stapledon.api.dto.payload.UserError;
 import org.stapledon.engine.batch.BatchJobBaseConfig;
 import org.stapledon.engine.batch.BatchJobMonitoringService;
+import org.stapledon.engine.batch.dto.BatchExecutionSummary;
+import org.stapledon.engine.batch.dto.BatchStepSummary;
+import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.SchedulerStateService;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * GraphQL resolver for batch job queries and mutations.
  */
 @Slf4j
 @Controller
+@RequiredArgsConstructor
 public class BatchJobResolver {
 
     private final BatchJobMonitoringService monitoringService;
     private final List<DailyJobScheduler> schedulers;
-
-    /**
-     * Constructs a BatchJobResolver with required dependencies.
-     */
-    public BatchJobResolver(BatchJobMonitoringService monitoringService, @Autowired(required = false) List<DailyJobScheduler> schedulers) {
-        this.monitoringService = monitoringService;
-        this.schedulers = schedulers != null ? schedulers : List.of();
-    }
+    private final SchedulerStateService schedulerStateService;
+    private final BatchJobLogService batchJobLogService;
 
     // =========================================================================
     // Queries
@@ -56,9 +65,20 @@ public class BatchJobResolver {
         log.debug("GraphQL: Getting {} recent batch jobs", count);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getRecentJobExecutions(jobName, count).stream())
-                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
+                .sorted((a, b) -> {
+                    if (a.getStartTime() == null && b.getStartTime() == null) {
+                        return 0;
+                    }
+                    if (a.getStartTime() == null) {
+                        return 1;
+                    }
+                    if (b.getStartTime() == null) {
+                        return -1;
+                    }
+                    return b.getStartTime().compareTo(a.getStartTime());
+                })
                 .limit(count)
-                .map(this::mapJobExecution)
+                .map(this::mapSummary)
                 .toList();
     }
 
@@ -70,8 +90,19 @@ public class BatchJobResolver {
         log.debug("GraphQL: Getting batch jobs from {} to {}", startDate, endDate);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getJobExecutionsForDateRange(jobName, startDate, endDate).stream())
-                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
-                .map(this::mapJobExecution)
+                .sorted((a, b) -> {
+                    if (a.getStartTime() == null && b.getStartTime() == null) {
+                        return 0;
+                    }
+                    if (a.getStartTime() == null) {
+                        return 1;
+                    }
+                    if (b.getStartTime() == null) {
+                        return -1;
+                    }
+                    return b.getStartTime().compareTo(a.getStartTime());
+                })
+                .map(this::mapSummary)
                 .toList();
     }
 
@@ -94,17 +125,17 @@ public class BatchJobResolver {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
 
-        List<JobExecution> allExecutions = BatchJobBaseConfig.KNOWN_JOBS.stream()
+        List<BatchExecutionSummary> allExecutions = BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getJobExecutionsForDateRange(jobName, startDate, endDate).stream())
                 .toList();
 
         int total = allExecutions.size();
         int success = (int) allExecutions.stream()
-                .filter(e -> e.getStatus() == BatchStatus.COMPLETED).count();
+                .filter(e -> "COMPLETED".equals(e.getStatus())).count();
         int failure = (int) allExecutions.stream()
-                .filter(e -> e.getStatus() == BatchStatus.FAILED).count();
+                .filter(e -> "FAILED".equals(e.getStatus())).count();
         int running = (int) allExecutions.stream()
-                .filter(e -> e.getStatus().isRunning()).count();
+                .filter(e -> "STARTED".equals(e.getStatus()) || "STARTING".equals(e.getStatus())).count();
 
         OptionalDouble avgOpt = allExecutions.stream()
                 .filter(e -> e.getStartTime() != null && e.getEndTime() != null)
@@ -113,11 +144,12 @@ public class BatchJobResolver {
         Double averageDurationMs = avgOpt.isPresent() ? avgOpt.getAsDouble() : null;
 
         int totalItemsProcessed = allExecutions.stream()
-                .flatMap(e -> e.getStepExecutions().stream())
-                .mapToInt(s -> (int) s.getReadCount())
+                .filter(e -> e.getSteps() != null)
+                .flatMap(e -> e.getSteps().stream())
+                .mapToInt(BatchStepSummary::readCount)
                 .sum();
 
-        Map<LocalDate, List<JobExecution>> byDate = allExecutions.stream()
+        Map<LocalDate, List<BatchExecutionSummary>> byDate = allExecutions.stream()
                 .filter(e -> e.getStartTime() != null)
                 .collect(Collectors.groupingBy(e -> e.getStartTime().toLocalDate()));
 
@@ -126,11 +158,33 @@ public class BatchJobResolver {
                 .map(entry -> new DailyJobStatsDto(
                         entry.getKey(),
                         entry.getValue().size(),
-                        (int) entry.getValue().stream().filter(e -> e.getStatus() == BatchStatus.COMPLETED).count(),
-                        (int) entry.getValue().stream().filter(e -> e.getStatus() == BatchStatus.FAILED).count()))
+                        (int) entry.getValue().stream().filter(e -> "COMPLETED".equals(e.getStatus())).count(),
+                        (int) entry.getValue().stream().filter(e -> "FAILED".equals(e.getStatus())).count()))
                 .toList();
 
         return new BatchJobSummaryDto(days, total, success, failure, running, averageDurationMs, totalItemsProcessed, dailyBreakdown);
+    }
+
+    /**
+     * Get scheduler info for all batch jobs, including runtime pause state.
+     */
+    @QueryMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<BatchSchedulerInfoDto> batchSchedulers() {
+        log.debug("GraphQL: Getting batch scheduler info");
+        return schedulers.stream()
+                .map(this::mapSchedulerInfo)
+                .toList();
+    }
+
+    /**
+     * Get the execution log for a specific batch job run.
+     */
+    @QueryMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public String batchJobLog(@Argument int executionId, @Argument String jobName) {
+        log.debug("GraphQL: Getting log for {} execution {}", jobName, executionId);
+        return batchJobLogService.getExecutionLog(executionId, jobName).orElse(null);
     }
 
     // =========================================================================
@@ -143,14 +197,7 @@ public class BatchJobResolver {
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
     public TriggerBatchJobPayload triggerBatchJob() {
-        log.info("GraphQL: Triggering ComicDownloadJob");
-        DailyJobScheduler scheduler = findScheduler("ComicDownloadJob");
-        Long executionId = scheduler.triggerManually();
-        if (executionId == null) {
-            throw new IllegalStateException("Failed to trigger ComicDownloadJob");
-        }
-        JobExecution execution = monitoringService.getJobExecution(executionId);
-        return new TriggerBatchJobPayload(mapJobExecution(execution), List.of());
+        return triggerJob("ComicDownloadJob");
     }
 
     /**
@@ -159,20 +206,106 @@ public class BatchJobResolver {
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
     public TriggerBatchJobPayload triggerBackfillJob() {
-        log.info("GraphQL: Triggering ComicBackfillJob");
-        DailyJobScheduler scheduler = findScheduler("ComicBackfillJob");
-        Long executionId = scheduler.triggerManually();
-        if (executionId == null) {
-            throw new IllegalStateException("Failed to trigger ComicBackfillJob");
+        return triggerJob("ComicBackfillJob");
+    }
+
+    /**
+     * Trigger any batch job by name.
+     */
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public TriggerBatchJobPayload triggerJob(@Argument String jobName) {
+        log.info("GraphQL: Triggering {}", jobName);
+
+        Optional<DailyJobScheduler> schedulerOpt = schedulers.stream()
+                .filter(s -> s.getJobName().equals(jobName))
+                .findFirst();
+
+        if (schedulerOpt.isEmpty()) {
+            return new TriggerBatchJobPayload(null, List.of(new UserError("Job not available (disabled in configuration)", "jobName", null)));
         }
-        JobExecution execution = monitoringService.getJobExecution(executionId);
-        return new TriggerBatchJobPayload(mapJobExecution(execution), List.of());
+
+        try {
+            Long executionId = schedulerOpt.get().triggerManually();
+            if (executionId == null) {
+                return new TriggerBatchJobPayload(null, List.of(new UserError("Failed to start job " + jobName, "jobName", null)));
+            }
+            JobExecution execution = monitoringService.getJobExecution(executionId);
+            return new TriggerBatchJobPayload(mapJobExecution(execution), List.of());
+        } catch (Exception e) {
+            log.error("Error triggering {}: {}", jobName, e.getMessage(), e);
+            return new TriggerBatchJobPayload(null, List.of(new UserError(e.getMessage(), "jobName", null)));
+        }
+    }
+
+    /**
+     * Pause or resume a batch job scheduler.
+     */
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ToggleJobSchedulerPayload toggleJobScheduler(@Argument String jobName, @Argument boolean paused) {
+        log.info("GraphQL: {} job {}", paused ? "Pausing" : "Resuming", jobName);
+
+        Optional<DailyJobScheduler> schedulerOpt = schedulers.stream()
+                .filter(s -> s.getJobName().equals(jobName))
+                .findFirst();
+
+        if (schedulerOpt.isEmpty()) {
+            return new ToggleJobSchedulerPayload(null, List.of(new UserError("Job not available (disabled in configuration)", "jobName", null)));
+        }
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        schedulerStateService.setPaused(jobName, paused, username);
+
+        return new ToggleJobSchedulerPayload(mapSchedulerInfo(schedulerOpt.get()), List.of());
     }
 
     // =========================================================================
     // Mapping Helpers
     // =========================================================================
 
+    /**
+     * Map a persisted BatchExecutionSummary to the GraphQL BatchJobDto.
+     */
+    private BatchJobDto mapSummary(BatchExecutionSummary summary) {
+        Double durationMs = null;
+        if (summary.getStartTime() != null && summary.getEndTime() != null) {
+            durationMs = (double) Duration.between(summary.getStartTime(), summary.getEndTime()).toMillis();
+        }
+
+        List<BatchStepDto> steps = List.of();
+        if (summary.getSteps() != null) {
+            steps = summary.getSteps().stream()
+                    .map(step -> new BatchStepDto(
+                            step.stepName(),
+                            step.status(),
+                            step.readCount(),
+                            step.writeCount(),
+                            step.filterCount(),
+                            step.skipCount(),
+                            step.commitCount(),
+                            step.rollbackCount(),
+                            toOffset(step.startTime()),
+                            toOffset(step.endTime())))
+                    .toList();
+        }
+
+        return new BatchJobDto(
+                summary.getExecutionId() != null ? summary.getExecutionId() : 0L,
+                summary.getJobName(),
+                summary.getStatus(),
+                toOffset(summary.getStartTime()),
+                toOffset(summary.getEndTime()),
+                durationMs,
+                summary.getExitCode(),
+                summary.getExitMessage(),
+                summary.getParameters() != null ? summary.getParameters() : Map.of(),
+                steps);
+    }
+
+    /**
+     * Map a live JobExecution (from H2) to the GraphQL BatchJobDto. Used for in-flight jobs.
+     */
     private BatchJobDto mapJobExecution(JobExecution execution) {
         Double durationMs = null;
         if (execution.getStartTime() != null && execution.getEndTime() != null) {
@@ -193,16 +326,16 @@ public class BatchJobResolver {
                         (int) step.getSkipCount(),
                         (int) step.getCommitCount(),
                         (int) step.getRollbackCount(),
-                        step.getStartTime(),
-                        step.getEndTime()))
+                        toOffset(step.getStartTime()),
+                        toOffset(step.getEndTime())))
                 .toList();
 
         return new BatchJobDto(
                 execution.getId(),
                 execution.getJobInstance().getJobName(),
                 execution.getStatus().name(),
-                execution.getStartTime(),
-                execution.getEndTime(),
+                toOffset(execution.getStartTime()),
+                toOffset(execution.getEndTime()),
                 durationMs,
                 execution.getExitStatus().getExitCode(),
                 execution.getExitStatus().getExitDescription(),
@@ -210,10 +343,43 @@ public class BatchJobResolver {
                 steps);
     }
 
-    private DailyJobScheduler findScheduler(String jobName) {
-        return schedulers.stream()
-                .filter(s -> s.getJobName().equals(jobName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Scheduler not found for job: " + jobName));
+    private OffsetDateTime toOffset(java.time.LocalDateTime ldt) {
+        return Optional.ofNullable(ldt)
+                .map(t -> t.atOffset(ZoneOffset.UTC))
+                .orElse(null);
+    }
+
+    private BatchSchedulerInfoDto mapSchedulerInfo(DailyJobScheduler scheduler) {
+        String jobName = scheduler.getJobName();
+        boolean paused = schedulerStateService.isPaused(jobName);
+        var stateOpt = schedulerStateService.getState(jobName);
+
+        OffsetDateTime nextRunTime = computeNextRunTime(scheduler);
+        OffsetDateTime lastToggled = stateOpt
+                .map(SchedulerStateService.SchedulerState::lastToggled)
+                .map(ldt -> ldt.atOffset(ZoneOffset.UTC))
+                .orElse(null);
+
+        return new BatchSchedulerInfoDto(
+                jobName,
+                scheduler.getCronExpression(),
+                scheduler.getTimezone(),
+                nextRunTime,
+                true,
+                paused,
+                lastToggled,
+                stateOpt.map(SchedulerStateService.SchedulerState::toggledBy).orElse(null));
+    }
+
+    private OffsetDateTime computeNextRunTime(DailyJobScheduler scheduler) {
+        try {
+            CronExpression cron = CronExpression.parse(scheduler.getCronExpression());
+            return Optional.ofNullable(cron.next(ZonedDateTime.now(ZoneId.of(scheduler.getTimezone()))))
+                    .map(ZonedDateTime::toOffsetDateTime)
+                    .orElse(null);
+        } catch (Exception e) {
+            log.error("Failed to compute next run time for {}: {}", scheduler.getJobName(), e.getMessage());
+            return null;
+        }
     }
 }

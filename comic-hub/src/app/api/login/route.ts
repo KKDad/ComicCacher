@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
+import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
 import { loginSchema } from '@/lib/validations/auth';
 
 export async function POST(request: NextRequest) {
@@ -59,6 +59,17 @@ export async function POST(request: NextRequest) {
 
   response.cookies.set(JWT_COOKIE, data.token, cookieOptions);
   response.cookies.set(REFRESH_COOKIE, data.refreshToken, cookieOptions);
+
+  // Persist the rememberMe preference so token refresh can respect it
+  if (rememberMe) {
+    response.cookies.set(REMEMBER_COOKIE, '1', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: COOKIE_MAX_AGE,
+    });
+  }
 
   return response;
 }

@@ -120,133 +120,109 @@ describe('MetricsPage', () => {
     expect(screen.getByText('Last updated 10m ago')).toBeInTheDocument();
   });
 
-  it('renders storage table with comic data', () => {
+  it('renders combined metrics table with all comic data', () => {
     renderWithQuery(<MetricsPage />);
-    expect(screen.getByText('Storage by Comic')).toBeInTheDocument();
-    const storageTable = screen.getByText('Storage by Comic').closest('[class*="card"]')!;
-    expect(within(storageTable).getByText('Garfield')).toBeInTheDocument();
-    expect(within(storageTable).getByText('Calvin and Hobbes')).toBeInTheDocument();
-    expect(within(storageTable).getByText('Peanuts')).toBeInTheDocument();
+    expect(screen.getByText('Metrics by Comic')).toBeInTheDocument();
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    expect(within(table).getByText('Garfield')).toBeInTheDocument();
+    expect(within(table).getByText('Calvin and Hobbes')).toBeInTheDocument();
+    expect(within(table).getByText('Peanuts')).toBeInTheDocument();
+    expect(within(table).getByText('12.5 ms')).toBeInTheDocument();
   });
 
-  it('renders access table with comic data', () => {
+  it('shows dash for null averageAccessTimeMs and lastAccessed', () => {
     renderWithQuery(<MetricsPage />);
-    expect(screen.getByText('Access by Comic')).toBeInTheDocument();
-    expect(screen.getByText('12.5 ms')).toBeInTheDocument();
-  });
-
-  it('shows dash for null averageAccessTimeMs', () => {
-    renderWithQuery(<MetricsPage />);
-    const accessTable = screen.getByText('Access by Comic').closest('[class*="card"]')!;
-    const peanutsRow = within(accessTable).getByText('Peanuts').closest('tr')!;
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const peanutsRow = within(table).getByText('Peanuts').closest('tr')!;
     const cells = peanutsRow.querySelectorAll('td');
-    expect(cells[2].textContent).toBe('—');
-    expect(cells[3].textContent).toBe('—');
+    // cols: Comic, Images, Storage, Avg Size, Accesses, Avg Response, Last Accessed
+    expect(cells[5].textContent).toBe('—');
+    expect(cells[6].textContent).toBe('—');
   });
 
-  it('sorts storage table by comic name when header clicked', async () => {
+  it('sorts by comic name when header clicked', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const storageTable = screen.getByText('Storage by Comic').closest('[class*="card"]')!;
-    const comicSortBtn = within(storageTable).getAllByRole('button').find(
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const comicSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Comic')
     )!;
 
     // First click sets key=comicName, dir=desc → Z-A
     await user.click(comicSortBtn);
-    let rows = within(storageTable).getAllByRole('row').slice(1);
+    let rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Peanuts');
     expect(rows[2]).toHaveTextContent('Calvin and Hobbes');
 
     // Second click toggles to asc → A-Z
     await user.click(comicSortBtn);
-    rows = within(storageTable).getAllByRole('row').slice(1);
+    rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Calvin and Hobbes');
     expect(rows[2]).toHaveTextContent('Peanuts');
   });
 
-  it('toggles storage sort direction on repeated click', async () => {
+  it('toggles sort direction on repeated click', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const storageTable = screen.getByText('Storage by Comic').closest('[class*="card"]')!;
-    const storageSortBtn = within(storageTable).getAllByRole('button').find(
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const storageSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Storage')
     )!;
 
     // Default is desc by totalBytes — Calvin (10MB), Garfield (5MB), Peanuts (1MB)
-    let rows = within(storageTable).getAllByRole('row').slice(1);
+    let rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Calvin and Hobbes');
 
     // Click again to toggle to asc
     await user.click(storageSortBtn);
-    rows = within(storageTable).getAllByRole('row').slice(1);
+    rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Peanuts');
   });
 
-  it('sorts access table by comic name when header clicked', async () => {
+  it('sorts by accesses', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const accessTable = screen.getByText('Access by Comic').closest('[class*="card"]')!;
-    const comicSortBtn = within(accessTable).getAllByRole('button').find(
-      (btn) => btn.textContent?.includes('Comic')
-    )!;
-
-    // First click sets key=comicName, dir=desc → Z-A
-    await user.click(comicSortBtn);
-    let rows = within(accessTable).getAllByRole('row').slice(1);
-    expect(rows[0]).toHaveTextContent('Peanuts');
-    expect(rows[2]).toHaveTextContent('Calvin and Hobbes');
-
-    // Second click toggles to asc → A-Z
-    await user.click(comicSortBtn);
-    rows = within(accessTable).getAllByRole('row').slice(1);
-    expect(rows[0]).toHaveTextContent('Calvin and Hobbes');
-    expect(rows[2]).toHaveTextContent('Peanuts');
-  });
-
-  it('toggles access sort direction on repeated click', async () => {
-    const user = userEvent.setup();
-    renderWithQuery(<MetricsPage />);
-    const accessTable = screen.getByText('Access by Comic').closest('[class*="card"]')!;
-    const accessSortBtn = within(accessTable).getAllByRole('button').find(
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const accessSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Accesses')
     )!;
 
-    // Default desc — Garfield (500), Calvin (300), Peanuts (100)
-    let rows = within(accessTable).getAllByRole('row').slice(1);
+    // Click to sort by accesses desc — Garfield (500), Calvin (300), Peanuts (100)
+    await user.click(accessSortBtn);
+    let rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Garfield');
 
     // Toggle to asc
     await user.click(accessSortBtn);
-    rows = within(accessTable).getAllByRole('row').slice(1);
+    rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Peanuts');
   });
 
-  it('sorts access table by avg response time', async () => {
+  it('sorts by avg response time', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const accessTable = screen.getByText('Access by Comic').closest('[class*="card"]')!;
-    const avgBtn = within(accessTable).getAllByRole('button').find(
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const avgBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Avg Response')
     )!;
 
     await user.click(avgBtn);
-    const rows = within(accessTable).getAllByRole('row').slice(1);
+    const rows = within(table).getAllByRole('row').slice(1);
     // desc: Garfield (12.5), Calvin (8.2), Peanuts (null→0)
     expect(rows[0]).toHaveTextContent('Garfield');
     expect(rows[2]).toHaveTextContent('Peanuts');
   });
 
-  it('sorts storage table by image count', async () => {
+  it('sorts by image count', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const storageTable = screen.getByText('Storage by Comic').closest('[class*="card"]')!;
-    const imgBtn = within(storageTable).getAllByRole('button').find(
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const imgBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Images')
     )!;
 
     await user.click(imgBtn);
-    const rows = within(storageTable).getAllByRole('row').slice(1);
+    const rows = within(table).getAllByRole('row').slice(1);
     // desc: Calvin (200), Garfield (100), Peanuts (50)
     expect(rows[0]).toHaveTextContent('Calvin and Hobbes');
     expect(rows[2]).toHaveTextContent('Peanuts');
@@ -269,8 +245,8 @@ describe('MetricsPage', () => {
       error: null,
     } as any);
     renderWithQuery(<MetricsPage />);
-    const storageTable = screen.getByText('Storage by Comic').closest('[class*="card"]')!;
-    const row = within(storageTable).getByText('Empty').closest('tr')!;
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const row = within(table).getByText('Empty').closest('tr')!;
     const cells = row.querySelectorAll('td');
     expect(cells[3].textContent).toBe('—');
   });
@@ -337,6 +313,41 @@ describe('MetricsPage', () => {
     } as any);
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Last updated just now')).toBeInTheDocument();
+  });
+
+  it('merges storage and access rows with different name formats', () => {
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+      data: {
+        combinedMetrics: {
+          lastUpdated: null,
+          storage: {
+            totalBytes: 1000,
+            comicCount: 2,
+            comics: [
+              { comicId: 1, comicName: "Sherman'sLagoon", totalBytes: 500, imageCount: 6 },
+              { comicId: 2, comicName: 'BabyBlues', totalBytes: 500, imageCount: 5 },
+            ],
+          },
+          access: {
+            totalAccesses: 10,
+            comics: [
+              { comicName: "Sherman's Lagoon", accessCount: 3, averageAccessTimeMs: 2.0, lastAccessed: null },
+              { comicName: 'Baby Blues', accessCount: 7, averageAccessTimeMs: 4.0, lastAccessed: null },
+            ],
+          },
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    renderWithQuery(<MetricsPage />);
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const rows = within(table).getAllByRole('row').slice(1);
+    // Should be 2 rows (merged), not 4
+    expect(rows).toHaveLength(2);
+    // Prefers display name with spaces
+    expect(within(table).getByText("Sherman's Lagoon")).toBeInTheDocument();
+    expect(within(table).getByText('Baby Blues')).toBeInTheDocument();
   });
 
   it('formats 0 bytes correctly', () => {
