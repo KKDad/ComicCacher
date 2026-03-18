@@ -87,6 +87,13 @@ query SearchComics($query: String!) {
       id
       name
       description
+      oldest
+      newest
+      avatarUrl
+      lastStrip {
+        imageUrl
+        date
+      }
     }
   }
 }

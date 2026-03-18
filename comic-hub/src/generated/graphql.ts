@@ -1277,7 +1277,7 @@ export type SearchComicsQueryVariables = Exact<{
 }>;
 
 
-export type SearchComicsQuery = { __typename?: 'Query', search: { __typename?: 'SearchResults', comics: Array<{ __typename?: 'Comic', id: number, name: string, description?: string | null }> } };
+export type SearchComicsQuery = { __typename?: 'Query', search: { __typename?: 'SearchResults', comics: Array<{ __typename?: 'Comic', id: number, name: string, description?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null }> } };
 
 export type AddFavoriteMutationVariables = Exact<{
   comicId: Scalars['Int']['input'];
@@ -2067,6 +2067,13 @@ export const SearchComicsDocument = `
       id
       name
       description
+      oldest
+      newest
+      avatarUrl
+      lastStrip {
+        imageUrl
+        date
+      }
     }
   }
 }

@@ -1,10 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import ComicsPage from './page';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useInfiniteGetComicsQuery } from '@/generated/graphql';
+import { useInfiniteGetComicsQuery, useSearchComicsQuery } from '@/generated/graphql';
 
 vi.mock('@/generated/graphql', () => ({
   useInfiniteGetComicsQuery: vi.fn(),
+  useSearchComicsQuery: vi.fn(),
+}));
+
+const mockSearchParams = new Map<string, string>();
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => ({
+    get: (key: string) => mockSearchParams.get(key) ?? null,
+  }),
 }));
 
 // Mock IntersectionObserver
@@ -63,12 +71,17 @@ const mockFetchNextPage = vi.fn();
 
 describe('ComicsPage', () => {
   beforeEach(() => {
+    mockSearchParams.clear();
     vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
       data: { pages: [mockPage] },
       isLoading: false,
       isFetchingNextPage: false,
       hasNextPage: false,
       fetchNextPage: mockFetchNextPage,
+    } as any);
+    vi.mocked(useSearchComicsQuery).mockReturnValue({
+      data: undefined,
+      isLoading: false,
     } as any);
     mockFetchNextPage.mockClear();
     mockObserve.mockClear();
@@ -228,5 +241,79 @@ describe('ComicsPage', () => {
     const { unmount } = renderWithQuery(<ComicsPage />);
     unmount();
     expect(mockDisconnect).toHaveBeenCalled();
+  });
+});
+
+describe('ComicsPage - search mode', () => {
+  beforeEach(() => {
+    mockSearchParams.set('q', 'garfield');
+    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetchingNextPage: false,
+      hasNextPage: false,
+      fetchNextPage: vi.fn(),
+    } as any);
+  });
+
+  afterEach(() => {
+    mockSearchParams.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('renders search results when query param is present', () => {
+    vi.mocked(useSearchComicsQuery).mockReturnValue({
+      data: {
+        search: {
+          comics: [
+            { id: 1, name: 'Garfield', newest: '2024-01-15', avatarUrl: null, lastStrip: null },
+          ],
+        },
+      },
+      isLoading: false,
+    } as any);
+
+    renderWithQuery(<ComicsPage />);
+    expect(screen.getByText('Search Results')).toBeInTheDocument();
+    expect(screen.getByText(/1 comic matching "garfield"/)).toBeInTheDocument();
+    expect(screen.getByText('Garfield')).toBeInTheDocument();
+  });
+
+  it('shows empty state when search has no results', () => {
+    vi.mocked(useSearchComicsQuery).mockReturnValue({
+      data: { search: { comics: [] } },
+      isLoading: false,
+    } as any);
+
+    renderWithQuery(<ComicsPage />);
+    expect(screen.getByText('No comics found')).toBeInTheDocument();
+    expect(screen.getByText(/No comics matching "garfield"/)).toBeInTheDocument();
+  });
+
+  it('shows loading state during search', () => {
+    vi.mocked(useSearchComicsQuery).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as any);
+
+    renderWithQuery(<ComicsPage />);
+    expect(screen.queryByText('Search Results')).not.toBeInTheDocument();
+  });
+
+  it('pluralizes result count correctly', () => {
+    vi.mocked(useSearchComicsQuery).mockReturnValue({
+      data: {
+        search: {
+          comics: [
+            { id: 1, name: 'Garfield', newest: '2024-01-15', avatarUrl: null, lastStrip: null },
+            { id: 2, name: 'Garfield Minus Garfield', newest: '2024-01-15', avatarUrl: null, lastStrip: null },
+          ],
+        },
+      },
+      isLoading: false,
+    } as any);
+
+    renderWithQuery(<ComicsPage />);
+    expect(screen.getByText(/2 comics matching "garfield"/)).toBeInTheDocument();
   });
 });
