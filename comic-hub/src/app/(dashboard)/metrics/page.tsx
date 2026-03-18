@@ -32,26 +32,16 @@ type SortDir = 'asc' | 'desc';
 export default function MetricsPage() {
   const { data, isLoading, error } = useGetCombinedMetricsQuery();
 
-  const [storageSortKey, setStorageSortKey] = useState<'comicName' | 'imageCount' | 'totalBytes'>('totalBytes');
-  const [storageSortDir, setStorageSortDir] = useState<SortDir>('desc');
-  const [accessSortKey, setAccessSortKey] = useState<'comicName' | 'accessCount' | 'averageAccessTimeMs'>('accessCount');
-  const [accessSortDir, setAccessSortDir] = useState<SortDir>('desc');
+  type SortKey = 'comicName' | 'imageCount' | 'totalBytes' | 'accessCount' | 'averageAccessTimeMs';
+  const [sortKey, setSortKey] = useState<SortKey>('totalBytes');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  function toggleStorageSort(key: typeof storageSortKey) {
-    if (storageSortKey === key) {
-      setStorageSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
-      setStorageSortKey(key);
-      setStorageSortDir('desc');
-    }
-  }
-
-  function toggleAccessSort(key: typeof accessSortKey) {
-    if (accessSortKey === key) {
-      setAccessSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setAccessSortKey(key);
-      setAccessSortDir('desc');
+      setSortKey(key);
+      setSortDir('desc');
     }
   }
 
@@ -108,16 +98,58 @@ export default function MetricsPage() {
 
   const totalImages = storage?.comics?.reduce((sum, c) => sum + c.imageCount, 0) ?? 0;
 
-  const storageComics = [...(storage?.comics ?? [])].sort((a, b) => {
-    const dir = storageSortDir === 'asc' ? 1 : -1;
-    if (storageSortKey === 'comicName') return dir * a.comicName.localeCompare(b.comicName);
-    return dir * (a[storageSortKey] - b[storageSortKey]);
-  });
+  // Merge storage and access data by normalized name (strip spaces/punctuation, lowercase)
+  // Storage uses directory names (e.g. "Sherman'sLagoon") while access uses display names
+  // (e.g. "Sherman's Lagoon"), so we normalize to match them.
+  const normalizeKey = (name: string) => name.toLowerCase().replace(/[\s''-]/g, '');
 
-  const accessComics = [...(access?.comics ?? [])].sort((a, b) => {
-    const dir = accessSortDir === 'asc' ? 1 : -1;
-    if (accessSortKey === 'comicName') return dir * a.comicName.localeCompare(b.comicName);
-    return dir * ((a[accessSortKey] ?? 0) - (b[accessSortKey] ?? 0));
+  const comicMap = new Map<string, {
+    comicName: string;
+    imageCount: number;
+    totalBytes: number;
+    accessCount: number;
+    averageAccessTimeMs: number | null;
+    lastAccessed: string | null;
+  }>();
+
+  for (const c of storage?.comics ?? []) {
+    comicMap.set(normalizeKey(c.comicName), {
+      comicName: c.comicName,
+      imageCount: c.imageCount,
+      totalBytes: c.totalBytes,
+      accessCount: 0,
+      averageAccessTimeMs: null,
+      lastAccessed: null,
+    });
+  }
+
+  for (const c of access?.comics ?? []) {
+    const key = normalizeKey(c.comicName);
+    const existing = comicMap.get(key);
+    if (existing) {
+      existing.accessCount = c.accessCount;
+      existing.averageAccessTimeMs = c.averageAccessTimeMs ?? null;
+      existing.lastAccessed = c.lastAccessed ?? null;
+      // Prefer the display name with spaces if available
+      if (c.comicName.includes(' ')) {
+        existing.comicName = c.comicName;
+      }
+    } else {
+      comicMap.set(key, {
+        comicName: c.comicName,
+        imageCount: 0,
+        totalBytes: 0,
+        accessCount: c.accessCount,
+        averageAccessTimeMs: c.averageAccessTimeMs ?? null,
+        lastAccessed: c.lastAccessed ?? null,
+      });
+    }
+  }
+
+  const combinedComics = [...comicMap.values()].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    if (sortKey === 'comicName') return dir * a.comicName.localeCompare(b.comicName);
+    return dir * ((a[sortKey] ?? 0) - (b[sortKey] ?? 0));
   });
 
   const summaryCards = [
@@ -153,71 +185,38 @@ export default function MetricsPage() {
         })}
       </div>
 
-      {storageComics.length > 0 && (
+      {combinedComics.length > 0 && (
         <Card>
           <div className="p-6 pb-4">
-            <h2 className="text-lg font-semibold text-ink">Storage by Comic</h2>
+            <h2 className="text-lg font-semibold text-ink">Metrics by Comic</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-t border-border text-left text-ink-subtle">
                   <th className="px-6 py-3 font-medium">
-                    <button className="inline-flex items-center gap-1" onClick={() => toggleStorageSort('comicName')}>
+                    <button className="inline-flex items-center gap-1" onClick={() => toggleSort('comicName')}>
                       Comic <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
                   <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleStorageSort('imageCount')}>
+                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('imageCount')}>
                       Images <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
                   <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleStorageSort('totalBytes')}>
+                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('totalBytes')}>
                       Storage <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
                   <th className="px-6 py-3 font-medium text-right">Avg Size</th>
-                </tr>
-              </thead>
-              <tbody>
-                {storageComics.map((comic) => (
-                  <tr key={comic.comicName} className="border-t border-border hover:bg-surface-hover">
-                    <td className="px-6 py-3 text-ink">{comic.comicName}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">{comic.imageCount.toLocaleString()}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">{formatBytes(comic.totalBytes)}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">
-                      {comic.imageCount > 0 ? formatBytes(comic.totalBytes / comic.imageCount) : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {accessComics.length > 0 && (
-        <Card>
-          <div className="p-6 pb-4">
-            <h2 className="text-lg font-semibold text-ink">Access by Comic</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-t border-border text-left text-ink-subtle">
-                  <th className="px-6 py-3 font-medium">
-                    <button className="inline-flex items-center gap-1" onClick={() => toggleAccessSort('comicName')}>
-                      Comic <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
                   <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleAccessSort('accessCount')}>
+                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('accessCount')}>
                       Accesses <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
                   <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleAccessSort('averageAccessTimeMs')}>
+                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('averageAccessTimeMs')}>
                       Avg Response <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
@@ -225,10 +224,15 @@ export default function MetricsPage() {
                 </tr>
               </thead>
               <tbody>
-                {accessComics.map((comic) => (
+                {combinedComics.map((comic) => (
                   <tr key={comic.comicName} className="border-t border-border hover:bg-surface-hover">
                     <td className="px-6 py-3 text-ink">{comic.comicName}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">{comic.accessCount.toLocaleString()}</td>
+                    <td className="px-6 py-3 text-right text-ink-subtle">{comic.imageCount.toLocaleString()}</td>
+                    <td className="px-6 py-3 text-right text-ink-subtle">{formatBytes(comic.totalBytes)}</td>
+                    <td className="px-6 py-3 text-right text-ink-subtle">
+                      {comic.imageCount > 0 ? formatBytes(comic.totalBytes / comic.imageCount) : '—'}
+                    </td>
+                    <td className="px-6 py-3 text-right text-ink-subtle">{comic.accessCount > 0 ? comic.accessCount.toLocaleString() : '—'}</td>
                     <td className="px-6 py-3 text-right text-ink-subtle">
                       {comic.averageAccessTimeMs != null ? `${comic.averageAccessTimeMs.toFixed(1)} ms` : '—'}
                     </td>

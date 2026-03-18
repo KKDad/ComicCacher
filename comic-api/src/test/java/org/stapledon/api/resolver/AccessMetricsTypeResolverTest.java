@@ -74,7 +74,7 @@ class AccessMetricsTypeResolverTest {
                 .accessCount(5).lastAccess("2024-01-15T10:30:00Z")
                 .totalAccessTimeMs(500L).build());
         metrics.put("Dilbert", ComicAccessMetrics.builder()
-                .accessCount(3).lastAccess("2024-01-14T09:00:00Z")
+                .accessCount(3).lastAccess("2024-01-14T09:00:00")
                 .totalAccessTimeMs(300L).build());
 
         var preBuiltList = List.of(new ComicAccessMetricView("Calvin", 1, 10.0, null));
