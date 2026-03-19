@@ -41,7 +41,9 @@ public abstract class AbstractBatchJobIntegrationTest {
 
     @Autowired protected ImageMetadataRepository imageMetadataRepository;
 
-    @Autowired @Qualifier("gsonWithLocalDate") protected Gson gson;
+    @Autowired
+    @Qualifier("gsonWithLocalDate")
+    protected Gson gson;
 
     @Autowired protected ObjectMapper objectMapper;
 

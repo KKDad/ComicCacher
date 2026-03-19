@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
-  BarChart3,
   Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { isOperator } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -20,23 +20,30 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
 import { useLogout } from '@/hooks/use-auth';
+import { useUser } from '@/contexts/user-context';
 
 const bottomNavItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/comics', label: 'Comics', icon: BookOpen },
-  { href: '/metrics', label: 'Metrics', icon: BarChart3 },
 ];
 
 const menuItems = [
-  { href: '/retrieval-status', label: 'Retrieval Status' },
   { href: '/api', label: 'API' },
   { href: '/preferences', label: 'Preferences' },
+];
+
+const operationsMenuItems = [
+  { href: '/metrics', label: 'Metrics' },
+  { href: '/retrieval-status', label: 'Retrieval Status' },
+  { href: '/batch-jobs', label: 'Batch Jobs' },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { logout, isLoggingOut } = useLogout();
+  const user = useUser();
+  const showOperations = isOperator(user?.roles ?? []);
 
   const handleLogout = async () => {
     setIsOpen(false);
@@ -98,6 +105,30 @@ export function MobileNav() {
                     </Button>
                   </Link>
                 ))}
+
+                {showOperations && (
+                  <>
+                    <Separator className="my-2" />
+                    <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Operations
+                    </div>
+                    {operationsMenuItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-base h-12"
+                        >
+                          {item.label}
+                        </Button>
+                      </Link>
+                    ))}
+                  </>
+                )}
+
                 <Separator className="my-2" />
                 <Button
                   variant="ghost"

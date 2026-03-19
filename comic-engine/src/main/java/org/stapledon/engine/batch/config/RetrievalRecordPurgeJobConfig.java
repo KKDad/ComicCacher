@@ -47,7 +47,7 @@ public class RetrievalRecordPurgeJobConfig {
      */
     @Bean
     public DailyJobScheduler retrievalRecordPurgeJobScheduler(@Qualifier("retrievalRecordPurgeJob") Job retrievalRecordPurgeJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(retrievalRecordPurgeJob, cronExpression, timezone, jobOperator, tracker);
+        return new DailyJobScheduler(retrievalRecordPurgeJob, cronExpression, timezone, jobOperator, tracker, "Purges old retrieval records beyond the retention window");
     }
 
     /**

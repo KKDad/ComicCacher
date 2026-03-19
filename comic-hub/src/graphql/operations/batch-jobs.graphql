@@ -2,6 +2,7 @@ query GetBatchSchedulers {
   batchSchedulers {
     jobName
     cronExpression
+    description
     timezone
     nextRunTime
     enabled

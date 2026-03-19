@@ -36,11 +36,15 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired private JobOperator jobOperator;
 
-    @Autowired @Qualifier("metricsArchiveJob") private Job metricsArchiveJob;
+    @Autowired
+    @Qualifier("metricsArchiveJob")
+    private Job metricsArchiveJob;
 
     @Autowired private MetricsRepository metricsRepository;
 
-    @Autowired @Qualifier("gsonWithLocalDate") private Gson gson;
+    @Autowired
+    @Qualifier("gsonWithLocalDate")
+    private Gson gson;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 

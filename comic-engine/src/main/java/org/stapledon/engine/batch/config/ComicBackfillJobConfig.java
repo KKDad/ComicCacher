@@ -58,7 +58,7 @@ public class ComicBackfillJobConfig {
      */
     @Bean
     public DailyJobScheduler comicBackfillJobScheduler(@Qualifier("comicBackfillJob") Job comicBackfillJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker);
+        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker, "Backfills missing comic strips for gaps in the archive");
     }
 
     /**

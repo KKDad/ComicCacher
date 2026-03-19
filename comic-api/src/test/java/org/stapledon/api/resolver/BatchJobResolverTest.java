@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.job.JobExecution;
@@ -46,6 +47,12 @@ class BatchJobResolverTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    private BatchJobResolver createResolver(List<DailyJobScheduler> schedulerList) {
+        var resolver = new BatchJobResolver(monitoringService, schedulerList, schedulerStateService, batchJobLogService);
+        ReflectionTestUtils.setField(resolver, "batchTimezone", "America/Toronto");
+        return resolver;
     }
 
     private JobExecution createJobExecution(Long id, String jobName, BatchStatus status) {
@@ -87,7 +94,7 @@ class BatchJobResolverTest {
             when(schedulerStateService.getState("ComicBackfillJob"))
                     .thenReturn(Optional.of(new SchedulerStateService.SchedulerState(true, LocalDateTime.of(2026, 3, 17, 10, 0), "admin")));
 
-            var resolver = new BatchJobResolver(monitoringService, List.of(comicDownloadScheduler, comicBackfillScheduler), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of(comicDownloadScheduler, comicBackfillScheduler));
             List<BatchSchedulerInfoDto> result = resolver.batchSchedulers();
 
             assertThat(result).hasSize(2);
@@ -117,7 +124,7 @@ class BatchJobResolverTest {
             when(batchJobLogService.getExecutionLog(42, "ComicDownloadJob"))
                     .thenReturn(Optional.of("INFO Job started"));
 
-            var resolver = new BatchJobResolver(monitoringService, List.of(), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of());
             String log = resolver.batchJobLog(42, "ComicDownloadJob");
 
             assertThat(log).isEqualTo("INFO Job started");
@@ -129,7 +136,7 @@ class BatchJobResolverTest {
             when(batchJobLogService.getExecutionLog(99, "ComicDownloadJob"))
                     .thenReturn(Optional.empty());
 
-            var resolver = new BatchJobResolver(monitoringService, List.of(), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of());
             String log = resolver.batchJobLog(99, "ComicDownloadJob");
 
             assertThat(log).isNull();
@@ -156,7 +163,7 @@ class BatchJobResolverTest {
             JobExecution execution = createJobExecution(1L, "ComicDownloadJob", BatchStatus.STARTED);
             when(monitoringService.getJobExecution(1L)).thenReturn(execution);
 
-            var resolver = new BatchJobResolver(monitoringService, List.of(comicDownloadScheduler), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of(comicDownloadScheduler));
             TriggerBatchJobPayload result = resolver.triggerJob("ComicDownloadJob");
 
             assertThat(result.errors()).isEmpty();
@@ -167,7 +174,7 @@ class BatchJobResolverTest {
         @Test
         @DisplayName("should return error for unavailable job")
         void shouldReturnErrorForUnavailableJob() {
-            var resolver = new BatchJobResolver(monitoringService, List.of(), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of());
             TriggerBatchJobPayload result = resolver.triggerJob("NonexistentJob");
 
             assertThat(result.errors()).hasSize(1);
@@ -181,7 +188,7 @@ class BatchJobResolverTest {
             when(comicDownloadScheduler.getJobName()).thenReturn("ComicDownloadJob");
             when(comicDownloadScheduler.triggerManually()).thenReturn(null);
 
-            var resolver = new BatchJobResolver(monitoringService, List.of(comicDownloadScheduler), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of(comicDownloadScheduler));
             TriggerBatchJobPayload result = resolver.triggerJob("ComicDownloadJob");
 
             assertThat(result.errors()).hasSize(1);
@@ -213,7 +220,7 @@ class BatchJobResolverTest {
             when(schedulerStateService.getState("ComicDownloadJob"))
                     .thenReturn(Optional.of(new SchedulerStateService.SchedulerState(true, LocalDateTime.now(), "admin")));
 
-            var resolver = new BatchJobResolver(monitoringService, List.of(comicDownloadScheduler), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of(comicDownloadScheduler));
             ToggleJobSchedulerPayload result = resolver.toggleJobScheduler("ComicDownloadJob", true);
 
             assertThat(result.errors()).isEmpty();
@@ -225,7 +232,7 @@ class BatchJobResolverTest {
         @Test
         @DisplayName("should return error when toggling unavailable job")
         void shouldReturnErrorForUnavailableJobToggle() {
-            var resolver = new BatchJobResolver(monitoringService, List.of(), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of());
             ToggleJobSchedulerPayload result = resolver.toggleJobScheduler("NonexistentJob", true);
 
             assertThat(result.errors()).hasSize(1);
@@ -258,7 +265,7 @@ class BatchJobResolverTest {
             when(monitoringService.getJobExecution(1L)).thenReturn(execution);
 
             // Backfill scheduler listed first forces stream to call getJobName() on it before finding the match
-            var resolver = new BatchJobResolver(monitoringService, List.of(comicBackfillScheduler, comicDownloadScheduler), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of(comicBackfillScheduler, comicDownloadScheduler));
             TriggerBatchJobPayload result = resolver.triggerBatchJob();
 
             assertThat(result.batchJob().jobName()).isEqualTo("ComicDownloadJob");
@@ -275,7 +282,7 @@ class BatchJobResolverTest {
             when(monitoringService.getJobExecution(2L)).thenReturn(execution);
 
             // Download scheduler listed first forces stream to call getJobName() on it before finding backfill
-            var resolver = new BatchJobResolver(monitoringService, List.of(comicDownloadScheduler, comicBackfillScheduler), schedulerStateService, batchJobLogService);
+            var resolver = createResolver(List.of(comicDownloadScheduler, comicBackfillScheduler));
             TriggerBatchJobPayload result = resolver.triggerBackfillJob();
 
             assertThat(result.batchJob().jobName()).isEqualTo("ComicBackfillJob");

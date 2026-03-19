@@ -9,10 +9,14 @@ import { Card } from '@/components/ui/card';
 function SummaryBar({
   schedulerCount,
   pausedCount,
+  completedCount,
+  failedCount,
   lastFailure,
 }: {
   schedulerCount: number;
   pausedCount: number;
+  completedCount: number;
+  failedCount: number;
   lastFailure?: BatchJob;
 }) {
   const activeCount = schedulerCount - pausedCount;
@@ -27,9 +31,15 @@ function SummaryBar({
           <span className="font-semibold text-foreground">{pausedCount}</span> paused
         </span>
       )}
-      {lastFailure?.startTime && (
+      <span>
+        <span className="font-semibold text-foreground">{completedCount}</span> completed
+      </span>
+      {failedCount > 0 && (
         <span>
-          Last failure: <span className="font-semibold text-destructive">{formatTimeAgo(lastFailure.startTime)}</span>
+          <span className="font-semibold text-destructive">{failedCount}</span> failed
+          {lastFailure?.startTime && (
+            <> ({formatTimeAgo(lastFailure.startTime)})</>
+          )}
         </span>
       )}
     </div>
@@ -57,15 +67,19 @@ export default function BatchJobsPage() {
   const schedulers = schedulersData?.batchSchedulers ?? [];
   const recentJobs = jobsData?.recentBatchJobs ?? [];
 
-  const lastExecutionByJob = new Map<string, BatchJob>();
+  const executionsByJob = new Map<string, BatchJob[]>();
   for (const job of recentJobs) {
-    if (!lastExecutionByJob.has(job.jobName)) {
-      lastExecutionByJob.set(job.jobName, job as BatchJob);
+    const list = executionsByJob.get(job.jobName) ?? [];
+    if (list.length < 5) {
+      list.push(job as BatchJob);
     }
+    executionsByJob.set(job.jobName, list);
   }
 
   const pausedCount = schedulers.filter((s) => s.paused).length;
-  const lastFailure = recentJobs.find((j) => j.status === 'FAILED') as BatchJob | undefined;
+  const completedCount = recentJobs.filter((j) => j.status === 'COMPLETED').length;
+  const failedJobs = recentJobs.filter((j) => j.status === 'FAILED');
+  const lastFailure = failedJobs[0] as BatchJob | undefined;
 
   return (
     <div className="space-y-6">
@@ -95,6 +109,8 @@ export default function BatchJobsPage() {
           <SummaryBar
             schedulerCount={schedulers.length}
             pausedCount={pausedCount}
+            completedCount={completedCount}
+            failedCount={failedJobs.length}
             lastFailure={lastFailure}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -102,7 +118,7 @@ export default function BatchJobsPage() {
               <JobCard
                 key={scheduler.jobName}
                 scheduler={scheduler}
-                lastExecution={lastExecutionByJob.get(scheduler.jobName)}
+                recentExecutions={executionsByJob.get(scheduler.jobName) ?? []}
               />
             ))}
           </div>

@@ -199,6 +199,11 @@ type BatchSchedulerInfo {
     cronExpression: String!
 
     """
+    Human-readable description of what this job does.
+    """
+    description: String
+
+    """
     Timezone for cron evaluation.
     """
     timezone: String!

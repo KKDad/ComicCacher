@@ -3,6 +3,7 @@ package org.stapledon.api.exception;
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.stapledon.common.model.ComicCachingException;
@@ -40,6 +41,15 @@ public class GraphQLExceptionHandlerConfig {
 
     @GraphQlExceptionHandler(AccessDeniedException.class)
     public GraphQLError handleAccessDeniedException(AccessDeniedException ex, DataFetchingEnvironment env) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.warn("GraphQL unauthorized on field '{}': no valid authentication", env.getField().getName());
+            return GraphQLError.newError()
+                    .errorType(ErrorClassification.errorClassification("UNAUTHORIZED"))
+                    .message("Authentication required. Please sign in.")
+                    .extensions(java.util.Map.of("errorCode", "UNAUTHENTICATED"))
+                    .build();
+        }
         log.warn("GraphQL access denied on field '{}': {}", env.getField().getName(), sanitize(ex.getMessage()));
         return GraphQLError.newError()
                 .errorType(ErrorClassification.errorClassification("FORBIDDEN"))

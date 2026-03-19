@@ -1,5 +1,6 @@
 package org.stapledon.api.resolver;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.stapledon.AbstractHttpGraphQlIntegrationTest;
 
@@ -8,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Integration tests for MetricsResolver GraphQL operations.
  * Extends AbstractHttpGraphQlIntegrationTest for proper GraphQL testing setup.
- * 
+ *
  * Note: Metrics queries may return null in integration tests since metrics
  * files may not exist. Tests verify no unexpected errors occur.
  */
@@ -41,6 +42,11 @@ class MetricsResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 }
             }
             """;
+
+    @BeforeEach
+    void authenticate() {
+        authenticateAsOperator();
+    }
 
     // =========================================================================
     // Query Tests

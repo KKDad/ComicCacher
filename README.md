@@ -2,89 +2,115 @@
 
 ![Comic Viewer Banner](assets/ComicViewer.png)
 
-> Serving up daily laughs since 2013
+> Your daily comics. No ads. No paywalls. No nonsense.
 
-A personal project to read my favorite daily comic strips without ads, pop-ups, or paywalls. Just comics.
+**ComicCacher** is a self-hosted comic strip reader that automatically downloads, caches, and serves your favorite daily strips from GoComics and ComicsKingdom in a clean, distraction-free interface.
 
-Originally written in C# and .NET 3.0 back in 2013, this has been rebuilt from the ground up with modern tech:
-- **Backend**: Spring Boot 4 + Java 21 API that downloads and caches comics daily
-- **Frontend**: Next.js 16 + React 19 web app (migrating from Angular — see `comic-hub/`)
-- **Hosting**: Runs in my home K8s cluster
+Born as a C#/.NET hobby project in 2013, it's been rebuilt from scratch across 500+ commits into a modern, production-grade stack — and it still does exactly what it was always meant to do: **let you read your comics in peace.**
 
-There's no public deployment — I built this for my own use and for fun. But if you'd like to run it yourself, go ahead!
+---
 
-## What does it do?
+## Why?
 
-- Downloads daily comic strips from GoComics and ComicsKingdom
-- Caches images locally with automatic cleanup
-- Displays them in a clean, ad-free interface
-- Works on mobile, tablet, and desktop
-- Tracks metrics on cache performance and storage
+Every comic strip site is the same story: autoplay ads, pop-ups, newsletter modals, cookie banners, and tracking scripts — all to read a four-panel strip. ComicCacher sidesteps all of it. It scrapes the strips at 6 AM, stores them locally, and serves them through a fast, minimal UI. That's it.
+
+## Highlights
+
+- **Fully automated** — Comics download daily on schedule. Missed a day? Startup makeup runs catch it.
+- **Smart caching** — Perceptual + cryptographic hash dedup, image validation, and predictive prefetch so navigation is instant.
+- **6 batch jobs** — Daily download, backfill gaps, avatar sync, metadata repair, metrics archive, and record purge — all observable from the admin UI.
+- **GraphQL-first API** — With REST fallback, Swagger UI, JWT auth, and three roles (USER, OPERATOR, ADMIN).
+- **Responsive UI** — Works on phone, tablet, and desktop. Dark mode included.
+- **Runs anywhere** — Docker, Kubernetes, bare metal. If it runs Java 21 and Node 22, it runs ComicCacher.
+- **Fully self-contained** — No database required. All state lives on the filesystem (NFS-safe with atomic writes).
+
+## Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| **Backend** | Java 21, Spring Boot 4, Spring Batch, Caffeine Cache |
+| **API** | GraphQL + REST, Springdoc OpenAPI, JWT (JJWT) |
+| **Scraping** | Jsoup (ComicsKingdom), Selenium (GoComics) |
+| **Image Pipeline** | TwelveMonkeys ImageIO, perceptual hashing, 3-layer validation |
+| **Frontend** | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4, TanStack Query v5 |
+| **Infra** | Docker, Helm, Kubernetes |
+
+## Architecture
+
+```
+comic-common ─── shared DTOs, config, service interfaces
+     ↑
+     ├── comic-metrics ─── cache & storage metrics
+     ├── comic-engine ─── download engine, batch jobs, image validation
+     │        ↑
+     └── comic-api ─── REST + GraphQL API (orchestrates everything)
+              ↓
+         comic-hub ─── Next.js frontend
+```
+
+Full architecture docs, Mermaid diagrams, and module reference in [`docs/`](docs/README.md).
+
+## Quick Start
+
+### Backend
+
+```bash
+./gradlew :comic-api:build
+./gradlew :comic-api:bootRun
+```
+
+API docs at [localhost:8080/swagger-ui](http://localhost:8080/swagger-ui/index.html) | GraphQL at [localhost:8080/graphql](http://localhost:8080/graphql)
+
+### Frontend
+
+```bash
+cd comic-hub
+cp .env.example .env.local
+npm install && npm run dev
+```
+
+Open [localhost:3000](http://localhost:3000).
+
+## Deployment
+
+Runs on a home Kubernetes cluster. Build and deploy with:
+
+```bash
+# Backend
+./gradlew :comic-api:build
+./comic-api/build-docker.sh <TAG>
+
+# Frontend
+cd comic-hub && ./build-docker.sh
+
+# Deploy
+helm upgrade comics comics
+```
 
 ## Project Structure
 
 ```
 ComicCacher/
-├── comic-common/    # Shared DTOs, config, service interfaces (Java)
-├── comic-metrics/   # Cache & storage metrics collection (Java)
-├── comic-engine/    # Download & storage engine, Spring Batch jobs (Java)
-├── comic-api/       # REST + GraphQL API layer (Java/Spring Boot)
-├── comic-hub/       # New web frontend (Next.js 16, React 19, TypeScript)
-├── comic-web/       # Legacy web frontend (Angular — being replaced)
-├── docs/            # API endpoint docs, UI refactor specs
+├── comic-common/    # Shared DTOs, config, service interfaces
+├── comic-metrics/   # Cache & storage metrics collection
+├── comic-engine/    # Download engine, batch jobs, image validation
+├── comic-api/       # REST + GraphQL API layer
+├── comic-hub/       # Web frontend (Next.js 16 / React 19)
+├── comic-web/       # Legacy Angular frontend (being replaced)
+├── docs/            # API reference, design docs, storage specs
 └── utils/           # Debug & deployment scripts
 ```
 
-## Quick Start
+## The Story
 
-### Backend (comic-api)
+This project started in **2013** as a quick C#/.NET 3.0 script to scrape a few comics. Over the years it's been rewritten, rearchitected, and modernized — first to Java/Spring, then to Spring Boot 4 with a GraphQL API, and most recently to a Next.js 16 frontend. It runs on a home K8s cluster and has been serving up daily laughs for over a decade.
 
-```bash
-./gradlew :comic-api:build
-./gradlew :comic-api:bootRun
+There's no public deployment. This is a personal project, built for fun and for learning. But the code is here if you want to run your own — PRs and ideas are welcome.
 
-# View API docs at http://localhost:8080/swagger-ui/index.html
-```
+## Contributing
 
-### Frontend (comic-hub)
-
-```bash
-cd comic-hub
-cp .env.example .env.local
-npm install
-npm run dev
-
-# Visit http://localhost:3000
-```
-
-## Deployment
-
-Deployed to a home K8s cluster using Docker and Helm:
-
-```bash
-# Build backend
-./gradlew :comic-api:build
-./comic-api/build-docker.sh <TAG>
-
-# Build frontend
-cd comic-hub
-./build-docker.sh
-
-# Deploy with Helm
-helm upgrade comics comics
-```
-
-## API & Docs
-
-When running locally:
-- Web App: http://localhost:3000
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- REST API: http://localhost:8080/api/v1/comics
-- GraphQL: http://localhost:8080/graphql
-- Metrics: http://localhost:8080/api/v1/metrics
-
-Full endpoint documentation in the [docs/](docs/) directory.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Development
 
-For detailed architecture, build instructions, module structure, testing guidelines, and coding standards, see [CLAUDE.md](CLAUDE.md).
+For detailed build instructions, module internals, testing guidelines, and coding standards, see [CLAUDE.md](CLAUDE.md).

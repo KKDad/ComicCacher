@@ -35,6 +35,7 @@ public class MetricsResolver {
      * Get storage metrics for the comic cache.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public ImageCacheStats storageMetrics() {
         log.debug("Getting storage metrics");
         return metricsService.getStorageMetrics();
@@ -44,6 +45,7 @@ public class MetricsResolver {
      * Get access metrics for all comics.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public AccessMetricsData accessMetrics() {
         log.debug("Getting access metrics");
         return metricsService.getAccessMetrics();
@@ -53,6 +55,7 @@ public class MetricsResolver {
      * Get combined storage and access metrics.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public CombinedMetricsData combinedMetrics() {
         log.debug("Getting combined metrics");
         return metricsService.getCombinedMetrics();

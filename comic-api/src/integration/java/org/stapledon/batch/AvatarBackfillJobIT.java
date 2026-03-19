@@ -32,14 +32,17 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @TestPropertySource(properties = {
-        "batch.avatar-backfill.enabled=true",
-        "batch.avatar-backfill.cron=0 15 7 * * ?",
-        "batch.avatar-backfill.delay-between-downloads-ms=0"
+    "batch.avatar-backfill.enabled=true",
+    "batch.avatar-backfill.cron=0 15 7 * * ?",
+    "batch.avatar-backfill.delay-between-downloads-ms=0"
 })
 class AvatarBackfillJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired private JobOperator jobOperator;
-    @Autowired @Qualifier("avatarBackfillJob") private Job avatarBackfillJob;
+
+    @Autowired
+    @Qualifier("avatarBackfillJob")
+    private Job avatarBackfillJob;
     @Autowired private ManagementFacade managementFacade;
     @Autowired private ComicConfigurationService comicConfigurationService;
 

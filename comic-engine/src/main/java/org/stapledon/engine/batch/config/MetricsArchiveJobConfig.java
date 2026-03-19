@@ -46,7 +46,7 @@ public class MetricsArchiveJobConfig {
      */
     @Bean
     public DailyJobScheduler metricsArchiveJobScheduler(@Qualifier("metricsArchiveJob") Job metricsArchiveJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(metricsArchiveJob, cronExpression, timezone, jobOperator, tracker);
+        return new DailyJobScheduler(metricsArchiveJob, cronExpression, timezone, jobOperator, tracker, "Archives access and storage metrics to persistent storage");
     }
 
     /**

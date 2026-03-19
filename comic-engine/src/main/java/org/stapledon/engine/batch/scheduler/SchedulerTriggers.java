@@ -23,25 +23,36 @@ import org.springframework.stereotype.Component;
 public class SchedulerTriggers {
 
     // Daily job schedulers
-    private final DailyJobScheduler comicDownloadJobScheduler;
+    private final DailyJobScheduler avatarBackfillJobScheduler;
     private final DailyJobScheduler comicBackfillJobScheduler;
+    private final DailyJobScheduler comicDownloadJobScheduler;
     private final DailyJobScheduler imageMetadataBackfillJobScheduler;
     private final DailyJobScheduler metricsArchiveJobScheduler;
     private final DailyJobScheduler retrievalRecordPurgeJobScheduler;
 
-    public SchedulerTriggers(@Qualifier("comicDownloadJobScheduler") DailyJobScheduler comicDownloadJobScheduler,
+    public SchedulerTriggers(@Qualifier("avatarBackfillJobScheduler") DailyJobScheduler avatarBackfillJobScheduler,
                              @Qualifier("comicBackfillJobScheduler") DailyJobScheduler comicBackfillJobScheduler,
+                             @Qualifier("comicDownloadJobScheduler") DailyJobScheduler comicDownloadJobScheduler,
                              @Qualifier("imageMetadataBackfillJobScheduler") DailyJobScheduler imageMetadataBackfillJobScheduler,
                              @Qualifier("metricsArchiveJobScheduler") DailyJobScheduler metricsArchiveJobScheduler,
                              @Qualifier("retrievalRecordPurgeJobScheduler") DailyJobScheduler retrievalRecordPurgeJobScheduler) {
-        this.comicDownloadJobScheduler = comicDownloadJobScheduler;
+        this.avatarBackfillJobScheduler = avatarBackfillJobScheduler;
         this.comicBackfillJobScheduler = comicBackfillJobScheduler;
+        this.comicDownloadJobScheduler = comicDownloadJobScheduler;
         this.imageMetadataBackfillJobScheduler = imageMetadataBackfillJobScheduler;
         this.metricsArchiveJobScheduler = metricsArchiveJobScheduler;
         this.retrievalRecordPurgeJobScheduler = retrievalRecordPurgeJobScheduler;
     }
 
     // ==================== Daily Job Triggers ====================
+    @Scheduled(cron = "${batch.avatar-backfill.cron}", zone = "${batch.timezone}")
+    @ConditionalOnProperty(name = "batch.avatar-backfill.enabled", havingValue = "true", matchIfMissing = false)
+    public void triggerAvatarBackfill() {
+        if (avatarBackfillJobScheduler != null) {
+            avatarBackfillJobScheduler.executeScheduled();
+        }
+    }
+
     @Scheduled(cron = "${batch.comic-download.cron}", zone = "${batch.timezone}")
     @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
     public void triggerComicDownload() {

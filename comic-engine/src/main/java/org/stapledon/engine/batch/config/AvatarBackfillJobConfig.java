@@ -54,7 +54,7 @@ public class AvatarBackfillJobConfig {
             @Qualifier("avatarBackfillJob") Job avatarBackfillJob,
             JobOperator jobOperator,
             JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(avatarBackfillJob, cronExpression, timezone, jobOperator, tracker);
+        return new DailyJobScheduler(avatarBackfillJob, cronExpression, timezone, jobOperator, tracker, "Downloads missing avatar images for comics with a configured source");
     }
 
     /**

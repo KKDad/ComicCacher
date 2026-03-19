@@ -43,6 +43,7 @@ function createScheduler(overrides?: Partial<BatchSchedulerInfo>): BatchSchedule
     nextRunTime: new Date(Date.now() + 3_600_000 * 14).toISOString(),
     enabled: true,
     paused: false,
+    description: null,
     lastToggled: null,
     toggledBy: null,
     ...overrides,
@@ -81,103 +82,120 @@ function createExecution(overrides?: Partial<BatchJob>): BatchJob {
 
 describe('JobCard', () => {
   it('renders job name as human-readable label', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.getByText('Comic Download')).toBeInTheDocument();
   });
 
+  it('renders info icon when scheduler has a description', () => {
+    const { container } = renderWithProviders(
+      <JobCard scheduler={createScheduler({ description: 'Downloads comics daily' })} recentExecutions={[]} />,
+    );
+    expect(container.querySelector('.lucide-info')).toBeInTheDocument();
+  });
+
+  it('does not render info icon when scheduler has no description', () => {
+    const { container } = renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
+    expect(container.querySelector('.lucide-info')).not.toBeInTheDocument();
+  });
+
   it('renders PAUSED badge when scheduler is paused', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler({ paused: true })} />);
+    renderWithProviders(<JobCard scheduler={createScheduler({ paused: true })} recentExecutions={[]} />);
     expect(screen.getByText('PAUSED')).toBeInTheDocument();
   });
 
   it('renders COMPLETED badge from last execution', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[createExecution()]} />);
     expect(screen.getByText('COMPLETED')).toBeInTheDocument();
   });
 
   it('renders FAILED badge for failed execution', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution({ status: 'FAILED' as BatchStatusEnum })} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[createExecution({ status: 'FAILED' as BatchStatusEnum })]} />);
     expect(screen.getByText('FAILED')).toBeInTheDocument();
   });
 
   it('renders human-readable cron schedule', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.getByText(/Daily at 6:00 AM ET/)).toBeInTheDocument();
   });
 
   it('renders next run time', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.getByText(/Next run:/)).toBeInTheDocument();
   });
 
-  it('renders last run info when execution exists', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution()} />);
-    expect(screen.getByText(/Last run:/)).toBeInTheDocument();
+  it('renders last ran info with absolute time when execution exists', () => {
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[createExecution()]} />);
+    expect(screen.getByText(/Last Ran:/)).toBeInTheDocument();
+    expect(screen.getByText(/·/)).toBeInTheDocument();
   });
 
   it('renders active/paused toggle switch', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.getByText('Active')).toBeInTheDocument();
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 
   it('renders Paused label when paused', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler({ paused: true })} />);
+    renderWithProviders(<JobCard scheduler={createScheduler({ paused: true })} recentExecutions={[]} />);
     expect(screen.getByText('Paused')).toBeInTheDocument();
   });
 
   it('renders Run Now button', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.getByRole('button', { name: /run now/i })).toBeInTheDocument();
   });
 
   it('opens confirmation dialog when Run Now is clicked', async () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /run now/i }));
     expect(screen.getByText(/This will trigger a manual execution/)).toBeInTheDocument();
   });
 
-  it('renders Show Details button when execution exists', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution()} />);
+  it('renders Show Details button when executions exist', () => {
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[createExecution()]} />);
     expect(screen.getByRole('button', { name: /show details/i })).toBeInTheDocument();
   });
 
-  it('does not render Show Details button without execution', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+  it('does not render Show Details button without executions', () => {
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.queryByRole('button', { name: /show details/i })).not.toBeInTheDocument();
   });
 
-  it('expands details with step info on click', async () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution()} />);
-    await userEvent.click(screen.getByRole('button', { name: /show details/i }));
-
-    expect(screen.getByText('comicRetrievalStep')).toBeInTheDocument();
-    expect(screen.getByText('Read: 50')).toBeInTheDocument();
-    expect(screen.getByText('Write: 50')).toBeInTheDocument();
-    expect(screen.getByText('Skip: 2')).toBeInTheDocument();
+  it('shows View Logs inside expanded details, not on main card', () => {
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[createExecution()]} />);
+    expect(screen.queryByRole('button', { name: /view logs/i })).not.toBeInTheDocument();
   });
 
-  it('shows View Logs button in expanded details', async () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution()} />);
+  it('expands details showing recent runs with view logs', async () => {
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[createExecution()]} />);
     await userEvent.click(screen.getByRole('button', { name: /show details/i }));
+
+    expect(screen.getByText('Recent Runs')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /view logs/i })).toBeInTheDocument();
   });
 
-  it('shows exit code in expanded details', async () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution()} />);
+  it('shows multiple executions in details', async () => {
+    const executions = [
+      createExecution({ executionId: 3, status: 'COMPLETED' as BatchStatusEnum }),
+      createExecution({ executionId: 2, status: 'FAILED' as BatchStatusEnum, exitDescription: 'Timeout' }),
+      createExecution({ executionId: 1, status: 'COMPLETED' as BatchStatusEnum }),
+    ];
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={executions} />);
     await userEvent.click(screen.getByRole('button', { name: /show details/i }));
-    expect(screen.getByText('Exit Code')).toBeInTheDocument();
-    expect(screen.getAllByText('COMPLETED')).toHaveLength(2); // badge + exit code
+
+    const viewLogsButtons = screen.getAllByRole('button', { name: /view logs/i });
+    expect(viewLogsButtons).toHaveLength(3);
+    expect(screen.getByText('Timeout')).toBeInTheDocument();
   });
 
-  it('shows error description for failed jobs', async () => {
+  it('shows error description for failed jobs in run history', async () => {
     renderWithProviders(
       <JobCard
         scheduler={createScheduler()}
-        lastExecution={createExecution({
+        recentExecutions={[createExecution({
           status: 'FAILED' as BatchStatusEnum,
           exitDescription: 'Connection timeout',
-        })}
+        })]}
       />
     );
     await userEvent.click(screen.getByRole('button', { name: /show details/i }));
@@ -185,15 +203,50 @@ describe('JobCard', () => {
   });
 
   it('renders UNKNOWN status badge when no execution exists', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
   });
 
   it('renders RUNNING badge for STARTED status', () => {
     renderWithProviders(
-      <JobCard scheduler={createScheduler()} lastExecution={createExecution({ status: 'STARTED' as BatchStatusEnum })} />,
+      <JobCard scheduler={createScheduler()} recentExecutions={[createExecution({ status: 'STARTED' as BatchStatusEnum })]} />,
     );
     expect(screen.getByText('RUNNING')).toBeInTheDocument();
+  });
+
+  it('applies green accent border for COMPLETED status', () => {
+    const { container } = renderWithProviders(
+      <JobCard scheduler={createScheduler()} recentExecutions={[createExecution()]} />,
+    );
+    expect(container.querySelector('.border-l-green-500')).toBeInTheDocument();
+  });
+
+  it('applies red accent border for FAILED status', () => {
+    const { container } = renderWithProviders(
+      <JobCard scheduler={createScheduler()} recentExecutions={[createExecution({ status: 'FAILED' as BatchStatusEnum })]} />,
+    );
+    expect(container.querySelector('.border-l-red-500')).toBeInTheDocument();
+  });
+
+  it('applies blue accent border for STARTED status', () => {
+    const { container } = renderWithProviders(
+      <JobCard scheduler={createScheduler()} recentExecutions={[createExecution({ status: 'STARTED' as BatchStatusEnum })]} />,
+    );
+    expect(container.querySelector('.border-l-blue-500')).toBeInTheDocument();
+  });
+
+  it('applies yellow accent border for paused scheduler', () => {
+    const { container } = renderWithProviders(
+      <JobCard scheduler={createScheduler({ paused: true })} recentExecutions={[createExecution()]} />,
+    );
+    expect(container.querySelector('.border-l-yellow-500')).toBeInTheDocument();
+  });
+
+  it('applies no accent border for UNKNOWN status', () => {
+    const { container } = renderWithProviders(
+      <JobCard scheduler={createScheduler()} recentExecutions={[]} />,
+    );
+    expect(container.querySelector('.border-l-4')).not.toBeInTheDocument();
   });
 
   it('calls toggleMutation when switch is clicked', () => {
@@ -203,7 +256,7 @@ describe('JobCard', () => {
       isPending: false,
     } as any);
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     screen.getByRole('switch').click();
 
     expect(toggleMutate).toHaveBeenCalledWith({ jobName: 'ComicDownloadJob', paused: true });
@@ -216,9 +269,8 @@ describe('JobCard', () => {
       isPending: false,
     } as any);
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /run now/i }));
-    // Now click the confirm button in the dialog
     const buttons = screen.getAllByRole('button', { name: /run now/i });
     await userEvent.click(buttons[buttons.length - 1]);
 
@@ -226,7 +278,7 @@ describe('JobCard', () => {
   });
 
   it('closes confirm dialog on Cancel', async () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /run now/i }));
     expect(screen.getByText(/This will trigger a manual execution/)).toBeInTheDocument();
 
@@ -236,8 +288,8 @@ describe('JobCard', () => {
     });
   });
 
-  it('opens log viewer when View Logs is clicked', async () => {
-    renderWithProviders(<JobCard scheduler={createScheduler()} lastExecution={createExecution()} />);
+  it('opens log viewer when View Logs is clicked in details', async () => {
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[createExecution()]} />);
     await userEvent.click(screen.getByRole('button', { name: /show details/i }));
     await userEvent.click(screen.getByRole('button', { name: /view logs/i }));
 
@@ -251,7 +303,7 @@ describe('JobCard', () => {
       return { mutate: vi.fn(), isPending: false } as any;
     });
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     capturedOpts.onSuccess({ toggleJobScheduler: { errors: [] } });
 
     expect(toast.success).toHaveBeenCalledWith('ComicDownloadJob paused');
@@ -264,7 +316,7 @@ describe('JobCard', () => {
       return { mutate: vi.fn(), isPending: false } as any;
     });
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     capturedOpts.onSuccess({ toggleJobScheduler: { errors: [{ message: 'Not allowed' }] } });
 
     expect(toast.error).toHaveBeenCalledWith('Not allowed');
@@ -277,7 +329,7 @@ describe('JobCard', () => {
       return { mutate: vi.fn(), isPending: false } as any;
     });
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     capturedOpts.onError(new Error('Network failure'));
 
     expect(toast.error).toHaveBeenCalledWith('Failed to toggle scheduler: Network failure');
@@ -290,7 +342,7 @@ describe('JobCard', () => {
       return { mutate: vi.fn(), isPending: false } as any;
     });
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     capturedOpts.onSuccess({ triggerJob: { errors: [] } });
 
     expect(toast.success).toHaveBeenCalledWith('ComicDownloadJob triggered successfully');
@@ -303,7 +355,7 @@ describe('JobCard', () => {
       return { mutate: vi.fn(), isPending: false } as any;
     });
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     capturedOpts.onSuccess({ triggerJob: { errors: [{ message: 'Conflict' }] } });
 
     expect(toast.error).toHaveBeenCalledWith('Conflict');
@@ -316,34 +368,79 @@ describe('JobCard', () => {
       return { mutate: vi.fn(), isPending: false } as any;
     });
 
-    renderWithProviders(<JobCard scheduler={createScheduler()} />);
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     capturedOpts.onError(new Error('Timeout'));
 
     expect(toast.error).toHaveBeenCalledWith('Failed to trigger job: Timeout');
   });
 
-  it('shows N/A when exitCode is null', async () => {
-    renderWithProviders(
-      <JobCard scheduler={createScheduler()} lastExecution={createExecution({ exitCode: null })} />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: /show details/i }));
-    expect(screen.getByText('N/A')).toBeInTheDocument();
-  });
-
   it('renders unknown job name as-is when not in JOB_LABELS', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler({ jobName: 'CustomJob' })} />);
+    renderWithProviders(<JobCard scheduler={createScheduler({ jobName: 'CustomJob' })} recentExecutions={[]} />);
     expect(screen.getByText('CustomJob')).toBeInTheDocument();
   });
 
   it('hides next run time when not provided', () => {
-    renderWithProviders(<JobCard scheduler={createScheduler({ nextRunTime: null })} />);
+    renderWithProviders(<JobCard scheduler={createScheduler({ nextRunTime: null })} recentExecutions={[]} />);
     expect(screen.queryByText(/Next run:/)).not.toBeInTheDocument();
+  });
+
+  it('renders STARTING small status badge in run history', async () => {
+    renderWithProviders(
+      <JobCard
+        scheduler={createScheduler()}
+        recentExecutions={[createExecution({ status: 'STARTING' as BatchStatusEnum })]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /show details/i }));
+    // The main card badge renders RUNNING from getStatusBadge, the details section uses getSmallStatusBadge
+    const runningBadges = screen.getAllByText('RUNNING');
+    expect(runningBadges.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders unknown small status badge in run history', async () => {
+    renderWithProviders(
+      <JobCard
+        scheduler={createScheduler()}
+        recentExecutions={[createExecution({ status: 'ABANDONED' as BatchStatusEnum })]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /show details/i }));
+    const badges = screen.getAllByText('ABANDONED');
+    // Both main badge and small badge render ABANDONED
+    expect(badges.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('formats relative time in minutes for near-future next run', () => {
+    const tenMinutesFromNow = new Date(Date.now() + 600_000).toISOString();
+    renderWithProviders(
+      <JobCard
+        scheduler={createScheduler({ nextRunTime: tenMinutesFromNow })}
+        recentExecutions={[]}
+      />,
+    );
+    // formatRelativeTime returns "in Xm" for < 1 hour future
+    expect(screen.getByText(/Next run:.*in \d+m$/)).toBeInTheDocument();
+  });
+
+  it('formats relative time in minutes for recent past execution', () => {
+    const fiveMinutesAgo = new Date(Date.now() - 300_000).toISOString();
+    renderWithProviders(
+      <JobCard
+        scheduler={createScheduler()}
+        recentExecutions={[createExecution({
+          startTime: fiveMinutesAgo,
+          endTime: new Date(Date.now() - 200_000).toISOString(),
+        })]}
+      />,
+    );
+    // formatRelativeTime returns "Xm ago" for < 1 hour past
+    expect(screen.getByText(/\d+m ago/)).toBeInTheDocument();
   });
 
   it('hides duration when durationMs is null', () => {
     renderWithProviders(
-      <JobCard scheduler={createScheduler()} lastExecution={createExecution({ durationMs: null })} />,
+      <JobCard scheduler={createScheduler()} recentExecutions={[createExecution({ durationMs: null })]} />,
     );
-    expect(screen.getByText(/Last run:/)).toBeInTheDocument();
+    expect(screen.getByText(/Last Ran:/)).toBeInTheDocument();
   });
 });

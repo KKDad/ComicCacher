@@ -15,6 +15,11 @@
 - Estimated effort: 2-4 hours
 
 
+### Enable Gradle Configuration Cache
+- Consider enabling the Gradle configuration cache to speed up builds
+- Reference: https://docs.gradle.org/9.4.0/userguide/configuration_cache_enabling.html
+- Priority: Low
+
 ### Revisit OpenAPI/Swagger Generation
 - With the move to GraphQL, only 2 REST endpoints remain (binary image streaming)
 - Evaluate whether the openapi-gradle-plugin, `generate-openapi-docs.sh`, and `openapi.json` are still worth maintaining

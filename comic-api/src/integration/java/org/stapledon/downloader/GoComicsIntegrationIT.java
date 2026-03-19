@@ -11,7 +11,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.engine.downloader.GoComics;
-import org.stapledon.engine.downloader.IDailyComic;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -151,10 +150,10 @@ class GoComicsIntegrationIT {
      */
     @ParameterizedTest
     @ValueSource(strings = {
-            "Adam at Home",
-            "Garfield",
-            "Peanuts",
-            "CalvinAndHobbes"
+        "Adam at Home",
+        "Garfield",
+        "Peanuts",
+        "CalvinAndHobbes"
     })
     void getComicDetailsTest(String name) {
         // Arrange

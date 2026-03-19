@@ -19,6 +19,24 @@ import org.mockito.Mockito;
 public class BatchIntegrationTestConfig {
 
     /**
+     * Mock DailyJobScheduler for AvatarBackfillJob when disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.avatar-backfill.enabled", havingValue = "false")
+    public DailyJobScheduler avatarBackfillJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
+    }
+
+    /**
+     * Mock DailyJobScheduler for ComicBackfillJob when disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "false")
+    public DailyJobScheduler comicBackfillJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
+    }
+
+    /**
      * Mock DailyJobScheduler for ComicDownloadJob when disabled
      */
     @Bean

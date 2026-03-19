@@ -29,48 +29,48 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class GraphqlSchemaCompletenessIT extends AbstractHttpGraphQlIntegrationTest {
 
-	@Autowired
-	private GraphQlSource graphQlSource;
+    @Autowired
+    private GraphQlSource graphQlSource;
 
-	@Test
-	void allQueryFieldsHaveResolvers() {
-		GraphQLSchema schema = graphQlSource.schema();
+    @Test
+    void allQueryFieldsHaveResolvers() {
+        GraphQLSchema schema = graphQlSource.schema();
 
-		GraphQLObjectType queryType = schema.getQueryType();
-		assertThat(queryType).as("Schema must define a Query type").isNotNull();
+        GraphQLObjectType queryType = schema.getQueryType();
+        assertThat(queryType).as("Schema must define a Query type").isNotNull();
 
-		List<String> unmappedFields = findUnmappedFields(schema, queryType);
+        List<String> unmappedFields = findUnmappedFields(schema, queryType);
 
-		assertThat(unmappedFields)
-				.as("All Query fields must have resolvers (not PropertyDataFetcher). Unmapped: %s", unmappedFields)
-				.isEmpty();
-	}
+        assertThat(unmappedFields)
+                .as("All Query fields must have resolvers (not PropertyDataFetcher). Unmapped: %s", unmappedFields)
+                .isEmpty();
+    }
 
-	@Test
-	void allMutationFieldsHaveResolvers() {
-		GraphQLSchema schema = graphQlSource.schema();
+    @Test
+    void allMutationFieldsHaveResolvers() {
+        GraphQLSchema schema = graphQlSource.schema();
 
-		GraphQLObjectType mutationType = schema.getMutationType();
-		assertThat(mutationType).as("Schema must define a Mutation type").isNotNull();
+        GraphQLObjectType mutationType = schema.getMutationType();
+        assertThat(mutationType).as("Schema must define a Mutation type").isNotNull();
 
-		List<String> unmappedFields = findUnmappedFields(schema, mutationType);
+        List<String> unmappedFields = findUnmappedFields(schema, mutationType);
 
-		assertThat(unmappedFields)
-				.as("All Mutation fields must have resolvers (not PropertyDataFetcher). Unmapped: %s", unmappedFields)
-				.isEmpty();
-	}
+        assertThat(unmappedFields)
+                .as("All Mutation fields must have resolvers (not PropertyDataFetcher). Unmapped: %s", unmappedFields)
+                .isEmpty();
+    }
 
-	private List<String> findUnmappedFields(GraphQLSchema schema, GraphQLObjectType rootType) {
-		return rootType.getFieldDefinitions().stream()
-				.filter(field -> isPropertyDataFetcher(schema, rootType, field))
-				.map(GraphQLFieldDefinition::getName)
-				.sorted()
-				.collect(Collectors.toList());
-	}
+    private List<String> findUnmappedFields(GraphQLSchema schema, GraphQLObjectType rootType) {
+        return rootType.getFieldDefinitions().stream()
+                .filter(field -> isPropertyDataFetcher(schema, rootType, field))
+                .map(GraphQLFieldDefinition::getName)
+                .sorted()
+                .collect(Collectors.toList());
+    }
 
-	private boolean isPropertyDataFetcher(GraphQLSchema schema, GraphQLObjectType parentType, GraphQLFieldDefinition field) {
-		var fetcher = schema.getCodeRegistry().getDataFetcher(parentType, field);
-		log.debug("Field {}.{} -> {}", parentType.getName(), field.getName(), fetcher.getClass().getSimpleName());
-		return fetcher instanceof PropertyDataFetcher || fetcher instanceof SingletonPropertyDataFetcher;
-	}
+    private boolean isPropertyDataFetcher(GraphQLSchema schema, GraphQLObjectType parentType, GraphQLFieldDefinition field) {
+        var fetcher = schema.getCodeRegistry().getDataFetcher(parentType, field);
+        log.debug("Field {}.{} -> {}", parentType.getName(), field.getName(), fetcher.getClass().getSimpleName());
+        return fetcher instanceof PropertyDataFetcher || fetcher instanceof SingletonPropertyDataFetcher;
+    }
 }

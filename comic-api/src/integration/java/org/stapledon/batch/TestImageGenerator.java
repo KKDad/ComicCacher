@@ -18,7 +18,10 @@ import lombok.extern.slf4j.Slf4j;
  * processing.
  */
 @Slf4j
-public class TestImageGenerator {
+public final class TestImageGenerator {
+
+    private TestImageGenerator() {
+    }
 
     /**
      * Creates a test image with specified dimensions and format.
