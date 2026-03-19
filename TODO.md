@@ -51,3 +51,49 @@ Audit complete. Remaining items (JJWT builder migration done):
 - **Where:** `GoComicsIntegrationIT` (lines 52-59) uses try-with-resources per test; `GoComics.initializeWebDriver()` (lines 67-95) does `WebDriverManager.chromedriver().setup()` + `new ChromeDriver()`
 - **Fix is at the test level**, not in `GoComics` itself — it already has lazy init and `AutoCloseable`
 - **Approach:** Share a single `GoComics` instance (or at least a shared `WebDriver`) across the test class via `@BeforeAll`/`@AfterAll`, resetting comic-specific state between tests instead of recreating the browser
+
+## Feature Ideas (from competitive analysis)
+
+### Reading Progress Tracking
+- Per-user "mark as read" state with continue-where-you-left-off and unread count badges
+- Multi-user auth already exists — add per-user read state to the preference/user model
+- Every competitor with a UI has this (Kavita, Komga, OpenComic)
+- Priority: Medium-High
+
+### CBZ/PDF Export
+- Export a date range of strips as CBZ or PDF for offline reading
+- Natural extension of existing image storage — images are already on disk
+- Universal feature across comic downloaders (dosage, comic-dl, mangal, comics-downloader)
+- Priority: Medium
+
+### OPDS Feed
+- Serve comics via the OPDS protocol for external reader apps (Panels, Chunky, KOReader)
+- Opens the collection to a large ecosystem of existing reader apps
+- Kavita and Komga both support this
+- Priority: Medium
+
+### Respect robots.txt
+- Check and honor `robots.txt` rules from GoComics and ComicsKingdom before scraping
+- Good-citizen behavior that aligns with the copyright notice in the README
+- dosage implements this — set a `User-Agent` and respect disallow rules
+- Priority: Medium
+
+### Random Strip Button
+- Pick a random date within the available range for a given comic
+- Fun daily discovery feature — trivial to implement
+- Priority: Low (easy win)
+
+### Favorites / Collections
+- Named groups beyond "my comics" (e.g., "Sunday Funnies", "Political", "Classic")
+- Kavita has collections and reading lists
+- Priority: Low
+
+### Download Failure Notifications
+- Alert when a comic fails to download for N consecutive days
+- Could be webhook, email, or in-app notification
+- Priority: Low
+
+### Configurable Scraping Rate Limits
+- Expose delay configuration for respectful scraping
+- Currently hardcoded — make configurable per source
+- Priority: Low
