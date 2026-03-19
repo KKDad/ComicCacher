@@ -6,19 +6,19 @@ Image processing in ComicCacher uses a 3-layer pipeline. Each layer serves a dis
 
 ```mermaid
 graph TD
-    Input["byte[] imageData"]
-    L1["Layer 1: ImageValidationService<br/>(null / size / decode / dimensions)"]
-    L2["Layer 2: DuplicateImageValidationService<br/>(hash + year-scope dedup)"]
-    L3["Layer 3: ImageAnalysisService<br/>(color / grayscale detection)"]
-    Save["FileSystemComicStorageFacade.saveComicStripWithResult()"]
+    Input[byte array imageData]
+    L1[Layer 1: ImageValidationService\nnull / size / decode / dimensions]
+    L2[Layer 2: DuplicateImageValidationService\nhash + year-scope dedup]
+    L3[Layer 3: ImageAnalysisService\ncolor / grayscale detection]
+    Save[FileSystemComicStorageFacade\nsaveComicStripWithResult]
 
     Input --> L1
     L1 -->|valid| L2
-    L1 -->|invalid| Reject1["SaveResult.validationFailed()"]
+    L1 -->|invalid| Reject1[SaveResult.validationFailed]
     L2 -->|unique| Save
-    L2 -->|duplicate| Reject2["SaveResult.duplicateSkipped()"]
+    L2 -->|duplicate| Reject2[SaveResult.duplicateSkipped]
     Save --> L3
-    L3 --> Metadata["ImageMetadataRepository"]
+    L3 --> Metadata[ImageMetadataRepository]
 ```
 
 ## Layer 1: ImageValidationService

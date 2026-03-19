@@ -4,19 +4,19 @@
 
 ```mermaid
 graph TD
-    comic-common["comic-common<br/>(shared DTOs, config, services)"]
-    comic-metrics["comic-metrics<br/>(cache & storage metrics)"]
-    comic-engine["comic-engine<br/>(download, storage, batch jobs)"]
-    comic-api["comic-api<br/>(REST + GraphQL API layer)"]
-    comic-hub["comic-hub<br/>(Next.js 16 frontend)"]
+    A[comic-common\nshared DTOs, config, services]
+    B[comic-metrics\ncache & storage metrics]
+    C[comic-engine\ndownload, storage, batch jobs]
+    D[comic-api\nREST + GraphQL API layer]
+    E[comic-hub\nNext.js 16 frontend]
 
-    comic-metrics --> comic-common
-    comic-engine --> comic-common
-    comic-engine --> comic-metrics
-    comic-api --> comic-common
-    comic-api --> comic-metrics
-    comic-api --> comic-engine
-    comic-hub -->|HTTP/GraphQL| comic-api
+    B --> A
+    C --> A
+    C --> B
+    D --> A
+    D --> B
+    D --> C
+    E -->|HTTP/GraphQL| D
 ```
 
 ## Module Responsibilities
@@ -80,22 +80,22 @@ ComicCacher uses a layered facade pattern where each facade owns a well-defined 
 
 ```mermaid
 graph TD
-    API["comic-api Controllers"]
-    MF["ManagementFacade<br/>(ComicManagementFacade)"]
-    DF["DownloaderFacade<br/>(ComicDownloaderFacade)"]
-    SF["ComicStorageFacade<br/>(FileSystemComicStorageFacade)"]
-    CC["ComicConfigurationService"]
+    API[comic-api Controllers]
+    MF[ManagementFacade\nComicManagementFacade]
+    DF[DownloaderFacade\nComicDownloaderFacade]
+    SF[ComicStorageFacade\nFileSystemComicStorageFacade]
+    CC[ComicConfigurationService]
 
     API --> MF
     MF --> DF
     MF --> SF
     MF --> CC
-    DF --> GoComics["GoComicsDownloaderStrategy"]
-    DF --> CK["ComicsKingdomDownloaderStrategy"]
-    SF --> IV["ImageValidationService"]
-    SF --> DV["DuplicateImageValidationService"]
-    SF --> IA["ImageAnalysisService"]
-    SF --> CIS["ComicIndexService"]
+    DF --> GoComics[GoComicsDownloaderStrategy]
+    DF --> CK[ComicsKingdomDownloaderStrategy]
+    SF --> IV[ImageValidationService]
+    SF --> DV[DuplicateImageValidationService]
+    SF --> IA[ImageAnalysisService]
+    SF --> CIS[ComicIndexService]
 ```
 
 ### ManagementFacade (ComicManagementFacade)
