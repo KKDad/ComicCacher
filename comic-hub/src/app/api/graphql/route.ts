@@ -107,7 +107,7 @@ function hasAuthError(data: any): boolean {
   if (!data?.errors?.length) return false;
   return data.errors.some(
     (e: any) =>
-      e.message === 'Access Denied' ||
-      e.extensions?.classification === 'UNAUTHORIZED',
+      e.extensions?.classification === 'UNAUTHORIZED' ||
+      e.extensions?.errorCode === 'UNAUTHENTICATED',
   );
 }

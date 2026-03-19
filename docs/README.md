@@ -1,28 +1,39 @@
-# API Documentation
+# ComicCacher Documentation
 
-This directory contains automatically generated API documentation for the ComicCacher project.
+## API Reference
 
-## OpenAPI Documentation
+GraphQL-first API with JWT authentication, three roles (USER, OPERATOR, ADMIN), and two supplementary REST endpoints.
 
-The OpenAPI JSON file is automatically generated during the build process and placed here. This file can be used with tools like Swagger UI to visualize and interact with the API's resources.
+| Document | Description |
+|----------|-------------|
+| [Overview](api/overview.md) | Architecture, auth model, scalars, pagination, error handling |
+| [Comics](api/comics.md) | Comic queries, mutations, and REST image endpoints |
+| [Auth](api/auth.md) | Registration, login, JWT lifecycle |
+| [Users](api/users.md) | Profile management and display preferences |
+| [Batch Jobs](api/batch-jobs.md) | Job execution, scheduling, and log queries |
+| [Retrieval Status](api/retrieval-status.md) | Download tracking and history |
+| [Metrics](api/metrics.md) | Storage and access metrics |
+| [Health](api/health.md) | Health check and error codes |
 
-## How to Use
+## Design
 
-You can view the API documentation in several ways:
+Architecture decisions, data flows, and internal patterns.
 
-1. **Using the built-in Swagger UI**: When the application is running, navigate to `/swagger-ui.html` to use the interactive documentation.
+| Document | Description |
+|----------|-------------|
+| [Architecture](design/architecture.md) | Module graph, key classes, facade pattern |
+| [Download Pipeline](design/download-pipeline.md) | End-to-end download, validate, dedup, store flow |
+| [Batch Jobs](design/batch-jobs.md) | Scheduler framework, job configs, execution tracking |
+| [Image Validation](design/image-validation.md) | 3-layer validation, dedup, and analysis pipeline |
+| [Adding Batch Jobs](design/adding-batch-jobs.md) | Developer guide for new job creation |
 
-2. **Using the OpenAPI JSON file**: The `openapi.json` file can be imported into tools like:
-   - [Swagger Editor](https://editor.swagger.io/)
-   - [Postman](https://www.postman.com/)
-   - [Insomnia](https://insomnia.rest/)
+## Storage
 
-## Automated Updates
+File-based persistence layer on NFS.
 
-The API documentation is automatically updated during the build process using the following Gradle task:
-
-```bash
-./gradlew updateApiDocs
-```
-
-This task is also triggered as part of the regular build process.
+| Document | Description |
+|----------|-------------|
+| [Overview](storage/overview.md) | Directory layout, naming conventions, atomic writes |
+| [Configuration Files](storage/configuration-files.md) | comics.json, users.json, preferences.json, bootstrap |
+| [Operational State](storage/operational-state.md) | Batch executions, retrieval status, scheduler state, metrics |
+| [Comic Data](storage/comic-data.md) | Strip images, date indexes, hash caches, metadata sidecars |

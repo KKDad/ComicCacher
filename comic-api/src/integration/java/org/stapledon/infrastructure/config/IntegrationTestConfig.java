@@ -19,6 +19,24 @@ import org.mockito.Mockito;
 public class IntegrationTestConfig {
 
     /**
+     * Mock DailyJobScheduler for AvatarBackfillJob when disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.avatar-backfill.enabled", havingValue = "false")
+    public DailyJobScheduler avatarBackfillJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
+    }
+
+    /**
+     * Mock DailyJobScheduler for ComicBackfillJob when disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "false")
+    public DailyJobScheduler comicBackfillJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
+    }
+
+    /**
      * Mock DailyJobScheduler for ComicDownloadJob when disabled
      */
     @Bean
@@ -28,20 +46,20 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * Mock DailyJobScheduler for MetricsArchiveJob when disabled
-     */
-    @Bean
-    @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "false")
-    public DailyJobScheduler metricsArchiveJobScheduler() {
-        return Mockito.mock(DailyJobScheduler.class);
-    }
-
-    /**
      * Mock DailyJobScheduler for ImageMetadataBackfillJob when disabled
      */
     @Bean
     @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "false")
     public DailyJobScheduler imageMetadataBackfillJobScheduler() {
+        return Mockito.mock(DailyJobScheduler.class);
+    }
+
+    /**
+     * Mock DailyJobScheduler for MetricsArchiveJob when disabled
+     */
+    @Bean
+    @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "false")
+    public DailyJobScheduler metricsArchiveJobScheduler() {
         return Mockito.mock(DailyJobScheduler.class);
     }
 

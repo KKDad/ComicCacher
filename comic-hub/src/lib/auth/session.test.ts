@@ -63,6 +63,24 @@ describe('getSession', () => {
     expect(result).toBeNull();
   });
 
+  it('returns null when response data is missing me field', async () => {
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
+    vi.mocked(global.fetch).mockResolvedValue(
+      new Response(JSON.stringify({ data: { me: null } })),
+    );
+    const result = await getSession();
+    expect(result).toBeNull();
+  });
+
+  it('returns null when response has no data field', async () => {
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
+    vi.mocked(global.fetch).mockResolvedValue(
+      new Response(JSON.stringify({ errors: [{ message: 'Unauthorized' }] })),
+    );
+    const result = await getSession();
+    expect(result).toBeNull();
+  });
+
   it('returns null on fetch error', async () => {
     mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'));

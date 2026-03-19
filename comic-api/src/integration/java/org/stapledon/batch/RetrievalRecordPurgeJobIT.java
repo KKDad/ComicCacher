@@ -29,7 +29,9 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired private JobOperator jobOperator;
 
-    @Autowired @Qualifier("retrievalRecordPurgeJob") private Job retrievalRecordPurgeJob;
+    @Autowired
+    @Qualifier("retrievalRecordPurgeJob")
+    private Job retrievalRecordPurgeJob;
 
     @Autowired private RetrievalStatusService retrievalStatusService;
 

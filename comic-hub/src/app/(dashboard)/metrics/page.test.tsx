@@ -350,6 +350,33 @@ describe('MetricsPage', () => {
     expect(within(table).getByText('Baby Blues')).toBeInTheDocument();
   });
 
+  it('creates new row for access-only comic with no matching storage entry', () => {
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+      data: {
+        combinedMetrics: {
+          lastUpdated: null,
+          storage: { totalBytes: 0, comicCount: 0, comics: [] },
+          access: {
+            totalAccesses: 42,
+            comics: [
+              { comicName: 'Dilbert', accessCount: 42, averageAccessTimeMs: 5.0, lastAccessed: null },
+            ],
+          },
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    renderWithQuery(<MetricsPage />);
+    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    expect(within(table).getByText('Dilbert')).toBeInTheDocument();
+    const row = within(table).getByText('Dilbert').closest('tr')!;
+    const cells = row.querySelectorAll('td');
+    // imageCount and totalBytes should be 0 for access-only entry
+    expect(cells[1].textContent).toBe('0');
+    expect(cells[2].textContent).toBe('0 B');
+  });
+
   it('formats 0 bytes correctly', () => {
     vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
       data: {

@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.graphql.test.autoconfigure.tester.AutoConfigureHttpGraphQlTester;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.graphql.test.tester.HttpGraphQlTester;
 import org.springframework.test.context.ActiveProfiles;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
@@ -156,6 +155,27 @@ public abstract class AbstractHttpGraphQlIntegrationTest {
             return jwtToken;
         } catch (Exception e) {
             log.error("Error authenticating user: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Authenticate as an operator user with OPERATOR role for operational queries.
+     */
+    protected String authenticateAsOperator() {
+        try {
+            StapledonAccountGivens.GivenAccountContext context = givens.givenUser();
+            context.setRoles(java.util.List.of("USER", "OPERATOR"));
+            String jwtToken = context.authenticate();
+            log.info("Using operator user: {}", context.getUsername());
+            graphQlTester = getGraphQlTester()
+                    .mutate()
+                    .headers(h -> h.setBearerAuth(jwtToken))
+                    .build();
+
+            return jwtToken;
+        } catch (Exception e) {
+            log.error("Error authenticating operator: {}", e.getMessage());
             return null;
         }
     }

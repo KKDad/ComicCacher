@@ -27,7 +27,9 @@ class ImageMetadataJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired private JobOperator jobOperator;
 
-    @Autowired @Qualifier("imageMetadataBackfillJob") private Job imageMetadataBackfillJob;
+    @Autowired
+    @Qualifier("imageMetadataBackfillJob")
+    private Job imageMetadataBackfillJob;
 
     private File testImage1;
     private File testImage2;

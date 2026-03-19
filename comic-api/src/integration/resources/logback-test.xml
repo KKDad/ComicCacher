@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Hardcoded for integration tests (matches application-batch-integration.properties) -->
+    <property name="BATCH_LOG_DIR" value="./batch-integration-cache"/>
+
+    <appender name="BATCH_SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>batchLogPath</key>
+            <defaultValue>NONE</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="BATCH-${batchLogPath}" class="ch.qos.logback.core.FileAppender">
+                <file>${BATCH_LOG_DIR}/batch-logs/${batchLogPath}.log</file>
+                <append>true</append>
+                <encoder>
+                    <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %-5level [%thread] %logger{39} : %msg%n%xEx</pattern>
+                </encoder>
+            </appender>
+        </sift>
+        <filter class="org.stapledon.infrastructure.logging.MdcPresentFilter">
+            <key>batchLogPath</key>
+            <defaultValue>NONE</defaultValue>
+        </filter>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="BATCH_SIFT"/>
+    </root>
+
+    <logger name="org.stapledon" level="DEBUG"/>
+</configuration>

@@ -37,24 +37,27 @@ import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 public class DailyJobScheduler extends AbstractJobScheduler {
 
     private final String cronExpression;
-    private final String timezone;
+    private final String description;
     private final JsonBatchExecutionTracker executionTracker;
+    private final String timezone;
     private SchedulerStateService schedulerStateService;
 
     /**
-     * Creates a new DailyJobScheduler.
-     *
-     * @param job the Spring Batch Job bean
-     * @param cronExpression cron expression for scheduling
-     * @param timezone timezone for cron evaluation (e.g., "America/Toronto")
-     * @param jobOperator Spring Batch JobOperator
-     * @param executionTracker tracker for reading/writing execution history
+     * Creates a new DailyJobScheduler without a description.
      */
     public DailyJobScheduler(Job job, String cronExpression, String timezone, JobOperator jobOperator, JsonBatchExecutionTracker executionTracker) {
+        this(job, cronExpression, timezone, jobOperator, executionTracker, null);
+    }
+
+    /**
+     * Creates a new DailyJobScheduler with a description.
+     */
+    public DailyJobScheduler(Job job, String cronExpression, String timezone, JobOperator jobOperator, JsonBatchExecutionTracker executionTracker, String description) {
         super(job, jobOperator);
         this.cronExpression = cronExpression;
         this.timezone = timezone;
         this.executionTracker = executionTracker;
+        this.description = description;
     }
 
     /**
@@ -160,6 +163,13 @@ public class DailyJobScheduler extends AbstractJobScheduler {
      */
     public String getCronExpression() {
         return cronExpression;
+    }
+
+    /**
+     * Returns the user-facing description of this job.
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**

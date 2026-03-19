@@ -28,7 +28,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +38,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * GraphQL resolver for batch job queries and mutations.
@@ -53,6 +53,9 @@ public class BatchJobResolver {
     private final SchedulerStateService schedulerStateService;
     private final BatchJobLogService batchJobLogService;
 
+    @Value("${batch.timezone:America/Toronto}")
+    private String batchTimezone;
+
     // =========================================================================
     // Queries
     // =========================================================================
@@ -61,6 +64,7 @@ public class BatchJobResolver {
      * Get recent batch job executions across all known jobs.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public List<BatchJobDto> recentBatchJobs(@Argument int count) {
         log.debug("GraphQL: Getting {} recent batch jobs", count);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
@@ -86,6 +90,7 @@ public class BatchJobResolver {
      * Get batch jobs within a date range across all known jobs.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public List<BatchJobDto> batchJobsByDateRange(@Argument LocalDate startDate, @Argument LocalDate endDate) {
         log.debug("GraphQL: Getting batch jobs from {} to {}", startDate, endDate);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
@@ -110,6 +115,7 @@ public class BatchJobResolver {
      * Get a specific batch job execution by ID.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public BatchJobDto batchJob(@Argument int executionId) {
         log.debug("GraphQL: Getting batch job execution {}", executionId);
         JobExecution execution = monitoringService.getJobExecution((long) executionId);
@@ -120,6 +126,7 @@ public class BatchJobResolver {
      * Get summary statistics for batch jobs over a number of days.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public BatchJobSummaryDto batchJobSummary(@Argument int days) {
         log.debug("GraphQL: Getting batch job summary for {} days", days);
         LocalDate endDate = LocalDate.now();
@@ -169,7 +176,7 @@ public class BatchJobResolver {
      * Get scheduler info for all batch jobs, including runtime pause state.
      */
     @QueryMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('OPERATOR')")
     public List<BatchSchedulerInfoDto> batchSchedulers() {
         log.debug("GraphQL: Getting batch scheduler info");
         return schedulers.stream()
@@ -181,7 +188,7 @@ public class BatchJobResolver {
      * Get the execution log for a specific batch job run.
      */
     @QueryMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('OPERATOR')")
     public String batchJobLog(@Argument int executionId, @Argument String jobName) {
         log.debug("GraphQL: Getting log for {} execution {}", jobName, executionId);
         return batchJobLogService.getExecutionLog(executionId, jobName).orElse(null);
@@ -345,7 +352,7 @@ public class BatchJobResolver {
 
     private OffsetDateTime toOffset(java.time.LocalDateTime ldt) {
         return Optional.ofNullable(ldt)
-                .map(t -> t.atOffset(ZoneOffset.UTC))
+                .map(t -> t.atZone(ZoneId.of(batchTimezone)).toOffsetDateTime())
                 .orElse(null);
     }
 
@@ -357,12 +364,13 @@ public class BatchJobResolver {
         OffsetDateTime nextRunTime = computeNextRunTime(scheduler);
         OffsetDateTime lastToggled = stateOpt
                 .map(SchedulerStateService.SchedulerState::lastToggled)
-                .map(ldt -> ldt.atOffset(ZoneOffset.UTC))
+                .map(ldt -> ldt.atZone(ZoneId.of(batchTimezone)).toOffsetDateTime())
                 .orElse(null);
 
         return new BatchSchedulerInfoDto(
                 jobName,
                 scheduler.getCronExpression(),
+                scheduler.getDescription(),
                 scheduler.getTimezone(),
                 nextRunTime,
                 true,

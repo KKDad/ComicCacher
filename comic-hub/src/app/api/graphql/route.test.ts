@@ -159,7 +159,7 @@ describe('POST /api/graphql', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({
-        errors: [{ message: 'Access Denied' }],
+        errors: [{ message: 'Access Denied', extensions: { classification: 'UNAUTHORIZED', errorCode: 'UNAUTHENTICATED' } }],
         data: { preferences: null },
       })),
     );
@@ -178,7 +178,7 @@ describe('POST /api/graphql', () => {
     vi.mocked(global.fetch)
       .mockResolvedValueOnce(
         new Response(JSON.stringify({
-          errors: [{ message: 'Access Denied' }],
+          errors: [{ message: 'Access Denied', extensions: { classification: 'UNAUTHORIZED', errorCode: 'UNAUTHENTICATED' } }],
           data: null,
         })),
       )
@@ -234,6 +234,35 @@ describe('POST /api/graphql', () => {
     const response = await POST(createRequest());
     expect(response.cookies.get('comic-hub-jwt')?.value).toBe('new-jwt');
     expect(response.cookies.get('comic-hub-refresh')?.value).toBe('new-refresh');
+  });
+
+  it('detects UNAUTHORIZED from expired token and attempts refresh', async () => {
+    mockCookieStore({
+      'comic-hub-jwt': 'expired-jwt',
+      'comic-hub-refresh': 'valid-refresh',
+    });
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          errors: [{ message: 'Authentication required. Please sign in.', extensions: { errorCode: 'UNAUTHENTICATED', classification: 'UNAUTHORIZED' } }],
+          data: { batchJobLog: null },
+        })),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          data: { refreshToken: { token: 'new-jwt', refreshToken: 'new-refresh' } },
+        })),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { batchJobLog: 'log content here' } })),
+      );
+
+    const { POST } = await importRoute();
+    const response = await POST(createRequest());
+    const json = await response.json();
+    expect(json).toEqual({ data: { batchJobLog: 'log content here' } });
+    expect(response.cookies.get('comic-hub-jwt')?.value).toBe('new-jwt');
   });
 
   it('returns 401 when refresh returns no token', async () => {

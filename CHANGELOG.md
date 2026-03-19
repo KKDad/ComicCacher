@@ -5,173 +5,208 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- All checkstyle warnings in integration tests
 
-## [2.0.33] - 2025-05-19
+## [2.4.5] - 2026-03-19
 ### Added
-- Check for existing usernames during user registration
-- Enhanced user management capabilities
+- OPERATOR role with read-only operational access
+- Branch coverage tests to meet 90% threshold
 
 ### Changed
-- Refactored tests to be more production-like to better catch issues
+- Restructured docs/ into api/design/storage layout with accuracy fixes
+- Refreshed README with marketing-focused copy and feature highlights
 
 ### Fixed
-- Fixed all tests to ensure system stability
+- Expired JWT returning FORBIDDEN instead of UNAUTHORIZED
+- Replaced brittle message-string auth checks with structured extension checks
 
-## [2.0.32] - 2025-05-19
-### Added
-- Test for handling quoted refresh tokens in AuthController
-- Handling for null comic names in directory naming
-- Enhanced validation for comic names
+### Security
+- Locked down unauthenticated GraphQL endpoints
 
-## [2.0.31] - 2025-05-19
+## [2.4.4] - 2026-03-17
 ### Added
-- Postman collection and environment for ComicCacher API testing
-- Enhanced comic retrieval and reconciliation with better handling of null names
-- Null name validation for comics
-- Improved error handling in GlobalExceptionHandler
-
-## [2.0.30] - 2025-05-18
-### Added
-- TypeMismatchException handler to GlobalExceptionHandler for improved error handling
+- Batch jobs admin screen with runtime scheduler control
+- Retrieval status GraphQL layer with security enforcement
+- JaCoCo coverage enforcement with dead code removal
 
 ### Changed
-- Refactored tests to use List.of() for role assignments
-- Improved mock implementations
-- Enhanced cache miss event handling
-- Removed CacheUtils bean definition and added custom deserializer for IComicsBootstrap
+- Upgraded Jackson/Spring Boot and cleaned up Gradle configuration
+- Strengthened weak frontend tests
 
-## [2.0.29] - 2025-05-18
-### Added
-- Comprehensive API documentation for ComicCacher
+### Fixed
+- Batch job UI tooltip, timezone conversion, and MDC log file placement
+- AvatarBackfillJob wiring and admin-only permission enforcement
 
-## [2.0.28] - 2025-05-18
+### Security
+- Updated org.openrewrite.rewrite from 7.28.0 to 7.28.1
+- Updated org.openrewrite.recipe:rewrite-static-analysis
+- Updated org.openrewrite.recipe:rewrite-testing-frameworks
+- Updated next in /comic-hub
+
+## [2.4.3] - 2026-03-15
 ### Added
+- Metrics page with GraphQL metrics layer
+- CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md
+
+### Security
+- Updated undici in /comic-hub
+
+## [2.4.2] - 2026-03-11
+### Security
+- Updated org.springframework.boot from 4.0.2 to 4.0.3
+- Updated Gradle wrapper from 9.3.1 to 9.4.0
+- Updated com.graphql-java:graphql-java-extended-scalars from 22.0 to 24.0
+- Updated org.openrewrite.rewrite from 7.27.0 to 7.28.0
+- Updated org.openrewrite.recipe:rewrite-static-analysis
+- Updated org.openrewrite.recipe:rewrite-testing-frameworks
+- Updated hono in /comic-hub
+- Updated immutable in /comic-hub
+
+## [2.4.1] - 2026-03-05
+### Security
+- Updated OpenRewrite static-analysis from 2.1.1 to 2.28.0
+- Updated Gradle wrapper from 9.3.0 to 9.3.1
+- Updated OpenRewrite rewrite from 7.25.0 to 7.27.0
+- Updated com.graphql-java:graphql-java-extended-scalars from 22.0 to 24.0
+- Various npm dependency bumps
+
+## [2.4.0] - 2026-02-28
+### Added
+- Next.js 16 frontend (comic-hub) replacing Angular — React 19, TypeScript 5, TanStack Query v5, Zustand, Tailwind CSS 4, Radix UI/shadcn
+- GraphQL API layer with custom scalar types (Date, DateTime, JSON)
+- Server-side GraphQL proxy with httpOnly cookie authentication
+
+### Changed
+- Updated Spring Boot from 4.0.1 to 4.0.2
+- Updated Gradle wrapper from 8.14 to 9.3.0
+
+### Removed
+- Angular comic-web frontend (deprecated in favor of comic-hub)
+- Deprecated REST controllers (AuthController, BatchJobController, HealthController, MetricsController, PreferenceController, RetrievalStatusController, UpdateController, UserController)
+- comics-server module
+
+### Security
+- Updated actions/upload-artifact from 6 to 7
+- Updated org.openrewrite.rewrite from 7.23.0 to 7.25.0
+- Updated org.assertj:assertj-core from 3.27.6 to 3.27.7
+- Updated org.openrewrite.recipe:rewrite-testing-frameworks
+- Various npm bumps (minimatch, rollup, hono, qs)
+
+## [2.3.1] - 2026-01-11
+### Added
+- Source-specific rate limiting for download sources
+- Timing instrumentation for cold-start performance visibility
+
+### Changed
+- Migrated Angular 19 → 21 with Vitest and zoneless change detection
+- Eliminated MetricsUpdateJob in favor of event-driven persistence
+- Migrated Spring Batch APIs to non-deprecated versions
+
+### Fixed
+- Navigation cache bug causing stale page state
+- @StepScope added to defer findMissingStrips until job execution
+- Task scheduling issues
+
+### Security
+- Updated actions/upload-artifact from 5 to 6
+- Updated org.openrewrite.recipe:rewrite-testing-frameworks
+- Updated org.openrewrite.rewrite from 6.26.0 to 7.23.0
+
+## [2.3.0] - 2025-12-29
+### Changed
+- Updated Spring Boot from 3.5.7 to 4.0.x
+- Migrated JUnit assertions to AssertJ via OpenRewrite recipes
+- Removed deprecated code and enforced checkstyle
+
+### Fixed
+- Navigation cache bug (BUG-NAV-1)
+- PageUp/PageDown scroll alignment (BUG-UI-1)
+- Cache staleness and error accumulation issues
+
+### Security
+- Updated actions/checkout from 4 to 6
+- Updated actions/upload-artifact from 4 to 5
+- Updated actions/setup-node from 4 to 6
+- Updated com.github.ben-manes.caffeine:caffeine from 3.2.2 to 3.2.3
+
+## [2.2.0] - 2025-10-27
+### Added
+- Comprehensive image validation service (3-layer pipeline: format validation, hash-based dedup, color analysis)
+- GitHub Actions workflow for Angular CI
+- Null-safety checks for comics without source information
+- Configurable Chrome headless mode via application properties
+
+### Changed
+- Upgraded comic-web to Angular 19.2 with modern tooling
+- UI refreshed with glassmorphism design
+- Batch job reorganization and tracking validation
+
+### Fixed
+- Spring Batch bean conflict in production environment
+- All test failures after Angular 19 upgrade
+
+### Security
+- Updated org.springframework.boot from 3.4.5 to 3.5.7
+- Updated org.seleniumhq.selenium:selenium-java from 4.11.0 to 4.38.0
+- Updated org.springdoc:springdoc-openapi-starter-webmvc-ui
+- Updated com.github.ben-manes.caffeine:caffeine from 3.1.8 to 3.2.2
+
+## [2.1.0] - 2025-10-23
+### Added
+- Spring Batch for comic retrieval jobs (ComicDownloadJob, ComicBackfillJob, AvatarBackfillJob, ImageMetadataBackfillJob, MetricsArchiveJob, RetrievalRecordPurgeJob)
+
+### Changed
+- 10-phase modular refactoring: monolith decomposed into comic-common, comic-metrics, comic-engine, comic-api
+- ComicCacher delegated to ComicManagementFacade
+- Renamed CacheUtils → AccessMetricsCollector, ImageCacheStatsUpdater → StorageMetricsCollector
+- Renamed ComicAPI → comic-api for consistent module naming
+- Removed on-demand download infrastructure (CacheMissEvent)
+
+### Fixed
+- GoComics CSS selectors updated for site changes
+- Spring Batch integration and compilation fixes
+
+### Security
+- Updated com.google.guava:guava from 33.4.6-jre to 33.5.0-jre
+- Updated org.projectlombok:lombok from 1.18.34 to 1.18.42
+- Updated com.fasterxml.jackson:jackson-bom from 2.18.3 to 2.20.0
+- Updated org.jsoup:jsoup from 1.18.1 to 1.21.2
+
+## [2.0.3] - 2025-05-22
+### Added
+- Enhanced API documentation and updated user model
+- Username uniqueness check during registration
+- Postman collection and environment for API testing
+- Null name validation and improved error handling in GlobalExceptionHandler
 - Health check endpoint and related services
-
-### Changed
-- Consolidated and enhanced testing for ComicAPI components
-
-## [2.0.27] - 2025-05-18
-### Changed
-- Updated documentation to reflect daily reconciliation scheduling for StartupReconciler
-- Restructured codebase into better-separated domains (core, api, infrastructure, common)
-
-## [2.0.26] - 2025-05-18
-### Added
-- Daily reconciliation scheduling
-- Unit tests for StartupReconciler
-- Documentation for JSON storage details in ComicCacher
-
-## [2.0.25] - 2025-05-18
-### Changed
-- Removed temporary files for cleaner codebase
-
-## [2.0.24] - 2025-05-17
-### Security
-- Updated org.springdoc:springdoc-openapi-starter-webmvc-ui to version 2.8.8
-
-## [2.0.23] - 2025-05-15
-### Security
-- Updated org.jsoup:jsoup from 1.18.1 to 1.20.1
-- Updated com.google.code.gson:gson from 2.11.0 to 2.13.1
-
-## [2.0.22] - 2025-05-15
-### Fixed
-- SpringDoc OpenAPI compatibility with Spring Boot 3.4.5
-- Simplified Gradle dependencies to reduce conflicts
-
-## [2.0.21] - 2025-05-15
-### Added
-- OS-specific cache path handling
-- Access to Swagger UI
-
-## [2.0.20] - 2025-05-15
-### Fixed
-- Tests for TaskExecutionTracker implementation
-
-## [2.0.19] - 2025-05-15
-### Added
+- Daily reconciliation scheduling with unit tests
 - Task execution tracking to ensure operations run once per day
-
-## [2.0.18] - 2025-05-15
-### Fixed
-- Spring Boot dependency conflicts with JWT and OpenAPI libraries
-
-## [2.0.17] - 2025-05-15
-### Added
-- Initial OpenAPI documentation
-
-## [2.0.16] - 2025-05-15
-### Added
-- Shell script for OpenAPI documentation generation
-
-## [2.0.15] - 2025-05-15
-### Fixed
-- StartupReconciler to respect enabled property
-- Added necessary dependencies for StartupReconciler
-
-## [2.0.14] - 2025-05-15
-### Changed
-- Used customBootRun feature to set profile for API documentation generation
-
-## [2.0.13] - 2025-05-15
-### Fixed
-- Profile handling for API documentation generation
-
-## [2.0.12] - 2025-05-15
-### Added
-- Disabled-caching profile for API documentation generation
-
-## [2.0.11] - 2025-05-09
-### Changed
-- Improved JaCoCo configuration with exclusion patterns
-
-## [2.0.10] - 2025-05-09
-### Added
+- OpenAPI documentation with Swagger UI
+- OS-specific cache path handling
 - Accessibility improvements with ARIA attributes and keyboard navigation
+- Loading indicators and signal-based state management (ComicStateService)
 
 ### Changed
-- Optimized build configuration and implemented modern bundling
-- Enhanced responsive design for mobile and tablet viewing
-
-## [2.0.9] - 2025-05-09
-### Added
-- Loading indicators and error handling throughout the application
-- Signal-based state management with ComicStateService
-
-## [2.0.8] - 2025-05-09
-### Changed
+- Restructured codebase into core, api, infrastructure, common domains
 - Refactored ComicService to use signals and modern RxJS patterns
-- Updated scroll virtualization with latest Angular CDK patterns and improved styling
-
-## [2.0.7] - 2025-05-09
-### Changed
-- Converted app to use standalone components and modern bootstrapping
-- Updated remaining dependencies for Angular 18 modern stack
-
-## [2.0.6] - 2025-05-09
-### Changed
-- Updated Angular Material, CDK, and CDK-experimental to v18
-- Updated Angular ESLint packages to v18
-
-## [2.0.5] - 2025-05-09
-### Changed
-- Updated to Angular 18 and migrated HTTP modules
-
-## [2.0.4] - 2025-05-09
-### Changed
-- Updated Angular Material and CDK to v17
-- Updated Angular ESLint packages to v17
-- Updated package-lock.json for Angular v17
-
-## [2.0.3] - 2025-05-09
-### Changed
-- Updated Angular to v17
-- Updated to Java 21
-- Modernized Java codebase
+- Converted app to standalone components with modern bootstrapping
+- Upgraded Angular through v17 → v18, including Material, CDK, and ESLint
+- Updated to Java 21 and modernized Java codebase
+- Improved JaCoCo configuration with exclusion patterns
+- Optimized build configuration with modern bundling
 
 ### Fixed
 - GoComics caching
+- SpringDoc OpenAPI compatibility with Spring Boot 3.4.5
+- Spring Boot dependency conflicts with JWT and OpenAPI libraries
+- StartupReconciler to respect enabled property
+- Profile handling for API documentation generation
+
+### Security
+- Updated org.springdoc:springdoc-openapi-starter-webmvc-ui to 2.8.8
+- Updated org.jsoup:jsoup from 1.18.1 to 1.20.1
+- Updated com.google.code.gson:gson from 2.11.0 to 2.13.1
 
 ## [2.0.2] - 2025-03-31
 ### Security

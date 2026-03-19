@@ -110,6 +110,30 @@ describe('BatchJobsPage', () => {
     expect(screen.getByText('COMPLETED')).toBeInTheDocument();
   });
 
+  it('shows last failure time in minutes when recent', () => {
+    vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
+      data: {
+        batchSchedulers: [
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+        ],
+      },
+      isLoading: false,
+    } as any);
+    vi.mocked(useGetRecentBatchJobsQuery).mockReturnValue({
+      data: {
+        recentBatchJobs: [
+          { executionId: 1, jobName: 'ComicDownloadJob', status: 'FAILED' as BatchStatusEnum, startTime: new Date(Date.now() - 300_000).toISOString(), endTime: null, durationMs: null, exitCode: 'FAILED', exitDescription: 'Error', steps: [] },
+        ],
+      },
+      isLoading: false,
+    } as any);
+    renderWithProviders(<BatchJobsPage />);
+
+    // formatTimeAgo in summary bar shows "Xm ago" for recent failures
+    const matches = screen.getAllByText(/\dm ago/);
+    expect(matches.length).toBeGreaterThan(0);
+  });
+
   it('shows last failure time in summary bar', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
@@ -129,6 +153,7 @@ describe('BatchJobsPage', () => {
     } as any);
     renderWithProviders(<BatchJobsPage />);
 
-    expect(screen.getByText(/Last failure:/)).toBeInTheDocument();
+    expect(screen.getByText(/failed/)).toBeInTheDocument();
+    expect(screen.getByText(/2h ago/)).toBeInTheDocument();
   });
 });

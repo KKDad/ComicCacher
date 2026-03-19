@@ -8,6 +8,7 @@ import java.time.OffsetDateTime;
 public record BatchSchedulerInfoDto(
     String jobName,
     String cronExpression,
+    String description,
     String timezone,
     OffsetDateTime nextRunTime,
     boolean enabled,

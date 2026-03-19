@@ -54,7 +54,7 @@ public class ComicRetrievalJobConfig {
      */
     @Bean
     public DailyJobScheduler comicDownloadJobScheduler(@Qualifier("comicDownloadJob") Job comicDownloadJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(comicDownloadJob, cronExpression, timezone, jobOperator, tracker);
+        return new DailyJobScheduler(comicDownloadJob, cronExpression, timezone, jobOperator, tracker, "Downloads today's comic strips from all enabled sources");
     }
 
     /**

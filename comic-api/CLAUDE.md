@@ -52,6 +52,7 @@
 - **Scalars:** Custom scalars for `Date` and `FilePath`.
 - **Mutations:** Return a "Payload" object containing the updated object and a list of user-friendly errors.
 - **Binary Data:** GQL handles metadata only. Binary streams stay on REST using `FileSystemResource`.
+- **Authorization:** Three roles — `USER` (default), `OPERATOR` (batch/metrics read-only), `ADMIN` (full access). Schema directives: `@public`, `@authenticated`, `@hasRole(role: "ROLE")`.
 
 ## 8. JSON Serialization (Gson)
 - **Gson only.** Do not use Jackson annotations (`@JsonProperty`, `@JsonFormat`).
@@ -71,3 +72,6 @@ Alphabetical ordering required for: enum entries, import statements, class membe
 - Run `./gradlew clean checkstyleMain` before every commit.
 - Use `./gradlew rewriteRun` for trivial auto-fixes (imports, spacing, formatting).
 - Zero new warnings in any PR. Clean up legacy warnings when modifying a file.
+
+## 12. Further Reading
+See [docs/](../docs/README.md) for full API reference, design decisions, and storage specifications.

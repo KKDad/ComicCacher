@@ -37,6 +37,7 @@ public class RetrievalResolver {
      * Get retrieval records with optional filtering.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public List<RetrievalRecordDto> retrievalRecords(
             @Argument String comicName,
             @Argument ComicRetrievalStatus status,
@@ -61,6 +62,7 @@ public class RetrievalResolver {
      * Get a specific retrieval record by ID.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public RetrievalRecordDto retrievalRecord(@Argument String id) {
         log.debug("Getting retrieval record: id={}", id);
         return retrievalStatusService.getRetrievalRecord(id)
@@ -72,6 +74,7 @@ public class RetrievalResolver {
      * Get retrieval records for a specific comic.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public List<RetrievalRecordDto> retrievalRecordsForComic(
             @Argument String comicName,
             @Argument Integer limit) {
@@ -92,6 +95,7 @@ public class RetrievalResolver {
      * Get summary statistics of retrieval operations.
      */
     @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
     public RetrievalSummaryDto retrievalSummary(
             @Argument LocalDate fromDate,
             @Argument LocalDate toDate) {

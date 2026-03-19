@@ -100,6 +100,8 @@ export type BatchSchedulerInfo = {
   __typename?: 'BatchSchedulerInfo';
   /** Cron expression for scheduling. */
   cronExpression: Scalars['String']['output'];
+  /** Human-readable description of what this job does. */
+  description?: Maybe<Scalars['String']['output']>;
   /** Whether the job is enabled in configuration. */
   enabled: Scalars['Boolean']['output'];
   /** Job name (e.g., "ComicDownloadJob"). */
@@ -1212,7 +1214,7 @@ export type GetMeQuery = { __typename?: 'Query', me?: { __typename?: 'User', use
 export type GetBatchSchedulersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetBatchSchedulersQuery = { __typename?: 'Query', batchSchedulers: Array<{ __typename?: 'BatchSchedulerInfo', jobName: string, cronExpression: string, timezone: string, nextRunTime?: any | null, enabled: boolean, paused: boolean, lastToggled?: any | null, toggledBy?: string | null }> };
+export type GetBatchSchedulersQuery = { __typename?: 'Query', batchSchedulers: Array<{ __typename?: 'BatchSchedulerInfo', jobName: string, cronExpression: string, description?: string | null, timezone: string, nextRunTime?: any | null, enabled: boolean, paused: boolean, lastToggled?: any | null, toggledBy?: string | null }> };
 
 export type GetRecentBatchJobsQueryVariables = Exact<{
   count?: InputMaybe<Scalars['Int']['input']>;
@@ -1572,6 +1574,7 @@ export const GetBatchSchedulersDocument = `
   batchSchedulers {
     jobName
     cronExpression
+    description
     timezone
     nextRunTime
     enabled

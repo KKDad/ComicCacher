@@ -39,7 +39,7 @@ class RetrievalResolverIT extends AbstractHttpGraphQlIntegrationTest {
 
     @BeforeEach
     void authenticate() {
-        authenticateUser();
+        authenticateAsOperator();
     }
 
     @Test

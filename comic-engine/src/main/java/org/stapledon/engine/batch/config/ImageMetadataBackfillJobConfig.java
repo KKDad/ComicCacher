@@ -92,7 +92,7 @@ public class ImageMetadataBackfillJobConfig {
     @Bean
     public DailyJobScheduler imageMetadataBackfillJobScheduler(@Qualifier("imageMetadataBackfillJob") Job imageMetadataBackfillJob, JobOperator jobOperator,
             JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(imageMetadataBackfillJob, cronExpression, timezone, jobOperator, tracker);
+        return new DailyJobScheduler(imageMetadataBackfillJob, cronExpression, timezone, jobOperator, tracker, "Recalculates image dimensions and format metadata");
     }
 
     /**

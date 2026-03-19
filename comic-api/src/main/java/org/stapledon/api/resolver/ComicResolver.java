@@ -60,6 +60,7 @@ public class ComicResolver {
      * Get paginated list of comics with optional filtering.
      */
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public ComicConnection comics(
             @Argument String search,
             @Argument Boolean active,
@@ -116,6 +117,7 @@ public class ComicResolver {
      * Get a specific comic by ID.
      */
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public ComicItem comic(@Argument int id) {
         return comicManagementFacade.getComic(id)
                 .orElse(null);
@@ -127,6 +129,7 @@ public class ComicResolver {
      * Also tracks access metrics for the comic.
      */
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public CompletableFuture<ComicStrip> strip(
             @Argument int comicId,
             @Argument LocalDate date,
@@ -174,6 +177,7 @@ public class ComicResolver {
      * Search comics by query string.
      */
     @QueryMapping
+    @PreAuthorize("isAuthenticated()")
     public SearchResults search(@Argument String query, @Argument Integer limit) {
         int maxResults = limit != null ? Math.min(limit, 50) : 20;
 

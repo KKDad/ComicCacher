@@ -50,7 +50,6 @@ class ComicsKingdomIntegrationIT {
         return comicsKingdom;
     }
 
-
     @Test
     void ensureCacheTest() {
         LocalDate fetchDate = LocalDate.now().minusDays(3);

@@ -8,7 +8,7 @@ Next.js web frontend for ComicCacher — browse, read, and manage comic strip su
 - **Styling:** Tailwind CSS 4, Radix UI / shadcn components
 - **Data Fetching:** TanStack Query v5, graphql-request v7, GraphQL Codegen
 - **Forms:** react-hook-form + Zod
-- **State:** Zustand v5 (theme & sidebar only — auth uses httpOnly cookies)
+- **State:** Zustand v5 (sidebar & preferences — auth uses httpOnly cookies, theme via next-themes)
 - **Testing:** Vitest, React Testing Library, MSW
 
 ## Prerequisites
@@ -50,6 +50,8 @@ src/
 │   └── (dashboard)/              # Dashboard, comics list, strip viewer
 ├── components/
 │   ├── ui/                       # shadcn components
+│   ├── auth/                     # ErrorBanner
+│   ├── batch-jobs/               # JobCard, LogViewer
 │   ├── comics/                   # ComicTile, FavoriteCard
 │   ├── dashboard/                # Dashboard sections
 │   └── layout/                   # Sidebar, Header, NavRail, MobileNav
@@ -64,10 +66,14 @@ src/
 │   │   ├── session.ts            # getSession() — server-side user fetch
 │   │   └── graphql-server.ts     # getAuthenticatedClient() — server-side
 │   ├── graphql-client.ts         # Client fetcher for codegen (no auth logic)
+│   ├── gravatar.ts               # Gravatar URL generation
+│   ├── preferences-defaults.ts   # Default preference values
 │   ├── providers.tsx             # QueryClientProvider
+│   ├── roles.ts                  # Role utilities (USER, OPERATOR, ADMIN)
+│   ├── utils.ts                  # General utilities
 │   └── validations/auth.ts       # Zod schemas
 ├── stores/
-│   ├── theme-store.ts            # Light/dark/system theme
+│   ├── preferences-store.ts      # User display preferences
 │   └── sidebar-store.ts          # Sidebar open/collapsed
 ├── graphql/operations/           # .graphql query/mutation files
 ├── generated/graphql.ts          # Codegen output (do not edit)

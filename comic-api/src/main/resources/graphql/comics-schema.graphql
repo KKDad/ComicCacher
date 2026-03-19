@@ -26,6 +26,11 @@ Marks a field as requiring a specific role.
 """
 directive @hasRole(role: String!) on FIELD_DEFINITION
 
+"""
+Marks a field as intentionally public (no authentication required).
+"""
+directive @public on FIELD_DEFINITION
+
 # -----------------------------------------------------------------------------
 # Root Query Type
 # -----------------------------------------------------------------------------
@@ -49,18 +54,18 @@ type Query {
         first: Int = 20
         """Cursor for pagination - return comics after this cursor."""
         after: String
-    ): ComicConnection!
+    ): ComicConnection! @authenticated
 
     """
     Get a specific comic by its ID.
     """
-    comic(id: Int!): Comic
+    comic(id: Int!): Comic @authenticated
 
     """
     Get a comic strip directly by comic ID and date.
     More efficient than querying comic.strip when you only need the strip.
     """
-    strip(comicId: Int!, date: Date!): ComicStrip
+    strip(comicId: Int!, date: Date!): ComicStrip @authenticated
 
     # =========================================================================
     # Search
@@ -75,7 +80,7 @@ type Query {
         query: String!
         """Maximum number of results to return."""
         limit: Int = 20
-    ): SearchResults!
+    ): SearchResults! @authenticated
 
     # =========================================================================
     # Authentication
@@ -85,7 +90,7 @@ type Query {
     Validate the current JWT token from Authorization header.
     Returns true if the token is valid, false otherwise.
     """
-    validateToken: Boolean!
+    validateToken: Boolean! @public
 
     # =========================================================================
     # User & Preferences (Authenticated)
@@ -110,7 +115,7 @@ type Query {
     """
     Get the health status of the application.
     """
-    health(detailed: Boolean = false): HealthStatus!
+    health(detailed: Boolean = false): HealthStatus! @public
 
     # =========================================================================
     # Metrics
@@ -119,17 +124,17 @@ type Query {
     """
     Get storage metrics for the comic cache.
     """
-    storageMetrics: StorageMetrics
+    storageMetrics: StorageMetrics @hasRole(role: "OPERATOR")
 
     """
     Get access metrics for all comics.
     """
-    accessMetrics: AccessMetrics
+    accessMetrics: AccessMetrics @hasRole(role: "OPERATOR")
 
     """
     Get combined storage and access metrics.
     """
-    combinedMetrics: CombinedMetrics
+    combinedMetrics: CombinedMetrics @hasRole(role: "OPERATOR")
 
     # =========================================================================
     # Retrieval Status
@@ -145,22 +150,22 @@ type Query {
         fromDate: Date
         toDate: Date
         limit: Int = 100
-    ): [RetrievalRecord!]!
+    ): [RetrievalRecord!]! @hasRole(role: "OPERATOR")
 
     """
     Get a specific retrieval record by ID.
     """
-    retrievalRecord(id: String!): RetrievalRecord
+    retrievalRecord(id: String!): RetrievalRecord @hasRole(role: "OPERATOR")
 
     """
     Get summary statistics of retrieval operations.
     """
-    retrievalSummary(fromDate: Date, toDate: Date): RetrievalSummary!
+    retrievalSummary(fromDate: Date, toDate: Date): RetrievalSummary! @hasRole(role: "OPERATOR")
 
     """
     Get retrieval records for a specific comic.
     """
-    retrievalRecordsForComic(comicName: String!, limit: Int = 20): [RetrievalRecord!]!
+    retrievalRecordsForComic(comicName: String!, limit: Int = 20): [RetrievalRecord!]! @hasRole(role: "OPERATOR")
 
     # =========================================================================
     # Batch Jobs
@@ -169,32 +174,32 @@ type Query {
     """
     Get recent batch job executions.
     """
-    recentBatchJobs(count: Int = 10): [BatchJob!]!
+    recentBatchJobs(count: Int = 10): [BatchJob!]! @hasRole(role: "OPERATOR")
 
     """
     Get batch jobs within a date range.
     """
-    batchJobsByDateRange(startDate: Date!, endDate: Date!): [BatchJob!]!
+    batchJobsByDateRange(startDate: Date!, endDate: Date!): [BatchJob!]! @hasRole(role: "OPERATOR")
 
     """
     Get a specific batch job execution by ID.
     """
-    batchJob(executionId: Int!): BatchJob
+    batchJob(executionId: Int!): BatchJob @hasRole(role: "OPERATOR")
 
     """
     Get summary statistics for batch jobs.
     """
-    batchJobSummary(days: Int = 7): BatchJobSummary!
+    batchJobSummary(days: Int = 7): BatchJobSummary! @hasRole(role: "OPERATOR")
 
     """
     Get scheduler info for all batch jobs, including pause state.
     """
-    batchSchedulers: [BatchSchedulerInfo!]! @hasRole(role: "ADMIN")
+    batchSchedulers: [BatchSchedulerInfo!]! @hasRole(role: "OPERATOR")
 
     """
     Get the execution log for a specific batch job run.
     """
-    batchJobLog(executionId: Int!, jobName: String!): String @hasRole(role: "ADMIN")
+    batchJobLog(executionId: Int!, jobName: String!): String @hasRole(role: "OPERATOR")
 
     # =========================================================================
     # Error Codes (Metadata)
@@ -203,7 +208,7 @@ type Query {
     """
     Get a list of all known error codes.
     """
-    errorCodes: [ErrorCode!]!
+    errorCodes: [ErrorCode!]! @public
 }
 
 # -----------------------------------------------------------------------------
@@ -218,29 +223,29 @@ type Mutation {
     Register a new user account.
     Returns authentication payload with JWT token on success.
     """
-    register(input: RegisterInput!): AuthPayload!
+    register(input: RegisterInput!): AuthPayload! @public
 
     """
     Authenticate with username and password.
     Returns authentication payload with JWT token on success.
     """
-    login(input: LoginInput!): AuthPayload!
+    login(input: LoginInput!): AuthPayload! @public
 
     """
     Refresh an expired JWT token using a refresh token.
     """
-    refreshToken(refreshToken: String!): AuthPayload!
+    refreshToken(refreshToken: String!): AuthPayload! @public
 
     """
     Request a password reset email.
     Returns true if the email was sent (always returns true to prevent email enumeration).
     """
-    forgotPassword(email: String!): Boolean!
+    forgotPassword(email: String!): Boolean! @public
 
     """
     Reset password using a token from the password reset email.
     """
-    resetPassword(token: String!, newPassword: String!): AuthPayload!
+    resetPassword(token: String!, newPassword: String!): AuthPayload! @public
 
     # =========================================================================
     # User Management (Authenticated)

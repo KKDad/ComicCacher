@@ -157,6 +157,42 @@ describe('LoginPage', () => {
     });
   });
 
+  it('shows fallback error message when response has no error field', async () => {
+    vi.mocked(global.fetch).mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 400 }),
+    );
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/username or email/i), 'testuser');
+    await user.type(screen.getByLabelText(/^password$/i), 'Password1!');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /sign in/i })).not.toBeDisabled();
+    });
+
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Login failed')).toBeInTheDocument();
+    });
+  });
+
+  it('shows validation error styling on invalid fields', async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    // Type and clear to trigger validation
+    await user.type(screen.getByLabelText(/username or email/i), 'a');
+    await user.clear(screen.getByLabelText(/username or email/i));
+    await user.tab();
+
+    await waitFor(() => {
+      const input = screen.getByLabelText(/username or email/i);
+      expect(input.className).toContain('border-error');
+    });
+  });
+
   it('toggles remember me checkbox', async () => {
     const user = userEvent.setup();
     render(<LoginPage />);

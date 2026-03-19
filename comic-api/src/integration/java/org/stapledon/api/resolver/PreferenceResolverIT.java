@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.stapledon.AbstractHttpGraphQlIntegrationTest;
 
 import java.time.LocalDate;
-import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**

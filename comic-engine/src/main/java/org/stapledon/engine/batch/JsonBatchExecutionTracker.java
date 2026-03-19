@@ -55,6 +55,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
     private static final String MDC_EXECUTION_ID = "batchJobExecutionId";
     private static final String MDC_JOB_NAME = "batchJobName";
+    private static final String MDC_LOG_PATH = "batchLogPath";
 
     /**
      * Constructor with configurable max history per job.
@@ -73,6 +74,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         super.beforeJob(jobExecution);
         MDC.put(MDC_EXECUTION_ID, String.valueOf(jobExecution.getId()));
         MDC.put(MDC_JOB_NAME, jobExecution.getJobInstance().getJobName());
+        MDC.put(MDC_LOG_PATH, jobExecution.getJobInstance().getJobName() + "/" + jobExecution.getId());
     }
 
     @Override
@@ -99,6 +101,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         } finally {
             MDC.remove(MDC_EXECUTION_ID);
             MDC.remove(MDC_JOB_NAME);
+            MDC.remove(MDC_LOG_PATH);
         }
     }
 

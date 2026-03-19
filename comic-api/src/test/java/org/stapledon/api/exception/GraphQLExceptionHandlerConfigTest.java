@@ -4,11 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.stapledon.common.model.ComicCachingException;
 import org.stapledon.common.model.ComicImageNotFoundException;
@@ -20,12 +25,18 @@ import org.stapledon.engine.caching.CacheException;
 import graphql.GraphQLError;
 import graphql.language.Field;
 import graphql.schema.DataFetchingEnvironment;
+import java.util.List;
 import java.util.stream.Stream;
 
 class GraphQLExceptionHandlerConfigTest {
 
     private final GraphQLExceptionHandlerConfig handler = new GraphQLExceptionHandlerConfig();
     private final DataFetchingEnvironment env = mockEnv("testField");
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @ParameterizedTest
     @MethodSource("exceptionProvider")
@@ -43,7 +54,7 @@ class GraphQLExceptionHandlerConfigTest {
                 Arguments.of(new AuthenticationException("bad creds"), "UNAUTHORIZED", "UNAUTHENTICATED", "Authentication failed"),
                 Arguments.of(new BadCredentialsException("wrong pw"), "UNAUTHORIZED", "UNAUTHENTICATED", "Authentication failed"),
                 Arguments.of(new UsernameNotFoundException("no user"), "UNAUTHORIZED", "UNAUTHENTICATED", "Authentication failed"),
-                Arguments.of(new AccessDeniedException("denied"), "FORBIDDEN", "FORBIDDEN", "permission"),
+                Arguments.of(new AccessDeniedException("denied"), "UNAUTHORIZED", "UNAUTHENTICATED", "Authentication required"),
                 Arguments.of(new ComicNotFoundException("missing"), "NOT_FOUND", "COMIC_NOT_FOUND", "comic could not be found"),
                 Arguments.of(new ComicImageNotFoundException("no strip"), "NOT_FOUND", "STRIP_NOT_FOUND", "comic strip could not be found"),
                 Arguments.of(new ComicOperationException(1, "update", "failed"), "INTERNAL_ERROR", "INTERNAL_ERROR", "operation failed"),
@@ -53,6 +64,29 @@ class GraphQLExceptionHandlerConfigTest {
                 Arguments.of(new IllegalStateException("bad state"), "INTERNAL_ERROR", "INTERNAL_ERROR", "unexpected error"),
                 Arguments.of(new RuntimeException("unknown"), "INTERNAL_ERROR", "INTERNAL_ERROR", "unexpected error")
         );
+    }
+
+    @Test
+    void accessDeniedWithAuthenticatedUserReturnsForbidden() {
+        var auth = new UsernamePasswordAuthenticationToken("user", null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        GraphQLError error = handler.handleAccessDeniedException(new AccessDeniedException("denied"), env);
+
+        assertThat(error.getErrorType().toString()).isEqualTo("FORBIDDEN");
+        assertThat(error.getExtensions()).containsEntry("errorCode", "FORBIDDEN");
+        assertThat(error.getMessage()).contains("permission");
+    }
+
+    @Test
+    void accessDeniedWithNoAuthenticationReturnsUnauthorized() {
+        SecurityContextHolder.clearContext();
+
+        GraphQLError error = handler.handleAccessDeniedException(new AccessDeniedException("denied"), env);
+
+        assertThat(error.getErrorType().toString()).isEqualTo("UNAUTHORIZED");
+        assertThat(error.getExtensions()).containsEntry("errorCode", "UNAUTHENTICATED");
+        assertThat(error.getMessage()).contains("Authentication required");
     }
 
     private GraphQLError dispatch(Exception ex) {

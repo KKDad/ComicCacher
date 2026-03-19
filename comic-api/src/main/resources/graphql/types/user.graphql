@@ -34,7 +34,7 @@ type User {
     lastLogin: DateTime
     
     """
-    User's assigned roles (e.g., "USER", "ADMIN").
+    User's assigned roles: "USER" (product access), "OPERATOR" (read-only operational), "ADMIN" (full control).
     """
     roles: [String!]!
 }

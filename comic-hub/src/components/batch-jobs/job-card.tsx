@@ -3,11 +3,17 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Play, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, FileText, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +29,7 @@ import {
   useGetBatchSchedulersQuery,
   useGetRecentBatchJobsQuery,
 } from '@/generated/graphql';
-import type { BatchSchedulerInfo, BatchJob, BatchStep } from '@/generated/graphql';
+import type { BatchSchedulerInfo, BatchJob } from '@/generated/graphql';
 
 const JOB_LABELS: Record<string, string> = {
   ComicDownloadJob: 'Comic Download',
@@ -48,6 +54,16 @@ function cronToHumanReadable(cron: string, timezone: string): string {
   const tz = timezone === 'America/Toronto' ? 'ET' : timezone;
 
   return `Daily at ${displayHour}:${displayMinute} ${period} ${tz}`;
+}
+
+function formatAbsoluteTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -95,16 +111,47 @@ function getStatusBadge(status: string, paused: boolean) {
   }
 }
 
-interface JobCardProps {
-  scheduler: BatchSchedulerInfo;
-  lastExecution?: BatchJob;
+function getSmallStatusBadge(status: string) {
+  switch (status) {
+    case 'COMPLETED':
+      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs px-1.5 py-0">COMPLETED</Badge>;
+    case 'FAILED':
+      return <Badge variant="destructive" className="text-xs px-1.5 py-0">FAILED</Badge>;
+    case 'STARTED':
+    case 'STARTING':
+      return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs px-1.5 py-0">RUNNING</Badge>;
+    default:
+      return <Badge variant="outline" className="text-xs px-1.5 py-0">{status}</Badge>;
+  }
 }
 
-export function JobCard({ scheduler, lastExecution }: JobCardProps) {
+function getStatusAccentClass(status: string, paused: boolean): string {
+  if (paused) return 'border-l-4 border-l-yellow-500';
+  switch (status) {
+    case 'COMPLETED':
+      return 'border-l-4 border-l-green-500';
+    case 'FAILED':
+      return 'border-l-4 border-l-red-500';
+    case 'STARTED':
+    case 'STARTING':
+      return 'border-l-4 border-l-blue-500';
+    default:
+      return '';
+  }
+}
+
+interface JobCardProps {
+  scheduler: BatchSchedulerInfo;
+  recentExecutions: BatchJob[];
+}
+
+export function JobCard({ scheduler, recentExecutions }: JobCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmRunOpen, setConfirmRunOpen] = useState(false);
-  const [logViewerOpen, setLogViewerOpen] = useState(false);
+  const [logViewerExecution, setLogViewerExecution] = useState<BatchJob | null>(null);
   const queryClient = useQueryClient();
+
+  const lastExecution = recentExecutions[0] ?? undefined;
 
   const toggleMutation = useToggleJobSchedulerMutation({
     onSuccess: (data) => {
@@ -137,13 +184,26 @@ export function JobCard({ scheduler, lastExecution }: JobCardProps) {
 
   const label = JOB_LABELS[scheduler.jobName] ?? scheduler.jobName;
   const lastStatus = lastExecution?.status ?? 'UNKNOWN';
+  const accentClass = getStatusAccentClass(lastStatus, scheduler.paused);
 
   return (
     <>
-      <Card>
+      <Card className={accentClass}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">{label}</CardTitle>
+            <TooltipProvider>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base font-semibold">{label}</CardTitle>
+                {scheduler.description && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">{scheduler.description}</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </TooltipProvider>
             {getStatusBadge(lastStatus, scheduler.paused)}
           </div>
         </CardHeader>
@@ -155,8 +215,9 @@ export function JobCard({ scheduler, lastExecution }: JobCardProps) {
             )}
             {lastExecution?.startTime && (
               <div>
-                Last run: {formatRelativeTime(lastExecution.startTime)}
+                Last Ran: {formatAbsoluteTime(lastExecution.startTime)}
                 {lastExecution.durationMs != null && ` (${formatDuration(lastExecution.durationMs)})`}
+                {' · '}{formatRelativeTime(lastExecution.startTime)}
               </div>
             )}
           </div>
@@ -185,7 +246,7 @@ export function JobCard({ scheduler, lastExecution }: JobCardProps) {
             </Button>
           </div>
 
-          {lastExecution && (
+          {recentExecutions.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -197,37 +258,40 @@ export function JobCard({ scheduler, lastExecution }: JobCardProps) {
             </Button>
           )}
 
-          {expanded && lastExecution && (
-            <div className="border-t pt-3 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Exit Code</span>
-                <span>{lastExecution.exitCode ?? 'N/A'}</span>
-              </div>
-              {lastExecution.exitDescription && (
-                <div>
-                  <span className="text-muted-foreground">Error: </span>
-                  <span className="text-destructive">{lastExecution.exitDescription}</span>
-                </div>
-              )}
-              {lastExecution.steps?.map((step: BatchStep) => (
-                <div key={step.stepName} className="bg-muted/50 rounded p-2 text-xs space-y-1">
-                  <div className="font-medium">{step.stepName}</div>
-                  <div className="grid grid-cols-3 gap-1 text-muted-foreground">
-                    <span>Read: {step.readCount}</span>
-                    <span>Write: {step.writeCount}</span>
-                    <span>Skip: {step.skipCount}</span>
+          {expanded && recentExecutions.length > 0 && (
+            <div className="border-t pt-3 space-y-3 text-sm">
+              <div className="font-medium text-muted-foreground">Recent Runs</div>
+              <div className="divide-y">
+                {recentExecutions.map((execution, idx) => (
+                  <div key={`${execution.executionId}-${idx}`} className="py-2 first:pt-0 last:pb-0 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getSmallStatusBadge(execution.status)}
+                        <span className="text-sm text-muted-foreground">
+                          {execution.startTime ? formatAbsoluteTime(execution.startTime) : 'Unknown'}
+                        </span>
+                        {execution.durationMs != null && (
+                          <span className="text-xs text-muted-foreground">
+                            ({formatDuration(execution.durationMs)})
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-muted-foreground"
+                        onClick={() => setLogViewerExecution(execution)}
+                      >
+                        <FileText className="h-3.5 w-3.5 mr-1" />
+                        View Logs
+                      </Button>
+                    </div>
+                    {execution.exitDescription && (
+                      <div className="text-xs text-destructive">{execution.exitDescription}</div>
+                    )}
                   </div>
-                </div>
-              ))}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => setLogViewerOpen(true)}
-              >
-                <FileText className="h-4 w-4 mr-1" />
-                View Logs
-              </Button>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
@@ -257,11 +321,11 @@ export function JobCard({ scheduler, lastExecution }: JobCardProps) {
         </DialogContent>
       </Dialog>
 
-      {lastExecution && (
+      {logViewerExecution && (
         <LogViewer
-          open={logViewerOpen}
-          onOpenChange={setLogViewerOpen}
-          executionId={lastExecution.executionId}
+          open={!!logViewerExecution}
+          onOpenChange={(open) => { if (!open) setLogViewerExecution(null); }}
+          executionId={logViewerExecution.executionId}
           jobName={scheduler.jobName}
           jobLabel={label}
         />
