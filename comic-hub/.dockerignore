@@ -1,7 +1,8 @@
 node_modules
 .next
-.env.local
-.env*.local
+.git
+.env*
+README.md
 vitest.config.ts
 src/test/
 **/*.test.ts
