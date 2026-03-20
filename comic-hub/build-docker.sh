@@ -19,6 +19,12 @@ if [ -z "${BUILD_TAG}" ]; then
    exit 1
 fi
 
+# Validate tag is semver-like (e.g. 2.3.1 or 2.3.1-rc1)
+echo "${BUILD_TAG}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$' || {
+   echo "Error: Tag must be semver format (e.g. 2.3.1 or 2.3.1-rc1)"
+   exit 1
+}
+
 # 1. Build the Docker image locally with the tag
 FULL_IMAGE="${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_TAG}"
 echo "--- Building ${FULL_IMAGE} ---"
@@ -29,6 +35,7 @@ docker build -f Dockerfile . --tag "${FULL_IMAGE}" --platform linux/amd64
 # Save image to tarball first since Skopeo's docker-daemon transport has issues with Docker Desktop.
 echo "--- Saving image to tarball ---"
 TARBALL="/tmp/comic-ui-${BUILD_TAG}.tar"
+trap 'rm -f "${TARBALL}"' EXIT
 docker save "${FULL_IMAGE}" -o "${TARBALL}"
 
 echo "--- Pushing ${FULL_IMAGE} via Skopeo ---"
@@ -36,8 +43,5 @@ skopeo copy \
     --dest-tls-verify=false \
     docker-archive:"${TARBALL}" \
     docker://"${FULL_IMAGE}"
-
-# Clean up tarball
-rm -f "${TARBALL}"
 
 echo "--- Success! Image ${FULL_IMAGE} is now in the registry ---"

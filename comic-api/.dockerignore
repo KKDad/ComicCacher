@@ -1,0 +1,7 @@
+.gradle
+.git
+.idea
+src/
+integration-cache/
+batch-integration-cache/
+*.md

@@ -19,6 +19,12 @@ if [ -z "${BUILD_TAG}" ]; then
    exit 1
 fi
 
+# Validate tag is semver-like (e.g. 2.3.1 or 2.3.1-rc1)
+echo "${BUILD_TAG}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$' || {
+   echo "Error: Tag must be semver format (e.g. 2.3.1 or 2.3.1-rc1)"
+   exit 1
+}
+
 # 1. Build the bootJar with the specified version
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -38,6 +44,7 @@ docker build -f Dockerfile . --tag "${FULL_IMAGE}" --build-arg VERSION="${BUILD_
 # Save image to tarball first since Skopeo's docker-daemon transport has issues with Docker Desktop.
 echo "--- Saving image to tarball ---"
 TARBALL="/tmp/comic-api-${BUILD_TAG}.tar"
+trap 'rm -f "${TARBALL}"' EXIT
 docker save "${FULL_IMAGE}" -o "${TARBALL}"
 
 echo "--- Pushing ${FULL_IMAGE} via Skopeo ---"
@@ -45,8 +52,5 @@ skopeo copy \
     --dest-tls-verify=false \
     docker-archive:"${TARBALL}" \
     docker://"${FULL_IMAGE}"
-
-# Clean up tarball
-rm -f "${TARBALL}"
 
 echo "--- Success! Image ${FULL_IMAGE} is now in the registry ---"
