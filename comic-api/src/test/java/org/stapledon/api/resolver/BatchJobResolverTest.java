@@ -23,6 +23,7 @@ import org.stapledon.api.dto.batch.BatchSchedulerInfoDto;
 import org.stapledon.api.dto.payload.MutationPayloads.ToggleJobSchedulerPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.TriggerBatchJobPayload;
 import org.stapledon.engine.batch.BatchJobMonitoringService;
+import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.SchedulerStateService;
@@ -121,7 +122,13 @@ class BatchJobResolverTest {
         @Test
         @DisplayName("should return log content when available")
         void shouldReturnLogContent() {
-            when(batchJobLogService.getExecutionLog(42, "ComicDownloadJob"))
+            var summary = BatchExecutionSummary.builder()
+                    .executionId(42L)
+                    .jobName("ComicDownloadJob")
+                    .logFileName("ComicDownloadJob-20260320-a3f7b2c1.log")
+                    .build();
+            when(monitoringService.getExecutionSummary(42)).thenReturn(Optional.of(summary));
+            when(batchJobLogService.getExecutionLog("ComicDownloadJob", "ComicDownloadJob-20260320-a3f7b2c1.log"))
                     .thenReturn(Optional.of("INFO Job started"));
 
             var resolver = createResolver(List.of());
@@ -133,8 +140,7 @@ class BatchJobResolverTest {
         @Test
         @DisplayName("should return null when log not available")
         void shouldReturnNullForMissingLog() {
-            when(batchJobLogService.getExecutionLog(99, "ComicDownloadJob"))
-                    .thenReturn(Optional.empty());
+            when(monitoringService.getExecutionSummary(99)).thenReturn(Optional.empty());
 
             var resolver = createResolver(List.of());
             String log = resolver.batchJobLog(99, "ComicDownloadJob");

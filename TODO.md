@@ -5,6 +5,19 @@
 - Currently the form submission is a no-op that immediately shows the success view
 - Priority: Medium
 
+## Configure SMTP for Password Reset
+- Mail is disabled by default (`spring.mail.host` is empty, `management.health.mail.enabled=false`)
+- To enable in production, set the following environment variables:
+  - `MAIL_HOST` — SMTP server hostname (e.g., `smtp.gmail.com`)
+  - `MAIL_PORT` — SMTP port (default: 587)
+  - `MAIL_USERNAME` — SMTP auth username
+  - `MAIL_PASSWORD` — SMTP auth password
+  - `MAIL_FROM` — sender address (default: `noreply@comiccacher.local`)
+  - `MAIL_RESET_URL_BASE` — password reset page URL (default: `http://localhost:3000/reset-password`)
+- Once SMTP is configured, re-enable the health indicator: `management.health.mail.enabled=true`
+- Config file: `comic-api/src/main/resources/application.properties`
+- Priority: Medium (blocked until Forgot Password Flow is wired up)
+
 ## Performance Improvements
 
 ### API Response Caching

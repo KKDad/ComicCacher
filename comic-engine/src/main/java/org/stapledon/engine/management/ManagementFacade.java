@@ -167,6 +167,18 @@ public interface ManagementFacade {
     boolean purgeOldImages(int daysToKeep);
 
     /**
+     * Gets a window of strips centered on a date.
+     * Returns up to `before` older strips + the center strip + up to `after` newer strips,
+     * in chronological order.
+     */
+    List<ComicNavigationResult> getStripWindow(int comicId, LocalDate center, int before, int after);
+
+    /**
+     * Gets a random available date for the specified comic.
+     */
+    Optional<LocalDate> getRandomDate(int comicId);
+
+    /**
      * Gets the newest date with a comic strip for the specified comic.
      */
     Optional<LocalDate> getNewestDateWithComic(int comicId);

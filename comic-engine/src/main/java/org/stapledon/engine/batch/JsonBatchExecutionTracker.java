@@ -20,12 +20,14 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.MDC;
 import org.stapledon.common.config.CacheProperties;
@@ -74,13 +76,21 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         super.beforeJob(jobExecution);
         MDC.put(MDC_EXECUTION_ID, String.valueOf(jobExecution.getId()));
         MDC.put(MDC_JOB_NAME, jobExecution.getJobInstance().getJobName());
-        MDC.put(MDC_LOG_PATH, jobExecution.getJobInstance().getJobName() + "/" + jobExecution.getId());
+        String jobName = jobExecution.getJobInstance().getJobName();
+        String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String shortHash = UUID.randomUUID().toString().substring(0, 8);
+        String logFileName = jobName + "-" + date + "-" + shortHash;
+        MDC.put(MDC_LOG_PATH, jobName + "/" + logFileName);
     }
 
     @Override
     public synchronized void afterJob(JobExecution jobExecution) {
         try {
             BatchExecutionSummary summary = createSummary(jobExecution);
+            String logPath = MDC.get(MDC_LOG_PATH);
+            if (logPath != null && logPath.contains("/")) {
+                summary.setLogFileName(logPath.substring(logPath.lastIndexOf('/') + 1) + ".log");
+            }
 
             Map<String, List<BatchExecutionSummary>> executions = readExecutions();
 

@@ -147,7 +147,7 @@ export function LogViewer({ open, onOpenChange, executionId, jobName, jobLabel }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-6xl w-[92vw] h-[90vh] overflow-hidden flex flex-col"
+        className="max-w-[1920px] w-[95vw] h-[90vh] overflow-hidden flex flex-col"
         onKeyDown={handleKeyDown}
       >
         <DialogHeader>

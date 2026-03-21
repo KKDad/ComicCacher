@@ -613,6 +613,59 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
+    public List<ComicNavigationResult> getStripWindow(int comicId, LocalDate center, int before, int after) {
+        return getComic(comicId)
+                .map(comic -> {
+                    ComicIdentifier identifier = ComicIdentifier.from(comic);
+                    List<LocalDate> dates = new ArrayList<>();
+
+                    // Walk backward from center to collect `before` dates
+                    LocalDate cursor = center;
+                    for (int i = 0; i < before; i++) {
+                        Optional<LocalDate> prev = storageFacade.getPreviousDateWithComic(identifier, cursor);
+                        if (prev.isEmpty()) {
+                            break;
+                        }
+                        dates.addFirst(prev.get());
+                        cursor = prev.get();
+                    }
+
+                    // Add center
+                    dates.add(center);
+
+                    // Walk forward from center to collect `after` dates
+                    cursor = center;
+                    for (int i = 0; i < after; i++) {
+                        Optional<LocalDate> next = storageFacade.getNextDateWithComic(identifier, cursor);
+                        if (next.isEmpty()) {
+                            break;
+                        }
+                        dates.add(next.get());
+                        cursor = next.get();
+                    }
+
+                    // Fetch navigation results for each date
+                    return dates.stream()
+                            .map(date -> getComicStripWithNavigation(comicId, date))
+                            .toList();
+                })
+                .orElse(List.of());
+    }
+
+    @Override
+    public Optional<LocalDate> getRandomDate(int comicId) {
+        return getComic(comicId)
+                .flatMap(comic -> {
+                    List<LocalDate> dates = storageFacade.getAvailableDates(ComicIdentifier.from(comic));
+                    if (dates.isEmpty()) {
+                        return Optional.empty();
+                    }
+                    int index = java.util.concurrent.ThreadLocalRandom.current().nextInt(dates.size());
+                    return Optional.of(dates.get(index));
+                });
+    }
+
+    @Override
     public Optional<LocalDate> getNewestDateWithComic(int comicId) {
         return getComic(comicId).flatMap(comic -> storageFacade.getNewestDateWithComic(ComicIdentifier.from(comic)));
     }

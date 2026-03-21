@@ -118,11 +118,26 @@ public abstract class AbstractHttpGraphQlIntegrationTest {
             Path testComicDir = integrationCacheDir.resolve("TestComic");
             try {
                 Files.createDirectories(testComicDir);
-                Files.write(testComicDir.resolve("avatar.png"), java.util.Base64.getDecoder().decode(
-                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); // dummy
-                // avatar
+                byte[] dummyPng = java.util.Base64.getDecoder().decode(
+                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
+                Files.write(testComicDir.resolve("avatar.png"), dummyPng);
+
+                // Create test strip files so strip-based queries have data
                 Files.createDirectories(testComicDir.resolve("2023"));
                 Files.createDirectories(testComicDir.resolve("2024"));
+                Files.write(testComicDir.resolve("2023/2023-06-15.png"), dummyPng);
+                Files.write(testComicDir.resolve("2023/2023-06-16.png"), dummyPng);
+                Files.write(testComicDir.resolve("2023/2023-06-17.png"), dummyPng);
+
+                // Create available-dates index for the test comic
+                String indexJson = """
+                        {
+                          "comicId": 1,
+                          "comicName": "Test Comic",
+                          "availableDates": ["2023-06-15", "2023-06-16", "2023-06-17"],
+                          "lastUpdated": "2024-05-19"
+                        }""";
+                Files.writeString(testComicDir.resolve("available-dates.json"), indexJson);
             } catch (IOException e) {
                 log.error("Failed to create test comic directory or avatar: {}", e.getMessage(), e);
             }

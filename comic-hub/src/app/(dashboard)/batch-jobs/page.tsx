@@ -91,7 +91,7 @@ export default function BatchJobsPage() {
       {isLoading ? (
         <>
           <Skeleton className="h-6 w-48" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={i} className="p-6">
                 <div className="space-y-3">
@@ -113,7 +113,7 @@ export default function BatchJobsPage() {
             failedCount={failedJobs.length}
             lastFailure={lastFailure}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {schedulers.map((scheduler) => (
               <JobCard
                 key={scheduler.jobName}

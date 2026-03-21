@@ -1,3 +1,24 @@
+import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+
+export class TypedDocumentString<TResult, TVariables>
+  extends String
+  implements DocumentTypeDecoration<TResult, TVariables>
+{
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
+  private value: string;
+  public __meta__?: Record<string, any> | undefined;
+
+  constructor(value: string, __meta__?: Record<string, any> | undefined) {
+    super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
+  }
+
+  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
+    return this.value;
+  }
+}
+
 import { useMutation, useQuery, useInfiniteQuery, UseMutationOptions, UseQueryOptions, UseInfiniteQueryOptions, InfiniteData } from '@tanstack/react-query';
 import { fetcher } from '../lib/graphql-client';
 export type Maybe<T> = T | null;
@@ -238,6 +259,11 @@ export type Comic = {
    */
   strip?: Maybe<ComicStrip>;
   /**
+   * Get a window of strips centered on a date.
+   * Returns `before` older strips + the center strip + `after` newer strips, in chronological order.
+   */
+  stripWindow: Array<ComicStrip>;
+  /**
    * Get strips for multiple specific dates.
    * Useful for dashboard views showing several dates at once.
    */
@@ -248,6 +274,14 @@ export type Comic = {
 /** A comic series/strip registered in the system. */
 export type ComicStripArgs = {
   date?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
+/** A comic series/strip registered in the system. */
+export type ComicStripWindowArgs = {
+  after: Scalars['Int']['input'];
+  before: Scalars['Int']['input'];
+  center: Scalars['Date']['input'];
 };
 
 
@@ -327,12 +361,16 @@ export type ComicStrip = {
   available: Scalars['Boolean']['output'];
   /** The date of this strip. */
   date: Scalars['Date']['output'];
+  /** Image height in pixels (null if not available). */
+  height?: Maybe<Scalars['Int']['output']>;
   /** URL to the strip image (null if not available). */
   imageUrl?: Maybe<Scalars['String']['output']>;
   /** The next strip after this date (null if at end). */
   next?: Maybe<ComicStrip>;
   /** The previous strip before this date (null if at beginning). */
   previous?: Maybe<ComicStrip>;
+  /** Image width in pixels (null if not available). */
+  width?: Maybe<Scalars['Int']['output']>;
 };
 
 /** Health status of an individual component. */
@@ -764,6 +802,12 @@ export type Query = {
    * Requires authentication.
    */
   preferences?: Maybe<UserPreference>;
+  /**
+   * Get a random comic strip.
+   * If comicId is provided, returns a random strip from that comic.
+   * If comicId is null, picks a random comic and random date.
+   */
+  randomStrip?: Maybe<ComicStrip>;
   /** Get recent batch job executions. */
   recentBatchJobs: Array<BatchJob>;
   /** Get a specific retrieval record by ID. */
@@ -835,6 +879,11 @@ export type QueryComicsArgs = {
 
 export type QueryHealthArgs = {
   detailed?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type QueryRandomStripArgs = {
+  comicId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1124,7 +1173,7 @@ export type User = {
   email?: Maybe<Scalars['String']['output']>;
   /** Last login timestamp. */
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
-  /** User's assigned roles (e.g., "USER", "ADMIN"). */
+  /** User's assigned roles: "USER" (product access), "OPERATOR" (read-only operational), "ADMIN" (full control). */
   roles: Array<Scalars['String']['output']>;
   /** Unique username. */
   username: Scalars['String']['output'];
@@ -1272,7 +1321,7 @@ export type GetComicStripQueryVariables = Exact<{
 }>;
 
 
-export type GetComicStripQuery = { __typename?: 'Query', strip?: { __typename?: 'ComicStrip', available: boolean, imageUrl?: string | null, date: any, previous?: { __typename?: 'ComicStrip', date: any } | null, next?: { __typename?: 'ComicStrip', date: any } | null } | null };
+export type GetComicStripQuery = { __typename?: 'Query', strip?: { __typename?: 'ComicStrip', available: boolean, imageUrl?: string | null, date: any, width?: number | null, height?: number | null, previous?: { __typename?: 'ComicStrip', date: any } | null, next?: { __typename?: 'ComicStrip', date: any } | null } | null };
 
 export type SearchComicsQueryVariables = Exact<{
   query: Scalars['String']['input'];
@@ -1310,6 +1359,31 @@ export type UpdateDisplaySettingsMutationVariables = Exact<{
 
 export type UpdateDisplaySettingsMutation = { __typename?: 'Mutation', updateDisplaySettings: { __typename?: 'UpdateDisplaySettingsPayload', preference?: { __typename?: 'UserPreference', displaySettings?: any | null } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
 
+export type GetStripWindowQueryVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+  center: Scalars['Date']['input'];
+  before: Scalars['Int']['input'];
+  after: Scalars['Int']['input'];
+}>;
+
+
+export type GetStripWindowQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, stripWindow: Array<{ __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null }> } | null };
+
+export type GetRandomStripQueryVariables = Exact<{
+  comicId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetRandomStripQuery = { __typename?: 'Query', randomStrip?: { __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null } | null };
+
+export type GetStripsQueryVariables = Exact<{
+  comicId: Scalars['Int']['input'];
+  dates: Array<Scalars['Date']['input']> | Scalars['Date']['input'];
+}>;
+
+
+export type GetStripsQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, strips: Array<{ __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null }> } | null };
+
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1336,7 +1410,7 @@ export type GetRetrievalRecordsQuery = { __typename?: 'Query', retrievalRecords:
 
 
 
-export const LoginDocument = `
+export const LoginDocument = new TypedDocumentString(`
     mutation Login($input: LoginInput!) {
   login(input: $input) {
     token
@@ -1345,7 +1419,7 @@ export const LoginDocument = `
     displayName
   }
 }
-    `;
+    `);
 
 export const useLoginMutation = <
       TError = unknown,
@@ -1363,7 +1437,7 @@ export const useLoginMutation = <
 
 useLoginMutation.fetcher = (variables: LoginMutationVariables, options?: RequestInit['headers']) => fetcher<LoginMutation, LoginMutationVariables>(LoginDocument, variables, options);
 
-export const RegisterDocument = `
+export const RegisterDocument = new TypedDocumentString(`
     mutation Register($input: RegisterInput!) {
   register(input: $input) {
     token
@@ -1372,7 +1446,7 @@ export const RegisterDocument = `
     displayName
   }
 }
-    `;
+    `);
 
 export const useRegisterMutation = <
       TError = unknown,
@@ -1390,7 +1464,7 @@ export const useRegisterMutation = <
 
 useRegisterMutation.fetcher = (variables: RegisterMutationVariables, options?: RequestInit['headers']) => fetcher<RegisterMutation, RegisterMutationVariables>(RegisterDocument, variables, options);
 
-export const RefreshTokenDocument = `
+export const RefreshTokenDocument = new TypedDocumentString(`
     mutation RefreshToken($refreshToken: String!) {
   refreshToken(refreshToken: $refreshToken) {
     token
@@ -1399,7 +1473,7 @@ export const RefreshTokenDocument = `
     displayName
   }
 }
-    `;
+    `);
 
 export const useRefreshTokenMutation = <
       TError = unknown,
@@ -1417,11 +1491,11 @@ export const useRefreshTokenMutation = <
 
 useRefreshTokenMutation.fetcher = (variables: RefreshTokenMutationVariables, options?: RequestInit['headers']) => fetcher<RefreshTokenMutation, RefreshTokenMutationVariables>(RefreshTokenDocument, variables, options);
 
-export const ForgotPasswordDocument = `
+export const ForgotPasswordDocument = new TypedDocumentString(`
     mutation ForgotPassword($email: String!) {
   forgotPassword(email: $email)
 }
-    `;
+    `);
 
 export const useForgotPasswordMutation = <
       TError = unknown,
@@ -1439,7 +1513,7 @@ export const useForgotPasswordMutation = <
 
 useForgotPasswordMutation.fetcher = (variables: ForgotPasswordMutationVariables, options?: RequestInit['headers']) => fetcher<ForgotPasswordMutation, ForgotPasswordMutationVariables>(ForgotPasswordDocument, variables, options);
 
-export const ResetPasswordDocument = `
+export const ResetPasswordDocument = new TypedDocumentString(`
     mutation ResetPassword($token: String!, $newPassword: String!) {
   resetPassword(token: $token, newPassword: $newPassword) {
     token
@@ -1448,7 +1522,7 @@ export const ResetPasswordDocument = `
     displayName
   }
 }
-    `;
+    `);
 
 export const useResetPasswordMutation = <
       TError = unknown,
@@ -1466,11 +1540,11 @@ export const useResetPasswordMutation = <
 
 useResetPasswordMutation.fetcher = (variables: ResetPasswordMutationVariables, options?: RequestInit['headers']) => fetcher<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument, variables, options);
 
-export const ValidateTokenDocument = `
+export const ValidateTokenDocument = new TypedDocumentString(`
     query ValidateToken {
   validateToken
 }
-    `;
+    `);
 
 export const useValidateTokenQuery = <
       TData = ValidateTokenQuery,
@@ -1514,7 +1588,7 @@ useInfiniteValidateTokenQuery.getKey = (variables?: ValidateTokenQueryVariables)
 
 useValidateTokenQuery.fetcher = (variables?: ValidateTokenQueryVariables, options?: RequestInit['headers']) => fetcher<ValidateTokenQuery, ValidateTokenQueryVariables>(ValidateTokenDocument, variables, options);
 
-export const GetMeDocument = `
+export const GetMeDocument = new TypedDocumentString(`
     query GetMe {
   me {
     username
@@ -1525,7 +1599,7 @@ export const GetMeDocument = `
     roles
   }
 }
-    `;
+    `);
 
 export const useGetMeQuery = <
       TData = GetMeQuery,
@@ -1569,7 +1643,7 @@ useInfiniteGetMeQuery.getKey = (variables?: GetMeQueryVariables) => variables ==
 
 useGetMeQuery.fetcher = (variables?: GetMeQueryVariables, options?: RequestInit['headers']) => fetcher<GetMeQuery, GetMeQueryVariables>(GetMeDocument, variables, options);
 
-export const GetBatchSchedulersDocument = `
+export const GetBatchSchedulersDocument = new TypedDocumentString(`
     query GetBatchSchedulers {
   batchSchedulers {
     jobName
@@ -1583,7 +1657,7 @@ export const GetBatchSchedulersDocument = `
     toggledBy
   }
 }
-    `;
+    `);
 
 export const useGetBatchSchedulersQuery = <
       TData = GetBatchSchedulersQuery,
@@ -1627,7 +1701,7 @@ useInfiniteGetBatchSchedulersQuery.getKey = (variables?: GetBatchSchedulersQuery
 
 useGetBatchSchedulersQuery.fetcher = (variables?: GetBatchSchedulersQueryVariables, options?: RequestInit['headers']) => fetcher<GetBatchSchedulersQuery, GetBatchSchedulersQueryVariables>(GetBatchSchedulersDocument, variables, options);
 
-export const GetRecentBatchJobsDocument = `
+export const GetRecentBatchJobsDocument = new TypedDocumentString(`
     query GetRecentBatchJobs($count: Int = 10) {
   recentBatchJobs(count: $count) {
     executionId
@@ -1652,7 +1726,7 @@ export const GetRecentBatchJobsDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useGetRecentBatchJobsQuery = <
       TData = GetRecentBatchJobsQuery,
@@ -1696,11 +1770,11 @@ useInfiniteGetRecentBatchJobsQuery.getKey = (variables?: GetRecentBatchJobsQuery
 
 useGetRecentBatchJobsQuery.fetcher = (variables?: GetRecentBatchJobsQueryVariables, options?: RequestInit['headers']) => fetcher<GetRecentBatchJobsQuery, GetRecentBatchJobsQueryVariables>(GetRecentBatchJobsDocument, variables, options);
 
-export const GetBatchJobLogDocument = `
+export const GetBatchJobLogDocument = new TypedDocumentString(`
     query GetBatchJobLog($executionId: Int!, $jobName: String!) {
   batchJobLog(executionId: $executionId, jobName: $jobName)
 }
-    `;
+    `);
 
 export const useGetBatchJobLogQuery = <
       TData = GetBatchJobLogQuery,
@@ -1744,7 +1818,7 @@ useInfiniteGetBatchJobLogQuery.getKey = (variables: GetBatchJobLogQueryVariables
 
 useGetBatchJobLogQuery.fetcher = (variables: GetBatchJobLogQueryVariables, options?: RequestInit['headers']) => fetcher<GetBatchJobLogQuery, GetBatchJobLogQueryVariables>(GetBatchJobLogDocument, variables, options);
 
-export const TriggerJobDocument = `
+export const TriggerJobDocument = new TypedDocumentString(`
     mutation TriggerJob($jobName: String!) {
   triggerJob(jobName: $jobName) {
     batchJob {
@@ -1760,7 +1834,7 @@ export const TriggerJobDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useTriggerJobMutation = <
       TError = unknown,
@@ -1778,7 +1852,7 @@ export const useTriggerJobMutation = <
 
 useTriggerJobMutation.fetcher = (variables: TriggerJobMutationVariables, options?: RequestInit['headers']) => fetcher<TriggerJobMutation, TriggerJobMutationVariables>(TriggerJobDocument, variables, options);
 
-export const ToggleJobSchedulerDocument = `
+export const ToggleJobSchedulerDocument = new TypedDocumentString(`
     mutation ToggleJobScheduler($jobName: String!, $paused: Boolean!) {
   toggleJobScheduler(jobName: $jobName, paused: $paused) {
     scheduler {
@@ -1794,7 +1868,7 @@ export const ToggleJobSchedulerDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useToggleJobSchedulerMutation = <
       TError = unknown,
@@ -1812,7 +1886,7 @@ export const useToggleJobSchedulerMutation = <
 
 useToggleJobSchedulerMutation.fetcher = (variables: ToggleJobSchedulerMutationVariables, options?: RequestInit['headers']) => fetcher<ToggleJobSchedulerMutation, ToggleJobSchedulerMutationVariables>(ToggleJobSchedulerDocument, variables, options);
 
-export const GetUserPreferencesDocument = `
+export const GetUserPreferencesDocument = new TypedDocumentString(`
     query GetUserPreferences {
   preferences {
     username
@@ -1824,7 +1898,7 @@ export const GetUserPreferencesDocument = `
     displaySettings
   }
 }
-    `;
+    `);
 
 export const useGetUserPreferencesQuery = <
       TData = GetUserPreferencesQuery,
@@ -1868,7 +1942,7 @@ useInfiniteGetUserPreferencesQuery.getKey = (variables?: GetUserPreferencesQuery
 
 useGetUserPreferencesQuery.fetcher = (variables?: GetUserPreferencesQueryVariables, options?: RequestInit['headers']) => fetcher<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>(GetUserPreferencesDocument, variables, options);
 
-export const GetComicsDocument = `
+export const GetComicsDocument = new TypedDocumentString(`
     query GetComics($first: Int, $after: String) {
   comics(first: $first, after: $after) {
     edges {
@@ -1895,7 +1969,7 @@ export const GetComicsDocument = `
     totalCount
   }
 }
-    `;
+    `);
 
 export const useGetComicsQuery = <
       TData = GetComicsQuery,
@@ -1939,7 +2013,7 @@ useInfiniteGetComicsQuery.getKey = (variables?: GetComicsQueryVariables) => vari
 
 useGetComicsQuery.fetcher = (variables?: GetComicsQueryVariables, options?: RequestInit['headers']) => fetcher<GetComicsQuery, GetComicsQueryVariables>(GetComicsDocument, variables, options);
 
-export const GetComicDocument = `
+export const GetComicDocument = new TypedDocumentString(`
     query GetComic($id: Int!) {
   comic(id: $id) {
     id
@@ -1961,7 +2035,7 @@ export const GetComicDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useGetComicQuery = <
       TData = GetComicQuery,
@@ -2005,12 +2079,14 @@ useInfiniteGetComicQuery.getKey = (variables: GetComicQueryVariables) => ['GetCo
 
 useGetComicQuery.fetcher = (variables: GetComicQueryVariables, options?: RequestInit['headers']) => fetcher<GetComicQuery, GetComicQueryVariables>(GetComicDocument, variables, options);
 
-export const GetComicStripDocument = `
+export const GetComicStripDocument = new TypedDocumentString(`
     query GetComicStrip($comicId: Int!, $date: Date!) {
   strip(comicId: $comicId, date: $date) {
     available
     imageUrl
     date
+    width
+    height
     previous {
       date
     }
@@ -2019,7 +2095,7 @@ export const GetComicStripDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useGetComicStripQuery = <
       TData = GetComicStripQuery,
@@ -2063,7 +2139,7 @@ useInfiniteGetComicStripQuery.getKey = (variables: GetComicStripQueryVariables) 
 
 useGetComicStripQuery.fetcher = (variables: GetComicStripQueryVariables, options?: RequestInit['headers']) => fetcher<GetComicStripQuery, GetComicStripQueryVariables>(GetComicStripDocument, variables, options);
 
-export const SearchComicsDocument = `
+export const SearchComicsDocument = new TypedDocumentString(`
     query SearchComics($query: String!) {
   search(query: $query) {
     comics {
@@ -2080,7 +2156,7 @@ export const SearchComicsDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useSearchComicsQuery = <
       TData = SearchComicsQuery,
@@ -2124,7 +2200,7 @@ useInfiniteSearchComicsQuery.getKey = (variables: SearchComicsQueryVariables) =>
 
 useSearchComicsQuery.fetcher = (variables: SearchComicsQueryVariables, options?: RequestInit['headers']) => fetcher<SearchComicsQuery, SearchComicsQueryVariables>(SearchComicsDocument, variables, options);
 
-export const AddFavoriteDocument = `
+export const AddFavoriteDocument = new TypedDocumentString(`
     mutation AddFavorite($comicId: Int!) {
   addFavorite(comicId: $comicId) {
     preference {
@@ -2137,7 +2213,7 @@ export const AddFavoriteDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useAddFavoriteMutation = <
       TError = unknown,
@@ -2155,7 +2231,7 @@ export const useAddFavoriteMutation = <
 
 useAddFavoriteMutation.fetcher = (variables: AddFavoriteMutationVariables, options?: RequestInit['headers']) => fetcher<AddFavoriteMutation, AddFavoriteMutationVariables>(AddFavoriteDocument, variables, options);
 
-export const RemoveFavoriteDocument = `
+export const RemoveFavoriteDocument = new TypedDocumentString(`
     mutation RemoveFavorite($comicId: Int!) {
   removeFavorite(comicId: $comicId) {
     preference {
@@ -2168,7 +2244,7 @@ export const RemoveFavoriteDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useRemoveFavoriteMutation = <
       TError = unknown,
@@ -2186,7 +2262,7 @@ export const useRemoveFavoriteMutation = <
 
 useRemoveFavoriteMutation.fetcher = (variables: RemoveFavoriteMutationVariables, options?: RequestInit['headers']) => fetcher<RemoveFavoriteMutation, RemoveFavoriteMutationVariables>(RemoveFavoriteDocument, variables, options);
 
-export const UpdateLastReadDocument = `
+export const UpdateLastReadDocument = new TypedDocumentString(`
     mutation UpdateLastRead($comicId: Int!, $date: Date!) {
   updateLastRead(comicId: $comicId, date: $date) {
     preference {
@@ -2202,7 +2278,7 @@ export const UpdateLastReadDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useUpdateLastReadMutation = <
       TError = unknown,
@@ -2220,7 +2296,7 @@ export const useUpdateLastReadMutation = <
 
 useUpdateLastReadMutation.fetcher = (variables: UpdateLastReadMutationVariables, options?: RequestInit['headers']) => fetcher<UpdateLastReadMutation, UpdateLastReadMutationVariables>(UpdateLastReadDocument, variables, options);
 
-export const UpdateDisplaySettingsDocument = `
+export const UpdateDisplaySettingsDocument = new TypedDocumentString(`
     mutation UpdateDisplaySettings($settings: JSON!) {
   updateDisplaySettings(settings: $settings) {
     preference {
@@ -2233,7 +2309,7 @@ export const UpdateDisplaySettingsDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useUpdateDisplaySettingsMutation = <
       TError = unknown,
@@ -2251,7 +2327,179 @@ export const useUpdateDisplaySettingsMutation = <
 
 useUpdateDisplaySettingsMutation.fetcher = (variables: UpdateDisplaySettingsMutationVariables, options?: RequestInit['headers']) => fetcher<UpdateDisplaySettingsMutation, UpdateDisplaySettingsMutationVariables>(UpdateDisplaySettingsDocument, variables, options);
 
-export const GetCombinedMetricsDocument = `
+export const GetStripWindowDocument = new TypedDocumentString(`
+    query GetStripWindow($comicId: Int!, $center: Date!, $before: Int!, $after: Int!) {
+  comic(id: $comicId) {
+    id
+    name
+    oldest
+    newest
+    avatarUrl
+    stripWindow(center: $center, before: $before, after: $after) {
+      date
+      available
+      imageUrl
+      width
+      height
+    }
+  }
+}
+    `);
+
+export const useGetStripWindowQuery = <
+      TData = GetStripWindowQuery,
+      TError = unknown
+    >(
+      variables: GetStripWindowQueryVariables,
+      options?: Omit<UseQueryOptions<GetStripWindowQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetStripWindowQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetStripWindowQuery, TError, TData>(
+      {
+    queryKey: ['GetStripWindow', variables],
+    queryFn: fetcher<GetStripWindowQuery, GetStripWindowQueryVariables>(GetStripWindowDocument, variables),
+    ...options
+  }
+    )};
+
+useGetStripWindowQuery.getKey = (variables: GetStripWindowQueryVariables) => ['GetStripWindow', variables];
+
+export const useInfiniteGetStripWindowQuery = <
+      TData = InfiniteData<GetStripWindowQuery>,
+      TError = unknown
+    >(
+      variables: GetStripWindowQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetStripWindowQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetStripWindowQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetStripWindowQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? ['GetStripWindow.infinite', variables],
+      queryFn: (metaData) => fetcher<GetStripWindowQuery, GetStripWindowQueryVariables>(GetStripWindowDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetStripWindowQuery.getKey = (variables: GetStripWindowQueryVariables) => ['GetStripWindow.infinite', variables];
+
+
+useGetStripWindowQuery.fetcher = (variables: GetStripWindowQueryVariables, options?: RequestInit['headers']) => fetcher<GetStripWindowQuery, GetStripWindowQueryVariables>(GetStripWindowDocument, variables, options);
+
+export const GetRandomStripDocument = new TypedDocumentString(`
+    query GetRandomStrip($comicId: Int) {
+  randomStrip(comicId: $comicId) {
+    date
+    available
+    imageUrl
+    width
+    height
+  }
+}
+    `);
+
+export const useGetRandomStripQuery = <
+      TData = GetRandomStripQuery,
+      TError = unknown
+    >(
+      variables?: GetRandomStripQueryVariables,
+      options?: Omit<UseQueryOptions<GetRandomStripQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetRandomStripQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetRandomStripQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetRandomStrip'] : ['GetRandomStrip', variables],
+    queryFn: fetcher<GetRandomStripQuery, GetRandomStripQueryVariables>(GetRandomStripDocument, variables),
+    ...options
+  }
+    )};
+
+useGetRandomStripQuery.getKey = (variables?: GetRandomStripQueryVariables) => variables === undefined ? ['GetRandomStrip'] : ['GetRandomStrip', variables];
+
+export const useInfiniteGetRandomStripQuery = <
+      TData = InfiniteData<GetRandomStripQuery>,
+      TError = unknown
+    >(
+      variables: GetRandomStripQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetRandomStripQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetRandomStripQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetRandomStripQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetRandomStrip.infinite'] : ['GetRandomStrip.infinite', variables],
+      queryFn: (metaData) => fetcher<GetRandomStripQuery, GetRandomStripQueryVariables>(GetRandomStripDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetRandomStripQuery.getKey = (variables?: GetRandomStripQueryVariables) => variables === undefined ? ['GetRandomStrip.infinite'] : ['GetRandomStrip.infinite', variables];
+
+
+useGetRandomStripQuery.fetcher = (variables?: GetRandomStripQueryVariables, options?: RequestInit['headers']) => fetcher<GetRandomStripQuery, GetRandomStripQueryVariables>(GetRandomStripDocument, variables, options);
+
+export const GetStripsDocument = new TypedDocumentString(`
+    query GetStrips($comicId: Int!, $dates: [Date!]!) {
+  comic(id: $comicId) {
+    id
+    strips(dates: $dates) {
+      date
+      available
+      imageUrl
+      width
+      height
+    }
+  }
+}
+    `);
+
+export const useGetStripsQuery = <
+      TData = GetStripsQuery,
+      TError = unknown
+    >(
+      variables: GetStripsQueryVariables,
+      options?: Omit<UseQueryOptions<GetStripsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetStripsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetStripsQuery, TError, TData>(
+      {
+    queryKey: ['GetStrips', variables],
+    queryFn: fetcher<GetStripsQuery, GetStripsQueryVariables>(GetStripsDocument, variables),
+    ...options
+  }
+    )};
+
+useGetStripsQuery.getKey = (variables: GetStripsQueryVariables) => ['GetStrips', variables];
+
+export const useInfiniteGetStripsQuery = <
+      TData = InfiniteData<GetStripsQuery>,
+      TError = unknown
+    >(
+      variables: GetStripsQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetStripsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetStripsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetStripsQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? ['GetStrips.infinite', variables],
+      queryFn: (metaData) => fetcher<GetStripsQuery, GetStripsQueryVariables>(GetStripsDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetStripsQuery.getKey = (variables: GetStripsQueryVariables) => ['GetStrips.infinite', variables];
+
+
+useGetStripsQuery.fetcher = (variables: GetStripsQueryVariables, options?: RequestInit['headers']) => fetcher<GetStripsQuery, GetStripsQueryVariables>(GetStripsDocument, variables, options);
+
+export const GetCombinedMetricsDocument = new TypedDocumentString(`
     query GetCombinedMetrics {
   combinedMetrics {
     storage {
@@ -2283,7 +2531,7 @@ export const GetCombinedMetricsDocument = `
     lastUpdated
   }
 }
-    `;
+    `);
 
 export const useGetCombinedMetricsQuery = <
       TData = GetCombinedMetricsQuery,
@@ -2327,7 +2575,7 @@ useInfiniteGetCombinedMetricsQuery.getKey = (variables?: GetCombinedMetricsQuery
 
 useGetCombinedMetricsQuery.fetcher = (variables?: GetCombinedMetricsQueryVariables, options?: RequestInit['headers']) => fetcher<GetCombinedMetricsQuery, GetCombinedMetricsQueryVariables>(GetCombinedMetricsDocument, variables, options);
 
-export const GetRetrievalSummaryDocument = `
+export const GetRetrievalSummaryDocument = new TypedDocumentString(`
     query GetRetrievalSummary($fromDate: Date, $toDate: Date) {
   retrievalSummary(fromDate: $fromDate, toDate: $toDate) {
     totalAttempts
@@ -2348,7 +2596,7 @@ export const GetRetrievalSummaryDocument = `
     }
   }
 }
-    `;
+    `);
 
 export const useGetRetrievalSummaryQuery = <
       TData = GetRetrievalSummaryQuery,
@@ -2392,7 +2640,7 @@ useInfiniteGetRetrievalSummaryQuery.getKey = (variables?: GetRetrievalSummaryQue
 
 useGetRetrievalSummaryQuery.fetcher = (variables?: GetRetrievalSummaryQueryVariables, options?: RequestInit['headers']) => fetcher<GetRetrievalSummaryQuery, GetRetrievalSummaryQueryVariables>(GetRetrievalSummaryDocument, variables, options);
 
-export const GetRetrievalRecordsDocument = `
+export const GetRetrievalRecordsDocument = new TypedDocumentString(`
     query GetRetrievalRecords($comicName: String, $status: RetrievalStatusEnum, $fromDate: Date, $toDate: Date, $limit: Int) {
   retrievalRecords(
     comicName: $comicName
@@ -2412,7 +2660,7 @@ export const GetRetrievalRecordsDocument = `
     errorMessage
   }
 }
-    `;
+    `);
 
 export const useGetRetrievalRecordsQuery = <
       TData = GetRetrievalRecordsQuery,

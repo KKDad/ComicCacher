@@ -56,6 +56,24 @@ public class BatchJobResolver {
     @Value("${batch.timezone:America/Toronto}")
     private String batchTimezone;
 
+    private static final String STATUS_COMPLETED = "COMPLETED";
+    private static final String STATUS_FAILED = "FAILED";
+    private static final String STATUS_STARTED = "STARTED";
+    private static final String STATUS_STARTING = "STARTING";
+
+    private static final java.util.Comparator<BatchExecutionSummary> BY_START_TIME_DESC = (a, b) -> {
+        if (a.getStartTime() == null && b.getStartTime() == null) {
+            return 0;
+        }
+        if (a.getStartTime() == null) {
+            return 1;
+        }
+        if (b.getStartTime() == null) {
+            return -1;
+        }
+        return b.getStartTime().compareTo(a.getStartTime());
+    };
+
     // =========================================================================
     // Queries
     // =========================================================================
@@ -69,18 +87,7 @@ public class BatchJobResolver {
         log.debug("GraphQL: Getting {} recent batch jobs", count);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getRecentJobExecutions(jobName, count).stream())
-                .sorted((a, b) -> {
-                    if (a.getStartTime() == null && b.getStartTime() == null) {
-                        return 0;
-                    }
-                    if (a.getStartTime() == null) {
-                        return 1;
-                    }
-                    if (b.getStartTime() == null) {
-                        return -1;
-                    }
-                    return b.getStartTime().compareTo(a.getStartTime());
-                })
+                .sorted(BY_START_TIME_DESC)
                 .limit(count)
                 .map(this::mapSummary)
                 .toList();
@@ -95,18 +102,7 @@ public class BatchJobResolver {
         log.debug("GraphQL: Getting batch jobs from {} to {}", startDate, endDate);
         return BatchJobBaseConfig.KNOWN_JOBS.stream()
                 .flatMap(jobName -> monitoringService.getJobExecutionsForDateRange(jobName, startDate, endDate).stream())
-                .sorted((a, b) -> {
-                    if (a.getStartTime() == null && b.getStartTime() == null) {
-                        return 0;
-                    }
-                    if (a.getStartTime() == null) {
-                        return 1;
-                    }
-                    if (b.getStartTime() == null) {
-                        return -1;
-                    }
-                    return b.getStartTime().compareTo(a.getStartTime());
-                })
+                .sorted(BY_START_TIME_DESC)
                 .map(this::mapSummary)
                 .toList();
     }
@@ -138,11 +134,11 @@ public class BatchJobResolver {
 
         int total = allExecutions.size();
         int success = (int) allExecutions.stream()
-                .filter(e -> "COMPLETED".equals(e.getStatus())).count();
+                .filter(e -> STATUS_COMPLETED.equals(e.getStatus())).count();
         int failure = (int) allExecutions.stream()
-                .filter(e -> "FAILED".equals(e.getStatus())).count();
+                .filter(e -> STATUS_FAILED.equals(e.getStatus())).count();
         int running = (int) allExecutions.stream()
-                .filter(e -> "STARTED".equals(e.getStatus()) || "STARTING".equals(e.getStatus())).count();
+                .filter(e -> STATUS_STARTED.equals(e.getStatus()) || STATUS_STARTING.equals(e.getStatus())).count();
 
         OptionalDouble avgOpt = allExecutions.stream()
                 .filter(e -> e.getStartTime() != null && e.getEndTime() != null)
@@ -165,8 +161,8 @@ public class BatchJobResolver {
                 .map(entry -> new DailyJobStatsDto(
                         entry.getKey(),
                         entry.getValue().size(),
-                        (int) entry.getValue().stream().filter(e -> "COMPLETED".equals(e.getStatus())).count(),
-                        (int) entry.getValue().stream().filter(e -> "FAILED".equals(e.getStatus())).count()))
+                        (int) entry.getValue().stream().filter(e -> STATUS_COMPLETED.equals(e.getStatus())).count(),
+                        (int) entry.getValue().stream().filter(e -> STATUS_FAILED.equals(e.getStatus())).count()))
                 .toList();
 
         return new BatchJobSummaryDto(days, total, success, failure, running, averageDurationMs, totalItemsProcessed, dailyBreakdown);
@@ -191,7 +187,10 @@ public class BatchJobResolver {
     @PreAuthorize("hasRole('OPERATOR')")
     public String batchJobLog(@Argument int executionId, @Argument String jobName) {
         log.debug("GraphQL: Getting log for {} execution {}", jobName, executionId);
-        return batchJobLogService.getExecutionLog(executionId, jobName).orElse(null);
+        return monitoringService.getExecutionSummary(executionId)
+                .map(BatchExecutionSummary::getLogFileName)
+                .flatMap(logFileName -> batchJobLogService.getExecutionLog(jobName, logFileName))
+                .orElse(null);
     }
 
     // =========================================================================

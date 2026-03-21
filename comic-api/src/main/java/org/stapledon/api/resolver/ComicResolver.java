@@ -8,6 +8,7 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.StripLoaderKey;
 import org.stapledon.common.dto.StripLoaderKey.DateStripKey;
 import org.stapledon.common.dto.StripLoaderKey.BoundaryStripKey;
@@ -25,6 +26,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -174,6 +176,36 @@ public class ComicResolver {
     }
 
     /**
+     * Get a random comic strip, optionally from a specific comic.
+     */
+    @QueryMapping
+    @PreAuthorize("isAuthenticated()")
+    public ComicStrip randomStrip(@Argument Integer comicId) {
+        if (comicId != null) {
+            return comicManagementFacade.getRandomDate(comicId)
+                    .map(date -> {
+                        ComicNavigationResult result = comicManagementFacade.getComicStripWithNavigation(comicId, date);
+                        return toComicStrip(comicId, result);
+                    })
+                    .orElse(null);
+        }
+
+        // No comicId — pick a random comic, then a random date
+        List<ComicItem> allComics = comicManagementFacade.getAllComics();
+        if (allComics.isEmpty()) {
+            return null;
+        }
+        int randomIndex = ThreadLocalRandom.current().nextInt(allComics.size());
+        ComicItem comic = allComics.get(randomIndex);
+        return comicManagementFacade.getRandomDate(comic.getId())
+                .map(date -> {
+                    ComicNavigationResult result = comicManagementFacade.getComicStripWithNavigation(comic.getId(), date);
+                    return toComicStrip(comic.getId(), result);
+                })
+                .orElse(null);
+    }
+
+    /**
      * Search comics by query string.
      */
     @QueryMapping
@@ -247,6 +279,44 @@ public class ComicResolver {
                 .thenApply(result -> toComicStrip(comic.getId(), result));
     }
 
+    /**
+     * Resolve stripWindow field for Comic type.
+     * Returns a window of strips centered on a date, in chronological order.
+     */
+    @SchemaMapping(typeName = "Comic", field = "stripWindow")
+    public List<ComicStrip> stripWindow(
+            ComicItem comic,
+            @Argument LocalDate center,
+            @Argument int before,
+            @Argument int after) {
+
+        int cappedBefore = Math.min(before, 20);
+        int cappedAfter = Math.min(after, 20);
+
+        return comicManagementFacade.getStripWindow(comic.getId(), center, cappedBefore, cappedAfter)
+                .stream()
+                .map(result -> toComicStrip(comic.getId(), result))
+                .toList();
+    }
+
+    /**
+     * Resolve strips field for Comic type — batch fetch strips for multiple dates.
+     */
+    @SchemaMapping(typeName = "Comic", field = "strips")
+    public List<ComicStrip> strips(
+            ComicItem comic,
+            @Argument List<LocalDate> dates) {
+
+        List<LocalDate> cappedDates = dates.stream().limit(30).toList();
+
+        return cappedDates.stream()
+                .map(date -> {
+                    ComicNavigationResult result = comicManagementFacade.getComicStripWithNavigation(comic.getId(), date);
+                    return toComicStrip(comic.getId(), result);
+                })
+                .toList();
+    }
+
     // =========================================================================
     // Mutations
     // =========================================================================
@@ -310,15 +380,13 @@ public class ComicResolver {
 
     private boolean matchesSearch(ComicItem comic, String query) {
         String lowerQuery = query.toLowerCase();
-        return Optional.ofNullable(comic.getName())
-                       .map(String::toLowerCase)
-                       .map(s -> s.contains(lowerQuery))
-                       .orElse(false)
-            || Optional.ofNullable(comic.getAuthor())
-                       .map(String::toLowerCase)
-                       .map(s -> s.contains(lowerQuery))
-                       .orElse(false)
-            || Optional.ofNullable(comic.getDescription())
+        return matchesField(comic.getName(), lowerQuery)
+            || matchesField(comic.getAuthor(), lowerQuery)
+            || matchesField(comic.getDescription(), lowerQuery);
+    }
+
+    private boolean matchesField(String field, String lowerQuery) {
+        return Optional.ofNullable(field)
                        .map(String::toLowerCase)
                        .map(s -> s.contains(lowerQuery))
                        .orElse(false);
@@ -335,10 +403,14 @@ public class ComicResolver {
 
     private ComicStrip toComicStrip(int comicId, ComicNavigationResult result) {
         if (!result.isFound()) {
-            // Return navigation hints even when strip not found
+            // Return navigation hints even when strip not found.
+            // Fall back to requestedDate when currentDate is null (not-found results).
+            LocalDate date = result.getCurrentDate() != null ? result.getCurrentDate() : result.getRequestedDate();
             return new ComicStrip(
-                    result.getCurrentDate(),
+                    date,
                     false,
+                    null,
+                    null,
                     null,
                     ComicStrip.navStub(result.getNearestPreviousDate()),
                     ComicStrip.navStub(result.getNearestNextDate()));
@@ -347,10 +419,16 @@ public class ComicResolver {
                 ? externalBaseUrl + "/api/v1/comics/" + comicId + "/strip/" + result.getCurrentDate()
                 : null;
 
+        Optional<ImageDto> image = Optional.ofNullable(result.getImage());
+        Integer width = image.map(ImageDto::getWidth).orElse(null);
+        Integer height = image.map(ImageDto::getHeight).orElse(null);
+
         return new ComicStrip(
                 result.getCurrentDate(),
                 result.isFound(),
                 imageUrl,
+                width,
+                height,
                 ComicStrip.navStub(result.getNearestPreviousDate()),
                 ComicStrip.navStub(result.getNearestNextDate()));
     }
@@ -368,12 +446,12 @@ public class ComicResolver {
     public record PageInfo(boolean hasNextPage, boolean hasPreviousPage, String startCursor, String endCursor) {
     }
 
-    public record ComicStrip(LocalDate date, boolean available, String imageUrl, ComicStrip previous,
-            ComicStrip next) {
+    public record ComicStrip(LocalDate date, boolean available, String imageUrl, Integer width, Integer height,
+            ComicStrip previous, ComicStrip next) {
 
         /** Navigation-only stub with just a date (used for previous/next links). */
         static ComicStrip navStub(LocalDate date) {
-            return date != null ? new ComicStrip(date, false, null, null, null) : null;
+            return date != null ? new ComicStrip(date, false, null, null, null, null, null) : null;
         }
     }
 

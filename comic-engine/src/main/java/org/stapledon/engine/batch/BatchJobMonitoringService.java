@@ -10,6 +10,7 @@ import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service for monitoring batch job executions.
@@ -38,6 +39,13 @@ public class BatchJobMonitoringService {
      */
     public List<BatchExecutionSummary> getJobExecutionsForDateRange(String jobName, LocalDate startDate, LocalDate endDate) {
         return executionTracker.getExecutionHistoryForDateRange(jobName, startDate, endDate);
+    }
+
+    /**
+     * Get a persisted execution summary by execution ID from JSON history.
+     */
+    public Optional<BatchExecutionSummary> getExecutionSummary(long executionId) {
+        return executionTracker.getExecution(executionId);
     }
 
     /**

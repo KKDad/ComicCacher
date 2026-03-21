@@ -247,6 +247,11 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
+    public List<LocalDate> getAvailableDates(@lombok.NonNull ComicIdentifier comic) {
+        return comicIndexService.getAvailableDates(comic.getId(), comic.getName());
+    }
+
+    @Override
     public boolean comicStripExists(@lombok.NonNull ComicIdentifier comic, @lombok.NonNull LocalDate date) {
 
         String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));

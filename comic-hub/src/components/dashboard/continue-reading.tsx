@@ -93,7 +93,7 @@ export function ContinueReading({ lastRead = null, isLoading = false }: Continue
           </div>
           <CardTitle className="text-lg mb-1">{lastRead.comic.name}</CardTitle>
           <CardDescription>Last read: {timeAgo}</CardDescription>
-          <Link href={`/comics/${lastRead.comic.id}/${lastRead.date}`}>
+          <Link href={`/comics/${lastRead.comic.id}/read?date=${lastRead.date}`}>
             <Button className="w-full mt-4">Continue Reading</Button>
           </Link>
         </CardContent>

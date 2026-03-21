@@ -24,7 +24,7 @@ export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicT
   });
 
   return (
-    <Link href={`/comics/${comic.id}/${comic.date}`}>
+    <Link href={`/comics/${comic.id}/read?date=${comic.date}`}>
       <Card className="overflow-hidden hover:shadow-md transition-shadow group">
         <div className="aspect-[4/3] bg-canvas overflow-hidden relative">
           {comic.thumbnail ? (

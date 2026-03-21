@@ -15,7 +15,8 @@ import org.stapledon.common.config.CacheProperties;
 
 /**
  * Reads per-execution log files produced by the SiftingAppender.
- * Log files are stored at {@code ${comics.cache.location}/batch-logs/{jobName}/{executionId}.log}.
+ * Log files are stored at {@code ${comics.cache.location}/batch-logs/{jobName}/{jobName}-{date}-{hash}.log}.
+ * The exact filename is recorded in {@code BatchExecutionSummary.logFileName}.
  */
 @Slf4j
 @Service
@@ -33,25 +34,25 @@ public class BatchJobLogService {
     }
 
     /**
-     * Reads the log file for a specific job execution.
+     * Reads the log file for a specific job execution by its stored filename.
      */
-    public Optional<String> getExecutionLog(long executionId, String jobName) {
-        Path logFile = getLogFilePath(jobName, executionId);
+    public Optional<String> getExecutionLog(String jobName, String logFileName) {
+        Path logFile = getJobLogDir(jobName).resolve(logFileName);
         if (!Files.exists(logFile)) {
-            log.debug("No log file found for {} execution {}", jobName, executionId);
+            log.debug("No log file found at {}", logFile);
             return Optional.empty();
         }
 
         try {
             return Optional.of(Files.readString(logFile));
         } catch (IOException e) {
-            log.error("Failed to read log file for {} execution {}", jobName, executionId, e);
+            log.error("Failed to read log file {}", logFile, e);
             return Optional.empty();
         }
     }
 
     /**
-     * Lists recent log files for a job, sorted by execution ID descending.
+     * Lists recent log files for a job, sorted by filename descending.
      */
     public List<Path> getRecentLogFiles(String jobName, int count) {
         Path jobDir = getJobLogDir(jobName);
@@ -69,10 +70,6 @@ public class BatchJobLogService {
             log.error("Failed to list log files for {}", jobName, e);
             return List.of();
         }
-    }
-
-    private Path getLogFilePath(String jobName, long executionId) {
-        return getJobLogDir(jobName).resolve(executionId + ".log");
     }
 
     private Path getJobLogDir(String jobName) {
