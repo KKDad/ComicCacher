@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.time.LocalDate;
+
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
@@ -74,13 +76,18 @@ public class RetrievalRecordPurgeJobConfig {
     @Bean
     public Tasklet recordPurgeTasklet() {
         return (contribution, chunkContext) -> {
-            log.info("Starting retrieval record purge (keeping last {} days)", daysToKeep);
+            LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
+            log.info("Starting retrieval record purge (keeping last {} days, cutoff date: {})", daysToKeep, cutoffDate);
 
             long startTime = System.currentTimeMillis();
             int purgedCount = comicManagementFacade.purgeOldRetrievalRecords(daysToKeep);
             long duration = System.currentTimeMillis() - startTime;
 
-            log.info("Retrieval record purge completed in {}ms. Purged {} records.", duration, purgedCount);
+            if (purgedCount > 0) {
+                log.info("Retrieval record purge completed in {}ms: purged {} records older than {}", duration, purgedCount, cutoffDate);
+            } else {
+                log.info("Retrieval record purge completed in {}ms: no records older than {} to purge", duration, cutoffDate);
+            }
 
             return RepeatStatus.FINISHED;
         };

@@ -53,7 +53,7 @@ describe('ComicTile', () => {
     render(<ComicTile comic={mockComic} />);
 
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/comics/1/2024-01-15');
+    expect(link).toHaveAttribute('href', '/comics/1/read?date=2024-01-15');
   });
 
   it('link includes comic ID and date in URL', () => {
@@ -65,7 +65,7 @@ describe('ComicTile', () => {
     render(<ComicTile comic={comic} />);
 
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/comics/42/2024-12-25');
+    expect(link).toHaveAttribute('href', '/comics/42/read?date=2024-12-25');
   });
 
   it('renders New badge when isNew is true', () => {

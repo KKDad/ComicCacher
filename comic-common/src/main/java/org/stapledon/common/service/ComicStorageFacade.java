@@ -62,6 +62,13 @@ public interface ComicStorageFacade {
 
     Optional<LocalDate> getOldestDateWithComic(ComicIdentifier comic);
 
+    // Date index operations
+
+    /**
+     * Gets all available dates for a comic, sorted in ascending order.
+     */
+    List<LocalDate> getAvailableDates(ComicIdentifier comic);
+
     // Management operations
     boolean comicStripExists(ComicIdentifier comic, LocalDate date);
 

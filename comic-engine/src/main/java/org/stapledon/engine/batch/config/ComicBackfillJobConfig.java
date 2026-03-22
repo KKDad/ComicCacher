@@ -21,11 +21,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.util.List;
+
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.ComicBackfillService;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
-import org.stapledon.engine.batch.LoggingJobExecutionListener;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
@@ -71,7 +72,6 @@ public class ComicBackfillJobConfig {
         return new JobBuilder("ComicBackfillJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(jsonBatchExecutionTracker)
-                .listener(new LoggingJobExecutionListener())
                 .start(comicBackfillStep).build();
     }
 
@@ -95,8 +95,14 @@ public class ComicBackfillJobConfig {
     @StepScope
     @Qualifier("backfillTaskReader")
     public ItemReader<BackfillTask> backfillTaskReader() {
-        log.info("Building backfill task list for job execution");
-        return new ListItemReader<>(backfillService.findMissingStrips());
+        log.debug("Building backfill task list for job execution");
+        List<BackfillTask> tasks = backfillService.findMissingStrips();
+        if (tasks.isEmpty()) {
+            log.info("No missing strips found - backfill has nothing to process");
+        } else {
+            log.info("Backfill reader prepared {} tasks (chunk size: {}, delay: {}ms)", tasks.size(), chunkSize, delayBetweenComics);
+        }
+        return new ListItemReader<>(tasks);
     }
 
     /**
@@ -107,7 +113,7 @@ public class ComicBackfillJobConfig {
     @Qualifier("backfillTaskProcessor")
     public ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor() {
         return task -> {
-            log.debug("Backfilling {} for date: {}", task.comic().getName(), task.date());
+            log.info("Backfilling {} for date: {}", task.comic().getName(), task.date());
 
             try {
                 // Add a small delay between comics to avoid overwhelming sources
@@ -125,7 +131,7 @@ public class ComicBackfillJobConfig {
                 log.warn("Backfill interrupted for {}: {}", task.comic().getName(), e.getMessage());
                 return null;
             } catch (Exception e) {
-                log.error("Error backfilling {} for {}: {}", task.comic().getName(), task.date(), e.getMessage());
+                log.error("Error backfilling {} for {}: {}", task.comic().getName(), task.date(), e.getMessage(), e);
                 return null;
             }
         };
@@ -149,7 +155,7 @@ public class ComicBackfillJobConfig {
 
                 if (result.isSuccessful()) {
                     successCount++;
-                    log.debug("Successfully backfilled: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());
+                    log.info("Successfully backfilled: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());
                 } else {
                     failureCount++;
                     log.warn("Failed to backfill: {} for {} - {}", result.getRequest().getComicName(), result.getRequest().getDate(), result.getErrorMessage());

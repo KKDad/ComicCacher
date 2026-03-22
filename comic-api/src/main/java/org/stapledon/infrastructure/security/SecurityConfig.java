@@ -1,5 +1,7 @@
 package org.stapledon.infrastructure.security;
 
+import org.springframework.boot.health.actuate.endpoint.HealthEndpoint;
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -46,13 +48,13 @@ public class SecurityConfig {
                 .exceptionHandling(
                         exceptionHandling -> exceptionHandling.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/graphiql/**").permitAll()
                         .requestMatchers("/graphql").permitAll()
                         .requestMatchers("/api/v1/comics/**").permitAll()
-                        .requestMatchers("/api/v1/health").permitAll()
                         .anyRequest().authenticated());
 
         // Add JWT filter for all environments

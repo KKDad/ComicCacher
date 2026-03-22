@@ -65,7 +65,9 @@ describe('PreferencesPage', () => {
     renderWithQuery(<PreferencesPage />);
 
     expect(screen.getByText('Continue Reading')).toBeInTheDocument();
-    expect(screen.getByText('Favorites')).toBeInTheDocument();
+    // "Favorites" appears as both a dashboard switch label and a reader button
+    const switches = screen.getAllByRole('switch');
+    expect(switches).toHaveLength(3);
     expect(screen.getByText('Recently Added')).toBeInTheDocument();
   });
 
@@ -93,7 +95,6 @@ describe('PreferencesPage', () => {
     expect(calledWith).toHaveProperty('showContinueReading');
     expect(calledWith).toHaveProperty('showFavorites');
     expect(calledWith).toHaveProperty('showRecentlyAdded');
-    expect(calledWith).toHaveProperty('readingDirection');
     expect(calledWith).toHaveProperty('comicsPerPage');
     expect(calledWith).toHaveProperty('defaultZoom');
   });
@@ -170,17 +171,32 @@ describe('PreferencesPage', () => {
     });
   });
 
-  it('toggles reading direction', async () => {
+  it('toggles reader nav mode', async () => {
     const user = userEvent.setup();
     renderWithQuery(<PreferencesPage />);
 
-    await user.click(screen.getByRole('button', { name: /oldest first/i }));
+    await user.click(screen.getByRole('button', { name: /^all$/i }));
 
-    expect(usePreferencesStore.getState().settings.readingDirection).toBe('oldest-first');
+    expect(usePreferencesStore.getState().settings.readerNavMode).toBe('all');
 
     await waitFor(() => {
       expect(mockMutate).toHaveBeenCalledWith({
-        settings: expect.objectContaining({ readingDirection: 'oldest-first' }),
+        settings: expect.objectContaining({ readerNavMode: 'all' }),
+      });
+    });
+  });
+
+  it('toggles reader scroll order', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<PreferencesPage />);
+
+    await user.click(screen.getByRole('button', { name: /newest first/i }));
+
+    expect(usePreferencesStore.getState().settings.readerScrollOrder).toBe('newest-first');
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({
+        settings: expect.objectContaining({ readerScrollOrder: 'newest-first' }),
       });
     });
   });
@@ -213,20 +229,5 @@ describe('PreferencesPage', () => {
 
     expect(usePreferencesStore.getState().settings.showRecentlyAdded).toBe(false);
   });
-
-  it('selects newest-first reading direction', async () => {
-    usePreferencesStore.setState({
-      settings: { ...DEFAULT_DISPLAY_SETTINGS, readingDirection: 'oldest-first' },
-      isHydrated: true,
-    });
-
-    const user = userEvent.setup();
-    renderWithQuery(<PreferencesPage />);
-
-    await user.click(screen.getByRole('button', { name: /newest first/i }));
-
-    expect(usePreferencesStore.getState().settings.readingDirection).toBe('newest-first');
-  });
-
 
 });

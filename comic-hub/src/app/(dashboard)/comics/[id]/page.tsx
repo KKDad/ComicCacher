@@ -147,7 +147,7 @@ export default function ComicDetailPage() {
               </CardHeader>
               <CardContent>
                 {comic.lastStrip.imageUrl && (
-                  <Link href={`/comics/${comicId}/${comic.lastStrip.date}`}>
+                  <Link href={`/comics/${comicId}/read?date=${comic.lastStrip.date}`}>
                     <div className="aspect-[4/3] bg-canvas rounded-lg overflow-hidden hover:opacity-90 transition-opacity cursor-pointer">
                       <img
                         src={comic.lastStrip.imageUrl}
@@ -157,7 +157,7 @@ export default function ComicDetailPage() {
                     </div>
                   </Link>
                 )}
-                <Link href={`/comics/${comicId}/${comic.newest}`}>
+                <Link href={`/comics/${comicId}/read`}>
                   <Button className="w-full mt-4">Read Latest Strip</Button>
                 </Link>
               </CardContent>

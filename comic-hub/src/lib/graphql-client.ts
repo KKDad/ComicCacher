@@ -1,9 +1,9 @@
-export function fetcher<TData, TVariables>(query: string, variables?: TVariables, headers?: RequestInit['headers']) {
+export function fetcher<TData, TVariables>(query: string | String, variables?: TVariables, headers?: RequestInit['headers']) {
   return async (): Promise<TData> => {
     const res = await fetch('/api/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({ query: query.toString(), variables }),
     });
 
     if (!res.ok) {
