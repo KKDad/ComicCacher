@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.MDC;
 import org.stapledon.common.config.CacheProperties;
@@ -53,6 +54,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     private final CacheProperties cacheProperties;
     private final Gson gson;
     private final int maxHistoryPerJob;
+    private final ConcurrentHashMap<Long, Long> h2ToStableId = new ConcurrentHashMap<>();
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
     private static final String MDC_EXECUTION_ID = "batchJobExecutionId";
@@ -72,7 +74,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     @Override
-    public void beforeJob(JobExecution jobExecution) {
+    public synchronized void beforeJob(JobExecution jobExecution) {
         // Set MDC before super.beforeJob() so the start banner is captured in the per-execution log file
         MDC.put(MDC_EXECUTION_ID, String.valueOf(jobExecution.getId()));
         MDC.put(MDC_JOB_NAME, jobExecution.getJobInstance().getJobName());
@@ -82,6 +84,30 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         String logFileName = jobName + "-" + date + "-" + shortHash;
         MDC.put(MDC_LOG_PATH, jobName + "/" + logFileName);
         super.beforeJob(jobExecution);
+
+        try {
+            long stableId = nextStableId();
+            h2ToStableId.put(jobExecution.getId(), stableId);
+
+            BatchExecutionSummary summary = BatchExecutionSummary.builder()
+                    .executionId(stableId)
+                    .jobName(jobName)
+                    .status(BatchStatus.STARTED.name())
+                    .startTime(jobExecution.getStartTime())
+                    .build();
+
+            Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+            List<BatchExecutionSummary> jobHistory = executions.computeIfAbsent(jobName, k -> new ArrayList<>());
+            jobHistory.addFirst(summary);
+            if (jobHistory.size() > maxHistoryPerJob) {
+                executions.put(jobName, new ArrayList<>(jobHistory.subList(0, maxHistoryPerJob)));
+            }
+
+            writeExecutions(executions);
+            log.info("Batch job started: {} - Stable execution ID: {}", jobName, stableId);
+        } catch (Exception e) {
+            log.error("Failed to write STARTED entry to JSON", e);
+        }
     }
 
     @Override
@@ -90,19 +116,32 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
             // Log end banner before MDC cleanup so it's captured in the per-execution log file
             super.afterJob(jobExecution);
 
-            BatchExecutionSummary summary = createSummary(jobExecution);
+            Long stableId = h2ToStableId.remove(jobExecution.getId());
+            BatchExecutionSummary summary = createSummary(jobExecution, stableId);
             String logPath = MDC.get(MDC_LOG_PATH);
             if (logPath != null && logPath.contains("/")) {
                 summary.setLogFileName(logPath.substring(logPath.lastIndexOf('/') + 1) + ".log");
             }
 
             Map<String, List<BatchExecutionSummary>> executions = readExecutions();
-
             String jobName = jobExecution.getJobInstance().getJobName();
             List<BatchExecutionSummary> jobHistory = executions.computeIfAbsent(jobName, k -> new ArrayList<>());
 
-            // Prepend new execution and trim to cap
-            jobHistory.addFirst(summary);
+            if (stableId != null) {
+                // Find and update the STARTED entry written by beforeJob()
+                Optional<BatchExecutionSummary> existing = jobHistory.stream()
+                        .filter(s -> stableId.equals(s.getExecutionId()))
+                        .findFirst();
+                if (existing.isPresent()) {
+                    updateSummaryInPlace(existing.get(), summary);
+                } else {
+                    jobHistory.addFirst(summary);
+                }
+            } else {
+                // Fallback: no beforeJob() entry (e.g. backward compat or beforeJob failed)
+                jobHistory.addFirst(summary);
+            }
+
             if (jobHistory.size() > maxHistoryPerJob) {
                 executions.put(jobName, new ArrayList<>(jobHistory.subList(0, maxHistoryPerJob)));
             }
@@ -120,10 +159,41 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     /**
+     * Derive the next stable execution ID from the JSON file.
+     * Must be called within a synchronized context.
+     */
+    private long nextStableId() {
+        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
+        return executions.values().stream()
+                .flatMap(List::stream)
+                .filter(s -> s.getExecutionId() != null)
+                .mapToLong(BatchExecutionSummary::getExecutionId)
+                .max()
+                .orElse(0L) + 1;
+    }
+
+    /**
+     * Update an existing STARTED summary in-place with final execution data.
+     */
+    private void updateSummaryInPlace(BatchExecutionSummary target, BatchExecutionSummary source) {
+        target.setStatus(source.getStatus());
+        target.setExitCode(source.getExitCode());
+        target.setExitMessage(source.getExitMessage());
+        target.setExecutionTime(source.getExecutionTime());
+        target.setStartTime(source.getStartTime());
+        target.setEndTime(source.getEndTime());
+        target.setErrorMessage(source.getErrorMessage());
+        target.setLogFileName(source.getLogFileName());
+        target.setParameters(source.getParameters());
+        target.setSteps(source.getSteps());
+    }
+
+    /**
      * Create execution summary from JobExecution.
      */
-    private BatchExecutionSummary createSummary(JobExecution jobExecution) {
+    private BatchExecutionSummary createSummary(JobExecution jobExecution, Long stableId) {
         String jobName = jobExecution.getJobInstance().getJobName();
+        long effectiveId = Optional.ofNullable(stableId).orElse(nextStableId());
 
         Map<String, Object> params = new LinkedHashMap<>();
         jobExecution.getJobParameters().parameters()
@@ -144,7 +214,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
                 .toList();
 
         BatchExecutionSummary summary = BatchExecutionSummary.builder()
-                .executionId(jobExecution.getId())
+                .executionId(effectiveId)
                 .jobName(jobName)
                 .executionTime(jobExecution.getEndTime())
                 .status(jobExecution.getStatus().name())

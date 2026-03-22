@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useGetBatchSchedulersQuery, useGetRecentBatchJobsQuery } from '@/generated/graphql';
 import type { BatchJob } from '@/generated/graphql';
 import { JobCard } from '@/components/batch-jobs/job-card';
@@ -60,12 +61,25 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 export default function BatchJobsPage() {
+  const [pollUntil, setPollUntil] = useState(0);
   const { data: schedulersData, isLoading: schedulersLoading } = useGetBatchSchedulersQuery();
-  const { data: jobsData, isLoading: jobsLoading } = useGetRecentBatchJobsQuery({ count: 50 });
+  const { data: jobsData, isLoading: jobsLoading } = useGetRecentBatchJobsQuery(
+    { count: 50 },
+    {
+      refetchInterval: (query) => {
+        const jobs = query.state.data?.recentBatchJobs ?? [];
+        const hasRunningJob = jobs.some(
+          (j) => j.status === 'STARTED' || j.status === 'STARTING',
+        );
+        return hasRunningJob || Date.now() < pollUntil ? 3000 : false;
+      },
+    },
+  );
 
   const isLoading = schedulersLoading || jobsLoading;
   const schedulers = schedulersData?.batchSchedulers ?? [];
   const recentJobs = jobsData?.recentBatchJobs ?? [];
+  const handleJobTriggered = () => setPollUntil(Date.now() + 30_000);
 
   const executionsByJob = new Map<string, BatchJob[]>();
   for (const job of recentJobs) {
@@ -119,6 +133,7 @@ export default function BatchJobsPage() {
                 key={scheduler.jobName}
                 scheduler={scheduler}
                 recentExecutions={executionsByJob.get(scheduler.jobName) ?? []}
+                onJobTriggered={handleJobTriggered}
               />
             ))}
           </div>

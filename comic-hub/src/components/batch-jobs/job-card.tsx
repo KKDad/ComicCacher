@@ -143,9 +143,10 @@ function getStatusAccentClass(status: string, paused: boolean): string {
 interface JobCardProps {
   scheduler: BatchSchedulerInfo;
   recentExecutions: BatchJob[];
+  onJobTriggered?: () => void;
 }
 
-export function JobCard({ scheduler, recentExecutions }: JobCardProps) {
+export function JobCard({ scheduler, recentExecutions, onJobTriggered }: JobCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmRunOpen, setConfirmRunOpen] = useState(false);
   const [logViewerExecution, setLogViewerExecution] = useState<BatchJob | null>(null);
@@ -176,6 +177,7 @@ export function JobCard({ scheduler, recentExecutions }: JobCardProps) {
       toast.success(`${scheduler.jobName} triggered successfully`);
       queryClient.invalidateQueries({ queryKey: useGetRecentBatchJobsQuery.getKey() });
       queryClient.invalidateQueries({ queryKey: useGetBatchSchedulersQuery.getKey() });
+      onJobTriggered?.();
     },
     onError: (error: Error) => {
       toast.error(`Failed to trigger job: ${error.message}`);
