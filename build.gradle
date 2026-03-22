@@ -1,8 +1,8 @@
 // Centralized version management for all modules
 plugins {
-    id 'org.openrewrite.rewrite' version '7.28.1' apply false
+    id 'org.openrewrite.rewrite' version '7.28.2' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
-    id 'org.springframework.boot' version '4.0.3' apply false
+    id 'org.springframework.boot' version '4.0.4' apply false
 }
 
 ext {
@@ -10,27 +10,25 @@ ext {
     projectVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : '2.4.5'
 
     // Core dependency versions — keep in sync with plugin version above
-    springBootVersion = '4.0.3'
+    springBootVersion = '4.0.4'
 
     // Library versions
     bcryptVersion = '0.4'
     caffeineVersion = '3.2.3'
-    jackson2BomVersion = '2.21.1'
-    jackson3BomVersion = '3.1.0'
     guavaVersion = '33.5.0-jre'
     jjwtVersion = '0.13.0'
-    jsoupVersion = '1.21.2'
-    lombokVersion = '1.18.42'
-    seleniumVersion = '4.39.0'
+    jsoupVersion = '1.22.1'
+    lombokVersion = '1.18.44'
+    seleniumVersion = '4.41.0'
     springdocVersion = '2.8.13'
-    twelvemonkeysVersion = '3.13.0'
+    twelvemonkeysVersion = '3.13.1'
     webdrivermanagerVersion = '6.3.3'
 
     // Test dependency versions
-    jacocoVersion = '0.8.11'
+    jacocoVersion = '0.8.14'
 
     // Tool versions
-    checkstyleVersion = '10.21.1'
+    checkstyleVersion = '13.3.0'
 }
 
 subprojects {
@@ -77,10 +75,6 @@ subprojects {
         enabled = false  // Skip checkstyle on test code initially
     }
 
-    // Override Jackson BOM versions to fix CVEs (Spring Boot 4.0.3 ships older Jackson)
-    ext['jackson-2-bom.version'] = rootProject.ext.jackson2BomVersion
-    ext['jackson-bom.version'] = rootProject.ext.jackson3BomVersion
-
     // Apply Spring Boot BOM to all modules using dependency-management plugin
     pluginManager.withPlugin('io.spring.dependency-management') {
         dependencyManagement {
@@ -112,7 +106,7 @@ subprojects {
 
         // OpenRewrite Recipes
         rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.30.0")
-        rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.30.0")
+        rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.30.1")
     }
 
     tasks.withType(Test).configureEach {

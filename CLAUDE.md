@@ -32,12 +32,12 @@ comic-common (shared DTOs, config, services)
 ### Key Dependency Versions
 
 **Backend:**
-- Java 21, Spring Boot 4.0.3
-- Lombok 1.18.42, Gson 2.11.0, Guava 33.5.0-jre
-- Jsoup 1.21.2, Caffeine Cache 3.2.3
+- Java 21, Spring Boot 4.0.4
+- Lombok 1.18.44, Gson 2.11.0, Guava 33.5.0-jre
+- Jsoup 1.22.1, Caffeine Cache 3.2.3
 - Jackson BOM 2.21.1, JJWT 0.13.0
-- Selenium 4.39.0, Springdoc OpenAPI 2.8.13
-- TwelveMonkeys ImageIO 3.13.0
+- Selenium 4.41.0, Springdoc OpenAPI 2.8.13
+- TwelveMonkeys ImageIO 3.13.1
 
 **Frontend (comic-hub):**
 - Next.js 16, React 19, TypeScript 5

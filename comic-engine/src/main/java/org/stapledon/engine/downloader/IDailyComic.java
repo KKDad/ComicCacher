@@ -24,7 +24,6 @@ public interface IDailyComic extends AutoCloseable {
      */
     IDailyComic setComic(String comicName);
 
-
     /**
      * Ensure that the api is cached for the current date
      *

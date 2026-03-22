@@ -38,10 +38,6 @@
 - Evaluate whether the openapi-gradle-plugin, `generate-openapi-docs.sh`, and `openapi.json` are still worth maintaining
 - If not needed, remove the springdoc dependency, openApi task config, and related tasks from comic-api/build.gradle
 
-### Remove Jackson BOM Overrides When Spring Boot Catches Up
-- `ext['jackson-2-bom.version']` and `ext['jackson-bom.version']` in root build.gradle override Spring Boot 4.0.3's Jackson to fix CVEs
-- Check with each Spring Boot upgrade whether the bundled Jackson versions include the fixes, and remove the overrides if so
-
 ### Upgrade to Java 25
 - Upgrade from Java 21 to Java 25 when available
 - Update `build.gradle` Java toolchain/sourceCompatibility settings
