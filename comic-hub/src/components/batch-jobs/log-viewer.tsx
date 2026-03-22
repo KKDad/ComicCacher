@@ -22,6 +22,28 @@ interface LogViewerProps {
   jobLabel: string;
 }
 
+const LOG_LINE_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\s+\w+\s+\[.*?]\s+)(\S+)(\s+:.*)$/;
+
+function alignLoggerColumn(content: string): string {
+  const lines = content.split('\n');
+  let maxLoggerLen = 0;
+
+  const parsed = lines.map((line) => {
+    const match = line.match(LOG_LINE_REGEX);
+    if (match) {
+      maxLoggerLen = Math.max(maxLoggerLen, match[2].length);
+      return { prefix: match[1], logger: match[2], suffix: match[3] };
+    }
+    return null;
+  });
+
+  return parsed
+    .map((p, i) =>
+      p ? `${p.prefix}${p.logger.padEnd(maxLoggerLen)}${p.suffix}` : lines[i],
+    )
+    .join('\n');
+}
+
 function findAllMatches(text: string, query: string): number[] {
   const indices: number[] = [];
   const lowerText = text.toLowerCase();
@@ -83,7 +105,10 @@ export function LogViewer({ open, onOpenChange, executionId, jobName, jobLabel }
     { enabled: open },
   );
 
-  const logContent = data?.batchJobLog;
+  const logContent = useMemo(
+    () => (data?.batchJobLog ? alignLoggerColumn(data.batchJobLog) : undefined),
+    [data?.batchJobLog],
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [activeMatchIndex, setActiveMatchIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -214,7 +239,7 @@ export function LogViewer({ open, onOpenChange, executionId, jobName, jobLabel }
           {!isLoading && logContent && (
             <pre
               ref={preRef}
-              className="bg-zinc-950 text-zinc-100 rounded-md p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap break-words overflow-auto flex-1"
+              className="bg-zinc-950 text-zinc-100 rounded-md p-4 text-xs font-mono leading-relaxed whitespace-pre overflow-auto flex-1"
             >
               <HighlightedLog
                 content={logContent}
