@@ -37,6 +37,7 @@ import org.stapledon.common.util.NfsFileOperations;
 @lombok.RequiredArgsConstructor
 public class ComicIndexService {
     public static final String INDEX_FILENAME = "available-dates.json";
+    public static final String STRIP_INDEX_FILENAME = "downloaded-strips.json";
 
     /** Synology NAS metadata directories - excluded from scanning */
     private static final String SYNOLOGY_METADATA_PREFIX = "@";
@@ -54,6 +55,9 @@ public class ComicIndexService {
 
     // In-memory cache of the indexes to avoid repeated disk reads.
     private final Map<Integer, ComicDateIndex> indexCache = new ConcurrentHashMap<>();
+
+    // In-memory cache of downloaded strip numbers for indexed comics.
+    private final Map<Integer, Set<Integer>> stripIndexCache = new ConcurrentHashMap<>();
 
     /** Marker for comics that have been verified as legitimately empty */
     private final Set<Integer> verifiedEmptyComics = ConcurrentHashMap.newKeySet();
@@ -281,6 +285,72 @@ public class ComicIndexService {
     }
 
     /**
+     * Returns the set of downloaded strip numbers for an indexed comic.
+     * Loads from disk on first access and caches in memory.
+     */
+    public Set<Integer> getDownloadedStripNumbers(int comicId, String comicName) {
+        return stripIndexCache.computeIfAbsent(comicId, id -> loadStripIndex(id, comicName));
+    }
+
+    /**
+     * Records a downloaded strip number in the index.
+     * Thread-safe: uses write lock to prevent concurrent modification.
+     */
+    public void addStripNumberToIndex(int comicId, String comicName, int stripNumber) {
+        ReadWriteLock lock = getLock(comicId);
+        lock.writeLock().lock();
+        try {
+            Set<Integer> strips = stripIndexCache.computeIfAbsent(comicId, id -> loadStripIndex(id, comicName));
+
+            if (strips.add(stripNumber)) {
+                List<Integer> sorted = new ArrayList<>(strips);
+                Collections.sort(sorted);
+                try {
+                    saveStripIndex(sorted, comicName, comicId);
+                } catch (IOException e) {
+                    // Roll back cache on disk failure
+                    strips.remove(stripNumber);
+                    log.error("Failed to persist strip index for {}: {}", comicName, e.getMessage());
+                    throw new RuntimeException("Failed to persist strip index to disk", e);
+                }
+                log.debug("Added strip #{} to index for comic {}", stripNumber, comicName);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private Set<Integer> loadStripIndex(int comicId, String comicName) {
+        Path indexFile = getStripIndexFile(comicId, comicName);
+        if (NfsFileOperations.exists(indexFile)) {
+            try (Reader reader = Files.newBufferedReader(indexFile)) {
+                int[] numbers = gson.fromJson(reader, int[].class);
+                if (numbers != null) {
+                    Set<Integer> result = ConcurrentHashMap.newKeySet();
+                    for (int n : numbers) {
+                        result.add(n);
+                    }
+                    return result;
+                }
+            } catch (IOException e) {
+                log.error("Failed to load strip index for '{}' (id={}): {}", comicName, comicId, e.getMessage());
+            }
+        }
+        return ConcurrentHashMap.newKeySet();
+    }
+
+    private void saveStripIndex(List<Integer> sortedStrips, String comicName, int comicId) throws IOException {
+        Path indexFile = getStripIndexFile(comicId, comicName);
+        String json = gson.toJson(sortedStrips);
+        NfsFileOperations.atomicWrite(indexFile, json);
+    }
+
+    private Path getStripIndexFile(int comicId, String comicName) {
+        String parsedName = sanitizeComicName(comicName, comicId);
+        return NfsFileOperations.resolvePath(cacheProperties.getLocation(), parsedName, STRIP_INDEX_FILENAME);
+    }
+
+    /**
      * Invalidate the cache for a comic (e.g., when comic is deleted).
      */
     public void invalidateCache(int comicId) {
@@ -288,6 +358,7 @@ public class ComicIndexService {
         lock.writeLock().lock();
         try {
             indexCache.remove(comicId);
+            stripIndexCache.remove(comicId);
             verifiedEmptyComics.remove(comicId);
             log.debug("Invalidated cache for comic {}", comicId);
         } finally {

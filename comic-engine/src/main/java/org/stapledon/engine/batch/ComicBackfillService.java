@@ -10,12 +10,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.storage.ComicIndexService;
 
 /**
  * Service for identifying missing comic strips that need to be backfilled.
@@ -42,6 +44,7 @@ public class ComicBackfillService {
     private final ComicStorageFacade storageFacade;
     private final BackfillConfigurationService config;
     private final DownloaderFacade downloaderFacade;
+    private final ComicIndexService comicIndexService;
 
     /**
      * Sealed interface representing a backfill task for either date-based or indexed comics.
@@ -313,20 +316,27 @@ public class ComicBackfillService {
             return tasks;
         }
 
+        // Load already-downloaded strip numbers to avoid wasteful re-downloads
+        Set<Integer> downloadedStrips = comicIndexService.getDownloadedStripNumbers(
+                comic.getId(), comic.getName());
+
         int startStrip = lastStrip - 1;
         int endStrip = firstStrip != null ? firstStrip : 1;
         int consecutiveMissing = 0;
         int maxConsecutive = config.getMaxConsecutiveFailures();
 
         for (int stripNum = startStrip; stripNum >= endStrip && tasks.size() < maxTasks; stripNum--) {
-            // For indexed comics, we don't know the date upfront, so we check
-            // all strip numbers. The processor will discover the date and check existence.
+            if (downloadedStrips.contains(stripNum)) {
+                consecutiveMissing = 0;
+                continue;
+            }
+
             tasks.add(new StripBackfillTask(comic, stripNum));
             consecutiveMissing++;
 
             if (consecutiveMissing >= maxConsecutive) {
-                log.debug("Stopping scan for {} at strip #{} - reached max consecutive limit",
-                        comic.getName(), stripNum);
+                log.debug("Stopping scan for {} at strip #{} - {} consecutive missing strips",
+                        comic.getName(), stripNum, consecutiveMissing);
                 break;
             }
         }

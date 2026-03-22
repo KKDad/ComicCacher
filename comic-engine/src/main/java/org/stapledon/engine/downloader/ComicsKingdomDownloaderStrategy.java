@@ -24,7 +24,6 @@ import org.stapledon.common.service.ValidationService;
 @Component
 public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStrategy {
 
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36";
     private static final int TIMEOUT = 5 * 1000;
     private static final String SOURCE_IDENTIFIER = "comicskingdom";
     private static final String ABOUT_SITE_STRING = "https://comicskingdom.com/%s/about";
@@ -50,7 +49,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
         log.debug("Fetching {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
+                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
                 .header("DNT", "1")
                 .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
                 .timeout(TIMEOUT)
@@ -84,7 +83,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
         log.debug("Fetching avatar from {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
+                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
                 .header("DNT", "1")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml")
                 .timeout(TIMEOUT)

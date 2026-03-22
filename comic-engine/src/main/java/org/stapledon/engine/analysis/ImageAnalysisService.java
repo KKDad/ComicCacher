@@ -72,7 +72,7 @@ public class ImageAnalysisService implements AnalysisService {
 
     @Override
     public ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
-            ImageValidationResult validation, String sourceUrl) {
+            ImageValidationResult validation, String sourceUrl, String transcript) {
         if (imageData == null || imageData.length == 0) {
             log.warn("Image data is null or empty for path: {}", filePath);
             return buildUnknownMetadata(comicId, comicName, filePath, validation, sourceUrl);
@@ -87,7 +87,7 @@ public class ImageAnalysisService implements AnalysisService {
 
             ImageMetadata.ColorMode colorMode = detectColorModeFromImage(image);
 
-            return ImageMetadata.builder()
+            ImageMetadata.ImageMetadataBuilder builder = ImageMetadata.builder()
                     .comicId(comicId)
                     .comicName(comicName)
                     .filePath(filePath)
@@ -98,8 +98,13 @@ public class ImageAnalysisService implements AnalysisService {
                     .colorMode(colorMode)
                     .samplePercentage(samplePercentage)
                     .captureTimestamp(OffsetDateTime.now())
-                    .sourceUrl(sourceUrl)
-                    .build();
+                    .sourceUrl(sourceUrl);
+
+            if (transcript != null && !transcript.isBlank()) {
+                builder.transcript(transcript);
+            }
+
+            return builder.build();
         } catch (IOException e) {
             log.error("Error analyzing image data for path {}: {}", filePath, e.getMessage());
             return buildUnknownMetadata(comicId, comicName, filePath, validation, sourceUrl);

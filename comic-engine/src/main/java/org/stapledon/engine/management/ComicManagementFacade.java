@@ -23,6 +23,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
@@ -621,16 +622,17 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     /**
-     * Saves a download result to storage, using transcript-aware save when transcript is available.
+     * Saves a download result to storage via ComicSaveData DTO.
      */
     private boolean saveDownloadResult(ComicItem comic, LocalDate date, ComicDownloadResult result) {
-        boolean saved;
-        if (result.getTranscript() != null && !result.getTranscript().isBlank()) {
-            saved = storageFacade.saveComicStripWithResult(
-                    ComicIdentifier.from(comic), date, result.getImageData(), result.getTranscript()).isSuccess();
-        } else {
-            saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), date, result.getImageData());
-        }
+        ComicSaveData saveData = ComicSaveData.builder()
+                .imageData(result.getImageData())
+                .transcript(result.getTranscript())
+                .stripNumber(result.getStripNumber())
+                .build();
+
+        boolean saved = storageFacade.saveComicStripWithResult(
+                ComicIdentifier.from(comic), date, saveData).isSuccess();
 
         if (!saved) {
             log.error("Failed to save comic {} to storage", comic.getName());

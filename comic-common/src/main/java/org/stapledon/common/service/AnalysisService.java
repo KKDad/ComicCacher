@@ -21,17 +21,6 @@ public interface AnalysisService {
                                String sourceUrl);
 
     /**
-     * Analyzes image data in memory and creates comprehensive metadata.
-     *
-     * @param comicId   ID of the comic
-     * @param comicName Name of the comic
-     * @param filePath  path where the image will be/is stored
-     * @param sourceUrl optional source URL from which the image was downloaded
-     */
-    ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
-                               ImageValidationResult validation, String sourceUrl);
-
-    /**
      * Analyzes image data in memory and creates comprehensive metadata, including transcript text.
      *
      * @param comicId    ID of the comic
@@ -40,13 +29,18 @@ public interface AnalysisService {
      * @param sourceUrl  optional source URL from which the image was downloaded
      * @param transcript optional transcript text extracted from the comic page
      */
+    ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
+                                ImageValidationResult validation, String sourceUrl, String transcript);
+
+    /**
+     * Analyzes image data in memory and creates comprehensive metadata.
+     * <p>
+     * Convenience overload that delegates to the transcript-aware version with null transcript.
+     * </p>
+     */
     default ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
-                                        ImageValidationResult validation, String sourceUrl, String transcript) {
-        ImageMetadata metadata = analyzeImage(comicId, comicName, imageData, filePath, validation, sourceUrl);
-        if (transcript != null && !transcript.isBlank()) {
-            return metadata.toBuilder().transcript(transcript).build();
-        }
-        return metadata;
+                               ImageValidationResult validation, String sourceUrl) {
+        return analyzeImage(comicId, comicName, imageData, filePath, validation, sourceUrl, null);
     }
 
     /**

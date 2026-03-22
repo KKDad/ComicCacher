@@ -18,10 +18,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
-import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
 
@@ -32,8 +29,7 @@ import org.stapledon.common.service.ValidationService;
 @Slf4j
 @ToString(callSuper = true)
 @Component
-public class FreefallDownloaderStrategy extends AbstractComicDownloaderStrategy
-        implements IndexedComicDownloaderStrategy {
+public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrategy {
 
     static final String SOURCE_IDENTIFIER = "freefall";
     static final String BASE_URL = "http://freefall.purrsia.com";
@@ -55,49 +51,37 @@ public class FreefallDownloaderStrategy extends AbstractComicDownloaderStrategy
      * {@inheritDoc}
      */
     @Override
-    public ComicDownloadResult downloadLatestStrip(ComicItem comic) {
-        try {
-            String url = BASE_URL + "/default.htm";
-            log.info("Fetching latest Freefall strip from {}", url);
+    protected IndexedStripData fetchLatestStrip(ComicItem comic) throws Exception {
+        String url = BASE_URL + "/default.htm";
+        log.info("Fetching latest Freefall strip from {}", url);
 
-            Document doc = Jsoup.connect(url).timeout(TIMEOUT).get();
+        Document doc = Jsoup.connect(url)
+                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(TIMEOUT).get();
 
-            return downloadStripFromDocument(comic, doc, url);
-        } catch (Exception e) {
-            String errorMessage = String.format("Error downloading latest Freefall strip: %s", e.getMessage());
-            log.error(errorMessage, e);
-            ComicDownloadRequest request = buildRequest(comic, LocalDate.now());
-            return ComicDownloadResult.failure(request, errorMessage);
-        }
+        return fetchStripFromDocument(doc);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ComicDownloadResult downloadStrip(ComicItem comic, int stripNumber) {
+    protected IndexedStripData fetchStrip(ComicItem comic, int stripNumber) throws Exception {
+        String url = buildStripPageUrl(stripNumber);
+        log.info("Fetching Freefall strip #{} from {}", stripNumber, url);
+
+        Document doc;
         try {
-            String url = buildStripPageUrl(stripNumber);
-            log.info("Fetching Freefall strip #{} from {}", stripNumber, url);
-
-            Document doc;
-            try {
-                doc = Jsoup.connect(url).timeout(TIMEOUT).get();
-            } catch (org.jsoup.HttpStatusException e) {
-                // Try grayscale version for older strips
-                String grayUrl = buildGrayscaleStripPageUrl(stripNumber);
-                log.debug("Color page not found, trying grayscale: {}", grayUrl);
-                doc = Jsoup.connect(grayUrl).timeout(TIMEOUT).get();
-            }
-
-            return downloadStripFromDocument(comic, doc, url);
-        } catch (Exception e) {
-            String errorMessage = String.format("Error downloading Freefall strip #%d: %s",
-                    stripNumber, e.getMessage());
-            log.error(errorMessage, e);
-            ComicDownloadRequest request = buildRequest(comic, LocalDate.now());
-            return ComicDownloadResult.failure(request, errorMessage);
+            doc = Jsoup.connect(url)
+                    .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(TIMEOUT).get();
+        } catch (org.jsoup.HttpStatusException e) {
+            // Try grayscale version for older strips
+            String grayUrl = buildGrayscaleStripPageUrl(stripNumber);
+            log.debug("Color page not found, trying grayscale: {}", grayUrl);
+            doc = Jsoup.connect(grayUrl)
+                    .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(TIMEOUT).get();
         }
+
+        return fetchStripFromDocument(doc);
     }
 
     /**
@@ -115,14 +99,13 @@ public class FreefallDownloaderStrategy extends AbstractComicDownloaderStrategy
     /**
      * Processes a fetched Freefall page document: parses title, extracts image, parses transcript.
      */
-    private ComicDownloadResult downloadStripFromDocument(ComicItem comic, Document doc, String pageUrl) throws Exception {
+    private IndexedStripData fetchStripFromDocument(Document doc) throws Exception {
         // Parse title to get strip number and date
         String title = doc.title();
         TitleParseResult titleResult = parseTitleTag(title);
 
         if (titleResult == null) {
-            ComicDownloadRequest request = buildRequest(comic, LocalDate.now());
-            return ComicDownloadResult.failure(request, "Could not parse Freefall title: " + title);
+            throw new IllegalStateException("Could not parse Freefall title: " + title);
         }
 
         // Determine the actual date
@@ -134,8 +117,7 @@ public class FreefallDownloaderStrategy extends AbstractComicDownloaderStrategy
         // Extract and download the image
         String imageUrl = extractImageUrl(doc, titleResult.stripNumber());
         if (imageUrl == null) {
-            ComicDownloadRequest request = buildRequest(comic, actualDate);
-            return ComicDownloadResult.failure(request, "Could not find image for strip #" + titleResult.stripNumber());
+            throw new IllegalStateException("Could not find image for strip #" + titleResult.stripNumber());
         }
 
         // Make URL absolute if needed
@@ -150,21 +132,10 @@ public class FreefallDownloaderStrategy extends AbstractComicDownloaderStrategy
             imageData = in.readAllBytes();
         }
 
-        // Validate the image
-        ImageValidationResult validation = validateImage(imageData, comic.getName(),
-                "strip #" + titleResult.stripNumber());
-        if (validation == null) {
-            ComicDownloadRequest request = buildRequest(comic, actualDate);
-            return ComicDownloadResult.failure(request,
-                    "Invalid image for strip #" + titleResult.stripNumber());
-        }
-
         // Parse transcript
         String transcript = parseTranscript(doc);
 
-        ComicDownloadRequest request = buildRequest(comic, actualDate);
-        return ComicDownloadResult.successWithMetadata(request, imageData, actualDate,
-                titleResult.stripNumber(), transcript);
+        return new IndexedStripData(imageData, actualDate, titleResult.stripNumber(), transcript);
     }
 
     /**
@@ -337,16 +308,6 @@ public class FreefallDownloaderStrategy extends AbstractComicDownloaderStrategy
         }
 
         return null;
-    }
-
-    private ComicDownloadRequest buildRequest(ComicItem comic, LocalDate date) {
-        return ComicDownloadRequest.builder()
-                .comicId(comic.getId())
-                .comicName(comic.getName())
-                .source(SOURCE_IDENTIFIER)
-                .sourceIdentifier(comic.getSourceIdentifier())
-                .date(date != null ? date : LocalDate.now())
-                .build();
     }
 
     /**

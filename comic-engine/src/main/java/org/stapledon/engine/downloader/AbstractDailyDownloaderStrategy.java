@@ -41,22 +41,22 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
                     request.getComicName(), request.getDate(), getSource());
 
             byte[] imageData = downloadComicImage(request);
+
             if (imageData == null || imageData.length == 0) {
-                return ComicDownloadResult.failure(request, "Downloaded image data is empty");
+                return ComicDownloadResult.failure(request,
+                        String.format("Downloaded image data is empty for %s on %s",
+                                request.getComicName(), request.getDate()));
             }
 
-            // Validate image integrity
-            ImageValidationResult validation = imageValidationService.validate(imageData);
-            if (!validation.isValid()) {
-                String error = String.format("Invalid image downloaded: %s", validation.getErrorMessage());
-                log.error("Validation failed for {} on {}: {}",
-                        request.getComicName(), request.getDate(), error);
-                return ComicDownloadResult.failure(request, error);
+            // Validate image integrity using shared helper
+            ImageValidationResult validation = validateImage(imageData,
+                    request.getComicName(), request.getDate().toString());
+            if (validation == null || !validation.isValid()) {
+                String detail = validation != null ? validation.getErrorMessage() : "unknown";
+                return ComicDownloadResult.failure(request,
+                        String.format("Invalid image for %s on %s: %s",
+                                request.getComicName(), request.getDate(), detail));
             }
-
-            log.debug("Validated {} image for {} on {}: {}x{} ({} bytes)",
-                    validation.getFormat(), request.getComicName(), request.getDate(),
-                    validation.getWidth(), validation.getHeight(), validation.getSizeInBytes());
 
             return ComicDownloadResult.success(request, imageData);
         } catch (Exception e) {

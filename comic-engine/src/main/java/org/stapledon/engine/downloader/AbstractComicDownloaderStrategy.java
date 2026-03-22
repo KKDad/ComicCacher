@@ -87,7 +87,7 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
         ImageValidationResult validation = imageValidationService.validate(imageData);
         if (!validation.isValid()) {
             log.error("Validation failed for {} ({}): {}", comicName, context, validation.getErrorMessage());
-            return null;
+            return validation;
         }
 
         log.debug("Validated {} image for {} ({}): {}x{} ({} bytes)",

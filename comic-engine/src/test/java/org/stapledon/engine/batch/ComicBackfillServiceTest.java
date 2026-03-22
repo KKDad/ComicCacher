@@ -26,6 +26,7 @@ import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
 import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
 import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.storage.ComicIndexService;
 
 @ExtendWith(MockitoExtension.class)
 class ComicBackfillServiceTest {
@@ -42,6 +43,9 @@ class ComicBackfillServiceTest {
     @Mock
     private DownloaderFacade downloaderFacade;
 
+    @Mock
+    private ComicIndexService comicIndexService;
+
     private ComicBackfillService service;
 
     private static final int MAX_CONSECUTIVE_FAILURES = 14;
@@ -50,7 +54,7 @@ class ComicBackfillServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ComicBackfillService(managementFacade, storageFacade, configService, downloaderFacade);
+        service = new ComicBackfillService(managementFacade, storageFacade, configService, downloaderFacade, comicIndexService);
 
         // Setup default configuration service behavior using lenient to avoid
         // UnnecessaryStubbingException for tests that don't use all stubs
