@@ -33,6 +33,26 @@ describe('DatePickerPopover', () => {
     expect(screen.getByRole('grid')).toBeInTheDocument();
   });
 
+  it('calls onSelectDate when a day is clicked', async () => {
+    const onSelectDate = vi.fn();
+    render(
+      <DatePickerPopover
+        oldest="2026-03-01"
+        newest="2026-03-31"
+        currentDate="2026-03-15"
+        onSelectDate={onSelectDate}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /pick a date/i }));
+
+    // Click a specific day in the calendar — find day 10
+    const day10 = screen.getByRole('gridcell', { name: '10' });
+    await userEvent.click(day10.querySelector('button') ?? day10);
+
+    expect(onSelectDate).toHaveBeenCalledWith('2026-03-10');
+  });
+
   it('handles null dates gracefully', () => {
     render(
       <DatePickerPopover

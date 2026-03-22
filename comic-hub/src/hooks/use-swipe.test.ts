@@ -80,6 +80,44 @@ describe('useSwipe', () => {
     });
   });
 
+  it('does not fire when prefers-reduced-motion is set', () => {
+    // Mock matchMedia to return prefers-reduced-motion: true
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    const onSwipeUp = vi.fn();
+    const { result } = renderHook(() =>
+      useSwipe({ onSwipeUp, threshold: 50 }),
+    );
+
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(200));
+      result.current.onTouchMove(createTouchEvent(100)); // deltaY = -100
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    expect(onSwipeUp).not.toHaveBeenCalled();
+    window.matchMedia = originalMatchMedia;
+  });
+
+  it('does not call onSwipeDown when callback is undefined but swipe is down', () => {
+    const { result } = renderHook(() => useSwipe({ onSwipeUp: vi.fn(), threshold: 50 }));
+
+    // Swipe down without onSwipeDown handler
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(100));
+      result.current.onTouchMove(createTouchEvent(200)); // deltaY = +100
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    // Should not throw
+  });
+
   it('uses default threshold of 50', () => {
     const onSwipeUp = vi.fn();
     const { result } = renderHook(() => useSwipe({ onSwipeUp }));

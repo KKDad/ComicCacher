@@ -174,18 +174,17 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 ### RetrievalRecordPurgeJob
 
-**Purpose:** Purges old retrieval records beyond the retention window to prevent unbounded growth.
+**Purpose:** Purges old retrieval records and batch log files beyond the retention window to prevent unbounded growth.
 
 **Config class:** `RetrievalRecordPurgeJobConfig`
 
-**Pattern:** Tasklet (single step).
+**Pattern:** Tasklet (two steps).
 
-- Delegates to `comicManagementFacade.purgeOldRetrievalRecords(daysToKeep)`
+- **Step 1 — recordPurgeStep:** Delegates to `comicManagementFacade.purgeOldRetrievalRecords(daysToKeep)`
+- **Step 2 — logPurgeStep:** Delegates to `batchJobLogService.purgeOldLogFiles(daysToKeep)` to delete old per-execution log files from `batch-logs/`
 - Configurable retention via `batch.record-purge.days-to-keep` (default 30)
 
-**Note:** `JsonRetrievalStatusRepository` also runs its own `@Scheduled` purge at 2:30 AM with a 7-day retention window. The two mechanisms operate independently. See [Operational State](../storage/operational-state.md#2-retrieval-statusjson).
-
-**Data source:** `ManagementFacade` -> `RetrievalStatusService`
+**Data source:** `ManagementFacade` -> `RetrievalStatusService`, `BatchJobLogService`
 
 ## Comparison Table
 
@@ -196,7 +195,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 | AvatarBackfillJob | Tasklet | `0 15 7 * * ?` | `false` | Web scraping (avatar pages) | `ManagementFacade` |
 | ImageMetadataBackfillJob | Tasklet | `0 30 6 * * ?` | `true` | Filesystem walk | `ValidationService`, `AnalysisService`, `ImageMetadataRepository` |
 | MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | In-memory metrics | `MetricsArchiveService` |
-| RetrievalRecordPurgeJob | Tasklet | `0 45 6 * * ?` | `true` | JSON retrieval records | `ManagementFacade` |
+| RetrievalRecordPurgeJob | Tasklet (2 steps) | `0 45 6 * * ?` | `true` | JSON retrieval records, batch log files | `ManagementFacade`, `BatchJobLogService` |
 
 All jobs run in `America/Toronto` timezone. Cron expressions are configurable via `batch.<job-key>.cron` properties.
 
