@@ -12,8 +12,6 @@ describe('ReaderHeader', () => {
     onLast: vi.fn(),
     onRandom: vi.fn(),
     isLoadingRandom: false,
-    hasOlder: true,
-    hasNewer: true,
   };
 
   beforeEach(() => {

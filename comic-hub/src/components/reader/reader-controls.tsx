@@ -2,8 +2,14 @@
 
 import { Button } from '@/components/ui/button';
 import {
-  ChevronsLeft,
-  ChevronsRight,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  SkipBack,
+  SkipForward,
   Shuffle,
   Loader2,
 } from 'lucide-react';
@@ -13,9 +19,6 @@ interface ReaderControlsProps {
   onLast: () => void;
   onRandom: () => void;
   isLoadingRandom: boolean;
-  hasOlder: boolean;
-  hasNewer: boolean;
-  /** Slot for date picker popover (wired in Phase 6) */
   datePicker?: React.ReactNode;
 }
 
@@ -24,47 +27,63 @@ export function ReaderControls({
   onLast,
   onRandom,
   isLoadingRandom,
-  hasOlder,
-  hasNewer,
   datePicker,
 }: ReaderControlsProps) {
   return (
-    <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onFirst}
-        disabled={!hasOlder}
-        aria-label="Go to first strip"
-      >
-        <ChevronsLeft className="h-4 w-4" />
-      </Button>
+    <TooltipProvider>
+      <div className="flex items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onFirst}
+              aria-label="Go to first strip"
+              className="text-ink-subtle hover:text-ink hover:bg-muted"
+            >
+              <SkipBack className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">First strip</TooltipContent>
+        </Tooltip>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onRandom}
-        disabled={isLoadingRandom}
-        aria-label="Go to random strip"
-      >
-        {isLoadingRandom ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Shuffle className="h-4 w-4" />
-        )}
-      </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onRandom}
+              disabled={isLoadingRandom}
+              aria-label="Go to random strip"
+              className="text-ink-subtle hover:text-ink hover:bg-muted"
+            >
+              {isLoadingRandom ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Shuffle className="h-5 w-5" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Random strip</TooltipContent>
+        </Tooltip>
 
-      {datePicker}
+        {datePicker}
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onLast}
-        disabled={!hasNewer}
-        aria-label="Go to latest strip"
-      >
-        <ChevronsRight className="h-4 w-4" />
-      </Button>
-    </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onLast}
+              aria-label="Go to latest strip"
+              className="text-ink-subtle hover:text-ink hover:bg-muted"
+            >
+              <SkipForward className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Latest strip</TooltipContent>
+        </Tooltip>
+      </div>
+    </TooltipProvider>
   );
 }

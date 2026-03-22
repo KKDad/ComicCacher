@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { toast } from 'sonner';
 import type { useReader } from '@/hooks/use-reader';
 import { ReaderHeader } from './reader-header';
 import { StripCard } from './strip-card';
@@ -8,6 +10,11 @@ import { StripSkeleton } from './strip-skeleton';
 import { CrossComicNav } from './cross-comic-nav';
 import { DatePickerPopover } from './date-picker-popover';
 import { useReadingList } from '@/hooks/use-reading-list';
+
+const HEADER_HEIGHT = 56; // h-14 = 3.5rem = 56px
+const STRIP_PADDING = 60; // date label + vertical padding
+const FALLBACK_ASPECT = 3; // 3:1 width:height for strips without dimensions
+const MAX_CONTENT_WIDTH = 768; // max-w-3xl
 
 interface DesktopReaderProps {
   comicId: number;
@@ -36,93 +43,119 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
 
   const { previousComic, nextComic, navigateToComic } = useReadingList(comicId);
 
-  const stripRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const containerRef = useRef<HTMLDivElement>(null);
-  const olderSentinelRef = useRef<HTMLDivElement>(null);
-  const newerSentinelRef = useRef<HTMLDivElement>(null);
+  const handleGoToFirst = useCallback(() => {
+    const result = goToFirst();
+    if (result === 'already') toast.info('Already at the first strip');
+  }, [goToFirst]);
+
+  const handleGoToLast = useCallback(() => {
+    const result = goToLast();
+    if (result === 'already') toast.info('Already at the latest strip');
+  }, [goToLast]);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
+
+  const virtualizer = useVirtualizer({
+    count: strips.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: (index) => {
+      const strip = strips[index];
+      if (strip.width && strip.height) {
+        const contentWidth = Math.min(MAX_CONTENT_WIDTH, window.innerWidth - 32);
+        return (contentWidth * strip.height) / strip.width + STRIP_PADDING;
+      }
+      return MAX_CONTENT_WIDTH / FALLBACK_ASPECT + STRIP_PADDING;
+    },
+    overscan: 3,
+    paddingStart: HEADER_HEIGHT,
+    paddingEnd: 32,
+  });
 
   // Scroll to starting strip on initial load
   useEffect(() => {
     if (!initialScrollDone.current && strips.length > 0 && currentIndex >= 0) {
-      const el = stripRefs.current.get(currentIndex);
-      if (el) {
-        el.scrollIntoView({ block: 'center' });
-        initialScrollDone.current = true;
-      }
+      virtualizer.scrollToIndex(currentIndex, { align: 'center' });
+      initialScrollDone.current = true;
     }
-  }, [strips, currentIndex]);
+  }, [strips.length, currentIndex, virtualizer]);
 
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // IntersectionObserver for tracking current strip — only after initial scroll
+  // Scroll to strip when currentIndex changes via goToFirst/goToLast/goToDate
+  const prevCurrentIndex = useRef(currentIndex);
   useEffect(() => {
-    if (strips.length === 0 || !initialScrollDone.current) return;
+    if (initialScrollDone.current && currentIndex !== prevCurrentIndex.current) {
+      virtualizer.scrollToIndex(currentIndex, { align: 'center', behavior: 'smooth' });
+    }
+    prevCurrentIndex.current = currentIndex;
+  }, [currentIndex, virtualizer]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const idx = Number(entry.target.getAttribute('data-index'));
-            if (!isNaN(idx)) {
-              if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-              debounceTimerRef.current = setTimeout(() => setCurrentIndex(idx), 100);
-            }
+  // Track current strip from scroll position
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!initialScrollDone.current || strips.length === 0) return;
+
+    const scrollEl = scrollContainerRef.current;
+    if (!scrollEl) return;
+
+    const handleScroll = () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        const items = virtualizer.getVirtualItems();
+        if (items.length === 0) return;
+
+        const viewportCenter = scrollEl.scrollTop + scrollEl.clientHeight / 2;
+        let closestIdx = items[0].index;
+        let closestDist = Infinity;
+        for (const item of items) {
+          const itemCenter = item.start + item.size / 2;
+          const dist = Math.abs(itemCenter - viewportCenter);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestIdx = item.index;
           }
         }
-      },
-      { threshold: 0.5 },
-    );
+        setCurrentIndex(closestIdx);
+      }, 100);
+    };
 
-    for (const [, el] of stripRefs.current) {
-      observer.observe(el);
-    }
-
+    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
-      observer.disconnect();
+      scrollEl.removeEventListener('scroll', handleScroll);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [strips, setCurrentIndex]);
+  }, [strips.length, setCurrentIndex, virtualizer]);
 
-  // Sentinel observers for infinite scroll — only after initial scroll
+  // Infinite scroll — load more when near boundaries
   useEffect(() => {
-    if (!initialScrollDone.current) return;
+    if (!initialScrollDone.current || strips.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            if (entry.target === olderSentinelRef.current && hasOlder) {
-              loadOlder();
-            } else if (entry.target === newerSentinelRef.current && hasNewer) {
-              loadNewer();
-            }
-          }
-        }
-      },
-      { rootMargin: '200px' },
-    );
+    const items = virtualizer.getVirtualItems();
+    if (items.length === 0) return;
 
-    if (olderSentinelRef.current) observer.observe(olderSentinelRef.current);
-    if (newerSentinelRef.current) observer.observe(newerSentinelRef.current);
+    const firstVisible = items[0];
+    const lastVisible = items[items.length - 1];
 
-    return () => observer.disconnect();
-  }, [hasOlder, hasNewer, loadOlder, loadNewer]);
+    if (firstVisible.index <= 1 && hasOlder) {
+      loadOlder();
+    }
+    if (lastVisible.index >= strips.length - 2 && hasNewer) {
+      loadNewer();
+    }
+  }, [virtualizer.getVirtualItems(), strips.length, hasOlder, hasNewer, loadOlder, loadNewer]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       switch (e.key) {
         case 'Home':
           e.preventDefault();
-          goToFirst();
+          handleGoToFirst();
           break;
         case 'End':
           e.preventDefault();
-          goToLast();
+          handleGoToLast();
           break;
         case 'r':
         case 'R':
@@ -152,29 +185,16 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToFirst, goToLast, goToRandom, previousComic, nextComic, navigateToComic]);
-
-  const setStripRef = useCallback(
-    (index: number) => (el: HTMLDivElement | null) => {
-      if (el) {
-        stripRefs.current.set(index, el);
-      } else {
-        stripRefs.current.delete(index);
-      }
-    },
-    [],
-  );
+  }, [handleGoToFirst, handleGoToLast, goToRandom, previousComic, nextComic, navigateToComic]);
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-canvas">
+    <div ref={scrollContainerRef} className="h-screen overflow-y-auto bg-canvas">
       <ReaderHeader
         comicName={comicName}
-        onFirst={goToFirst}
-        onLast={goToLast}
+        onFirst={handleGoToFirst}
+        onLast={handleGoToLast}
         onRandom={goToRandom}
         isLoadingRandom={isLoadingRandom}
-        hasOlder={hasOlder}
-        hasNewer={hasNewer}
         datePicker={
           <DatePickerPopover
             oldest={oldest}
@@ -185,29 +205,49 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
         }
       />
 
-      <CrossComicNav comicId={comicId} />
+      <CrossComicNav
+        previousComic={previousComic}
+        nextComic={nextComic}
+        navigateToComic={navigateToComic}
+      />
 
-      <main className="pt-14 pb-8 px-4">
+      <main className="px-4">
         <div className="max-w-3xl mx-auto">
-          {/* Older sentinel */}
-          <div ref={olderSentinelRef} className="h-1" />
-
           {isLoading ? (
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 py-4 pt-18">
               <StripSkeleton className="bg-card rounded-lg p-4" />
               <StripSkeleton className="bg-card rounded-lg p-4" />
               <StripSkeleton className="bg-card rounded-lg p-4" />
             </div>
           ) : (
-            strips.map((strip, index) => (
-              <div key={strip.date} data-index={index} ref={setStripRef(index)}>
-                <StripCard strip={strip} comicName={comicName} />
-              </div>
-            ))
+            <div
+              style={{
+                height: virtualizer.getTotalSize(),
+                position: 'relative',
+                width: '100%',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => (
+                <div
+                  key={strips[virtualItem.index].date}
+                  data-index={virtualItem.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  <StripCard
+                    strip={strips[virtualItem.index]}
+                    comicName={comicName}
+                  />
+                </div>
+              ))}
+            </div>
           )}
-
-          {/* Newer sentinel */}
-          <div ref={newerSentinelRef} className="h-1" />
         </div>
       </main>
     </div>

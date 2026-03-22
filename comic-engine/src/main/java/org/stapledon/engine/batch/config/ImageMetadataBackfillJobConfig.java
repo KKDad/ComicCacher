@@ -119,18 +119,18 @@ public class ImageMetadataBackfillJobConfig {
     @Bean
     public Tasklet imageBackfillTasklet() {
         return (contribution, chunkContext) -> {
-            log.info("Starting image metadata backfill");
+            File cacheRoot = new File(cacheProperties.getLocation());
+            int maxToProcess = batchSize * 100; // Process up to 100 batches per run
+
+            log.info("Starting image metadata backfill (cache: {}, batch size: {}, max images: {})",
+                    cacheRoot.getAbsolutePath(), batchSize, maxToProcess);
 
             long startTime = System.currentTimeMillis();
-            File cacheRoot = new File(cacheProperties.getLocation());
 
             if (!cacheRoot.exists() || !cacheRoot.isDirectory()) {
                 log.warn("Cache directory does not exist or is not a directory: {}", cacheRoot.getAbsolutePath());
                 return RepeatStatus.FINISHED;
             }
-
-            // Process in streaming fashion with configurable max limit
-            int maxToProcess = batchSize * 100; // Process up to 100 batches per run
             int[] counters = {0, 0, 0}; // processed, successful, failed
 
             try (Stream<Path> paths = Files.walk(cacheRoot.toPath())) {
@@ -154,7 +154,7 @@ public class ImageMetadataBackfillJobConfig {
             }
 
             if (counters[0] == 0) {
-                log.info("No images need metadata backfill. Job complete.");
+                log.info("Image metadata backfill: no images without metadata found");
             } else {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("Image metadata backfill complete. Processed {} images in {}ms ({} successful, {} failed)", counters[0], duration, counters[1], counters[2]);

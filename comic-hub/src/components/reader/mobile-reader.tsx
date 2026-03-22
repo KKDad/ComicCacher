@@ -255,8 +255,6 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               onLast={goToLast}
               onRandom={goToRandom}
               isLoadingRandom={isLoadingRandom}
-              hasOlder={hasOlder}
-              hasNewer={hasNewer}
               datePicker={
                 <DatePickerPopover
                   oldest={oldest}

@@ -11,8 +11,6 @@ interface ReaderHeaderProps {
   onLast: () => void;
   onRandom: () => void;
   isLoadingRandom: boolean;
-  hasOlder: boolean;
-  hasNewer: boolean;
   datePicker?: React.ReactNode;
 }
 
@@ -22,8 +20,6 @@ export function ReaderHeader({
   onLast,
   onRandom,
   isLoadingRandom,
-  hasOlder,
-  hasNewer,
   datePicker,
 }: ReaderHeaderProps) {
   const router = useRouter();
@@ -49,8 +45,6 @@ export function ReaderHeader({
         onLast={onLast}
         onRandom={onRandom}
         isLoadingRandom={isLoadingRandom}
-        hasOlder={hasOlder}
-        hasNewer={hasNewer}
         datePicker={datePicker}
       />
     </header>

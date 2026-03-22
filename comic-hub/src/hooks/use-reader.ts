@@ -36,8 +36,8 @@ interface UseReaderReturn {
   loadOlder: () => void;
   loadNewer: () => void;
   goToDate: (date: string) => void;
-  goToFirst: () => void;
-  goToLast: () => void;
+  goToFirst: () => 'already' | 'scrolled' | 'loading';
+  goToLast: () => 'already' | 'scrolled' | 'loading';
   goToRandom: () => void;
   goNewer: () => void;
   goOlder: () => void;
@@ -238,17 +238,45 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
     setCenterDate(newestStrip.date);
   }, [strips, hasNewer]);
 
-  const goToFirst = useCallback(() => {
-    if (windowData?.comic?.oldest) {
-      goToDate(windowData.comic.oldest);
-    }
-  }, [windowData, goToDate]);
+  const goToFirst = useCallback((): 'already' | 'scrolled' | 'loading' => {
+    const oldestDate = windowData?.comic?.oldest;
+    if (!oldestDate) return 'loading';
 
-  const goToLast = useCallback(() => {
-    if (windowData?.comic?.newest) {
-      goToDate(windowData.comic.newest);
+    const firstIdx = strips.findIndex((s) => s.date === oldestDate);
+
+    // Already at or near the first strip (scroll centering may land 1-2 strips off)
+    if (firstIdx >= 0 && currentIndex <= firstIdx + 2) return 'already';
+
+    // First strip is loaded but not in view — scroll to it
+    if (firstIdx >= 0) {
+      setCurrentIndex(firstIdx);
+      return 'scrolled';
     }
-  }, [windowData, goToDate]);
+
+    // Not loaded — fetch it
+    goToDate(oldestDate);
+    return 'loading';
+  }, [windowData, strips, currentIndex, goToDate]);
+
+  const goToLast = useCallback((): 'already' | 'scrolled' | 'loading' => {
+    const newestDate = windowData?.comic?.newest;
+    if (!newestDate) return 'loading';
+
+    const lastIdx = strips.findIndex((s) => s.date === newestDate);
+
+    // Already at or near the latest strip (scroll centering may land 1-2 strips off)
+    if (lastIdx >= 0 && currentIndex >= lastIdx - 2) return 'already';
+
+    // Latest strip is loaded but not in view — scroll to it
+    if (lastIdx >= 0) {
+      setCurrentIndex(lastIdx);
+      return 'scrolled';
+    }
+
+    // Not loaded — fetch it
+    goToDate(newestDate);
+    return 'loading';
+  }, [windowData, strips, currentIndex, goToDate]);
 
   const goToRandom = useCallback(() => {
     setRandomComicId(null);

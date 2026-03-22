@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { keepPreviousData } from '@tanstack/react-query';
 import { useGetComicsQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
 import { usePreferencesStore } from '@/stores/preferences-store';
 
@@ -28,12 +29,12 @@ export function useReadingList(currentComicId: number): UseReadingListReturn {
 
   const { data: comicsData, isLoading: comicsLoading } = useGetComicsQuery(
     { first: 200 },
-    { staleTime: 5 * 60 * 1000 },
+    { staleTime: 5 * 60 * 1000, placeholderData: keepPreviousData },
   );
 
   const { data: prefsData, isLoading: prefsLoading } = useGetUserPreferencesQuery(
     undefined,
-    { staleTime: 5 * 60 * 1000 },
+    { staleTime: 5 * 60 * 1000, placeholderData: keepPreviousData },
   );
 
   const comics = useMemo(() => {

@@ -92,13 +92,17 @@ public class AvatarBackfillJobConfig {
     @Bean
     public Tasklet avatarBackfillTasklet() {
         return (contribution, chunkContext) -> {
-            log.info("Starting avatar backfill job");
+            log.info("Starting avatar backfill job (delay between downloads: {}ms)", delayBetweenDownloads);
 
             long startTime = System.currentTimeMillis();
             int downloaded = managementFacade.downloadMissingAvatars();
             long duration = System.currentTimeMillis() - startTime;
 
-            log.info("Avatar backfill job complete: {} avatars downloaded in {}ms", downloaded, duration);
+            if (downloaded == 0) {
+                log.info("Avatar backfill complete: no missing avatars found ({}ms)", duration);
+            } else {
+                log.info("Avatar backfill complete: {} avatars downloaded in {}ms", downloaded, duration);
+            }
             return RepeatStatus.FINISHED;
         };
     }

@@ -73,18 +73,18 @@ public class MetricsArchiveJobConfig {
     @Bean
     public Tasklet metricsArchiveTasklet() {
         return (contribution, chunkContext) -> {
-            log.info("Starting metrics archiving");
+            LocalDate yesterday = LocalDate.now().minusDays(1);
+            log.info("Starting metrics archiving for date: {}", yesterday);
 
             long startTime = System.currentTimeMillis();
-            LocalDate yesterday = LocalDate.now().minusDays(1);
             boolean success = metricsArchiveService.archiveMetricsForDate(yesterday);
             long duration = System.currentTimeMillis() - startTime;
 
             if (success) {
-                log.info("Metrics archiving completed successfully in {}ms", duration);
+                log.info("Metrics archiving completed successfully for {} in {}ms", yesterday, duration);
             } else {
-                log.error("Metrics archiving failed");
-                throw new IllegalStateException("Metrics archiving failed");
+                log.error("Metrics archiving failed for date: {} after {}ms - check MetricsArchiveService logs for root cause", yesterday, duration);
+                throw new IllegalStateException("Metrics archiving failed for date: " + yesterday);
             }
 
             return RepeatStatus.FINISHED;

@@ -50,6 +50,7 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
             <img
               src={strip.imageUrl}
               alt={`${comicName} - ${formattedDate}`}
+              loading="lazy"
               className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setLoaded(true)}
               onError={() => setError(true)}

@@ -21,7 +21,7 @@ public class LoggingJobExecutionListener implements JobExecutionListener {
     @Override
     public void beforeJob(JobExecution jobExecution) {
         log.info(MSG_SEPARATOR);
-        log.info("Starting Comic Retrieval Job ID: {}, Job: {}", jobExecution.getId(), jobExecution.getJobInstance().getJobName());
+        log.info("Starting Job ID: {}, Job: {}", jobExecution.getId(), jobExecution.getJobInstance().getJobName());
         log.info("Job Parameters: {}", jobExecution.getJobParameters());
         log.info(MSG_SEPARATOR);
     }
@@ -32,7 +32,7 @@ public class LoggingJobExecutionListener implements JobExecutionListener {
         Duration duration = Duration.between(jobExecution.getStartTime(), jobExecution.getEndTime());
 
         log.info(MSG_SEPARATOR);
-        log.info("Finished Comic Retrieval Job ID: {}, Job: {}", jobExecution.getId(), jobExecution.getJobInstance().getJobName());
+        log.info("Finished Job ID: {}, Job: {}", jobExecution.getId(), jobExecution.getJobInstance().getJobName());
         log.info("--> Status: {}", jobExecution.getStatus());
         log.info("--> Exit Code: {}", jobExecution.getExitStatus().getExitCode());
         log.info("--> Exit Description: {}", jobExecution.getExitStatus().getExitDescription());

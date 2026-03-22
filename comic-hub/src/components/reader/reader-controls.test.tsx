@@ -8,8 +8,6 @@ describe('ReaderControls', () => {
     onLast: vi.fn(),
     onRandom: vi.fn(),
     isLoadingRandom: false,
-    hasOlder: true,
-    hasNewer: true,
   };
 
   beforeEach(() => {
@@ -45,16 +43,11 @@ describe('ReaderControls', () => {
     expect(defaultProps.onRandom).toHaveBeenCalledOnce();
   });
 
-  it('disables first button when hasOlder is false', () => {
-    render(<ReaderControls {...defaultProps} hasOlder={false} />);
+  it('first and last buttons are always enabled', () => {
+    render(<ReaderControls {...defaultProps} />);
 
-    expect(screen.getByRole('button', { name: /first strip/i })).toBeDisabled();
-  });
-
-  it('disables last button when hasNewer is false', () => {
-    render(<ReaderControls {...defaultProps} hasNewer={false} />);
-
-    expect(screen.getByRole('button', { name: /latest strip/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /first strip/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /latest strip/i })).toBeEnabled();
   });
 
   it('disables random button when loading', () => {
