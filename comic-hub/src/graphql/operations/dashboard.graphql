@@ -71,6 +71,8 @@ query GetComicStrip($comicId: Int!, $date: Date!) {
     available
     imageUrl
     date
+    width
+    height
     previous {
       date
     }
@@ -153,6 +155,49 @@ mutation UpdateDisplaySettings($settings: JSON!) {
       message
       field
       code
+    }
+  }
+}
+
+# Query for a window of strips centered on a date
+query GetStripWindow($comicId: Int!, $center: Date!, $before: Int!, $after: Int!) {
+  comic(id: $comicId) {
+    id
+    name
+    oldest
+    newest
+    avatarUrl
+    stripWindow(center: $center, before: $before, after: $after) {
+      date
+      available
+      imageUrl
+      width
+      height
+    }
+  }
+}
+
+# Query for a random strip
+query GetRandomStrip($comicId: Int) {
+  randomStrip(comicId: $comicId) {
+    date
+    available
+    imageUrl
+    width
+    height
+  }
+}
+
+# Query for strips at specific dates
+query GetStrips($comicId: Int!, $dates: [Date!]!) {
+  comic(id: $comicId) {
+    id
+    strips(dates: $dates) {
+      date
+      available
+      imageUrl
+      width
+      height
     }
   }
 }

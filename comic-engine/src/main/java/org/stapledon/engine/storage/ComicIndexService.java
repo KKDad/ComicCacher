@@ -177,6 +177,21 @@ public class ComicIndexService {
     }
 
     /**
+     * Get all available dates for a comic, sorted in ascending order.
+     */
+    public List<LocalDate> getAvailableDates(int comicId, String comicName) {
+        ComicDateIndex index = getOrLoadIndex(comicId, comicName);
+        if (index == null) {
+            return List.of();
+        }
+        List<LocalDate> dates = index.getAvailableDates();
+        if (dates == null || dates.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(dates);
+    }
+
+    /**
      * Mark a date as available and update the index. Thread-safe: uses write lock
      * to prevent concurrent modification.
      */

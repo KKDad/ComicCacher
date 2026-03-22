@@ -72,6 +72,6 @@ describe('ContinueReading', () => {
   it('links to the correct comic strip page', () => {
     render(<ContinueReading lastRead={lastRead} />);
     const link = screen.getByRole('link', { name: /continue reading/i });
-    expect(link).toHaveAttribute('href', '/comics/1/2024-01-15');
+    expect(link).toHaveAttribute('href', '/comics/1/read?date=2024-01-15');
   });
 });

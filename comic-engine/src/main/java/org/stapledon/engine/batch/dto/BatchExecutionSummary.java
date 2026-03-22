@@ -39,6 +39,7 @@ public class BatchExecutionSummary {
     LocalDateTime endTime;
     @ToString.Include
     String errorMessage;
+    String logFileName;
     Map<String, Object> parameters;
     List<BatchStepSummary> steps;
 }

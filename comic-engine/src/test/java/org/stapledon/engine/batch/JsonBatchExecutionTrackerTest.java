@@ -325,6 +325,96 @@ class JsonBatchExecutionTrackerTest {
     }
 
     // =========================================================================
+    // beforeJob / Stable ID Tests
+    // =========================================================================
+
+    @Test
+    void beforeJobWritesStartedEntryToJson() {
+        JobExecution execution = createJobExecution("TestJob", 1L, BatchStatus.STARTED);
+
+        tracker.beforeJob(execution);
+
+        Optional<BatchExecutionSummary> result = tracker.getLastExecution("TestJob");
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo("STARTED");
+        assertThat(result.get().getExecutionId()).isEqualTo(1L);
+        assertThat(result.get().getStartTime()).isNotNull();
+        assertThat(result.get().getEndTime()).isNull();
+    }
+
+    @Test
+    void afterJobUpdatesStartedEntryInPlace() {
+        JobExecution execution = createJobExecution("TestJob", 1L, BatchStatus.STARTED);
+        tracker.beforeJob(execution);
+
+        // Simulate job completion
+        execution.setStatus(BatchStatus.COMPLETED);
+        execution.setExitStatus(new ExitStatus("COMPLETED"));
+        execution.setEndTime(LocalDateTime.of(2026, 3, 17, 6, 30, 0));
+        tracker.afterJob(execution);
+
+        List<BatchExecutionSummary> history = tracker.getExecutionHistory("TestJob", 10);
+        assertThat(history).hasSize(1);
+        assertThat(history.getFirst().getStatus()).isEqualTo("COMPLETED");
+        assertThat(history.getFirst().getExecutionId()).isEqualTo(1L);
+        assertThat(history.getFirst().getEndTime()).isNotNull();
+    }
+
+    @Test
+    void stableIdIncrementsPersistentlyAcrossTrackerInstances() {
+        tracker.afterJob(createJobExecution("TestJob", 1L, BatchStatus.COMPLETED));
+        assertThat(tracker.getLastExecution("TestJob").orElseThrow().getExecutionId()).isEqualTo(1L);
+
+        // Simulate restart: new tracker instance, same JSON file
+        var tracker2 = new JsonBatchExecutionTracker(cacheProperties, gson, 5);
+        // H2 would restart from 1, but stable ID should continue from 2
+        tracker2.afterJob(createJobExecution("TestJob", 1L, BatchStatus.COMPLETED));
+
+        List<BatchExecutionSummary> history = tracker2.getExecutionHistory("TestJob", 10);
+        assertThat(history).hasSize(2);
+        assertThat(history.get(0).getExecutionId()).isEqualTo(2L);
+        assertThat(history.get(1).getExecutionId()).isEqualTo(1L);
+    }
+
+    @Test
+    void concurrentJobsGetDistinctStableIds() {
+        JobExecution execA = createJobExecution("JobA", 1L, BatchStatus.STARTED);
+        JobExecution execB = createJobExecution("JobB", 2L, BatchStatus.STARTED);
+
+        tracker.beforeJob(execA);
+        tracker.beforeJob(execB);
+
+        Optional<BatchExecutionSummary> a = tracker.getLastExecution("JobA");
+        Optional<BatchExecutionSummary> b = tracker.getLastExecution("JobB");
+        assertThat(a).isPresent();
+        assertThat(b).isPresent();
+        assertThat(a.get().getExecutionId()).isNotEqualTo(b.get().getExecutionId());
+    }
+
+    @Test
+    void afterJobWithoutBeforeJobFallsBackToPrepend() {
+        // Skip beforeJob entirely — simulates backward compat
+        tracker.afterJob(createJobExecution("TestJob", 1L, BatchStatus.COMPLETED));
+
+        Optional<BatchExecutionSummary> result = tracker.getLastExecution("TestJob");
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.get().getExecutionId()).isNotNull();
+    }
+
+    @Test
+    void crashedJobLeavesStartedEntry() {
+        JobExecution execution = createJobExecution("TestJob", 1L, BatchStatus.STARTED);
+        tracker.beforeJob(execution);
+        // No afterJob() — simulates a crash
+
+        Optional<BatchExecutionSummary> result = tracker.getLastExecution("TestJob");
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo("STARTED");
+        assertThat(result.get().getEndTime()).isNull();
+    }
+
+    // =========================================================================
     // Test Helpers
     // =========================================================================
 

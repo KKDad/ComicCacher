@@ -12,14 +12,17 @@ import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Integration test verifying that batch job log files land in the correct directory ({jobName}/{executionId}.log)
- * via the composite MDC key (batchLogPath) used by the SiftingAppender.
+ * Integration test verifying that batch job log files land in the correct directory
+ * ({jobName}/{jobName}-{date}-{hash}.log) via the composite MDC key (batchLogPath)
+ * used by the SiftingAppender.
  */
 @Slf4j
 class BatchLogMdcIT extends AbstractBatchJobIntegrationTest {
@@ -40,27 +43,41 @@ class BatchLogMdcIT extends AbstractBatchJobIntegrationTest {
         JobExecution jobExecution = jobOperator.start(logVerificationJob, params);
         assertThat(jobExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
 
-        long executionId = jobExecution.getId();
-
-        // Verify log file at correct path: batch-logs/LogVerificationJob/{executionId}.log
-        Path expectedLogFile = Paths.get(
-                cacheProperties.getLocation(), "batch-logs", "LogVerificationJob", executionId + ".log");
-        assertThat(Files.exists(expectedLogFile))
-                .as("Log file should exist at %s", expectedLogFile)
-                .isTrue();
-        assertThat(Files.size(expectedLogFile))
+        // Verify log file matching LogVerificationJob-{date}-{hash}.log exists in the job directory
+        Path jobLogDir = Paths.get(
+                cacheProperties.getLocation(), "batch-logs", "LogVerificationJob");
+        Path logFile = findLogFile(jobLogDir, "LogVerificationJob-");
+        assertThat(logFile)
+                .as("Log file matching LogVerificationJob-*.log should exist in %s", jobLogDir)
+                .isNotNull();
+        assertThat(Files.size(logFile))
                 .as("Log file should not be empty")
                 .isGreaterThan(0);
 
         // Verify marker text is in the log
-        String logContent = Files.readString(expectedLogFile);
+        String logContent = Files.readString(logFile);
         assertThat(logContent).contains("Log verification marker");
 
         // Verify no log file at the old broken path
-        Path brokenLogFile = Paths.get(
-                cacheProperties.getLocation(), "batch-logs", "unknown", executionId + ".log");
-        assertThat(Files.exists(brokenLogFile))
-                .as("Log file should NOT exist at old broken path %s", brokenLogFile)
+        Path brokenLogDir = Paths.get(
+                cacheProperties.getLocation(), "batch-logs", "unknown");
+        assertThat(Files.exists(brokenLogDir))
+                .as("No log files should exist at old broken path %s", brokenLogDir)
                 .isFalse();
+    }
+
+    private Path findLogFile(Path dir, String prefix) throws IOException {
+        if (!Files.isDirectory(dir)) {
+            return null;
+        }
+        try (Stream<Path> files = Files.list(dir)) {
+            return files
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        return name.startsWith(prefix) && name.endsWith(".log");
+                    })
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 }

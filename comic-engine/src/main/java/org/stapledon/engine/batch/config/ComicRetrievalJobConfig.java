@@ -27,7 +27,6 @@ import java.util.List;
 
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
-import org.stapledon.engine.batch.LoggingJobExecutionListener;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
@@ -64,7 +63,7 @@ public class ComicRetrievalJobConfig {
     @Primary
     public Job comicDownloadJob(JobRepository jobRepository, @Qualifier("comicRetrievalStep") Step comicRetrievalStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ComicDownloadJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).listener(new LoggingJobExecutionListener())
+        return new JobBuilder("ComicDownloadJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker)
                 .start(comicRetrievalStep).build();
     }
 
@@ -84,7 +83,9 @@ public class ComicRetrievalJobConfig {
      */
     @Bean
     public ItemReader<LocalDate> dateReader() {
-        return new ListItemReader<>(List.of(LocalDate.now()));
+        LocalDate targetDate = LocalDate.now();
+        log.info("Comic download target date: {} ({})", targetDate, targetDate.getDayOfWeek());
+        return new ListItemReader<>(List.of(targetDate));
     }
 
     /**
@@ -93,17 +94,21 @@ public class ComicRetrievalJobConfig {
     @Bean
     public ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor() {
         return date -> {
-            log.info("Processing comics for date: {}", date);
+            log.info("Processing comics for date: {} ({})", date, date.getDayOfWeek());
             long startTime = System.currentTimeMillis();
 
             // Management facade handles download + save + metadata update
             List<ComicDownloadResult> results = managementFacade.updateComicsForDate(date);
 
             long duration = System.currentTimeMillis() - startTime;
-            long successCount = results.stream().filter(ComicDownloadResult::isSuccessful).count();
-            long failureCount = results.size() - successCount;
 
-            log.info("Completed processing {} comics in {}ms: {} successful, {} failed", results.size(), duration, successCount, failureCount);
+            if (results.isEmpty()) {
+                log.info("No comics returned for download on {} - all comics were filtered upstream", date);
+            } else {
+                long successCount = results.stream().filter(ComicDownloadResult::isSuccessful).count();
+                long failureCount = results.size() - successCount;
+                log.info("Completed processing {} comics in {}ms: {} successful, {} failed", results.size(), duration, successCount, failureCount);
+            }
 
             return results;
         };
@@ -118,7 +123,7 @@ public class ComicRetrievalJobConfig {
             for (List<ComicDownloadResult> results : chunk.getItems()) {
                 for (ComicDownloadResult result : results) {
                     if (result.isSuccessful()) {
-                        log.debug("Successfully processed: {}", result.getRequest().getComicName());
+                        log.info("Successfully downloaded: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());
                     } else {
                         log.error("Failed to process: {} - {}", result.getRequest().getComicName(), result.getErrorMessage());
                     }

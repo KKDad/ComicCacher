@@ -95,9 +95,7 @@ Tracks Spring Batch job execution history. Written after each job completion via
 
 Records individual comic retrieval attempts with outcomes. Used for troubleshooting and monitoring download success rates. In-memory cached after first load.
 
-**Purging:** Two independent purge mechanisms exist:
-1. **Repository-level** -- `@Scheduled(cron = "0 30 2 * * ?")` in `JsonRetrievalStatusRepository`. Removes records older than 7 days.
-2. **Batch job** -- `RetrievalRecordPurgeJob` at 6:45 AM with configurable retention (`batch.record-purge.days-to-keep`, default 30). See [Batch Jobs Design](../design/batch-jobs.md#retrievalrecordpurgejob).
+**Purging:** `RetrievalRecordPurgeJob` at 6:45 AM with configurable retention (`batch.record-purge.days-to-keep`, default 30). See [Batch Jobs Design](../design/batch-jobs.md#retrievalrecordpurgejob).
 
 **DTO:** `ComicRetrievalRecordStorage` wrapping `List<ComicRetrievalRecord>` (`comic-common`)
 

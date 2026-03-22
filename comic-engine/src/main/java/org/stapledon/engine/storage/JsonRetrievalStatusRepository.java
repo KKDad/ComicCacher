@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -183,14 +182,5 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
         return (int) storage.getRecords().stream()
                 .filter(record -> record.getStatus() == status)
                 .count();
-    }
-
-    /**
-     * Automatically purge old records every day at 2:30 AM
-     */
-    @Scheduled(cron = "0 30 2 * * ?")
-    public void scheduledPurge() {
-        log.info("Running scheduled purge of old retrieval records");
-        purgeOldRecords(7);
     }
 }

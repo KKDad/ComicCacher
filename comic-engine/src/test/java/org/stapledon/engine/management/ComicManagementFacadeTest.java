@@ -450,6 +450,170 @@ class ComicManagementFacadeTest {
         assertThat(result.get()).isEqualTo(oldest);
     }
 
+    // =========================================================================
+    // getStripWindow
+    // =========================================================================
+
+    @Test
+    void shouldGetStripWindowCenteredOnDate() {
+        // Arrange: center date with one before and one after
+        LocalDate center = LocalDate.of(2026, 3, 15);
+        LocalDate before = center.minusDays(1);
+        LocalDate after = center.plusDays(1);
+        ImageDto img = ImageDto.builder().mimeType("image/png").build();
+        ComicIdentifier id = ComicIdentifier.from(testComic);
+
+        when(storageFacade.getPreviousDateWithComic(id, center)).thenReturn(Optional.of(before));
+        when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.of(after));
+
+        // Navigation for each date
+        when(storageFacade.getComicStrip(id, before)).thenReturn(Optional.of(img));
+        when(storageFacade.getPreviousDateWithComic(id, before)).thenReturn(Optional.empty());
+        when(storageFacade.getNextDateWithComic(id, before)).thenReturn(Optional.of(center));
+
+        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+        when(storageFacade.getNextDateWithComic(id, after)).thenReturn(Optional.empty());
+
+        when(storageFacade.getComicStrip(id, after)).thenReturn(Optional.of(img));
+        when(storageFacade.getPreviousDateWithComic(id, after)).thenReturn(Optional.of(center));
+
+        // Act
+        List<ComicNavigationResult> results = facade.getStripWindow(1, center, 1, 1);
+
+        // Assert
+        assertThat(results).hasSize(3);
+        assertThat(results.get(0).isFound()).isTrue();
+        assertThat(results.get(1).isFound()).isTrue();
+        assertThat(results.get(2).isFound()).isTrue();
+    }
+
+    @Test
+    void shouldGetStripWindowAtBoundary() {
+        // Arrange: center date is the oldest — no "before" dates
+        LocalDate center = LocalDate.of(2026, 3, 15);
+        LocalDate after = center.plusDays(1);
+        ImageDto img = ImageDto.builder().mimeType("image/png").build();
+        ComicIdentifier id = ComicIdentifier.from(testComic);
+
+        when(storageFacade.getPreviousDateWithComic(id, center)).thenReturn(Optional.empty());
+        when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.of(after));
+
+        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+        when(storageFacade.getNextDateWithComic(id, after)).thenReturn(Optional.empty());
+
+        when(storageFacade.getComicStrip(id, after)).thenReturn(Optional.of(img));
+        when(storageFacade.getPreviousDateWithComic(id, after)).thenReturn(Optional.of(center));
+
+        // Act — request 3 before but only center + after available
+        List<ComicNavigationResult> results = facade.getStripWindow(1, center, 3, 3);
+
+        // Assert
+        assertThat(results).hasSize(2);
+    }
+
+    @Test
+    void shouldGetStripWindowCenterOnlyWhenBeforeAndAfterAreZero() {
+        LocalDate center = LocalDate.of(2026, 3, 15);
+        ImageDto img = ImageDto.builder().mimeType("image/png").build();
+        ComicIdentifier id = ComicIdentifier.from(testComic);
+
+        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+        when(storageFacade.getPreviousDateWithComic(id, center)).thenReturn(Optional.empty());
+        when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.empty());
+
+        List<ComicNavigationResult> results = facade.getStripWindow(1, center, 0, 0);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().isFound()).isTrue();
+    }
+
+    @Test
+    void shouldHandleAsymmetricStripWindow() {
+        // Many dates available before, none after
+        LocalDate center = LocalDate.of(2026, 3, 15);
+        LocalDate before1 = center.minusDays(1);
+        LocalDate before2 = center.minusDays(2);
+        ImageDto img = ImageDto.builder().mimeType("image/png").build();
+        ComicIdentifier id = ComicIdentifier.from(testComic);
+
+        when(storageFacade.getPreviousDateWithComic(id, center)).thenReturn(Optional.of(before1));
+        when(storageFacade.getPreviousDateWithComic(id, before1)).thenReturn(Optional.of(before2));
+        when(storageFacade.getPreviousDateWithComic(id, before2)).thenReturn(Optional.empty());
+        when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.empty());
+
+        when(storageFacade.getComicStrip(id, before2)).thenReturn(Optional.of(img));
+        when(storageFacade.getNextDateWithComic(id, before2)).thenReturn(Optional.of(before1));
+
+        when(storageFacade.getComicStrip(id, before1)).thenReturn(Optional.of(img));
+        when(storageFacade.getNextDateWithComic(id, before1)).thenReturn(Optional.of(center));
+        when(storageFacade.getPreviousDateWithComic(id, before1)).thenReturn(Optional.of(before2));
+
+        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+
+        List<ComicNavigationResult> results = facade.getStripWindow(1, center, 5, 5);
+
+        assertThat(results).hasSize(3);
+    }
+
+    @Test
+    void shouldReturnEmptyStripWindowForUnknownComic() {
+        List<ComicNavigationResult> results = facade.getStripWindow(999, LocalDate.now(), 5, 5);
+
+        assertThat(results).isEmpty();
+    }
+
+    // =========================================================================
+    // getRandomDate
+    // =========================================================================
+
+    @Test
+    void shouldGetRandomDateForComic() {
+        // Arrange
+        List<LocalDate> dates = List.of(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 2, 1),
+                LocalDate.of(2026, 3, 1));
+        when(storageFacade.getAvailableDates(ComicIdentifier.from(testComic))).thenReturn(dates);
+
+        // Act
+        Optional<LocalDate> result = facade.getRandomDate(1);
+
+        // Assert
+        assertThat(result).isPresent();
+        assertThat(dates).contains(result.get());
+    }
+
+    @Test
+    void shouldReturnEmptyRandomDateForEmptyComic() {
+        when(storageFacade.getAvailableDates(ComicIdentifier.from(testComic))).thenReturn(List.of());
+
+        Optional<LocalDate> result = facade.getRandomDate(1);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyRandomDateForUnknownComic() {
+        Optional<LocalDate> result = facade.getRandomDate(999);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldReturnSingleDateWhenOnlyOneAvailable() {
+        LocalDate onlyDate = LocalDate.of(2026, 6, 1);
+        when(storageFacade.getAvailableDates(ComicIdentifier.from(testComic))).thenReturn(List.of(onlyDate));
+
+        Optional<LocalDate> result = facade.getRandomDate(1);
+
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(onlyDate);
+    }
+
+    // =========================================================================
+    // Navigation
+    // =========================================================================
+
     @Test
     void shouldNavigateBackwardConsecutively() {
         // Arrange: 3 days of comics

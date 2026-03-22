@@ -67,6 +67,13 @@ type Query {
     """
     strip(comicId: Int!, date: Date!): ComicStrip @authenticated
 
+    """
+    Get a random comic strip.
+    If comicId is provided, returns a random strip from that comic.
+    If comicId is null, picks a random comic and random date.
+    """
+    randomStrip(comicId: Int): ComicStrip @authenticated
+
     # =========================================================================
     # Search
     # =========================================================================

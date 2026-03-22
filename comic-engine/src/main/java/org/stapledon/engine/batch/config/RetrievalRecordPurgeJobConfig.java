@@ -18,12 +18,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.time.LocalDate;
+
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
 
 /**
- * Spring Batch configuration for retrieval record purge job. Purges old retrieval records to prevent unbounded growth.
+ * Spring Batch configuration for retrieval record purge job. Purges old retrieval records and batch log files to prevent unbounded growth.
  */
 @Slf4j
 @Configuration
@@ -31,6 +34,7 @@ import org.stapledon.engine.management.ManagementFacade;
 @ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "true", matchIfMissing = true)
 public class RetrievalRecordPurgeJobConfig {
 
+    private final BatchJobLogService batchJobLogService;
     private final ManagementFacade comicManagementFacade;
 
     @Value("${batch.record-purge.days-to-keep:30}")
@@ -47,16 +51,22 @@ public class RetrievalRecordPurgeJobConfig {
      */
     @Bean
     public DailyJobScheduler retrievalRecordPurgeJobScheduler(@Qualifier("retrievalRecordPurgeJob") Job retrievalRecordPurgeJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(retrievalRecordPurgeJob, cronExpression, timezone, jobOperator, tracker, "Purges old retrieval records beyond the retention window");
+        return new DailyJobScheduler(retrievalRecordPurgeJob, cronExpression, timezone, jobOperator, tracker, "Purges old retrieval records and batch log files beyond the retention window");
     }
 
     /**
-     * Job for purging old retrieval records
+     * Job for purging old retrieval records and batch log files
      */
     @Bean
-    public Job retrievalRecordPurgeJob(JobRepository jobRepository, @Qualifier("recordPurgeStep") Step recordPurgeStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+    public Job retrievalRecordPurgeJob(JobRepository jobRepository, @Qualifier("recordPurgeStep") Step recordPurgeStep, @Qualifier("logPurgeStep") Step logPurgeStep,
+                                       JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("RetrievalRecordPurgeJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).start(recordPurgeStep).build();
+        return new JobBuilder("RetrievalRecordPurgeJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .listener(jsonBatchExecutionTracker)
+                .start(recordPurgeStep)
+                .next(logPurgeStep)
+                .build();
     }
 
     /**
@@ -74,13 +84,49 @@ public class RetrievalRecordPurgeJobConfig {
     @Bean
     public Tasklet recordPurgeTasklet() {
         return (contribution, chunkContext) -> {
-            log.info("Starting retrieval record purge (keeping last {} days)", daysToKeep);
+            LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
+            log.info("Starting retrieval record purge (keeping last {} days, cutoff date: {})", daysToKeep, cutoffDate);
 
             long startTime = System.currentTimeMillis();
             int purgedCount = comicManagementFacade.purgeOldRetrievalRecords(daysToKeep);
             long duration = System.currentTimeMillis() - startTime;
 
-            log.info("Retrieval record purge completed in {}ms. Purged {} records.", duration, purgedCount);
+            if (purgedCount > 0) {
+                log.info("Retrieval record purge completed in {}ms: purged {} records older than {}", duration, purgedCount, cutoffDate);
+            } else {
+                log.info("Retrieval record purge completed in {}ms: no records older than {} to purge", duration, cutoffDate);
+            }
+
+            return RepeatStatus.FINISHED;
+        };
+    }
+
+    /**
+     * Step for purging old batch log files
+     */
+    @Bean
+    public Step logPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+
+        return new StepBuilder("logPurgeStep", jobRepository).tasklet(logPurgeTasklet(), transactionManager).build();
+    }
+
+    /**
+     * Tasklet that purges old batch log files
+     */
+    @Bean
+    public Tasklet logPurgeTasklet() {
+        return (contribution, chunkContext) -> {
+            log.info("Starting batch log file purge (keeping last {} days)", daysToKeep);
+
+            long startTime = System.currentTimeMillis();
+            int purgedCount = batchJobLogService.purgeOldLogFiles(daysToKeep);
+            long duration = System.currentTimeMillis() - startTime;
+
+            if (purgedCount > 0) {
+                log.info("Batch log file purge completed in {}ms: deleted {} log files", duration, purgedCount);
+            } else {
+                log.info("Batch log file purge completed in {}ms: no old log files to delete", duration);
+            }
 
             return RepeatStatus.FINISHED;
         };

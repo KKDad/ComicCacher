@@ -100,6 +100,12 @@ type Comic {
     Get the last (newest) available strip.
     """
     lastStrip: ComicStrip
+
+    """
+    Get a window of strips centered on a date.
+    Returns `before` older strips + the center strip + `after` newer strips, in chronological order.
+    """
+    stripWindow(center: Date!, before: Int!, after: Int!): [ComicStrip!]!
 }
 
 # =============================================================================
@@ -185,6 +191,16 @@ type ComicStrip {
     URL to the strip image (null if not available).
     """
     imageUrl: String
+
+    """
+    Image width in pixels (null if not available).
+    """
+    width: Int
+
+    """
+    Image height in pixels (null if not available).
+    """
+    height: Int
 
     """
     The previous strip before this date (null if at beginning).

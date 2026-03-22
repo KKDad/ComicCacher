@@ -16,12 +16,17 @@ import org.springframework.test.context.TestPropertySource;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.service.RetrievalStatusService;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Integration tests for RetrievalRecordPurgeJob. Tests the complete flow of purging old retrieval records.
+ * Integration tests for RetrievalRecordPurgeJob. Tests the complete flow of purging old retrieval records and batch log files.
  */
 @Slf4j
 @TestPropertySource(properties = {"batch.record-purge.enabled=true", "batch.record-purge.cron=0 45 6 * * ?", "batch.record-purge.days-to-keep=30"})
@@ -169,5 +174,61 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
         assertThat(countAfterSecond).as("Record count should be same after second purge").isEqualTo(countAfterFirst);
 
         log.info("SUCCESS: Job is idempotent");
+    }
+
+    /**
+     * Test: RetrievalRecordPurgeJob purges old batch log files while keeping recent ones.
+     *
+     * Given: Log files exist with old and recent dates in their filenames When: RetrievalRecordPurgeJob is executed Then: Old log files are deleted, recent log files remain
+     */
+    @Test
+    void retrievalRecordPurgeJobPurgesOldLogFiles() throws Exception {
+        log.info("TEST: RetrievalRecordPurgeJob purges old batch log files");
+
+        Path batchLogsDir = Paths.get(BATCH_CACHE_DIR, "batch-logs", "TestJob");
+        Files.createDirectories(batchLogsDir);
+
+        // Create recent log files (within 30 days) - should NOT be deleted
+        List<Path> recentFiles = List.of(
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(1)),
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(15)));
+
+        // Create old log files (older than 30 days) - should be deleted
+        List<Path> oldFiles = List.of(
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(31)),
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(60)),
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(90)));
+
+        // Verify all files exist before purge
+        for (Path file : recentFiles) {
+            assertThat(Files.exists(file)).as("Recent log file should exist before purge: " + file).isTrue();
+        }
+        for (Path file : oldFiles) {
+            assertThat(Files.exists(file)).as("Old log file should exist before purge: " + file).isTrue();
+        }
+
+        // Execute the job
+        JobExecution jobExecution = runJob();
+        assertThat(jobExecution.getStatus()).as("Job should complete successfully").isEqualTo(BatchStatus.COMPLETED);
+
+        // Verify recent files still exist
+        for (Path file : recentFiles) {
+            assertThat(Files.exists(file)).as("Recent log file should still exist after purge: " + file).isTrue();
+        }
+
+        // Verify old files are deleted
+        for (Path file : oldFiles) {
+            assertThat(Files.exists(file)).as("Old log file should be deleted after purge: " + file).isFalse();
+        }
+
+        log.info("SUCCESS: Purged 3 old log files, kept 2 recent log files");
+    }
+
+    private Path createTestLogFile(Path directory, String jobName, LocalDate date) throws IOException {
+        String dateStr = date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        String hash = String.format("%08x", date.hashCode());
+        Path logFile = directory.resolve(jobName + "-" + dateStr + "-" + hash + ".log");
+        Files.writeString(logFile, "test log content for " + date);
+        return logFile;
     }
 }

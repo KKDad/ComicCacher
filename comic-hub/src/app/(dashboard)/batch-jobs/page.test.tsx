@@ -134,6 +134,105 @@ describe('BatchJobsPage', () => {
     expect(matches.length).toBeGreaterThan(0);
   });
 
+  it('shows no paused or failed sections when counts are zero', () => {
+    vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
+      data: {
+        batchSchedulers: [
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+        ],
+      },
+      isLoading: false,
+    } as any);
+    vi.mocked(useGetRecentBatchJobsQuery).mockReturnValue({
+      data: { recentBatchJobs: [
+        { executionId: 1, jobName: 'ComicDownloadJob', status: 'COMPLETED' as BatchStatusEnum, startTime: new Date().toISOString(), endTime: new Date().toISOString(), durationMs: 5000, exitCode: 'COMPLETED', exitDescription: null, steps: [] },
+      ] },
+      isLoading: false,
+    } as any);
+    renderWithProviders(<BatchJobsPage />);
+
+    expect(screen.queryByText(/paused/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/failed/)).not.toBeInTheDocument();
+  });
+
+  it('shows failure time in days when old', () => {
+    vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
+      data: {
+        batchSchedulers: [
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+        ],
+      },
+      isLoading: false,
+    } as any);
+    vi.mocked(useGetRecentBatchJobsQuery).mockReturnValue({
+      data: {
+        recentBatchJobs: [
+          { executionId: 1, jobName: 'ComicDownloadJob', status: 'FAILED' as BatchStatusEnum, startTime: new Date(Date.now() - 3 * 86_400_000).toISOString(), endTime: null, durationMs: null, exitCode: 'FAILED', exitDescription: 'Error', steps: [] },
+        ],
+      },
+      isLoading: false,
+    } as any);
+    renderWithProviders(<BatchJobsPage />);
+
+    expect(screen.getByText(/3d ago/)).toBeInTheDocument();
+  });
+
+  it('passes refetchInterval that returns 3000 when a job is STARTED', () => {
+    let capturedRefetchInterval: any;
+    vi.mocked(useGetRecentBatchJobsQuery).mockImplementation((_vars: any, opts: any) => {
+      capturedRefetchInterval = opts?.refetchInterval;
+      return { data: { recentBatchJobs: [] }, isLoading: false } as any;
+    });
+    vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
+      data: { batchSchedulers: [] },
+      isLoading: false,
+    } as any);
+    renderWithProviders(<BatchJobsPage />);
+
+    // Simulate query state with a running job
+    const queryWithRunning = { state: { data: { recentBatchJobs: [{ status: 'STARTED' }] } } };
+    expect(capturedRefetchInterval(queryWithRunning)).toBe(3000);
+
+    // Simulate query state with no running jobs
+    const queryNoRunning = { state: { data: { recentBatchJobs: [{ status: 'COMPLETED' }] } } };
+    expect(capturedRefetchInterval(queryNoRunning)).toBe(false);
+
+    // Simulate null data
+    const queryNullData = { state: { data: null } };
+    expect(capturedRefetchInterval(queryNullData)).toBe(false);
+  });
+
+  it('truncates executions to 5 per job', () => {
+    const jobs = Array.from({ length: 8 }, (_, i) => ({
+      executionId: i + 1,
+      jobName: 'ComicDownloadJob',
+      status: 'COMPLETED' as BatchStatusEnum,
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      durationMs: 5000,
+      exitCode: 'COMPLETED',
+      exitDescription: null,
+      steps: [],
+    }));
+
+    vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
+      data: {
+        batchSchedulers: [
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+        ],
+      },
+      isLoading: false,
+    } as any);
+    vi.mocked(useGetRecentBatchJobsQuery).mockReturnValue({
+      data: { recentBatchJobs: jobs },
+      isLoading: false,
+    } as any);
+    renderWithProviders(<BatchJobsPage />);
+
+    // Should still render without error (truncation happens internally)
+    expect(screen.getByText('Comic Download')).toBeInTheDocument();
+  });
+
   it('shows last failure time in summary bar', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {

@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useGetUserPreferencesQuery, useUpdateDisplaySettingsMutation } from '@/generated/graphql';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePreferencesStore } from '@/stores/preferences-store';
-import { type DisplaySettings, type Theme, type ReadingDirection } from '@/lib/preferences-defaults';
+import { type DisplaySettings, type Theme, type ReaderNavMode, type ReaderScrollOrder } from '@/lib/preferences-defaults';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -150,26 +150,48 @@ export default function PreferencesPage() {
           <CardTitle>Reading</CardTitle>
           <CardDescription>Configure your default reading behavior.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Reading direction</p>
-              <p className="text-xs text-muted-foreground">Order strips appear when browsing a comic</p>
+              <p className="text-sm font-medium">Reading list</p>
+              <p className="text-xs text-muted-foreground">Which comics appear in the reader sidebar</p>
             </div>
             <div className="flex gap-2">
               <Button
-                variant={settings.readingDirection === 'newest-first' ? 'default' : 'outline'}
+                variant={settings.readerNavMode === 'favorites' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => update({ readingDirection: 'newest-first' as ReadingDirection })}
+                onClick={() => update({ readerNavMode: 'favorites' as ReaderNavMode })}
               >
-                Newest first
+                Favorites
               </Button>
               <Button
-                variant={settings.readingDirection === 'oldest-first' ? 'default' : 'outline'}
+                variant={settings.readerNavMode === 'all' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => update({ readingDirection: 'oldest-first' as ReadingDirection })}
+                onClick={() => update({ readerNavMode: 'all' as ReaderNavMode })}
               >
-                Oldest first
+                All
+              </Button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Scroll order</p>
+              <p className="text-xs text-muted-foreground">Order strips load when scrolling in the reader</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={settings.readerScrollOrder === 'catchup' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => update({ readerScrollOrder: 'catchup' as ReaderScrollOrder })}
+              >
+                Catch up
+              </Button>
+              <Button
+                variant={settings.readerScrollOrder === 'newest-first' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => update({ readerScrollOrder: 'newest-first' as ReaderScrollOrder })}
+              >
+                Newest first
               </Button>
             </div>
           </div>
