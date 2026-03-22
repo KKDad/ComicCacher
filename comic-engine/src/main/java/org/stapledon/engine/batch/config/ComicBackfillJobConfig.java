@@ -26,6 +26,8 @@ import java.util.List;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.ComicBackfillService;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.StripBackfillTask;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.management.ManagementFacade;
@@ -113,25 +115,30 @@ public class ComicBackfillJobConfig {
     @Qualifier("backfillTaskProcessor")
     public ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor() {
         return task -> {
-            log.info("Backfilling {} for date: {}", task.comic().getName(), task.date());
-
             try {
                 // Add a small delay between comics to avoid overwhelming sources
                 if (delayBetweenComics > 0) {
                     Thread.sleep(delayBetweenComics);
                 }
 
-                // Download this specific comic directly - much more efficient than
-                // iterating all comics. The comic has already been validated by
-                // ComicBackfillService.
-                return managementFacade.downloadComicForDate(task.comic(), task.date()).orElse(null);
+                if (task instanceof DateBackfillTask dateTask) {
+                    log.info("Backfilling {} for date: {}", dateTask.comic().getName(), dateTask.date());
+                    return managementFacade.downloadComicForDate(dateTask.comic(), dateTask.date()).orElse(null);
+                } else if (task instanceof StripBackfillTask stripTask) {
+                    log.info("Backfilling {} for strip #{}", stripTask.comic().getName(), stripTask.stripNumber());
+                    return managementFacade.downloadComicByStripNumber(
+                            stripTask.comic(), stripTask.stripNumber()).orElse(null);
+                } else {
+                    log.error("Unknown backfill task type: {}", task.getClass().getName());
+                    return null;
+                }
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.warn("Backfill interrupted for {}: {}", task.comic().getName(), e.getMessage());
                 return null;
             } catch (Exception e) {
-                log.error("Error backfilling {} for {}: {}", task.comic().getName(), task.date(), e.getMessage(), e);
+                log.error("Error backfilling {}: {}", task.comic().getName(), e.getMessage(), e);
                 return null;
             }
         };

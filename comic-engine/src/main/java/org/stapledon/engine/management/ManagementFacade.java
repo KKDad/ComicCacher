@@ -155,6 +155,25 @@ public interface ManagementFacade {
     Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date);
 
     /**
+     * Downloads and saves the latest strip for an indexed comic.
+     * This is used by the daily download job for indexed comics.
+     *
+     * @param comic The comic item to download
+     * @return The download result, or empty if the comic couldn't be downloaded
+     */
+    Optional<ComicDownloadResult> downloadLatestIndexedComic(ComicItem comic);
+
+    /**
+     * Downloads and saves a specific strip by number for an indexed comic.
+     * This is used by the backfill job for indexed comics.
+     *
+     * @param comic The comic item to download
+     * @param stripNumber The strip number to download
+     * @return The download result, or empty if the comic couldn't be downloaded
+     */
+    Optional<ComicDownloadResult> downloadComicByStripNumber(ComicItem comic, int stripNumber);
+
+    /**
      * Refreshes the comic list from storage and configuration.
      * This ensures that the in-memory comic list matches the persisted state.
      */

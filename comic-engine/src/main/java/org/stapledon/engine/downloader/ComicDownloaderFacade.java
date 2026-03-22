@@ -65,9 +65,30 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         }
 
         try {
-            log.debug("Downloading comic {} for date {} from source {}",
-                    request.getComicName(), request.getDate(), request.getSource());
-            ComicDownloadResult result = strategy.downloadComic(request);
+            ComicDownloadResult result;
+
+            if (strategy instanceof DailyComicDownloaderStrategy daily) {
+                log.debug("Downloading comic {} for date {} from source {}",
+                        request.getComicName(), request.getDate(), request.getSource());
+                result = daily.downloadComic(request);
+            } else if (strategy instanceof IndexedComicDownloaderStrategy indexed) {
+                // For indexed comics called via the date-based path, download the latest strip
+                log.debug("Downloading latest strip for indexed comic {} from source {}",
+                        request.getComicName(), request.getSource());
+                ComicItem comic = ComicItem.builder()
+                        .id(request.getComicId())
+                        .name(request.getComicName())
+                        .source(request.getSource())
+                        .sourceIdentifier(request.getSourceIdentifier())
+                        .build();
+                result = indexed.downloadLatestStrip(comic);
+            } else {
+                String errorMsg = String.format("Strategy for source '%s' does not implement a known download interface",
+                        request.getSource());
+                log.error(errorMsg);
+                recordFailure(request, ComicRetrievalStatus.UNKNOWN_ERROR, errorMsg, startTime, null);
+                return ComicDownloadResult.failure(request, errorMsg);
+            }
 
             // Record the result
             if (result.isSuccessful()) {
@@ -169,6 +190,103 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         }
 
         return results;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ComicDownloadResult downloadLatestStrip(ComicItem comic) {
+        LocalDateTime startTime = LocalDateTime.now();
+        ComicDownloaderStrategy strategy = downloaderStrategies.get(comic.getSource());
+
+        if (!(strategy instanceof IndexedComicDownloaderStrategy indexed)) {
+            String errorMsg = String.format("No indexed downloader strategy for source: %s", comic.getSource());
+            log.error(errorMsg);
+            ComicDownloadRequest request = buildRequestFromComic(comic);
+            recordFailure(request, ComicRetrievalStatus.UNKNOWN_ERROR, errorMsg, startTime, null);
+            return ComicDownloadResult.failure(request, errorMsg);
+        }
+
+        try {
+            ComicDownloadResult result = indexed.downloadLatestStrip(comic);
+            ComicDownloadRequest request = result.getRequest();
+
+            if (result.isSuccessful()) {
+                recordSuccess(request, startTime, result.getImageData().length);
+            } else {
+                recordFailure(request, ComicRetrievalStatus.COMIC_UNAVAILABLE,
+                        result.getErrorMessage(), startTime, null);
+            }
+
+            return result;
+        } catch (Exception e) {
+            String errorMessage = String.format("Error downloading latest strip for %s: %s",
+                    comic.getName(), e.getMessage());
+            log.error(errorMessage, e);
+            ComicDownloadRequest request = buildRequestFromComic(comic);
+            ComicRetrievalStatus status = determineErrorStatus(e);
+            recordFailure(request, status, errorMessage, startTime, null);
+            return ComicDownloadResult.failure(request, errorMessage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ComicDownloadResult downloadStrip(ComicItem comic, int stripNumber) {
+        LocalDateTime startTime = LocalDateTime.now();
+        ComicDownloaderStrategy strategy = downloaderStrategies.get(comic.getSource());
+
+        if (!(strategy instanceof IndexedComicDownloaderStrategy indexed)) {
+            String errorMsg = String.format("No indexed downloader strategy for source: %s", comic.getSource());
+            log.error(errorMsg);
+            ComicDownloadRequest request = buildRequestFromComic(comic);
+            recordFailure(request, ComicRetrievalStatus.UNKNOWN_ERROR, errorMsg, startTime, null);
+            return ComicDownloadResult.failure(request, errorMsg);
+        }
+
+        try {
+            ComicDownloadResult result = indexed.downloadStrip(comic, stripNumber);
+            ComicDownloadRequest request = result.getRequest();
+
+            if (result.isSuccessful()) {
+                recordSuccess(request, startTime, result.getImageData().length);
+            } else {
+                recordFailure(request, ComicRetrievalStatus.COMIC_UNAVAILABLE,
+                        result.getErrorMessage(), startTime, null);
+            }
+
+            return result;
+        } catch (Exception e) {
+            String errorMessage = String.format("Error downloading strip #%d for %s: %s",
+                    stripNumber, comic.getName(), e.getMessage());
+            log.error(errorMessage, e);
+            ComicDownloadRequest request = buildRequestFromComic(comic);
+            ComicRetrievalStatus status = determineErrorStatus(e);
+            recordFailure(request, status, errorMessage, startTime, null);
+            return ComicDownloadResult.failure(request, errorMessage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isIndexedSource(String source) {
+        ComicDownloaderStrategy strategy = downloaderStrategies.get(source);
+        return strategy instanceof IndexedComicDownloaderStrategy;
+    }
+
+    private ComicDownloadRequest buildRequestFromComic(ComicItem comic) {
+        return ComicDownloadRequest.builder()
+                .comicId(comic.getId())
+                .comicName(comic.getName())
+                .source(comic.getSource())
+                .sourceIdentifier(comic.getSourceIdentifier())
+                .date(LocalDate.now())
+                .build();
     }
 
     /**

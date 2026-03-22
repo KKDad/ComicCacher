@@ -2,29 +2,21 @@ package org.stapledon.engine.downloader;
 
 import java.util.Optional;
 
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
-
 /**
- * Strategy interface for downloading comics from a specific source.
- * Different implementations handle different comic sources like GoComics, ComicsKingdom, etc.
+ * Base strategy interface for downloading comics from a specific source.
+ * Sub-interfaces define the download method signature appropriate for each comic type.
+ *
+ * @see DailyComicDownloaderStrategy for date-based comics (GoComics, ComicsKingdom)
+ * @see IndexedComicDownloaderStrategy for strip-number-based comics (Freefall, XKCD)
  */
 public interface ComicDownloaderStrategy {
 
     /**
      * Returns the source identifier that this strategy handles.
      *
-     * @return The source identifier (e.g., "gocomics", "comicskingdom")
+     * @return The source identifier (e.g., "gocomics", "comicskingdom", "freefall")
      */
     String getSource();
-
-    /**
-     * Downloads a comic strip based on the provided request.
-     *
-     * @param request The download request containing comic details and date
-     * @return The download result containing the image data if successful
-     */
-    ComicDownloadResult downloadComic(ComicDownloadRequest request);
 
     /**
      * Downloads the avatar image for a comic.

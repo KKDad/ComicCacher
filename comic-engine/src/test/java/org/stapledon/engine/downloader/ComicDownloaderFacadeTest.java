@@ -34,9 +34,9 @@ class ComicDownloaderFacadeTest {
     private final byte[] testImageData = "test-image-data".getBytes();
     private DownloaderFacade facade;
     @Mock
-    private ComicDownloaderStrategy goComicsStrategy;
+    private DailyComicDownloaderStrategy goComicsStrategy;
     @Mock
-    private ComicDownloaderStrategy comicsKingdomStrategy;
+    private DailyComicDownloaderStrategy comicsKingdomStrategy;
 
     @BeforeEach
     void setUp() {

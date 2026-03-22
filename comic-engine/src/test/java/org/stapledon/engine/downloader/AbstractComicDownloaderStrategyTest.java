@@ -268,9 +268,9 @@ class AbstractComicDownloaderStrategyTest {
     }
 
     /**
-     * Test implementation of AbstractComicDownloaderStrategy for testing purposes
+     * Test implementation of AbstractDailyDownloaderStrategy for testing purposes
      */
-    private static class TestComicDownloaderStrategy extends AbstractComicDownloaderStrategy {
+    private static class TestComicDownloaderStrategy extends AbstractDailyDownloaderStrategy {
         private byte[] mockImageData;
         private byte[] mockAvatarData;
         private boolean throwException;

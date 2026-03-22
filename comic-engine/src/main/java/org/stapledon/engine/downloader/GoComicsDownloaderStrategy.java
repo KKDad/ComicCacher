@@ -22,7 +22,7 @@ import org.stapledon.common.service.ValidationService;
 @Slf4j
 @ToString
 @Component
-public class GoComicsDownloaderStrategy extends AbstractComicDownloaderStrategy {
+public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy {
 
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36";
     private static final int TIMEOUT = 5 * 1000;

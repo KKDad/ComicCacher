@@ -1,5 +1,7 @@
 package org.stapledon.common.dto;
 
+import java.time.LocalDate;
+
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -35,11 +37,25 @@ public class ComicDownloadResult {
     private final String errorMessage;
 
     /**
+     * The actual publication date discovered from the page (for indexed comics).
+     * Null for date-based comics where the date is already known from the request.
+     */
+    @ToString.Include
+    private final LocalDate actualDate;
+
+    /**
+     * The strip number (for indexed comics). Null for date-based comics.
+     */
+    @ToString.Include
+    private final Integer stripNumber;
+
+    /**
+     * Transcript text extracted from the comic page (nullable).
+     */
+    private final String transcript;
+
+    /**
      * Factory method to create a successful result.
-     *
-     * @param request   The original download request
-     * @param imageData The downloaded image data
-     * @return A successful ComicDownloadResult
      */
     public static ComicDownloadResult success(ComicDownloadRequest request, byte[] imageData) {
         return ComicDownloadResult.builder()
@@ -50,11 +66,22 @@ public class ComicDownloadResult {
     }
 
     /**
+     * Factory method to create a successful result with metadata from indexed comics.
+     */
+    public static ComicDownloadResult successWithMetadata(ComicDownloadRequest request, byte[] imageData,
+            LocalDate actualDate, Integer stripNumber, String transcript) {
+        return ComicDownloadResult.builder()
+                .request(request)
+                .imageData(imageData)
+                .successful(true)
+                .actualDate(actualDate)
+                .stripNumber(stripNumber)
+                .transcript(transcript)
+                .build();
+    }
+
+    /**
      * Factory method to create a failed result.
-     *
-     * @param request      The original download request
-     * @param errorMessage Description of the error
-     * @return A failed ComicDownloadResult
      */
     public static ComicDownloadResult failure(ComicDownloadRequest request, String errorMessage) {
         return ComicDownloadResult.builder()

@@ -32,6 +32,24 @@ public interface AnalysisService {
                                ImageValidationResult validation, String sourceUrl);
 
     /**
+     * Analyzes image data in memory and creates comprehensive metadata, including transcript text.
+     *
+     * @param comicId    ID of the comic
+     * @param comicName  Name of the comic
+     * @param filePath   path where the image will be/is stored
+     * @param sourceUrl  optional source URL from which the image was downloaded
+     * @param transcript optional transcript text extracted from the comic page
+     */
+    default ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
+                                        ImageValidationResult validation, String sourceUrl, String transcript) {
+        ImageMetadata metadata = analyzeImage(comicId, comicName, imageData, filePath, validation, sourceUrl);
+        if (transcript != null && !transcript.isBlank()) {
+            return metadata.toBuilder().transcript(transcript).build();
+        }
+        return metadata;
+    }
+
+    /**
      * Detects the color mode of an image by sampling pixels.
      */
     ImageMetadata.ColorMode detectColorMode(byte[] imageData);

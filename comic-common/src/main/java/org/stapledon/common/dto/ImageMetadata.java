@@ -11,7 +11,7 @@ import lombok.ToString;
  * Stored as a sidecar JSON file alongside each image.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class ImageMetadata {
     @ToString.Include
@@ -71,6 +71,11 @@ public class ImageMetadata {
      * Source URL from which the image was downloaded (if available)
      */
     private final String sourceUrl;
+
+    /**
+     * Transcript text extracted from the comic page (if available)
+     */
+    private final String transcript;
 
     /**
      * Enum representing the color mode of an image

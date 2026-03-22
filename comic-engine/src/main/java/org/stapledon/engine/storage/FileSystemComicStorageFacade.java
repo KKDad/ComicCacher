@@ -59,6 +59,14 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     public SaveResult saveComicStripWithResult(@lombok.NonNull ComicIdentifier comic,
                                                @lombok.NonNull LocalDate date,
                                                @lombok.NonNull byte[] imageData) {
+        return saveComicStripWithResult(comic, date, imageData, null);
+    }
+
+    @Override
+    public SaveResult saveComicStripWithResult(@lombok.NonNull ComicIdentifier comic,
+                                               @lombok.NonNull LocalDate date,
+                                               @lombok.NonNull byte[] imageData,
+                                               String transcript) {
 
         // Validate image before saving
         ImageValidationResult validation = imageValidationService.validateWithMinDimensions(
@@ -128,7 +136,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             // After successfully saving the image, analyze and save metadata (non-critical)
             try {
                 ImageMetadata metadata = imageAnalysisService.analyzeImage(comic.getId(), comic.getName(), imageData,
-                        file.getAbsolutePath(), validation, null);
+                        file.getAbsolutePath(), validation, null, transcript);
                 boolean saved = imageMetadataRepository.saveMetadata(metadata);
                 if (saved) {
                     log.debug("Saved metadata for comic strip: {}", file.getAbsolutePath());

@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.stapledon.engine.downloader.ComicDownloaderStrategy;
 import org.stapledon.engine.downloader.ComicsKingdomDownloaderStrategy;
 import org.stapledon.engine.downloader.DownloaderFacade;
+import org.stapledon.engine.downloader.FreefallDownloaderStrategy;
 import org.stapledon.engine.downloader.GoComicsDownloaderStrategy;
 
 import jakarta.annotation.PostConstruct;
@@ -25,6 +26,7 @@ public class ComicDownloaderConfig {
     private final DownloaderFacade downloaderFacade;
     private final GoComicsDownloaderStrategy goComicsStrategy;
     private final ComicsKingdomDownloaderStrategy comicsKingdomStrategy;
+    private final FreefallDownloaderStrategy freefallStrategy;
 
     /**
      * Initializes the comic downloader configuration by registering all available
@@ -36,6 +38,7 @@ public class ComicDownloaderConfig {
 
         registerStrategy(goComicsStrategy);
         registerStrategy(comicsKingdomStrategy);
+        registerStrategy(freefallStrategy);
 
         log.info("Comic downloader strategies registered successfully");
     }

@@ -32,6 +32,23 @@ public interface ComicStorageFacade {
     SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData);
 
     /**
+     * Saves a comic strip image with transcript text.
+     * <p>
+     * This overload passes transcript text through to the metadata pipeline.
+     * </p>
+     *
+     * @param comic The comic identifier
+     * @param date The publication date
+     * @param imageData The image data to save
+     * @param transcript The transcript text extracted from the comic page (nullable)
+     * @return A SaveResult containing the outcome and any relevant details
+     */
+    default SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData,
+                                                 String transcript) {
+        return saveComicStripWithResult(comic, date, imageData);
+    }
+
+    /**
      * Saves a comic strip image (legacy method).
      * <p>
      * This method provides backward compatibility by wrapping the new saveComicStripWithResult method.
