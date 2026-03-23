@@ -30,6 +30,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
 import org.stapledon.engine.batch.config.ComicBackfillJobConfig;
 import org.stapledon.engine.management.ManagementFacade;
 
@@ -90,16 +91,17 @@ class ComicBackfillJobConfigTest {
     @Test
     void backfillTaskReader_shouldReturnTasks() throws Exception {
         ComicItem comic = createComic(1, "Test Comic");
-        BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
+        BackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
-        when(backfillService.findMissingStrips()).thenReturn(List.of(task));
+        when(backfillService.findMissingStrips(null)).thenReturn(List.of(task));
 
-        ItemReader<BackfillTask> reader = config.backfillTaskReader();
+        ItemReader<BackfillTask> reader = config.backfillTaskReader(null);
 
         BackfillTask result = reader.read();
         assertThat(result).isNotNull();
+        assertThat(result).isInstanceOf(DateBackfillTask.class);
         assertThat(result.comic()).isEqualTo(comic);
-        assertThat(result.date()).isEqualTo(LocalDate.of(2025, 1, 1));
+        assertThat(((DateBackfillTask) result).date()).isEqualTo(LocalDate.of(2025, 1, 1));
 
         // Second read should return null (end of list)
         assertThat(reader.read()).isNull();
@@ -108,7 +110,7 @@ class ComicBackfillJobConfigTest {
     @Test
     void backfillTaskProcessor_shouldProcessTask() throws Exception {
         ComicItem comic = createComic(1, "Test Comic");
-        BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
+        DateBackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
         ComicDownloadRequest request = ComicDownloadRequest.builder()
                 .comicId(comic.getId())
@@ -133,7 +135,7 @@ class ComicBackfillJobConfigTest {
     @Test
     void backfillTaskProcessor_handlesEmptyResult() throws Exception {
         ComicItem comic = createComic(1, "Test Comic");
-        BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
+        BackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
         // Return empty (comic already cached or couldn't be downloaded)
         when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
@@ -149,7 +151,7 @@ class ComicBackfillJobConfigTest {
     @Test
     void backfillTaskProcessor_handlesException() throws Exception {
         ComicItem comic = createComic(1, "Test Comic");
-        BackfillTask task = new BackfillTask(comic, LocalDate.of(2025, 1, 1));
+        BackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
         when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
                 .thenThrow(new RuntimeException("Test exception"));

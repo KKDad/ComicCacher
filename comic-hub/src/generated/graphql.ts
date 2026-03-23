@@ -95,6 +95,40 @@ export type BatchJob = {
   steps?: Maybe<Array<BatchStep>>;
 };
 
+/** Metadata describing an optional parameter accepted by a batch job. */
+export type BatchJobParameter = {
+  __typename?: 'BatchJobParameter';
+  /** Default value (as a string) when the parameter is not supplied. */
+  defaultValue?: Maybe<Scalars['String']['output']>;
+  /** Human-readable label for the parameter. */
+  label: Scalars['String']['output'];
+  /** Parameter key name passed to the job. */
+  name: Scalars['String']['output'];
+  /** Selectable options (only populated for ENUM type). */
+  options?: Maybe<Array<BatchJobParameterOption>>;
+  /** Whether the parameter must be provided. */
+  required: Scalars['Boolean']['output'];
+  /** Data type of the parameter. */
+  type: BatchJobParameterType;
+};
+
+/** A selectable option for an ENUM-type batch job parameter. */
+export type BatchJobParameterOption = {
+  __typename?: 'BatchJobParameterOption';
+  /** Display label for the option. */
+  label: Scalars['String']['output'];
+  /** Value submitted when this option is selected. */
+  value: Scalars['String']['output'];
+};
+
+/** Data types for batch job parameters. */
+export enum BatchJobParameterType {
+  Boolean = 'BOOLEAN',
+  Enum = 'ENUM',
+  Integer = 'INTEGER',
+  String = 'STRING'
+}
+
 /** Summary statistics for batch job executions. */
 export type BatchJobSummary = {
   __typename?: 'BatchJobSummary';
@@ -119,6 +153,8 @@ export type BatchJobSummary = {
 /** Scheduler information for a batch job, including runtime pause state. */
 export type BatchSchedulerInfo = {
   __typename?: 'BatchSchedulerInfo';
+  /** Optional parameters this job accepts for manual triggers. */
+  availableParameters: Array<BatchJobParameter>;
   /** Cron expression for scheduling. */
   cronExpression: Scalars['String']['output'];
   /** Human-readable description of what this job does. */
@@ -369,6 +405,8 @@ export type ComicStrip = {
   next?: Maybe<ComicStrip>;
   /** The previous strip before this date (null if at beginning). */
   previous?: Maybe<ComicStrip>;
+  /** Transcript text extracted from the comic page (null if not available). */
+  transcript?: Maybe<Scalars['String']['output']>;
   /** Image width in pixels (null if not available). */
   width?: Maybe<Scalars['Int']['output']>;
 };
@@ -615,7 +653,7 @@ export type Mutation = {
   triggerBackfillJob: TriggerBatchJobPayload;
   /** Trigger a batch job for comic retrieval. */
   triggerBatchJob: TriggerBatchJobPayload;
-  /** Trigger any batch job by name. */
+  /** Trigger any batch job by name, with optional parameters. */
   triggerJob: TriggerBatchJobPayload;
   /**
    * Update an existing comic's details.
@@ -714,6 +752,7 @@ export type MutationToggleJobSchedulerArgs = {
 
 export type MutationTriggerJobArgs = {
   jobName: Scalars['String']['input'];
+  parameters?: InputMaybe<Scalars['JSON']['input']>;
 };
 
 
@@ -1263,7 +1302,7 @@ export type GetMeQuery = { __typename?: 'Query', me?: { __typename?: 'User', use
 export type GetBatchSchedulersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetBatchSchedulersQuery = { __typename?: 'Query', batchSchedulers: Array<{ __typename?: 'BatchSchedulerInfo', jobName: string, cronExpression: string, description?: string | null, timezone: string, nextRunTime?: any | null, enabled: boolean, paused: boolean, lastToggled?: any | null, toggledBy?: string | null }> };
+export type GetBatchSchedulersQuery = { __typename?: 'Query', batchSchedulers: Array<{ __typename?: 'BatchSchedulerInfo', jobName: string, cronExpression: string, description?: string | null, timezone: string, nextRunTime?: any | null, enabled: boolean, paused: boolean, lastToggled?: any | null, toggledBy?: string | null, availableParameters: Array<{ __typename?: 'BatchJobParameter', name: string, label: string, type: BatchJobParameterType, required: boolean, defaultValue?: string | null, options?: Array<{ __typename?: 'BatchJobParameterOption', value: string, label: string }> | null }> }> };
 
 export type GetRecentBatchJobsQueryVariables = Exact<{
   count?: InputMaybe<Scalars['Int']['input']>;
@@ -1282,6 +1321,7 @@ export type GetBatchJobLogQuery = { __typename?: 'Query', batchJobLog?: string |
 
 export type TriggerJobMutationVariables = Exact<{
   jobName: Scalars['String']['input'];
+  parameters?: InputMaybe<Scalars['JSON']['input']>;
 }>;
 
 
@@ -1655,6 +1695,17 @@ export const GetBatchSchedulersDocument = new TypedDocumentString(`
     paused
     lastToggled
     toggledBy
+    availableParameters {
+      name
+      label
+      type
+      required
+      defaultValue
+      options {
+        value
+        label
+      }
+    }
   }
 }
     `);
@@ -1819,8 +1870,8 @@ useInfiniteGetBatchJobLogQuery.getKey = (variables: GetBatchJobLogQueryVariables
 useGetBatchJobLogQuery.fetcher = (variables: GetBatchJobLogQueryVariables, options?: RequestInit['headers']) => fetcher<GetBatchJobLogQuery, GetBatchJobLogQueryVariables>(GetBatchJobLogDocument, variables, options);
 
 export const TriggerJobDocument = new TypedDocumentString(`
-    mutation TriggerJob($jobName: String!) {
-  triggerJob(jobName: $jobName) {
+    mutation TriggerJob($jobName: String!, $parameters: JSON) {
+  triggerJob(jobName: $jobName, parameters: $parameters) {
     batchJob {
       executionId
       jobName

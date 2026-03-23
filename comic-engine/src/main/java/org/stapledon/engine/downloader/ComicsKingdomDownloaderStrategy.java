@@ -8,8 +8,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.time.format.DateTimeFormatter;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -22,9 +20,8 @@ import org.stapledon.common.service.ValidationService;
 @Slf4j
 @ToString
 @Component
-public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStrategy {
+public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStrategy {
 
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36";
     private static final int TIMEOUT = 5 * 1000;
     private static final String SOURCE_IDENTIFIER = "comicskingdom";
     private static final String ABOUT_SITE_STRING = "https://comicskingdom.com/%s/about";
@@ -50,7 +47,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
         log.debug("Fetching {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
+                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
                 .header("DNT", "1")
                 .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
                 .timeout(TIMEOUT)
@@ -67,11 +64,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
         }
 
         Element imageElement = imageElements.first();
-        URL imageUrl = java.net.URI.create(imageElement.attr("content")).toURL();
-
-        try (InputStream in = imageUrl.openStream()) {
-            return in.readAllBytes();
-        }
+        return downloadImageData(imageElement.attr("content"));
     }
 
     /**
@@ -84,7 +77,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
         log.debug("Fetching avatar from {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
+                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
                 .header("DNT", "1")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml")
                 .timeout(TIMEOUT)
@@ -96,10 +89,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractComicDownloaderStra
             return null;
         }
 
-        URL imageUrl = java.net.URI.create(featureAvatars.attr("abs:src")).toURL();
-        try (InputStream in = imageUrl.openStream()) {
-            return in.readAllBytes();
-        }
+        return downloadImageData(featureAvatars.attr("abs:src"));
     }
 
     /**

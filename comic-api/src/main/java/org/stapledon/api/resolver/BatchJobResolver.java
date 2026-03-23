@@ -9,6 +9,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.stapledon.api.dto.batch.BatchJobDto;
+import org.stapledon.api.dto.batch.BatchJobParameterDto;
+import org.stapledon.api.dto.batch.BatchJobParameterOptionDto;
+import org.stapledon.api.dto.batch.BatchJobParameterType;
 import org.stapledon.api.dto.batch.BatchJobSummaryDto;
 import org.stapledon.api.dto.batch.BatchSchedulerInfoDto;
 import org.stapledon.api.dto.batch.BatchStepDto;
@@ -22,6 +25,7 @@ import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 import org.stapledon.engine.batch.dto.BatchStepSummary;
 import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.batch.scheduler.SchedulerStateService;
 
 import java.time.Duration;
@@ -203,7 +207,7 @@ public class BatchJobResolver {
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
     public TriggerBatchJobPayload triggerBatchJob() {
-        return triggerJob("ComicDownloadJob");
+        return triggerJob("ComicDownloadJob", null);
     }
 
     /**
@@ -212,16 +216,17 @@ public class BatchJobResolver {
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
     public TriggerBatchJobPayload triggerBackfillJob() {
-        return triggerJob("ComicBackfillJob");
+        return triggerJob("ComicBackfillJob", null);
     }
 
     /**
-     * Trigger any batch job by name.
+     * Trigger any batch job by name, with optional parameters.
      */
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public TriggerBatchJobPayload triggerJob(@Argument String jobName) {
-        log.info("GraphQL: Triggering {}", jobName);
+    @SuppressWarnings("unchecked")
+    public TriggerBatchJobPayload triggerJob(@Argument String jobName, @Argument Map<String, Object> parameters) {
+        log.info("GraphQL: Triggering {} with parameters {}", jobName, parameters);
 
         Optional<DailyJobScheduler> schedulerOpt = schedulers.stream()
                 .filter(s -> s.getJobName().equals(jobName))
@@ -232,7 +237,16 @@ public class BatchJobResolver {
         }
 
         try {
-            Long executionId = schedulerOpt.get().triggerManually();
+            Map<String, String> stringParams = new HashMap<>();
+            if (parameters != null) {
+                parameters.forEach((key, value) -> {
+                    if (value != null) {
+                        stringParams.put(key, String.valueOf(value));
+                    }
+                });
+            }
+
+            Long executionId = schedulerOpt.get().triggerManually(stringParams);
             if (executionId == null) {
                 return new TriggerBatchJobPayload(null, List.of(new UserError("Failed to start job " + jobName, "jobName", null)));
             }
@@ -366,6 +380,10 @@ public class BatchJobResolver {
                 .map(ldt -> ldt.atZone(ZoneId.of(batchTimezone)).toOffsetDateTime())
                 .orElse(null);
 
+        List<BatchJobParameterDto> availableParameters = scheduler.getParameterDefinitions().stream()
+                .map(this::mapParameterDefinition)
+                .toList();
+
         return new BatchSchedulerInfoDto(
                 jobName,
                 scheduler.getCronExpression(),
@@ -375,7 +393,24 @@ public class BatchJobResolver {
                 true,
                 paused,
                 lastToggled,
-                stateOpt.map(SchedulerStateService.SchedulerState::toggledBy).orElse(null));
+                stateOpt.map(SchedulerStateService.SchedulerState::toggledBy).orElse(null),
+                availableParameters);
+    }
+
+    private BatchJobParameterDto mapParameterDefinition(JobParameterDefinition def) {
+        List<BatchJobParameterOptionDto> options = Optional.ofNullable(def.options())
+                .map(opts -> opts.stream()
+                        .map(o -> new BatchJobParameterOptionDto(o.value(), o.label()))
+                        .toList())
+                .orElse(null);
+
+        return new BatchJobParameterDto(
+                def.name(),
+                def.label(),
+                BatchJobParameterType.valueOf(def.type()),
+                def.required(),
+                def.defaultValue(),
+                options);
     }
 
     private OffsetDateTime computeNextRunTime(DailyJobScheduler scheduler) {

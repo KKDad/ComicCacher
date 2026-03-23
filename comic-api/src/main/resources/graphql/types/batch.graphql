@@ -232,6 +232,11 @@ type BatchSchedulerInfo {
     Who toggled the pause state.
     """
     toggledBy: String
+
+    """
+    Optional parameters this job accepts for manual triggers.
+    """
+    availableParameters: [BatchJobParameter!]!
 }
 
 """
@@ -246,4 +251,64 @@ enum BatchStatusEnum {
     FAILED
     ABANDONED
     UNKNOWN
+}
+
+"""
+Data types for batch job parameters.
+"""
+enum BatchJobParameterType {
+    BOOLEAN
+    ENUM
+    INTEGER
+    STRING
+}
+
+"""
+A selectable option for an ENUM-type batch job parameter.
+"""
+type BatchJobParameterOption {
+    """
+    Display label for the option.
+    """
+    label: String!
+
+    """
+    Value submitted when this option is selected.
+    """
+    value: String!
+}
+
+"""
+Metadata describing an optional parameter accepted by a batch job.
+"""
+type BatchJobParameter {
+    """
+    Default value (as a string) when the parameter is not supplied.
+    """
+    defaultValue: String
+
+    """
+    Human-readable label for the parameter.
+    """
+    label: String!
+
+    """
+    Parameter key name passed to the job.
+    """
+    name: String!
+
+    """
+    Selectable options (only populated for ENUM type).
+    """
+    options: [BatchJobParameterOption!]
+
+    """
+    Whether the parameter must be provided.
+    """
+    required: Boolean!
+
+    """
+    Data type of the parameter.
+    """
+    type: BatchJobParameterType!
 }

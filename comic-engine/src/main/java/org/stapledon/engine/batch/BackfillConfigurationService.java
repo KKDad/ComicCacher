@@ -121,4 +121,14 @@ public class BackfillConfigurationService {
                 .map(BackfillSourceConfig::isEnabled)
                 .orElse(true);
     }
+
+    /**
+     * Checks if a source prefers color strips over grayscale.
+     * Returns true if the source has no explicit config (defaults to prefer color).
+     */
+    public boolean getPreferColorForSource(String source) {
+        return Optional.ofNullable(sources.get(source))
+                .map(BackfillSourceConfig::isPreferColor)
+                .orElse(true);
+    }
 }

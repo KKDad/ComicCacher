@@ -4,10 +4,12 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.Optional;
 
-import org.stapledon.common.dto.ComicDownloadRequest;
-import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
@@ -44,42 +46,6 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
      * {@inheritDoc}
      */
     @Override
-    public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
-        try {
-            log.info("Downloading comic {} for date {} from {}",
-                    request.getComicName(), request.getDate(), source);
-
-            byte[] imageData = downloadComicImage(request);
-            if (imageData == null || imageData.length == 0) {
-                return ComicDownloadResult.failure(request, "Downloaded image data is empty");
-            }
-
-            // Validate image integrity
-            ImageValidationResult validation = imageValidationService.validate(imageData);
-            if (!validation.isValid()) {
-                String error = String.format("Invalid image downloaded: %s", validation.getErrorMessage());
-                log.error("Validation failed for {} on {}: {}",
-                        request.getComicName(), request.getDate(), error);
-                return ComicDownloadResult.failure(request, error);
-            }
-
-            log.debug("Validated {} image for {} on {}: {}x{} ({} bytes)",
-                    validation.getFormat(), request.getComicName(), request.getDate(),
-                    validation.getWidth(), validation.getHeight(), validation.getSizeInBytes());
-
-            return ComicDownloadResult.success(request, imageData);
-        } catch (Exception e) {
-            String errorMessage = String.format("Error downloading comic %s for date %s: %s",
-                    request.getComicName(), request.getDate(), e.getMessage());
-            log.error(errorMessage, e);
-            return ComicDownloadResult.failure(request, errorMessage);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Optional<byte[]> downloadAvatar(int comicId, String comicName, String sourceIdentifier) {
         try {
             log.debug("Downloading avatar for comic {} from {}", comicName, source);
@@ -108,14 +74,48 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     }
 
     /**
-     * Downloads the comic image from the source.
-     * This method must be implemented by concrete subclasses to handle source-specific logic.
+     * Validates downloaded image data and returns the validation result.
+     * Utility method for subclasses to reuse validation logic.
      *
-     * @param request The download request containing comic details and date
-     * @return The downloaded image data
-     * @throws Exception If an error occurs during download
+     * @param imageData The image data to validate
+     * @param comicName The comic name (for logging)
+     * @param context The context string for logging (e.g., date or strip number)
+     * @return The validation result, or null if image data is empty
      */
-    protected abstract byte[] downloadComicImage(ComicDownloadRequest request) throws Exception;
+    protected ImageValidationResult validateImage(byte[] imageData, String comicName, String context) {
+        if (imageData == null || imageData.length == 0) {
+            log.error("Downloaded image data is empty for {} ({})", comicName, context);
+            return null;
+        }
+
+        ImageValidationResult validation = imageValidationService.validate(imageData);
+        if (!validation.isValid()) {
+            log.error("Validation failed for {} ({}): {}", comicName, context, validation.getErrorMessage());
+            return validation;
+        }
+
+        log.debug("Validated {} image for {} ({}): {}x{} ({} bytes)",
+                validation.getFormat(), comicName, context,
+                validation.getWidth(), validation.getHeight(), validation.getSizeInBytes());
+
+        return validation;
+    }
+
+    /**
+     * Downloads binary image data from a URL with proper timeout and User-Agent.
+     * All strategies should use this instead of raw {@code URL.openStream()}.
+     */
+    protected byte[] downloadImageData(String imageUrl) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) URI.create(imageUrl).toURL().openConnection();
+        conn.setRequestProperty("User-Agent", DownloaderConstants.DEFAULT_USER_AGENT);
+        conn.setConnectTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
+        conn.setReadTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
+        try (InputStream in = conn.getInputStream()) {
+            return in.readAllBytes();
+        } finally {
+            conn.disconnect();
+        }
+    }
 
     /**
      * Downloads the avatar image for a comic from the source.

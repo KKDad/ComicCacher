@@ -144,6 +144,16 @@ public interface ManagementFacade {
     List<ComicDownloadResult> updateComicsForDate(LocalDate date);
 
     /**
+     * Updates comics by downloading strips for the specified date, filtered by source.
+     * When sourceFilter is null or "ALL", downloads from all sources (same as {@link #updateComicsForDate(LocalDate)}).
+     *
+     * @param date         The date for which to download comics
+     * @param sourceFilter The source to filter by (e.g., "gocomics"), or null/"ALL" for all sources
+     * @return List of download results for each comic
+     */
+    List<ComicDownloadResult> updateComicsForDate(LocalDate date, String sourceFilter);
+
+    /**
      * Downloads and saves a specific comic strip for the specified date.
      * This is more efficient for backfill operations where the comic is already
      * known and pre-validated, as it bypasses the full comics list iteration.
@@ -153,6 +163,25 @@ public interface ManagementFacade {
      * @return The download result, or empty if the comic couldn't be downloaded
      */
     Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date);
+
+    /**
+     * Downloads and saves the latest strip for an indexed comic.
+     * This is used by the daily download job for indexed comics.
+     *
+     * @param comic The comic item to download
+     * @return The download result, or empty if the comic couldn't be downloaded
+     */
+    Optional<ComicDownloadResult> downloadLatestIndexedComic(ComicItem comic);
+
+    /**
+     * Downloads and saves a specific strip by number for an indexed comic.
+     * This is used by the backfill job for indexed comics.
+     *
+     * @param comic The comic item to download
+     * @param stripNumber The strip number to download
+     * @return The download result, or empty if the comic couldn't be downloaded
+     */
+    Optional<ComicDownloadResult> downloadComicByStripNumber(ComicItem comic, int stripNumber);
 
     /**
      * Refreshes the comic list from storage and configuration.

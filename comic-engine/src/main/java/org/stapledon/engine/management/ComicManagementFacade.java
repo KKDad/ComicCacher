@@ -23,6 +23,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
@@ -422,7 +423,13 @@ public class ComicManagementFacade implements ManagementFacade {
 
     @Override
     public List<ComicDownloadResult> updateComicsForDate(LocalDate date) {
+        return updateComicsForDate(date, null);
+    }
+
+    @Override
+    public List<ComicDownloadResult> updateComicsForDate(LocalDate date, String sourceFilter) {
         List<ComicDownloadResult> results = new ArrayList<>();
+        boolean hasSourceFilter = sourceFilter != null && !"ALL".equalsIgnoreCase(sourceFilter);
 
         try {
             // Log if attempting to download future dates
@@ -430,7 +437,7 @@ public class ComicManagementFacade implements ManagementFacade {
                 log.warn("⚠️ FUTURE DATE DETECTED: Attempting to download comics for {} which is AFTER today ({})",
                         date, LocalDate.now());
             } else {
-                log.info("Downloading comics for date: {} (today: {})", date, LocalDate.now());
+                log.info("Downloading comics for date: {} (today: {}, sourceFilter: {})", date, LocalDate.now(), sourceFilter);
             }
 
             // Get the current comic configuration
@@ -448,6 +455,11 @@ public class ComicManagementFacade implements ManagementFacade {
                 // Skip comics with null or empty source
                 if (comic.getSource() == null || comic.getSource().isEmpty()) {
                     log.warn("Skipping comic '{}' - has null or empty source", comic.getName());
+                    continue;
+                }
+
+                // Skip comics that don't match the source filter
+                if (hasSourceFilter && !sourceFilter.equalsIgnoreCase(comic.getSource())) {
                     continue;
                 }
 
@@ -469,6 +481,13 @@ public class ComicManagementFacade implements ManagementFacade {
                 // Check if comic already exists on disk
                 if (storageFacade.comicStripExists(ComicIdentifier.from(comic), date)) {
                     log.info("Skipping comic '{}' for {} - already cached", comic.getName(), date);
+                    continue;
+                }
+
+                // Handle indexed comics differently
+                if (downloaderFacade.isIndexedSource(comic.getSource())) {
+                    Optional<ComicDownloadResult> indexedResult = downloadLatestIndexedComic(comic);
+                    indexedResult.ifPresent(results::add);
                     continue;
                 }
 
@@ -527,25 +546,131 @@ public class ComicManagementFacade implements ManagementFacade {
         ComicDownloadResult result = downloaderFacade.downloadComic(request);
 
         if (result.isSuccessful()) {
-            // Save the comic to storage
-            boolean saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), date, result.getImageData());
+            LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : date;
+            boolean saved = saveDownloadResult(comic, saveDate, result);
 
             if (!saved) {
-                log.error("Failed to save comic {} to storage", comic.getName());
                 return Optional.empty();
             }
 
             // Update oldest date if this is earlier than known
-            // (backfill typically downloads older strips)
             LocalDate currentOldest = comic.getOldest();
-            if (currentOldest == null || date.isBefore(currentOldest)) {
-                ComicItem updated = comic.toBuilder().oldest(date).build();
-
+            if (currentOldest == null || saveDate.isBefore(currentOldest)) {
+                ComicItem updated = comic.toBuilder().oldest(saveDate).build();
                 updateComic(comic.getId(), updated);
+            }
+
+            // Update strip number tracking for indexed comics
+            updateStripNumberTracking(comic, result);
+        }
+
+        return Optional.of(result);
+    }
+
+    @Override
+    public Optional<ComicDownloadResult> downloadLatestIndexedComic(ComicItem comic) {
+        if (comic.getSource() == null || comic.getSource().isEmpty()) {
+            log.warn("Cannot download comic '{}' - has null or empty source", comic.getName());
+            return Optional.empty();
+        }
+
+        ComicDownloadResult result = downloaderFacade.downloadLatestStrip(comic);
+
+        if (result.isSuccessful()) {
+            LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : LocalDate.now();
+
+            // Check if this date already exists
+            if (storageFacade.comicStripExists(ComicIdentifier.from(comic), saveDate)) {
+                log.debug("Comic '{}' for {} already cached", comic.getName(), saveDate);
+                return Optional.empty();
+            }
+
+            boolean saved = saveDownloadResult(comic, saveDate, result);
+            if (!saved) {
+                return Optional.empty();
+            }
+
+            // Update newest date
+            ComicItem.ComicItemBuilder builder = comic.toBuilder().newest(saveDate);
+            updateStripNumberOnBuilder(builder, result);
+            updateComic(comic.getId(), builder.build());
+        }
+
+        return Optional.of(result);
+    }
+
+    @Override
+    public Optional<ComicDownloadResult> downloadComicByStripNumber(ComicItem comic, int stripNumber) {
+        if (comic.getSource() == null || comic.getSource().isEmpty()) {
+            log.warn("Cannot download comic '{}' - has null or empty source", comic.getName());
+            return Optional.empty();
+        }
+
+        ComicDownloadResult result = downloaderFacade.downloadStrip(comic, stripNumber);
+
+        if (result.isSuccessful()) {
+            LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : LocalDate.now();
+
+            // Check if this date already exists
+            if (storageFacade.comicStripExists(ComicIdentifier.from(comic), saveDate)) {
+                log.debug("Comic '{}' for {} already cached", comic.getName(), saveDate);
+                return Optional.empty();
+            }
+
+            boolean saved = saveDownloadResult(comic, saveDate, result);
+            if (!saved) {
+                return Optional.empty();
+            }
+
+            // Update oldest date if this is earlier than known (backfill goes backwards)
+            LocalDate currentOldest = comic.getOldest();
+            if (currentOldest == null || saveDate.isBefore(currentOldest)) {
+                updateComic(comic.getId(), comic.toBuilder().oldest(saveDate).build());
             }
         }
 
         return Optional.of(result);
+    }
+
+    /**
+     * Saves a download result to storage via ComicSaveData DTO.
+     */
+    private boolean saveDownloadResult(ComicItem comic, LocalDate date, ComicDownloadResult result) {
+        ComicSaveData saveData = ComicSaveData.builder()
+                .imageData(result.getImageData())
+                .transcript(result.getTranscript())
+                .stripNumber(result.getStripNumber())
+                .build();
+
+        boolean saved = storageFacade.saveComicStripWithResult(
+                ComicIdentifier.from(comic), date, saveData).isSuccess();
+
+        if (!saved) {
+            log.error("Failed to save comic {} to storage", comic.getName());
+        }
+        return saved;
+    }
+
+    /**
+     * Updates strip number tracking on the comic if the result contains strip number info.
+     */
+    private void updateStripNumberTracking(ComicItem comic, ComicDownloadResult result) {
+        if (result.getStripNumber() != null) {
+            Integer currentLast = comic.getLastStripNumber();
+            if (currentLast == null || result.getStripNumber() > currentLast) {
+                updateComic(comic.getId(),
+                        comic.toBuilder().lastStripNumber(result.getStripNumber()).build());
+            }
+        }
+    }
+
+    /**
+     * Updates strip number fields on a builder if the result contains strip number info.
+     */
+    private void updateStripNumberOnBuilder(ComicItem.ComicItemBuilder builder, ComicDownloadResult result) {
+        if (result.getStripNumber() != null) {
+            builder.lastStripNumber(result.getStripNumber());
+        }
     }
 
     @Override

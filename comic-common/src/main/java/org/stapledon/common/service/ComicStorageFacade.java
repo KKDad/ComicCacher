@@ -1,6 +1,7 @@
 package org.stapledon.common.service;
 
 import org.stapledon.common.dto.ComicIdentifier;
+import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.SaveResult;
 
@@ -20,16 +21,39 @@ public interface ComicStorageFacade {
     /**
      * Saves a comic strip image with detailed result information.
      * <p>
-     * This method provides comprehensive feedback about the save operation including
-     * validation failures, duplicate detection, and I/O errors.
+     * This is the primary save method. All other save overloads delegate to this method.
+     * Implementations provide validation, duplicate detection, metadata capture,
+     * and index updates.
      * </p>
      *
      * @param comic The comic identifier
      * @param date The publication date
-     * @param imageData The image data to save
+     * @param data The save data containing image bytes and optional metadata
      * @return A SaveResult containing the outcome and any relevant details
      */
-    SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData);
+    SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, ComicSaveData data);
+
+    /**
+     * Saves a comic strip image with detailed result information.
+     * <p>
+     * Convenience overload that wraps raw image data into a {@link ComicSaveData}.
+     * </p>
+     */
+    default SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData) {
+        return saveComicStripWithResult(comic, date, ComicSaveData.builder().imageData(imageData).build());
+    }
+
+    /**
+     * Saves a comic strip image with transcript text.
+     * <p>
+     * Convenience overload that wraps image data and transcript into a {@link ComicSaveData}.
+     * </p>
+     */
+    default SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData,
+                                                 String transcript) {
+        return saveComicStripWithResult(comic, date,
+                ComicSaveData.builder().imageData(imageData).transcript(transcript).build());
+    }
 
     /**
      * Saves a comic strip image (legacy method).

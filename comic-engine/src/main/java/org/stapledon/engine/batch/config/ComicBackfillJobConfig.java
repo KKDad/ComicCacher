@@ -26,8 +26,12 @@ import java.util.List;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.ComicBackfillService;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.StripBackfillTask;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition.Option;
 import org.stapledon.engine.management.ManagementFacade;
 
 /**
@@ -54,12 +58,21 @@ public class ComicBackfillJobConfig {
     @Value("${batch.timezone:America/Toronto}")
     private String timezone;
 
+    private static final List<JobParameterDefinition> BACKFILL_PARAMETERS = List.of(
+            new JobParameterDefinition("source", "Source Filter", "ENUM", false, "ALL",
+                    List.of(new Option("ALL", "All Sources"),
+                            new Option("gocomics", "GoComics"),
+                            new Option("comicskingdom", "Comics Kingdom"),
+                            new Option("freefall", "Freefall")))
+    );
+
     /**
      * Scheduler for ComicBackfillJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
     public DailyJobScheduler comicBackfillJobScheduler(@Qualifier("comicBackfillJob") Job comicBackfillJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker, "Backfills missing comic strips for gaps in the archive");
+        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker,
+                "Backfills missing comic strips for gaps in the archive", BACKFILL_PARAMETERS);
     }
 
     /**
@@ -89,14 +102,15 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup.
+     * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup. Accepts an
+     * optional "source" job parameter to filter by comic source.
      */
     @Bean
     @StepScope
     @Qualifier("backfillTaskReader")
-    public ItemReader<BackfillTask> backfillTaskReader() {
-        log.debug("Building backfill task list for job execution");
-        List<BackfillTask> tasks = backfillService.findMissingStrips();
+    public ItemReader<BackfillTask> backfillTaskReader(@Value("#{jobParameters['source']}") String sourceFilter) {
+        log.debug("Building backfill task list for job execution (sourceFilter={})", sourceFilter);
+        List<BackfillTask> tasks = backfillService.findMissingStrips(sourceFilter);
         if (tasks.isEmpty()) {
             log.info("No missing strips found - backfill has nothing to process");
         } else {
@@ -113,25 +127,30 @@ public class ComicBackfillJobConfig {
     @Qualifier("backfillTaskProcessor")
     public ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor() {
         return task -> {
-            log.info("Backfilling {} for date: {}", task.comic().getName(), task.date());
-
             try {
                 // Add a small delay between comics to avoid overwhelming sources
                 if (delayBetweenComics > 0) {
                     Thread.sleep(delayBetweenComics);
                 }
 
-                // Download this specific comic directly - much more efficient than
-                // iterating all comics. The comic has already been validated by
-                // ComicBackfillService.
-                return managementFacade.downloadComicForDate(task.comic(), task.date()).orElse(null);
+                if (task instanceof DateBackfillTask dateTask) {
+                    log.info("Backfilling {} for date: {}", dateTask.comic().getName(), dateTask.date());
+                    return managementFacade.downloadComicForDate(dateTask.comic(), dateTask.date()).orElse(null);
+                } else if (task instanceof StripBackfillTask stripTask) {
+                    log.info("Backfilling {} for strip #{}", stripTask.comic().getName(), stripTask.stripNumber());
+                    return managementFacade.downloadComicByStripNumber(
+                            stripTask.comic(), stripTask.stripNumber()).orElse(null);
+                } else {
+                    log.error("Unknown backfill task type: {}", task.getClass().getName());
+                    return null;
+                }
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.warn("Backfill interrupted for {}: {}", task.comic().getName(), e.getMessage());
                 return null;
             } catch (Exception e) {
-                log.error("Error backfilling {} for {}: {}", task.comic().getName(), task.date(), e.getMessage(), e);
+                log.error("Error backfilling {}: {}", task.comic().getName(), e.getMessage(), e);
                 return null;
             }
         };

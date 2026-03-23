@@ -412,6 +412,7 @@ public class ComicResolver {
                     null,
                     null,
                     null,
+                    null,
                     ComicStrip.navStub(result.getNearestPreviousDate()),
                     ComicStrip.navStub(result.getNearestNextDate()));
         }
@@ -422,6 +423,7 @@ public class ComicResolver {
         Optional<ImageDto> image = Optional.ofNullable(result.getImage());
         Integer width = image.map(ImageDto::getWidth).orElse(null);
         Integer height = image.map(ImageDto::getHeight).orElse(null);
+        String transcript = image.map(ImageDto::getTranscript).orElse(null);
 
         return new ComicStrip(
                 result.getCurrentDate(),
@@ -429,6 +431,7 @@ public class ComicResolver {
                 imageUrl,
                 width,
                 height,
+                transcript,
                 ComicStrip.navStub(result.getNearestPreviousDate()),
                 ComicStrip.navStub(result.getNearestNextDate()));
     }
@@ -447,11 +450,11 @@ public class ComicResolver {
     }
 
     public record ComicStrip(LocalDate date, boolean available, String imageUrl, Integer width, Integer height,
-            ComicStrip previous, ComicStrip next) {
+            String transcript, ComicStrip previous, ComicStrip next) {
 
         /** Navigation-only stub with just a date (used for previous/next links). */
         static ComicStrip navStub(LocalDate date) {
-            return date != null ? new ComicStrip(date, false, null, null, null, null, null) : null;
+            return date != null ? new ComicStrip(date, false, null, null, null, null, null, null) : null;
         }
     }
 

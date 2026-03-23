@@ -9,6 +9,17 @@ query GetBatchSchedulers {
     paused
     lastToggled
     toggledBy
+    availableParameters {
+      name
+      label
+      type
+      required
+      defaultValue
+      options {
+        value
+        label
+      }
+    }
   }
 }
 
@@ -41,8 +52,8 @@ query GetBatchJobLog($executionId: Int!, $jobName: String!) {
   batchJobLog(executionId: $executionId, jobName: $jobName)
 }
 
-mutation TriggerJob($jobName: String!) {
-  triggerJob(jobName: $jobName) {
+mutation TriggerJob($jobName: String!, $parameters: JSON) {
+  triggerJob(jobName: $jobName, parameters: $parameters) {
     batchJob {
       executionId
       jobName

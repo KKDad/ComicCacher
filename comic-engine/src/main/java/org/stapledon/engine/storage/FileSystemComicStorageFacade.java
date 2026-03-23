@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicIdentifier;
+import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.DuplicateValidationResult;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.ImageMetadata;
@@ -58,7 +59,9 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     @Override
     public SaveResult saveComicStripWithResult(@lombok.NonNull ComicIdentifier comic,
                                                @lombok.NonNull LocalDate date,
-                                               @lombok.NonNull byte[] imageData) {
+                                               @lombok.NonNull ComicSaveData data) {
+
+        byte[] imageData = data.imageData();
 
         // Validate image before saving
         ImageValidationResult validation = imageValidationService.validateWithMinDimensions(
@@ -125,10 +128,19 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                 return SaveResult.ioError("Index update failed: " + e.getMessage());
             }
 
+            // Add to strip number index for indexed comics (non-critical)
+            if (data.stripNumber() != null) {
+                try {
+                    comicIndexService.addStripNumberToIndex(comic.getId(), comic.getName(), data.stripNumber());
+                } catch (Exception e) {
+                    log.warn("Failed to update strip number index (non-critical): {}", e.getMessage());
+                }
+            }
+
             // After successfully saving the image, analyze and save metadata (non-critical)
             try {
                 ImageMetadata metadata = imageAnalysisService.analyzeImage(comic.getId(), comic.getName(), imageData,
-                        file.getAbsolutePath(), validation, null);
+                        file.getAbsolutePath(), validation, null, data.transcript());
                 boolean saved = imageMetadataRepository.saveMetadata(metadata);
                 if (saved) {
                     log.debug("Saved metadata for comic strip: {}", file.getAbsolutePath());
@@ -198,7 +210,11 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                 comic.getDirectoryName(), yearPath, filename));
 
         try {
-            return Optional.of(ImageUtils.getImageDto(file));
+            ImageDto dto = ImageUtils.getImageDto(file);
+            imageMetadataRepository.loadMetadata(file.getAbsolutePath())
+                    .map(ImageMetadata::getTranscript)
+                    .ifPresent(dto::setTranscript);
+            return Optional.of(dto);
         } catch (IOException e) {
             log.error("Failed to read comic strip for {} on {}: {}", comic.getName(), date, e.getMessage());
             return Optional.empty();

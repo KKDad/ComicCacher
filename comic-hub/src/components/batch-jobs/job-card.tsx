@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { LogViewer } from './log-viewer';
+import { ParameterControl } from './parameter-control';
 import {
   useTriggerJobMutation,
   useToggleJobSchedulerMutation,
@@ -150,6 +151,7 @@ export function JobCard({ scheduler, recentExecutions, onJobTriggered }: JobCard
   const [expanded, setExpanded] = useState(false);
   const [confirmRunOpen, setConfirmRunOpen] = useState(false);
   const [logViewerExecution, setLogViewerExecution] = useState<BatchJob | null>(null);
+  const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const queryClient = useQueryClient();
 
   const lastExecution = recentExecutions[0] ?? undefined;
@@ -240,7 +242,14 @@ export function JobCard({ scheduler, recentExecutions, onJobTriggered }: JobCard
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setConfirmRunOpen(true)}
+              onClick={() => {
+                const defaults: Record<string, string> = {};
+                for (const p of scheduler.availableParameters ?? []) {
+                  defaults[p.name] = p.defaultValue ?? '';
+                }
+                setParamValues(defaults);
+                setConfirmRunOpen(true);
+              }}
               disabled={triggerMutation.isPending}
             >
               <Play className="h-4 w-4 mr-1" />
@@ -307,13 +316,31 @@ export function JobCard({ scheduler, recentExecutions, onJobTriggered }: JobCard
               This will trigger a manual execution of the {label} job immediately.
             </DialogDescription>
           </DialogHeader>
+          {scheduler.availableParameters?.length > 0 && (
+            <div className="space-y-4 py-2">
+              {scheduler.availableParameters?.map((param) => (
+                <ParameterControl
+                  key={param.name}
+                  param={param}
+                  value={paramValues[param.name] ?? param.defaultValue ?? ''}
+                  onChange={(value) =>
+                    setParamValues((prev) => ({ ...prev, [param.name]: value }))
+                  }
+                />
+              ))}
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmRunOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={() => {
-                triggerMutation.mutate({ jobName: scheduler.jobName });
+                const hasParams = (scheduler.availableParameters?.length ?? 0) > 0;
+                triggerMutation.mutate({
+                  jobName: scheduler.jobName,
+                  parameters: hasParams ? paramValues : undefined,
+                });
                 setConfirmRunOpen(false);
               }}
             >

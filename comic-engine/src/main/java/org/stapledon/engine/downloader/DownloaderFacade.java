@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicItem;
 
 /**
  * Facade interface for downloading comic images from various sources.
@@ -51,6 +52,31 @@ public interface DownloaderFacade {
      * @return List of download results for each comic
      */
     List<ComicDownloadResult> downloadComicsForDate(ComicConfig config, LocalDate date);
+
+    /**
+     * Downloads the latest strip for an indexed comic.
+     *
+     * @param comic The comic item to download the latest strip for
+     * @return The download result with actualDate and stripNumber set
+     */
+    ComicDownloadResult downloadLatestStrip(ComicItem comic);
+
+    /**
+     * Downloads a specific strip by number for an indexed comic.
+     *
+     * @param comic The comic item to download
+     * @param stripNumber The strip number to download
+     * @return The download result with actualDate and stripNumber set
+     */
+    ComicDownloadResult downloadStrip(ComicItem comic, int stripNumber);
+
+    /**
+     * Checks whether the strategy registered for the given source is an indexed comic strategy.
+     *
+     * @param source The source identifier
+     * @return true if the strategy is an IndexedComicDownloaderStrategy
+     */
+    boolean isIndexedSource(String source);
 
     /**
      * Registers a new comic downloader strategy for a specific source.

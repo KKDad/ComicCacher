@@ -3,6 +3,7 @@ package org.stapledon.engine.batch.config;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -28,6 +29,8 @@ import java.util.List;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition.Option;
 import org.stapledon.engine.management.ManagementFacade;
 
 /**
@@ -48,12 +51,21 @@ public class ComicRetrievalJobConfig {
     @Value("${batch.timezone:America/Toronto}")
     private String timezone;
 
+    private static final List<JobParameterDefinition> DOWNLOAD_PARAMETERS = List.of(
+            new JobParameterDefinition("source", "Source Filter", "ENUM", false, "ALL",
+                    List.of(new Option("ALL", "All Sources"),
+                            new Option("gocomics", "GoComics"),
+                            new Option("comicskingdom", "Comics Kingdom"),
+                            new Option("freefall", "Freefall")))
+    );
+
     /**
      * Scheduler for ComicDownloadJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
     public DailyJobScheduler comicDownloadJobScheduler(@Qualifier("comicDownloadJob") Job comicDownloadJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(comicDownloadJob, cronExpression, timezone, jobOperator, tracker, "Downloads today's comic strips from all enabled sources");
+        return new DailyJobScheduler(comicDownloadJob, cronExpression, timezone, jobOperator, tracker,
+                "Downloads today's comic strips from all enabled sources", DOWNLOAD_PARAMETERS);
     }
 
     /**
@@ -72,7 +84,7 @@ public class ComicRetrievalJobConfig {
      */
     @Bean
     public Step comicRetrievalStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, ItemReader<LocalDate> dateReader,
-            ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor, ItemWriter<List<ComicDownloadResult>> comicResultWriter) {
+            @Qualifier("comicProcessor") ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor, ItemWriter<List<ComicDownloadResult>> comicResultWriter) {
 
         return new StepBuilder("comicRetrievalStep", jobRepository).<LocalDate, List<ComicDownloadResult>>chunk(1).transactionManager(transactionManager).reader(dateReader)
                 .processor(comicProcessor).writer(comicResultWriter).build();
@@ -89,16 +101,18 @@ public class ComicRetrievalJobConfig {
     }
 
     /**
-     * Processor that handles downloading and saving comics for a date
+     * Processor that handles downloading and saving comics for a date. Accepts an optional "source" job parameter to filter by comic source.
      */
     @Bean
-    public ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor() {
+    @StepScope
+    @Qualifier("comicProcessor")
+    public ItemProcessor<LocalDate, List<ComicDownloadResult>> comicProcessor(@Value("#{jobParameters['source']}") String sourceFilter) {
         return date -> {
-            log.info("Processing comics for date: {} ({})", date, date.getDayOfWeek());
+            log.info("Processing comics for date: {} ({}, sourceFilter={})", date, date.getDayOfWeek(), sourceFilter);
             long startTime = System.currentTimeMillis();
 
             // Management facade handles download + save + metadata update
-            List<ComicDownloadResult> results = managementFacade.updateComicsForDate(date);
+            List<ComicDownloadResult> results = managementFacade.updateComicsForDate(date, sourceFilter);
 
             long duration = System.currentTimeMillis() - startTime;
 

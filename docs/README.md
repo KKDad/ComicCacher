@@ -23,6 +23,7 @@ Architecture decisions, data flows, and internal patterns.
 |----------|-------------|
 | [Architecture](design/architecture.md) | Module graph, key classes, facade pattern |
 | [Download Pipeline](design/download-pipeline.md) | End-to-end download, validate, dedup, store flow |
+| [Downloader Strategies](design/downloader-strategies.md) | Strategy hierarchy, daily vs. indexed comics, adding new sources |
 | [Batch Jobs](design/batch-jobs.md) | Scheduler framework, job configs, execution tracking |
 | [Image Validation](design/image-validation.md) | 3-layer validation, dedup, and analysis pipeline |
 | [Adding Batch Jobs](design/adding-batch-jobs.md) | Developer guide for new job creation |

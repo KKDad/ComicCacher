@@ -1,0 +1,327 @@
+package org.stapledon.engine.downloader;
+
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.service.ValidationService;
+import org.stapledon.engine.batch.BackfillConfigurationService;
+
+/**
+ * Strategy implementation for downloading comics from Freefall (freefall.purrsia.com).
+ * Freefall uses sequential strip numbers rather than date-based URLs.
+ */
+@Slf4j
+@ToString(callSuper = true)
+@Component
+public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrategy {
+
+    static final String SOURCE_IDENTIFIER = "freefall";
+    // HTTPS is not available for freefall.purrsia.com
+    static final String BASE_URL = "http://freefall.purrsia.com";
+    private static final String AVATAR_URL = BASE_URL + "/fflogo.gif";
+
+    private static final Pattern TITLE_PATTERN = Pattern.compile("Freefall\\s+(\\d+)(?:\\s+(.+))?");
+    private static final DateTimeFormatter TITLE_DATE_FORMAT = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH);
+
+    private final BackfillConfigurationService backfillConfig;
+
+    /**
+     * Creates a new Freefall downloader strategy.
+     */
+    public FreefallDownloaderStrategy(InspectorService webInspector,
+            ValidationService imageValidationService,
+            BackfillConfigurationService backfillConfig) {
+        super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
+        this.backfillConfig = backfillConfig;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected IndexedStripData fetchLatestStrip(ComicItem comic) throws Exception {
+        String url = BASE_URL + "/default.htm";
+        log.info("Fetching latest Freefall strip from {}", url);
+
+        Document doc = Jsoup.connect(url)
+                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+
+        return fetchStripFromDocument(doc);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected IndexedStripData fetchStrip(ComicItem comic, int stripNumber) throws Exception {
+        boolean preferColor = backfillConfig.getPreferColorForSource(SOURCE_IDENTIFIER);
+
+        String primaryUrl;
+        String fallbackUrl;
+        if (preferColor) {
+            primaryUrl = buildStripPageUrl(stripNumber);
+            fallbackUrl = buildGrayscaleStripPageUrl(stripNumber);
+        } else {
+            primaryUrl = buildGrayscaleStripPageUrl(stripNumber);
+            fallbackUrl = buildStripPageUrl(stripNumber);
+        }
+
+        log.info("Fetching Freefall strip #{} from {} (preferColor={})", stripNumber, primaryUrl, preferColor);
+
+        Document doc;
+        try {
+            doc = Jsoup.connect(primaryUrl)
+                    .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+        } catch (org.jsoup.HttpStatusException e) {
+            log.debug("Primary page not found ({}), trying fallback: {}", primaryUrl, fallbackUrl);
+            try {
+                doc = Jsoup.connect(fallbackUrl)
+                        .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+            } catch (org.jsoup.HttpStatusException e2) {
+                log.error("Both color and grayscale pages failed for strip #{}: {} and {}", stripNumber,
+                        buildStripPageUrl(stripNumber), buildGrayscaleStripPageUrl(stripNumber));
+                throw e2;
+            }
+        }
+
+        return fetchStripFromDocument(doc);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected byte[] downloadAvatarImage(int comicId, String comicName, String sourceIdentifier) throws Exception {
+        log.debug("Downloading Freefall avatar from {}", AVATAR_URL);
+        return downloadImageData(AVATAR_URL);
+    }
+
+    /**
+     * Processes a fetched Freefall page document: parses title, extracts image, parses transcript.
+     */
+    private IndexedStripData fetchStripFromDocument(Document doc) throws Exception {
+        // Parse title to get strip number and date
+        String title = doc.title();
+        TitleParseResult titleResult = parseTitleTag(title)
+                .orElseThrow(() -> new IllegalStateException("Could not parse Freefall title: " + title));
+
+        // Determine the actual date
+        LocalDate actualDate = titleResult.date();
+        if (actualDate == null) {
+            actualDate = parseDateFromComment(doc);
+        }
+
+        // Extract and download the image
+        String imageUrl = extractImageUrl(doc, titleResult.stripNumber());
+        if (imageUrl == null) {
+            throw new IllegalStateException("Could not find image for strip #" + titleResult.stripNumber());
+        }
+
+        // Make URL absolute if needed
+        if (!imageUrl.startsWith("http")) {
+            imageUrl = BASE_URL + "/" + imageUrl;
+        }
+
+        log.debug("Downloading image from {}", imageUrl);
+        byte[] imageData = downloadImageData(imageUrl);
+
+        // Parse transcript
+        String transcript = parseTranscript(doc);
+
+        return new IndexedStripData(imageData, actualDate, titleResult.stripNumber(), transcript);
+    }
+
+    /**
+     * Parses the Freefall title tag to extract strip number and optional date.
+     * Title format: "Freefall 04350 March 18, 2026" (modern) or "Freefall 00001" (old)
+     */
+    Optional<TitleParseResult> parseTitleTag(String title) {
+        if (title == null || title.isBlank()) {
+            return Optional.empty();
+        }
+
+        Matcher matcher = TITLE_PATTERN.matcher(title.trim());
+        if (!matcher.matches()) {
+            return Optional.empty();
+        }
+
+        int stripNumber = Integer.parseInt(matcher.group(1));
+        LocalDate date = null;
+
+        if (matcher.group(2) != null) {
+            try {
+                date = LocalDate.parse(matcher.group(2).trim(), TITLE_DATE_FORMAT);
+            } catch (DateTimeParseException e) {
+                log.debug("Could not parse date from title: {}", matcher.group(2));
+            }
+        }
+
+        return Optional.of(new TitleParseResult(stripNumber, date));
+    }
+
+    /**
+     * For old strips, extracts the date from an HTML comment like {@code <!- April 9, 1998 ->}.
+     */
+    LocalDate parseDateFromComment(Document doc) {
+        return findDateInCommentNodes(doc.body());
+    }
+
+    /**
+     * Recursively walks the DOM tree to find Comment nodes containing parseable dates.
+     */
+    private LocalDate findDateInCommentNodes(Node parent) {
+        if (parent == null) {
+            return null;
+        }
+
+        for (Node node : parent.childNodes()) {
+            if (node instanceof org.jsoup.nodes.Comment comment) {
+                String commentText = comment.getData().trim();
+                // Strip leading/trailing dashes that Jsoup may add
+                commentText = commentText.replaceAll("^-+\\s*", "").replaceAll("\\s*-+$", "");
+                try {
+                    return LocalDate.parse(commentText.trim(), TITLE_DATE_FORMAT);
+                } catch (DateTimeParseException e) {
+                    // Not a date comment, continue
+                }
+            } else if (node instanceof Element) {
+                LocalDate found = findDateInCommentNodes(node);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extracts transcript text from the page.
+     * Freefall transcripts appear after a {@code <FONT SIZE=+1>TRANSCRIPT</FONT>} heading.
+     */
+    String parseTranscript(Document doc) {
+        // Look for the transcript section
+        for (Element font : doc.select("font")) {
+            if ("TRANSCRIPT".equalsIgnoreCase(font.text().trim())) {
+                // The font element and transcript text are siblings inside the same parent
+                Element parent = font.parent();
+                if (parent == null) {
+                    continue;
+                }
+
+                StringBuilder transcript = new StringBuilder();
+                boolean foundTranscript = false;
+
+                for (Node node : parent.childNodes()) {
+                    // Skip nodes until we find the TRANSCRIPT font element
+                    if (!foundTranscript) {
+                        if (node instanceof Element el
+                                && "font".equalsIgnoreCase(el.tagName())
+                                && "TRANSCRIPT".equalsIgnoreCase(el.text().trim())) {
+                            foundTranscript = true;
+                        }
+                        continue;
+                    }
+
+                    // Collect text from text nodes after the transcript heading
+                    if (node instanceof TextNode textNode) {
+                        String text = textNode.text().trim();
+                        if (!text.isEmpty()) {
+                            if (!transcript.isEmpty()) {
+                                transcript.append("\n");
+                            }
+                            transcript.append(text);
+                        }
+                    } else if (node instanceof Element element
+                            && !"br".equalsIgnoreCase(element.tagName())) {
+                        String text = element.text().trim();
+                        if (!text.isEmpty()) {
+                            if (!transcript.isEmpty()) {
+                                transcript.append("\n");
+                            }
+                            transcript.append(text);
+                        }
+                    }
+                }
+
+                String result = transcript.toString().trim();
+                return result.isEmpty() ? null : result;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Builds the URL for a color strip page.
+     * Formula: /ff{folder}/fc{NNNNN}.htm
+     */
+    String buildStripPageUrl(int stripNumber) {
+        int folder = calculateFolderNumber(stripNumber);
+        String padded = String.format("%05d", stripNumber);
+        return String.format("%s/ff%d/fc%s.htm", BASE_URL, folder, padded);
+    }
+
+    /**
+     * Builds the URL for a grayscale strip page (for older strips).
+     * Formula: /ff{folder}/fv{NNNNN}.htm
+     */
+    private String buildGrayscaleStripPageUrl(int stripNumber) {
+        int folder = calculateFolderNumber(stripNumber);
+        String padded = String.format("%05d", stripNumber);
+        return String.format("%s/ff%d/fv%s.htm", BASE_URL, folder, padded);
+    }
+
+    /**
+     * Calculates the folder number for a given strip number.
+     * Formula: ((stripNumber - 1) / 100 + 1) * 100
+     */
+    int calculateFolderNumber(int stripNumber) {
+        return ((stripNumber - 1) / 100 + 1) * 100;
+    }
+
+    /**
+     * Extracts the image URL from the document for the given strip number.
+     * Looks for an img tag whose src contains the padded strip number.
+     */
+    String extractImageUrl(Document doc, int stripNumber) {
+        String padded = String.format("%05d", stripNumber);
+
+        // Safe to interpolate: padded is always numeric from String.format("%05d", stripNumber)
+        Element img = doc.selectFirst("img[src*=" + padded + "]");
+        if (img != null) {
+            return img.attr("src");
+        }
+
+        // Try without padding
+        String unpadded = String.valueOf(stripNumber);
+        img = doc.selectFirst("img[src*=" + unpadded + "]");
+        if (img != null) {
+            return img.attr("src");
+        }
+
+        return null;
+    }
+
+    /**
+     * Result of parsing a Freefall title tag.
+     */
+    record TitleParseResult(int stripNumber, LocalDate date) {
+    }
+}

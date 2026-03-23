@@ -10,11 +10,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
+import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.storage.ComicIndexService;
 
 /**
  * Service for identifying missing comic strips that need to be backfilled.
@@ -40,16 +43,43 @@ public class ComicBackfillService {
     private final ManagementFacade managementFacade;
     private final ComicStorageFacade storageFacade;
     private final BackfillConfigurationService config;
+    private final DownloaderFacade downloaderFacade;
+    private final ComicIndexService comicIndexService;
 
     /**
-     * Represents a date that needs to be backfilled for a specific comic.
+     * Sealed interface representing a backfill task for either date-based or indexed comics.
      */
-    public record BackfillTask(ComicItem comic, LocalDate date) {
+    public sealed interface BackfillTask permits DateBackfillTask, StripBackfillTask {
+
+        /**
+         * Returns the comic this task is for.
+         */
+        ComicItem comic();
     }
 
     /**
-     * Scans all eligible comics and identifies missing strips, respecting
-     * source-specific rate limits.
+     * Represents a date that needs to be backfilled for a daily comic.
+     */
+    public record DateBackfillTask(ComicItem comic, LocalDate date) implements BackfillTask {
+    }
+
+    /**
+     * Represents a strip number that needs to be backfilled for an indexed comic.
+     */
+    public record StripBackfillTask(ComicItem comic, int stripNumber) implements BackfillTask {
+    }
+
+    /**
+     * Scans all eligible comics and identifies missing strips with no source filter.
+     */
+    public List<BackfillTask> findMissingStrips() {
+        return findMissingStrips(null);
+    }
+
+    /**
+     * Scans eligible comics and identifies missing strips, respecting
+     * source-specific rate limits. When sourceFilter is non-null and not "ALL",
+     * only comics from that source are considered.
      * <p>
      * This method filters comics upfront and only scans dates where the comic
      * is expected to have published. The filtering considers:
@@ -65,13 +95,13 @@ public class ComicBackfillService {
      * @return List of backfill tasks (comic + date pairs) limited by per-source
      *         daily limits
      */
-    public List<BackfillTask> findMissingStrips() {
-        log.info("Scanning for missing comic strips");
+    public List<BackfillTask> findMissingStrips(String sourceFilter) {
+        log.info("Scanning for missing comic strips (sourceFilter={})", sourceFilter);
 
         List<ComicItem> allComics = managementFacade.getAllComics();
 
         // Pre-filter comics - only active comics with valid, enabled sources
-        List<ComicItem> eligibleComics = filterEligibleComics(allComics);
+        List<ComicItem> eligibleComics = filterEligibleComics(allComics, sourceFilter);
 
         log.info("Found {} eligible comics out of {} total (filtered {} inactive/invalid)",
                 eligibleComics.size(), allComics.size(),
@@ -94,21 +124,28 @@ public class ComicBackfillService {
                 continue;
             }
 
-            // Calculate the effective scan range for this specific comic
-            DateRange scanRange = calculateScanRange(comic);
-
-            if (scanRange == null) {
-                log.debug("No valid scan range for comic '{}'", comic.getName());
-                continue;
-            }
-
-            log.debug("Scanning {} ({} to {})",
-                    comic.getName(), scanRange.start(), scanRange.end());
-
-            // Scan for missing strips, respecting remaining quota
             int remainingQuota = maxPerDay - currentCount;
-            List<BackfillTask> comicTasks = scanComicForMissingStrips(
-                    comic, scanRange.start(), scanRange.end(), remainingQuota);
+            List<BackfillTask> comicTasks;
+
+            // Handle indexed comics differently
+            if (downloaderFacade.isIndexedSource(source)) {
+                comicTasks = scanIndexedComicForMissingStrips(comic, remainingQuota);
+            } else {
+                // Calculate the effective scan range for this specific comic
+                DateRange scanRange = calculateScanRange(comic);
+
+                if (scanRange == null) {
+                    log.debug("No valid scan range for comic '{}'", comic.getName());
+                    continue;
+                }
+
+                log.debug("Scanning {} ({} to {})",
+                        comic.getName(), scanRange.start(), scanRange.end());
+
+                // Scan for missing strips, respecting remaining quota
+                comicTasks = scanComicForMissingStrips(
+                        comic, scanRange.start(), scanRange.end(), remainingQuota);
+            }
 
             allTasks.addAll(comicTasks);
             taskCountBySource.put(source, currentCount + comicTasks.size());
@@ -133,13 +170,12 @@ public class ComicBackfillService {
      * <li>It is active (not discontinued)</li>
      * <li>It has a valid source configured</li>
      * <li>Its source is enabled for backfill</li>
+     * <li>Its source matches the sourceFilter (if provided and not "ALL")</li>
      * </ul>
-     *
-     * @param comics list of all comics
-     * @return filtered list of eligible comics
      */
-    private List<ComicItem> filterEligibleComics(List<ComicItem> comics) {
+    private List<ComicItem> filterEligibleComics(List<ComicItem> comics, String sourceFilter) {
         List<ComicItem> eligible = new ArrayList<>();
+        boolean hasSourceFilter = sourceFilter != null && !"ALL".equalsIgnoreCase(sourceFilter);
 
         for (ComicItem comic : comics) {
             if (!comic.isActive()) {
@@ -155,6 +191,12 @@ public class ComicBackfillService {
             if (!config.isSourceEnabled(comic.getSource())) {
                 log.debug("Excluding comic {} - source '{}' disabled for backfill",
                         comic.getName(), comic.getSource());
+                continue;
+            }
+
+            if (hasSourceFilter && !sourceFilter.equalsIgnoreCase(comic.getSource())) {
+                log.debug("Excluding comic {} - source '{}' doesn't match filter '{}'",
+                        comic.getName(), comic.getSource(), sourceFilter);
                 continue;
             }
 
@@ -246,7 +288,7 @@ public class ComicBackfillService {
                         date);
 
                 if (!exists) {
-                    tasks.add(new BackfillTask(comic, date));
+                    tasks.add(new DateBackfillTask(comic, date));
                     consecutiveMissing++;
 
                     // Stop if we've hit too many consecutive missing strips
@@ -263,6 +305,53 @@ public class ComicBackfillService {
             }
 
             date = date.minusDays(1);
+        }
+
+        return tasks;
+    }
+
+    /**
+     * Scans an indexed comic for missing strips by iterating strip numbers
+     * backwards from the last known strip number.
+     *
+     * @param comic    the indexed comic to scan
+     * @param maxTasks maximum number of tasks to return
+     * @return list of backfill tasks for missing strips
+     */
+    private List<BackfillTask> scanIndexedComicForMissingStrips(ComicItem comic, int maxTasks) {
+        List<BackfillTask> tasks = new ArrayList<>();
+
+        Integer lastStrip = comic.getLastStripNumber();
+        Integer firstStrip = comic.getFirstStripNumber();
+
+        if (lastStrip == null || lastStrip <= 0) {
+            log.debug("No last strip number known for indexed comic '{}'", comic.getName());
+            return tasks;
+        }
+
+        // Load already-downloaded strip numbers to avoid wasteful re-downloads
+        Set<Integer> downloadedStrips = comicIndexService.getDownloadedStripNumbers(
+                comic.getId(), comic.getName());
+
+        int startStrip = downloadedStrips.contains(lastStrip) ? lastStrip - 1 : lastStrip;
+        int endStrip = firstStrip != null ? firstStrip : 1;
+        int consecutiveMissing = 0;
+        int maxConsecutive = config.getMaxConsecutiveFailures();
+
+        for (int stripNum = startStrip; stripNum >= endStrip && tasks.size() < maxTasks; stripNum--) {
+            if (downloadedStrips.contains(stripNum)) {
+                consecutiveMissing = 0;
+                continue;
+            }
+
+            tasks.add(new StripBackfillTask(comic, stripNum));
+            consecutiveMissing++;
+
+            if (consecutiveMissing >= maxConsecutive) {
+                log.debug("Stopping scan for {} at strip #{} - {} consecutive missing strips",
+                        comic.getName(), stripNum, consecutiveMissing);
+                break;
+            }
         }
 
         return tasks;

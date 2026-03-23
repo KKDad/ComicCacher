@@ -48,6 +48,9 @@ public class ComicItem implements Comparable<ComicItem> {
     @Builder.Default
     boolean active = true; // Whether comic is actively publishing (true = active, false = inactive/discontinued)
 
+    Integer firstStripNumber; // Lowest known strip number (for indexed comics, usually 1)
+    Integer lastStripNumber; // Highest downloaded strip number (for indexed comics)
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

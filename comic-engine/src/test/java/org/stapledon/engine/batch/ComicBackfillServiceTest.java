@@ -23,7 +23,10 @@ import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
+import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.storage.ComicIndexService;
 
 @ExtendWith(MockitoExtension.class)
 class ComicBackfillServiceTest {
@@ -37,6 +40,12 @@ class ComicBackfillServiceTest {
     @Mock
     private BackfillConfigurationService configService;
 
+    @Mock
+    private DownloaderFacade downloaderFacade;
+
+    @Mock
+    private ComicIndexService comicIndexService;
+
     private ComicBackfillService service;
 
     private static final int MAX_CONSECUTIVE_FAILURES = 14;
@@ -45,7 +54,7 @@ class ComicBackfillServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ComicBackfillService(managementFacade, storageFacade, configService);
+        service = new ComicBackfillService(managementFacade, storageFacade, configService, downloaderFacade, comicIndexService);
 
         // Setup default configuration service behavior using lenient to avoid
         // UnnecessaryStubbingException for tests that don't use all stubs
@@ -134,8 +143,14 @@ class ComicBackfillServiceTest {
         List<BackfillTask> result = service.findMissingStrips();
 
         assertThat(result.isEmpty()).isFalse();
-        assertThat(result.stream().anyMatch(t -> t.date().equals(missingDate1))).isTrue();
-        assertThat(result.stream().anyMatch(t -> t.date().equals(missingDate2))).isTrue();
+        assertThat(result.stream()
+                .filter(DateBackfillTask.class::isInstance)
+                .map(DateBackfillTask.class::cast)
+                .anyMatch(t -> t.date().equals(missingDate1))).isTrue();
+        assertThat(result.stream()
+                .filter(DateBackfillTask.class::isInstance)
+                .map(DateBackfillTask.class::cast)
+                .anyMatch(t -> t.date().equals(missingDate2))).isTrue();
     }
 
     @Test
@@ -184,7 +199,8 @@ class ComicBackfillServiceTest {
 
         // Verify no weekend dates are included
         for (BackfillTask task : result) {
-            DayOfWeek dayOfWeek = task.date().getDayOfWeek();
+            DateBackfillTask dateTask = (DateBackfillTask) task;
+            DayOfWeek dayOfWeek = dateTask.date().getDayOfWeek();
             assertThat(dayOfWeek).isNotEqualTo(DayOfWeek.SATURDAY);
             assertThat(dayOfWeek).isNotEqualTo(DayOfWeek.SUNDAY);
         }
@@ -204,7 +220,8 @@ class ComicBackfillServiceTest {
 
         // Verify no future dates are included
         for (BackfillTask task : result) {
-            assertThat(task.date().isAfter(today)).as("Should not scan future dates: " + task.date()).isFalse();
+            DateBackfillTask dateTask = (DateBackfillTask) task;
+            assertThat(dateTask.date().isAfter(today)).as("Should not scan future dates: " + dateTask.date()).isFalse();
         }
     }
 
@@ -223,7 +240,10 @@ class ComicBackfillServiceTest {
         List<BackfillTask> result = service.findMissingStrips();
 
         // Should have tasks for both comics
-        assertThat(result.stream().filter(t -> t.date().equals(missingDate)).count()).isEqualTo(2);
+        assertThat(result.stream()
+                .filter(DateBackfillTask.class::isInstance)
+                .map(DateBackfillTask.class::cast)
+                .filter(t -> t.date().equals(missingDate)).count()).isEqualTo(2);
     }
 
     @Test
@@ -242,7 +262,8 @@ class ComicBackfillServiceTest {
 
         // Verify no dates before earliest allowed
         for (BackfillTask task : result) {
-            assertThat(task.date().isBefore(earliestAllowed)).as("Should not scan before earliest allowed date: " + task.date()).isFalse();
+            DateBackfillTask dateTask = (DateBackfillTask) task;
+            assertThat(dateTask.date().isBefore(earliestAllowed)).as("Should not scan before earliest allowed date: " + dateTask.date()).isFalse();
         }
     }
 
@@ -278,7 +299,8 @@ class ComicBackfillServiceTest {
 
         // Verify no dates before comic's oldest date
         for (BackfillTask task : result) {
-            assertThat(task.date().isBefore(comicOldest)).as("Should not scan before comic's oldest date: " + task.date()).isFalse();
+            DateBackfillTask dateTask = (DateBackfillTask) task;
+            assertThat(dateTask.date().isBefore(comicOldest)).as("Should not scan before comic's oldest date: " + dateTask.date()).isFalse();
         }
     }
 
