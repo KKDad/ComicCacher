@@ -46,11 +46,24 @@ public class BackfillSourceConfig {
     private Boolean enabled = true;
 
     /**
+     * Whether to prefer color strips over grayscale for indexed comics.
+     * When true (default), tries color first and falls back to grayscale.
+     * When false, tries grayscale first and falls back to color.
+     */
+    @Builder.Default
+    private Boolean preferColor = true;
+
+    /**
      * Checks if this source is enabled for backfill.
-     *
-     * @return true if enabled, false if disabled
      */
     public boolean isEnabled() {
         return enabled == null || enabled;
+    }
+
+    /**
+     * Checks if this source prefers color strips.
+     */
+    public boolean isPreferColor() {
+        return preferColor == null || preferColor;
     }
 }

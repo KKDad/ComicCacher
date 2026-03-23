@@ -8,8 +8,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.time.format.DateTimeFormatter;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -62,10 +60,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         }
 
         log.debug("Found image via Open Graph metadata: {}", imageUrl);
-        URL imgUrl = java.net.URI.create(imageUrl).toURL();
-        try (InputStream in = imgUrl.openStream()) {
-            return in.readAllBytes();
-        }
+        return downloadImageData(imageUrl);
     }
 
     /**
@@ -105,10 +100,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
             return null;
         }
 
-        URL imageUrl = java.net.URI.create(badgeImage.attr("abs:src")).toURL();
-        try (InputStream in = imageUrl.openStream()) {
-            return in.readAllBytes();
-        }
+        return downloadImageData(badgeImage.attr("abs:src"));
     }
 
     /**

@@ -32,4 +32,6 @@ public class ImageDto {
     @JsonFormat(pattern = "yyyy-MM-dd")
     @ToString.Include
     LocalDate imageDate;
+
+    String transcript;
 }

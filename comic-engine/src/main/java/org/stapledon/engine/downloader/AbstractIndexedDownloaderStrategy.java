@@ -95,6 +95,9 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
      * Builds a download request from a comic and date.
      */
     protected ComicDownloadRequest buildRequest(ComicItem comic, LocalDate date) {
+        if (date == null) {
+            log.warn("actualDate is null for comic '{}', defaulting to today", comic.getName());
+        }
         return ComicDownloadRequest.builder()
                 .comicId(comic.getId())
                 .comicName(comic.getName())

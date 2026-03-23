@@ -320,7 +320,7 @@ public class ComicBackfillService {
         Set<Integer> downloadedStrips = comicIndexService.getDownloadedStripNumbers(
                 comic.getId(), comic.getName());
 
-        int startStrip = lastStrip - 1;
+        int startStrip = downloadedStrips.contains(lastStrip) ? lastStrip - 1 : lastStrip;
         int endStrip = firstStrip != null ? firstStrip : 1;
         int consecutiveMissing = 0;
         int maxConsecutive = config.getMaxConsecutiveFailures();

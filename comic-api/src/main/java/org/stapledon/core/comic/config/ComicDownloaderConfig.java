@@ -14,8 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Configuration class for registering comic downloader strategies.
- * This class ensures that all available downloader strategies are registered
- * with the downloader facade during application startup.
+ * <p>
+ * Strategies use {@code @Component} for Spring lifecycle (dependency injection),
+ * but must also be manually registered here because the {@link DownloaderFacade}
+ * needs them keyed by source identifier, which Spring DI alone cannot provide.
  */
 @Slf4j
 @ToString

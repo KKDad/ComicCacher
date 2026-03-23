@@ -203,6 +203,11 @@ type ComicStrip {
     height: Int
 
     """
+    Transcript text extracted from the comic page (null if not available).
+    """
+    transcript: String
+
+    """
     The previous strip before this date (null if at beginning).
     """
     previous: ComicStrip

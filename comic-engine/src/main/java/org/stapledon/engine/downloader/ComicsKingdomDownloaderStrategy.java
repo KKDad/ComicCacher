@@ -8,8 +8,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.time.format.DateTimeFormatter;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -66,11 +64,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
         }
 
         Element imageElement = imageElements.first();
-        URL imageUrl = java.net.URI.create(imageElement.attr("content")).toURL();
-
-        try (InputStream in = imageUrl.openStream()) {
-            return in.readAllBytes();
-        }
+        return downloadImageData(imageElement.attr("content"));
     }
 
     /**
@@ -95,10 +89,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
             return null;
         }
 
-        URL imageUrl = java.net.URI.create(featureAvatars.attr("abs:src")).toURL();
-        try (InputStream in = imageUrl.openStream()) {
-            return in.readAllBytes();
-        }
+        return downloadImageData(featureAvatars.attr("abs:src"));
     }
 
     /**

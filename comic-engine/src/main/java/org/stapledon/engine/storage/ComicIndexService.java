@@ -522,8 +522,15 @@ public class ComicIndexService {
 
         ComicDateIndex index = loadIndex(comicId, comicName);
         if (index.getAvailableDates().isEmpty()) {
-            rebuildIndex(comicId, comicName);
-            return indexCache.get(comicId);
+            // Call internal method directly — caller already holds the write lock
+            index = rebuildIndexInternal(comicId, comicName);
+            if (!index.getAvailableDates().isEmpty()) {
+                try {
+                    saveIndex(index, comicName);
+                } catch (IOException e) {
+                    log.error("Failed to persist rebuilt index for {}", comicName, e);
+                }
+            }
         }
         indexCache.put(comicId, index);
         return index;

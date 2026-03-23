@@ -9,18 +9,18 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
+import org.stapledon.engine.batch.BackfillConfigurationService;
 
 /**
  * Strategy implementation for downloading comics from Freefall (freefall.purrsia.com).
@@ -32,19 +32,23 @@ import org.stapledon.common.service.ValidationService;
 public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrategy {
 
     static final String SOURCE_IDENTIFIER = "freefall";
+    // HTTPS is not available for freefall.purrsia.com
     static final String BASE_URL = "http://freefall.purrsia.com";
     private static final String AVATAR_URL = BASE_URL + "/fflogo.gif";
-    private static final int TIMEOUT = 10 * 1000;
 
     private static final Pattern TITLE_PATTERN = Pattern.compile("Freefall\\s+(\\d+)(?:\\s+(.+))?");
     private static final DateTimeFormatter TITLE_DATE_FORMAT = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH);
+
+    private final BackfillConfigurationService backfillConfig;
 
     /**
      * Creates a new Freefall downloader strategy.
      */
     public FreefallDownloaderStrategy(InspectorService webInspector,
-            ValidationService imageValidationService) {
+            ValidationService imageValidationService,
+            BackfillConfigurationService backfillConfig) {
         super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
+        this.backfillConfig = backfillConfig;
     }
 
     /**
@@ -56,7 +60,7 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         log.info("Fetching latest Freefall strip from {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(TIMEOUT).get();
+                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
 
         return fetchStripFromDocument(doc);
     }
@@ -66,19 +70,34 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
      */
     @Override
     protected IndexedStripData fetchStrip(ComicItem comic, int stripNumber) throws Exception {
-        String url = buildStripPageUrl(stripNumber);
-        log.info("Fetching Freefall strip #{} from {}", stripNumber, url);
+        boolean preferColor = backfillConfig.getPreferColorForSource(SOURCE_IDENTIFIER);
+
+        String primaryUrl;
+        String fallbackUrl;
+        if (preferColor) {
+            primaryUrl = buildStripPageUrl(stripNumber);
+            fallbackUrl = buildGrayscaleStripPageUrl(stripNumber);
+        } else {
+            primaryUrl = buildGrayscaleStripPageUrl(stripNumber);
+            fallbackUrl = buildStripPageUrl(stripNumber);
+        }
+
+        log.info("Fetching Freefall strip #{} from {} (preferColor={})", stripNumber, primaryUrl, preferColor);
 
         Document doc;
         try {
-            doc = Jsoup.connect(url)
-                    .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(TIMEOUT).get();
+            doc = Jsoup.connect(primaryUrl)
+                    .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
         } catch (org.jsoup.HttpStatusException e) {
-            // Try grayscale version for older strips
-            String grayUrl = buildGrayscaleStripPageUrl(stripNumber);
-            log.debug("Color page not found, trying grayscale: {}", grayUrl);
-            doc = Jsoup.connect(grayUrl)
-                    .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(TIMEOUT).get();
+            log.debug("Primary page not found ({}), trying fallback: {}", primaryUrl, fallbackUrl);
+            try {
+                doc = Jsoup.connect(fallbackUrl)
+                        .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+            } catch (org.jsoup.HttpStatusException e2) {
+                log.error("Both color and grayscale pages failed for strip #{}: {} and {}", stripNumber,
+                        buildStripPageUrl(stripNumber), buildGrayscaleStripPageUrl(stripNumber));
+                throw e2;
+            }
         }
 
         return fetchStripFromDocument(doc);
@@ -90,10 +109,7 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
     @Override
     protected byte[] downloadAvatarImage(int comicId, String comicName, String sourceIdentifier) throws Exception {
         log.debug("Downloading Freefall avatar from {}", AVATAR_URL);
-        URL imgUrl = java.net.URI.create(AVATAR_URL).toURL();
-        try (InputStream in = imgUrl.openStream()) {
-            return in.readAllBytes();
-        }
+        return downloadImageData(AVATAR_URL);
     }
 
     /**
@@ -102,11 +118,8 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
     private IndexedStripData fetchStripFromDocument(Document doc) throws Exception {
         // Parse title to get strip number and date
         String title = doc.title();
-        TitleParseResult titleResult = parseTitleTag(title);
-
-        if (titleResult == null) {
-            throw new IllegalStateException("Could not parse Freefall title: " + title);
-        }
+        TitleParseResult titleResult = parseTitleTag(title)
+                .orElseThrow(() -> new IllegalStateException("Could not parse Freefall title: " + title));
 
         // Determine the actual date
         LocalDate actualDate = titleResult.date();
@@ -126,11 +139,7 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         }
 
         log.debug("Downloading image from {}", imageUrl);
-        URL imgUrl = java.net.URI.create(imageUrl).toURL();
-        byte[] imageData;
-        try (InputStream in = imgUrl.openStream()) {
-            imageData = in.readAllBytes();
-        }
+        byte[] imageData = downloadImageData(imageUrl);
 
         // Parse transcript
         String transcript = parseTranscript(doc);
@@ -142,14 +151,14 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
      * Parses the Freefall title tag to extract strip number and optional date.
      * Title format: "Freefall 04350 March 18, 2026" (modern) or "Freefall 00001" (old)
      */
-    TitleParseResult parseTitleTag(String title) {
+    Optional<TitleParseResult> parseTitleTag(String title) {
         if (title == null || title.isBlank()) {
-            return null;
+            return Optional.empty();
         }
 
         Matcher matcher = TITLE_PATTERN.matcher(title.trim());
         if (!matcher.matches()) {
-            return null;
+            return Optional.empty();
         }
 
         int stripNumber = Integer.parseInt(matcher.group(1));
@@ -163,7 +172,7 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
             }
         }
 
-        return new TitleParseResult(stripNumber, date);
+        return Optional.of(new TitleParseResult(stripNumber, date));
     }
 
     /**
@@ -294,7 +303,7 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
     String extractImageUrl(Document doc, int stripNumber) {
         String padded = String.format("%05d", stripNumber);
 
-        // Try color version first (fc prefix, .png)
+        // Safe to interpolate: padded is always numeric from String.format("%05d", stripNumber)
         Element img = doc.selectFirst("img[src*=" + padded + "]");
         if (img != null) {
             return img.attr("src");

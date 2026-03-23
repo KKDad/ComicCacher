@@ -210,7 +210,11 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                 comic.getDirectoryName(), yearPath, filename));
 
         try {
-            return Optional.of(ImageUtils.getImageDto(file));
+            ImageDto dto = ImageUtils.getImageDto(file);
+            imageMetadataRepository.loadMetadata(file.getAbsolutePath())
+                    .map(ImageMetadata::getTranscript)
+                    .ifPresent(dto::setTranscript);
+            return Optional.of(dto);
         } catch (IOException e) {
             log.error("Failed to read comic strip for {} on {}: {}", comic.getName(), date, e.getMessage());
             return Optional.empty();

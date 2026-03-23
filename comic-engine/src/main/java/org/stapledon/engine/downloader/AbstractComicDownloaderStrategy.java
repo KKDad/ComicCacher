@@ -4,6 +4,10 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.Optional;
 
 import org.stapledon.common.dto.ImageValidationResult;
@@ -95,6 +99,22 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
                 validation.getWidth(), validation.getHeight(), validation.getSizeInBytes());
 
         return validation;
+    }
+
+    /**
+     * Downloads binary image data from a URL with proper timeout and User-Agent.
+     * All strategies should use this instead of raw {@code URL.openStream()}.
+     */
+    protected byte[] downloadImageData(String imageUrl) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) URI.create(imageUrl).toURL().openConnection();
+        conn.setRequestProperty("User-Agent", DownloaderConstants.DEFAULT_USER_AGENT);
+        conn.setConnectTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
+        conn.setReadTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
+        try (InputStream in = conn.getInputStream()) {
+            return in.readAllBytes();
+        } finally {
+            conn.disconnect();
+        }
     }
 
     /**

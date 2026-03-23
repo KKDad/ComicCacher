@@ -2,6 +2,7 @@ package org.stapledon.engine.downloader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -19,6 +20,7 @@ import java.util.stream.Stream;
 
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.service.ValidationService;
+import org.stapledon.engine.batch.BackfillConfigurationService;
 
 @ExtendWith(MockitoExtension.class)
 class FreefallDownloaderStrategyTest {
@@ -29,11 +31,14 @@ class FreefallDownloaderStrategyTest {
     @Mock
     private ValidationService imageValidationService;
 
+    @Mock
+    private BackfillConfigurationService backfillConfig;
+
     private FreefallDownloaderStrategy strategy;
 
     @BeforeEach
     void setUp() {
-        strategy = new FreefallDownloaderStrategy(webInspector, imageValidationService);
+        strategy = new FreefallDownloaderStrategy(webInspector, imageValidationService, backfillConfig);
     }
 
     @Test
@@ -45,9 +50,10 @@ class FreefallDownloaderStrategyTest {
     void shouldCreateStrategyWithDependencies() {
         InspectorService mockInspector = mock(InspectorService.class);
         ValidationService mockValidation = mock(ValidationService.class);
+        BackfillConfigurationService mockConfig = mock(BackfillConfigurationService.class);
 
         FreefallDownloaderStrategy newStrategy = new FreefallDownloaderStrategy(
-                mockInspector, mockValidation);
+                mockInspector, mockValidation, mockConfig);
 
         assertThat(newStrategy).isNotNull();
         assertThat(newStrategy.getSource()).isEqualTo("freefall");
@@ -56,9 +62,8 @@ class FreefallDownloaderStrategyTest {
     @ParameterizedTest
     @MethodSource("titlesWithDates")
     void shouldParseTitleWithDate(String title, int expectedStrip, String expectedDate) {
-        FreefallDownloaderStrategy.TitleParseResult result = strategy.parseTitleTag(title);
+        FreefallDownloaderStrategy.TitleParseResult result = strategy.parseTitleTag(title).orElseThrow();
 
-        assertThat(result).isNotNull();
         assertThat(result.stripNumber()).isEqualTo(expectedStrip);
         assertThat(result.date()).isEqualTo(LocalDate.parse(expectedDate));
     }
@@ -76,18 +81,17 @@ class FreefallDownloaderStrategyTest {
 
     @Test
     void shouldParseTitleWithoutDate() {
-        FreefallDownloaderStrategy.TitleParseResult result = strategy.parseTitleTag("Freefall 00001");
+        FreefallDownloaderStrategy.TitleParseResult result = strategy.parseTitleTag("Freefall 00001").orElseThrow();
 
-        assertThat(result).isNotNull();
         assertThat(result.stripNumber()).isEqualTo(1);
         assertThat(result.date()).isNull();
     }
 
     @Test
-    void shouldReturnNullForInvalidTitle() {
-        assertThat(strategy.parseTitleTag("Not a Freefall title")).isNull();
-        assertThat(strategy.parseTitleTag(null)).isNull();
-        assertThat(strategy.parseTitleTag("")).isNull();
+    void shouldReturnEmptyForInvalidTitle() {
+        assertThat(strategy.parseTitleTag("Not a Freefall title")).isEmpty();
+        assertThat(strategy.parseTitleTag(null)).isEmpty();
+        assertThat(strategy.parseTitleTag("")).isEmpty();
     }
 
     @Test
@@ -185,5 +189,64 @@ class FreefallDownloaderStrategyTest {
         String result = strategy.extractImageUrl(doc, 4350);
 
         assertThat(result).isNull();
+    }
+
+    // =========================================================================
+    // Composition tests: verify parsing methods work together as
+    // fetchStripFromDocument chains them
+    // =========================================================================
+
+    @Test
+    void shouldParseModernPageWithTitleDateImageAndTranscript() {
+        String html = "<html><head><title>Freefall 04350 March 18, 2026</title></head>"
+                + "<body>"
+                + "<img src=\"ff4400/fc04350.png\" alt=\"strip\">"
+                + "<div><font size=+1>TRANSCRIPT</font><br>"
+                + "Florence: Test line.<br>"
+                + "</div></body></html>";
+        Document doc = Jsoup.parse(html);
+
+        FreefallDownloaderStrategy.TitleParseResult title = strategy.parseTitleTag(doc.title()).orElseThrow();
+        assertThat(title.stripNumber()).isEqualTo(4350);
+        assertThat(title.date()).isEqualTo(LocalDate.of(2026, 3, 18));
+
+        String imageUrl = strategy.extractImageUrl(doc, title.stripNumber());
+        assertThat(imageUrl).isEqualTo("ff4400/fc04350.png");
+
+        String transcript = strategy.parseTranscript(doc);
+        assertThat(transcript).contains("Florence");
+    }
+
+    @Test
+    void shouldParseOldPageWithCommentDateAndNoTranscript() {
+        String html = "<html><head><title>Freefall 00001</title></head>"
+                + "<body><!- April 9, 1998 ->"
+                + "<img src=\"ff100/fv00001.gif\" alt=\"strip\">"
+                + "</body></html>";
+        Document doc = Jsoup.parse(html);
+
+        FreefallDownloaderStrategy.TitleParseResult title = strategy.parseTitleTag(doc.title()).orElseThrow();
+        assertThat(title.stripNumber()).isEqualTo(1);
+        assertThat(title.date()).isNull();
+
+        LocalDate commentDate = strategy.parseDateFromComment(doc);
+        assertThat(commentDate).isEqualTo(LocalDate.of(1998, 4, 9));
+
+        String imageUrl = strategy.extractImageUrl(doc, title.stripNumber());
+        assertThat(imageUrl).isEqualTo("ff100/fv00001.gif");
+
+        assertThat(strategy.parseTranscript(doc)).isNull();
+    }
+
+    @Test
+    void shouldHandlePageWithNoDatesAnywhere() {
+        String html = "<html><head><title>Freefall 02000</title></head>"
+                + "<body><img src=\"ff2000/fc02000.png\" alt=\"strip\"></body></html>";
+        Document doc = Jsoup.parse(html);
+
+        FreefallDownloaderStrategy.TitleParseResult title = strategy.parseTitleTag(doc.title()).orElseThrow();
+        assertThat(title.stripNumber()).isEqualTo(2000);
+        assertThat(title.date()).isNull();
+        assertThat(strategy.parseDateFromComment(doc)).isNull();
     }
 }
