@@ -74,4 +74,4 @@ Alphabetical ordering required for: enum entries, import statements, class membe
 - Zero new warnings in any PR. Clean up legacy warnings when modifying a file.
 
 ## 12. Further Reading
-See [docs/](../docs/README.md) for full API reference, design decisions, and storage specifications.
+See [@~/docs/README.md](../docs/README.md) for full API reference, design decisions, and storage specifications.

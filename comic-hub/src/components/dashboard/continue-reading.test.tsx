@@ -52,9 +52,10 @@ describe('ContinueReading', () => {
     expect(screen.getByText('G')).toBeInTheDocument();
   });
 
-  it('shows "today" for same-day reads', () => {
-    render(<ContinueReading lastRead={lastRead} />);
-    expect(screen.getByText('Last read: today')).toBeInTheDocument();
+  it('shows "just now" for same-time reads', () => {
+    const justNow = { ...lastRead, date: '2024-01-15T12:00:00Z' };
+    render(<ContinueReading lastRead={justNow} />);
+    expect(screen.getByText('Last read: just now')).toBeInTheDocument();
   });
 
   it('shows "1 day ago" for yesterday', () => {

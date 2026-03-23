@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { formatShortDate } from '@/lib/date-utils';
 
 interface ComicTileProps {
   comic: {
@@ -18,26 +20,18 @@ interface ComicTileProps {
 }
 
 export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicTileProps) {
-  const formattedDate = new Date(comic.date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+  const formattedDate = formatShortDate(comic.date);
 
   return (
     <Link href={`/comics/${comic.id}/read?date=${comic.date}`}>
       <Card className="overflow-hidden hover:shadow-md transition-shadow group">
         <div className="aspect-[4/3] bg-canvas overflow-hidden relative">
-          {comic.thumbnail ? (
-            <img
-              src={comic.thumbnail}
-              alt={comic.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-ink-muted">
-              {comic.name[0]}
-            </div>
-          )}
+          <ImageWithFallback
+            src={comic.thumbnail}
+            alt={comic.name}
+            fallbackText={comic.name[0]}
+            className="group-hover:scale-105 transition-transform"
+          />
           {onToggleFavorite && (
             <button
               type="button"

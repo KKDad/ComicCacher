@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ComicTile } from '@/components/comics/comic-tile';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface TodaysComic {
   id: number;
@@ -63,16 +64,13 @@ export function TodaysComics({ comics = null, isLoading = false }: TodaysComicsP
             <p className="text-sm text-ink-subtle">{today}</p>
           </div>
         </div>
-        <Card className="border-dashed">
-          <div className="flex flex-col items-center justify-center p-12 text-center">
-            <Calendar className="h-12 w-12 text-ink-muted mb-4" />
-            <p className="text-ink-subtle mb-2">No comics for today</p>
-            <p className="text-sm text-ink-muted mb-4">
-              Check back later or browse the archive
-            </p>
-            <Button>View Archive</Button>
-          </div>
-        </Card>
+        <EmptyState
+          icon={Calendar}
+          title="No comics for today"
+          description="Check back later or browse the archive"
+          actionLabel="View Archive"
+          actionHref="/comics"
+        />
       </section>
     );
   }

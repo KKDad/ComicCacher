@@ -3,6 +3,7 @@
 import { forwardRef, useState } from 'react';
 import type { Strip } from '@/hooks/use-reader';
 import { StripSkeleton } from './strip-skeleton';
+import { formatFullDate } from '@/lib/date-utils';
 
 interface StripCardProps {
   strip: Strip;
@@ -14,12 +15,7 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
 
-    const formattedDate = new Date(strip.date).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const formattedDate = formatFullDate(strip.date);
 
     if (!strip.available || !strip.imageUrl) {
       return (

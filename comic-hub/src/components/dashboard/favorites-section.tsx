@@ -1,11 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { Heart } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FavoriteCard } from '@/components/comics/favorite-card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface FavoriteComic {
   id: number;
@@ -39,18 +37,13 @@ export function FavoritesSection({ favorites = null, isLoading = false }: Favori
     return (
       <section>
         <h2 className="text-xl font-semibold mb-4 text-ink">Your Favorites</h2>
-        <Card className="border-dashed">
-          <div className="flex flex-col items-center justify-center p-12 text-center">
-            <Heart className="h-12 w-12 text-ink-muted mb-4" />
-            <p className="text-ink-subtle mb-2">No favorite comics yet</p>
-            <p className="text-sm text-ink-muted mb-4">
-              Mark comics as favorites to see them here
-            </p>
-            <Link href="/comics">
-              <Button>Browse Comics</Button>
-            </Link>
-          </div>
-        </Card>
+        <EmptyState
+          icon={Heart}
+          title="No favorite comics yet"
+          description="Mark comics as favorites to see them here"
+          actionLabel="Browse Comics"
+          actionHref="/comics"
+        />
       </section>
     );
   }
