@@ -2,6 +2,7 @@ package org.stapledon.engine.batch.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -19,10 +20,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.management.ManagementFacade;
 
 /**
@@ -46,12 +49,17 @@ public class RetrievalRecordPurgeJobConfig {
     @Value("${batch.timezone:America/Toronto}")
     private String timezone;
 
+    private static final List<JobParameterDefinition> PURGE_PARAMETERS = List.of(
+            new JobParameterDefinition("daysToKeep", "Days to Keep", "INTEGER", false, "30", null)
+    );
+
     /**
      * Scheduler for RetrievalRecordPurgeJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
     public DailyJobScheduler retrievalRecordPurgeJobScheduler(@Qualifier("retrievalRecordPurgeJob") Job retrievalRecordPurgeJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(retrievalRecordPurgeJob, cronExpression, timezone, jobOperator, tracker, "Purges old retrieval records and batch log files beyond the retention window");
+        return new DailyJobScheduler(retrievalRecordPurgeJob, cronExpression, timezone, jobOperator, tracker,
+                "Purges old retrieval records and batch log files beyond the retention window", PURGE_PARAMETERS);
     }
 
     /**
@@ -73,22 +81,26 @@ public class RetrievalRecordPurgeJobConfig {
      * Step for performing record purge
      */
     @Bean
-    public Step recordPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public Step recordPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
+                                @Qualifier("recordPurgeTasklet") Tasklet recordPurgeTasklet) {
 
-        return new StepBuilder("recordPurgeStep", jobRepository).tasklet(recordPurgeTasklet(), transactionManager).build();
+        return new StepBuilder("recordPurgeStep", jobRepository).tasklet(recordPurgeTasklet, transactionManager).build();
     }
 
     /**
-     * Tasklet that performs the actual record purge
+     * Tasklet that performs the actual record purge. Accepts an optional "daysToKeep" job parameter to override the configured retention period.
      */
     @Bean
-    public Tasklet recordPurgeTasklet() {
+    @StepScope
+    @Qualifier("recordPurgeTasklet")
+    public Tasklet recordPurgeTasklet(@Value("#{jobParameters['daysToKeep']}") String daysToKeepParam) {
         return (contribution, chunkContext) -> {
-            LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
-            log.info("Starting retrieval record purge (keeping last {} days, cutoff date: {})", daysToKeep, cutoffDate);
+            int effectiveDays = daysToKeepParam != null ? Integer.parseInt(daysToKeepParam) : daysToKeep;
+            LocalDate cutoffDate = LocalDate.now().minusDays(effectiveDays);
+            log.info("Starting retrieval record purge (keeping last {} days, cutoff date: {})", effectiveDays, cutoffDate);
 
             long startTime = System.currentTimeMillis();
-            int purgedCount = comicManagementFacade.purgeOldRetrievalRecords(daysToKeep);
+            int purgedCount = comicManagementFacade.purgeOldRetrievalRecords(effectiveDays);
             long duration = System.currentTimeMillis() - startTime;
 
             if (purgedCount > 0) {
@@ -105,21 +117,25 @@ public class RetrievalRecordPurgeJobConfig {
      * Step for purging old batch log files
      */
     @Bean
-    public Step logPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public Step logPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
+                             @Qualifier("logPurgeTasklet") Tasklet logPurgeTasklet) {
 
-        return new StepBuilder("logPurgeStep", jobRepository).tasklet(logPurgeTasklet(), transactionManager).build();
+        return new StepBuilder("logPurgeStep", jobRepository).tasklet(logPurgeTasklet, transactionManager).build();
     }
 
     /**
-     * Tasklet that purges old batch log files
+     * Tasklet that purges old batch log files. Uses the same "daysToKeep" parameter as record purge.
      */
     @Bean
-    public Tasklet logPurgeTasklet() {
+    @StepScope
+    @Qualifier("logPurgeTasklet")
+    public Tasklet logPurgeTasklet(@Value("#{jobParameters['daysToKeep']}") String daysToKeepParam) {
         return (contribution, chunkContext) -> {
-            log.info("Starting batch log file purge (keeping last {} days)", daysToKeep);
+            int effectiveDays = daysToKeepParam != null ? Integer.parseInt(daysToKeepParam) : daysToKeep;
+            log.info("Starting batch log file purge (keeping last {} days)", effectiveDays);
 
             long startTime = System.currentTimeMillis();
-            int purgedCount = batchJobLogService.purgeOldLogFiles(daysToKeep);
+            int purgedCount = batchJobLogService.purgeOldLogFiles(effectiveDays);
             long duration = System.currentTimeMillis() - startTime;
 
             if (purgedCount > 0) {

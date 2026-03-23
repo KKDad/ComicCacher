@@ -2,6 +2,7 @@ package org.stapledon.engine.batch.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.parameters.RunIdIncrementer;
@@ -24,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -36,6 +38,7 @@ import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
 /**
@@ -68,6 +71,10 @@ public class ImageMetadataBackfillJobConfig {
 
     private volatile boolean initialized;
 
+    private static final List<JobParameterDefinition> IMAGE_BACKFILL_PARAMETERS = List.of(
+            new JobParameterDefinition("batchSize", "Batch Size", "INTEGER", false, "100", null)
+    );
+
     /**
      * Lazily initializes the comic directory map on first use. Avoids blocking application startup.
      */
@@ -92,7 +99,8 @@ public class ImageMetadataBackfillJobConfig {
     @Bean
     public DailyJobScheduler imageMetadataBackfillJobScheduler(@Qualifier("imageMetadataBackfillJob") Job imageMetadataBackfillJob, JobOperator jobOperator,
             JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(imageMetadataBackfillJob, cronExpression, timezone, jobOperator, tracker, "Recalculates image dimensions and format metadata");
+        return new DailyJobScheduler(imageMetadataBackfillJob, cronExpression, timezone, jobOperator, tracker,
+                "Recalculates image dimensions and format metadata", IMAGE_BACKFILL_PARAMETERS);
     }
 
     /**
@@ -108,22 +116,27 @@ public class ImageMetadataBackfillJobConfig {
      * Step for performing image metadata backfill
      */
     @Bean
-    public Step imageBackfillStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public Step imageBackfillStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
+                                  @Qualifier("imageBackfillTasklet") Tasklet imageBackfillTasklet) {
 
-        return new StepBuilder("imageBackfillStep", jobRepository).tasklet(imageBackfillTasklet(), transactionManager).build();
+        return new StepBuilder("imageBackfillStep", jobRepository).tasklet(imageBackfillTasklet, transactionManager).build();
     }
 
     /**
-     * Tasklet that performs the actual image metadata backfill. Uses streaming to avoid loading all file paths into memory.
+     * Tasklet that performs the actual image metadata backfill. Uses streaming to avoid loading all file paths into memory. Accepts an optional "batchSize" job parameter to override the
+     * configured batch size.
      */
     @Bean
-    public Tasklet imageBackfillTasklet() {
+    @StepScope
+    @Qualifier("imageBackfillTasklet")
+    public Tasklet imageBackfillTasklet(@Value("#{jobParameters['batchSize']}") String batchSizeParam) {
         return (contribution, chunkContext) -> {
+            int effectiveBatchSize = batchSizeParam != null ? Integer.parseInt(batchSizeParam) : batchSize;
             File cacheRoot = new File(cacheProperties.getLocation());
-            int maxToProcess = batchSize * 100; // Process up to 100 batches per run
+            int maxToProcess = effectiveBatchSize * 100; // Process up to 100 batches per run
 
             log.info("Starting image metadata backfill (cache: {}, batch size: {}, max images: {})",
-                    cacheRoot.getAbsolutePath(), batchSize, maxToProcess);
+                    cacheRoot.getAbsolutePath(), effectiveBatchSize, maxToProcess);
 
             long startTime = System.currentTimeMillis();
 
@@ -147,7 +160,7 @@ public class ImageMetadataBackfillJobConfig {
                             counters[0]++;
 
                             // Log progress every batch
-                            if (counters[0] % batchSize == 0) {
+                            if (counters[0] % effectiveBatchSize == 0) {
                                 log.info("Progress: {} images processed ({} successful, {} failed)", counters[0], counters[1], counters[2]);
                             }
                         });

@@ -144,6 +144,16 @@ public interface ManagementFacade {
     List<ComicDownloadResult> updateComicsForDate(LocalDate date);
 
     /**
+     * Updates comics by downloading strips for the specified date, filtered by source.
+     * When sourceFilter is null or "ALL", downloads from all sources (same as {@link #updateComicsForDate(LocalDate)}).
+     *
+     * @param date         The date for which to download comics
+     * @param sourceFilter The source to filter by (e.g., "gocomics"), or null/"ALL" for all sources
+     * @return List of download results for each comic
+     */
+    List<ComicDownloadResult> updateComicsForDate(LocalDate date, String sourceFilter);
+
+    /**
      * Downloads and saves a specific comic strip for the specified date.
      * This is more efficient for backfill operations where the comic is already
      * known and pre-validated, as it bypasses the full comics list iteration.

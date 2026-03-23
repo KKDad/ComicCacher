@@ -423,7 +423,13 @@ public class ComicManagementFacade implements ManagementFacade {
 
     @Override
     public List<ComicDownloadResult> updateComicsForDate(LocalDate date) {
+        return updateComicsForDate(date, null);
+    }
+
+    @Override
+    public List<ComicDownloadResult> updateComicsForDate(LocalDate date, String sourceFilter) {
         List<ComicDownloadResult> results = new ArrayList<>();
+        boolean hasSourceFilter = sourceFilter != null && !"ALL".equalsIgnoreCase(sourceFilter);
 
         try {
             // Log if attempting to download future dates
@@ -431,7 +437,7 @@ public class ComicManagementFacade implements ManagementFacade {
                 log.warn("⚠️ FUTURE DATE DETECTED: Attempting to download comics for {} which is AFTER today ({})",
                         date, LocalDate.now());
             } else {
-                log.info("Downloading comics for date: {} (today: {})", date, LocalDate.now());
+                log.info("Downloading comics for date: {} (today: {}, sourceFilter: {})", date, LocalDate.now(), sourceFilter);
             }
 
             // Get the current comic configuration
@@ -449,6 +455,11 @@ public class ComicManagementFacade implements ManagementFacade {
                 // Skip comics with null or empty source
                 if (comic.getSource() == null || comic.getSource().isEmpty()) {
                     log.warn("Skipping comic '{}' - has null or empty source", comic.getName());
+                    continue;
+                }
+
+                // Skip comics that don't match the source filter
+                if (hasSourceFilter && !sourceFilter.equalsIgnoreCase(comic.getSource())) {
                     continue;
                 }
 
