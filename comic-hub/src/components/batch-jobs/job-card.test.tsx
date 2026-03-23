@@ -7,7 +7,7 @@ import {
   useTriggerJobMutation,
   useToggleJobSchedulerMutation,
 } from '@/generated/graphql';
-import type { BatchSchedulerInfo, BatchJob, BatchStatusEnum } from '@/generated/graphql';
+import type { BatchSchedulerInfo, BatchJob, BatchStatusEnum, BatchJobParameterType } from '@/generated/graphql';
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -443,5 +443,71 @@ describe('JobCard', () => {
       <JobCard scheduler={createScheduler()} recentExecutions={[createExecution({ durationMs: null })]} />,
     );
     expect(screen.getByText(/Last Ran:/)).toBeInTheDocument();
+  });
+
+  it('renders parameter controls in confirm dialog when scheduler has parameters', async () => {
+    const scheduler = createScheduler({
+      availableParameters: [
+        {
+          __typename: 'BatchJobParameter',
+          name: 'source',
+          label: 'Source Filter',
+          type: 'ENUM' as BatchJobParameterType,
+          required: false,
+          defaultValue: 'ALL',
+          options: [
+            { __typename: 'BatchJobParameterOption', value: 'ALL', label: 'All Sources' },
+            { __typename: 'BatchJobParameterOption', value: 'gocomics', label: 'GoComics' },
+          ],
+        },
+      ],
+    });
+
+    renderWithProviders(<JobCard scheduler={scheduler} recentExecutions={[]} />);
+    await userEvent.click(screen.getByRole('button', { name: /run now/i }));
+
+    expect(screen.getByText('Source Filter')).toBeInTheDocument();
+  });
+
+  it('sends parameters when triggering job with available parameters', async () => {
+    const triggerMutate = vi.fn();
+    vi.mocked(useTriggerJobMutation).mockReturnValue({
+      mutate: triggerMutate,
+      isPending: false,
+    } as any);
+
+    const scheduler = createScheduler({
+      availableParameters: [
+        {
+          __typename: 'BatchJobParameter',
+          name: 'source',
+          label: 'Source Filter',
+          type: 'ENUM' as BatchJobParameterType,
+          required: false,
+          defaultValue: 'ALL',
+          options: [
+            { __typename: 'BatchJobParameterOption', value: 'ALL', label: 'All Sources' },
+            { __typename: 'BatchJobParameterOption', value: 'gocomics', label: 'GoComics' },
+          ],
+        },
+      ],
+    });
+
+    renderWithProviders(<JobCard scheduler={scheduler} recentExecutions={[]} />);
+    await userEvent.click(screen.getByRole('button', { name: /run now/i }));
+    const buttons = screen.getAllByRole('button', { name: /run now/i });
+    await userEvent.click(buttons[buttons.length - 1]);
+
+    expect(triggerMutate).toHaveBeenCalledWith({
+      jobName: 'ComicDownloadJob',
+      parameters: { source: 'ALL' },
+    });
+  });
+
+  it('does not render parameter controls when scheduler has no parameters', async () => {
+    renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
+    await userEvent.click(screen.getByRole('button', { name: /run now/i }));
+
+    expect(screen.queryByText('Source Filter')).not.toBeInTheDocument();
   });
 });
