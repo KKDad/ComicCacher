@@ -48,7 +48,7 @@ Download engine, filesystem storage, image validation, and Spring Batch job infr
 
 | Area | Key Classes |
 |------|-------------|
-| Download strategies | `ComicDownloaderStrategy` (interface), `AbstractComicDownloaderStrategy`, `GoComicsDownloaderStrategy`, `ComicsKingdomDownloaderStrategy` |
+| Download strategies | `ComicDownloaderStrategy` (interface), `DailyComicDownloaderStrategy`, `IndexedComicDownloaderStrategy`, `AbstractComicDownloaderStrategy`, `AbstractDailyDownloaderStrategy`, `AbstractIndexedDownloaderStrategy`, `GoComicsDownloaderStrategy`, `ComicsKingdomDownloaderStrategy`, `FreefallDownloaderStrategy` |
 | Legacy downloaders | `IDailyComic` (interface), `DailyComic`, `GoComics` (Selenium-based), `ComicsKingdom` (Jsoup-based) |
 | Facades | `DownloaderFacade` / `ComicDownloaderFacade`, `ManagementFacade` / `ComicManagementFacade`, `ComicStorageFacade` / `FileSystemComicStorageFacade` |
 | Storage | `FileSystemComicStorageFacade`, `ComicIndexService`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository` |
@@ -90,8 +90,9 @@ graph TD
     MF --> DF
     MF --> SF
     MF --> CC
-    DF --> GoComics[GoComicsDownloaderStrategy]
-    DF --> CK[ComicsKingdomDownloaderStrategy]
+    DF --> GoComics[GoComicsDownloaderStrategy\nDaily]
+    DF --> CK[ComicsKingdomDownloaderStrategy\nDaily]
+    DF --> FF[FreefallDownloaderStrategy\nIndexed]
     SF --> IV[ImageValidationService]
     SF --> DV[DuplicateImageValidationService]
     SF --> IA[ImageAnalysisService]
@@ -109,12 +110,15 @@ The top-level orchestrator. All API controllers talk to this facade. It coordina
 
 ### DownloaderFacade (ComicDownloaderFacade)
 
-Coordinates comic downloads using a strategy registry (`Map<String, ComicDownloaderStrategy>`). Strategies are registered at startup by source name (e.g., `"gocomics"`, `"comicskingdom"`). The facade:
+Coordinates comic downloads using a strategy registry (`Map<String, ComicDownloaderStrategy>`). Strategies are registered at startup by source name (e.g., `"gocomics"`, `"comicskingdom"`, `"freefall"`). The facade:
 
 1. Resolves the correct strategy from the request's `source` field
-2. Delegates to `strategy.downloadComic(request)`
+2. Routes to the appropriate download method based on strategy type (daily vs. indexed)
 3. Records success/failure via `RetrievalStatusService` and `ErrorTrackingService`
 4. Supports batch downloads via `downloadComicsForDate()` with day-of-week filtering and inactive comic filtering
+5. Provides indexed-comic-specific methods: `downloadLatestStrip()`, `downloadStrip()`, `isIndexedSource()`
+
+See [Downloader Strategies](design/downloader-strategies.md) for the full class hierarchy and guide for adding new sources.
 
 ### ComicStorageFacade (FileSystemComicStorageFacade)
 
