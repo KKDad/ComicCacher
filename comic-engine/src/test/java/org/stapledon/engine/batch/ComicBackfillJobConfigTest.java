@@ -93,9 +93,9 @@ class ComicBackfillJobConfigTest {
         ComicItem comic = createComic(1, "Test Comic");
         BackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
-        when(backfillService.findMissingStrips()).thenReturn(List.of(task));
+        when(backfillService.findMissingStrips(null)).thenReturn(List.of(task));
 
-        ItemReader<BackfillTask> reader = config.backfillTaskReader();
+        ItemReader<BackfillTask> reader = config.backfillTaskReader(null);
 
         BackfillTask result = reader.read();
         assertThat(result).isNotNull();

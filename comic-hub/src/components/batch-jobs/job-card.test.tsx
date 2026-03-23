@@ -46,6 +46,7 @@ function createScheduler(overrides?: Partial<BatchSchedulerInfo>): BatchSchedule
     description: null,
     lastToggled: null,
     toggledBy: null,
+    availableParameters: [],
     ...overrides,
   };
 }

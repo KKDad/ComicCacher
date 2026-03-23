@@ -50,8 +50,8 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
-          { jobName: 'ComicBackfillJob', cronExpression: '0 0 7 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: true, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
+          { jobName: 'ComicBackfillJob', cronExpression: '0 0 7 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: true, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,
@@ -67,8 +67,8 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
-          { jobName: 'ComicBackfillJob', cronExpression: '0 0 7 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: true, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
+          { jobName: 'ComicBackfillJob', cronExpression: '0 0 7 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: true, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,
@@ -92,7 +92,7 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,
@@ -114,7 +114,7 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,
@@ -138,7 +138,7 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,
@@ -159,7 +159,7 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,
@@ -218,7 +218,7 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,
@@ -237,7 +237,7 @@ describe('BatchJobsPage', () => {
     vi.mocked(useGetBatchSchedulersQuery).mockReturnValue({
       data: {
         batchSchedulers: [
-          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null },
+          { jobName: 'ComicDownloadJob', cronExpression: '0 0 6 * * ?', timezone: 'America/Toronto', nextRunTime: null, enabled: true, paused: false, lastToggled: null, toggledBy: null, availableParameters: [] },
         ],
       },
       isLoading: false,

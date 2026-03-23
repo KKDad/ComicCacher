@@ -9,6 +9,8 @@ import org.springframework.scheduling.support.CronExpression;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 
@@ -39,6 +41,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     private final String cronExpression;
     private final String description;
     private final JsonBatchExecutionTracker executionTracker;
+    private final List<JobParameterDefinition> parameterDefinitions;
     private final String timezone;
     private SchedulerStateService schedulerStateService;
 
@@ -46,18 +49,27 @@ public class DailyJobScheduler extends AbstractJobScheduler {
      * Creates a new DailyJobScheduler without a description.
      */
     public DailyJobScheduler(Job job, String cronExpression, String timezone, JobOperator jobOperator, JsonBatchExecutionTracker executionTracker) {
-        this(job, cronExpression, timezone, jobOperator, executionTracker, null);
+        this(job, cronExpression, timezone, jobOperator, executionTracker, null, List.of());
     }
 
     /**
      * Creates a new DailyJobScheduler with a description.
      */
     public DailyJobScheduler(Job job, String cronExpression, String timezone, JobOperator jobOperator, JsonBatchExecutionTracker executionTracker, String description) {
+        this(job, cronExpression, timezone, jobOperator, executionTracker, description, List.of());
+    }
+
+    /**
+     * Creates a new DailyJobScheduler with a description and parameter definitions.
+     */
+    public DailyJobScheduler(Job job, String cronExpression, String timezone, JobOperator jobOperator, JsonBatchExecutionTracker executionTracker, String description,
+            List<JobParameterDefinition> parameterDefinitions) {
         super(job, jobOperator);
         this.cronExpression = cronExpression;
         this.timezone = timezone;
         this.executionTracker = executionTracker;
         this.description = description;
+        this.parameterDefinitions = parameterDefinitions;
     }
 
     /**
@@ -105,6 +117,13 @@ public class DailyJobScheduler extends AbstractJobScheduler {
      */
     public Long triggerManually() {
         return runJob("MANUAL");
+    }
+
+    /**
+     * Manually triggers the job with extra parameters (e.g., via API).
+     */
+    public Long triggerManually(Map<String, String> parameters) {
+        return runJob("MANUAL", parameters);
     }
 
     /**
@@ -170,6 +189,13 @@ public class DailyJobScheduler extends AbstractJobScheduler {
      */
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Returns the parameter definitions this job accepts for manual triggers.
+     */
+    public List<JobParameterDefinition> getParameterDefinitions() {
+        return parameterDefinitions;
     }
 
     /**

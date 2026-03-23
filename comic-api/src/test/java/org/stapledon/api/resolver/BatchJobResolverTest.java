@@ -1,6 +1,7 @@
 package org.stapledon.api.resolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -85,9 +86,11 @@ class BatchJobResolverTest {
             when(comicDownloadScheduler.getJobName()).thenReturn("ComicDownloadJob");
             when(comicDownloadScheduler.getCronExpression()).thenReturn("0 0 6 * * ?");
             when(comicDownloadScheduler.getTimezone()).thenReturn("America/Toronto");
+            when(comicDownloadScheduler.getParameterDefinitions()).thenReturn(List.of());
             when(comicBackfillScheduler.getJobName()).thenReturn("ComicBackfillJob");
             when(comicBackfillScheduler.getCronExpression()).thenReturn("0 0 7 * * ?");
             when(comicBackfillScheduler.getTimezone()).thenReturn("America/Toronto");
+            when(comicBackfillScheduler.getParameterDefinitions()).thenReturn(List.of());
 
             when(schedulerStateService.isPaused("ComicDownloadJob")).thenReturn(false);
             when(schedulerStateService.isPaused("ComicBackfillJob")).thenReturn(true);
@@ -164,13 +167,13 @@ class BatchJobResolverTest {
         @DisplayName("should trigger job and return execution")
         void shouldTriggerJob() {
             when(comicDownloadScheduler.getJobName()).thenReturn("ComicDownloadJob");
-            when(comicDownloadScheduler.triggerManually()).thenReturn(1L);
+            when(comicDownloadScheduler.triggerManually(anyMap())).thenReturn(1L);
 
             JobExecution execution = createJobExecution(1L, "ComicDownloadJob", BatchStatus.STARTED);
             when(monitoringService.getJobExecution(1L)).thenReturn(execution);
 
             var resolver = createResolver(List.of(comicDownloadScheduler));
-            TriggerBatchJobPayload result = resolver.triggerJob("ComicDownloadJob");
+            TriggerBatchJobPayload result = resolver.triggerJob("ComicDownloadJob", null);
 
             assertThat(result.errors()).isEmpty();
             assertThat(result.batchJob()).isNotNull();
@@ -181,7 +184,7 @@ class BatchJobResolverTest {
         @DisplayName("should return error for unavailable job")
         void shouldReturnErrorForUnavailableJob() {
             var resolver = createResolver(List.of());
-            TriggerBatchJobPayload result = resolver.triggerJob("NonexistentJob");
+            TriggerBatchJobPayload result = resolver.triggerJob("NonexistentJob", null);
 
             assertThat(result.errors()).hasSize(1);
             assertThat(result.errors().getFirst().message()).contains("not available");
@@ -192,10 +195,10 @@ class BatchJobResolverTest {
         @DisplayName("should return error when trigger returns null")
         void shouldReturnErrorWhenTriggerFails() {
             when(comicDownloadScheduler.getJobName()).thenReturn("ComicDownloadJob");
-            when(comicDownloadScheduler.triggerManually()).thenReturn(null);
+            when(comicDownloadScheduler.triggerManually(anyMap())).thenReturn(null);
 
             var resolver = createResolver(List.of(comicDownloadScheduler));
-            TriggerBatchJobPayload result = resolver.triggerJob("ComicDownloadJob");
+            TriggerBatchJobPayload result = resolver.triggerJob("ComicDownloadJob", null);
 
             assertThat(result.errors()).hasSize(1);
             assertThat(result.batchJob()).isNull();
@@ -222,6 +225,7 @@ class BatchJobResolverTest {
             when(comicDownloadScheduler.getJobName()).thenReturn("ComicDownloadJob");
             when(comicDownloadScheduler.getCronExpression()).thenReturn("0 0 6 * * ?");
             when(comicDownloadScheduler.getTimezone()).thenReturn("America/Toronto");
+            when(comicDownloadScheduler.getParameterDefinitions()).thenReturn(List.of());
             when(schedulerStateService.isPaused("ComicDownloadJob")).thenReturn(true);
             when(schedulerStateService.getState("ComicDownloadJob"))
                     .thenReturn(Optional.of(new SchedulerStateService.SchedulerState(true, LocalDateTime.now(), "admin")));
@@ -265,7 +269,7 @@ class BatchJobResolverTest {
         void triggerBatchJobDelegatesToTriggerJob() {
             when(comicBackfillScheduler.getJobName()).thenReturn("ComicBackfillJob");
             when(comicDownloadScheduler.getJobName()).thenReturn("ComicDownloadJob");
-            when(comicDownloadScheduler.triggerManually()).thenReturn(1L);
+            when(comicDownloadScheduler.triggerManually(anyMap())).thenReturn(1L);
 
             JobExecution execution = createJobExecution(1L, "ComicDownloadJob", BatchStatus.STARTED);
             when(monitoringService.getJobExecution(1L)).thenReturn(execution);
@@ -282,7 +286,7 @@ class BatchJobResolverTest {
         void triggerBackfillJobDelegatesToTriggerJob() {
             when(comicDownloadScheduler.getJobName()).thenReturn("ComicDownloadJob");
             when(comicBackfillScheduler.getJobName()).thenReturn("ComicBackfillJob");
-            when(comicBackfillScheduler.triggerManually()).thenReturn(2L);
+            when(comicBackfillScheduler.triggerManually(anyMap())).thenReturn(2L);
 
             JobExecution execution = createJobExecution(2L, "ComicBackfillJob", BatchStatus.STARTED);
             when(monitoringService.getJobExecution(2L)).thenReturn(execution);

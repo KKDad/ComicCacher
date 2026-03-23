@@ -30,6 +30,8 @@ import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
 import org.stapledon.engine.batch.ComicBackfillService.StripBackfillTask;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
+import org.stapledon.engine.batch.scheduler.JobParameterDefinition.Option;
 import org.stapledon.engine.management.ManagementFacade;
 
 /**
@@ -56,12 +58,21 @@ public class ComicBackfillJobConfig {
     @Value("${batch.timezone:America/Toronto}")
     private String timezone;
 
+    private static final List<JobParameterDefinition> BACKFILL_PARAMETERS = List.of(
+            new JobParameterDefinition("source", "Source Filter", "ENUM", false, "ALL",
+                    List.of(new Option("ALL", "All Sources"),
+                            new Option("gocomics", "GoComics"),
+                            new Option("comicskingdom", "Comics Kingdom"),
+                            new Option("freefall", "Freefall")))
+    );
+
     /**
      * Scheduler for ComicBackfillJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
     public DailyJobScheduler comicBackfillJobScheduler(@Qualifier("comicBackfillJob") Job comicBackfillJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker, "Backfills missing comic strips for gaps in the archive");
+        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker,
+                "Backfills missing comic strips for gaps in the archive", BACKFILL_PARAMETERS);
     }
 
     /**
@@ -91,14 +102,15 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup.
+     * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup. Accepts an
+     * optional "source" job parameter to filter by comic source.
      */
     @Bean
     @StepScope
     @Qualifier("backfillTaskReader")
-    public ItemReader<BackfillTask> backfillTaskReader() {
-        log.debug("Building backfill task list for job execution");
-        List<BackfillTask> tasks = backfillService.findMissingStrips();
+    public ItemReader<BackfillTask> backfillTaskReader(@Value("#{jobParameters['source']}") String sourceFilter) {
+        log.debug("Building backfill task list for job execution (sourceFilter={})", sourceFilter);
+        List<BackfillTask> tasks = backfillService.findMissingStrips(sourceFilter);
         if (tasks.isEmpty()) {
             log.info("No missing strips found - backfill has nothing to process");
         } else {

@@ -1,6 +1,7 @@
 package org.stapledon.api.dto.batch;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 /**
  * DTO for batch scheduler info exposed via GraphQL.
@@ -14,6 +15,7 @@ public record BatchSchedulerInfoDto(
     boolean enabled,
     boolean paused,
     OffsetDateTime lastToggled,
-    String toggledBy
+    String toggledBy,
+    List<BatchJobParameterDto> availableParameters
 ) {
 }

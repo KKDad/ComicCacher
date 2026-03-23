@@ -70,8 +70,16 @@ public class ComicBackfillService {
     }
 
     /**
-     * Scans all eligible comics and identifies missing strips, respecting
-     * source-specific rate limits.
+     * Scans all eligible comics and identifies missing strips with no source filter.
+     */
+    public List<BackfillTask> findMissingStrips() {
+        return findMissingStrips(null);
+    }
+
+    /**
+     * Scans eligible comics and identifies missing strips, respecting
+     * source-specific rate limits. When sourceFilter is non-null and not "ALL",
+     * only comics from that source are considered.
      * <p>
      * This method filters comics upfront and only scans dates where the comic
      * is expected to have published. The filtering considers:
@@ -87,13 +95,13 @@ public class ComicBackfillService {
      * @return List of backfill tasks (comic + date pairs) limited by per-source
      *         daily limits
      */
-    public List<BackfillTask> findMissingStrips() {
-        log.info("Scanning for missing comic strips");
+    public List<BackfillTask> findMissingStrips(String sourceFilter) {
+        log.info("Scanning for missing comic strips (sourceFilter={})", sourceFilter);
 
         List<ComicItem> allComics = managementFacade.getAllComics();
 
         // Pre-filter comics - only active comics with valid, enabled sources
-        List<ComicItem> eligibleComics = filterEligibleComics(allComics);
+        List<ComicItem> eligibleComics = filterEligibleComics(allComics, sourceFilter);
 
         log.info("Found {} eligible comics out of {} total (filtered {} inactive/invalid)",
                 eligibleComics.size(), allComics.size(),
@@ -162,13 +170,12 @@ public class ComicBackfillService {
      * <li>It is active (not discontinued)</li>
      * <li>It has a valid source configured</li>
      * <li>Its source is enabled for backfill</li>
+     * <li>Its source matches the sourceFilter (if provided and not "ALL")</li>
      * </ul>
-     *
-     * @param comics list of all comics
-     * @return filtered list of eligible comics
      */
-    private List<ComicItem> filterEligibleComics(List<ComicItem> comics) {
+    private List<ComicItem> filterEligibleComics(List<ComicItem> comics, String sourceFilter) {
         List<ComicItem> eligible = new ArrayList<>();
+        boolean hasSourceFilter = sourceFilter != null && !"ALL".equalsIgnoreCase(sourceFilter);
 
         for (ComicItem comic : comics) {
             if (!comic.isActive()) {
@@ -184,6 +191,12 @@ public class ComicBackfillService {
             if (!config.isSourceEnabled(comic.getSource())) {
                 log.debug("Excluding comic {} - source '{}' disabled for backfill",
                         comic.getName(), comic.getSource());
+                continue;
+            }
+
+            if (hasSourceFilter && !sourceFilter.equalsIgnoreCase(comic.getSource())) {
+                log.debug("Excluding comic {} - source '{}' doesn't match filter '{}'",
+                        comic.getName(), comic.getSource(), sourceFilter);
                 continue;
             }
 

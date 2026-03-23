@@ -371,9 +371,9 @@ type Mutation {
     triggerBackfillJob: TriggerBatchJobPayload! @hasRole(role: "ADMIN")
 
     """
-    Trigger any batch job by name.
+    Trigger any batch job by name, with optional parameters.
     """
-    triggerJob(jobName: String!): TriggerBatchJobPayload! @hasRole(role: "ADMIN")
+    triggerJob(jobName: String!, parameters: JSON): TriggerBatchJobPayload! @hasRole(role: "ADMIN")
 
     """
     Pause or resume a batch job scheduler.

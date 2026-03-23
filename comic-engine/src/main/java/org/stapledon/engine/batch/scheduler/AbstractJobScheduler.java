@@ -9,6 +9,7 @@ import org.springframework.batch.core.launch.JobOperator;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 /**
  * Abstract base class for job schedulers. Provides common functionality for all batch job schedulers using the modern JobOperator API.
@@ -72,8 +73,18 @@ public abstract class AbstractJobScheduler {
      * @return JobParameters to pass to the job
      */
     protected JobParameters buildJobParameters(String trigger) {
-        return new JobParametersBuilder().addString("trigger", trigger).addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")))
-                .toJobParameters();
+        return buildJobParameters(trigger, Map.of());
+    }
+
+    /**
+     * Builds job parameters for execution with additional user-supplied parameters.
+     */
+    protected JobParameters buildJobParameters(String trigger, Map<String, String> extraParams) {
+        JobParametersBuilder builder = new JobParametersBuilder()
+                .addString("trigger", trigger)
+                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
+        extraParams.forEach(builder::addString);
+        return builder.toJobParameters();
     }
 
     /**
@@ -83,10 +94,17 @@ public abstract class AbstractJobScheduler {
      * @return the job execution ID, or null if execution failed to start
      */
     protected Long runJob(String trigger) {
-        log.info("Launching {} (triggered by: {})", getJobName(), trigger);
+        return runJob(trigger, Map.of());
+    }
+
+    /**
+     * Executes the job with the given trigger source and extra parameters.
+     */
+    protected Long runJob(String trigger, Map<String, String> extraParams) {
+        log.info("Launching {} (triggered by: {}, params: {})", getJobName(), trigger, extraParams);
 
         try {
-            JobParameters parameters = buildJobParameters(trigger);
+            JobParameters parameters = buildJobParameters(trigger, extraParams);
             org.springframework.batch.core.job.JobExecution execution = jobOperator.start(job, parameters);
             Long executionId = execution.getId();
             log.info("{} started with execution ID: {}", getJobName(), executionId);
