@@ -31,6 +31,7 @@ import {
   useGetRecentBatchJobsQuery,
 } from '@/generated/graphql';
 import type { BatchSchedulerInfo, BatchJob } from '@/generated/graphql';
+import { formatAbsoluteTime, formatRelativeTime, formatDuration } from '@/lib/date-utils';
 
 const JOB_LABELS: Record<string, string> = {
   ComicDownloadJob: 'Comic Download',
@@ -57,43 +58,7 @@ function cronToHumanReadable(cron: string, timezone: string): string {
   return `Daily at ${displayHour}:${displayMinute} ${period} ${tz}`;
 }
 
-function formatAbsoluteTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
 
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const absDiffMs = Math.abs(diffMs);
-
-  if (absDiffMs < 60_000) return 'just now';
-
-  const minutes = Math.floor(absDiffMs / 60_000);
-  const hours = Math.floor(absDiffMs / 3_600_000);
-
-  if (diffMs > 0) {
-    if (hours > 0) return `in ${hours}h ${minutes % 60}m`;
-    return `in ${minutes}m`;
-  }
-  if (hours > 0) return `${hours}h ${minutes % 60}m ago`;
-  return `${minutes}m ago`;
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  const seconds = ms / 1000;
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60);
-  return `${minutes}m ${remainingSeconds}s`;
-}
 
 function getStatusBadge(status: string, paused: boolean) {
   if (paused) {

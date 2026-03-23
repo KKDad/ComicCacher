@@ -4,6 +4,7 @@ import { useReadingList } from '@/hooks/use-reading-list';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { List } from 'lucide-react';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 interface ReadingListDrawerProps {
   comicId: number;
@@ -41,19 +42,14 @@ export function ReadingListDrawer({ comicId }: ReadingListDrawerProps) {
                     onClick={() => navigateToComic(comic.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors hover:bg-muted ${comic.id === comicId ? 'bg-muted' : ''}`}
                   >
-                    {comic.avatarUrl ? (
-                      <img
+                    <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                      <ImageWithFallback
                         src={comic.avatarUrl}
                         alt=""
-                        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                        fallbackText={comic.name[0]}
+                        className="text-xs font-medium text-ink-subtle"
                       />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-medium text-ink-subtle">
-                          {comic.name[0]}
-                        </span>
-                      </div>
-                    )}
+                    </div>
                     <span className="text-sm text-ink truncate flex-1">
                       {comic.name}
                     </span>

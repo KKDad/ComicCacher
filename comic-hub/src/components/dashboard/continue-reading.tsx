@@ -1,11 +1,13 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMemo } from 'react';
 import Link from 'next/link';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { EmptyState } from '@/components/ui/empty-state';
+import { formatRelativeTime } from '@/lib/date-utils';
 
 interface LastRead {
   comic: {
@@ -22,17 +24,7 @@ interface ContinueReadingProps {
 }
 
 export function ContinueReading({ lastRead = null, isLoading = false }: ContinueReadingProps) {
-  const timeAgo = useMemo(() => {
-    if (!lastRead) return '';
-    const lastReadDate = new Date(lastRead.date);
-    const now = new Date();
-    const diffMs = now.getTime() - lastReadDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'today';
-    if (diffDays === 1) return '1 day ago';
-    return `${diffDays} days ago`;
-  }, [lastRead]);
+  const timeAgo = lastRead ? formatRelativeTime(lastRead.date) : '';
 
   if (isLoading) {
     return (
@@ -57,16 +49,15 @@ export function ContinueReading({ lastRead = null, isLoading = false }: Continue
         <h2 className="text-xl font-semibold mb-4 text-ink">
           Continue Where You Left Off
         </h2>
-        <Card className="max-w-sm border-dashed">
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <BookOpen className="h-12 w-12 text-ink-muted mb-4" />
-            <p className="text-ink-subtle mb-2">No recent reading history</p>
-            <p className="text-sm text-ink-muted mb-4">
-              Start reading to see your progress here
-            </p>
-            <Button>Browse Comics</Button>
-          </CardContent>
-        </Card>
+        <div className="max-w-sm">
+          <EmptyState
+            icon={BookOpen}
+            title="No recent reading history"
+            description="Start reading to see your progress here"
+            actionLabel="Browse Comics"
+            actionHref="/comics"
+          />
+        </div>
       </section>
     );
   }
@@ -79,17 +70,11 @@ export function ContinueReading({ lastRead = null, isLoading = false }: Continue
       <Card className="max-w-sm hover:shadow-md transition-shadow">
         <CardContent className="p-6">
           <div className="aspect-[3/4] bg-canvas rounded-lg mb-4 overflow-hidden">
-            {lastRead.comic.lastStrip?.imageUrl ? (
-              <img
-                src={lastRead.comic.lastStrip.imageUrl}
-                alt={lastRead.comic.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-ink-muted">
-                {lastRead.comic.name[0]}
-              </div>
-            )}
+            <ImageWithFallback
+              src={lastRead.comic.lastStrip?.imageUrl}
+              alt={lastRead.comic.name}
+              fallbackText={lastRead.comic.name[0]}
+            />
           </div>
           <CardTitle className="text-lg mb-1">{lastRead.comic.name}</CardTitle>
           <CardDescription>Last read: {timeAgo}</CardDescription>
