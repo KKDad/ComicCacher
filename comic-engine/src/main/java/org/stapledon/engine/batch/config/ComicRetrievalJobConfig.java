@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
@@ -75,7 +74,7 @@ public class ComicRetrievalJobConfig {
     @Primary
     public Job comicDownloadJob(JobRepository jobRepository, @Qualifier("comicRetrievalStep") Step comicRetrievalStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ComicDownloadJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker)
+        return new JobBuilder("ComicDownloadJob", jobRepository).listener(jsonBatchExecutionTracker)
                 .start(comicRetrievalStep).build();
     }
 

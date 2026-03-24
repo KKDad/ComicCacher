@@ -61,7 +61,6 @@ public class MyNewJobConfig {
             JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
         return new JobBuilder("MyNewJob", jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .listener(jsonBatchExecutionTracker)
                 .start(myNewStep)
                 .build();
@@ -269,7 +268,7 @@ curl http://localhost:8080/actuator/health | jq '.components.schedulerHealthChec
 - [ ] Job config class in `comic-engine/.../batch/config/`
 - [ ] `@ConditionalOnProperty` on the config class with correct `matchIfMissing`
 - [ ] `DailyJobScheduler` bean with description
-- [ ] Job bean with `RunIdIncrementer` and `JsonBatchExecutionTracker` listener
+- [ ] Job bean with `JsonBatchExecutionTracker` listener
 - [ ] Job name added to `BatchJobBaseConfig.KNOWN_JOBS`
 - [ ] Properties added to `application.properties` (`enabled` + `cron`)
 - [ ] Constructor parameter and `@Scheduled` method added to `SchedulerTriggers`

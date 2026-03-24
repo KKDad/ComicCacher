@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
@@ -55,7 +54,7 @@ public class MetricsArchiveJobConfig {
     @Bean
     public Job metricsArchiveJob(JobRepository jobRepository, @Qualifier("metricsArchiveStep") Step metricsArchiveStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("MetricsArchiveJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).start(metricsArchiveStep).build();
+        return new JobBuilder("MetricsArchiveJob", jobRepository).listener(jsonBatchExecutionTracker).start(metricsArchiveStep).build();
     }
 
     /**

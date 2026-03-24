@@ -3,7 +3,6 @@ package org.stapledon.batch;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -27,7 +26,6 @@ public class TestLogVerificationJobConfig {
                                   @Qualifier("logVerificationStep") Step step,
                                   JsonBatchExecutionTracker tracker) {
         return new JobBuilder("LogVerificationJob", jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .listener(tracker)
                 .start(step)
                 .build();

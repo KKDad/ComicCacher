@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.parameters.RunIdIncrementer;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
@@ -109,7 +108,7 @@ public class ImageMetadataBackfillJobConfig {
     @Bean
     public Job imageMetadataBackfillJob(JobRepository jobRepository, @Qualifier("imageBackfillStep") Step imageBackfillStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ImageMetadataBackfillJob", jobRepository).incrementer(new RunIdIncrementer()).listener(jsonBatchExecutionTracker).start(imageBackfillStep).build();
+        return new JobBuilder("ImageMetadataBackfillJob", jobRepository).listener(jsonBatchExecutionTracker).start(imageBackfillStep).build();
     }
 
     /**
