@@ -325,8 +325,15 @@ public class ComicBackfillService {
         Integer firstStrip = comic.getFirstStripNumber();
 
         if (lastStrip == null || lastStrip <= 0) {
-            log.debug("No last strip number known for indexed comic '{}'", comic.getName());
-            return tasks;
+            log.info("Auto-discovering latest strip number for indexed comic '{}'", comic.getName());
+            var result = managementFacade.downloadLatestIndexedComic(comic);
+            if (result.isPresent() && result.get().isSuccessful() && result.get().getStripNumber() != null) {
+                lastStrip = result.get().getStripNumber();
+                log.info("Discovered lastStripNumber={} for '{}'", lastStrip, comic.getName());
+            } else {
+                log.warn("Could not auto-discover latest strip for '{}'", comic.getName());
+                return tasks;
+            }
         }
 
         // Load already-downloaded strip numbers to avoid wasteful re-downloads

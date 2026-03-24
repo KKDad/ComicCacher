@@ -25,7 +25,7 @@ package org.stapledon.engine.batch;
  * <pre>
  * &#64;Bean
  * public Job myJob(JobRepository jobRepository, Step myStep, JsonBatchExecutionTracker tracker) {
- *     return new JobBuilder("MyJob", jobRepository).incrementer(new RunIdIncrementer()).listener(tracker).start(myStep).build();
+ *     return new JobBuilder("MyJob", jobRepository).listener(tracker).start(myStep).build();
  * }
  * </pre>
  */

@@ -99,7 +99,7 @@ Constants class containing:
 
 ## Job Configurations
 
-All jobs follow the same pattern: a `@Configuration` class that defines a `Job` bean, one or more `Step` beans, and a `DailyJobScheduler` bean. All jobs use `RunIdIncrementer` and register `JsonBatchExecutionTracker` as a listener.
+All jobs follow the same pattern: a `@Configuration` class that defines a `Job` bean, one or more `Step` beans, and a `DailyJobScheduler` bean. All jobs register `JsonBatchExecutionTracker` as a listener. Job instance uniqueness is handled by `AbstractJobScheduler.buildJobParameters()`, which generates a timestamp-based `runId` for each execution.
 
 ### ComicDownloadJob
 
