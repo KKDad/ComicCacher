@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
+  Newspaper,
   BarChart3,
   RefreshCw,
   Code,
@@ -20,6 +21,7 @@ import { useUser } from '@/contexts/user-context';
 
 const baseNavItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/read', label: 'Daily Reader', icon: Newspaper },
   { href: '/comics', label: 'Comics List', icon: BookOpen },
   { href: '/api', label: 'API', icon: Code },
   { href: '/preferences', label: 'Preferences', icon: Settings },
