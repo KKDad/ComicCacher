@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
+  Newspaper,
   Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,7 @@ import { useUser } from '@/contexts/user-context';
 
 const bottomNavItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/read', label: 'Daily', icon: Newspaper },
   { href: '/comics', label: 'Comics', icon: BookOpen },
 ];
 

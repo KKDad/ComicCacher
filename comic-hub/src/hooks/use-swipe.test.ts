@@ -118,6 +118,70 @@ describe('useSwipe', () => {
     // Should not throw
   });
 
+  it('calls onSwipeLeft when swiped left beyond threshold', () => {
+    const onSwipeLeft = vi.fn();
+    const { result } = renderHook(() =>
+      useSwipe({ onSwipeLeft, threshold: 50 }),
+    );
+
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(200, 200));
+      result.current.onTouchMove(createTouchEvent(200, 80)); // deltaX = -120, deltaY = 0
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    expect(onSwipeLeft).toHaveBeenCalledOnce();
+  });
+
+  it('calls onSwipeRight when swiped right beyond threshold', () => {
+    const onSwipeRight = vi.fn();
+    const { result } = renderHook(() =>
+      useSwipe({ onSwipeRight, threshold: 50 }),
+    );
+
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(200, 100));
+      result.current.onTouchMove(createTouchEvent(200, 250)); // deltaX = +150, deltaY = 0
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    expect(onSwipeRight).toHaveBeenCalledOnce();
+  });
+
+  it('prefers vertical swipe when deltaY is larger than deltaX', () => {
+    const onSwipeUp = vi.fn();
+    const onSwipeLeft = vi.fn();
+    const { result } = renderHook(() =>
+      useSwipe({ onSwipeUp, onSwipeLeft, threshold: 50 }),
+    );
+
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(300, 200));
+      result.current.onTouchMove(createTouchEvent(150, 140)); // deltaY = -150, deltaX = -60
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    expect(onSwipeUp).toHaveBeenCalledOnce();
+    expect(onSwipeLeft).not.toHaveBeenCalled();
+  });
+
+  it('prefers horizontal swipe when deltaX is larger than deltaY', () => {
+    const onSwipeUp = vi.fn();
+    const onSwipeLeft = vi.fn();
+    const { result } = renderHook(() =>
+      useSwipe({ onSwipeUp, onSwipeLeft, threshold: 50 }),
+    );
+
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(200, 300));
+      result.current.onTouchMove(createTouchEvent(170, 100)); // deltaY = -30, deltaX = -200
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    expect(onSwipeLeft).toHaveBeenCalledOnce();
+    expect(onSwipeUp).not.toHaveBeenCalled();
+  });
+
   it('uses default threshold of 50', () => {
     const onSwipeUp = vi.fn();
     const { result } = renderHook(() => useSwipe({ onSwipeUp }));

@@ -29,36 +29,37 @@ describe('NavRail', () => {
   it('renders base nav links for unauthenticated user', () => {
     render(<NavRail />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(5);
   });
 
   it('renders base nav buttons plus logout', () => {
     render(<NavRail />);
-    // 4 base nav buttons + 1 logout button
+    // 5 base nav buttons + 1 logout button
     const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(5);
+    expect(buttons).toHaveLength(6);
   });
 
   it('renders operations items for OPERATOR role', () => {
     vi.mocked(useUser).mockReturnValue({ username: 'operator', email: 'o@test.com', displayName: 'Operator', roles: ['USER', 'OPERATOR'], created: '2026-01-01' });
     render(<NavRail />);
     const links = screen.getAllByRole('link');
-    // 4 base + 3 operations
-    expect(links).toHaveLength(7);
+    // 5 base + 3 operations
+    expect(links).toHaveLength(8);
   });
 
   it('renders operations items for ADMIN role (hierarchy)', () => {
     vi.mocked(useUser).mockReturnValue({ username: 'admin', email: 'a@test.com', displayName: 'Admin', roles: ['USER', 'ADMIN'], created: '2026-01-01' });
     render(<NavRail />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(7);
+    // 5 base + 3 operations
+    expect(links).toHaveLength(8);
   });
 
   it('does not render operations items for USER role', () => {
     vi.mocked(useUser).mockReturnValue({ username: 'user', email: 'u@test.com', displayName: 'User', roles: ['USER'], created: '2026-01-01' });
     render(<NavRail />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(5);
   });
 
   it('calls logout when logout button is clicked', async () => {

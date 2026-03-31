@@ -7,9 +7,7 @@ import type { useReader } from '@/hooks/use-reader';
 import { ReaderHeader } from './reader-header';
 import { StripCard } from './strip-card';
 import { StripSkeleton } from './strip-skeleton';
-import { CrossComicNav } from './cross-comic-nav';
 import { DatePickerPopover } from './date-picker-popover';
-import { useReadingList } from '@/hooks/use-reading-list';
 
 const HEADER_HEIGHT = 56; // h-14 = 3.5rem = 56px
 const STRIP_PADDING = 60; // date label + vertical padding
@@ -17,11 +15,10 @@ const FALLBACK_ASPECT = 3; // 3:1 width:height for strips without dimensions
 const MAX_CONTENT_WIDTH = 768; // max-w-3xl
 
 interface DesktopReaderProps {
-  comicId: number;
   reader: ReturnType<typeof useReader>;
 }
 
-export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
+export function DesktopReader({ reader }: DesktopReaderProps) {
   const {
     strips,
     currentIndex,
@@ -40,8 +37,6 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
     goToRandom,
     isLoadingRandom,
   } = reader;
-
-  const { previousComic, nextComic, navigateToComic } = useReadingList(comicId);
 
   const handleGoToFirst = useCallback(() => {
     const result = goToFirst();
@@ -168,24 +163,12 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
           e.preventDefault();
           window.history.back();
           break;
-        case 'ArrowLeft':
-          if (previousComic) {
-            e.preventDefault();
-            navigateToComic(previousComic.id);
-          }
-          break;
-        case 'ArrowRight':
-          if (nextComic) {
-            e.preventDefault();
-            navigateToComic(nextComic.id);
-          }
-          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleGoToFirst, handleGoToLast, goToRandom, previousComic, nextComic, navigateToComic]);
+  }, [handleGoToFirst, handleGoToLast, goToRandom]);
 
   return (
     <div ref={scrollContainerRef} className="h-screen overflow-y-auto bg-canvas">
@@ -203,12 +186,6 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
             onSelectDate={goToDate}
           />
         }
-      />
-
-      <CrossComicNav
-        previousComic={previousComic}
-        nextComic={nextComic}
-        navigateToComic={navigateToComic}
       />
 
       <main className="px-4">
