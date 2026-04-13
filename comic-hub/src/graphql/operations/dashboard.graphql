@@ -202,6 +202,30 @@ query GetStrips($comicId: Int!, $dates: [Date!]!) {
   }
 }
 
+# Query for all comics with their strip for a specific date (grid reader)
+query GetComicsForDate($first: Int, $date: Date!) {
+  comics(first: $first) {
+    edges {
+      node {
+        id
+        name
+        avatarUrl
+        oldest
+        newest
+        strip(date: $date) {
+          date
+          available
+          imageUrl
+          width
+          height
+          transcript
+        }
+      }
+    }
+    totalCount
+  }
+}
+
 # Query for combined storage and access metrics
 query GetCombinedMetrics {
   combinedMetrics {

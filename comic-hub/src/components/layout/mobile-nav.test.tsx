@@ -36,7 +36,7 @@ describe('MobileNav', () => {
     render(<MobileNav />);
     // Metrics is no longer in the bottom bar — it's in the operations menu
     const bottomLinks = screen.getAllByRole('link');
-    expect(bottomLinks).toHaveLength(2);
+    expect(bottomLinks).toHaveLength(3);
   });
 
   it('renders More button', () => {

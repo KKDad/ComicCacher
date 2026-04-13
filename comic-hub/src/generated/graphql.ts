@@ -1424,6 +1424,14 @@ export type GetStripsQueryVariables = Exact<{
 
 export type GetStripsQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, strips: Array<{ __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null }> } | null };
 
+export type GetComicsForDateQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  date: Scalars['Date']['input'];
+}>;
+
+
+export type GetComicsForDateQuery = { __typename?: 'Query', comics: { __typename?: 'ComicConnection', totalCount: number, edges: Array<{ __typename?: 'ComicEdge', node: { __typename?: 'Comic', id: number, name: string, avatarUrl?: string | null, oldest?: any | null, newest?: any | null, strip?: { __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null, transcript?: string | null } | null } }> } };
+
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -2549,6 +2557,73 @@ useInfiniteGetStripsQuery.getKey = (variables: GetStripsQueryVariables) => ['Get
 
 
 useGetStripsQuery.fetcher = (variables: GetStripsQueryVariables, options?: RequestInit['headers']) => fetcher<GetStripsQuery, GetStripsQueryVariables>(GetStripsDocument, variables, options);
+
+export const GetComicsForDateDocument = new TypedDocumentString(`
+    query GetComicsForDate($first: Int, $date: Date!) {
+  comics(first: $first) {
+    edges {
+      node {
+        id
+        name
+        avatarUrl
+        oldest
+        newest
+        strip(date: $date) {
+          date
+          available
+          imageUrl
+          width
+          height
+          transcript
+        }
+      }
+    }
+    totalCount
+  }
+}
+    `);
+
+export const useGetComicsForDateQuery = <
+      TData = GetComicsForDateQuery,
+      TError = unknown
+    >(
+      variables: GetComicsForDateQueryVariables,
+      options?: Omit<UseQueryOptions<GetComicsForDateQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetComicsForDateQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetComicsForDateQuery, TError, TData>(
+      {
+    queryKey: ['GetComicsForDate', variables],
+    queryFn: fetcher<GetComicsForDateQuery, GetComicsForDateQueryVariables>(GetComicsForDateDocument, variables),
+    ...options
+  }
+    )};
+
+useGetComicsForDateQuery.getKey = (variables: GetComicsForDateQueryVariables) => ['GetComicsForDate', variables];
+
+export const useInfiniteGetComicsForDateQuery = <
+      TData = InfiniteData<GetComicsForDateQuery>,
+      TError = unknown
+    >(
+      variables: GetComicsForDateQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetComicsForDateQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetComicsForDateQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetComicsForDateQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? ['GetComicsForDate.infinite', variables],
+      queryFn: (metaData) => fetcher<GetComicsForDateQuery, GetComicsForDateQueryVariables>(GetComicsForDateDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetComicsForDateQuery.getKey = (variables: GetComicsForDateQueryVariables) => ['GetComicsForDate.infinite', variables];
+
+
+useGetComicsForDateQuery.fetcher = (variables: GetComicsForDateQueryVariables, options?: RequestInit['headers']) => fetcher<GetComicsForDateQuery, GetComicsForDateQueryVariables>(GetComicsForDateDocument, variables, options);
 
 export const GetCombinedMetricsDocument = new TypedDocumentString(`
     query GetCombinedMetrics {

@@ -1,12 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DesktopReader } from './desktop-reader';
-import { useReadingList } from '@/hooks/use-reading-list';
 import type { useReader } from '@/hooks/use-reader';
 
 // jsdom doesn't implement scrollIntoView or IntersectionObserver
 HTMLElement.prototype.scrollIntoView = vi.fn();
-
-vi.mock('@/hooks/use-reading-list');
 
 vi.mock('@tanstack/react-virtual', () => ({
   useVirtualizer: vi.fn().mockReturnValue({
@@ -30,8 +27,6 @@ import { toast } from 'sonner';
 vi.mock('sonner', () => ({
   toast: { info: vi.fn() },
 }));
-
-const mockNavigateToComic = vi.fn();
 
 function createMockReader(overrides?: Partial<ReturnType<typeof useReader>>): ReturnType<typeof useReader> {
   return {
@@ -64,30 +59,23 @@ function createMockReader(overrides?: Partial<ReturnType<typeof useReader>>): Re
 describe('DesktopReader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useReadingList).mockReturnValue({
-      comics: [],
-      previousComic: null,
-      nextComic: null,
-      navigateToComic: mockNavigateToComic,
-      isLoading: false,
-    });
   });
 
   it('renders comic name in header', () => {
-    render(<DesktopReader comicId={1} reader={createMockReader()} />);
+    render(<DesktopReader reader={createMockReader()} />);
     expect(screen.getByText('Garfield')).toBeInTheDocument();
   });
 
   it('renders loading skeletons when isLoading is true', () => {
     const reader = createMockReader({ isLoading: true });
-    const { container } = render(<DesktopReader comicId={1} reader={reader} />);
+    const { container } = render(<DesktopReader reader={reader} />);
 
     // StripSkeleton renders when loading
     expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders strip cards for each virtual item', () => {
-    render(<DesktopReader comicId={1} reader={createMockReader()} />);
+    render(<DesktopReader reader={createMockReader()} />);
 
     // Should render 2 strips from the virtualizer mock
     const images = screen.getAllByRole('img');
@@ -96,7 +84,7 @@ describe('DesktopReader', () => {
 
   it('shows toast when goToFirst returns already', () => {
     const reader = createMockReader({ goToFirst: vi.fn().mockReturnValue('already') });
-    render(<DesktopReader comicId={1} reader={reader} />);
+    render(<DesktopReader reader={reader} />);
 
     fireEvent.keyDown(window, { key: 'Home' });
     expect(toast.info).toHaveBeenCalledWith('Already at the first strip');
@@ -104,7 +92,7 @@ describe('DesktopReader', () => {
 
   it('shows toast when goToLast returns already', () => {
     const reader = createMockReader({ goToLast: vi.fn().mockReturnValue('already') });
-    render(<DesktopReader comicId={1} reader={reader} />);
+    render(<DesktopReader reader={reader} />);
 
     fireEvent.keyDown(window, { key: 'End' });
     expect(toast.info).toHaveBeenCalledWith('Already at the latest strip');
@@ -112,7 +100,7 @@ describe('DesktopReader', () => {
 
   it('calls goToRandom on R key', () => {
     const goToRandom = vi.fn();
-    render(<DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />);
+    render(<DesktopReader reader={createMockReader({ goToRandom })} />);
 
     fireEvent.keyDown(window, { key: 'r' });
     expect(goToRandom).toHaveBeenCalledOnce();
@@ -120,7 +108,7 @@ describe('DesktopReader', () => {
 
   it('does not call goToRandom on Ctrl+R', () => {
     const goToRandom = vi.fn();
-    render(<DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />);
+    render(<DesktopReader reader={createMockReader({ goToRandom })} />);
 
     fireEvent.keyDown(window, { key: 'r', ctrlKey: true });
     expect(goToRandom).not.toHaveBeenCalled();
@@ -128,48 +116,11 @@ describe('DesktopReader', () => {
 
   it('calls window.history.back on Escape', () => {
     const backSpy = vi.spyOn(window.history, 'back').mockImplementation(() => {});
-    render(<DesktopReader comicId={1} reader={createMockReader()} />);
+    render(<DesktopReader reader={createMockReader()} />);
 
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(backSpy).toHaveBeenCalledOnce();
     backSpy.mockRestore();
-  });
-
-  it('navigates to previous comic on ArrowLeft', () => {
-    vi.mocked(useReadingList).mockReturnValue({
-      comics: [],
-      previousComic: { id: 5, name: 'Peanuts', avatarUrl: null, lastReadDate: null, newest: null, hasUnread: false },
-      nextComic: null,
-      navigateToComic: mockNavigateToComic,
-      isLoading: false,
-    });
-
-    render(<DesktopReader comicId={1} reader={createMockReader()} />);
-
-    fireEvent.keyDown(window, { key: 'ArrowLeft' });
-    expect(mockNavigateToComic).toHaveBeenCalledWith(5);
-  });
-
-  it('navigates to next comic on ArrowRight', () => {
-    vi.mocked(useReadingList).mockReturnValue({
-      comics: [],
-      previousComic: null,
-      nextComic: { id: 7, name: 'Dilbert', avatarUrl: null, lastReadDate: null, newest: null, hasUnread: false },
-      navigateToComic: mockNavigateToComic,
-      isLoading: false,
-    });
-
-    render(<DesktopReader comicId={1} reader={createMockReader()} />);
-
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(mockNavigateToComic).toHaveBeenCalledWith(7);
-  });
-
-  it('does not navigate on ArrowLeft when no previous comic', () => {
-    render(<DesktopReader comicId={1} reader={createMockReader()} />);
-
-    fireEvent.keyDown(window, { key: 'ArrowLeft' });
-    expect(mockNavigateToComic).not.toHaveBeenCalled();
   });
 
   it('renders with strips that have no dimensions (fallback aspect)', () => {
@@ -179,13 +130,13 @@ describe('DesktopReader', () => {
         { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: null, height: null },
       ],
     });
-    render(<DesktopReader comicId={1} reader={reader} />);
+    render(<DesktopReader reader={reader} />);
     expect(screen.getByText('Garfield')).toBeInTheDocument();
   });
 
   it('calls goToFirst on first button click in reader controls', () => {
     const goToFirst = vi.fn().mockReturnValue('scrolled');
-    render(<DesktopReader comicId={1} reader={createMockReader({ goToFirst })} />);
+    render(<DesktopReader reader={createMockReader({ goToFirst })} />);
 
     // The first button is in the ReaderControls which has role button with specific labels
     const firstBtn = screen.getByRole('button', { name: /first/i });
@@ -195,7 +146,7 @@ describe('DesktopReader', () => {
 
   it('calls goToLast on last button click in reader controls', () => {
     const goToLast = vi.fn().mockReturnValue('scrolled');
-    render(<DesktopReader comicId={1} reader={createMockReader({ goToLast })} />);
+    render(<DesktopReader reader={createMockReader({ goToLast })} />);
 
     const lastBtn = screen.getByRole('button', { name: /latest/i });
     fireEvent.click(lastBtn);
@@ -204,7 +155,7 @@ describe('DesktopReader', () => {
 
   it('handles metaKey+R without calling goToRandom', () => {
     const goToRandom = vi.fn();
-    render(<DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />);
+    render(<DesktopReader reader={createMockReader({ goToRandom })} />);
 
     fireEvent.keyDown(window, { key: 'R', metaKey: true });
     expect(goToRandom).not.toHaveBeenCalled();
@@ -212,7 +163,7 @@ describe('DesktopReader', () => {
 
   it('passes currentDate as null when currentIndex is out of bounds', () => {
     const reader = createMockReader({ currentIndex: 5 }); // out of bounds for 2 strips
-    render(<DesktopReader comicId={1} reader={reader} />);
+    render(<DesktopReader reader={reader} />);
     // Should render without crashing — DatePickerPopover receives null
     expect(screen.getByText('Garfield')).toBeInTheDocument();
   });
@@ -221,7 +172,7 @@ describe('DesktopReader', () => {
     const goToRandom = vi.fn();
     render(
       <div>
-        <DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />
+        <DesktopReader reader={createMockReader({ goToRandom })} />
         <input data-testid="test-input" />
       </div>,
     );
