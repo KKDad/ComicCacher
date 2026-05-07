@@ -182,6 +182,42 @@ describe('useSwipe', () => {
     expect(onSwipeUp).not.toHaveBeenCalled();
   });
 
+  it('does not fire when horizontal delta exactly equals threshold (boundary)', () => {
+    const onSwipeLeft = vi.fn();
+    const onSwipeRight = vi.fn();
+    const { result } = renderHook(() =>
+      useSwipe({ onSwipeLeft, onSwipeRight, threshold: 50 }),
+    );
+
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(200, 100));
+      result.current.onTouchMove(createTouchEvent(200, 150)); // deltaX = +50 exactly
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    // absDeltaX (50) >= threshold (50) enters horizontal branch, but
+    // deltaX < -threshold and deltaX > threshold are both false at exact boundary
+    expect(onSwipeLeft).not.toHaveBeenCalled();
+    expect(onSwipeRight).not.toHaveBeenCalled();
+  });
+
+  it('does not fire when vertical delta exactly equals threshold (boundary)', () => {
+    const onSwipeUp = vi.fn();
+    const onSwipeDown = vi.fn();
+    const { result } = renderHook(() =>
+      useSwipe({ onSwipeUp, onSwipeDown, threshold: 50 }),
+    );
+
+    act(() => {
+      result.current.onTouchStart(createTouchEvent(100));
+      result.current.onTouchMove(createTouchEvent(150)); // deltaY = +50 exactly
+      result.current.onTouchEnd(createEmptyTouchEvent());
+    });
+
+    expect(onSwipeUp).not.toHaveBeenCalled();
+    expect(onSwipeDown).not.toHaveBeenCalled();
+  });
+
   it('uses default threshold of 50', () => {
     const onSwipeUp = vi.fn();
     const { result } = renderHook(() => useSwipe({ onSwipeUp }));

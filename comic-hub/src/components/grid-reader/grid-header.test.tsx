@@ -1,8 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GridHeader } from './grid-header';
 
+const mockBack = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ back: vi.fn() }),
+  useRouter: () => ({ back: mockBack }),
 }));
 
 describe('GridHeader', () => {
@@ -43,9 +44,10 @@ describe('GridHeader', () => {
     expect(defaultProps.onToday).toHaveBeenCalledOnce();
   });
 
-  it('renders back button', () => {
+  it('calls router.back when back button clicked', () => {
     render(<GridHeader {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /go back/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /go back/i }));
+    expect(mockBack).toHaveBeenCalledOnce();
   });
 
   it('renders date picker button', () => {

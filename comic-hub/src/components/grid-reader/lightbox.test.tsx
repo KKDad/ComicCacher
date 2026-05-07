@@ -1,6 +1,19 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Lightbox } from './lightbox';
 import type { GridComic } from '@/hooks/use-grid-reader';
+import { usePinchZoom } from '@/hooks/use-pinch-zoom';
+
+vi.mock('@/hooks/use-pinch-zoom', () => ({
+  usePinchZoom: vi.fn(),
+}));
+
+const mockResetZoom = vi.fn();
+const defaultZoomState = {
+  state: { scale: 1, translateX: 0, translateY: 0, originX: 50, originY: 50 },
+  handlers: {},
+  isZoomed: false,
+  resetZoom: mockResetZoom,
+};
 
 const mockComics: GridComic[] = [
   {
@@ -28,6 +41,7 @@ describe('Lightbox', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(usePinchZoom).mockReturnValue(defaultZoomState as any);
   });
 
   it('renders the current comic strip image', () => {
@@ -84,5 +98,36 @@ describe('Lightbox', () => {
   it('has modal dialog role', () => {
     render(<Lightbox {...defaultProps} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('calls onClose when backdrop is clicked', () => {
+    render(<Lightbox {...defaultProps} />);
+    const backdrop = screen.getByRole('dialog');
+    fireEvent.click(backdrop);
+    expect(defaultProps.onClose).toHaveBeenCalledOnce();
+  });
+
+  it('does not call onClose when child element is clicked', () => {
+    render(<Lightbox {...defaultProps} />);
+    fireEvent.click(screen.getByRole('img'));
+    expect(defaultProps.onClose).not.toHaveBeenCalled();
+  });
+
+  it('returns null when comic at currentIndex is undefined', () => {
+    const { container } = render(
+      <Lightbox {...defaultProps} currentIndex={99} />,
+    );
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('resets zoom instead of closing when backdrop is clicked while zoomed', () => {
+    vi.mocked(usePinchZoom).mockReturnValue({
+      ...defaultZoomState,
+      isZoomed: true,
+    } as any);
+    render(<Lightbox {...defaultProps} />);
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(mockResetZoom).toHaveBeenCalledOnce();
+    expect(defaultProps.onClose).not.toHaveBeenCalled();
   });
 });
