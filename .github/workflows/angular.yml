@@ -35,9 +35,7 @@ jobs:
         cache-dependency-path: comic-hub/package-lock.json
 
     - name: Install dependencies
-      # --no-audit / --no-fund work around npm/cli#8336 (Exit handler never called)
-      # which fires when npm's audit/fund worker thread races with deprecation warnings.
-      run: npm ci --no-audit --no-fund
+      run: npm ci
 
     - name: Run tests with coverage
       run: npx vitest run --coverage

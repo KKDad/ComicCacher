@@ -1,0 +1,8 @@
+{
+  "name": "node-domexception",
+  "version": "1.0.0",
+  "description": "Stub: re-exports the platform-native DOMException (Node 17+, all browsers).",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT"
+}
