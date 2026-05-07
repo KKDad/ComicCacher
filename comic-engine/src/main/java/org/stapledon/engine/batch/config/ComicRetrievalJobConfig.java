@@ -90,9 +90,11 @@ public class ComicRetrievalJobConfig {
     }
 
     /**
-     * Reader that provides the target date for comic downloads
+     * Reader that provides the target date for comic downloads. Uses @StepScope so the date is captured at job execution time and the underlying ListItemReader is recreated per run.
+     * A singleton ListItemReader would be exhausted after the first execution and silently no-op forever.
      */
     @Bean
+    @StepScope
     public ItemReader<LocalDate> dateReader() {
         LocalDate targetDate = LocalDate.now();
         log.info("Comic download target date: {} ({})", targetDate, targetDate.getDayOfWeek());

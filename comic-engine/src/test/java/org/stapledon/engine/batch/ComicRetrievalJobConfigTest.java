@@ -13,11 +13,13 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -79,5 +81,15 @@ class ComicRetrievalJobConfigTest {
 
         assertThat(results).isEmpty();
         verify(managementFacade).updateComicsForDate(date, sourceFilter);
+    }
+
+    @Test
+    void dateReader_isStepScoped() throws NoSuchMethodException {
+        Method method = ComicRetrievalJobConfig.class.getDeclaredMethod("dateReader");
+
+        assertThat(method.isAnnotationPresent(StepScope.class))
+                .as("dateReader must be @StepScope: without it the singleton ListItemReader is exhausted after the first job run, "
+                        + "and every subsequent ComicDownloadJob silently completes in 1ms with zero downloads")
+                .isTrue();
     }
 }
