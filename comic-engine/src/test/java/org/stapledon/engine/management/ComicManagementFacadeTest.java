@@ -89,9 +89,10 @@ class ComicManagementFacadeTest {
         when(storageFacade.getAvatar(ComicIdentifier.from(testComic)))
                 .thenReturn(Optional.of(ImageDto.builder().mimeType("image/png").imageData("").build()));
 
-        // Initialize facade
+        // Initialize facade with a synchronous executor so per-source threading runs inline in tests
         facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class),
+                Runnable::run);
     }
 
     // Test removed - on-demand downloads via CacheMissEvent no longer supported
@@ -136,7 +137,7 @@ class ComicManagementFacadeTest {
 
         // Create new facade instance with our test data
         ComicManagementFacade testFacade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class), Runnable::run);
 
         // Act
         List<ComicItem> comics = testFacade.getAllComics();
@@ -203,7 +204,7 @@ class ComicManagementFacadeTest {
 
         // Create new facade with our null-name comic
         ComicManagementFacade nullNameFacade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class));
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class), Runnable::run);
 
         // Act and Assert - this shouldn't throw an NPE
         assertThat(nullNameFacade.getAllComics().size()).isEqualTo(1);

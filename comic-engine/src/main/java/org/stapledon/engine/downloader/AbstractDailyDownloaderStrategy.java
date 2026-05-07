@@ -7,6 +7,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 
 /**
@@ -20,15 +21,13 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
 
     /**
      * Creates a new daily downloader strategy for the specified source.
-     *
-     * @param source The source identifier (e.g., "gocomics", "comicskingdom")
-     * @param webInspector The web inspector to use for HTTP requests
-     * @param imageValidationService The service for validating downloaded images
      */
     protected AbstractDailyDownloaderStrategy(String source,
             InspectorService webInspector,
-            ValidationService imageValidationService) {
-        super(source, webInspector, imageValidationService);
+            ValidationService imageValidationService,
+            UserAgentService userAgentService,
+            SourceThrottleService throttleService) {
+        super(source, webInspector, imageValidationService, userAgentService, throttleService);
     }
 
     /**
@@ -37,6 +36,7 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
     @Override
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
         try {
+            throttleService.await(getSource());
             log.info("Downloading comic {} for date {} from {}",
                     request.getComicName(), request.getDate(), getSource());
 

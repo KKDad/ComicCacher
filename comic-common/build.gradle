@@ -3,6 +3,10 @@ plugins {
 	id "java-library"
 }
 
+// Per-module coverage threshold — ratcheting towards 0.80 (project default).
+// comic-common is dominated by DTOs and config classes; new code added here should bump this upward.
+ext.jacocoCoverageMinimum = 0.05
+
 // repositories inherited from root build.gradle
 
 dependencies {

@@ -14,6 +14,7 @@ ext {
 
     // Library versions
     bcryptVersion = '0.4'
+    brotliDecVersion = '0.1.2'
     caffeineVersion = '3.2.3'
     guavaVersion = '33.5.0-jre'
     jjwtVersion = '0.13.0'

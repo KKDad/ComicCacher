@@ -26,6 +26,10 @@ dependencies {
 	implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
 	implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
 
+	// Brotli decoder (pure Java) — required because GoComics serves Content-Encoding: br
+	// and Jsoup only auto-decompresses gzip.
+	implementation "org.brotli:dec:${rootProject.ext.brotliDecVersion}"
+
 	// Spring Boot for web and batch
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-batch-jdbc'

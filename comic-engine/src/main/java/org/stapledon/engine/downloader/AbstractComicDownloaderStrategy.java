@@ -12,7 +12,9 @@ import java.util.Optional;
 
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
+
 
 /**
  * Abstract base class for comic downloader strategies.
@@ -26,20 +28,22 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     private final String source;
     protected final InspectorService webInspector;
     protected final ValidationService imageValidationService;
+    protected final UserAgentService userAgentService;
+    protected final SourceThrottleService throttleService;
 
     /**
      * Creates a new downloader strategy for the specified source.
-     *
-     * @param source The source identifier (e.g., "gocomics", "comicskingdom")
-     * @param webInspector The web inspector to use for HTTP requests
-     * @param imageValidationService The service for validating downloaded images
      */
     protected AbstractComicDownloaderStrategy(String source,
             InspectorService webInspector,
-            ValidationService imageValidationService) {
+            ValidationService imageValidationService,
+            UserAgentService userAgentService,
+            SourceThrottleService throttleService) {
         this.source = source;
         this.webInspector = webInspector;
         this.imageValidationService = imageValidationService;
+        this.userAgentService = userAgentService;
+        this.throttleService = throttleService;
     }
 
     /**
@@ -48,6 +52,7 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     @Override
     public Optional<byte[]> downloadAvatar(int comicId, String comicName, String sourceIdentifier) {
         try {
+            throttleService.await(source);
             log.debug("Downloading avatar for comic {} from {}", comicName, source);
             byte[] avatarData = downloadAvatarImage(comicId, comicName, sourceIdentifier);
 
@@ -76,11 +81,6 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     /**
      * Validates downloaded image data and returns the validation result.
      * Utility method for subclasses to reuse validation logic.
-     *
-     * @param imageData The image data to validate
-     * @param comicName The comic name (for logging)
-     * @param context The context string for logging (e.g., date or strip number)
-     * @return The validation result, or null if image data is empty
      */
     protected ImageValidationResult validateImage(byte[] imageData, String comicName, String context) {
         if (imageData == null || imageData.length == 0) {
@@ -107,7 +107,7 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
      */
     protected byte[] downloadImageData(String imageUrl) throws IOException {
         HttpURLConnection conn = (HttpURLConnection) URI.create(imageUrl).toURL().openConnection();
-        conn.setRequestProperty("User-Agent", DownloaderConstants.DEFAULT_USER_AGENT);
+        conn.setRequestProperty("User-Agent", userAgentService.getUserAgent(source));
         conn.setConnectTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
         conn.setReadTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
         try (InputStream in = conn.getInputStream()) {
@@ -120,12 +120,6 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     /**
      * Downloads the avatar image for a comic from the source.
      * This method must be implemented by concrete subclasses to handle source-specific logic.
-     *
-     * @param comicId The unique identifier of the comic
-     * @param comicName The name of the comic
-     * @param sourceIdentifier The URL or identifier used to locate the comic at the source
-     * @return The avatar image data, or null if not available
-     * @throws Exception If an error occurs during download
      */
     protected abstract byte[] downloadAvatarImage(int comicId, String comicName, String sourceIdentifier) throws Exception;
 }

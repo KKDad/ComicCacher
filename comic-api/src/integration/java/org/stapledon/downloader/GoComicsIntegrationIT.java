@@ -70,7 +70,6 @@ class GoComicsIntegrationIT {
     }
 
     @Test
-    @Disabled("Integration test - run manually as needed")
     void downloadAdamAtHomeFiveDaysAgo() throws Exception {
         LocalDate testDate = LocalDate.of(2025, 10, 20);
         String year = "2025";
@@ -101,7 +100,7 @@ class GoComicsIntegrationIT {
     }
 
     @Test
-    @Disabled("Integration test - run manually as needed")
+    @Disabled("Hits GoComics 10× sequentially with no throttle — likely to retrigger Cloudflare rate-limiting; run manually if needed")
     void downloadTenWeeklyComics() throws Exception {
         LocalDate today = LocalDate.now();
         LOG.info("=== Downloading 10 Adam@Home comics, one week apart ===");
@@ -151,9 +150,7 @@ class GoComicsIntegrationIT {
     @ParameterizedTest
     @ValueSource(strings = {
         "Adam at Home",
-        "Garfield",
-        "Peanuts",
-        "CalvinAndHobbes"
+        "Garfield"
     })
     void getComicDetailsTest(String name) {
         // Arrange

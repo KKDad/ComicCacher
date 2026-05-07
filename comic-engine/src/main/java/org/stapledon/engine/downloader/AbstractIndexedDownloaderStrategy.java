@@ -10,6 +10,7 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 
 /**
@@ -24,15 +25,13 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
 
     /**
      * Creates a new indexed downloader strategy for the specified source.
-     *
-     * @param source The source identifier (e.g., "freefall")
-     * @param webInspector The web inspector to use for HTTP requests
-     * @param imageValidationService The service for validating downloaded images
      */
     protected AbstractIndexedDownloaderStrategy(String source,
             InspectorService webInspector,
-            ValidationService imageValidationService) {
-        super(source, webInspector, imageValidationService);
+            ValidationService imageValidationService,
+            UserAgentService userAgentService,
+            SourceThrottleService throttleService) {
+        super(source, webInspector, imageValidationService, userAgentService, throttleService);
     }
 
     /**
@@ -49,6 +48,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
     @Override
     public ComicDownloadResult downloadLatestStrip(ComicItem comic) {
         try {
+            throttleService.await(getSource());
             IndexedStripData data = fetchLatestStrip(comic);
             return buildSuccessResult(comic, data);
         } catch (Exception e) {
@@ -65,6 +65,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
     @Override
     public ComicDownloadResult downloadStrip(ComicItem comic, int stripNumber) {
         try {
+            throttleService.await(getSource());
             IndexedStripData data = fetchStrip(comic, stripNumber);
             return buildSuccessResult(comic, data);
         } catch (Exception e) {
