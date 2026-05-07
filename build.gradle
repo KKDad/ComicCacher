@@ -106,7 +106,7 @@ subprojects {
 
         // OpenRewrite Recipes
         rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.35.2")
-        rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.32.0")
+        rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.34.1")
     }
 
     tasks.withType(Test).configureEach {
