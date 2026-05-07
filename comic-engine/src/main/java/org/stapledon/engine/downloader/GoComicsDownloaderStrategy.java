@@ -2,12 +2,16 @@ package org.stapledon.engine.downloader;
 
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.brotli.dec.BrotliInputStream;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -44,19 +48,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         String url = generateSiteURL(request);
         log.debug("Fetching {}", url);
 
-        Document doc = Jsoup.connect(url)
-                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
-                .header("Accept-Language", "en-US,en;q=0.9")
-                .header("Accept-Encoding", "gzip, deflate, br")
-                .header("Sec-Fetch-Dest", "document")
-                .header("Sec-Fetch-Mode", "navigate")
-                .header("Sec-Fetch-Site", "none")
-                .header("Sec-Fetch-User", "?1")
-                .header("Upgrade-Insecure-Requests", "1")
-                .header("DNT", "1")
-                .timeout(TIMEOUT)
-                .get();
+        Document doc = fetchDocument(url);
 
         // Extract image URL from Open Graph metadata
         String imageUrl = extractImageFromOpenGraph(doc);
@@ -93,19 +85,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         String url = String.format("https://www.gocomics.com/%s/about", sourceIdentifier);
         log.debug("Fetching avatar from {}", url);
 
-        Document doc = Jsoup.connect(url)
-                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
-                .header("Accept-Language", "en-US,en;q=0.9")
-                .header("Accept-Encoding", "gzip, deflate, br")
-                .header("Sec-Fetch-Dest", "document")
-                .header("Sec-Fetch-Mode", "navigate")
-                .header("Sec-Fetch-Site", "none")
-                .header("Sec-Fetch-User", "?1")
-                .header("Upgrade-Insecure-Requests", "1")
-                .header("DNT", "1")
-                .timeout(TIMEOUT)
-                .get();
+        Document doc = fetchDocument(url);
 
         // Try to find badge image in HTML using different potential CSS classes
         Element badgeImage = doc.select("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]").first();
@@ -115,6 +95,31 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         }
 
         return downloadImageData(badgeImage.attr("abs:src"));
+    }
+
+    // GoComics serves Content-Encoding: br; Jsoup only auto-decompresses gzip, so we wrap the body stream manually when needed.
+    private Document fetchDocument(String url) throws IOException {
+        Connection.Response response = Jsoup.connect(url)
+                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("Accept-Encoding", "br, gzip, deflate")
+                .header("Sec-Fetch-Dest", "document")
+                .header("Sec-Fetch-Mode", "navigate")
+                .header("Sec-Fetch-Site", "none")
+                .header("Sec-Fetch-User", "?1")
+                .header("Upgrade-Insecure-Requests", "1")
+                .header("DNT", "1")
+                .timeout(TIMEOUT)
+                .execute();
+
+        InputStream stream = response.bodyStream();
+        if ("br".equalsIgnoreCase(response.header("Content-Encoding"))) {
+            stream = new BrotliInputStream(stream);
+        }
+        try (InputStream body = stream) {
+            return Jsoup.parse(body, response.charset(), response.url().toExternalForm());
+        }
     }
 
     /**
