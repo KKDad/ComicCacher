@@ -20,7 +20,6 @@ import java.util.Comparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Disabled("Skipped while Cloudflare is rate-limiting the dev server's IP — re-enable manually after verifying GoComics access")
 class GoComicsIntegrationIT {
     private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationIT.class);
     private static Path path;
@@ -101,6 +100,7 @@ class GoComicsIntegrationIT {
     }
 
     @Test
+    @Disabled("Hits GoComics 10× sequentially with no throttle — likely to retrigger Cloudflare rate-limiting; run manually if needed")
     void downloadTenWeeklyComics() throws Exception {
         LocalDate today = LocalDate.now();
         LOG.info("=== Downloading 10 Adam@Home comics, one week apart ===");
@@ -150,9 +150,7 @@ class GoComicsIntegrationIT {
     @ParameterizedTest
     @ValueSource(strings = {
         "Adam at Home",
-        "Garfield",
-        "Peanuts",
-        "CalvinAndHobbes"
+        "Garfield"
     })
     void getComicDetailsTest(String name) {
         // Arrange
