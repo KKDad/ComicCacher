@@ -2,6 +2,7 @@ package org.stapledon.engine.management;
 
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
@@ -11,11 +12,14 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import org.stapledon.common.dto.ComicConfig;
@@ -50,6 +54,7 @@ public class ComicManagementFacade implements ManagementFacade {
     private final ComicConfigurationService configFacade;
     private final DownloaderFacade downloaderFacade;
     private final RetrievalStatusService retrievalStatusService;
+    private final Executor sourceDownloadExecutor;
 
     /**
      * In-memory cache of comics for O(1) lookups.
@@ -75,11 +80,13 @@ public class ComicManagementFacade implements ManagementFacade {
     private final Map<Integer, ComicItem> comics = new ConcurrentHashMap<>();
 
     public ComicManagementFacade(ComicStorageFacade storageFacade, ComicConfigurationService configFacade,
-            DownloaderFacade downloaderFacade, RetrievalStatusService retrievalStatusService) {
+            DownloaderFacade downloaderFacade, RetrievalStatusService retrievalStatusService,
+            @Qualifier("sourceDownloadExecutor") Executor sourceDownloadExecutor) {
         this.storageFacade = storageFacade;
         this.configFacade = configFacade;
         this.downloaderFacade = downloaderFacade;
         this.retrievalStatusService = retrievalStatusService;
+        this.sourceDownloadExecutor = sourceDownloadExecutor;
 
         // Load comics from configuration
         refreshComicList();
@@ -428,7 +435,6 @@ public class ComicManagementFacade implements ManagementFacade {
 
     @Override
     public List<ComicDownloadResult> updateComicsForDate(LocalDate date, String sourceFilter) {
-        List<ComicDownloadResult> results = new ArrayList<>();
         boolean hasSourceFilter = sourceFilter != null && !"ALL".equalsIgnoreCase(sourceFilter);
 
         try {
@@ -445,83 +451,105 @@ public class ComicManagementFacade implements ManagementFacade {
 
             if (config == null || config.getComics() == null) {
                 log.warn("Comic configuration is null or empty");
-                return results;
+                return new ArrayList<>();
             }
 
             DayOfWeek dayOfWeek = date.getDayOfWeek();
 
-            // Process each comic individually - check if exists before downloading
+            // Apply all eligibility filters and group remaining comics by source. LinkedHashMap to keep grouping deterministic for tests.
+            Map<String, List<ComicItem>> bySource = new LinkedHashMap<>();
             for (ComicItem comic : config.getComics()) {
-                // Skip comics with null or empty source
-                if (comic.getSource() == null || comic.getSource().isEmpty()) {
-                    log.warn("Skipping comic '{}' - has null or empty source", comic.getName());
+                if (!isEligibleForDownload(comic, date, dayOfWeek, sourceFilter, hasSourceFilter)) {
                     continue;
                 }
-
-                // Skip comics that don't match the source filter
-                if (hasSourceFilter && !sourceFilter.equalsIgnoreCase(comic.getSource())) {
-                    continue;
-                }
-
-                // Skip inactive comics (discontinued/delisted)
-                if (!comic.isActive()) {
-                    log.info("Skipping comic '{}' - comic is inactive/discontinued", comic.getName());
-                    continue;
-                }
-
-                // Skip if comic doesn't publish on this day
-                if (comic.getPublicationDays() != null && !comic.getPublicationDays().isEmpty()) {
-                    if (!comic.getPublicationDays().contains(dayOfWeek)) {
-                        log.info("Skipping comic '{}' - not published on {} (publishes: {})", comic.getName(),
-                                dayOfWeek, comic.getPublicationDays());
-                        continue;
-                    }
-                }
-
-                // Check if comic already exists on disk
-                if (storageFacade.comicStripExists(ComicIdentifier.from(comic), date)) {
-                    log.info("Skipping comic '{}' for {} - already cached", comic.getName(), date);
-                    continue;
-                }
-
-                // Handle indexed comics differently
-                if (downloaderFacade.isIndexedSource(comic.getSource())) {
-                    Optional<ComicDownloadResult> indexedResult = downloadLatestIndexedComic(comic);
-                    indexedResult.ifPresent(results::add);
-                    continue;
-                }
-
-                // Comic doesn't exist - download it
-                ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(comic.getId())
-                        .comicName(comic.getName()).source(comic.getSource())
-                        .sourceIdentifier(comic.getSourceIdentifier()).date(date).build();
-
-                ComicDownloadResult result = downloaderFacade.downloadComic(request);
-                results.add(result);
-
-                if (result.isSuccessful()) {
-                    // Save the comic to storage
-                    boolean saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), date,
-                            result.getImageData());
-
-                    if (!saved) {
-                        log.error("Failed to save comic {} to storage", comic.getName());
-                        continue;
-                    }
-
-                    // Update comic item metadata
-                    ComicItem updated = comic.toBuilder().newest(date).build();
-
-                    updateComic(comic.getId(), updated);
-                } else {
-                    log.error("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
-                }
+                bySource.computeIfAbsent(comic.getSource(), s -> new ArrayList<>()).add(comic);
             }
+
+            if (bySource.isEmpty()) {
+                log.info("No comics eligible for download on {} (sourceFilter: {})", date, sourceFilter);
+                return new ArrayList<>();
+            }
+
+            // Run one task per source in parallel; each task processes its source serially, paced by SourceThrottleService inside the strategy.
+            log.info("Dispatching {} source download tasks: {}", bySource.size(), bySource.keySet());
+            List<CompletableFuture<List<ComicDownloadResult>>> futures = bySource.entrySet().stream()
+                    .map(entry -> CompletableFuture.supplyAsync(() -> downloadAllForSource(entry.getKey(), entry.getValue(), date), sourceDownloadExecutor))
+                    .toList();
+
+            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+
+            return futures.stream()
+                    .flatMap(f -> f.join().stream())
+                    .collect(Collectors.toCollection(ArrayList::new));
         } catch (Exception e) {
             log.error("Error occurred while updating comics for date {}", date, e);
+            return new ArrayList<>();
         }
+    }
 
-        return results;
+    private boolean isEligibleForDownload(ComicItem comic, LocalDate date, DayOfWeek dayOfWeek, String sourceFilter, boolean hasSourceFilter) {
+        if (comic.getSource() == null || comic.getSource().isEmpty()) {
+            log.warn("Skipping comic '{}' - has null or empty source", comic.getName());
+            return false;
+        }
+        if (hasSourceFilter && !sourceFilter.equalsIgnoreCase(comic.getSource())) {
+            return false;
+        }
+        if (!comic.isActive()) {
+            log.info("Skipping comic '{}' - comic is inactive/discontinued", comic.getName());
+            return false;
+        }
+        if (comic.getPublicationDays() != null && !comic.getPublicationDays().isEmpty()
+                && !comic.getPublicationDays().contains(dayOfWeek)) {
+            log.info("Skipping comic '{}' - not published on {} (publishes: {})", comic.getName(), dayOfWeek, comic.getPublicationDays());
+            return false;
+        }
+        if (storageFacade.comicStripExists(ComicIdentifier.from(comic), date)) {
+            log.info("Skipping comic '{}' for {} - already cached", comic.getName(), date);
+            return false;
+        }
+        return true;
+    }
+
+    private List<ComicDownloadResult> downloadAllForSource(String source, List<ComicItem> comics, LocalDate date) {
+        List<ComicDownloadResult> sourceResults = new ArrayList<>(comics.size());
+        log.info("Source thread starting: {} ({} comics for {})", source, comics.size(), date);
+        long start = System.currentTimeMillis();
+        try {
+            boolean indexed = downloaderFacade.isIndexedSource(source);
+            for (ComicItem comic : comics) {
+                try {
+                    if (indexed) {
+                        downloadLatestIndexedComic(comic).ifPresent(sourceResults::add);
+                        continue;
+                    }
+
+                    ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(comic.getId())
+                            .comicName(comic.getName()).source(comic.getSource())
+                            .sourceIdentifier(comic.getSourceIdentifier()).date(date).build();
+
+                    ComicDownloadResult result = downloaderFacade.downloadComic(request);
+                    sourceResults.add(result);
+
+                    if (result.isSuccessful()) {
+                        boolean saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), date, result.getImageData());
+                        if (!saved) {
+                            log.error("Failed to save comic {} to storage", comic.getName());
+                            continue;
+                        }
+                        ComicItem updated = comic.toBuilder().newest(date).build();
+                        updateComic(comic.getId(), updated);
+                    } else {
+                        log.error("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
+                    }
+                } catch (Exception e) {
+                    log.error("Error processing comic {} on {}: {}", comic.getName(), date, e.getMessage(), e);
+                }
+            }
+        } finally {
+            log.info("Source thread finished: {} ({} results in {}ms)", source, sourceResults.size(), System.currentTimeMillis() - start);
+        }
+        return sourceResults;
     }
 
     @Override

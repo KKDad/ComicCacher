@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.batch.BackfillConfigurationService;
 
@@ -46,8 +47,10 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
      */
     public FreefallDownloaderStrategy(InspectorService webInspector,
             ValidationService imageValidationService,
+            UserAgentService userAgentService,
+            SourceThrottleService throttleService,
             BackfillConfigurationService backfillConfig) {
-        super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
+        super(SOURCE_IDENTIFIER, webInspector, imageValidationService, userAgentService, throttleService);
         this.backfillConfig = backfillConfig;
     }
 
@@ -60,7 +63,7 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         log.info("Fetching latest Freefall strip from {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
 
         return fetchStripFromDocument(doc);
     }
@@ -87,12 +90,12 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         Document doc;
         try {
             doc = Jsoup.connect(primaryUrl)
-                    .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+                    .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
         } catch (org.jsoup.HttpStatusException e) {
             log.debug("Primary page not found ({}), trying fallback: {}", primaryUrl, fallbackUrl);
             try {
                 doc = Jsoup.connect(fallbackUrl)
-                        .userAgent(DownloaderConstants.DEFAULT_USER_AGENT).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+                        .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
             } catch (org.jsoup.HttpStatusException e2) {
                 log.error("Both color and grayscale pages failed for strip #{}: {} and {}", stripNumber,
                         buildStripPageUrl(stripNumber), buildGrayscaleStripPageUrl(stripNumber));

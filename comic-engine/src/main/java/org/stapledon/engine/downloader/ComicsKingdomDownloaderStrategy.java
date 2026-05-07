@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 
 /**
@@ -29,13 +30,12 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
 
     /**
      * Creates a new Comics Kingdom downloader strategy.
-     *
-     * @param webInspector           The web inspector to use for HTTP requests
-     * @param imageValidationService The service for validating downloaded images
      */
     public ComicsKingdomDownloaderStrategy(InspectorService webInspector,
-            ValidationService imageValidationService) {
-        super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
+            ValidationService imageValidationService,
+            UserAgentService userAgentService,
+            SourceThrottleService throttleService) {
+        super(SOURCE_IDENTIFIER, webInspector, imageValidationService, userAgentService, throttleService);
     }
 
     /**
@@ -47,7 +47,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
         log.debug("Fetching {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
+                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
                 .header("DNT", "1")
                 .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
                 .timeout(TIMEOUT)
@@ -77,7 +77,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
         log.debug("Fetching avatar from {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
+                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
                 .header("DNT", "1")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml")
                 .timeout(TIMEOUT)

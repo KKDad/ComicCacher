@@ -18,6 +18,7 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,13 +30,19 @@ class AbstractComicDownloaderStrategyTest {
     @Mock
     private ValidationService imageValidationService;
 
+    @Mock
+    private UserAgentService userAgentService;
+
+    @Mock
+    private SourceThrottleService throttleService;
+
     private TestComicDownloaderStrategy strategy;
     private final byte[] validImageData = "valid-image-data".getBytes();
     private final byte[] emptyImageData = new byte[0];
 
     @BeforeEach
     void setUp() {
-        strategy = new TestComicDownloaderStrategy("test-source", webInspector, imageValidationService);
+        strategy = new TestComicDownloaderStrategy("test-source", webInspector, imageValidationService, userAgentService, throttleService);
     }
 
     @Test
@@ -277,8 +284,10 @@ class AbstractComicDownloaderStrategyTest {
 
         public TestComicDownloaderStrategy(String source,
                 InspectorService webInspector,
-                ValidationService imageValidationService) {
-            super(source, webInspector, imageValidationService);
+                ValidationService imageValidationService,
+                UserAgentService userAgentService,
+                SourceThrottleService throttleService) {
+            super(source, webInspector, imageValidationService, userAgentService, throttleService);
         }
 
         public void setMockImageData(byte[] data) {

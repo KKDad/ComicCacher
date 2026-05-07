@@ -20,6 +20,7 @@ import java.util.Comparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Disabled("Skipped while Cloudflare is rate-limiting the dev server's IP — re-enable manually after verifying GoComics access")
 class GoComicsIntegrationIT {
     private static final Logger LOG = LoggerFactory.getLogger(GoComicsIntegrationIT.class);
     private static Path path;
@@ -70,7 +71,6 @@ class GoComicsIntegrationIT {
     }
 
     @Test
-    @Disabled("Integration test - run manually as needed")
     void downloadAdamAtHomeFiveDaysAgo() throws Exception {
         LocalDate testDate = LocalDate.of(2025, 10, 20);
         String year = "2025";
@@ -101,7 +101,6 @@ class GoComicsIntegrationIT {
     }
 
     @Test
-    @Disabled("Integration test - run manually as needed")
     void downloadTenWeeklyComics() throws Exception {
         LocalDate today = LocalDate.now();
         LOG.info("=== Downloading 10 Adam@Home comics, one week apart ===");

@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.stream.Stream;
 
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.batch.BackfillConfigurationService;
 
@@ -32,13 +33,19 @@ class FreefallDownloaderStrategyTest {
     private ValidationService imageValidationService;
 
     @Mock
+    private UserAgentService userAgentService;
+
+    @Mock
+    private SourceThrottleService throttleService;
+
+    @Mock
     private BackfillConfigurationService backfillConfig;
 
     private FreefallDownloaderStrategy strategy;
 
     @BeforeEach
     void setUp() {
-        strategy = new FreefallDownloaderStrategy(webInspector, imageValidationService, backfillConfig);
+        strategy = new FreefallDownloaderStrategy(webInspector, imageValidationService, userAgentService, throttleService, backfillConfig);
     }
 
     @Test
@@ -50,10 +57,12 @@ class FreefallDownloaderStrategyTest {
     void shouldCreateStrategyWithDependencies() {
         InspectorService mockInspector = mock(InspectorService.class);
         ValidationService mockValidation = mock(ValidationService.class);
+        UserAgentService mockUserAgent = mock(UserAgentService.class);
+        SourceThrottleService mockThrottle = mock(SourceThrottleService.class);
         BackfillConfigurationService mockConfig = mock(BackfillConfigurationService.class);
 
         FreefallDownloaderStrategy newStrategy = new FreefallDownloaderStrategy(
-                mockInspector, mockValidation, mockConfig);
+                mockInspector, mockValidation, mockUserAgent, mockThrottle, mockConfig);
 
         assertThat(newStrategy).isNotNull();
         assertThat(newStrategy.getSource()).isEqualTo("freefall");

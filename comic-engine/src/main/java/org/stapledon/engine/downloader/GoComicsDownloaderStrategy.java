@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 
 /**
@@ -27,13 +28,12 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
 
     /**
      * Creates a new GoComics downloader strategy.
-     *
-     * @param webInspector           The web inspector to use for HTTP requests
-     * @param imageValidationService The service for validating downloaded images
      */
     public GoComicsDownloaderStrategy(InspectorService webInspector,
-            ValidationService imageValidationService) {
-        super(SOURCE_IDENTIFIER, webInspector, imageValidationService);
+            ValidationService imageValidationService,
+            UserAgentService userAgentService,
+            SourceThrottleService throttleService) {
+        super(SOURCE_IDENTIFIER, webInspector, imageValidationService, userAgentService, throttleService);
     }
 
     /**
@@ -45,9 +45,16 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         log.debug("Fetching {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
+                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("Accept-Encoding", "gzip, deflate, br")
+                .header("Sec-Fetch-Dest", "document")
+                .header("Sec-Fetch-Mode", "navigate")
+                .header("Sec-Fetch-Site", "none")
+                .header("Sec-Fetch-User", "?1")
+                .header("Upgrade-Insecure-Requests", "1")
                 .header("DNT", "1")
-                .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
                 .timeout(TIMEOUT)
                 .get();
 
@@ -87,9 +94,16 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         log.debug("Fetching avatar from {}", url);
 
         Document doc = Jsoup.connect(url)
-                .userAgent(DownloaderConstants.DEFAULT_USER_AGENT)
+                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("Accept-Encoding", "gzip, deflate, br")
+                .header("Sec-Fetch-Dest", "document")
+                .header("Sec-Fetch-Mode", "navigate")
+                .header("Sec-Fetch-Site", "none")
+                .header("Sec-Fetch-User", "?1")
+                .header("Upgrade-Insecure-Requests", "1")
                 .header("DNT", "1")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml")
                 .timeout(TIMEOUT)
                 .get();
 

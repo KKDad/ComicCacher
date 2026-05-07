@@ -14,6 +14,7 @@ import java.time.LocalDate;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.infrastructure.web.InspectorService;
+import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,11 +26,17 @@ class ComicsKingdomDownloaderStrategyTest {
     @Mock
     private ValidationService imageValidationService;
 
+    @Mock
+    private UserAgentService userAgentService;
+
+    @Mock
+    private SourceThrottleService throttleService;
+
     private ComicsKingdomDownloaderStrategy strategy;
 
     @BeforeEach
     void setUp() {
-        strategy = new ComicsKingdomDownloaderStrategy(webInspector, imageValidationService);
+        strategy = new ComicsKingdomDownloaderStrategy(webInspector, imageValidationService, userAgentService, throttleService);
     }
 
     @Test
@@ -43,10 +50,12 @@ class ComicsKingdomDownloaderStrategyTest {
         // Arrange
         InspectorService mockInspector = mock(InspectorService.class);
         ValidationService mockValidation = mock(ValidationService.class);
+        UserAgentService mockUserAgent = mock(UserAgentService.class);
+        SourceThrottleService mockThrottle = mock(SourceThrottleService.class);
 
         // Act
         ComicsKingdomDownloaderStrategy newStrategy = new ComicsKingdomDownloaderStrategy(
-                mockInspector, mockValidation);
+                mockInspector, mockValidation, mockUserAgent, mockThrottle);
 
         // Assert
         assertThat(newStrategy).isNotNull();
