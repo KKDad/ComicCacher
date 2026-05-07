@@ -34,6 +34,12 @@ jobs:
         cache: 'npm'
         cache-dependency-path: comic-hub/package-lock.json
 
+    - name: Pin npm
+      # npm 10.9.x has a worker thread bug on Ubuntu runners that fires
+      # 'Exit handler never called!' (npm/cli#8336). Pin to the last 10.8.x
+      # release until the upstream fix lands in a Node 22 LTS update.
+      run: npm install -g npm@10.8.3
+
     - name: Install dependencies
       run: npm ci
 
