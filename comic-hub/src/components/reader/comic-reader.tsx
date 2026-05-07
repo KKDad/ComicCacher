@@ -24,5 +24,5 @@ export function ComicReader({ comicId, initialDate }: ComicReaderProps) {
     return <MobileReader comicId={comicId} reader={reader} />;
   }
 
-  return <DesktopReader comicId={comicId} reader={reader} />;
+  return <DesktopReader reader={reader} />;
 }

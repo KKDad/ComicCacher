@@ -36,7 +36,7 @@ describe('MobileNav', () => {
     render(<MobileNav />);
     // Metrics is no longer in the bottom bar — it's in the operations menu
     const bottomLinks = screen.getAllByRole('link');
-    expect(bottomLinks).toHaveLength(2);
+    expect(bottomLinks).toHaveLength(3);
   });
 
   it('renders More button', () => {
@@ -83,5 +83,23 @@ describe('MobileNav', () => {
     await userEvent.click(screen.getByText('More'));
     await userEvent.click(screen.getByText('Logout'));
     expect(mockLogout).toHaveBeenCalledOnce();
+  });
+
+  it('closes sheet when a base menu item is clicked', async () => {
+    render(<MobileNav />);
+    await userEvent.click(screen.getByText('More'));
+    expect(screen.getByText('Menu')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('API'));
+    // Sheet header should no longer be visible after clicking an item
+    expect(screen.queryByText('Menu')).not.toBeInTheDocument();
+  });
+
+  it('closes sheet when an operations menu item is clicked', async () => {
+    vi.mocked(useUser).mockReturnValue({ username: 'op', email: 'o@test.com', displayName: 'Op', roles: ['USER', 'OPERATOR'], created: '2026-01-01' });
+    render(<MobileNav />);
+    await userEvent.click(screen.getByText('More'));
+    expect(screen.getByText('Operations')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Metrics'));
+    expect(screen.queryByText('Menu')).not.toBeInTheDocument();
   });
 });

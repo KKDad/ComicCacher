@@ -480,6 +480,202 @@ describe('useReader', () => {
     expect(result.current.strips).toHaveLength(0);
   });
 
+  it('snap mode updates last-read immediately without debounce', () => {
+    mockGqlDefaults({ windowData: stripWindowData });
+
+    renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-15', mode: 'snap' }),
+      { wrapper: createWrapper() },
+    );
+
+    // In snap mode, mutate fires immediately on the centered strip
+    expect(mockMutate).toHaveBeenCalled();
+    expect(mockMutate).toHaveBeenCalledWith({ comicId: 1, date: '2026-03-15' });
+  });
+
+  it('skips last-read update when current strip has no imageUrl', () => {
+    const dataNoImage = {
+      comic: {
+        ...stripWindowData.comic,
+        stripWindow: [
+          { date: '2026-03-15', available: true, imageUrl: null, width: null, height: null },
+        ],
+      },
+    };
+    mockGqlDefaults({ windowData: dataNoImage });
+
+    renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-15', mode: 'snap' }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  it('loadOlder is a no-op when hasOlder is false', () => {
+    const dataAtOldest = {
+      comic: {
+        name: 'Garfield',
+        oldest: '2026-03-14',
+        newest: '2026-03-20',
+        avatarUrl: null,
+        stripWindow: [
+          { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300 },
+          { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
+        ],
+      },
+    };
+    mockGqlDefaults({ windowData: dataAtOldest });
+
+    const { result } = renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-14', mode: 'scroll' }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.hasOlder).toBe(false);
+    act(() => {
+      result.current.loadOlder();
+    });
+    // No crash and strips unchanged
+    expect(result.current.strips).toHaveLength(2);
+  });
+
+  it('loadNewer is a no-op when hasNewer is false', () => {
+    const dataAtNewest = {
+      comic: {
+        name: 'Garfield',
+        oldest: '2026-03-10',
+        newest: '2026-03-15',
+        avatarUrl: null,
+        stripWindow: [
+          { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300 },
+          { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
+        ],
+      },
+    };
+    mockGqlDefaults({ windowData: dataAtNewest });
+
+    const { result } = renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-15', mode: 'scroll' }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.hasNewer).toBe(false);
+    act(() => {
+      result.current.loadNewer();
+    });
+    expect(result.current.strips).toHaveLength(2);
+  });
+
+  it('merges overlapping strip windows without duplicating dates', () => {
+    const initialData = {
+      comic: {
+        ...stripWindowData.comic,
+        stripWindow: [
+          { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300 },
+          { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
+        ],
+      },
+    };
+    mockGqlDefaults({ windowData: initialData });
+
+    const { result, rerender } = renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-15', mode: 'scroll' }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.strips).toHaveLength(2);
+
+    // Subsequent fetch returns overlapping + new dates
+    const overlapData = {
+      comic: {
+        ...stripWindowData.comic,
+        stripWindow: [
+          { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
+          { date: '2026-03-16', available: true, imageUrl: 'https://example.com/16.png', width: 900, height: 300 },
+          { date: '2026-03-17', available: true, imageUrl: 'https://example.com/17.png', width: 900, height: 300 },
+        ],
+      },
+    };
+    mockGqlDefaults({ windowData: overlapData });
+    rerender();
+
+    expect(result.current.strips).toHaveLength(4);
+    expect(result.current.strips.map((s) => s.date)).toEqual([
+      '2026-03-14',
+      '2026-03-15',
+      '2026-03-16',
+      '2026-03-17',
+    ]);
+  });
+
+  it('skips merging when new window contains only already-loaded dates', () => {
+    const initialData = {
+      comic: {
+        ...stripWindowData.comic,
+        stripWindow: [
+          { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300 },
+          { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
+        ],
+      },
+    };
+    mockGqlDefaults({ windowData: initialData });
+
+    const { result, rerender } = renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-15', mode: 'scroll' }),
+      { wrapper: createWrapper() },
+    );
+
+    const stripsBefore = result.current.strips;
+
+    // Re-render with the same window — toAdd will be empty
+    mockGqlDefaults({ windowData: initialData });
+    rerender();
+
+    // Reference equality: setStrips short-circuited with `return prev`
+    expect(result.current.strips).toBe(stripsBefore);
+  });
+
+  it('returns empty defaults when window data has empty stripWindow', () => {
+    const emptyData = {
+      comic: {
+        name: 'Garfield',
+        oldest: null,
+        newest: null,
+        avatarUrl: null,
+        stripWindow: [],
+      },
+    };
+    mockGqlDefaults({ windowData: emptyData });
+
+    const { result } = renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-15', mode: 'scroll' }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.strips).toHaveLength(0);
+    expect(result.current.comicName).toBe('Garfield');
+  });
+
+  it('navigates to date returned from random strip query', () => {
+    mockGqlDefaults({
+      windowData: stripWindowData,
+      randomData: { randomStrip: { date: '2026-03-12' } },
+    });
+
+    const { result } = renderHook(
+      () => useReader({ comicId: 1, initialDate: '2026-03-15', mode: 'scroll' }),
+      { wrapper: createWrapper() },
+    );
+
+    act(() => {
+      result.current.goToRandom();
+    });
+
+    // Strips get cleared because goToDate is called with the random date
+    expect(result.current.strips).toHaveLength(0);
+  });
+
   it('goToFirst loads date when oldest strip is not in loaded strips', () => {
     // Window data where oldest date is NOT in the stripWindow
     const partialData = {
