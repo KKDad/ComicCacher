@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  * - comicMetadata: Caches ComicItem configuration data
  */
 @Slf4j
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableCaching
 @ConditionalOnProperty(name = "comics.cache.caffeine.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor

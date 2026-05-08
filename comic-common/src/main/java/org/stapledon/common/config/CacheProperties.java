@@ -1,7 +1,6 @@
 package org.stapledon.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import org.stapledon.common.dto.HashAlgorithm;
 
 import lombok.Getter;
@@ -13,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 @ToString
 @Getter
 @Setter
-@Component
 @ConfigurationProperties(prefix = "comics.cache")
 public class CacheProperties {
     private String location;

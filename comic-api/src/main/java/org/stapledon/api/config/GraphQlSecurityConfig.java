@@ -9,7 +9,7 @@ import graphql.analysis.MaxQueryDepthInstrumentation;
  * GraphQL security configuration.
  * Limits query depth to prevent deeply nested queries from overloading the server.
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class GraphQlSecurityConfig {
 
     private static final int MAX_QUERY_DEPTH = 10;

@@ -1,7 +1,6 @@
 package org.stapledon.metrics.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +8,6 @@ import lombok.Setter;
 /**
  * Configuration properties for metrics collection and persistence.
  */
-@Configuration
 @ConfigurationProperties(prefix = "comics.metrics")
 @Getter
 @Setter

@@ -10,7 +10,7 @@ import graphql.scalars.ExtendedScalars;
  * Configuration for custom GraphQL scalars.
  * Registers Date, DateTime, and JSON scalars for use in the GraphQL schema.
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class GraphQlScalarConfig {
 
     @Bean

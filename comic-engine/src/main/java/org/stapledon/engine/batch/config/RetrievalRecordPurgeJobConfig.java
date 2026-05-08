@@ -31,7 +31,7 @@ import org.stapledon.engine.management.ManagementFacade;
  * Spring Batch configuration for retrieval record purge job. Purges old retrieval records and batch log files to prevent unbounded growth.
  */
 @Slf4j
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "true", matchIfMissing = true)
 public class RetrievalRecordPurgeJobConfig {

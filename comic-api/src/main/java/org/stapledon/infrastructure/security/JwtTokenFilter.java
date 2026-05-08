@@ -8,6 +8,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.stapledon.api.dto.user.User;
+import org.stapledon.core.user.service.UserService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtUserDetailsService userDetailsService;
+    private final UserService userService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -41,6 +45,14 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     log.debug("Loaded user details for: {}", username);
+
+                    Optional<User> userOpt = userService.getUser(username);
+                    if (userOpt.isPresent()
+                            && jwtTokenUtil.isTokenInvalidatedByLogout(jwt, userOpt.get().getTokensInvalidatedBefore())) {
+                        log.warn("JWT rejected — issued before logout cutoff for user: {}", username);
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
 
                     if (jwtTokenUtil.validateToken(jwt, userDetails)) {
                         log.debug("JWT token validated for user: {}", username);

@@ -7,12 +7,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
-import org.stapledon.api.model.ApiResponse;
 import org.stapledon.common.model.ComicCachingException;
 import org.stapledon.common.model.ComicImageNotFoundException;
 import org.stapledon.common.model.ComicNotFoundException;
@@ -31,12 +31,13 @@ class GlobalExceptionHandlerTest {
 
     @ParameterizedTest
     @MethodSource("exceptionStatusProvider")
-    void shouldReturnCorrectStatusForException(Exception exception, HttpStatus expectedStatus, String expectedMessageSubstring) {
-        ResponseEntity<ApiResponse<Void>> response = dispatch(exception);
+    void shouldReturnCorrectStatusForException(Exception exception, HttpStatus expectedStatus, String expectedDetailSubstring) {
+        ResponseEntity<ProblemDetail> response = dispatch(exception);
 
         assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getMessage()).contains(expectedMessageSubstring);
+        assertThat(response.getBody().getStatus()).isEqualTo(expectedStatus.value());
+        assertThat(response.getBody().getDetail()).contains(expectedDetailSubstring);
     }
 
     static Stream<Arguments> exceptionStatusProvider() {
@@ -56,14 +57,15 @@ class GlobalExceptionHandlerTest {
 
     @ParameterizedTest
     @MethodSource("responseStatusProvider")
-    void shouldMapResponseStatusExceptionCorrectly(HttpStatus inputStatus, String expectedMessageSubstring) {
+    void shouldMapResponseStatusExceptionCorrectly(HttpStatus inputStatus, String expectedDetailSubstring) {
         ResponseStatusException ex = new ResponseStatusException(inputStatus, "detail");
 
-        ResponseEntity<ApiResponse<Void>> response = handler.handleResponseStatusException(ex, request);
+        ResponseEntity<ProblemDetail> response = handler.handleResponseStatusException(ex, request);
 
         assertThat(response.getStatusCode()).isEqualTo(inputStatus);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getMessage()).contains(expectedMessageSubstring);
+        assertThat(response.getBody().getStatus()).isEqualTo(inputStatus.value());
+        assertThat(response.getBody().getDetail()).contains(expectedDetailSubstring);
     }
 
     static Stream<Arguments> responseStatusProvider() {
@@ -77,34 +79,32 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void shouldTruncateLongMessages() {
+    void shouldUseGenericMessageForUnhandledException() {
         String longMessage = "A".repeat(200);
         RuntimeException ex = new RuntimeException(longMessage);
 
-        ResponseEntity<ApiResponse<Void>> response = handler.handleAllExceptions(ex, request);
+        ResponseEntity<ProblemDetail> response = handler.handleAllExceptions(ex, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        // The handler sanitizes internally; the response uses a generic message
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getMessage()).isEqualTo("An unexpected error occurred");
+        assertThat(response.getBody().getDetail()).isEqualTo("An unexpected error occurred");
     }
 
     @Test
-    void shouldSanitizeSpecialCharacters() {
+    void shouldNotLeakRawExceptionContent() {
         RuntimeException ex = new RuntimeException("msg with <script>alert('xss')</script>\nnewline");
 
-        ResponseEntity<ApiResponse<Void>> response = handler.handleAllExceptions(ex, request);
+        ResponseEntity<ProblemDetail> response = handler.handleAllExceptions(ex, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getMessage()).doesNotContain("<script>");
+        assertThat(response.getBody().getDetail()).doesNotContain("<script>");
     }
 
     /**
      * Dispatches the exception to the appropriate handler method.
      */
-    @SuppressWarnings("unchecked")
-    private ResponseEntity<ApiResponse<Void>> dispatch(Exception ex) {
+    private ResponseEntity<ProblemDetail> dispatch(Exception ex) {
         if (ex instanceof ComicNotFoundException e) {
             return handler.handleComicNotFoundException(e, request);
         } else if (ex instanceof ComicImageNotFoundException e) {

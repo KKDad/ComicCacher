@@ -70,6 +70,29 @@ public class AuthResolver {
     }
 
     /**
+     * Invalidate all tokens previously issued to the authenticated user.
+     * Sets the user's tokensInvalidatedBefore timestamp so that any token
+     * (access or refresh) issued before this call is rejected by the JWT filter.
+     *
+     * @return true if the user was logged out, false if no authenticated session
+     */
+    @MutationMapping
+    public boolean logout() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal() == null
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            log.debug("GraphQL: logout called with no authenticated session");
+            return false;
+        }
+
+        String username = authentication.getName();
+        log.info("GraphQL: Logout request for user: {}", username);
+        authService.logout(username);
+        return true;
+    }
+
+    /**
      * Validate the current JWT token from the security context.
      *
      * @return true if the token is valid, false otherwise

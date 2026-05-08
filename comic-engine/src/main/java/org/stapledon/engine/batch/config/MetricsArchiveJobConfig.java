@@ -27,7 +27,7 @@ import org.stapledon.metrics.service.MetricsArchiveService;
  * Spring Batch configuration for metrics archive job. Archives yesterday's metrics to JSON for historical analysis.
  */
 @Slf4j
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "true", matchIfMissing = true)
 public class MetricsArchiveJobConfig {

@@ -29,7 +29,7 @@ import org.stapledon.engine.management.ManagementFacade;
  * for a one-time run, then disable again.</p>
  */
 @Slf4j
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.avatar-backfill.enabled", havingValue = "true", matchIfMissing = false)
 public class AvatarBackfillJobConfig {

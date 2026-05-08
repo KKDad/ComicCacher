@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +24,6 @@ import java.util.Map;
 @ToString
 @Getter
 @Setter
-@Component
 @ConfigurationProperties(prefix = "downloader")
 public class DownloaderProperties {
 
