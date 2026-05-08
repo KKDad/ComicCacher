@@ -1,0 +1,11 @@
+import { GET } from './route';
+
+describe('GET /api/health', () => {
+  it('returns 200 with status ok', async () => {
+    const response = GET();
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json).toEqual({ status: 'ok' });
+  });
+});
