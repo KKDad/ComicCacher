@@ -26,6 +26,9 @@ echo "${BUILD_TAG}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$' || {
 }
 
 # 1. Build the Docker image locally with the tag
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "${SCRIPT_DIR}"
+
 FULL_IMAGE="${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_TAG}"
 echo "--- Building ${FULL_IMAGE} ---"
 docker build -f Dockerfile . --tag "${FULL_IMAGE}" --platform linux/amd64
