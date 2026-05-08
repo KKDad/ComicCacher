@@ -1,6 +1,7 @@
 package org.stapledon.api.dto.user;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,9 +32,9 @@ public class User {
     private String displayName;
 
     @Builder.Default
-    private LocalDateTime created = LocalDateTime.now();
+    private OffsetDateTime created = OffsetDateTime.now(ZoneOffset.UTC);
 
-    private LocalDateTime lastLogin;
+    private OffsetDateTime lastLogin;
 
     @Builder.Default
     private List<String> roles = new ArrayList<>();

@@ -1,6 +1,6 @@
 package org.stapledon.api.dto.health;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,7 +28,7 @@ public class HealthStatus {
     /**
      * Current server time when check was performed
      */
-    private LocalDateTime timestamp;
+    private OffsetDateTime timestamp;
 
     /**
      * Application uptime in milliseconds

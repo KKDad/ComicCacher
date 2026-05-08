@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +26,7 @@ public class BatchExecutionSummary {
     @ToString.Include
     String jobName;
     @ToString.Include
-    LocalDateTime executionTime;
+    OffsetDateTime executionTime;
     @ToString.Include
     String status;
     @ToString.Include
@@ -34,9 +34,9 @@ public class BatchExecutionSummary {
     @ToString.Include
     String exitMessage;
     @ToString.Include
-    LocalDateTime startTime;
+    OffsetDateTime startTime;
     @ToString.Include
-    LocalDateTime endTime;
+    OffsetDateTime endTime;
     @ToString.Include
     String errorMessage;
     String logFileName;

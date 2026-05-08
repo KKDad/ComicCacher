@@ -30,6 +30,7 @@ import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.SchedulerStateService;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,7 +97,7 @@ class BatchJobResolverTest {
             when(schedulerStateService.isPaused("ComicBackfillJob")).thenReturn(true);
             when(schedulerStateService.getState("ComicDownloadJob")).thenReturn(Optional.empty());
             when(schedulerStateService.getState("ComicBackfillJob"))
-                    .thenReturn(Optional.of(new SchedulerStateService.SchedulerState(true, LocalDateTime.of(2026, 3, 17, 10, 0), "admin")));
+                    .thenReturn(Optional.of(new SchedulerStateService.SchedulerState(true, OffsetDateTime.of(2026, 3, 17, 10, 0, 0, 0, java.time.ZoneOffset.UTC), "admin")));
 
             var resolver = createResolver(List.of(comicDownloadScheduler, comicBackfillScheduler));
             List<BatchSchedulerInfoDto> result = resolver.batchSchedulers();
@@ -228,7 +229,7 @@ class BatchJobResolverTest {
             when(comicDownloadScheduler.getParameterDefinitions()).thenReturn(List.of());
             when(schedulerStateService.isPaused("ComicDownloadJob")).thenReturn(true);
             when(schedulerStateService.getState("ComicDownloadJob"))
-                    .thenReturn(Optional.of(new SchedulerStateService.SchedulerState(true, LocalDateTime.now(), "admin")));
+                    .thenReturn(Optional.of(new SchedulerStateService.SchedulerState(true, OffsetDateTime.now(), "admin")));
 
             var resolver = createResolver(List.of(comicDownloadScheduler));
             ToggleJobSchedulerPayload result = resolver.toggleJobScheduler("ComicDownloadJob", true);

@@ -9,7 +9,8 @@ import org.stapledon.common.config.CacheProperties;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -94,7 +95,7 @@ public class UserConfigWriter {
                     .passwordHash(hashedPassword)
                     .email(registrationDto.getEmail())
                     .displayName(registrationDto.getDisplayName())
-                    .created(LocalDateTime.now())
+                    .created(OffsetDateTime.now(ZoneOffset.UTC))
                     .roles(new ArrayList<>(List.of("USER")))
                     .build();
 
@@ -146,7 +147,7 @@ public class UserConfigWriter {
             // Verify password
             if (BCrypt.checkpw(password, user.getPasswordHash())) {
                 // Update last login time
-                user.setLastLogin(LocalDateTime.now());
+                user.setLastLogin(OffsetDateTime.now(ZoneOffset.UTC));
                 boolean saved = saveUser(user);
                 if (!saved) {
                     log.warn("Failed to update last login time for user: {}", username);

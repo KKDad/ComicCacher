@@ -1,7 +1,8 @@
 package org.stapledon.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
-    private LocalDateTime timestamp;
+    private OffsetDateTime timestamp;
     private int status;
     private String message;
     private T data;
@@ -33,7 +34,7 @@ public class ApiResponse<T> {
      */
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .status(200)
                 .message("Success")
                 .data(data)
@@ -50,7 +51,7 @@ public class ApiResponse<T> {
      */
     public static <T> ApiResponse<T> success(T data, String message) {
         return ApiResponse.<T>builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .status(200)
                 .message(message)
                 .data(data)
@@ -67,7 +68,7 @@ public class ApiResponse<T> {
      */
     public static <T> ApiResponse<T> error(int status, String message) {
         return ApiResponse.<T>builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .status(status)
                 .message(message)
                 .build();

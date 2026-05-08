@@ -1,7 +1,5 @@
 package org.stapledon.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,24 +16,15 @@ public class ComicConfig {
     @ToString.Include
     private Map<Integer, ComicItem> items;
 
-    private List<ComicItem> comics;
+    // Transient so Gson skips this field during serialization. The items map is the single source
+    // of truth; comics is a derived view exposed by the getter for callers.
+    private transient List<ComicItem> comics;
 
     public ComicConfig() {
         this.items = new ConcurrentHashMap<>();
         this.comics = new ArrayList<>();
     }
 
-    /**
-     * Gets all comics as a list.
-     * If the comics list is empty but items map has values, populates the comics
-     * list from the items map.
-     * This method is marked with @JsonIgnore to prevent serialization of the comics
-     * array,
-     * ensuring only the items map is persisted (single source of truth).
-     *
-     * @return List of comic items
-     */
-    @JsonIgnore
     public List<ComicItem> getComics() {
         if (comics == null) {
             comics = new ArrayList<>();

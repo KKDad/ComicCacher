@@ -20,6 +20,8 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,11 +43,16 @@ import org.stapledon.engine.batch.dto.BatchStepSummary;
  * history tracking.
  * Implements JobExecutionListener to automatically export after each job
  * completion.
- * Uses gsonWithLocalDate bean for proper LocalDateTime serialization.
+ * Uses gsonWithLocalDate bean for proper OffsetDateTime serialization.
  *
  * <p>Stores a capped list of executions per job (configurable via
  * {@code batch.tracking.max-history-per-job}). Handles migration from
  * the legacy single-entry format automatically on read.
+ *
+ * <p>Spring Batch returns {@link LocalDateTime} from {@code JobExecution} and
+ * {@code StepExecution}. Per CLAUDE.md, those values are converted to
+ * {@link OffsetDateTime} at this boundary using the configured
+ * {@code batch.timezone} so persisted data carries an explicit offset.
  */
 @Slf4j
 @Component
@@ -54,6 +61,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     private final CacheProperties cacheProperties;
     private final Gson gson;
     private final int maxHistoryPerJob;
+    private final ZoneId batchZone;
     private final ConcurrentHashMap<Long, Long> h2ToStableId = new ConcurrentHashMap<>();
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
@@ -67,10 +75,19 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     public JsonBatchExecutionTracker(
             CacheProperties cacheProperties,
             @Qualifier("gsonWithLocalDate") Gson gson,
-            @Value("${batch.tracking.max-history-per-job:30}") int maxHistoryPerJob) {
+            @Value("${batch.tracking.max-history-per-job:30}") int maxHistoryPerJob,
+            @Value("${batch.timezone:UTC}") String batchTimezone) {
         this.cacheProperties = cacheProperties;
         this.gson = gson;
         this.maxHistoryPerJob = maxHistoryPerJob;
+        this.batchZone = ZoneId.of(batchTimezone);
+    }
+
+    private OffsetDateTime toOffset(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            return null;
+        }
+        return localDateTime.atZone(batchZone).toOffsetDateTime();
     }
 
     @Override
@@ -93,7 +110,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
                     .executionId(stableId)
                     .jobName(jobName)
                     .status(BatchStatus.STARTED.name())
-                    .startTime(jobExecution.getStartTime())
+                    .startTime(toOffset(jobExecution.getStartTime()))
                     .build();
 
             Map<String, List<BatchExecutionSummary>> executions = readExecutions();
@@ -209,19 +226,19 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
                         (int) step.getSkipCount(),
                         (int) step.getCommitCount(),
                         (int) step.getRollbackCount(),
-                        step.getStartTime(),
-                        step.getEndTime()))
+                        toOffset(step.getStartTime()),
+                        toOffset(step.getEndTime())))
                 .toList();
 
         BatchExecutionSummary summary = BatchExecutionSummary.builder()
                 .executionId(effectiveId)
                 .jobName(jobName)
-                .executionTime(jobExecution.getEndTime())
+                .executionTime(toOffset(jobExecution.getEndTime()))
                 .status(jobExecution.getStatus().name())
                 .exitCode(jobExecution.getExitStatus().getExitCode())
                 .exitMessage(jobExecution.getExitStatus().getExitDescription())
-                .startTime(jobExecution.getStartTime())
-                .endTime(jobExecution.getEndTime())
+                .startTime(toOffset(jobExecution.getStartTime()))
+                .endTime(toOffset(jobExecution.getEndTime()))
                 .parameters(params)
                 .steps(steps)
                 .build();
@@ -427,7 +444,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     /**
      * Checks if a job has run since the specified time.
      */
-    public boolean hasJobRunSince(String jobName, LocalDateTime since) {
+    public boolean hasJobRunSince(String jobName, OffsetDateTime since) {
         return getLastExecution(jobName)
                 .filter(summary -> summary.getEndTime() != null)
                 .filter(summary -> summary.getEndTime().isAfter(since))

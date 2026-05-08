@@ -1,7 +1,8 @@
 FROM eclipse-temurin:21-jre-alpine
 LABEL MAINTAINER="adrian@gilbert.ca"
 
-RUN addgroup --system --gid 1001 comicapi && \
+RUN apk add --no-cache wget && \
+    addgroup --system --gid 1001 comicapi && \
     adduser --system --uid 1001 comicapi
 
 EXPOSE 8888

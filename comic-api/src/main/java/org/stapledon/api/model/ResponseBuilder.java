@@ -58,7 +58,7 @@ public final class ResponseBuilder {
      */
     public static <T> ResponseEntity<ApiResponse<T>> created(T data) {
         ApiResponse<T> response = ApiResponse.<T>builder()
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC))
                 .status(HttpStatus.CREATED.value())
                 .message("Resource created successfully")
                 .data(data)

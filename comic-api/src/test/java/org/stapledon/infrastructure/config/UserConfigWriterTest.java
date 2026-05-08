@@ -10,16 +10,16 @@ import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.util.GsonUtils;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -122,7 +122,7 @@ class UserConfigWriterTest {
                             .displayName(user.getDisplayName())
                             .roles(user.getRoles())
                             .created(user.getCreated())
-                            .lastLogin(LocalDateTime.now())
+                            .lastLogin(OffsetDateTime.now())
                             .passwordHash(user.getPasswordHash())
                             .userToken(user.getUserToken())
                             .build();
@@ -144,7 +144,7 @@ class UserConfigWriterTest {
                     .email(registration.getEmail())
                     .displayName(registration.getDisplayName())
                     .passwordHash(BCrypt.hashpw(registration.getPassword(), BCrypt.gensalt()))
-                    .created(LocalDateTime.now())
+                    .created(OffsetDateTime.now())
                     .roles(List.of("USER"))
                     .userToken(UUID.randomUUID())
                     .build();
@@ -200,10 +200,7 @@ class UserConfigWriterTest {
 
     @BeforeEach
     void setUp() {
-        // Setup Gson with adapters for LocalDateTime
-        gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .create();
+        gson = GsonUtils.createGson();
 
         // Create the test writer
         userConfigWriter = new TestUserConfigWriter(gson, tempDir);
@@ -437,7 +434,7 @@ class UserConfigWriterTest {
                 .email("test@example.com")
                 .displayName("Test User")
                 .roles(List.of("USER"))
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .build();
 
         User adminUser = User.builder()
@@ -446,7 +443,7 @@ class UserConfigWriterTest {
                 .email("admin@example.com")
                 .displayName("Admin User")
                 .roles(List.of("USER", "ADMIN"))
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .build();
 
         validConfig.getUsers().put("testuser", testUser);
@@ -666,21 +663,9 @@ class UserConfigWriterTest {
                 .passwordHash(BCrypt.hashpw("testpass", BCrypt.gensalt()))
                 .email(username + "@example.com")
                 .displayName("Test " + username)
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .roles(List.of("USER"))
                 .build();
     }
 
-    // Simple adapter for LocalDateTime serialization
-    static class LocalDateTimeAdapter implements com.google.gson.JsonSerializer<LocalDateTime>, com.google.gson.JsonDeserializer<LocalDateTime> {
-        @Override
-        public com.google.gson.JsonElement serialize(LocalDateTime src, java.lang.reflect.Type typeOfSrc, com.google.gson.JsonSerializationContext context) {
-            return new com.google.gson.JsonPrimitive(src.toString());
-        }
-
-        @Override
-        public LocalDateTime deserialize(com.google.gson.JsonElement json, java.lang.reflect.Type typeOfT, com.google.gson.JsonDeserializationContext context) throws com.google.gson.JsonParseException {
-            return LocalDateTime.parse(json.getAsString());
-        }
-    }
 }

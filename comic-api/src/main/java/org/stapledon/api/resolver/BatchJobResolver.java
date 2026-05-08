@@ -305,8 +305,8 @@ public class BatchJobResolver {
                             step.skipCount(),
                             step.commitCount(),
                             step.rollbackCount(),
-                            toOffset(step.startTime()),
-                            toOffset(step.endTime())))
+                            step.startTime(),
+                            step.endTime()))
                     .toList();
         }
 
@@ -314,8 +314,8 @@ public class BatchJobResolver {
                 summary.getExecutionId() != null ? summary.getExecutionId() : 0L,
                 summary.getJobName(),
                 summary.getStatus(),
-                toOffset(summary.getStartTime()),
-                toOffset(summary.getEndTime()),
+                summary.getStartTime(),
+                summary.getEndTime(),
                 durationMs,
                 summary.getExitCode(),
                 summary.getExitMessage(),
@@ -377,7 +377,6 @@ public class BatchJobResolver {
         OffsetDateTime nextRunTime = computeNextRunTime(scheduler);
         OffsetDateTime lastToggled = stateOpt
                 .map(SchedulerStateService.SchedulerState::lastToggled)
-                .map(ldt -> ldt.atZone(ZoneId.of(batchTimezone)).toOffsetDateTime())
                 .orElse(null);
 
         List<BatchJobParameterDto> availableParameters = scheduler.getParameterDefinitions().stream()
