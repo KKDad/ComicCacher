@@ -12,7 +12,7 @@ import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.UUID;
 import tools.jackson.databind.ObjectMapper;
@@ -45,7 +45,7 @@ class PureAuthIntegrationTest {
                 .passwordHash(passwordEncoder.encode("password123"))
                 .email("jwt@example.com")
                 .displayName("JWT Test User")
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .roles(Collections.singletonList("USER"))
                 .userToken(UUID.randomUUID())
                 .build();

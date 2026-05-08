@@ -1,7 +1,7 @@
 # ComicAPI Coding Standards
 
 ## 1. Documentation & Storage
-- **Source of Truth:** All comic metadata resides in JSON files on the NFS filesystem. Treat the filesystem as a "Read-Through Cache." Refer to `STORAGE_DETAILS.md` for schema.
+- **Source of Truth:** All comic metadata resides in JSON files on the NFS filesystem. Treat the filesystem as a "Read-Through Cache." See [@~/docs/storage/overview.md](../docs/storage/overview.md) and [@~/docs/storage/comic-data.md](../docs/storage/comic-data.md) for schema.
 - **No Database:** Do not implement JPA, Hibernate, or any relational database logic.
 - **NFS I/O Safety:** Use `java.nio.file.Path` over `java.io.File`.
 - **Atomic Writes:** When updating JSON metadata, use a "write-to-temp-then-move" pattern to prevent corruption on NFS during network hiccups.
@@ -54,11 +54,12 @@
 - **Binary Data:** GQL handles metadata only. Binary streams stay on REST using `FileSystemResource`.
 - **Authorization:** Three roles — `USER` (default), `OPERATOR` (batch/metrics read-only), `ADMIN` (full access). Schema directives: `@public`, `@authenticated`, `@hasRole(role: "ROLE")`.
 
-## 8. JSON Serialization (Gson)
-- **Gson only.** Do not use Jackson annotations (`@JsonProperty`, `@JsonFormat`).
+## 8. JSON Serialization
+- **Gson is the standard for persisted/domain JSON** — anything written to NFS or read back through `GsonUtils`. Do not use Jackson annotations (`@JsonProperty`, `@JsonFormat`, `@JsonIgnore`) on these DTOs.
+- **Jackson is allowed at Spring framework boundaries only:** actuator endpoints (health/info DTOs) and the generic REST response wrapper (`ApiResponse`). Spring serializes these via its built-in `ObjectMapper`; using Gson there fights the framework.
 - Use `GsonBuilder().registerTypeAdapterFactory(new RecordAdapterFactory())` for Records.
 - Use `@SerializedName` if JSON key differs from Java field name.
-- Use `@Qualifier("gsonWithLocalDate")` bean for date-time serialization.
+- Use `@Qualifier("gsonWithLocalDate")` bean for date-time serialization. Prefer `OffsetDateTimeAdapter` for new code (`LocalDateTimeAdapter` remains for read-back compatibility with legacy JSON files).
 
 ## 9. Lombok Usage
 - `@ToString(onlyExplicitlyIncluded = true)` with `@ToString.Include` on identifier/logging fields.

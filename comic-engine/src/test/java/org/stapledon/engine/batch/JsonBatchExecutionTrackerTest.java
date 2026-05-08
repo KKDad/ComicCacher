@@ -17,20 +17,15 @@ import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.step.StepExecution;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.util.GsonUtils;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,12 +44,9 @@ class JsonBatchExecutionTrackerTest {
         cacheProperties = mock(CacheProperties.class);
         when(cacheProperties.getLocation()).thenReturn(tempDir.toString());
 
-        gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .create();
+        gson = GsonUtils.createGson();
 
-        tracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5);
+        tracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto");
     }
 
     @Test
@@ -212,7 +204,7 @@ class JsonBatchExecutionTrackerTest {
 
     @Test
     void hasJobRunSinceReturnsTrueWhenJobRanAfterThreshold() {
-        LocalDateTime threshold = LocalDateTime.now().minusHours(2);
+        OffsetDateTime threshold = OffsetDateTime.now().minusHours(2);
         JobExecution execution = createJobExecutionWithTimes("TestJob", 1L,
                 LocalDateTime.now().minusHours(1), LocalDateTime.now().minusMinutes(30));
 
@@ -366,7 +358,7 @@ class JsonBatchExecutionTrackerTest {
         assertThat(tracker.getLastExecution("TestJob").orElseThrow().getExecutionId()).isEqualTo(1L);
 
         // Simulate restart: new tracker instance, same JSON file
-        var tracker2 = new JsonBatchExecutionTracker(cacheProperties, gson, 5);
+        var tracker2 = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto");
         // H2 would restart from 1, but stable ID should continue from 2
         tracker2.afterJob(createJobExecution("TestJob", 1L, BatchStatus.COMPLETED));
 
@@ -443,28 +435,4 @@ class JsonBatchExecutionTrackerTest {
         return execution;
     }
 
-    /**
-     * LocalDateTime adapter matching the production GsonProvider configuration.
-     */
-    static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
-        private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
-        @Override
-        public void write(JsonWriter jsonWriter, LocalDateTime localDateTime) throws IOException {
-            if (localDateTime == null) {
-                jsonWriter.nullValue();
-            } else {
-                jsonWriter.value(FORMATTER.format(localDateTime));
-            }
-        }
-
-        @Override
-        public LocalDateTime read(JsonReader jsonReader) throws IOException {
-            if (jsonReader.peek() == JsonToken.NULL) {
-                jsonReader.nextNull();
-                return null;
-            }
-            return LocalDateTime.parse(jsonReader.nextString(), FORMATTER);
-        }
-    }
 }

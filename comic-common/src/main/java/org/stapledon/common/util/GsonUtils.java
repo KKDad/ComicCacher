@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public final class GsonUtils {
     private GsonUtils() {
@@ -79,6 +81,15 @@ public final class GsonUtils {
         }
     }
 
+    /**
+     * Read/write adapter for {@link LocalDateTime}.
+     *
+     * <p>Retained for backward compatibility with persisted JSON written before the migration
+     * to {@link OffsetDateTime}. New code must use {@link OffsetDateTime} or {@link java.time.Instant}
+     * (see CLAUDE.md "Time Handling Rules"). Once all on-disk JSON has been rewritten with offset
+     * timestamps, this adapter and its registration can be removed.
+     */
+    @Deprecated(since = "tech-debt-cleanup", forRemoval = true)
     public static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -121,7 +132,14 @@ public final class GsonUtils {
                 return null;
             }
             String dateTimeStr = jsonReader.nextString();
-            return OffsetDateTime.parse(dateTimeStr, FORMATTER);
+            try {
+                return OffsetDateTime.parse(dateTimeStr, FORMATTER);
+            } catch (DateTimeParseException ex) {
+                // Legacy JSON written before the OffsetDateTime migration stored ISO_LOCAL_DATE_TIME
+                // (no offset). Promote those to UTC on read; new writes always include the offset.
+                return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        .atOffset(ZoneOffset.UTC);
+            }
         }
     }
 }

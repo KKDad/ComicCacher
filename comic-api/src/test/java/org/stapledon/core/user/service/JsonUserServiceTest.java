@@ -11,7 +11,7 @@ import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.infrastructure.config.UserConfigWriter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -127,7 +127,7 @@ class JsonUserServiceTest {
                 .passwordHash("hashedPassword")
                 .email(username + "@example.com")
                 .displayName("Test " + username)
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();

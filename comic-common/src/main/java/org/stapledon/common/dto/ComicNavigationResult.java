@@ -1,7 +1,5 @@
 package org.stapledon.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
@@ -44,26 +42,22 @@ public class ComicNavigationResult {
     /**
      * The date that was requested
      */
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate requestedDate;
 
     /**
      * Nearest available date going backward from the requested date (null if none)
      */
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate nearestPreviousDate;
 
     /**
      * Nearest available date going forward from the requested date (null if none)
      */
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate nearestNextDate;
 
     /**
      * The date of the current image being displayed (same as image.imageDate when
      * found)
      */
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate currentDate;
 
     /**

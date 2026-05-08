@@ -11,7 +11,7 @@ import org.stapledon.api.dto.auth.JwtTokenDto;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -172,7 +172,7 @@ class JwtTokenUtilTest {
                 .passwordHash("hashedPassword")
                 .email(username + "@example.com")
                 .displayName("Test " + username)
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();

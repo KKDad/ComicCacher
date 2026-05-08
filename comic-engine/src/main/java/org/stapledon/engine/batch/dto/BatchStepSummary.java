@@ -1,6 +1,6 @@
 package org.stapledon.engine.batch.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * Summary of a single batch step execution, persisted to JSON.
@@ -14,7 +14,7 @@ public record BatchStepSummary(
         int skipCount,
         int commitCount,
         int rollbackCount,
-        LocalDateTime startTime,
-        LocalDateTime endTime
+        OffsetDateTime startTime,
+        OffsetDateTime endTime
 ) {
 }

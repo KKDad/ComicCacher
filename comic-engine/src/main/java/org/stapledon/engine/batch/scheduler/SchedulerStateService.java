@@ -12,7 +12,8 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -56,7 +57,7 @@ public class SchedulerStateService {
      * Sets the paused state for a job and persists the change.
      */
     public void setPaused(String jobName, boolean paused, String username) {
-        var state = new SchedulerState(paused, LocalDateTime.now(), username);
+        var state = new SchedulerState(paused, OffsetDateTime.now(ZoneOffset.UTC), username);
         states.put(jobName, state);
         persistStates();
         log.info("Job {} {} by {}", jobName, paused ? "paused" : "resumed", username);
@@ -118,6 +119,6 @@ public class SchedulerStateService {
     /**
      * Represents the pause/resume state for a single job scheduler.
      */
-    public record SchedulerState(boolean paused, LocalDateTime lastToggled, String toggledBy) {
+    public record SchedulerState(boolean paused, OffsetDateTime lastToggled, String toggledBy) {
     }
 }

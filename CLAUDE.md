@@ -17,7 +17,6 @@ graph TD
 
     subgraph Frontend
         HUB["comic-hub<br/>Next.js 16 / React 19"]
-        WEB["comic-web<br/>Legacy Angular (being replaced)"]
     end
 
     API --> ENGINE
@@ -27,7 +26,6 @@ graph TD
     ENGINE --> COMMON
     METRICS --> COMMON
     HUB -->|GraphQL + REST| API
-    WEB -->|GraphQL + REST| API
 ```
 
 ## Build Commands
@@ -64,7 +62,7 @@ Each module has its own coding standards. **Module-level standards override this
 
 | Module | Standards | Key Details |
 |--------|-----------|-------------|
-| **comic-api** | [@~/comic-api/CLAUDE.md](comic-api/CLAUDE.md) | GraphQL-first, Gson (not Jackson), NFS filesystem as DB, JWT auth (USER/OPERATOR/ADMIN) |
+| **comic-api** | [@~/comic-api/CLAUDE.md](comic-api/CLAUDE.md) | GraphQL-first, Gson for persisted JSON (Jackson allowed at Spring boundaries), NFS filesystem as DB, JWT auth (USER/OPERATOR/ADMIN) |
 | **comic-hub** | [@~/comic-hub/CLAUDE.md](comic-hub/CLAUDE.md) | Z-index tokens, httpOnly cookie auth, `proxy.ts` (not `middleware.ts`) |
 | **comic-engine** | See [@~/docs/design/architecture.md](docs/design/architecture.md) | Downloaders, facades, Spring Batch jobs |
 | **comic-common** | See [@~/docs/design/architecture.md](docs/design/architecture.md) | Shared DTOs, service interfaces, utilities |
@@ -101,7 +99,6 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 | **API** | [@~/docs/api/overview.md](docs/api/overview.md) (auth, pagination, errors), [@~/docs/api/comics.md](docs/api/comics.md), [@~/docs/api/batch-jobs.md](docs/api/batch-jobs.md) |
 | **Design** | [@~/docs/design/architecture.md](docs/design/architecture.md), [@~/docs/design/batch-jobs.md](docs/design/batch-jobs.md), [@~/docs/design/downloader-strategies.md](docs/design/downloader-strategies.md) |
 | **Storage** | [@~/docs/storage/overview.md](docs/storage/overview.md) (NFS layout, atomic writes), [@~/docs/storage/comic-data.md](docs/storage/comic-data.md) |
-| **UI Refactor** | [@~/docs/2026-ui-refactor/](docs/2026-ui-refactor/) (visual style, component specs, screen layouts) |
 
 ## Debug Utilities
 

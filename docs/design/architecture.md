@@ -65,10 +65,11 @@ REST + GraphQL API layer. Depends on all three backend modules.
 
 | Area | Key Classes |
 |------|-------------|
-| Controllers | `ComicController`, `UpdateController`, `BatchJobController` |
-| Services | `UpdateService`, `RetrievalStatusServiceImpl`, `AuthService`, `UserService`, `PreferenceService` |
-| Repositories | `ComicRepository`, `UserRepository`, `PreferenceRepository` |
-| Security | JWT-based authentication with `AuthService` |
+| GraphQL Resolvers | `AuthResolver`, `BatchJobResolver`, `ComicResolver`, `HealthResolver`, `MetricsResolver`, `PreferenceResolver`, `RetrievalResolver`, `UserResolver` (plus dataloaders and type resolvers in `api/resolver/`) |
+| REST Controllers | `ComicController` (binary image streaming only) |
+| Services | `UpdateService` / `ComicUpdateService`, `JsonRetrievalStatusService`, `AuthService` / `JwtAuthService`, `UserService` / `JsonUserService`, `PreferenceService` / `JsonPreferenceService`, `HealthService`, `SystemHealthService` |
+| Repositories | `JsonComicRepository`, `JsonUserRepository`, `JsonPreferenceRepository` (under `infrastructure/repository/`) |
+| Security | JWT-based authentication via `JwtAuthService` |
 
 ### comic-hub
 

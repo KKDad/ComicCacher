@@ -23,7 +23,7 @@ import org.stapledon.core.user.service.UserService;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -72,7 +72,7 @@ class JwtAuthServiceTest {
                 .passwordHash("hashedPassword")
                 .email("newuser@example.com")
                 .displayName("New User") // Explicit display name that matches test
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();
@@ -250,7 +250,7 @@ class JwtAuthServiceTest {
                 .passwordHash("hashedPassword")
                 .email(username + "@example.com")
                 .displayName("Test " + username)
-                .created(LocalDateTime.now())
+                .created(OffsetDateTime.now())
                 .roles(List.of("USER"))
                 .userToken(UUID.randomUUID())
                 .build();

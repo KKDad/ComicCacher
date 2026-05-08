@@ -16,7 +16,8 @@ import org.stapledon.metrics.collector.StorageMetricsCollector;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class SystemHealthService implements HealthService {
         // Basic health status without detailed metrics
         return HealthStatus.builder()
                 .status(determineStatus())
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .uptime(getUptime())
                 .buildInfo(getBuildInfo())
                 .build();
@@ -56,7 +57,7 @@ public class SystemHealthService implements HealthService {
 
         return HealthStatus.builder()
                 .status(overallStatus)
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .uptime(getUptime())
                 .buildInfo(getBuildInfo())
                 .systemResources(getSystemResources())

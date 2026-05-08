@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +45,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
      */
     @Override
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
-        LocalDateTime startTime = LocalDateTime.now();
+        Instant startTime = Instant.now();
 
         // Validate request has a source
         if (request.getSource() == null || request.getSource().isEmpty()) {
@@ -197,7 +197,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
      */
     @Override
     public ComicDownloadResult downloadLatestStrip(ComicItem comic) {
-        LocalDateTime startTime = LocalDateTime.now();
+        Instant startTime = Instant.now();
         ComicDownloaderStrategy strategy = downloaderStrategies.get(comic.getSource());
 
         if (!(strategy instanceof IndexedComicDownloaderStrategy indexed)) {
@@ -236,7 +236,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
      */
     @Override
     public ComicDownloadResult downloadStrip(ComicItem comic, int stripNumber) {
-        LocalDateTime startTime = LocalDateTime.now();
+        Instant startTime = Instant.now();
         ComicDownloaderStrategy strategy = downloaderStrategies.get(comic.getSource());
 
         if (!(strategy instanceof IndexedComicDownloaderStrategy indexed)) {
@@ -319,8 +319,8 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         }
     }
 
-    private void recordSuccess(ComicDownloadRequest request, LocalDateTime startTime, long imageSize) {
-        long durationMs = Duration.between(startTime, LocalDateTime.now()).toMillis();
+    private void recordSuccess(ComicDownloadRequest request, Instant startTime, long imageSize) {
+        long durationMs = Duration.between(startTime, Instant.now()).toMillis();
 
         ComicRetrievalRecord record = ComicRetrievalRecord.success(
                 request.getComicName(),
@@ -339,10 +339,10 @@ public class ComicDownloaderFacade implements DownloaderFacade {
             ComicDownloadRequest request,
             ComicRetrievalStatus status,
             String errorMessage,
-            LocalDateTime startTime,
+            Instant startTime,
             Integer httpStatusCode) {
 
-        long durationMs = Duration.between(startTime, LocalDateTime.now()).toMillis();
+        long durationMs = Duration.between(startTime, Instant.now()).toMillis();
 
         ComicRetrievalRecord record = ComicRetrievalRecord.failure(
                 request.getComicName(),

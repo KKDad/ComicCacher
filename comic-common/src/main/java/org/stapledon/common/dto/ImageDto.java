@@ -1,7 +1,5 @@
 package org.stapledon.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
@@ -29,7 +27,6 @@ public class ImageDto {
     @ToString.Include
     Integer width;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
     @ToString.Include
     LocalDate imageDate;
 
