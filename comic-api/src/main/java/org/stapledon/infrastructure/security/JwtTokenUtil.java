@@ -11,6 +11,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -117,6 +118,41 @@ public class JwtTokenUtil {
      */
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    /**
+     * Extract issued-at date from token.
+     *
+     * @param token JWT token
+     * @return Issued-at date
+     */
+    public Date extractIssuedAt(String token) {
+        return extractClaim(token, Claims::getIssuedAt);
+    }
+
+    /**
+     * Returns true if the token was issued before the given cutoff (e.g., a user's
+     * tokensInvalidatedBefore timestamp). Returns false if cutoff is null (no logout
+     * has occurred) or if the token's iat is at or after the cutoff.
+     *
+     * @param token  JWT token
+     * @param cutoff Cutoff instant — tokens issued before this are invalid
+     * @return true if the token must be rejected due to logout invalidation
+     */
+    public boolean isTokenInvalidatedByLogout(String token, OffsetDateTime cutoff) {
+        if (cutoff == null) {
+            return false;
+        }
+        try {
+            Date iat = extractIssuedAt(token);
+            if (iat == null) {
+                return false;
+            }
+            return iat.toInstant().isBefore(cutoff.toInstant());
+        } catch (Exception e) {
+            log.error("Error checking logout invalidation: {}", e.getMessage());
+            return false;
+        }
     }
 
     /**

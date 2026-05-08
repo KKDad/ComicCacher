@@ -15,7 +15,7 @@ case "$SERVICE" in
     ;;
   ui)
     CONTAINER_NAME="comics-ui"
-    DESCRIPTION="Angular Web UI (nginx)"
+    DESCRIPTION="Next.js Web UI"
     ;;
   *)
     echo "Usage: $0 [api|ui] [lines]"

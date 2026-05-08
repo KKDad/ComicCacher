@@ -13,7 +13,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class GsonProvider {
 
     @Bean(name = "gsonWithLocalDate")

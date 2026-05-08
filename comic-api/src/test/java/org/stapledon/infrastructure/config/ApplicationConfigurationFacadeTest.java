@@ -120,11 +120,12 @@ class ApplicationConfigurationFacadeTest {
         configRoot = tempDir.toFile();
 
         // Create real cache properties
-        CacheProperties cacheProperties = new CacheProperties();
-        cacheProperties.setLocation(configRoot.getAbsolutePath());
-        cacheProperties.setConfig(COMIC_CONFIG_NAME);
-        cacheProperties.setUsersConfig(USER_CONFIG_NAME);
-        cacheProperties.setPreferencesConfig(PREFERENCE_CONFIG_NAME);
+        CacheProperties cacheProperties = CacheProperties.builder()
+                .location(configRoot.getAbsolutePath())
+                .config(COMIC_CONFIG_NAME)
+                .usersConfig(USER_CONFIG_NAME)
+                .preferencesConfig(PREFERENCE_CONFIG_NAME)
+                .build();
 
         // Use a simple Gson instance
         Gson gson = new com.google.gson.GsonBuilder().create();

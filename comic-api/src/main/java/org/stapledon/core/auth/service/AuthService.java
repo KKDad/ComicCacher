@@ -41,6 +41,15 @@ public interface AuthService {
     boolean validateToken(String token);
 
     /**
+     * Invalidate all tokens previously issued to a user.
+     * Sets the user's tokensInvalidatedBefore timestamp so that subsequent token
+     * validation (including refresh) rejects any token issued before the call.
+     *
+     * @param username Username whose tokens should be invalidated
+     */
+    void logout(String username);
+
+    /**
      * Initiate a password reset by sending a reset email.
      * Always succeeds silently to prevent email enumeration.
      */

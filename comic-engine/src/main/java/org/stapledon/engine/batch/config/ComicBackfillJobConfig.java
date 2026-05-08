@@ -37,7 +37,7 @@ import org.stapledon.engine.management.ManagementFacade;
  * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips for a configurable target year.
  */
 @Slf4j
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicBackfillJobConfig {

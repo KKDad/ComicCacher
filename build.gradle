@@ -53,6 +53,13 @@ subprojects {
         }
     }
 
+    // Emit method/constructor parameter names in bytecode so Spring Boot constructor
+    // binding (used by @ConfigurationProperties classes) can map property keys to
+    // constructor parameters. Required for our immutable Lombok properties classes.
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << '-parameters'
+    }
+
     // Default JaCoCo configuration for all subprojects
     jacoco {
         toolVersion = rootProject.ext.jacocoVersion

@@ -44,7 +44,7 @@ import org.stapledon.engine.storage.ImageMetadataRepository;
  * Spring Batch configuration for image metadata backfill job. Backfills metadata for existing images that don't have metadata files.
  */
 @Slf4j
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "true", matchIfMissing = true)
 public class ImageMetadataBackfillJobConfig {

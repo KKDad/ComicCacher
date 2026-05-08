@@ -37,7 +37,7 @@ import org.stapledon.engine.management.ManagementFacade;
  */
 @Slf4j
 @ToString
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "true", matchIfMissing = true)
 public class ComicRetrievalJobConfig {

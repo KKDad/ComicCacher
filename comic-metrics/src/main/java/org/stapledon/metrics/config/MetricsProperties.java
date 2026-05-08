@@ -1,42 +1,34 @@
 package org.stapledon.metrics.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Configuration properties for metrics collection and persistence.
  */
-@Configuration
-@ConfigurationProperties(prefix = "comics.metrics")
 @Getter
-@Setter
+@ToString
+@Builder
+@AllArgsConstructor
+@ConfigurationProperties(prefix = "comics.metrics")
 public class MetricsProperties {
 
-    /**
-     * Enable/disable metrics collection and persistence
-     */
-    private boolean enabled = true;
+    /** Enable/disable metrics collection and persistence. */
+    private final boolean enabled;
 
-    /**
-     * Interval in seconds for persisting metrics (default: 5 minutes)
-     */
-    private int persistIntervalSeconds = 300;
+    /** Interval in seconds for persisting metrics. */
+    private final int persistIntervalSeconds;
 
-    /**
-     * Number of days to retain historical metrics archives (default: 90 days)
-     */
-    private int historyRetentionDays = 90;
+    /** Number of days to retain historical metrics archives. */
+    private final int historyRetentionDays;
 
-    /**
-     * Directory name for storing historical metrics archives (relative to cache location)
-     */
-    private String archiveDirectory = "metrics-history";
+    /** Directory name for storing historical metrics archives (relative to cache location). */
+    private final String archiveDirectory;
 
-    /**
-     * Cron expression for daily archiving (default: 3:00 AM)
-     */
-    private String archiveCron = "0 0 3 * * ?";
+    /** Cron expression for daily archiving. */
+    private final String archiveCron;
 }

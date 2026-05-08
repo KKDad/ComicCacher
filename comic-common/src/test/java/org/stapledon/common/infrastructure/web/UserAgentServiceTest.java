@@ -17,19 +17,30 @@ class UserAgentServiceTest {
     private static final String CUSTOM_DEFAULT = "CustomAgent/1.0";
     private static final String GOCOMICS_OVERRIDE = "GoComicsAgent/2.0";
 
+    private static DownloaderProperties propsWithDefault(String defaultValue) {
+        return DownloaderProperties.builder()
+                .userAgent(DownloaderProperties.UserAgent.builder().defaultValue(defaultValue).build())
+                .build();
+    }
+
+    private static DownloaderProperties propsWithDefaultAndSources(String defaultValue,
+                                                                    Map<String, DownloaderProperties.Source> sources) {
+        return DownloaderProperties.builder()
+                .userAgent(DownloaderProperties.UserAgent.builder().defaultValue(defaultValue).build())
+                .sources(sources)
+                .build();
+    }
+
     @Test
     void getDefault_whenNoConfiguration_returnsBuiltinFallback() {
-        UserAgentService service = new UserAgentService(new DownloaderProperties());
+        UserAgentService service = new UserAgentService(DownloaderProperties.builder().build());
 
         assertThat(service.getDefault()).isEqualTo(UserAgentService.FALLBACK_USER_AGENT);
     }
 
     @Test
     void getDefault_whenConfigured_returnsConfiguredValue() {
-        DownloaderProperties props = new DownloaderProperties();
-        props.getUserAgent().setDefaultValue(CUSTOM_DEFAULT);
-
-        UserAgentService service = new UserAgentService(props);
+        UserAgentService service = new UserAgentService(propsWithDefault(CUSTOM_DEFAULT));
 
         assertThat(service.getDefault()).isEqualTo(CUSTOM_DEFAULT);
     }
@@ -38,34 +49,25 @@ class UserAgentServiceTest {
     @NullAndEmptySource
     @ValueSource(strings = {"   "})
     void getUserAgent_whenSourceIsBlank_returnsDefault(String source) {
-        DownloaderProperties props = new DownloaderProperties();
-        props.getUserAgent().setDefaultValue(CUSTOM_DEFAULT);
-
-        UserAgentService service = new UserAgentService(props);
+        UserAgentService service = new UserAgentService(propsWithDefault(CUSTOM_DEFAULT));
 
         assertThat(service.getUserAgent(source)).isEqualTo(CUSTOM_DEFAULT);
     }
 
     @Test
     void getUserAgent_whenSourceHasNoOverride_returnsDefault() {
-        DownloaderProperties props = new DownloaderProperties();
-        props.getUserAgent().setDefaultValue(CUSTOM_DEFAULT);
-
-        UserAgentService service = new UserAgentService(props);
+        UserAgentService service = new UserAgentService(propsWithDefault(CUSTOM_DEFAULT));
 
         assertThat(service.getUserAgent("comicskingdom")).isEqualTo(CUSTOM_DEFAULT);
     }
 
     @Test
     void getUserAgent_whenSourceHasOverride_returnsOverride() {
-        DownloaderProperties props = new DownloaderProperties();
-        props.getUserAgent().setDefaultValue(CUSTOM_DEFAULT);
-
-        DownloaderProperties.Source gocomics = new DownloaderProperties.Source();
-        gocomics.setUserAgent(GOCOMICS_OVERRIDE);
-        props.setSources(Map.of("gocomics", gocomics));
-
-        UserAgentService service = new UserAgentService(props);
+        DownloaderProperties.Source gocomics = DownloaderProperties.Source.builder()
+                .userAgent(GOCOMICS_OVERRIDE)
+                .build();
+        UserAgentService service = new UserAgentService(
+                propsWithDefaultAndSources(CUSTOM_DEFAULT, Map.of("gocomics", gocomics)));
 
         assertThat(service.getUserAgent("gocomics")).isEqualTo(GOCOMICS_OVERRIDE);
         assertThat(service.getUserAgent("comicskingdom")).isEqualTo(CUSTOM_DEFAULT);
@@ -73,14 +75,11 @@ class UserAgentServiceTest {
 
     @Test
     void getUserAgent_whenSourceOverrideIsBlank_fallsBackToDefault() {
-        DownloaderProperties props = new DownloaderProperties();
-        props.getUserAgent().setDefaultValue(CUSTOM_DEFAULT);
-
-        DownloaderProperties.Source gocomics = new DownloaderProperties.Source();
-        gocomics.setUserAgent("");
-        props.setSources(Map.of("gocomics", gocomics));
-
-        UserAgentService service = new UserAgentService(props);
+        DownloaderProperties.Source gocomics = DownloaderProperties.Source.builder()
+                .userAgent("")
+                .build();
+        UserAgentService service = new UserAgentService(
+                propsWithDefaultAndSources(CUSTOM_DEFAULT, Map.of("gocomics", gocomics)));
 
         assertThat(service.getUserAgent("gocomics")).isEqualTo(CUSTOM_DEFAULT);
     }

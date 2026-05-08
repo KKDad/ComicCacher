@@ -24,8 +24,9 @@ class BatchJobLogServiceTest {
 
     @BeforeEach
     void setUp() {
-        CacheProperties cacheProperties = new CacheProperties();
-        cacheProperties.setLocation(tempDir.toString());
+        CacheProperties cacheProperties = CacheProperties.builder()
+                .location(tempDir.toString())
+                .build();
         service = new BatchJobLogService(cacheProperties);
     }
 

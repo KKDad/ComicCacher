@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * (currently 3: gocomics, comicskingdom, freefall) plus headroom.
  */
 @Slf4j
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class SourceDownloadExecutorConfig {
 
     /**

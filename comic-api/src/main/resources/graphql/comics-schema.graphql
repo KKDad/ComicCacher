@@ -244,6 +244,13 @@ type Mutation {
     refreshToken(refreshToken: String!): AuthPayload! @public
 
     """
+    Invalidate all tokens previously issued to the authenticated user.
+    The frontend should call this before clearing client-side cookies.
+    Returns true on success.
+    """
+    logout: Boolean! @authenticated
+
+    """
     Request a password reset email.
     Returns true if the email was sent (always returns true to prevent email enumeration).
     """

@@ -36,6 +36,12 @@ public class User {
 
     private OffsetDateTime lastLogin;
 
+    /**
+     * Tokens issued before this instant are considered invalidated (e.g., after logout).
+     * Null means no logout has occurred — all signature-valid tokens are accepted.
+     */
+    private OffsetDateTime tokensInvalidatedBefore;
+
     @Builder.Default
     private List<String> roles = new ArrayList<>();
 

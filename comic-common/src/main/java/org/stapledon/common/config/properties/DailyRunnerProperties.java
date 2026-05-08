@@ -1,15 +1,17 @@
 package org.stapledon.common.config.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 
 @Getter
-@Setter
-@Component
+@ToString
+@Builder
+@AllArgsConstructor
 @ConfigurationProperties(prefix = "batch.comic-download")
 public class DailyRunnerProperties {
-    boolean enabled;
+    private final boolean enabled;
 }

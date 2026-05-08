@@ -43,10 +43,10 @@ class UserConfigWriterTest {
         }
 
         private static CacheProperties createCacheProperties(Path tempDir) {
-            CacheProperties props = new CacheProperties();
-            props.setLocation(tempDir.toString());
-            props.setUsersConfig("users.json");
-            return props;
+            return CacheProperties.builder()
+                    .location(tempDir.toString())
+                    .usersConfig("users.json")
+                    .build();
         }
 
         @Override

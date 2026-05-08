@@ -1,12 +1,14 @@
 package org.stapledon.engine.batch;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,49 +36,43 @@ import org.stapledon.common.dto.BackfillSourceConfig;
  * </pre>
  */
 @Slf4j
-@Data
-@Component
+@Getter
+@ToString
+@EqualsAndHashCode
+@Builder
+@AllArgsConstructor
 @ConfigurationProperties(prefix = "batch.comic-backfill")
 public class BackfillConfigurationService {
 
-    /**
-     * Whether backfill is enabled globally.
-     */
-    private boolean enabled = true;
+    /** Whether backfill is enabled globally. */
+    private final boolean enabled;
 
     /**
      * Maximum consecutive failures before stopping scan for a comic.
      * This helps detect comics that don't exist as far back as we're scanning.
      */
-    private int maxConsecutiveFailures = 3;
+    private final int maxConsecutiveFailures;
 
-    /**
-     * Global default for max comics per day per source (can be overridden per
-     * source).
-     */
-    private int defaultMaxPerDay = 50;
+    /** Global default for max comics per day per source (can be overridden per source). */
+    private final int defaultMaxPerDay;
 
-    /**
-     * Global default for max days back (can be overridden per source).
-     */
-    private int defaultMaxDaysBack = 365;
+    /** Global default for max days back (can be overridden per source). */
+    private final int defaultMaxDaysBack;
 
     /**
      * Source-specific configurations.
      * Key is the source identifier (e.g., "gocomics", "comicskingdom").
      */
-    private Map<String, BackfillSourceConfig> sources = new HashMap<>();
+    private final Map<String, BackfillSourceConfig> sources;
 
     /**
      * Gets the effective max-per-day limit for a source.
      * Returns the source-specific value if configured, otherwise falls back to the
      * global default.
-     *
-     * @param source the source identifier
-     * @return the max number of comics to backfill per day for this source
      */
     public int getMaxPerDayForSource(String source) {
-        return Optional.ofNullable(sources.get(source))
+        return Optional.ofNullable(sources)
+                .map(s -> s.get(source))
                 .map(BackfillSourceConfig::getMaxPerDay)
                 .filter(max -> max != null && max > 0)
                 .orElse(defaultMaxPerDay);
@@ -84,14 +80,10 @@ public class BackfillConfigurationService {
 
     /**
      * Gets the effective max-days-back limit for a source.
-     * Returns the source-specific value if configured, otherwise falls back to the
-     * global default.
-     *
-     * @param source the source identifier
-     * @return the max number of days back this source allows
      */
     public int getMaxDaysBackForSource(String source) {
-        return Optional.ofNullable(sources.get(source))
+        return Optional.ofNullable(sources)
+                .map(s -> s.get(source))
                 .map(BackfillSourceConfig::getMaxDaysBack)
                 .filter(max -> max != null && max > 0)
                 .orElse(defaultMaxDaysBack);
@@ -99,35 +91,27 @@ public class BackfillConfigurationService {
 
     /**
      * Gets the earliest date allowed for backfill for a source.
-     * Calculated as today minus the source's max-days-back limit.
-     *
-     * @param source the source identifier
-     * @return the earliest date we can backfill for this source
      */
     public LocalDate getEarliestAllowedDate(String source) {
-        int maxDaysBack = getMaxDaysBackForSource(source);
-        return LocalDate.now().minusDays(maxDaysBack);
+        return LocalDate.now().minusDays(getMaxDaysBackForSource(source));
     }
 
     /**
-     * Checks if a source is enabled for backfill.
-     * Returns true if the source has no explicit config (defaults to enabled).
-     *
-     * @param source the source identifier
-     * @return true if backfill is enabled for this source
+     * Checks if a source is enabled for backfill. True if no explicit config (defaults to enabled).
      */
     public boolean isSourceEnabled(String source) {
-        return Optional.ofNullable(sources.get(source))
+        return Optional.ofNullable(sources)
+                .map(s -> s.get(source))
                 .map(BackfillSourceConfig::isEnabled)
                 .orElse(true);
     }
 
     /**
-     * Checks if a source prefers color strips over grayscale.
-     * Returns true if the source has no explicit config (defaults to prefer color).
+     * Checks if a source prefers color strips over grayscale. True if no explicit config.
      */
     public boolean getPreferColorForSource(String source) {
-        return Optional.ofNullable(sources.get(source))
+        return Optional.ofNullable(sources)
+                .map(s -> s.get(source))
                 .map(BackfillSourceConfig::isPreferColor)
                 .orElse(true);
     }

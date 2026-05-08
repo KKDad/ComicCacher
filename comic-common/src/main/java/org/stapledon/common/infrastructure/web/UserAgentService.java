@@ -35,7 +35,8 @@ public class UserAgentService {
 
     public UserAgentService(DownloaderProperties properties) {
         this.properties = properties;
-        log.info("UserAgentService initialized: default UA configured, {} source overrides", properties.getSources().size());
+        int sourceCount = properties.getSources() == null ? 0 : properties.getSources().size();
+        log.info("UserAgentService initialized: default UA configured, {} source overrides", sourceCount);
     }
 
     /**
@@ -53,7 +54,8 @@ public class UserAgentService {
      * Returns the global default User-Agent.
      */
     public String getDefault() {
-        String configured = properties.getUserAgent().getDefaultValue();
+        DownloaderProperties.UserAgent userAgent = properties.getUserAgent();
+        String configured = userAgent == null ? null : userAgent.getDefaultValue();
         return configured != null && !configured.isBlank() ? configured : FALLBACK_USER_AGENT;
     }
 }

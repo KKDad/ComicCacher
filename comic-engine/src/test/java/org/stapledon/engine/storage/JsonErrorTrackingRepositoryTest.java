@@ -45,8 +45,9 @@ class JsonErrorTrackingRepositoryTest {
                 .setPrettyPrinting()
                 .create();
 
-        cacheProperties = new CacheProperties();
-        cacheProperties.setLocation(tempDir.toString());
+        cacheProperties = CacheProperties.builder()
+                .location(tempDir.toString())
+                .build();
 
         repository = new JsonErrorTrackingRepository(gson, cacheProperties, 5);
         repository.resetErrors(); // Ensure clean state

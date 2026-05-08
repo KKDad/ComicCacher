@@ -31,8 +31,9 @@ class GoComicsIntegrationIT {
         LOG.info("Using TempDirectory: {}", path);
 
         // Create CacheProperties for tests with headless=true
-        cacheProperties = new CacheProperties();
-        cacheProperties.setChromeHeadless(true);
+        cacheProperties = CacheProperties.builder()
+                .chromeHeadless(true)
+                .build();
     }
 
     @AfterAll

@@ -17,7 +17,7 @@ class SourceThrottleServiceTest {
 
     @Test
     void await_whenSourceHasNoConfig_returnsImmediately() throws Exception {
-        SourceThrottleService service = new SourceThrottleService(new DownloaderProperties());
+        SourceThrottleService service = new SourceThrottleService(DownloaderProperties.builder().build());
 
         long elapsed = timeMs(() -> service.await("unknown"));
 
@@ -48,14 +48,15 @@ class SourceThrottleServiceTest {
 
     @Test
     void await_concurrentCallsForDifferentSources_doNotBlockEachOther() throws Exception {
-        DownloaderProperties props = new DownloaderProperties();
-        DownloaderProperties.Source slow = new DownloaderProperties.Source();
-        slow.getThrottle().setMinDelayMs(500);
-        slow.getThrottle().setMaxDelayMs(500);
-        DownloaderProperties.Source fast = new DownloaderProperties.Source();
-        fast.getThrottle().setMinDelayMs(0);
-        fast.getThrottle().setMaxDelayMs(0);
-        props.setSources(Map.of("slow", slow, "fast", fast));
+        DownloaderProperties.Source slow = DownloaderProperties.Source.builder()
+                .throttle(DownloaderProperties.Throttle.builder().minDelayMs(500).maxDelayMs(500).build())
+                .build();
+        DownloaderProperties.Source fast = DownloaderProperties.Source.builder()
+                .throttle(DownloaderProperties.Throttle.builder().minDelayMs(0).maxDelayMs(0).build())
+                .build();
+        DownloaderProperties props = DownloaderProperties.builder()
+                .sources(Map.of("slow", slow, "fast", fast))
+                .build();
 
         SourceThrottleService service = new SourceThrottleService(props);
 
@@ -110,12 +111,12 @@ class SourceThrottleServiceTest {
     }
 
     private static DownloaderProperties propertiesFor(String source, long minMs, long maxMs) {
-        DownloaderProperties props = new DownloaderProperties();
-        DownloaderProperties.Source cfg = new DownloaderProperties.Source();
-        cfg.getThrottle().setMinDelayMs(minMs);
-        cfg.getThrottle().setMaxDelayMs(maxMs);
-        props.setSources(Map.of(source, cfg));
-        return props;
+        DownloaderProperties.Source cfg = DownloaderProperties.Source.builder()
+                .throttle(DownloaderProperties.Throttle.builder().minDelayMs(minMs).maxDelayMs(maxMs).build())
+                .build();
+        return DownloaderProperties.builder()
+                .sources(Map.of(source, cfg))
+                .build();
     }
 
     private static long timeMs(ThrowingRunnable r) throws Exception {

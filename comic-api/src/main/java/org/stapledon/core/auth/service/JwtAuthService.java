@@ -13,6 +13,8 @@ import org.stapledon.core.user.service.UserService;
 import org.stapledon.infrastructure.security.JwtTokenUtil;
 import org.stapledon.infrastructure.security.JwtUserDetailsService;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -96,6 +98,12 @@ public class JwtAuthService implements AuthService {
             }
 
             User user = userOpt.get();
+
+            if (jwtTokenUtil.isTokenInvalidatedByLogout(refreshToken, user.getTokensInvalidatedBefore())) {
+                log.warn("Refresh token rejected — issued before logout cutoff for user: {}", username);
+                return Optional.empty();
+            }
+
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (jwtTokenUtil.validateToken(refreshToken, userDetails)) {
@@ -131,6 +139,22 @@ public class JwtAuthService implements AuthService {
             log.error("Token validation error: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    @Override
+    public void logout(String username) {
+        log.info("Logout request for user: {}", username);
+
+        Optional<User> userOpt = userService.getUser(username);
+        if (userOpt.isEmpty()) {
+            log.warn("Logout requested for unknown user: {}", username);
+            return;
+        }
+
+        User user = userOpt.get();
+        user.setTokensInvalidatedBefore(OffsetDateTime.now(ZoneOffset.UTC));
+        userService.updateUser(user);
+        log.info("Tokens invalidated for user: {}", username);
     }
 
     @Override

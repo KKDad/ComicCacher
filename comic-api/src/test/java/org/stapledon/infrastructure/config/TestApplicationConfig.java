@@ -43,11 +43,11 @@ public class TestApplicationConfig {
     @Bean
     @Primary
     public JwtProperties jwtProperties() {
-        JwtProperties properties = new JwtProperties();
-        properties.setSecret("test-secret-key-should-be-very-long-and-secure-for-testing-purposes-only");
-        properties.setExpiration(300000); // 5 minutes
-        properties.setRefreshExpiration(600000); // 10 minutes
-        return properties;
+        return JwtProperties.builder()
+                .secret("test-secret-key-should-be-very-long-and-secure-for-testing-purposes-only")
+                .expiration(300_000L) // 5 minutes
+                .refreshExpiration(600_000L) // 10 minutes
+                .build();
     }
 
     @Bean
@@ -111,11 +111,12 @@ public class TestApplicationConfig {
     @Bean
     @Primary
     public CacheProperties cacheProperties() {
-        CacheProperties properties = new CacheProperties();
-        properties.setLocation("./test-cache");
-        properties.setConfig("./test-comics.json");
-        properties.setUsersConfig("./test-users.json");
-        properties.setPreferencesConfig("./test-preferences.json");
+        CacheProperties properties = CacheProperties.builder()
+                .location("./test-cache")
+                .config("./test-comics.json")
+                .usersConfig("./test-users.json")
+                .preferencesConfig("./test-preferences.json")
+                .build();
         return properties;
     }
 

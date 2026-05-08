@@ -31,10 +31,11 @@ class PureAuthIntegrationTest {
     @Test
     void jwtTokenGeneration() {
         // Create JWT properties
-        JwtProperties jwtProperties = new JwtProperties();
-        jwtProperties.setSecret("test-secret-key-for-integration-testing-12345678901234567890");
-        jwtProperties.setExpiration(300000); // 5 minutes
-        jwtProperties.setRefreshExpiration(3600000); // 1 hour
+        JwtProperties jwtProperties = JwtProperties.builder()
+                .secret("test-secret-key-for-integration-testing-12345678901234567890")
+                .expiration(300_000L) // 5 minutes
+                .refreshExpiration(3_600_000L) // 1 hour
+                .build();
 
         // Create JWT token util
         JwtTokenUtil jwtTokenUtil = new JwtTokenUtil(jwtProperties);

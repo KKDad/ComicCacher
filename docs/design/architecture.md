@@ -151,8 +151,6 @@ The single active cache stores `ComicItem` configuration data:
 | Enabled | `comics.cache.caffeine.lookahead.enabled` | `false` |
 | Prefetch count | `comics.cache.caffeine.lookahead.count` | `3` |
 
-**Note:** `application.properties` also defines `navigation`, `boundary`, and `navigation-dates` cache properties, but these are not currently bound to `CaffeineCacheProperties` and have no effect.
-
 ## Build System
 
 Gradle multi-module project with centralized dependency management in the root `build.gradle`. All modules share:
