@@ -30,6 +30,10 @@ USER nextjs
 
 ENV NODE_ENV=production
 ENV PORT=8080
+# Bind to all interfaces. Without this, Docker sets HOSTNAME to the container
+# hostname (e.g. comics-ui), which Next.js standalone uses as its bind address
+# — leaving localhost unreachable and breaking the HEALTHCHECK below.
+ENV HOSTNAME=0.0.0.0
 
 EXPOSE 8080
 
