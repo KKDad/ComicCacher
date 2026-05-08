@@ -54,8 +54,9 @@ class ComicIndexIntegrationTest {
         Gson gson = GsonUtils.createGson();
 
         // Real cache properties pointing to temp directory
-        CacheProperties cacheProperties = new CacheProperties();
-        cacheProperties.setLocation(tempDir.toAbsolutePath().toString());
+        CacheProperties cacheProperties = CacheProperties.builder()
+                .location(tempDir.toAbsolutePath().toString())
+                .build();
 
         // Mock metadata repository (not critical for this test)
         metadataRepository = mock(ImageMetadataRepository.class);
@@ -154,8 +155,9 @@ class ComicIndexIntegrationTest {
         // Simulate service restart by creating new instances
         // (this mimics what happens when backend is redeployed)
         Gson gson = GsonUtils.createGson();
-        CacheProperties cacheProperties = new CacheProperties();
-        cacheProperties.setLocation(tempDir.toAbsolutePath().toString());
+        CacheProperties cacheProperties = CacheProperties.builder()
+                .location(tempDir.toAbsolutePath().toString())
+                .build();
         ComicIndexService newIndexService = new ComicIndexService(gson, cacheProperties, metadataRepository);
 
         ValidationService validationService = mock(ValidationService.class);

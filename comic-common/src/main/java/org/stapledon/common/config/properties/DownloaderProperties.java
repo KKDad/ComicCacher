@@ -1,11 +1,11 @@
 package org.stapledon.common.config.properties;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -21,72 +21,68 @@ import java.util.Map;
  * downloader.sources.gocomics.throttle.max-delay-ms=20000
  * </pre>
  */
-@ToString
 @Getter
-@Setter
+@ToString
+@Builder
+@AllArgsConstructor
 @ConfigurationProperties(prefix = "downloader")
 public class DownloaderProperties {
 
-    private UserAgent userAgent = new UserAgent();
+    private final UserAgent userAgent;
 
-    private Map<String, Source> sources = new HashMap<>();
+    private final Map<String, Source> sources;
 
     /**
      * Returns the throttle config for the given source, or empty defaults (no delay) if the source is not configured.
      */
     public Throttle throttleFor(String source) {
-        if (source == null) {
-            return new Throttle();
+        if (source == null || sources == null) {
+            return Throttle.builder().build();
         }
         Source cfg = sources.get(source);
-        return cfg == null || cfg.getThrottle() == null ? new Throttle() : cfg.getThrottle();
+        return cfg == null || cfg.getThrottle() == null ? Throttle.builder().build() : cfg.getThrottle();
     }
 
     /**
      * Returns the per-source User-Agent override, or {@code null} if no override is configured.
      */
     public String userAgentFor(String source) {
-        if (source == null) {
+        if (source == null || sources == null) {
             return null;
         }
         Source cfg = sources.get(source);
         return cfg == null ? null : cfg.getUserAgent();
     }
 
-    @ToString
     @Getter
-    @Setter
+    @ToString
+    @Builder
+    @AllArgsConstructor
     public static class UserAgent {
-        /**
-         * Global fallback User-Agent. If blank, {@code UserAgentService} uses its built-in fallback.
-         */
-        private String defaultValue = "";
+        /** Global fallback User-Agent. If blank, {@code UserAgentService} uses its built-in fallback. */
+        private final String defaultValue;
     }
 
-    @ToString
     @Getter
-    @Setter
+    @ToString
+    @Builder
+    @AllArgsConstructor
     public static class Source {
-        /**
-         * Optional per-source User-Agent override.
-         */
-        private String userAgent;
+        /** Optional per-source User-Agent override. */
+        private final String userAgent;
 
-        private Throttle throttle = new Throttle();
+        private final Throttle throttle;
     }
 
-    @ToString
     @Getter
-    @Setter
+    @ToString
+    @Builder
+    @AllArgsConstructor
     public static class Throttle {
-        /**
-         * Minimum delay (ms) between consecutive requests to this source. 0 disables throttling.
-         */
-        private long minDelayMs = 0;
+        /** Minimum delay (ms) between consecutive requests to this source. 0 disables throttling. */
+        private final long minDelayMs;
 
-        /**
-         * Maximum delay (ms) between consecutive requests to this source. Actual delay is randomized between min and max.
-         */
-        private long maxDelayMs = 0;
+        /** Maximum delay (ms) between consecutive requests to this source. Actual delay is randomized between min and max. */
+        private final long maxDelayMs;
     }
 }

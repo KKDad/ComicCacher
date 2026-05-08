@@ -27,7 +27,7 @@ class PreferenceConfigWriterTest {
         private final PreferenceConfig inMemoryConfig;
 
         public TestPreferenceConfigWriter(Gson gson) {
-            super(gson, new CacheProperties(), null);
+            super(gson, CacheProperties.builder().build(), null);
             inMemoryConfig = new PreferenceConfig();
         }
 

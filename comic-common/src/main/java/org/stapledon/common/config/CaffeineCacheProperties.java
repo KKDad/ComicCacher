@@ -2,76 +2,54 @@ package org.stapledon.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 /**
  * Configuration properties for Caffeine cache settings.
  * Maps to comics.cache.caffeine.* properties in application.properties.
  */
-@ToString
 @Getter
-@Setter
+@ToString
+@Builder
+@AllArgsConstructor
 @ConfigurationProperties(prefix = "comics.cache.caffeine")
 public class CaffeineCacheProperties {
 
-    /**
-     * Whether Caffeine caching is enabled globally.
-     */
-    private boolean enabled = true;
+    /** Whether Caffeine caching is enabled globally. */
+    private final boolean enabled;
 
-    /**
-     * Metadata cache settings for comic configuration data.
-     */
-    private CacheConfig metadata = new CacheConfig(60, 60);
+    /** Metadata cache settings for comic configuration data. */
+    private final CacheConfig metadata;
 
-    /**
-     * Predictive lookahead configuration.
-     */
-    private LookaheadConfig lookahead = new LookaheadConfig();
+    /** Predictive lookahead configuration. */
+    private final LookaheadConfig lookahead;
 
-    /**
-     * Configuration for an individual cache.
-     */
-    @ToString
+    /** Configuration for an individual cache. */
     @Getter
-    @Setter
+    @ToString
+    @Builder
+    @AllArgsConstructor
     public static class CacheConfig {
-        /**
-         * Maximum number of entries in the cache.
-         */
-        private int maxSize;
+        /** Maximum number of entries in the cache. */
+        private final int maxSize;
 
-        /**
-         * Time-to-live in minutes for cache entries.
-         */
-        private int ttlMinutes;
-
-        public CacheConfig() {
-        }
-
-        public CacheConfig(int maxSize, int ttlMinutes) {
-            this.maxSize = maxSize;
-            this.ttlMinutes = ttlMinutes;
-        }
+        /** Time-to-live in minutes for cache entries. */
+        private final int ttlMinutes;
     }
 
-    /**
-     * Configuration for predictive lookahead caching.
-     */
-    @ToString
+    /** Configuration for predictive lookahead caching. */
     @Getter
-    @Setter
+    @ToString
+    @Builder
+    @AllArgsConstructor
     public static class LookaheadConfig {
-        /**
-         * Whether predictive lookahead is enabled.
-         */
-        private boolean enabled = true;
+        /** Whether predictive lookahead is enabled. */
+        private final boolean enabled;
 
-        /**
-         * Number of comics to prefetch in each direction (N±count).
-         */
-        private int count = 3;
+        /** Number of comics to prefetch in each direction (N±count). */
+        private final int count;
     }
 }

@@ -27,8 +27,9 @@ class SchedulerStateServiceTest {
 
     @BeforeEach
     void setUp() {
-        cacheProperties = new CacheProperties();
-        cacheProperties.setLocation(tempDir.toString());
+        cacheProperties = CacheProperties.builder()
+                .location(tempDir.toString())
+                .build();
         gson = GsonUtils.createGsonBuilder().create();
         service = new SchedulerStateService(cacheProperties, gson);
     }

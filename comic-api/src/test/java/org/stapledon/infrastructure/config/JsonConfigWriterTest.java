@@ -59,9 +59,10 @@ class JsonConfigWriterTest {
         LOG.info("Writing to {}", fileName);
 
         // Act
-        CacheProperties cacheProperties = new CacheProperties();
-        cacheProperties.setLocation(path.toString());
-        cacheProperties.setConfig(String.format("%s.json", uuid));
+        CacheProperties cacheProperties = CacheProperties.builder()
+                .location(path.toString())
+                .config(String.format("%s.json", uuid))
+                .build();
 
         // Mock the configuration facade behavior
         ComicConfig comicConfig = new ComicConfig();

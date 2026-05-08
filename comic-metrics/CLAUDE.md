@@ -26,6 +26,6 @@ Cache and storage metrics. Tracks comic access counts, error rates per comic, an
 - Read paths must be safe under concurrent updates from collectors.
 - All on-disk metric files use Gson via `GsonUtils` and the project's standard adapters.
 
-## What's Not Here Yet
+## Metrics Pipeline (intentional design)
 
-There is **no Micrometer / Prometheus / OpenTelemetry pipeline** today. Metrics surface only through GraphQL queries and JSON files. Adding a Micrometer registry is a known modernization item — see `docs/design/architecture.md` and the Known Modernization Backlog in the root `CLAUDE.md`.
+Metrics surface only through GraphQL queries and JSON files on disk. **This is the intentional design** — ComicCacher is a single-tenant home-server app and does not run a Micrometer / Prometheus / OpenTelemetry pipeline. Don't add one without a concrete operator need; the JSON-on-disk approach is sufficient and matches the rest of the storage model.

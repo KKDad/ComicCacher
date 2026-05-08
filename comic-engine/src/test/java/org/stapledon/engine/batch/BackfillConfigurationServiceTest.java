@@ -2,30 +2,31 @@ package org.stapledon.engine.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
-
 
 import org.stapledon.common.dto.BackfillSourceConfig;
 
 class BackfillConfigurationServiceTest {
 
-    private BackfillConfigurationService service;
+    private static BackfillConfigurationService.BackfillConfigurationServiceBuilder defaultBuilder() {
+        return BackfillConfigurationService.builder()
+                .enabled(true)
+                .defaultMaxPerDay(50)
+                .defaultMaxDaysBack(365)
+                .maxConsecutiveFailures(3);
+    }
 
-    @BeforeEach
-    void setUp() {
-        service = new BackfillConfigurationService();
-        service.setDefaultMaxPerDay(50);
-        service.setDefaultMaxDaysBack(365);
-        service.setMaxConsecutiveFailures(3);
+    private static BackfillConfigurationService serviceWithSources(Map<String, BackfillSourceConfig> sources) {
+        return defaultBuilder().sources(sources).build();
     }
 
     @Test
     void getMaxPerDayForSource_withNoSourceConfig_returnsDefault() {
+        BackfillConfigurationService service = defaultBuilder().build();
+
         int result = service.getMaxPerDayForSource("unknown-source");
 
         assertThat(result).isEqualTo(50);
@@ -33,12 +34,8 @@ class BackfillConfigurationServiceTest {
 
     @Test
     void getMaxPerDayForSource_withSourceConfig_returnsSourceValue() {
-        Map<String, BackfillSourceConfig> sources = new HashMap<>();
-        sources.put("gocomics", BackfillSourceConfig.builder()
-                .source("gocomics")
-                .maxPerDay(20)
-                .build());
-        service.setSources(sources);
+        BackfillConfigurationService service = serviceWithSources(Map.of(
+                "gocomics", BackfillSourceConfig.builder().source("gocomics").maxPerDay(20).build()));
 
         int result = service.getMaxPerDayForSource("gocomics");
 
@@ -47,12 +44,8 @@ class BackfillConfigurationServiceTest {
 
     @Test
     void getMaxPerDayForSource_withZeroSourceValue_returnsDefault() {
-        Map<String, BackfillSourceConfig> sources = new HashMap<>();
-        sources.put("gocomics", BackfillSourceConfig.builder()
-                .source("gocomics")
-                .maxPerDay(0)
-                .build());
-        service.setSources(sources);
+        BackfillConfigurationService service = serviceWithSources(Map.of(
+                "gocomics", BackfillSourceConfig.builder().source("gocomics").maxPerDay(0).build()));
 
         int result = service.getMaxPerDayForSource("gocomics");
 
@@ -61,6 +54,8 @@ class BackfillConfigurationServiceTest {
 
     @Test
     void getMaxDaysBackForSource_withNoSourceConfig_returnsDefault() {
+        BackfillConfigurationService service = defaultBuilder().build();
+
         int result = service.getMaxDaysBackForSource("unknown-source");
 
         assertThat(result).isEqualTo(365);
@@ -68,12 +63,8 @@ class BackfillConfigurationServiceTest {
 
     @Test
     void getMaxDaysBackForSource_withSourceConfig_returnsSourceValue() {
-        Map<String, BackfillSourceConfig> sources = new HashMap<>();
-        sources.put("comicskingdom", BackfillSourceConfig.builder()
-                .source("comicskingdom")
-                .maxDaysBack(180)
-                .build());
-        service.setSources(sources);
+        BackfillConfigurationService service = serviceWithSources(Map.of(
+                "comicskingdom", BackfillSourceConfig.builder().source("comicskingdom").maxDaysBack(180).build()));
 
         int result = service.getMaxDaysBackForSource("comicskingdom");
 
@@ -82,7 +73,7 @@ class BackfillConfigurationServiceTest {
 
     @Test
     void getEarliestAllowedDate_calculatesCorrectly() {
-        service.setDefaultMaxDaysBack(30);
+        BackfillConfigurationService service = defaultBuilder().defaultMaxDaysBack(30).build();
 
         LocalDate result = service.getEarliestAllowedDate("test-source");
 
@@ -91,12 +82,8 @@ class BackfillConfigurationServiceTest {
 
     @Test
     void getEarliestAllowedDate_usesSourceSpecificLimit() {
-        Map<String, BackfillSourceConfig> sources = new HashMap<>();
-        sources.put("short-history", BackfillSourceConfig.builder()
-                .source("short-history")
-                .maxDaysBack(7)
-                .build());
-        service.setSources(sources);
+        BackfillConfigurationService service = serviceWithSources(Map.of(
+                "short-history", BackfillSourceConfig.builder().source("short-history").maxDaysBack(7).build()));
 
         LocalDate result = service.getEarliestAllowedDate("short-history");
 
@@ -105,50 +92,32 @@ class BackfillConfigurationServiceTest {
 
     @Test
     void isSourceEnabled_withNoConfig_returnsTrue() {
-        boolean result = service.isSourceEnabled("unknown-source");
+        BackfillConfigurationService service = defaultBuilder().build();
 
-        assertThat(result).isTrue();
+        assertThat(service.isSourceEnabled("unknown-source")).isTrue();
     }
 
     @Test
     void isSourceEnabled_withEnabledSource_returnsTrue() {
-        Map<String, BackfillSourceConfig> sources = new HashMap<>();
-        sources.put("enabled-source", BackfillSourceConfig.builder()
-                .source("enabled-source")
-                .enabled(true)
-                .build());
-        service.setSources(sources);
+        BackfillConfigurationService service = serviceWithSources(Map.of(
+                "enabled-source", BackfillSourceConfig.builder().source("enabled-source").enabled(true).build()));
 
-        boolean result = service.isSourceEnabled("enabled-source");
-
-        assertThat(result).isTrue();
+        assertThat(service.isSourceEnabled("enabled-source")).isTrue();
     }
 
     @Test
     void isSourceEnabled_withDisabledSource_returnsFalse() {
-        Map<String, BackfillSourceConfig> sources = new HashMap<>();
-        sources.put("disabled-source", BackfillSourceConfig.builder()
-                .source("disabled-source")
-                .enabled(false)
-                .build());
-        service.setSources(sources);
+        BackfillConfigurationService service = serviceWithSources(Map.of(
+                "disabled-source", BackfillSourceConfig.builder().source("disabled-source").enabled(false).build()));
 
-        boolean result = service.isSourceEnabled("disabled-source");
-
-        assertThat(result).isFalse();
+        assertThat(service.isSourceEnabled("disabled-source")).isFalse();
     }
 
     @Test
     void isSourceEnabled_withNullEnabled_returnsTrue() {
-        Map<String, BackfillSourceConfig> sources = new HashMap<>();
-        sources.put("null-enabled", BackfillSourceConfig.builder()
-                .source("null-enabled")
-                .enabled(null)
-                .build());
-        service.setSources(sources);
+        BackfillConfigurationService service = serviceWithSources(Map.of(
+                "null-enabled", BackfillSourceConfig.builder().source("null-enabled").enabled(null).build()));
 
-        boolean result = service.isSourceEnabled("null-enabled");
-
-        assertThat(result).isTrue();
+        assertThat(service.isSourceEnabled("null-enabled")).isTrue();
     }
 }

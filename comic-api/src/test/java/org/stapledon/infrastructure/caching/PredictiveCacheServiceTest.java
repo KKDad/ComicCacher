@@ -38,13 +38,11 @@ class PredictiveCacheServiceTest {
 
     @BeforeEach
     void setUp() {
-        cacheProperties = new CaffeineCacheProperties();
-        cacheProperties.setEnabled(true);
-
-        CaffeineCacheProperties.LookaheadConfig lookahead = new CaffeineCacheProperties.LookaheadConfig();
-        lookahead.setEnabled(true);
-        lookahead.setCount(3);
-        cacheProperties.setLookahead(lookahead);
+        cacheProperties = CaffeineCacheProperties.builder()
+                .enabled(true)
+                .metadata(CaffeineCacheProperties.CacheConfig.builder().maxSize(60).ttlMinutes(60).build())
+                .lookahead(CaffeineCacheProperties.LookaheadConfig.builder().enabled(true).count(3).build())
+                .build();
 
         service = new PredictiveCacheService(comicManagementFacade, cacheProperties);
     }
@@ -169,7 +167,12 @@ class PredictiveCacheServiceTest {
     @Test
     void prefetchAdjacentComicsDisabledLookahead() {
         // Disable lookahead
-        cacheProperties.getLookahead().setEnabled(false);
+        cacheProperties = CaffeineCacheProperties.builder()
+                .enabled(true)
+                .metadata(CaffeineCacheProperties.CacheConfig.builder().maxSize(60).ttlMinutes(60).build())
+                .lookahead(CaffeineCacheProperties.LookaheadConfig.builder().enabled(false).count(3).build())
+                .build();
+        service = new PredictiveCacheService(comicManagementFacade, cacheProperties);
 
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);
@@ -227,7 +230,12 @@ class PredictiveCacheServiceTest {
     @Test
     void lookaheadCountIsRespected() {
         // Set lookahead count to 2 instead of default 3
-        cacheProperties.getLookahead().setCount(2);
+        cacheProperties = CaffeineCacheProperties.builder()
+                .enabled(true)
+                .metadata(CaffeineCacheProperties.CacheConfig.builder().maxSize(60).ttlMinutes(60).build())
+                .lookahead(CaffeineCacheProperties.LookaheadConfig.builder().enabled(true).count(2).build())
+                .build();
+        service = new PredictiveCacheService(comicManagementFacade, cacheProperties);
 
         int comicId = 1;
         LocalDate startDate = LocalDate.of(2025, 10, 24);

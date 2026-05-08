@@ -20,17 +20,11 @@ class CaffeineCacheConfigurationTest {
 
     @BeforeEach
     void setUp() {
-        properties = new CaffeineCacheProperties();
-        properties.setEnabled(true);
-
-        // Set up default properties
-        CaffeineCacheProperties.CacheConfig metadata = new CaffeineCacheProperties.CacheConfig(60, 60);
-        properties.setMetadata(metadata);
-
-        CaffeineCacheProperties.LookaheadConfig lookahead = new CaffeineCacheProperties.LookaheadConfig();
-        lookahead.setEnabled(true);
-        lookahead.setCount(3);
-        properties.setLookahead(lookahead);
+        properties = CaffeineCacheProperties.builder()
+                .enabled(true)
+                .metadata(CaffeineCacheProperties.CacheConfig.builder().maxSize(60).ttlMinutes(60).build())
+                .lookahead(CaffeineCacheProperties.LookaheadConfig.builder().enabled(true).count(3).build())
+                .build();
 
         configuration = new CaffeineCacheConfiguration(properties);
     }

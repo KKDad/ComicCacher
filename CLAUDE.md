@@ -108,10 +108,3 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 - **`utils/dev-build-and-run.sh`** — Build and deploy a dev instance via Docker context
 - **`utils/verify-json-files.sh`** — Validate JSON storage files in the comics cache
 
-## Known Modernization Backlog
-
-Tracked here so doc-review sweeps don't keep rediscovering them. Items may be picked up in any order:
-
-- **Immutable `@ConfigurationProperties`** — properties classes still expose `@Setter` so tests can construct them directly. Future refactor: drop `@Setter`, switch to Lombok `@AllArgsConstructor` + `final` fields, and update tests to build instances via constructor. Scoped against test churn.
-- **Micrometer / Prometheus / OpenTelemetry pipeline** — no metrics registry today. `comic-metrics` writes JSON files event-driven via `comics.metrics.persist-threshold`. A real metrics pipeline is a known gap (also documented in `docs/design/architecture.md` and `comic-metrics/CLAUDE.md`).
-- **Caffeine cache property binding gap** — `comics.cache.caffeine.navigation.*`, `boundary.*`, and `navigation-dates.*` properties exist in `application.properties` but aren't wired to `CaffeineCacheConfiguration`. `docs/design/architecture.md` already flags this. Either bind them or remove the dead properties.
