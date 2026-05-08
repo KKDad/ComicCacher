@@ -33,6 +33,7 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://localhost:8080/ || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s \
+  CMD wget -q --spider http://localhost:8080/api/health || exit 1
 
 CMD ["node", "server.js"]
