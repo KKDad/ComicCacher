@@ -112,7 +112,6 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 
 Tracked here so doc-review sweeps don't keep rediscovering them. Items may be picked up in any order:
 
-- **Spring Boot 4 lightweight configs** — apply `@Configuration(proxyBeanMethods = false)` to all `@Configuration` classes that don't call other `@Bean` methods (currently 17 files).
-- **`@ConfigurationProperties` constructor binding** — modernize property classes to constructor binding (Lombok `@AllArgsConstructor` + `@ConstructorBinding` where needed).
-- **RFC 7807 Problem Details** — migrate error responses from custom `ApiResponse<T>` wrapper to Spring Boot 4 `ProblemDetail`. Keep `ApiResponse<T>` for success-path payloads.
-- **Logout backend revocation** — `/api/logout` currently only clears client cookies. Add a backend endpoint that invalidates the refresh token, and call it from `comic-hub/src/app/api/logout/route.ts` before clearing cookies.
+- **Immutable `@ConfigurationProperties`** — properties classes still expose `@Setter` so tests can construct them directly. Future refactor: drop `@Setter`, switch to Lombok `@AllArgsConstructor` + `final` fields, and update tests to build instances via constructor. Scoped against test churn.
+- **Micrometer / Prometheus / OpenTelemetry pipeline** — no metrics registry today. `comic-metrics` writes JSON files event-driven via `comics.metrics.persist-threshold`. A real metrics pipeline is a known gap (also documented in `docs/design/architecture.md` and `comic-metrics/CLAUDE.md`).
+- **Caffeine cache property binding gap** — `comics.cache.caffeine.navigation.*`, `boundary.*`, and `navigation-dates.*` properties exist in `application.properties` but aren't wired to `CaffeineCacheConfiguration`. `docs/design/architecture.md` already flags this. Either bind them or remove the dead properties.

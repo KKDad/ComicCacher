@@ -26,7 +26,7 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 - Auth cookies: `httpOnly: true`, `secure: process.env.NODE_ENV === 'production'`, `sameSite: 'lax'`. Never expose tokens to client JavaScript.
 - Session validation in server layouts uses `cache: 'no-store'` to ensure fresh JWT verification on every render.
 - **Server Actions are intentionally NOT adopted.** Mutations route through `/api/*` handlers because token refresh logic lives there. Revisit if/when refresh moves to a centralized middleware layer.
-- Known gap: `/api/logout` clears client cookies but does not yet call a backend revocation endpoint. Refresh tokens remain valid until expiry. Tracked in the root `CLAUDE.md` modernization backlog.
+- **Logout flow:** `/api/logout` calls the GraphQL `logout` mutation before clearing cookies. The backend sets the user's `tokensInvalidatedBefore` timestamp; the JWT filter and refresh path reject any token issued before the cutoff. The mutation is best-effort — if it fails, cookies are still cleared client-side.
 
 ## Error Boundaries & Loading States
 
