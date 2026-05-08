@@ -3,7 +3,7 @@
 ![Comic Viewer Banner](assets/ComicViewer.png)
 
 [![Backend CI](https://github.com/KKDad/ComicCacher/actions/workflows/gradle.yml/badge.svg)](https://github.com/KKDad/ComicCacher/actions/workflows/gradle.yml)
-[![Frontend CI](https://github.com/KKDad/ComicCacher/actions/workflows/angular.yml/badge.svg)](https://github.com/KKDad/ComicCacher/actions/workflows/angular.yml)
+[![Frontend CI](https://github.com/KKDad/ComicCacher/actions/workflows/comic-hub.yml/badge.svg)](https://github.com/KKDad/ComicCacher/actions/workflows/comic-hub.yml)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-6DB33F)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
@@ -121,7 +121,6 @@ ComicCacher/
 ├── comic-engine/    # Download engine, batch jobs, image validation
 ├── comic-api/       # REST + GraphQL API layer
 ├── comic-hub/       # Web frontend (Next.js 16 / React 19)
-├── comic-web/       # Legacy Angular frontend (being replaced)
 ├── docs/            # API reference, design docs, storage specs
 └── utils/           # Debug & deployment scripts
 ```

@@ -39,7 +39,7 @@
 - Use `{@inheritDoc}` for overridden methods. Use `//` for internal notes.
 
 ## 6. Java & Collections Style
-- Prefer `record` types for GQL DTOs and JSON metadata mapping.
+- **DTO standard:** Use Lombok (`@Builder`, `@Getter`, `@Setter`, `@AllArgsConstructor`, `@NoArgsConstructor`) for all DTOs and JSON metadata mappings. Java records are not the preferred pattern in this codebase.
 - Use `Map.of()`, `List.of()`, `Set.of()` for small/fixed collections.
 - Use `new ArrayList<>(List.of(...))` if the collection must be modifiable.
 - Prefer `.computeIfAbsent()` over `containsKey()` + `put()`.

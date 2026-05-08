@@ -62,10 +62,11 @@ Each module has its own coding standards. **Module-level standards override this
 
 | Module | Standards | Key Details |
 |--------|-----------|-------------|
-| **comic-api** | [@~/comic-api/CLAUDE.md](comic-api/CLAUDE.md) | GraphQL-first, Gson for persisted JSON (Jackson allowed at Spring boundaries), NFS filesystem as DB, JWT auth (USER/OPERATOR/ADMIN) |
-| **comic-hub** | [@~/comic-hub/CLAUDE.md](comic-hub/CLAUDE.md) | Z-index tokens, httpOnly cookie auth, `proxy.ts` (not `middleware.ts`) |
-| **comic-engine** | See [@~/docs/design/architecture.md](docs/design/architecture.md) | Downloaders, facades, Spring Batch jobs |
-| **comic-common** | See [@~/docs/design/architecture.md](docs/design/architecture.md) | Shared DTOs, service interfaces, utilities |
+| **comic-api** | [@~/comic-api/CLAUDE.md](comic-api/CLAUDE.md) | GraphQL-first, Gson for persisted JSON (Jackson allowed at Spring boundaries), NFS filesystem as DB, JWT auth (USER/OPERATOR/ADMIN), Lombok DTOs |
+| **comic-engine** | [@~/comic-engine/CLAUDE.md](comic-engine/CLAUDE.md) | Downloaders (GoComics Selenium, ComicsKingdom Jsoup), facades, Spring Batch jobs, image pipeline |
+| **comic-common** | [@~/comic-common/CLAUDE.md](comic-common/CLAUDE.md) | Shared DTOs, service interfaces, utilities — no Spring beans |
+| **comic-metrics** | [@~/comic-metrics/CLAUDE.md](comic-metrics/CLAUDE.md) | Cache and storage metrics, event-driven persistence |
+| **comic-hub** | [@~/comic-hub/CLAUDE.md](comic-hub/CLAUDE.md) | Next.js 16 / React 19, server components, httpOnly cookie auth via `/api/graphql`, z-index tokens |
 
 ## Time Handling Rules
 
@@ -102,5 +103,16 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 
 ## Debug Utilities
 
-- **`utils/fetch-prod-logs.sh [lines]`** — Fetch Docker logs from production (default 500 lines)
+- **`utils/fetch-prod-logs.sh [api|ui] [lines]`** — Fetch Docker logs from production `comics-api` or `comics-ui` container (default 500 lines)
 - **`utils/tunnel-to-prod-api.sh`** — SSH tunnel: `localhost:8888` to production API
+- **`utils/dev-build-and-run.sh`** — Build and deploy a dev instance via Docker context
+- **`utils/verify-json-files.sh`** — Validate JSON storage files in the comics cache
+
+## Known Modernization Backlog
+
+Tracked here so doc-review sweeps don't keep rediscovering them. Items may be picked up in any order:
+
+- **Spring Boot 4 lightweight configs** — apply `@Configuration(proxyBeanMethods = false)` to all `@Configuration` classes that don't call other `@Bean` methods (currently 17 files).
+- **`@ConfigurationProperties` constructor binding** — modernize property classes to constructor binding (Lombok `@AllArgsConstructor` + `@ConstructorBinding` where needed).
+- **RFC 7807 Problem Details** — migrate error responses from custom `ApiResponse<T>` wrapper to Spring Boot 4 `ProblemDetail`. Keep `ApiResponse<T>` for success-path payloads.
+- **Logout backend revocation** — `/api/logout` currently only clears client cookies. Add a backend endpoint that invalidates the refresh token, and call it from `comic-hub/src/app/api/logout/route.ts` before clearing cookies.
