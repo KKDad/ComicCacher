@@ -106,5 +106,6 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 - **`utils/fetch-prod-logs.sh [api|ui] [lines]`** — Fetch Docker logs from production `comics-api` or `comics-ui` container (default 500 lines)
 - **`utils/tunnel-to-prod-api.sh`** — SSH tunnel: `localhost:8888` to production API
 - **`utils/dev-build-and-run.sh`** — Build and deploy a dev instance via Docker context
+- **`utils/prod-build-and-run.sh [--api <ver>] [--ui <ver>] [--skip-build]`** — Build, push, and deploy prod containers via Docker context. Pre-flight gates (master branch, clean tree, semver tag, registry verification, confirm prompt) and post-deploy health-poll with auto-rollback. Audit log at `~/.comiccacher-prod-deploy.log`.
 - **`utils/verify-json-files.sh`** — Validate JSON storage files in the comics cache
 

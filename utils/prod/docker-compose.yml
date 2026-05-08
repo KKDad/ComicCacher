@@ -1,0 +1,38 @@
+volumes:
+  comicdata:
+    driver: local
+    driver_opts:
+      type: "nfs4"
+      o: "addr=10.0.0.48,rsize=1048576,wsize=1048576,timeo=600,retrans=2,noresvport,rw,noatime,nconnect=16,vers=4.1"
+      device: ":/volume1/PodGeneral/comics"
+
+services:
+  backend:
+    image: registry.stapledon.ca/kkdad/comic-api:${API_TAG}
+    pull_policy: always
+    container_name: comics-api
+    hostname: comics-api
+    restart: unless-stopped
+    volumes:
+      - type: volume
+        source: comicdata
+        target: /comics
+    ports:
+      - 8888:8888
+    environment:
+      - CACHE_DIRECTORY=/comics
+      - COMICS_CACHE_LOCATION=/comics
+
+  frontend:
+    image: registry.stapledon.ca/kkdad/comic-ui:${UI_TAG}
+    pull_policy: always
+    container_name: comics-ui
+    hostname: comics-ui
+    restart: unless-stopped
+    ports:
+      - 8899:8080
+
+networks:
+  default:
+    external: true
+    name: stapledon-network
