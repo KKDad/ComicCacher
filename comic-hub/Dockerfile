@@ -37,7 +37,10 @@ ENV HOSTNAME=0.0.0.0
 
 EXPOSE 8080
 
+# Use 127.0.0.1 explicitly: alpine's busybox wget resolves `localhost` to ::1
+# (IPv6) first per /etc/hosts and does not fall back to IPv4, so it gets
+# Connection refused against our IPv4-only bind on 0.0.0.0.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s \
-  CMD wget -q --spider http://localhost:8080/api/health || exit 1
+  CMD wget -q --spider http://127.0.0.1:8080/api/health || exit 1
 
 CMD ["node", "server.js"]
