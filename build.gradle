@@ -113,7 +113,7 @@ subprojects {
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
         // OpenRewrite Recipes
-        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.35.2")
+        rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.35.3")
         rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.34.1")
     }
 
