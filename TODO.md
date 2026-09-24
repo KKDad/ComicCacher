@@ -170,6 +170,13 @@
 - Also check which timezone `hasJobRunToday` uses to decide what counts as "today" (UTC vs `batch.timezone`)
 - Priority: Medium
 
+## Fix prod deploy script quirks
+
+- **Rollback baseline mis-parsed:** `current_ref()` in `utils/prod-run.sh` takes the tag from after the *last* `:` of `.Config.Image`. Once prod runs a digest-pinned image (`…comic-api:2.4.6@sha256:6cd8…`, which every rollback or pinned deploy creates), that's the digest's hex, so the baseline comes out as `6cd8…@sha256:6cd8…`, not `2.4.6@sha256:6cd8…`. Rollback still works because Docker pulls by the digest, but the plan output and audit log are misleading. Fix: strip `@digest` before extracting the tag (`ref="${config_image%%@*}"; tag="${ref##*:}"`)
+- **Piped confirmation is swallowed:** `prod-build-and-run.sh` runs `ssh` and `scp` before the final `ssh -t`, and they consume stdin, so `echo y | …` never reaches the `Continue?` prompt. Under `set -e`, `read` then hits EOF and the script exits silently, not printing "Aborted.". Fix: `ssh -n` on the staging call, and print a clear message when `read` gets no input
+- **Dev deploy can't run from a Podman workstation:** `dev-build-and-run.sh` uses `docker --context portainer`, which Podman's `docker` shim can't use against a Docker host (exit 127 over `ssh://root@10.0.0.47`). Run its deploy commands over `ssh` like `prod-run.sh` does
+- Priority: Low
+
 ## Fix comic mutations dropping fields
 
 - `updateComic` accepts `publicationDays` and `active` in `UpdateComicInput`, but the resolver never copies them, so the change is silently ignored (`comic-api/src/main/java/org/stapledon/api/resolver/ComicResolver.java`, `updateComic`)
