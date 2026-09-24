@@ -1,125 +1,182 @@
 # ComicCacher TODO
 
-Ordered by priority, most urgent first within each tier.
+## Fix startup catch-up jobs blocking readiness
 
-## High
+- `StartupJobRunner` runs any daily job that missed its time today on the main thread, inside the `ApplicationReadyEvent` listener
+- Readiness isn't reported until those jobs finish, so `/actuator/health` returns 503 `OUT_OF_SERVICE` the whole time. On dev (2.4.7 deploy) a gocomics backfill kept it unhealthy for many minutes
+- This matters for prod: `prod-run.sh` rolls back if the container isn't healthy within 180s, so a restart on a day a job hasn't run yet will roll the deploy back
+- Run the catch-up jobs in the background (e.g. on the batch `TaskExecutor`), keeping their order, and add a test that the listener returns straight away
+- Also check whether `hasJobRunToday` uses UTC or `batch.timezone` for "today"
+- Priority: High
 
-### Fix strips silently not saved (Mother Goose & Grimm, Sherman's Lagoon)
+## Verify the gocomics 429 fix in prod
 
-- **Problem:** since 2026-01-09 no strip files have been written for either comic, yet `retrieval-status.json` records `SUCCESS` daily (through 2026-09-21). Downloads and `image-hashes.json` updates happen; the image file never lands
-- **Cause (confirmed on prod, fixed):** #190 (2026-01-09) made `ComicIndexService` put the date index for names outside `[a-zA-Z0-9 _-]` in `comic_{id}/`. On prod those directories (`comic_1177918400`, `comic_62159896`) are `root:root 755`, but the container runs as `comicapi` (uid 1001). So each day the strip was written, its hash recorded, the index write failed, and the save's rollback deleted the strip. The downloader had already recorded `SUCCESS`
-- **Fix:** the index now uses `ComicIdentifier.getDirectoryName()`, the same directory as the strips. Failed saves are recorded as `STORAGE_ERROR`
-- **After deploying:**
-  1. On the host, delete `comic_1177918400/` and `comic_62159896/` under `/var/lib/docker/volumes/comics_comicdata/_data`
-  2. Backfill 2026-01-10 onward for both comics
+- Since 2026-09-22 about six gocomics comics have failed every day with HTTP 429. It's rate limiting across the whole source, not per-comic blocking
+- #318 added 429 retries with backoff (`downloader.sources.gocomics.retry.*`) and moved the User-Agent to Chrome 154
+- Check the next 07:30 `ComicDownloadJob` run for `Rate limited (HTTP 429)` warnings and whether the retries succeed. If they don't, lower `downloader.sources.gocomics.throttle.*` or spread the run out
+- 429s are recorded as `COMIC_UNAVAILABLE`, which hides them among real "no strip today" days. Give them their own status (e.g. `RATE_LIMITED`)
+- Optional: advertise and decode `zstd` like real Chrome (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
+- Priority: High
 
-### Fix startup catch-up jobs blocking readiness
+## Backfill Mother Goose & Grimm and Sherman's Lagoon
 
-- **Problem:** `StartupJobRunner.onApplicationReady()` runs missed daily jobs synchronously on `main`. Readiness (`ACCEPTING_TRAFFIC`) isn't published until they finish, so `/actuator/health` returns 503 `OUT_OF_SERVICE`. On dev (2.4.7 deploy, 2026-09-24) a gocomics backfill kept it unhealthy for many minutes
-- **Risk:** `prod-run.sh` rolls back if the container isn't healthy within 180s. Any prod restart after a daily job's scheduled time, on a day it hasn't run yet, will trigger a catch-up and roll back the deploy. This can block shipping the 429 fix below
-- **Fix:** launch catch-up jobs asynchronously (e.g. on the batch `TaskExecutor`), keeping their order if they depend on each other. Add a test that `onApplicationReady` returns without waiting
-- **Also check:** whether `hasJobRunToday` decides "today" in UTC or `batch.timezone`
+- The save bug is fixed (#322), and the 139 strips per comic that dev had were copied to prod
+- Still missing: 2026-01-10 to about 2026-02-10, plus any other days dev didn't have
+- Run a backfill from 2026-01-10 for both comics once 2.4.8 is on prod. Delete any `comic_*` folders the old version recreated in the cache root first
+- Priority: High
 
-### Verify the gocomics 429 fix in prod
+## Fix comic mutations dropping fields
 
-- **Background:** since 2026-09-22, six gocomics comics have failed daily with HTTP 429. It's source-wide rate limiting, not per-comic blocking. #318 added 429 retry with source-wide backoff (`downloader.sources.gocomics.retry.*`) and a Chrome 154 User-Agent
-- **After deploying:** check the 07:30 `ComicDownloadJob` logs for `Rate limited (HTTP 429)` warnings and whether the retries succeed. If not, lower `downloader.sources.gocomics.throttle.*` or spread the run out
-- **Follow-up:** 429s are recorded as `COMIC_UNAVAILABLE`, which hides them among genuine "no strip today" results. Give them their own status (e.g. `RATE_LIMITED`)
-- **Optional:** advertise and decode `zstd` like real Chrome (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
+- `updateComic` and `createComic` in `ComicResolver` ignore `publicationDays` and `active` from their inputs, so changes to them are silently lost
+- Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
+- For now, prod config changes mean stopping the API and editing `comics.json` by hand
+- Add resolver tests that each input field reaches the saved `ComicItem`
+- Priority: Medium
 
-## Medium
+## Fix prod deploy script quirks
 
-### Fix comic mutations dropping fields
+- `current_ref()` in `utils/prod-run.sh` takes the tag from after the last `:` of the image name. For a digest-pinned image that's the digest, so the plan output and audit log show the wrong version. Rollback still works. Fix: strip `@digest` first
+- In `prod-build-and-run.sh` the staging `ssh`/`scp` calls eat stdin, so `echo y | …` never reaches the `Continue?` prompt and the script exits without saying why. Use `ssh -n` there, and print a message when `read` gets no input
+- Priority: Low
 
-- `createComic` and `updateComic` in `ComicResolver` ignore `publicationDays` and `active` from their inputs
-- Neither input accepts `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
-- As a result, prod config changes have to be made by stopping the API and editing `comics.json`
-- Add resolver tests showing every input field reaches the saved `ComicItem`
+## Forgot Password Flow
 
-### Alert when a comic stops getting new strips
+- Wire up `requestPasswordReset` mutation in `comic-hub/src/app/(auth)/forgot-password/page.tsx`
+- Currently the form submission is a no-op that immediately shows the success view
+- Priority: Low
 
-- Alert when a comic has no new strip file on disk for N days, whatever its retrieval status says. The Mother Goose & Grimm bug went unnoticed for 8 months because the status said `SUCCESS`
-- Channel: webhook, email, or in-app
+## Configure SMTP for Password Reset
 
-### Replace the Selenium GoComics IT and remove Selenium
+- Mail is disabled by default (`spring.mail.host` is empty, `management.health.mail.enabled=false`)
+- To enable in production, set the following environment variables:
+  - `MAIL_HOST` — SMTP server hostname (e.g., `smtp.gmail.com`)
+  - `MAIL_PORT` — SMTP port (default: 587)
+  - `MAIL_USERNAME` — SMTP auth username
+  - `MAIL_PASSWORD` — SMTP auth password
+  - `MAIL_FROM` — sender address (default: `noreply@comiccacher.local`)
+  - `MAIL_RESET_URL_BASE` — password reset page URL (default: `http://localhost:3000/reset-password`)
+- Once SMTP is configured, re-enable the health indicator: `management.health.mail.enabled=true`
+- Config file: `comic-api/src/main/resources/application.properties`
+- Priority: Low (blocked until Forgot Password Flow is wired up)
 
-- `GoComicsIntegrationIT` tests the legacy Selenium `GoComics` class, which prod has never used. Prod uses the Jsoup `GoComicsDownloaderStrategy`, and the prod image has no Chrome. So the IT can pass while prod is broken, and fail while prod is fine
-- **Steps:**
-  1. Rewrite the IT against `GoComicsDownloaderStrategy`, paced through `SourceThrottleService` with only a few fetches
-  2. Delete `GoComics` (plus anything in `DailyComic` / `IDailyComic` only it uses) and drop `selenium-java` / `webdrivermanager` from the root, `comic-api`, and `comic-engine` `build.gradle`
-  3. Delete the unused `comic-common/.../infrastructure/web/DefaultTrustManager.java`
-  4. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
+## Performance Improvements
 
-### Sources configuration screen
+### API Response Caching
 
-- Admin UI listing each source (GoComics, ComicsKingdom, Freefall) with:
-  - Enabled/disabled toggle
-  - Comics configured vs. available (e.g. "8 of 400")
-  - Max days back to fetch
-  - Runtime throttle and retry settings (already configurable in `application.properties` under `downloader.sources.<source>.throttle.*` / `retry.*`, but changes need a redeploy)
-  - Buttons: refresh the list of available comics from the source; run backfill for one comic or the whole source
-- Comic lists: GoComics https://www.gocomics.com/comics/a-to-z, ComicsKingdom https://www.comicskingdom.com/guide
+- `Cache-Control: max-age` is already set on the image endpoints (`ComicController`: avatar 1 day, strip 7 days)
+- Remaining: add `ETag` / `Last-Modified` so clients can revalidate cheaply once max-age expires
+- Target: Comic image endpoints (/api/v1/comics/{id}/avatar, /api/v1/comics/{id}/strip/\*)
+- Priority: Low
 
-### Promote comics from dev to prod
+### Enable Gradle Configuration Cache
 
-- A job that copies strips dev already downloaded into prod storage so prod doesn't download them again
-- Modes: last 7 days (default, recurring) and all-time (one-off)
-- Only copy what prod is missing; never overwrite. Bring the metadata along (sidecar JSON, image hashes, date indexes) using atomic writes (`docs/storage/overview.md`)
-- **Open questions:** transport (shared NFS mount, API pull, or rsync over SSH), which instance runs it, and whether it can be scoped per comic
+- Consider enabling the Gradle configuration cache to speed up builds
+- Reference: https://docs.gradle.org/current/userguide/configuration_cache_enabling.html
+- Priority: Low
 
-### Respect robots.txt
+### Revisit OpenAPI/Swagger Generation
 
-- Fetch and honor `robots.txt` disallow rules for GoComics and ComicsKingdom before scraping (as dosage does)
-
-### Clean up deprecated Java APIs
-
-- Jsoup `.first()` / `.last()` → `.selectFirst()` or streams: 7 uses in `GoComics`, `GoComicsDownloaderStrategy`, `ComicsKingdom`, `ComicsKingdomDownloaderStrategy` (some go away with the Selenium removal)
-- Guava `@VisibleForTesting`: 3 uses (`RetrievalStatusRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`)
-- Guava `Files.getNameWithoutExtension()` → plain Java: 2 uses (`ImageUtils`, `FileSystemComicStorageFacade`)
-
-### Decide whether to keep OpenAPI/Swagger
-
-- Only 2 REST endpoints remain (image streaming); everything else is GraphQL
-- If it isn't worth keeping, remove springdoc, the openApi task config in `comic-api/build.gradle`, `generate-openapi-docs.sh`, and `openapi.json`
-
-## Low
-
-### Finish forgot password
-
-- `comic-hub/src/app/(auth)/forgot-password/page.tsx` doesn't call `requestPasswordReset`; it just shows the success view
-- It also needs SMTP, which is off by default. Set `MAIL_HOST`, `MAIL_PORT` (587), `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, and `MAIL_RESET_URL_BASE`, then set `management.health.mail.enabled=true` (`comic-api/src/main/resources/application.properties`)
-
-### Fix deploy script quirks
-
-- **Wrong rollback baseline label:** `current_ref()` in `utils/prod-run.sh` takes the text after the last `:` of `.Config.Image`, which for a digest-pinned image is the digest hex. Rollback still works, but the plan output and audit log are wrong. Fix: `ref="${config_image%%@*}"; tag="${ref##*:}"`
-- **Piped confirmation swallowed:** in `prod-build-and-run.sh`, earlier `ssh`/`scp` calls consume stdin, so `echo y | …` never reaches `Continue?`, and the script exits silently. Fix: `ssh -n` on the staging call, and print a message when `read` gets no input
-- **Dev deploy fails from Podman:** `dev-build-and-run.sh` uses `docker --context portainer`, which Podman's `docker` shim can't use. Run the deploy commands over `ssh` like `prod-run.sh` does
-
-### Add ETag / Last-Modified to image endpoints
-
-- `/api/v1/comics/{id}/avatar` and `/strip/*` already send `Cache-Control: max-age` (1 day / 7 days). Add `ETag` or `Last-Modified` so clients can revalidate cheaply once it expires
-
-### Move cache-root JSON files into a `data/` folder
-
-- The cache root holds ~9 loose JSON files (`comics.json`, `users.json`, `retrieval-status.json`, etc.; see `docs/storage/overview.md`). Move them into `data/`, update the code paths, and migrate existing prod/dev storage
+- With the move to GraphQL, only 2 REST endpoints remain (binary image streaming)
+- Evaluate whether the openapi-gradle-plugin, `comic-api/generate-openapi-docs.sh`, and `openapi.json` are still worth maintaining
+- If not needed, remove the springdoc dependency, openApi task config, and related tasks from comic-api/build.gradle
+- Priority: Medium
 
 ### Upgrade to Java 25
 
-- Do the deprecated-API cleanup first
-- Update the Gradle toolchain, CI, and Docker base images
+- Upgrade from Java 21 to Java 25
+- Update `build.gradle` Java toolchain/sourceCompatibility settings
+- Update CI/CD pipeline and Docker base images
+- Clean up deprecated API usage first (see below)
+- Priority: Low
 
-### Enable the Gradle configuration cache
+### Clean Up Deprecated Java APIs
 
-- https://docs.gradle.org/current/userguide/configuration_cache_enabling.html
+- **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — in `GoComics`, `GoComicsDownloaderStrategy`, `ComicsKingdom`, `ComicsKingdomDownloaderStrategy` in comic-engine (the `GoComics` ones go away with the Selenium removal)
+- **Guava `@VisibleForTesting` → remove or replace** — 3 instances (`RetrievalStatusRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`)
+- **Guava `Files.getNameWithoutExtension()` → plain Java** — 2 instances (`ImageUtils`, `FileSystemComicStorageFacade`)
+- Priority: Medium (do before Java 25 upgrade)
 
-## Ideas
+### Move the Cache-Root JSON Files into a Data Folder
 
-- **CBZ/PDF export:** export a date range of strips for offline reading (images are already on disk)
-- **OPDS feed:** serve comics to reader apps like Panels, Chunky, and KOReader (Kavita and Komga do this)
-- **More sources:**
-  - [XKCD](https://xkcd.com/archive/) (indexed)
-  - [The Web Comic Factory](http://www.thewebcomicfactory.com/)
-  - [Kevin and Kell](https://www.kevinandkell.com/archive/)
-  - [Questionable Content](https://www.questionablecontent.net/QCR/archive.php)
-  - [Penny Arcade](https://www.penny-arcade.com/comic)
-  - [Sinfest](https://www.sinfest.net)
+- The cache root (`/comics`) has about nine loose JSON files: `comics.json`, `users.json`, `retrieval-status.json` and so on (see `docs/storage/overview.md`)
+- Move them into a `data/` folder, update the code paths, and migrate the existing prod and dev storage
+- Priority: Low
+
+### Replace the Selenium GoComics IT and Remove Selenium
+
+- `GoComicsIntegrationIT` tests the legacy Selenium `GoComics` class, which prod has never used. Prod downloads through the Jsoup `GoComicsDownloaderStrategy`, and the prod image has no Chrome
+- So the IT can pass while prod is broken, and fail while prod is fine (`downloadAdamAtHomeFiveDaysAgo` fails on master today)
+- Steps:
+  1. Rewrite `GoComicsIntegrationIT` to exercise `GoComicsDownloaderStrategy` against the live site, paced through `SourceThrottleService` and with a small number of fetches
+  2. Delete the legacy `GoComics` class (and whatever in `DailyComic`/`IDailyComic` only it needs), and drop `selenium-java` / `webdrivermanager` from the root, `comic-api` and `comic-engine` `build.gradle`
+  3. Delete `comic-common/.../infrastructure/web/DefaultTrustManager.java`, which nothing references
+  4. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
+- Priority: Medium
+
+## Feature Ideas
+
+### Sources Configuration Screen
+
+- Admin UI to add/remove comics and configure source-specific settings (e.g., scraping frequency, date range)
+- Name of Source, Enabled/Disabled toggle, # of configured comics from source (if Applicable)
+- Should also cover the per-source throttle and retry settings, which today live in `application.properties` and need a redeploy to change
+- For Example:
+  - GoComics
+    - Fetch list from https://www.gocomics.com/comics/a-to-z
+    - Max days back to fetch: 14 (days)
+    - I've got 8 of 400 comics configured
+      - Add a button to force re-fetching the list of available comics from the source
+      - Add a button to Run Comics-Backfill on an individual comic or source
+  - ComicsKingdom
+    - Fetch list from https://www.comicskingdom.com/guide
+    - Max days back to fetch: 30 (days)
+    - I've got 5 of 200 comics configured
+- Priority: Medium
+
+### Download Failure Notifications
+
+- Alert when a comic hasn't had a new strip on disk for N days
+- Base it on the files, not the retrieval status: the Mother Goose & Grimm bug went unnoticed for eight months because the status said `SUCCESS`
+- Could be webhook, email, or in-app notification
+- Priority: Medium
+
+### Promote Comics from Dev to Prod
+
+- Add a job that "promotes" strips the dev instance already downloaded into the prod instance's storage, so prod doesn't have to download them a second time
+- Two sweep modes:
+  - **Last 7 days**: the default, suited to a recurring run
+  - **All-time**: a one-off full sweep across every date dev has
+- Only copy strips prod is missing. Never overwrite existing prod files
+- Bring the related metadata along (sidecar JSON, image hashes, date indexes) so duplicate detection and indexes stay consistent. Use atomic writes (see `docs/storage/overview.md`)
+- Open questions: how files move (shared NFS mount, API pull, or scp over ssh), which instance runs the job, and whether it can be scoped per comic
+- Priority: Medium
+
+### Respect robots.txt
+
+- Check and honor `robots.txt` rules from GoComics and ComicsKingdom before scraping
+- Good-citizen behavior that aligns with the copyright notice in the README
+- dosage implements this — set a `User-Agent` and respect disallow rules
+- Priority: Medium
+
+### CBZ/PDF Export
+
+- Export a date range of strips as CBZ or PDF for offline reading
+- Natural extension of existing image storage — images are already on disk
+- Priority: Low
+
+### OPDS Feed
+
+- Serve comics via the OPDS protocol for external reader apps (Panels, Chunky, KOReader)
+- Kavita and Komga both support this
+- Priority: Low
+
+# Additional Source Ideas
+
+- **XKCD** — https://xkcd.com/archive/
+  - Indexed
+- **The Web Comic Factory** — http://www.thewebcomicfactory.com/
+- **Kevin and Kell** — https://www.kevinandkell.com/archive/
+- **Questionable Content** — https://www.questionablecontent.net/QCR/archive.php
+- **Penny Arcade** — https://www.penny-arcade.com/comic
+- **Sinfest** — https://www.sinfest.net
+- Priority: Low
