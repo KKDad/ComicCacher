@@ -24,9 +24,9 @@
 
 ### API Response Caching
 
-- Add HTTP caching headers to backend API endpoints (Cache-Control, ETag)
+- `Cache-Control: max-age` is already set on the image endpoints (`ComicController`: avatar 1 day, strip 7 days)
+- Remaining: add `ETag` / `Last-Modified` so clients can revalidate cheaply once max-age expires
 - Target: Comic image endpoints (/api/v1/comics/{id}/avatar, /api/v1/comics/{id}/strip/\*)
-- Expected benefit: Reduce redundant network requests, improve load times for repeat visits
 - Priority: Medium
 
 ### Enable Gradle Configuration Cache
@@ -52,11 +52,9 @@
 
 ### Clean Up Deprecated Java APIs
 
-Audit complete. Remaining items (JJWT builder migration done):
-
-- **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — 8 instances across `GoComics`, `GoComicsDownloaderStrategy`, `ComicsKingdom`, `ComicsKingdomDownloaderStrategy` in comic-engine
-- **Guava `@VisibleForTesting` → remove or replace** — 3 instances (`ComicBackfillService`, `DailyJobScheduler`, `SchedulerHealthCheck`)
-- **Guava `Files.getNameWithoutExtension()` → plain Java** — 1 instance in `ImageUtils`
+- **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — 7 instances across `GoComics`, `GoComicsDownloaderStrategy`, `ComicsKingdom`, `ComicsKingdomDownloaderStrategy` in comic-engine
+- **Guava `@VisibleForTesting` → remove or replace** — 3 instances (`RetrievalStatusRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`)
+- **Guava `Files.getNameWithoutExtension()` → plain Java** — 2 instances (`ImageUtils`, `FileSystemComicStorageFacade`)
 - Priority: Medium (do before Java 25 upgrade)
 
 ### Consolidate Root JSON Files into a Data Folder
@@ -74,13 +72,6 @@ Audit complete. Remaining items (JJWT builder migration done):
 - Priority: High (will significantly reduce test execution time and resource usage)
 
 ## Feature Ideas
-
-### Reading Progress Tracking
-
-- Per-user "mark as read" state with continue-where-you-left-off and unread count badges
-- Multi-user auth already exists — add per-user read state to the preference/user model
-- Every competitor with a UI has this (Kavita, Komga, OpenComic)
-- Priority: Medium-High
 
 ### CBZ/PDF Export
 
@@ -103,12 +94,6 @@ Audit complete. Remaining items (JJWT builder migration done):
 - dosage implements this — set a `User-Agent` and respect disallow rules
 - Priority: Medium
 
-### Random Strip Button
-
-- Pick a random date within the available range for a given comic
-- Fun daily discovery feature — trivial to implement
-- Priority: Low (easy win)
-
 ### Download Failure Notifications
 
 - Alert when a comic fails to download for N consecutive days
@@ -117,8 +102,8 @@ Audit complete. Remaining items (JJWT builder migration done):
 
 ### Configurable Scraping Rate Limits
 
-- Expose delay configuration for respectful scraping
-- Currently hardcoded — make configurable per source
+- Per-source request delay (`downloader.sources.<source>.throttle.*`) and 429 retry/backoff (`downloader.sources.<source>.retry.*`) are already configurable in `application.properties`
+- Remaining: expose them at runtime (e.g. in the Sources Configuration Screen) instead of requiring a redeploy
 - Priority: Low
 
 ### Sources Configuration Screen
@@ -169,11 +154,10 @@ Audit complete. Remaining items (JJWT builder migration done):
 - Add resolver tests that each input field reaches the saved `ComicItem`
 - Priority: Medium
 
-## Add throttling and backoff for gocomics
+## Verify the gocomics 429 fix in prod
 
-- gocomics is rate-limiting prod (HTTP 429). Since 2026-09-22, six comics fail every day: Frank-And-Ernest, Luann, Mother Goose & Grimm, Pickles, ScaryGary, Sherman's Lagoon. The other ~29 gocomics comics download fine
-- The 429s show up in the 06:00 `ComicDownloadJob` (7 comics got a 429 on 2026-09-24; the 2026-09-23 run logged 15 lines mentioning 429)
-- Throttle requests to gocomics (a delay between comics, or a limit on concurrent requests) and retry a 429 with exponential backoff, honouring `Retry-After` if it's sent
-- Consider spreading downloads over a longer window instead of fetching every comic at once
-- Related: "Configurable Scraping Rate Limits" under Feature Ideas
-- Priority: High (comics stay missing until this is fixed or the limit relaxes)
+- Since 2026-09-22 six gocomics comics have failed every day with HTTP 429: Frank-And-Ernest, Luann, Mother Goose & Grimm, Pickles, ScaryGary, Sherman's Lagoon
+- `fix/gocomics-429` added 429 retries with source-wide backoff (`downloader.sources.gocomics.retry.*`) and moved the User-Agent to Chrome 154 with matching client hints
+- After deploy, check the 06:00 `ComicDownloadJob` logs for `Rate limited (HTTP 429)` warnings. If the same six still get a 429 on every attempt, they're blocked outright rather than rate-limited (next suspect: the JDK's TLS fingerprint)
+- Optional: advertise and decode `zstd` like real Chrome (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
+- Priority: High

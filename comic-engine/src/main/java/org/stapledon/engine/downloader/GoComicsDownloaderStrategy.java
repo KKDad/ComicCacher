@@ -4,6 +4,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.brotli.dec.BrotliInputStream;
 import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -13,6 +14,9 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.infrastructure.web.InspectorService;
@@ -29,6 +33,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
 
     private static final int TIMEOUT = 5 * 1000;
     private static final String SOURCE_IDENTIFIER = "gocomics";
+    private static final Pattern CHROME_MAJOR_VERSION = Pattern.compile("Chrome/(\\d+)\\.");
 
     /**
      * Creates a new GoComics downloader strategy.
@@ -98,20 +103,34 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
     }
 
     // GoComics serves Content-Encoding: br; Jsoup only auto-decompresses gzip, so we wrap the body stream manually when needed.
+    // Headers mirror a desktop Chrome navigation. Chrome also advertises zstd, which we can't decode, so it is left out of Accept-Encoding.
     private Document fetchDocument(String url) throws IOException {
-        Connection.Response response = Jsoup.connect(url)
-                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+        String userAgent = userAgentService.getUserAgent(SOURCE_IDENTIFIER);
+        Connection connection = Jsoup.connect(url)
+                .userAgent(userAgent)
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
                 .header("Accept-Language", "en-US,en;q=0.9")
-                .header("Accept-Encoding", "br, gzip, deflate")
+                .header("Accept-Encoding", "gzip, deflate, br");
+        chromeClientHints(userAgent).ifPresent(hint -> connection
+                .header("Sec-Ch-Ua", hint)
+                .header("Sec-Ch-Ua-Mobile", "?0")
+                .header("Sec-Ch-Ua-Platform", "\"Windows\""));
+        Connection.Response response = connection
                 .header("Sec-Fetch-Dest", "document")
                 .header("Sec-Fetch-Mode", "navigate")
                 .header("Sec-Fetch-Site", "none")
                 .header("Sec-Fetch-User", "?1")
                 .header("Upgrade-Insecure-Requests", "1")
-                .header("DNT", "1")
                 .timeout(TIMEOUT)
+                .ignoreHttpErrors(true)
                 .execute();
+
+        if (response.statusCode() == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
+            throw RateLimitedException.of(url, response.header("Retry-After"));
+        }
+        if (response.statusCode() >= 400) {
+            throw new HttpStatusException("HTTP error fetching URL", response.statusCode(), url);
+        }
 
         InputStream stream = response.bodyStream();
         if ("br".equalsIgnoreCase(response.header("Content-Encoding"))) {
@@ -120,6 +139,22 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         try (InputStream body = stream) {
             return Jsoup.parse(body, response.charset(), response.url().toExternalForm());
         }
+    }
+
+    /**
+     * Builds the {@code Sec-Ch-Ua} value real Chrome would send alongside {@code userAgent}, so the client hints never disagree with the UA string.
+     * Empty when the UA isn't a Chrome UA (e.g. a Firefox per-source override), since other browsers don't send client hints.
+     */
+    static Optional<String> chromeClientHints(String userAgent) {
+        if (userAgent == null) {
+            return Optional.empty();
+        }
+        Matcher m = CHROME_MAJOR_VERSION.matcher(userAgent);
+        if (!m.find()) {
+            return Optional.empty();
+        }
+        String major = m.group(1);
+        return Optional.of(String.format("\"Chromium\";v=\"%1$s\", \"Google Chrome\";v=\"%1$s\", \"Not?A_Brand\";v=\"99\"", major));
     }
 
     /**

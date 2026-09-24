@@ -33,7 +33,7 @@ Every comic strip site is the same story: autoplay ads, pop-ups, newsletter moda
 
 | Source | Comics | Scraping Method |
 |--------|--------|-----------------|
-| **[GoComics](https://www.gocomics.com)** | 300+ strips | Selenium WebDriver |
+| **[GoComics](https://www.gocomics.com)** | 300+ strips | Jsoup HTML parsing (throttled, 429 backoff) |
 | **[ComicsKingdom](https://comicskingdom.com)** | 100+ strips | Jsoup HTML parsing |
 
 ## How It Works
@@ -50,7 +50,7 @@ Every comic strip site is the same story: autoplay ads, pop-ups, newsletter moda
 |-------|------|
 | **Backend** | Java 21, Spring Boot 4, Spring Batch, Caffeine Cache |
 | **API** | GraphQL + REST, Springdoc OpenAPI, JWT (JJWT) |
-| **Scraping** | Jsoup (ComicsKingdom), Selenium (GoComics) |
+| **Scraping** | Jsoup (GoComics, ComicsKingdom, Freefall) |
 | **Image Pipeline** | TwelveMonkeys ImageIO, perceptual hashing, 3-layer validation |
 | **Frontend** | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4, TanStack Query v5 |
 | **Infra** | Docker |

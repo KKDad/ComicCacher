@@ -49,7 +49,7 @@ Download engine, filesystem storage, image validation, and Spring Batch job infr
 | Area | Key Classes |
 |------|-------------|
 | Download strategies | `ComicDownloaderStrategy` (interface), `DailyComicDownloaderStrategy`, `IndexedComicDownloaderStrategy`, `AbstractComicDownloaderStrategy`, `AbstractDailyDownloaderStrategy`, `AbstractIndexedDownloaderStrategy`, `GoComicsDownloaderStrategy`, `ComicsKingdomDownloaderStrategy`, `FreefallDownloaderStrategy` |
-| Legacy downloaders | `IDailyComic` (interface), `DailyComic`, `GoComics` (Selenium-based), `ComicsKingdom` (Jsoup-based) |
+| Legacy downloaders | `IDailyComic` (interface), `DailyComic`, `GoComics` (Selenium-based, integration tests only), `ComicsKingdom` (Jsoup-based) |
 | Facades | `DownloaderFacade` / `ComicDownloaderFacade`, `ManagementFacade` / `ComicManagementFacade`, `ComicStorageFacade` / `FileSystemComicStorageFacade` |
 | Storage | `FileSystemComicStorageFacade`, `ComicIndexService`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository` |
 | Validation | `ImageValidationService`, `DuplicateImageValidationService`, `DuplicateHashCacheService`, `ImageHasherFactory` |
