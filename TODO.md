@@ -63,22 +63,18 @@
 - Update all code references to the new paths
 - Priority: Medium
 
-### Reduce WebDriver Startup Overhead in GoComics IT Tests
+### Replace the Selenium GoComics IT and Remove Selenium
 
-- **Root cause:** `GoComicsIntegrationIT.getSubject()` creates a new `GoComics` instance per test method, each of which lazy-inits a new `ChromeDriver` process (~2-5s startup cost per test)
-- **Where:** `GoComicsIntegrationIT` (lines 52-59) uses try-with-resources per test; `GoComics.initializeWebDriver()` (lines 67-95) does `WebDriverManager.chromedriver().setup()` + `new ChromeDriver()`
-- **Fix is at the test level**, not in `GoComics` itself — it already has lazy init and `AutoCloseable`
-- **Approach:** Share a single `GoComics` instance (or at least a shared `WebDriver`) across the test class via `@BeforeAll`/`@AfterAll`, resetting comic-specific state between tests instead of recreating the browser
-- Priority: High (will significantly reduce test execution time and resource usage)
-
-### Move Selenium Out of the Production Jar
-
-- Production doesn't use Selenium: every source downloads through the Jsoup `*DownloaderStrategy` classes, and the prod image has no Chrome. Only `GoComicsIntegrationIT` drives the legacy Selenium `GoComics` class
-- Yet `selenium-java` and `webdrivermanager` are `implementation` dependencies in both `comic-api/build.gradle` and `comic-engine/build.gradle`, so they ship in the prod jar
-- Move them to test/integration-test scope, which means relocating the legacy `GoComics` (and whatever in `DailyComic`/`IDailyComic` only it needs) out of `comic-engine/src/main`, or deleting it along with `GoComicsIntegrationIT`
-- Also delete `comic-common/.../infrastructure/web/DefaultTrustManager.java`, which nothing references
-- Benefit: smaller jar and image, fewer dependencies to patch
-- Priority: Low
+- `GoComicsIntegrationIT` tests the wrong code: it drives the legacy Selenium `GoComics` class, which production has never used. Prod has downloaded through the Jsoup `GoComicsDownloaderStrategy` since 2025-05, and the prod image has no Chrome
+- So the IT can pass while prod is broken (it would have missed the Brotli bug fixed in #270) and fail while prod is fine (`downloadAdamAtHomeFiveDaysAgo` fails on master today)
+- History: Selenium was added to the already-unused legacy class in `b981c4d` ("Cleanup", 2025-10-21) and never wired into the strategy. Prod data shows Jsoup gets past bot detection (92–95% success in 2026-08/09; failures are 429 rate limits, which a browser would hit too)
+- Steps:
+  1. Rewrite `GoComicsIntegrationIT` to exercise `GoComicsDownloaderStrategy` against the live site, paced through `SourceThrottleService` and with a small number of fetches
+  2. Delete the legacy `GoComics` class (and whatever in `DailyComic`/`IDailyComic` only it needs), and drop `selenium-java` / `webdrivermanager` from `comic-api/build.gradle` and `comic-engine/build.gradle`
+  3. Delete `comic-common/.../infrastructure/web/DefaultTrustManager.java`, which nothing references
+  4. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
+- Benefits: the IT validates the real prod path, and the jar/image lose dependencies nothing uses. This also replaces the old "reduce WebDriver startup overhead in the IT" item, since there'd be no WebDriver left
+- Priority: Medium
 
 ## Feature Ideas
 
@@ -154,6 +150,16 @@
 - **Sinfest** — https://www.sinfest.net
 - Priority: Medium
 
+## Fix strips silently not saved for Mother Goose & Grimm and Sherman's Lagoon
+
+- Prod has recorded these as `SUCCESS` in `retrieval-status.json` every day through 2026-09-21 (20+ distinct images, distinct sizes), but the newest strip on disk is `2026-01-09.png` for both. No 2026 strips after that exist anywhere under `/comics`
+- Other gocomics comics save fine (e.g. Pickles through 2026-09-21), and `image-hashes.json` in `MotherGoose&Grimm/2026/` was still being updated on 2026-09-21, so the download and hash steps run but the image file never lands
+- Suspect: these are the only comics whose names have special characters (`&`, `'`), so the save path probably mishandles them. Unconfirmed; start in `FileSystemComicStorageFacade.saveComicStripWithResult()`
+- Also: the download is recorded as a success even though nothing was written. Make a failed save show up as a failure
+- Related: 429 failures are recorded as `COMIC_UNAVAILABLE`, which hides them among real "no strip today" cases. Give them their own status (e.g. `RATE_LIMITED`)
+- After the fix, backfill 2026-01-10 onward for both comics
+- Priority: High (silent data loss since January)
+
 ## Fix comic mutations dropping fields
 
 - `updateComic` accepts `publicationDays` and `active` in `UpdateComicInput`, but the resolver never copies them, so the change is silently ignored (`comic-api/src/main/java/org/stapledon/api/resolver/ComicResolver.java`, `updateComic`)
@@ -167,6 +173,7 @@
 
 - Since 2026-09-22 six gocomics comics have failed every day with HTTP 429: Frank-And-Ernest, Luann, Mother Goose & Grimm, Pickles, ScaryGary, Sherman's Lagoon
 - `fix/gocomics-429` added 429 retries with source-wide backoff (`downloader.sources.gocomics.retry.*`) and moved the User-Agent to Chrome 154 with matching client hints
-- After deploy, check the `ComicDownloadJob` logs (prod runs it at 07:30, `BATCH_COMICDOWNLOAD_CRON`) for `Rate limited (HTTP 429)` warnings. If the same six still get a 429 on every attempt, they're blocked outright rather than rate-limited (next suspect: the JDK's TLS fingerprint)
+- Prod data says this is rate limiting, not per-comic blocking: on 2026-09-22/23, 15 comics got 429 (Boondocks, Ziggy, WizardOfId and others), and most succeeded again on 09-24
+- After deploy, check the `ComicDownloadJob` logs (prod runs it at 07:30, `BATCH_COMICDOWNLOAD_CRON`) for `Rate limited (HTTP 429)` warnings and see whether the retries succeed. If they don't, lower the request rate further (`downloader.sources.gocomics.throttle.*`) or spread the run out
 - Optional: advertise and decode `zstd` like real Chrome (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
 - Priority: High
