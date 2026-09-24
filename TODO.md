@@ -160,6 +160,16 @@
 - After the fix, backfill 2026-01-10 onward for both comics
 - Priority: High (silent data loss since January)
 
+## Fix startup catch-up jobs blocking readiness (OUT_OF_SERVICE)
+
+- Seen deploying 2.4.7 to dev (2026-09-24): the container stayed `unhealthy` for many minutes, with `/actuator/health` returning 503 `OUT_OF_SERVICE`, even though the app started in ~6s
+- Cause: `StartupJobRunner.onApplicationReady()` (`@EventListener(ApplicationReadyEvent.class)`) calls `DailyJobScheduler.runMissedExecutionIfNeeded()` for each daily job, and runs any job that missed its scheduled time today **synchronously on the `main` thread**. Spring Boot only publishes `ReadinessState.ACCEPTING_TRAFFIC` after the ready listeners return, so readiness stays down until every catch-up job finishes
+- On dev this was `AvatarBackfillJob` then `ComicBackfillJob`, backfilling gocomics strips back to April at 8–20s per request (the gocomics throttle), so it takes a long time. The 429 backoff added in 2.4.7 can make it longer still
+- Risk for prod: `prod-run.sh` rolls back if the container isn't `healthy` within 180s. Any prod restart after a daily job's scheduled time on a day it hasn't run yet (e.g. a deploy early in the day, or a restart after a failed run) would start a catch-up and roll the deploy back
+- Fix: run the catch-up jobs asynchronously (e.g. on the batch `TaskExecutor`, or launch them without waiting for completion) so the ready listener returns immediately. Keep them in order if they depend on each other. Add a test that `onApplicationReady` returns without waiting for the jobs
+- Also check which timezone `hasJobRunToday` uses to decide what counts as "today" (UTC vs `batch.timezone`)
+- Priority: Medium
+
 ## Fix comic mutations dropping fields
 
 - `updateComic` accepts `publicationDays` and `active` in `UpdateComicInput`, but the resolver never copies them, so the change is silently ignored (`comic-api/src/main/java/org/stapledon/api/resolver/ComicResolver.java`, `updateComic`)
