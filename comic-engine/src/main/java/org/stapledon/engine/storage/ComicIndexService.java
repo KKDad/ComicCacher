@@ -22,10 +22,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.regex.Pattern;
 
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicDateIndex;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.util.NfsFileOperations;
 
 /**
@@ -41,12 +41,6 @@ public class ComicIndexService {
 
     /** Synology NAS metadata directories - excluded from scanning */
     private static final String SYNOLOGY_METADATA_PREFIX = "@";
-
-    /**
-     * Pattern to validate comic names - alphanumeric, spaces, hyphens, underscores
-     * only
-     */
-    private static final Pattern VALID_COMIC_NAME = Pattern.compile("^[a-zA-Z0-9 _-]+$");
 
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
@@ -66,28 +60,11 @@ public class ComicIndexService {
     private final Map<Integer, ReadWriteLock> comicLocks = new ConcurrentHashMap<>();
 
     /**
-     * Sanitizes a comic name to prevent path traversal attacks. Removes any
-     * characters that could be used for directory traversal.
-     *
-     * @param comicName the comic name to sanitize
-     * @param comicId   fallback ID if name is invalid
-     * @return sanitized name safe for filesystem operations
+     * Resolves the comic's directory name. Must match the directory the storage facade
+     * writes strips to, so both use {@link ComicIdentifier#getDirectoryName()}.
      */
     private String sanitizeComicName(String comicName, int comicId) {
-        if (comicName == null || comicName.trim().isEmpty()) {
-            return "comic_" + comicId;
-        }
-
-        String trimmed = comicName.trim();
-
-        // Validate against allowed pattern
-        if (!VALID_COMIC_NAME.matcher(trimmed).matches()) {
-            log.warn("Comic name '{}' contains invalid characters, using fallback", comicName);
-            return "comic_" + comicId;
-        }
-
-        // Remove spaces for directory name
-        return trimmed.replace(" ", "");
+        return new ComicIdentifier(comicId, comicName).getDirectoryName();
     }
 
     /**

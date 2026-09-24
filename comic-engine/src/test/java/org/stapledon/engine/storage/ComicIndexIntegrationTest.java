@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.DuplicateValidationResult;
@@ -194,5 +196,22 @@ class ComicIndexIntegrationTest {
         // After restart, when we save a new file, the index should be updated
         // with BOTH the old date (from disk scan/rebuild) and the new date.
         assertThat(newStorageFacade.getNextDateWithComic(COMIC, date1)).hasValue(date2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Mother Goose & Grimm", "Sherman's Lagoon"})
+    void saveComicStrip_withSpecialCharactersInName_shouldKeepFileAndIndexTogether(String name) {
+        ComicIdentifier comic = new ComicIdentifier(2, name);
+        LocalDate first = LocalDate.of(2026, 9, 20);
+        LocalDate second = LocalDate.of(2026, 9, 21);
+
+        assertThat(storageFacade.saveComicStrip(comic, first, new byte[] { 0x01 })).isTrue();
+        assertThat(storageFacade.saveComicStrip(comic, second, new byte[] { 0x02 })).isTrue();
+
+        assertThat(storageFacade.comicStripExists(comic, first)).isTrue();
+        assertThat(storageFacade.comicStripExists(comic, second)).isTrue();
+        assertThat(storageFacade.getNewestDateWithComic(comic)).hasValue(second);
+        assertThat(new File(tempDir.toFile(), comic.getDirectoryName() + "/available-dates.json")).exists();
+        assertThat(new File(tempDir.toFile(), "comic_2")).doesNotExist();
     }
 }

@@ -32,6 +32,7 @@ import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.SaveResult;
 import org.stapledon.common.dto.StripLoaderKey;
 import org.stapledon.common.dto.StripLoaderKey.DateStripKey;
 import org.stapledon.common.dto.StripLoaderKey.BoundaryStripKey;
@@ -177,16 +178,11 @@ public class ComicManagementFacade implements ManagementFacade {
 
             if (result.isSuccessful()) {
                 // Save the comic to storage
-                boolean saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), request.getDate(),
-                        result.getImageData());
-
-                if (saved) {
+                if (saveDownloadResult(comic, request.getDate(), result)) {
                     // Update comic item metadata
                     ComicItem updated = comic.toBuilder().newest(request.getDate()).build();
 
                     updateComic(comic.getId(), updated);
-                } else {
-                    log.error("Failed to save comic {} to storage", comic.getName());
                 }
             } else {
                 log.error("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
@@ -532,9 +528,7 @@ public class ComicManagementFacade implements ManagementFacade {
                     sourceResults.add(result);
 
                     if (result.isSuccessful()) {
-                        boolean saved = storageFacade.saveComicStrip(ComicIdentifier.from(comic), date, result.getImageData());
-                        if (!saved) {
-                            log.error("Failed to save comic {} to storage", comic.getName());
+                        if (!saveDownloadResult(comic, date, result)) {
                             continue;
                         }
                         ComicItem updated = comic.toBuilder().newest(date).build();
@@ -661,7 +655,8 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     /**
-     * Saves a download result to storage via ComicSaveData DTO.
+     * Saves a download result to storage via ComicSaveData DTO. The downloader has already
+     * recorded the retrieval as SUCCESS, so a failed save replaces that record with STORAGE_ERROR.
      */
     private boolean saveDownloadResult(ComicItem comic, LocalDate date, ComicDownloadResult result) {
         ComicSaveData saveData = ComicSaveData.builder()
@@ -670,13 +665,16 @@ public class ComicManagementFacade implements ManagementFacade {
                 .stripNumber(result.getStripNumber())
                 .build();
 
-        boolean saved = storageFacade.saveComicStripWithResult(
-                ComicIdentifier.from(comic), date, saveData).isSuccess();
-
-        if (!saved) {
-            log.error("Failed to save comic {} to storage", comic.getName());
+        SaveResult saveResult = storageFacade.saveComicStripWithResult(ComicIdentifier.from(comic), date, saveData);
+        if (saveResult.isSuccess()) {
+            return true;
         }
-        return saved;
+
+        log.error("Failed to save comic {} to storage: {}", comic.getName(), saveResult.getMessage());
+        retrievalStatusService.recordRetrievalResult(ComicRetrievalRecord.failure(
+                comic.getName(), date, comic.getSource(), ComicRetrievalStatus.STORAGE_ERROR,
+                "Save failed: " + saveResult.getMessage(), 0, null));
+        return false;
     }
 
     /**
