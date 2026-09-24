@@ -168,3 +168,12 @@ Audit complete. Remaining items (JJWT builder migration done):
 - Impact: prod config changes (e.g. FoxTrot → Sunday only, adding Freefall, 2026-09-24) had to be made by editing `comics.json` with the API stopped
 - Add resolver tests that each input field reaches the saved `ComicItem`
 - Priority: Medium
+
+## Add throttling and backoff for gocomics
+
+- gocomics is rate-limiting prod (HTTP 429). Since 2026-09-22, six comics fail every day: Frank-And-Ernest, Luann, Mother Goose & Grimm, Pickles, ScaryGary, Sherman's Lagoon. The other ~29 gocomics comics download fine
+- The 429s show up in the 06:00 `ComicDownloadJob` (7 comics got a 429 on 2026-09-24; the 2026-09-23 run logged 15 lines mentioning 429)
+- Throttle requests to gocomics (a delay between comics, or a limit on concurrent requests) and retry a 429 with exponential backoff, honouring `Retry-After` if it's sent
+- Consider spreading downloads over a longer window instead of fetching every comic at once
+- Related: "Configurable Scraping Rate Limits" under Feature Ideas
+- Priority: High (comics stay missing until this is fixed or the limit relaxes)
