@@ -93,6 +93,7 @@ Ordered by priority, most urgent first within each tier.
 
 - **Wrong rollback baseline label:** `current_ref()` in `utils/prod-run.sh` takes the text after the last `:` of `.Config.Image`, which for a digest-pinned image is the digest hex. Rollback still works, but the plan output and audit log are wrong. Fix: `ref="${config_image%%@*}"; tag="${ref##*:}"`
 - **Piped confirmation swallowed:** in `prod-build-and-run.sh`, earlier `ssh`/`scp` calls consume stdin, so `echo y | …` never reaches `Continue?`, and the script exits silently. Fix: `ssh -n` on the staging call, and print a message when `read` gets no input
+- **Dev deploy fails from Podman:** `dev-build-and-run.sh` uses `docker --context portainer`, which Podman's `docker` shim can't use. Run the deploy commands over `ssh` like `prod-run.sh` does
 
 ### Add ETag / Last-Modified to image endpoints
 
