@@ -7,11 +7,11 @@ Ordered by priority, most urgent first within each tier.
 ### Fix strips silently not saved (Mother Goose & Grimm, Sherman's Lagoon)
 
 - **Problem:** since 2026-01-09 no strip files have been written for either comic, yet `retrieval-status.json` records `SUCCESS` daily (through 2026-09-21). Downloads and `image-hashes.json` updates happen; the image file never lands
-- **Suspect:** they're the only comics with special characters in their names (`&`, `'`). Start in `FileSystemComicStorageFacade.saveComicStripWithResult()`
-- **Fix:**
-  1. Make the save work for these names
-  2. Record a failed save as a failure, not `SUCCESS`
-  3. Backfill 2026-01-10 onward for both comics
+- **Cause (confirmed on prod, fixed):** #190 (2026-01-09) made `ComicIndexService` put the date index for names outside `[a-zA-Z0-9 _-]` in `comic_{id}/`. On prod those directories (`comic_1177918400`, `comic_62159896`) are `root:root 755`, but the container runs as `comicapi` (uid 1001). So each day the strip was written, its hash recorded, the index write failed, and the save's rollback deleted the strip. The downloader had already recorded `SUCCESS`
+- **Fix:** the index now uses `ComicIdentifier.getDirectoryName()`, the same directory as the strips. Failed saves are recorded as `STORAGE_ERROR`
+- **After deploying:**
+  1. On the host, delete `comic_1177918400/` and `comic_62159896/` under `/var/lib/docker/volumes/comics_comicdata/_data`
+  2. Backfill 2026-01-10 onward for both comics
 
 ### Fix startup catch-up jobs blocking readiness
 

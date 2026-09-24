@@ -19,14 +19,20 @@ public record ComicIdentifier(int id, String name) {
     }
 
     /**
-     * Returns the sanitized directory name for this comic.
-     * Falls back to "comic_{id}" if name is null or empty.
+     * Returns the sanitized directory name for this comic: the name with spaces removed.
+     * Falls back to "comic_{id}" if the name is empty or could escape the cache root
+     * (path separators, "." or "..").
      */
     public String getDirectoryName() {
-        if (name == null || name.trim().isEmpty()) {
+        if (name == null) {
             return "comic_" + id;
         }
-        return name.replace(" ", "");
+        String dirName = name.replace(" ", "");
+        if (dirName.isEmpty() || dirName.equals(".") || dirName.equals("..")
+                || dirName.contains("/") || dirName.contains("\\")) {
+            return "comic_" + id;
+        }
+        return dirName;
     }
 
     /**

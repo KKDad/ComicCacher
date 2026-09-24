@@ -3,6 +3,7 @@ package org.stapledon.engine.management;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -30,10 +32,15 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicNavigationResult;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.ImageDto;
+import org.stapledon.common.dto.SaveResult;
 import org.stapledon.common.infrastructure.config.ExecutionTracker;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
+import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.Bootstrap;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.downloader.DownloaderFacade;
@@ -49,6 +56,9 @@ class ComicManagementFacadeTest {
 
     @Mock
     private DownloaderFacade downloaderFacade;
+
+    @Mock
+    private RetrievalStatusService retrievalStatusService;
 
     @Mock
     private ExecutionTracker taskExecutionTracker;
@@ -91,8 +101,7 @@ class ComicManagementFacadeTest {
 
         // Initialize facade with a synchronous executor so per-source threading runs inline in tests
         facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class),
-                Runnable::run);
+                retrievalStatusService, Runnable::run);
     }
 
     // Test removed - on-demand downloads via CacheMissEvent no longer supported
@@ -374,7 +383,8 @@ class ComicManagementFacadeTest {
         when(downloaderFacade.downloadComic(any())).thenReturn(result);
 
         // Mock: save succeeds
-        when(storageFacade.saveComicStrip(any(ComicIdentifier.class), any(), any())).thenReturn(true);
+        when(storageFacade.saveComicStripWithResult(any(ComicIdentifier.class), any(), any(ComicSaveData.class)))
+                .thenReturn(SaveResult.saved());
 
         // Act
         boolean updated = facade.updateAllComics();
@@ -383,7 +393,8 @@ class ComicManagementFacadeTest {
         assertThat(updated).isTrue();
         verify(storageFacade).comicStripExists(any(ComicIdentifier.class), any());
         verify(downloaderFacade).downloadComic(any());
-        verify(storageFacade).saveComicStrip(any(ComicIdentifier.class), any(), eq(testImageData));
+        verify(storageFacade).saveComicStripWithResult(any(ComicIdentifier.class), any(),
+                argThat((ComicSaveData data) -> data.imageData() == testImageData));
         verify(configFacade).saveComicConfig(any());
     }
 
@@ -394,7 +405,8 @@ class ComicManagementFacadeTest {
                 .successful(true).imageData(testImageData).build();
 
         when(downloaderFacade.downloadComic(any())).thenReturn(result);
-        when(storageFacade.saveComicStrip(any(ComicIdentifier.class), any(), any())).thenReturn(true);
+        when(storageFacade.saveComicStripWithResult(any(ComicIdentifier.class), any(), any(ComicSaveData.class)))
+                .thenReturn(SaveResult.saved());
 
         // Act
         boolean updated = facade.updateComic(1);
@@ -402,8 +414,31 @@ class ComicManagementFacadeTest {
         // Assert
         assertThat(updated).isTrue();
         verify(downloaderFacade).downloadComic(any());
-        verify(storageFacade).saveComicStrip(any(ComicIdentifier.class), any(), eq(testImageData));
+        verify(storageFacade).saveComicStripWithResult(any(ComicIdentifier.class), any(),
+                argThat((ComicSaveData data) -> data.imageData() == testImageData));
         verify(configFacade).saveComicConfig(any());
+    }
+
+    @Test
+    void shouldRecordStorageErrorWhenSaveFails() {
+        // Arrange
+        ComicDownloadResult result = ComicDownloadResult.builder().request(ComicDownloadRequest.builder().build())
+                .successful(true).imageData(testImageData).build();
+
+        when(downloaderFacade.downloadComic(any())).thenReturn(result);
+        when(storageFacade.saveComicStripWithResult(any(ComicIdentifier.class), any(), any(ComicSaveData.class)))
+                .thenReturn(SaveResult.ioError("disk full"));
+
+        // Act
+        facade.updateComic(1);
+
+        // Assert - the downloader's SUCCESS record is replaced with STORAGE_ERROR, and newest is not advanced
+        ArgumentCaptor<ComicRetrievalRecord> record = ArgumentCaptor.forClass(ComicRetrievalRecord.class);
+        verify(retrievalStatusService).recordRetrievalResult(record.capture());
+        assertThat(record.getValue().getComicName()).isEqualTo("Test Comic");
+        assertThat(record.getValue().getStatus()).isEqualTo(ComicRetrievalStatus.STORAGE_ERROR);
+        assertThat(record.getValue().getErrorMessage()).contains("disk full");
+        verify(configFacade, never()).saveComicConfig(any());
     }
 
     // Moved the reconcile test to a separate test class to avoid
