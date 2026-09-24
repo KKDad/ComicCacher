@@ -159,3 +159,12 @@ Audit complete. Remaining items (JJWT builder migration done):
 - **Penny Arcade** — https://www.penny-arcade.com/comic
 - **Sinfest** — https://www.sinfest.net
 - Priority: Medium
+
+## Fix comic mutations dropping fields
+
+- `updateComic` accepts `publicationDays` and `active` in `UpdateComicInput`, but the resolver never copies them, so the change is silently ignored (`comic-api/src/main/java/org/stapledon/api/resolver/ComicResolver.java`, `updateComic`)
+- `createComic` also ignores `publicationDays` and `active` from `CreateComicInput`
+- Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
+- Impact: prod config changes (e.g. FoxTrot → Sunday only, adding Freefall, 2026-09-24) had to be made by editing `comics.json` with the API stopped
+- Add resolver tests that each input field reaches the saved `ComicItem`
+- Priority: Medium
