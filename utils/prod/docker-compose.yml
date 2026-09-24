@@ -20,10 +20,8 @@ services:
     ports:
       - 8888:8888
     environment:
-      - CACHE_DIRECTORY=/comics
-      - COMICS_CACHE_LOCATION=/comics
-      # Batch schedule = dev's defaults + 90 min, so dev and prod never hit
-      # gocomics at the same time from the same public IP (HTTP 429). Toronto time.
+      - "CACHE_DIRECTORY=/comics"
+      - "COMICS_CACHE_LOCATION=/comics"
       - "BATCH_COMICDOWNLOAD_CRON=0 30 7 * * ?"
       - "BATCH_METRICSARCHIVE_CRON=0 0 8 * * ?"
       - "BATCH_IMAGEBACKFILL_CRON=0 0 8 * * ?"
