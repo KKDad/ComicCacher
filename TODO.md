@@ -138,6 +138,17 @@ Audit complete. Remaining items (JJWT builder migration done):
     - I've got 5 of 200 comics configured
 - Priority: High
 
+### Promote Comics from Dev to Prod
+
+- Add a job that "promotes" strips the dev instance already downloaded into the prod instance's storage, so prod doesn't have to download them a second time
+- Two sweep modes:
+  - **Last 7 days**: the default, suited to a recurring run
+  - **All-time**: a one-off full sweep across every date dev has
+- Only copy strips prod is missing. Never overwrite existing prod files
+- Bring the related metadata along (comic JSON, image hashes, analysis results) so duplicate detection and indexes stay consistent. Use atomic writes (see `docs/storage/overview.md`)
+- Open questions: how files move (shared NFS mount, API pull, or rsync over the Docker context), which instance runs the job, and whether it can be scoped per comic
+- Priority: Medium
+
 # Additional Source Ideas
 
 - **XKCD** — https://xkcd.com/archive/
