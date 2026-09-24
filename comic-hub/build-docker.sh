@@ -31,7 +31,8 @@ cd "${SCRIPT_DIR}"
 
 FULL_IMAGE="${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_TAG}"
 echo "--- Building ${FULL_IMAGE} ---"
-docker build -f Dockerfile . --tag "${FULL_IMAGE}" --platform linux/amd64
+# Podman defaults to OCI format, which drops HEALTHCHECK; prod-run.sh needs it to report "healthy". Docker ignores this variable.
+BUILDAH_FORMAT=docker docker build -f Dockerfile . --tag "${FULL_IMAGE}" --platform linux/amd64
 
 # 2. Push to the registry using Skopeo
 # We use the direct port 5000 to bypass Cloudflare's 100MB chunked upload limit.
