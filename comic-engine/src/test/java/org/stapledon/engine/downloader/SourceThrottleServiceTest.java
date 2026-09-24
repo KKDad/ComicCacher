@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -108,6 +110,59 @@ class SourceThrottleServiceTest {
                     .isGreaterThanOrEqualTo(min - 20)
                     .isLessThan(max + 200);
         }
+    }
+
+    @Test
+    void maxAttempts_whenSourceHasNoRetryConfig_isOne() {
+        SourceThrottleService service = new SourceThrottleService(propertiesFor("test", 0, 0));
+
+        assertThat(service.maxAttempts("test")).isEqualTo(1);
+        assertThat(service.maxAttempts("unknown")).isEqualTo(1);
+    }
+
+    @Test
+    void maxAttempts_returnsConfiguredValue() {
+        SourceThrottleService service = new SourceThrottleService(retryPropertiesFor("test", 4, 100, 1000));
+
+        assertThat(service.maxAttempts("test")).isEqualTo(4);
+    }
+
+    @Test
+    void backOff_withoutRetryAfter_doublesPerAttemptWithinJitter() {
+        SourceThrottleService service = new SourceThrottleService(retryPropertiesFor("test", 4, 100, 0));
+
+        assertThat(service.backOff("test", 1, Optional.empty()).toMillis()).isBetween(100L, 120L);
+        assertThat(service.backOff("test", 2, Optional.empty()).toMillis()).isBetween(200L, 240L);
+        assertThat(service.backOff("test", 3, Optional.empty()).toMillis()).isBetween(400L, 480L);
+    }
+
+    @Test
+    void backOff_prefersRetryAfter_cappedAtMax() {
+        SourceThrottleService service = new SourceThrottleService(retryPropertiesFor("test", 4, 100, 1000));
+
+        assertThat(service.backOff("test", 1, Optional.of(Duration.ofMillis(500)))).isEqualTo(Duration.ofMillis(500));
+        assertThat(service.backOff("test", 1, Optional.of(Duration.ofSeconds(60)))).isEqualTo(Duration.ofMillis(1000));
+    }
+
+    @Test
+    void backOff_delaysNextAwaitForWholeSource_evenWhenUnthrottled() throws Exception {
+        SourceThrottleService service = new SourceThrottleService(retryPropertiesFor("test", 2, 0, 0));
+
+        service.backOff("test", 1, Optional.of(Duration.ofMillis(200)));
+        long elapsed = timeMs(() -> service.await("test"));
+
+        assertThat(elapsed).isGreaterThanOrEqualTo(180);
+        assertThat(elapsed).isLessThan(500);
+    }
+
+    private static DownloaderProperties retryPropertiesFor(String source, int maxAttempts, long initialMs, long maxMs) {
+        DownloaderProperties.Source cfg = DownloaderProperties.Source.builder()
+                .throttle(DownloaderProperties.Throttle.builder().build())
+                .retry(DownloaderProperties.Retry.builder().maxAttempts(maxAttempts).initialBackoffMs(initialMs).maxBackoffMs(maxMs).build())
+                .build();
+        return DownloaderProperties.builder()
+                .sources(Map.of(source, cfg))
+                .build();
     }
 
     private static DownloaderProperties propertiesFor(String source, long minMs, long maxMs) {

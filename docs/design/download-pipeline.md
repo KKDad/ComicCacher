@@ -25,9 +25,10 @@ sequenceDiagram
         DF->>DF: Resolve strategy from request.source
         DF->>Strategy: downloadComic(request)
 
-        Note over Strategy: AbstractComicDownloaderStrategy.downloadComic()
+        Note over Strategy: AbstractDailyDownloaderStrategy.downloadComic()
+        Strategy->>Strategy: SourceThrottleService.await(source)
         Strategy->>Strategy: downloadComicImage(request) [abstract]
-        Strategy->>Source: HTTP GET (Jsoup / Selenium)
+        Strategy->>Source: HTTP GET (Jsoup)
         Source-->>Strategy: HTML page
         Strategy->>Strategy: Extract image URL (og:image meta tag)
         Strategy->>Source: HTTP GET image URL
@@ -115,7 +116,7 @@ Avatar downloads follow the same pattern through `downloadAvatar()` / `downloadA
 
 ## Legacy Downloaders
 
-The `IDailyComic` / `DailyComic` hierarchy predates the strategy pattern. `GoComics` uses Selenium WebDriver for JavaScript-rendered pages. `ComicsKingdom` uses Jsoup. These are being replaced by the `*DownloaderStrategy` classes.
+The `IDailyComic` / `DailyComic` hierarchy predates the strategy pattern. `GoComics` uses Selenium WebDriver for JavaScript-rendered pages. `ComicsKingdom` uses Jsoup. These are being replaced by the `*DownloaderStrategy` classes, which production already uses for every source (all via Jsoup); the legacy `GoComics` class is only exercised by `GoComicsIntegrationIT`.
 
 ## Storage Pipeline
 

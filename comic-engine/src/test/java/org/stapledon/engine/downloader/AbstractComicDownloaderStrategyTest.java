@@ -1,14 +1,25 @@
 package org.stapledon.engine.downloader;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -269,6 +280,108 @@ class AbstractComicDownloaderStrategyTest {
     }
 
     @Test
+    void shouldRetryAfterRateLimitAndSucceed() {
+        ComicDownloadRequest request = testRequest();
+        ImageValidationResult validationResult = ImageValidationResult.success(
+                ImageFormat.PNG, 800, 600, validImageData.length);
+
+        strategy.setMockImageData(validImageData);
+        strategy.setRateLimitsRemaining(2);
+        when(throttleService.maxAttempts("test-source")).thenReturn(3);
+        when(throttleService.backOff(eq("test-source"), anyInt(), any())).thenReturn(Duration.ofSeconds(7));
+        when(imageValidationService.validate(validImageData)).thenReturn(validationResult);
+
+        ComicDownloadResult result = strategy.downloadComic(request);
+
+        assertThat(result.isSuccessful()).isTrue();
+        assertThat(strategy.getDownloadCalls()).isEqualTo(3);
+        verify(throttleService).backOff("test-source", 1, Optional.of(Duration.ofSeconds(7)));
+        verify(throttleService).backOff("test-source", 2, Optional.of(Duration.ofSeconds(7)));
+        verify(throttleService, times(3)).await("test-source");
+    }
+
+    @Test
+    void shouldFailWithRateLimitMessageWhenAttemptsExhausted() {
+        ComicDownloadRequest request = testRequest();
+
+        strategy.setRateLimitsRemaining(10);
+        when(throttleService.maxAttempts("test-source")).thenReturn(2);
+        when(throttleService.backOff(eq("test-source"), anyInt(), any())).thenReturn(Duration.ofSeconds(7));
+
+        ComicDownloadResult result = strategy.downloadComic(request);
+
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage()).contains("Rate limited (HTTP 429)", "after 2 attempt(s)");
+        assertThat(strategy.getDownloadCalls()).isEqualTo(2);
+        verify(throttleService, times(1)).backOff(eq("test-source"), anyInt(), any());
+    }
+
+    @Test
+    void shouldNotRetryWhenRetriesDisabled() {
+        ComicDownloadRequest request = testRequest();
+
+        strategy.setRateLimitsRemaining(1);
+        when(throttleService.maxAttempts("test-source")).thenReturn(1);
+
+        ComicDownloadResult result = strategy.downloadComic(request);
+
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getErrorMessage()).contains("Rate limited (HTTP 429)");
+        assertThat(strategy.getDownloadCalls()).isEqualTo(1);
+        verify(throttleService, never()).backOff(any(), anyInt(), any());
+    }
+
+    @Test
+    void downloadImageData_whenServerReturns429_throwsRateLimitedWithRetryAfter() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/img", exchange -> {
+            exchange.getResponseHeaders().add("Retry-After", "42");
+            exchange.sendResponseHeaders(429, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/img";
+
+            assertThatThrownBy(() -> strategy.downloadImageData(url))
+                    .isInstanceOfSatisfying(RateLimitedException.class, e -> {
+                        assertThat(e.getUrl()).isEqualTo(url);
+                        assertThat(e.getRetryAfter()).contains(Duration.ofSeconds(42));
+                    });
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void downloadImageData_whenServerReturns200_returnsBody() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/img", exchange -> {
+            exchange.sendResponseHeaders(200, validImageData.length);
+            exchange.getResponseBody().write(validImageData);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/img";
+
+            assertThat(strategy.downloadImageData(url)).isEqualTo(validImageData);
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static ComicDownloadRequest testRequest() {
+        return ComicDownloadRequest.builder()
+                .comicId(1)
+                .comicName("Test Comic")
+                .source("test-source")
+                .sourceIdentifier("test-comic")
+                .date(LocalDate.now())
+                .build();
+    }
+
+    @Test
     void shouldReturnCorrectSource() {
         // Assert
         assertThat(strategy.getSource()).isEqualTo("test-source");
@@ -281,6 +394,8 @@ class AbstractComicDownloaderStrategyTest {
         private byte[] mockImageData;
         private byte[] mockAvatarData;
         private boolean throwException;
+        private int rateLimitsRemaining;
+        private int downloadCalls;
 
         public TestComicDownloaderStrategy(String source,
                 InspectorService webInspector,
@@ -302,8 +417,21 @@ class AbstractComicDownloaderStrategyTest {
             this.throwException = throwException;
         }
 
+        public void setRateLimitsRemaining(int rateLimitsRemaining) {
+            this.rateLimitsRemaining = rateLimitsRemaining;
+        }
+
+        public int getDownloadCalls() {
+            return downloadCalls;
+        }
+
         @Override
         protected byte[] downloadComicImage(ComicDownloadRequest request) throws Exception {
+            downloadCalls++;
+            if (rateLimitsRemaining > 0) {
+                rateLimitsRemaining--;
+                throw RateLimitedException.of("https://example.com/strip", "7");
+            }
             if (throwException) {
                 throw new Exception("Test exception");
             }

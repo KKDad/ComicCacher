@@ -104,14 +104,21 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     /**
      * Downloads binary image data from a URL with proper timeout and User-Agent.
      * All strategies should use this instead of raw {@code URL.openStream()}.
+     *
+     * @throws RateLimitedException if the server answers HTTP 429
      */
     protected byte[] downloadImageData(String imageUrl) throws IOException {
         HttpURLConnection conn = (HttpURLConnection) URI.create(imageUrl).toURL().openConnection();
         conn.setRequestProperty("User-Agent", userAgentService.getUserAgent(source));
         conn.setConnectTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
         conn.setReadTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
-        try (InputStream in = conn.getInputStream()) {
-            return in.readAllBytes();
+        try {
+            if (conn.getResponseCode() == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
+                throw RateLimitedException.of(imageUrl, conn.getHeaderField("Retry-After"));
+            }
+            try (InputStream in = conn.getInputStream()) {
+                return in.readAllBytes();
+            }
         } finally {
             conn.disconnect();
         }

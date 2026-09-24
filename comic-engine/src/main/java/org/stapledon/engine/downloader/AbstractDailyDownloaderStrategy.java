@@ -3,6 +3,8 @@ package org.stapledon.engine.downloader;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
+
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageValidationResult;
@@ -12,7 +14,7 @@ import org.stapledon.common.service.ValidationService;
 
 /**
  * Abstract base class for date-based comic downloader strategies.
- * Provides the downloadComic template method that handles validation and error handling.
+ * Provides the downloadComic template method that handles throttling, HTTP 429 retries, validation and error handling.
  */
 @Slf4j
 @ToString(callSuper = true)
@@ -36,11 +38,29 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
     @Override
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
         try {
-            throttleService.await(getSource());
-            log.info("Downloading comic {} for date {} from {}",
-                    request.getComicName(), request.getDate(), getSource());
-
-            byte[] imageData = downloadComicImage(request);
+            byte[] imageData;
+            int maxAttempts = throttleService.maxAttempts(getSource());
+            for (int attempt = 1; ; attempt++) {
+                throttleService.await(getSource());
+                log.info("Downloading comic {} for date {} from {}",
+                        request.getComicName(), request.getDate(), getSource());
+                try {
+                    imageData = downloadComicImage(request);
+                    break;
+                } catch (RateLimitedException e) {
+                    if (attempt >= maxAttempts) {
+                        String errorMessage = String.format("Rate limited (HTTP 429) downloading comic %s for date %s after %d attempt(s): %s",
+                                request.getComicName(), request.getDate(), attempt, e.getMessage());
+                        log.error(errorMessage);
+                        return ComicDownloadResult.failure(request, errorMessage);
+                    }
+                    Duration backoff = throttleService.backOff(getSource(), attempt, e.getRetryAfter());
+                    log.warn("Rate limited (HTTP 429) on {} for {} {}, attempt {}/{}; Retry-After={}; backing off {}s",
+                            e.getUrl(), request.getComicName(), request.getDate(), attempt, maxAttempts,
+                            e.getRetryAfter().map(d -> d.toSeconds() + "s").orElse("none"),
+                            backoff.toSeconds());
+                }
+            }
 
             if (imageData == null || imageData.length == 0) {
                 return ComicDownloadResult.failure(request,

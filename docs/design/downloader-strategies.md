@@ -113,15 +113,17 @@ The root abstract class providing shared infrastructure for all strategies:
 
 - **`downloadAvatar()`** — Template method: calls the abstract `downloadAvatarImage()`, validates the result, returns `Optional<byte[]>`.
 - **`validateImage()`** — Delegates to `ValidationService` for null/empty/decode/dimension checks.
-- **`downloadImageData(url)`** — HTTP GET with configurable timeout and User-Agent from `DownloaderConstants`.
+- **`downloadImageData(url)`** — HTTP GET with the timeout from `DownloaderConstants` and the source's User-Agent from `UserAgentService`. Throws `RateLimitedException` on HTTP 429.
 
 ### AbstractDailyDownloaderStrategy
 
 Template method for date-based downloads:
 
-1. Calls `downloadComicImage(request)` (abstract — implemented by each source strategy).
-2. Validates the image via `validateImage()`.
-3. Returns `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`.
+1. Waits on `SourceThrottleService.await(source)`.
+2. Calls `downloadComicImage(request)` (abstract — implemented by each source strategy).
+3. On `RateLimitedException` (HTTP 429), backs off and retries from step 1 until the source's `retry.max-attempts` is used up (see [Throttling and Rate Limits](#throttling-and-rate-limits)).
+4. Validates the image via `validateImage()`.
+5. Returns `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`.
 
 Subclasses only implement `downloadComicImage()` and `downloadAvatarImage()`.
 
@@ -138,6 +140,29 @@ Template method for strip-number-based downloads:
 3. Validates the image and builds a `ComicDownloadResult` with the discovered metadata.
 
 Subclasses only implement `fetchLatestStrip()`, `fetchStrip()`, and `downloadAvatarImage()`.
+
+## Throttling and Rate Limits
+
+All outbound requests are paced per source by `SourceThrottleService`, configured under `downloader.sources.<source>.*` in `application.properties` (bound to `DownloaderProperties`).
+
+| Property | Purpose |
+|----------|---------|
+| `throttle.min-delay-ms` / `throttle.max-delay-ms` | Random delay between consecutive requests to the source. `max-delay-ms=0` disables pacing. |
+| `retry.max-attempts` | Total attempts per daily download when the source answers HTTP 429. Unset or `1` means no retries. |
+| `retry.initial-backoff-ms` | Backoff after the first 429 when the server sends no `Retry-After`. Doubles per further attempt, plus up to 20% jitter. |
+| `retry.max-backoff-ms` | Cap on any single backoff, including one requested by `Retry-After`. `0` means no cap. |
+| `user-agent` | Per-source User-Agent override; otherwise `downloader.user-agent.default-value`. |
+
+**HTTP 429 handling:**
+
+1. `GoComicsDownloaderStrategy.fetchDocument()` and `downloadImageData()` turn a 429 into `RateLimitedException`, carrying the `Retry-After` value (delta-seconds or HTTP-date) when the server sends one.
+2. `AbstractDailyDownloaderStrategy` catches it and calls `SourceThrottleService.backOff(source, attempt, retryAfter)`. The backoff honours `Retry-After` when present, otherwise grows exponentially.
+3. `backOff()` pushes the **whole source's** next-allowed time forward, so other comics from the same source also wait rather than hitting the limit again.
+4. Each 429 is logged at WARN with the URL, attempt, `Retry-After` and backoff. When attempts run out the download fails with a `Rate limited (HTTP 429)` message.
+
+Only daily sources retry; indexed sources (Freefall) and avatar downloads still fail on the first 429.
+
+**Browser identity:** GoComics sits behind Cloudflare, so requests present as desktop Chrome. `downloader.user-agent.default-value` carries the Chrome UA, and `GoComicsDownloaderStrategy` derives matching `Sec-Ch-Ua` client hints from the Chrome major version in that UA (omitted for non-Chrome UAs). Keep the Chrome major version current ([Chromium Dash](https://chromiumdash.appspot.com/releases)); a stale browser version is a bot signal. The legacy UA constants (`UserAgentService.FALLBACK_USER_AGENT`, `DailyComic.USER_AGENT`, the rotation list in `GoComics`) should be bumped at the same time. `Accept-Encoding` omits `zstd`, since only gzip and Brotli are decoded.
 
 ## Strategy Dispatch
 

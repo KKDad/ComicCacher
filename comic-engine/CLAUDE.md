@@ -18,9 +18,11 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 ## Downloader Strategy Pattern
 
 - Daily-strip sources extend `AbstractDailyDownloaderStrategy`. Indexed/archive-walk sources extend `AbstractIndexedDownloaderStrategy`. New sources should extend one of these — never `AbstractComicDownloaderStrategy` directly unless implementing a fundamentally different access pattern.
-- GoComics requires Selenium (Cloudflare bot detection). ComicsKingdom and Freefall use Jsoup HTML parsing.
+- All production strategies (GoComics, ComicsKingdom, Freefall) use Jsoup. GoComics sits behind Cloudflare, so `GoComicsDownloaderStrategy` sends desktop-Chrome headers with `Sec-Ch-Ua` client hints derived from the configured UA. The Selenium-based legacy `GoComics` class is only used by `GoComicsIntegrationIT`.
 - Throttling is mandatory. Pace each request via `SourceThrottleService` using the `downloader.sources.<source>.throttle.min-delay-ms`/`max-delay-ms` properties. GoComics in particular needs aggressive jitter (8–20 s) to stay under Cloudflare's bot threshold.
-- The global `downloader.user-agent.default-value` applies unless `downloader.sources.<source>.user-agent` overrides it.
+- HTTP 429 handling: throw `RateLimitedException` (see `downloadImageData()` and `GoComicsDownloaderStrategy.fetchDocument()`). `AbstractDailyDownloaderStrategy` retries it via `SourceThrottleService.backOff()`, which honours `Retry-After` and pauses the whole source. Configure with `downloader.sources.<source>.retry.max-attempts` / `initial-backoff-ms` / `max-backoff-ms`; unset means no retries.
+- The global `downloader.user-agent.default-value` applies unless `downloader.sources.<source>.user-agent` overrides it. Keep its Chrome major version current, and bump the legacy UA constants (`UserAgentService.FALLBACK_USER_AGENT`, `DailyComic.USER_AGENT`, `GoComics` rotation list) at the same time.
+- Details: [@~/docs/design/downloader-strategies.md](../docs/design/downloader-strategies.md#throttling-and-rate-limits).
 
 ## Spring Batch 5 Conventions
 
