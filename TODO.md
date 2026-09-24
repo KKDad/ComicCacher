@@ -71,6 +71,15 @@
 - **Approach:** Share a single `GoComics` instance (or at least a shared `WebDriver`) across the test class via `@BeforeAll`/`@AfterAll`, resetting comic-specific state between tests instead of recreating the browser
 - Priority: High (will significantly reduce test execution time and resource usage)
 
+### Move Selenium Out of the Production Jar
+
+- Production doesn't use Selenium: every source downloads through the Jsoup `*DownloaderStrategy` classes, and the prod image has no Chrome. Only `GoComicsIntegrationIT` drives the legacy Selenium `GoComics` class
+- Yet `selenium-java` and `webdrivermanager` are `implementation` dependencies in both `comic-api/build.gradle` and `comic-engine/build.gradle`, so they ship in the prod jar
+- Move them to test/integration-test scope, which means relocating the legacy `GoComics` (and whatever in `DailyComic`/`IDailyComic` only it needs) out of `comic-engine/src/main`, or deleting it along with `GoComicsIntegrationIT`
+- Also delete `comic-common/.../infrastructure/web/DefaultTrustManager.java`, which nothing references
+- Benefit: smaller jar and image, fewer dependencies to patch
+- Priority: Low
+
 ## Feature Ideas
 
 ### CBZ/PDF Export
@@ -158,6 +167,6 @@
 
 - Since 2026-09-22 six gocomics comics have failed every day with HTTP 429: Frank-And-Ernest, Luann, Mother Goose & Grimm, Pickles, ScaryGary, Sherman's Lagoon
 - `fix/gocomics-429` added 429 retries with source-wide backoff (`downloader.sources.gocomics.retry.*`) and moved the User-Agent to Chrome 154 with matching client hints
-- After deploy, check the 06:00 `ComicDownloadJob` logs for `Rate limited (HTTP 429)` warnings. If the same six still get a 429 on every attempt, they're blocked outright rather than rate-limited (next suspect: the JDK's TLS fingerprint)
+- After deploy, check the `ComicDownloadJob` logs (prod runs it at 07:30, `BATCH_COMICDOWNLOAD_CRON`) for `Rate limited (HTTP 429)` warnings. If the same six still get a 429 on every attempt, they're blocked outright rather than rate-limited (next suspect: the JDK's TLS fingerprint)
 - Optional: advertise and decode `zstd` like real Chrome (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
 - Priority: High
