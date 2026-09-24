@@ -22,6 +22,14 @@ services:
     environment:
       - CACHE_DIRECTORY=/comics
       - COMICS_CACHE_LOCATION=/comics
+      # Batch schedule = dev's defaults + 90 min, so dev and prod never hit
+      # gocomics at the same time from the same public IP (HTTP 429). Toronto time.
+      - "BATCH_COMICDOWNLOAD_CRON=0 30 7 * * ?"
+      - "BATCH_METRICSARCHIVE_CRON=0 0 8 * * ?"
+      - "BATCH_IMAGEBACKFILL_CRON=0 0 8 * * ?"
+      - "BATCH_RECORDPURGE_CRON=0 15 8 * * ?"
+      - "BATCH_COMICBACKFILL_CRON=0 30 8 * * ?"
+      - "BATCH_AVATARBACKFILL_CRON=0 45 8 * * ?"
 
   frontend:
     image: registry.stapledon.ca/kkdad/comic-ui:${UI_TAG}
