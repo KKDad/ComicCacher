@@ -9,7 +9,7 @@
 # Steps:
 #   - Capture the running image of each container, by digest, as the rollback baseline
 #   - Compose project label on running containers must match COMPOSE_PROJECT
-#   - Operator confirmation prompt with current → target diff
+#   - Operator confirmation prompt with current -> target diff
 #   - Audit log appended to ~/.comiccacher-prod-deploy.log on this host
 #   - compose pull + up -d --no-deps for the changed services only
 #   - Polls Docker health status; on failure, rolls back to the baseline digests
@@ -189,12 +189,12 @@ echo ""
 printf " %-10s %-30s %s\n" "Service" "Current" "Target"
 printf " %-10s %-30s %s\n" "-------" "-------" "------"
 if [[ -n "$ARG_API_REF" ]]; then
-    printf " %-10s %-30s %s\n" "api" "${CURRENT_API_REF:-<none>}" "→ $ARG_API_REF"
+    printf " %-10s %-30s %s\n" "api" "${CURRENT_API_REF:-<none>}" "-> $ARG_API_REF"
 else
     printf " %-10s %-30s %s\n" "api" "${CURRENT_API_REF:-<none>}" "(unchanged)"
 fi
 if [[ -n "$ARG_UI_REF" ]]; then
-    printf " %-10s %-30s %s\n" "ui" "${CURRENT_UI_REF:-<none>}" "→ $ARG_UI_REF"
+    printf " %-10s %-30s %s\n" "ui" "${CURRENT_UI_REF:-<none>}" "-> $ARG_UI_REF"
 else
     printf " %-10s %-30s %s\n" "ui" "${CURRENT_UI_REF:-<none>}" "(unchanged)"
 fi
@@ -282,7 +282,7 @@ echo ""
 echo "--- Polling health (timeout ${HEALTH_TIMEOUT_SECS}s) ---"
 if wait_healthy "${CHANGED_SERVICES[@]}"; then
     echo ""
-    echo "✅ Deploy successful."
+    echo "Deploy successful."
     echo "   api: ${API_CONTAINER} @ ${EFFECTIVE_API_REF} (port 8888)"
     echo "   ui:  ${UI_CONTAINER} @ ${EFFECTIVE_UI_REF}  (port 8899)"
     echo ""
@@ -294,13 +294,13 @@ fi
 
 # --- Step 8: Auto-rollback ---
 echo ""
-echo "❌ Health check failed. Rolling back..."
-echo "   api: ${EFFECTIVE_API_REF} → ${CURRENT_API_REF}"
-echo "   ui:  ${EFFECTIVE_UI_REF} → ${CURRENT_UI_REF}"
+echo "Health check failed. Rolling back..."
+echo "   api: ${EFFECTIVE_API_REF} -> ${CURRENT_API_REF}"
+echo "   ui:  ${EFFECTIVE_UI_REF} -> ${CURRENT_UI_REF}"
 
 if [[ -z "$CURRENT_API_REF" || -z "$CURRENT_UI_REF" ]]; then
     echo ""
-    echo "🚨 MANUAL INTERVENTION REQUIRED — could not capture rollback baseline."
+    echo "MANUAL INTERVENTION REQUIRED: could not capture rollback baseline."
     echo "$TS ROLLBACK_FAILED reason=no-baseline" >> "$AUDIT_LOG"
     exit 2
 fi
@@ -308,13 +308,13 @@ fi
 if compose_apply "$CURRENT_API_REF" "$CURRENT_UI_REF" "${CHANGED_SERVICES[@]}" \
         && wait_healthy "${CHANGED_SERVICES[@]}"; then
     echo ""
-    echo "↩️  Rollback successful. Previous images restored."
+    echo "Rollback successful. Previous images restored."
     echo "   Note: the rollback reuses this compose file; restore the previous compose file too if it changed."
     echo "$TS ROLLBACK_OK from=api:${EFFECTIVE_API_REF},ui:${EFFECTIVE_UI_REF} to=api:${CURRENT_API_REF},ui:${CURRENT_UI_REF}" >> "$AUDIT_LOG"
     exit 1
 fi
 
 echo ""
-echo "🚨 MANUAL INTERVENTION REQUIRED — rollback also failed health check."
+echo "MANUAL INTERVENTION REQUIRED: rollback also failed health check."
 echo "$TS ROLLBACK_FAILED reason=unhealthy-after-rollback" >> "$AUDIT_LOG"
 exit 2

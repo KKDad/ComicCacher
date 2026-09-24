@@ -119,9 +119,9 @@ echo ""
 echo "--- Verifying images in registry ---"
 if [[ -n "$ARG_API_TAG" ]]; then
     verify_in_registry "$API_IMAGE" "$ARG_API_TAG"
-    echo "  ✓ ${API_IMAGE}:${ARG_API_TAG}"
+    echo "  ok: ${API_IMAGE}:${ARG_API_TAG}"
 fi
 if [[ -n "$ARG_UI_TAG" ]]; then
     verify_in_registry "$UI_IMAGE" "$ARG_UI_TAG"
-    echo "  ✓ ${UI_IMAGE}:${ARG_UI_TAG}"
+    echo "  ok: ${UI_IMAGE}:${ARG_UI_TAG}"
 fi
