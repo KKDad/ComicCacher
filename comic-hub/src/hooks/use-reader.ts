@@ -98,12 +98,13 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
 
   const queryClient = useQueryClient();
 
-  // If no date was given, fetch the comic's newest strips to find where to start
+  // If no date was given, fetch the comic to find its newest date. The window's last entry
+  // is the far-future centre itself (returned as unavailable), so read `newest` instead.
   const needsLatest = !chosenAnchor;
   const { data: latestData } = useGetStripWindowQuery(
     {
       comicId,
-      center: '9999-12-31', // Far future — BE clamps to newest
+      center: '9999-12-31',
       before: LATEST_SPAN,
       after: 0,
     },
@@ -112,7 +113,7 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
       staleTime: 5 * 60 * 1000,
     },
   );
-  const latestDate: string | undefined = latestData?.comic?.stripWindow.at(-1)?.date;
+  const latestDate: string | undefined = latestData?.comic?.newest ?? undefined;
   const anchorDate = chosenAnchor ?? latestDate;
   const currentDate = chosenDate ?? anchorDate;
 

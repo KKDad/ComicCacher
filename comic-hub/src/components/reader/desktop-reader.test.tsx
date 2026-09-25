@@ -338,6 +338,22 @@ describe('DesktopReader', () => {
       expect(reader.loadNewer).not.toHaveBeenCalled();
     });
 
+    it('waits for the view to reach the current strip before loading', () => {
+      // Opening on the newest strip: the first render is laid out from the top
+      const reader = createMockReader({ strips, currentIndex: 20, hasNewer: false });
+      virtual.rendered = range(0, 5);
+      const { rerender } = render(<DesktopReader reader={reader} />);
+
+      expect(reader.loadOlder).not.toHaveBeenCalled();
+
+      // The scroll to the current strip lands
+      virtual.rendered = range(16, 20);
+      rerender(<DesktopReader reader={reader} />);
+
+      expect(reader.loadOlder).not.toHaveBeenCalled();
+      expect(reader.loadNewer).not.toHaveBeenCalled();
+    });
+
     it('stops loading once the anchored page lands (no runaway loop)', () => {
       const reader = createMockReader({ strips, currentIndex: 2 });
       virtual.rendered = range(0, 5);

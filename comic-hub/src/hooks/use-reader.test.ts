@@ -24,10 +24,13 @@ vi.mock('@/lib/graphql-client', () => ({
       if (backend.gate) await backend.gate;
       const { center, before, after } = variables as { center: string; before: number; after: number };
       const { dates } = backend;
-      const idx = dates.indexOf(center);
-      const window = idx >= 0
-        ? dates.slice(Math.max(0, idx - before), idx + after + 1)
-        : [dates.at(-1)!]; // far-future centre: the backend clamps to the newest
+      // A centre date with no strip (e.g. the far-future one) comes back as an unavailable entry
+      const earlier = dates.filter((d) => d < center);
+      const window = [
+        ...earlier.slice(earlier.length - Math.min(before, earlier.length)),
+        center,
+        ...dates.filter((d) => d > center).slice(0, after),
+      ];
       return {
         comic: {
           id: 1,
@@ -35,13 +38,16 @@ vi.mock('@/lib/graphql-client', () => ({
           oldest: dates[0],
           newest: dates.at(-1),
           avatarUrl: null,
-          stripWindow: window.map((date) => ({
-            date,
-            available: true,
-            imageUrl: `https://example.com/${date}.png`,
-            width: 900,
-            height: 300,
-          })),
+          stripWindow: window.map((date) => {
+            const available = dates.includes(date);
+            return {
+              date,
+              available,
+              imageUrl: available ? `https://example.com/${date}.png` : null,
+              width: available ? 900 : null,
+              height: available ? 300 : null,
+            };
+          }),
         },
       };
     }
@@ -129,6 +135,8 @@ describe('useReader', () => {
       const { result } = await renderReader({ initialDate: undefined });
 
       expect(currentDate(result)).toBe('2026-03-31');
+      expect(result.current.strips.at(-1)?.date).toBe('2026-03-31');
+      expect(result.current.strips.every((s) => s.available)).toBe(true);
       expect(result.current.hasNewer).toBe(false);
       expect(result.current.hasOlder).toBe(true);
     });

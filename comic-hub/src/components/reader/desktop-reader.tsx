@@ -130,6 +130,9 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
   // when the first or last rendered strip is the edge of the list, one request at a time.
   // The anchoring above keeps the view still when older strips arrive, so the first
   // rendered strip moves away from the edge and this doesn't fire again.
+  // Nothing loads until the rendered range reaches the current strip: on open, the first
+  // render is laid out from the top before the scroll to the current strip lands, and
+  // loading older strips then would anchor the view on the wrong strip.
   const virtualItems = virtualizer.getVirtualItems();
   const firstRenderedIndex = virtualItems[0]?.index;
   const lastRenderedIndex = virtualItems.at(-1)?.index;
@@ -137,13 +140,14 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
   useEffect(() => {
     if (scrolledToDate.current === null || isFetchingPage) return;
     if (firstRenderedIndex === undefined || lastRenderedIndex === undefined) return;
+    if (currentIndex < firstRenderedIndex || currentIndex > lastRenderedIndex) return;
 
     if (firstRenderedIndex === 0 && hasOlder) {
       loadOlder();
     } else if (lastRenderedIndex >= strips.length - 1 && hasNewer) {
       loadNewer();
     }
-  }, [firstRenderedIndex, lastRenderedIndex, strips.length, hasOlder, hasNewer, isFetchingPage, loadOlder, loadNewer]);
+  }, [firstRenderedIndex, lastRenderedIndex, currentIndex, strips.length, hasOlder, hasNewer, isFetchingPage, loadOlder, loadNewer]);
 
   // Keyboard navigation
   useEffect(() => {
