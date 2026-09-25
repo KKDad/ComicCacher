@@ -46,19 +46,17 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
         String url = generateSiteURL(request);
         log.debug("Fetching {}", url);
 
-        Document doc = Jsoup.connect(url)
+        Document doc = getPage(Jsoup.connect(url)
                 .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
                 .header("DNT", "1")
                 .header("Accept", "image/webp,image/apng,image/*,*/*;q=0.8")
-                .timeout(TIMEOUT)
-                .get();
+                .timeout(TIMEOUT));
 
         Elements media = doc.select("meta");
         Elements imageElements = pickImages(media);
 
         if (imageElements == null || imageElements.isEmpty()) {
-            log.error("No images were selected from the media");
-            log.error("Site: {}", url);
+            log.warn("No strip image found in the page meta tags for {} on {} at {}", request.getComicName(), request.getDate(), url);
             webInspector.dumpMedia(media);
             return null;
         }
@@ -76,16 +74,15 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
                 sourceIdentifier != null ? sourceIdentifier : comicName.replace(' ', '-'));
         log.debug("Fetching avatar from {}", url);
 
-        Document doc = Jsoup.connect(url)
+        Document doc = getPage(Jsoup.connect(url)
                 .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER))
                 .header("DNT", "1")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml")
-                .timeout(TIMEOUT)
-                .get();
+                .timeout(TIMEOUT));
 
         Element featureAvatars = doc.select("img[src^=https://api.kingdigital.com/img/features/]").last();
         if (featureAvatars == null) {
-            log.error("Unable to determine site avatar for comic {}", comicName);
+            log.warn("No avatar image found for comic {} at {}", comicName, url);
             return null;
         }
 

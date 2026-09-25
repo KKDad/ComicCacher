@@ -48,7 +48,7 @@ class JwtTokenUtilTest {
         List<String> roles = jwtTokenUtil.extractRoles(token);
         assertThat(roles).isNotNull();
         assertThat(roles.size()).isEqualTo(1);
-        assertThat(roles.get(0)).isEqualTo("USER");
+        assertThat(roles.getFirst()).isEqualTo("USER");
     }
 
     @Test

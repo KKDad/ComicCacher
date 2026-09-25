@@ -141,7 +141,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
             return cacheImage(imageUrl.get(), f.getAbsolutePath());
 
         } catch (IOException ioe) {
-            log.error("Failed to cache comic {}: {}", getComic(), ioe.getMessage());
+            log.error("Failed to cache comic {}", getComic(), ioe);
             throw ComicCachingException.forComic(getComic(), ioe);
         }
     }
@@ -183,7 +183,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
     public IDailyComic setDate(LocalDate date) {
         this.currentDate = date;
         if (log.isInfoEnabled()) {
-            log.info("Date set to: {}", this.currentDate);
+            log.debug("Date set to: {}", this.currentDate);
         }
 
         return this;
@@ -204,7 +204,7 @@ public abstract class DailyComic implements IDailyComic, ICachable {
         this.comicName = comicName;
         this.comicNameParsed = comicName.replace(" ", "");
         if (log.isInfoEnabled()) {
-            log.info("Comic: {}", this.comicName);
+            log.debug("Comic: {}", this.comicName);
         }
 
         return this;

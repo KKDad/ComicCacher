@@ -65,24 +65,27 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         }
 
         try {
-            ComicDownloadResult result;
-
-            if (strategy instanceof DailyComicDownloaderStrategy daily) {
-                log.debug("Downloading comic {} for date {} from source {}",
-                        request.getComicName(), request.getDate(), request.getSource());
-                result = daily.downloadComic(request);
-            } else if (strategy instanceof IndexedComicDownloaderStrategy indexed) {
-                // For indexed comics called via the date-based path, download the latest strip
-                log.debug("Downloading latest strip for indexed comic {} from source {}",
-                        request.getComicName(), request.getSource());
-                ComicItem comic = ComicItem.builder()
-                        .id(request.getComicId())
-                        .name(request.getComicName())
-                        .source(request.getSource())
-                        .sourceIdentifier(request.getSourceIdentifier())
-                        .build();
-                result = indexed.downloadLatestStrip(comic);
-            } else {
+            ComicDownloadResult result = switch (strategy) {
+                case DailyComicDownloaderStrategy daily -> {
+                    log.debug("Downloading comic {} for date {} from source {}",
+                            request.getComicName(), request.getDate(), request.getSource());
+                    yield daily.downloadComic(request);
+                }
+                case IndexedComicDownloaderStrategy indexed -> {
+                    // For indexed comics called via the date-based path, download the latest strip
+                    log.debug("Downloading latest strip for indexed comic {} from source {}",
+                            request.getComicName(), request.getSource());
+                    ComicItem comic = ComicItem.builder()
+                            .id(request.getComicId())
+                            .name(request.getComicName())
+                            .source(request.getSource())
+                            .sourceIdentifier(request.getSourceIdentifier())
+                            .build();
+                    yield indexed.downloadLatestStrip(comic);
+                }
+                default -> null;
+            };
+            if (result == null) {
                 String errorMsg = String.format("Strategy for source '%s' does not implement a known download interface",
                         request.getSource());
                 log.error(errorMsg);
@@ -90,14 +93,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 return ComicDownloadResult.failure(request, errorMsg);
             }
 
-            // Record the result
-            if (result.isSuccessful()) {
-                recordSuccess(request, startTime, result.getImageData().length);
-            } else {
-                recordFailure(request, ComicRetrievalStatus.COMIC_UNAVAILABLE,
-                        result.getErrorMessage(), startTime, null);
-            }
-
+            recordResult(request, result, startTime);
             return result;
         } catch (Exception e) {
             String errorMessage = String.format("Error downloading comic %s for date %s: %s",
@@ -185,7 +181,8 @@ public class ComicDownloaderFacade implements DownloaderFacade {
             results.add(result);
 
             if (!result.isSuccessful()) {
-                log.warn("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
+                // The strategy already logged the cause at the right level
+                log.debug("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
             }
         }
 
@@ -210,15 +207,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
 
         try {
             ComicDownloadResult result = indexed.downloadLatestStrip(comic);
-            ComicDownloadRequest request = result.getRequest();
-
-            if (result.isSuccessful()) {
-                recordSuccess(request, startTime, result.getImageData().length);
-            } else {
-                recordFailure(request, ComicRetrievalStatus.COMIC_UNAVAILABLE,
-                        result.getErrorMessage(), startTime, null);
-            }
-
+            recordResult(result.getRequest(), result, startTime);
             return result;
         } catch (Exception e) {
             String errorMessage = String.format("Error downloading latest strip for %s: %s",
@@ -249,15 +238,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
 
         try {
             ComicDownloadResult result = indexed.downloadStrip(comic, stripNumber);
-            ComicDownloadRequest request = result.getRequest();
-
-            if (result.isSuccessful()) {
-                recordSuccess(request, startTime, result.getImageData().length);
-            } else {
-                recordFailure(request, ComicRetrievalStatus.COMIC_UNAVAILABLE,
-                        result.getErrorMessage(), startTime, null);
-            }
-
+            recordResult(result.getRequest(), result, startTime);
             return result;
         } catch (Exception e) {
             String errorMessage = String.format("Error downloading strip #%d for %s: %s",
@@ -306,17 +287,30 @@ public class ComicDownloaderFacade implements DownloaderFacade {
     }
 
     private ComicRetrievalStatus determineErrorStatus(Exception e) {
-        if (e instanceof java.net.ConnectException
-                || e instanceof java.net.SocketTimeoutException
-                || e instanceof java.io.IOException) {
-            return ComicRetrievalStatus.NETWORK_ERROR;
-        } else if (e instanceof org.jsoup.HttpStatusException) {
-            return ComicRetrievalStatus.PARSING_ERROR;
-        } else if (e instanceof java.nio.file.AccessDeniedException) {
-            return ComicRetrievalStatus.STORAGE_ERROR;
-        } else {
-            return ComicRetrievalStatus.UNKNOWN_ERROR;
+        // AccessDeniedException is an IOException, so it must come first. HTTP error statuses stay NETWORK_ERROR.
+        return switch (e) {
+            case java.nio.file.AccessDeniedException _ -> ComicRetrievalStatus.STORAGE_ERROR;
+            case java.io.IOException _ -> ComicRetrievalStatus.NETWORK_ERROR;
+            default -> ComicRetrievalStatus.UNKNOWN_ERROR;
+        };
+    }
+
+    /**
+     * Records a strategy's result. Failures are filed by what went wrong, keeping the source's HTTP status when there was one: only a genuinely
+     * missing or invalid strip counts as {@code COMIC_UNAVAILABLE}.
+     */
+    private void recordResult(ComicDownloadRequest request, ComicDownloadResult result, Instant startTime) {
+        if (result.isSuccessful()) {
+            recordSuccess(request, startTime, result.getImageData().length);
+            return;
         }
+        ComicRetrievalStatus status = switch (result.getFailureKind()) {
+            case RATE_LIMITED -> ComicRetrievalStatus.NETWORK_ERROR;
+            case ERROR -> result.getHttpStatus() != null ? ComicRetrievalStatus.NETWORK_ERROR : ComicRetrievalStatus.UNKNOWN_ERROR;
+            case UNAVAILABLE -> ComicRetrievalStatus.COMIC_UNAVAILABLE;
+            case null -> ComicRetrievalStatus.COMIC_UNAVAILABLE;
+        };
+        recordFailure(request, status, result.getErrorMessage(), startTime, result.getHttpStatus());
     }
 
     private void recordSuccess(ComicDownloadRequest request, Instant startTime, long imageSize) {

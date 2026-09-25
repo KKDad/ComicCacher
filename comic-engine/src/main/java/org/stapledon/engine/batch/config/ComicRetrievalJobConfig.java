@@ -140,7 +140,7 @@ public class ComicRetrievalJobConfig {
                     if (result.isSuccessful()) {
                         log.info("Successfully downloaded: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());
                     } else {
-                        log.error("Failed to process: {} - {}", result.getRequest().getComicName(), result.getErrorMessage());
+                        log.warn("Failed to process: {} for {} - {}", result.getRequest().getComicName(), result.getRequest().getDate(), result.getErrorMessage());
                     }
                 }
             }

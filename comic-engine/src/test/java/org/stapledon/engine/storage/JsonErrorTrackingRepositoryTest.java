@@ -64,8 +64,8 @@ class JsonErrorTrackingRepositoryTest {
         // Then
         List<ComicErrorRecord> errors = repository.getErrors("TestComic");
         assertThat(errors.size()).isEqualTo(1);
-        assertThat(errors.get(0).getComicName()).isEqualTo("TestComic");
-        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Test error message");
+        assertThat(errors.getFirst().getComicName()).isEqualTo("TestComic");
+        assertThat(errors.getFirst().getErrorMessage()).isEqualTo("Test error message");
     }
 
     @Test
@@ -83,7 +83,7 @@ class JsonErrorTrackingRepositoryTest {
         List<ComicErrorRecord> errors = repository.getErrors(comicName);
         assertThat(errors.size()).isEqualTo(5);
         // Most recent should be first
-        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Error 7");
+        assertThat(errors.getFirst().getErrorMessage()).isEqualTo("Error 7");
         assertThat(errors.get(4).getErrorMessage()).isEqualTo("Error 3");
     }
 
@@ -159,7 +159,7 @@ class JsonErrorTrackingRepositoryTest {
 
         // Then
         assertThat(errors.size()).isEqualTo(1);
-        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Test error");
+        assertThat(errors.getFirst().getErrorMessage()).isEqualTo("Test error");
     }
 
     @Test
@@ -176,7 +176,7 @@ class JsonErrorTrackingRepositoryTest {
         List<ComicErrorRecord> errors = repository.getErrors(comicName);
         assertThat(errors.size()).isEqualTo(3);
         // Most recent first
-        assertThat(errors.get(0).getErrorMessage()).isEqualTo("Storage error");
+        assertThat(errors.getFirst().getErrorMessage()).isEqualTo("Storage error");
         assertThat(errors.get(2).getErrorMessage()).isEqualTo("Network error");
     }
 
@@ -209,8 +209,8 @@ class JsonErrorTrackingRepositoryTest {
 
         // Then
         assertThat(errors.size()).isEqualTo(3);
-        assertThat(errors.get(0).getTimestamp().isAfter(errors.get(1).getTimestamp()) ||
-                errors.get(0).getTimestamp().isEqual(errors.get(1).getTimestamp())).isTrue();
+        assertThat(errors.getFirst().getTimestamp().isAfter(errors.get(1).getTimestamp()) ||
+                errors.getFirst().getTimestamp().isEqual(errors.get(1).getTimestamp())).isTrue();
         assertThat(errors.get(1).getTimestamp().isAfter(errors.get(2).getTimestamp()) ||
                 errors.get(1).getTimestamp().isEqual(errors.get(2).getTimestamp())).isTrue();
     }

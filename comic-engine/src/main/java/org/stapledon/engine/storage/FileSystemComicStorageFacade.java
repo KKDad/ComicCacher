@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -30,6 +29,7 @@ import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.common.util.ImageUtils;
+import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 /**
@@ -101,64 +101,64 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         File file = new File(String.format("%s/%s.png", directory.getAbsolutePath(), filename));
 
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(imageData);
-            log.info("Saved comic strip to: {}", file.getAbsolutePath());
-
-            // Add to hash cache after successful save (non-critical)
-            try {
-                duplicateHashCacheService.addImageToCache(comic.getId(), comic.getName(), date, imageData,
-                        file.getAbsolutePath());
-            } catch (Exception e) {
-                log.warn("Failed to update hash cache (non-critical): {}", e.getMessage());
-            }
-
-            // Add to the persistent date index - CRITICAL operation
-            log.info("Calling comicIndexService.addDateToIndex for comic {} (id={}) on date {}",
-                     comic.getName(), comic.getId(), date);
-            try {
-                comicIndexService.addDateToIndex(comic.getId(), comic.getName(), date);
-            } catch (Exception e) {
-                // Index update is CRITICAL - if it fails, the file becomes an orphan
-                // We should delete the file to maintain consistency
-                log.error("Index update failed for {} on {}, rolling back file write", comic.getName(), date, e);
-                if (!file.delete()) {
-                    log.error("CRITICAL: Failed to delete orphan file: {}", file.getAbsolutePath());
-                }
-                return SaveResult.ioError("Index update failed: " + e.getMessage());
-            }
-
-            // Add to strip number index for indexed comics (non-critical)
-            if (data.stripNumber() != null) {
-                try {
-                    comicIndexService.addStripNumberToIndex(comic.getId(), comic.getName(), data.stripNumber());
-                } catch (Exception e) {
-                    log.warn("Failed to update strip number index (non-critical): {}", e.getMessage());
-                }
-            }
-
-            // After successfully saving the image, analyze and save metadata (non-critical)
-            try {
-                ImageMetadata metadata = imageAnalysisService.analyzeImage(comic.getId(), comic.getName(), imageData,
-                        file.getAbsolutePath(), validation, null, data.transcript());
-                boolean saved = imageMetadataRepository.saveMetadata(metadata);
-                if (saved) {
-                    log.debug("Saved metadata for comic strip: {}", file.getAbsolutePath());
-                } else {
-                    log.error(
-                            "Failed to save metadata for comic strip {} on {}: metadata validation failed or incomplete",
-                            comic.getName(), date);
-                }
-            } catch (Exception e) {
-                // Log but don't fail the save operation if metadata capture fails (non-critical)
-                log.warn("Failed to save metadata (non-critical): {}", e.getMessage());
-            }
-
-            return SaveResult.saved();
+        try {
+            NfsFileOperations.atomicWrite(file.toPath(), imageData);
         } catch (IOException e) {
-            log.error("Failed to write comic strip file for {} on {}: {}", comic.getName(), date, e.getMessage());
+            log.error("Failed to write comic strip file {} for {} on {}", file.getAbsolutePath(), comic.getName(), date, e);
             return SaveResult.ioError("File write failed: " + e.getMessage());
         }
+        log.info("Saved comic strip to: {}", file.getAbsolutePath());
+
+        // Add to hash cache after successful save (non-critical)
+        try {
+            duplicateHashCacheService.addImageToCache(comic.getId(), comic.getName(), date, imageData,
+                    file.getAbsolutePath());
+        } catch (Exception e) {
+            log.warn("Failed to update hash cache for {} on {} (non-critical): {}", comic.getName(), date, e.toString());
+        }
+
+        // Add to the persistent date index - CRITICAL operation
+        log.debug("Calling comicIndexService.addDateToIndex for comic {} (id={}) on date {}",
+                 comic.getName(), comic.getId(), date);
+        try {
+            comicIndexService.addDateToIndex(comic.getId(), comic.getName(), date);
+        } catch (Exception e) {
+            // Index update is CRITICAL - if it fails, the file becomes an orphan
+            // We should delete the file to maintain consistency
+            log.error("Index update failed for {} on {}, rolling back file write", comic.getName(), date, e);
+            if (!file.delete()) {
+                log.error("CRITICAL: Failed to delete orphan file: {}", file.getAbsolutePath());
+            }
+            return SaveResult.ioError("Index update failed: " + e.getMessage());
+        }
+
+        // Add to strip number index for indexed comics (non-critical)
+        if (data.stripNumber() != null) {
+            try {
+                comicIndexService.addStripNumberToIndex(comic.getId(), comic.getName(), data.stripNumber());
+            } catch (Exception e) {
+                log.warn("Failed to update strip number index for {} strip #{} (non-critical): {}", comic.getName(), data.stripNumber(), e.toString());
+            }
+        }
+
+        // After successfully saving the image, analyze and save metadata (non-critical)
+        try {
+            ImageMetadata metadata = imageAnalysisService.analyzeImage(comic.getId(), comic.getName(), imageData,
+                    file.getAbsolutePath(), validation, null, data.transcript());
+            boolean saved = imageMetadataRepository.saveMetadata(metadata);
+            if (saved) {
+                log.debug("Saved metadata for comic strip: {}", file.getAbsolutePath());
+            } else {
+                log.warn(
+                        "Failed to save metadata for comic strip {} on {}: metadata validation failed or incomplete",
+                        comic.getName(), date);
+            }
+        } catch (Exception e) {
+            // Log but don't fail the save operation if metadata capture fails (non-critical)
+            log.warn("Failed to save metadata for {} on {} (non-critical)", comic.getName(), date, e);
+        }
+
+        return SaveResult.saved();
     }
 
     @Override
@@ -187,11 +187,11 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         // Create the file
         File file = new File(String.format(COMBINE_PATH, directory.getAbsolutePath(), AVATAR_FILE));
 
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(imageData);
+        try {
+            NfsFileOperations.atomicWrite(file.toPath(), imageData);
             return true;
         } catch (IOException e) {
-            log.error("Failed to save avatar for {}: {}", comic.getName(), e.getMessage());
+            log.error("Failed to save avatar for {} to {}", comic.getName(), file.getAbsolutePath(), e);
             return false;
         }
     }
@@ -216,7 +216,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                     .ifPresent(dto::setTranscript);
             return Optional.of(dto);
         } catch (IOException e) {
-            log.error("Failed to read comic strip for {} on {}: {}", comic.getName(), date, e.getMessage());
+            log.error("Failed to read comic strip {} for {} on {}", file.getAbsolutePath(), comic.getName(), date, e);
             return Optional.empty();
         }
     }
@@ -228,14 +228,14 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                 comic.getDirectoryName(), AVATAR_FILE));
 
         if (!file.exists()) {
-            log.error("Avatar not found for {}", comic.getName());
+            log.debug("Avatar not found for {}", comic.getName());
             return Optional.empty();
         }
 
         try {
             return Optional.of(ImageUtils.getImageDto(file));
         } catch (IOException e) {
-            log.error("Failed to read avatar for {}: {}", comic.getName(), e.getMessage());
+            log.error("Failed to read avatar {} for {}", file.getAbsolutePath(), comic.getName(), e);
             return Optional.empty();
         }
     }
@@ -366,7 +366,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                         }
                     }
                 } catch (Exception e) {
-                    log.error("Failed to parse date from filename: {}", comicFile.getName());
+                    log.warn("Skipping {} while purging old images: {}", comicFile.getAbsolutePath(), e.toString());
                 }
             }
 

@@ -68,7 +68,7 @@ public class DuplicateHashCacheService {
                                 comicName, year, imageCount);
                     }
                 } catch (IOException e) {
-                    log.warn("Failed to check for existing images: {}", e.getMessage());
+                    log.warn("Failed to check for existing images for {} year {}", comicName, year, e);
                 }
             }
         } else {
@@ -146,12 +146,12 @@ public class DuplicateHashCacheService {
                         failed++;
                     }
                 } catch (Exception e) {
-                    log.warn("Failed to backfill hash for {}: {}", imageFile.getFileName(), e.getMessage());
+                    log.warn("Failed to backfill hash for {}", imageFile, e);
                     failed++;
                 }
             }
         } catch (IOException e) {
-            log.error("Failed to read directory {}: {}", yearDir.toAbsolutePath(), e.getMessage());
+            log.error("Failed to read directory {}", yearDir.toAbsolutePath(), e);
         }
 
         log.info("Backfilled {} hashes for {} year {} ({} successful, {} failed)",
@@ -212,8 +212,11 @@ public class DuplicateHashCacheService {
                     .build();
 
             int year = date.getYear();
-            hashRepository.addHash(comicId, comicName, year, record);
-            log.info("Added hash record for {} on {} to cache (hash: {})", comicName, date, hash);
+            if (hashRepository.addHash(comicId, comicName, year, record)) {
+                log.debug("Added hash record for {} on {} to cache (hash: {})", comicName, date, hash);
+            } else {
+                log.warn("Hash record for {} on {} is only in memory; the hash file could not be written", comicName, date);
+            }
         } else {
             log.warn("Failed to calculate hash for {} on {}, not adding to cache", comicName, date);
         }

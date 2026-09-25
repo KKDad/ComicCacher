@@ -74,6 +74,12 @@ public class ComicDownloadResult {
     private final FailureKind failureKind;
 
     /**
+     * HTTP status the source answered with when the failure came from an HTTP error (404, 429, 503...), otherwise null.
+     */
+    @ToString.Include
+    private final Integer httpStatus;
+
+    /**
      * What happened when the downloaded image was saved (for example a duplicate of another date). Null when the result was not saved.
      */
     @ToString.Include
@@ -121,6 +127,19 @@ public class ComicDownloadResult {
                 .successful(false)
                 .errorMessage(errorMessage)
                 .failureKind(failureKind)
+                .build();
+    }
+
+    /**
+     * A failure caused by an HTTP error response, keeping the status so it lands in the retrieval record.
+     */
+    public static ComicDownloadResult failure(ComicDownloadRequest request, String errorMessage, FailureKind failureKind, Integer httpStatus) {
+        return ComicDownloadResult.builder()
+                .request(request)
+                .successful(false)
+                .errorMessage(errorMessage)
+                .failureKind(failureKind)
+                .httpStatus(httpStatus)
                 .build();
     }
 

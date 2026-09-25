@@ -317,7 +317,7 @@ public class BackfillStateService {
                 }
             }
         } catch (IOException | JsonSyntaxException e) {
-            log.error("Failed to read {}, starting with empty backfill state: {}", file, e.getMessage(), e);
+            log.error("Failed to read {}, starting with empty backfill state", file, e);
         }
         return state;
     }
@@ -328,7 +328,7 @@ public class BackfillStateService {
             NfsFileOperations.atomicWrite(file, gson.toJson(load()));
             dirty = false;
         } catch (IOException e) {
-            log.error("Failed to write {}: {}", file, e.getMessage(), e);
+            log.error("Failed to write backfill state {}; it stays dirty and is retried on the next flush", file, e);
         }
     }
 

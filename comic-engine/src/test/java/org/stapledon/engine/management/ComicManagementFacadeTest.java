@@ -1,6 +1,7 @@
 package org.stapledon.engine.management;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -417,6 +418,28 @@ class ComicManagementFacadeTest {
         verify(storageFacade).saveComicStripWithResult(any(ComicIdentifier.class), any(),
                 argThat((ComicSaveData data) -> data.imageData() == testImageData));
         verify(configFacade).saveComicConfig(any());
+    }
+
+    @Test
+    void updateComicReturnsFalseWhenDownloadFails() {
+        ComicDownloadResult failed = ComicDownloadResult.failure(ComicDownloadRequest.builder().build(), "HTTP 503");
+        when(downloaderFacade.downloadComic(any())).thenReturn(failed);
+
+        // The interface promises false on failure; this used to return true regardless
+        assertThat(facade.updateComic(1)).isFalse();
+        verify(storageFacade, never()).saveComicStripWithResult(any(ComicIdentifier.class), any(), any(ComicSaveData.class));
+    }
+
+    @Test
+    void updateComicsForDateRethrowsSoTheBatchStepFails() {
+        when(configFacade.loadComicConfig()).thenThrow(new IllegalStateException("config unreadable"));
+
+        // It used to log and return an empty list, so ComicDownloadJob finished COMPLETED having downloaded nothing
+        assertThatThrownBy(() -> facade.updateComicsForDate(LocalDate.of(2026, 9, 24), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("2026-09-24")
+                .hasRootCauseMessage("config unreadable");
+        assertThat(facade.updateAllComics()).isFalse();
     }
 
     @Test

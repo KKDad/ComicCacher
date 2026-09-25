@@ -6,11 +6,16 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,12 +25,17 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.service.ErrorTrackingService;
+import org.stapledon.common.service.RetrievalStatusService;
 
 @ExtendWith(MockitoExtension.class)
 class ComicDownloaderFacadeTest {
@@ -116,6 +126,49 @@ class ComicDownloaderFacadeTest {
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getErrorMessage().contains("Error downloading comic")).isTrue();
         verify(goComicsStrategy).downloadComic(request);
+    }
+
+    static Stream<Arguments> failureRecording() {
+        return Stream.of(
+                arguments(ComicDownloadResult.FailureKind.RATE_LIMITED, 429, ComicRetrievalStatus.NETWORK_ERROR),
+                arguments(ComicDownloadResult.FailureKind.UNAVAILABLE, 404, ComicRetrievalStatus.COMIC_UNAVAILABLE),
+                arguments(ComicDownloadResult.FailureKind.ERROR, 503, ComicRetrievalStatus.NETWORK_ERROR),
+                arguments(ComicDownloadResult.FailureKind.ERROR, null, ComicRetrievalStatus.UNKNOWN_ERROR));
+    }
+
+    @ParameterizedTest
+    @MethodSource("failureRecording")
+    void recordsFailureKindAndHttpStatusInRetrievalRecord(ComicDownloadResult.FailureKind kind, Integer httpStatus, ComicRetrievalStatus expected) {
+        RetrievalStatusService retrievalStatusService = Mockito.mock(RetrievalStatusService.class);
+        ComicDownloaderFacade recordingFacade = new ComicDownloaderFacade(retrievalStatusService, Mockito.mock(ErrorTrackingService.class));
+        recordingFacade.registerDownloaderStrategy("gocomics", goComicsStrategy);
+        ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(1).comicName("calvin").source("gocomics").date(testDate).build();
+        when(goComicsStrategy.downloadComic(request)).thenReturn(ComicDownloadResult.failure(request, "failed", kind, httpStatus));
+
+        recordingFacade.downloadComic(request);
+
+        ArgumentCaptor<ComicRetrievalRecord> captor = ArgumentCaptor.forClass(ComicRetrievalRecord.class);
+        verify(retrievalStatusService).recordRetrievalResult(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(expected);
+        assertThat(captor.getValue().getHttpStatusCode()).isEqualTo(httpStatus);
+    }
+
+    @Test
+    void recordsAccessDeniedAsStorageError() {
+        RetrievalStatusService retrievalStatusService = Mockito.mock(RetrievalStatusService.class);
+        ComicDownloaderFacade recordingFacade = new ComicDownloaderFacade(retrievalStatusService, Mockito.mock(ErrorTrackingService.class));
+        recordingFacade.registerDownloaderStrategy("gocomics", goComicsStrategy);
+        ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(1).comicName("calvin").source("gocomics").date(testDate).build();
+        when(goComicsStrategy.downloadComic(request)).thenAnswer(_ -> {
+            throw new java.nio.file.AccessDeniedException("/comics/calvin");
+        });
+
+        recordingFacade.downloadComic(request);
+
+        ArgumentCaptor<ComicRetrievalRecord> captor = ArgumentCaptor.forClass(ComicRetrievalRecord.class);
+        verify(retrievalStatusService).recordRetrievalResult(captor.capture());
+        // AccessDeniedException is an IOException; it used to be filed as NETWORK_ERROR
+        assertThat(captor.getValue().getStatus()).isEqualTo(ComicRetrievalStatus.STORAGE_ERROR);
     }
 
     @Test

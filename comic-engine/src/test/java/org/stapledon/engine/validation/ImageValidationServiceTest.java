@@ -11,6 +11,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
+
 import javax.imageio.ImageIO;
 
 import org.stapledon.common.dto.ImageFormat;
@@ -180,7 +182,7 @@ class ImageValidationServiceTest {
         // Create random binary data that isn't a valid image
         byte[] randomData = new byte[1000];
         for (int i = 0; i < randomData.length; i++) {
-            randomData[i] = (byte) (Math.random() * 256);
+            randomData[i] = (byte) (ThreadLocalRandom.current().nextDouble() * 256);
         }
 
         ImageValidationResult result = imageValidationService.validate(randomData);

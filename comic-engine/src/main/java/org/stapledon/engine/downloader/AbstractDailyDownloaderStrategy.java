@@ -56,13 +56,13 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
                         String errorMessage = String.format("Rate limited (HTTP 429) downloading comic %s for date %s; not retrying (source backing off %ds): %s",
                                 request.getComicName(), request.getDate(), backoff.toSeconds(), e.getMessage());
                         log.warn(errorMessage);
-                        return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED);
+                        return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED, RateLimitedException.HTTP_TOO_MANY_REQUESTS);
                     }
                     if (attempt >= maxAttempts) {
                         String errorMessage = String.format("Rate limited (HTTP 429) downloading comic %s for date %s after %d attempt(s): %s",
                                 request.getComicName(), request.getDate(), attempt, e.getMessage());
                         log.error(errorMessage);
-                        return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED);
+                        return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED, RateLimitedException.HTTP_TOO_MANY_REQUESTS);
                     }
                     Duration backoff = throttleService.backOff(getSource(), attempt, e.getRetryAfter());
                     log.warn("Rate limited (HTTP 429) on {} for {} {}, attempt {}/{}; Retry-After={}; backing off {}s",
@@ -73,10 +73,9 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
             }
 
             if (imageData == null || imageData.length == 0) {
-                return ComicDownloadResult.failure(request,
-                        String.format("Downloaded image data is empty for %s on %s",
-                                request.getComicName(), request.getDate()),
-                        FailureKind.UNAVAILABLE);
+                String errorMessage = String.format("Downloaded image data is empty for %s on %s", request.getComicName(), request.getDate());
+                log.warn(errorMessage);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE);
             }
 
             // Validate image integrity using shared helper
@@ -99,18 +98,24 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
                 String errorMessage = String.format("Rate limited (HTTP 429) downloading comic %s for date %s (source backing off %ds): %s",
                         request.getComicName(), request.getDate(), backoff.toSeconds(), e.getMessage());
                 log.warn(errorMessage);
-                return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED, status);
             }
             if (isNotFoundStatus(status)) {
                 String errorMessage = String.format("Comic %s for date %s not found at source (HTTP %d)",
                         request.getComicName(), request.getDate(), status);
                 log.warn(errorMessage);
-                return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE, status);
             }
-            String errorMessage = String.format("Error downloading comic %s for date %s: %s",
-                    request.getComicName(), request.getDate(), e.getMessage());
-            log.error(errorMessage, e);
-            return ComicDownloadResult.failure(request, errorMessage, FailureKind.ERROR);
+            Integer knownStatus = status > 0 ? status : null;
+            String errorMessage = String.format("Error downloading comic %s for date %s%s: %s",
+                    request.getComicName(), request.getDate(), knownStatus != null ? " (HTTP " + knownStatus + ")" : "", e.getMessage());
+            if (knownStatus != null) {
+                // The source answered with an error status: the message says everything, a stack trace would not help
+                log.warn(errorMessage);
+            } else {
+                log.error(errorMessage, e);
+            }
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.ERROR, knownStatus);
         }
     }
 

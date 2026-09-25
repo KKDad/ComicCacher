@@ -171,7 +171,12 @@ class ComicBackfillJobConfigTest {
 
         ComicDownloadResult result = processor.process(task);
 
-        assertThat(result).isNull(); // Should return null on exception
+        // A failed result, not null: null would be counted as filtered and the error would vanish from the step counts
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getFailureKind()).isEqualTo(FailureKind.ERROR);
+        assertThat(result.getErrorMessage()).contains("Test exception");
+        assertThat(result.getRequest().getDate()).isEqualTo(LocalDate.of(2025, 1, 1));
     }
 
     @Test
@@ -199,7 +204,7 @@ class ComicBackfillJobConfigTest {
 
     @Test
     void backfillTaskWriter_flushesBackfillStateAfterEachChunk() throws Exception {
-        config.backfillTaskWriter().write(Chunk.of((ComicDownloadResult) null));
+        config.backfillTaskWriter().write(Chunk.of());
 
         verify(backfillState).flush();
     }
@@ -219,11 +224,16 @@ class ComicBackfillJobConfigTest {
     }
 
     @Test
-    void backfillTaskWriter_handlesNullResults() throws Exception {
-        ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
+    void backfillTaskProcessor_stripExceptionIsCountedAsFailure() throws Exception {
+        ComicItem comic = createComic(1, "Freefall");
+        when(managementFacade.downloadComicByStripNumber(comic, 42)).thenThrow(new IllegalStateException("boom"));
 
-        // Should handle nulls gracefully
-        Assertions.assertThatCode(() -> writer.write(Chunk.of((ComicDownloadResult) null))).doesNotThrowAnyException();
+        ComicDownloadResult result = config.backfillTaskProcessor().process(new StripBackfillTask(comic, 42));
+
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getFailureKind()).isEqualTo(FailureKind.ERROR);
+        assertThat(result.getErrorMessage()).contains("boom");
     }
 
     @Test

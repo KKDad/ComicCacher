@@ -1,13 +1,16 @@
 package org.stapledon.common.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.common.dto.ImageDto;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 
 class ImageUtilsTest {
@@ -23,7 +26,7 @@ class ImageUtilsTest {
 
     @Test
     void getImageDtoAvatar() throws Exception {
-        Path path = Paths.get(getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
+        Path path = Path.of(getResourcesDirectory().getAbsolutePath(), "FakeComic", "avatar.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
         assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");
@@ -34,7 +37,7 @@ class ImageUtilsTest {
 
     @Test
     void getImageDtoStrip() throws Exception {
-        Path path = Paths.get(getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
+        Path path = Path.of(getResourcesDirectory().getAbsolutePath(), "FakeComic", "2008", "2008-01-11.png");
         ImageDto imageDto = ImageUtils.getImageDto(path.toFile());
 
         assertThat(imageDto.getMimeType()).isNotNull().isEqualTo("image/png");
@@ -42,5 +45,16 @@ class ImageUtilsTest {
         assertThat(imageDto.getWidth()).isEqualTo(1);
         assertThat(imageDto.getImageDate()).isEqualTo(LocalDate.of(2008, 1, 11));
 
+    }
+
+    @Test
+    void getImageDtoRejectsUndecodableFileWithItsPath(@TempDir Path tempDir) throws Exception {
+        Path notAnImage = tempDir.resolve("2026-09-24.png");
+        Files.writeString(notAnImage, "this is not a png");
+
+        // ImageIO.read returns null for unknown formats; this used to surface as a NullPointerException
+        assertThatThrownBy(() -> ImageUtils.getImageDto(notAnImage.toFile()))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining(notAnImage.toString());
     }
 }

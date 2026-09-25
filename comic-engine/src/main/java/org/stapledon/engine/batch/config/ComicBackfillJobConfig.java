@@ -2,6 +2,7 @@ package org.stapledon.engine.batch.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
@@ -27,9 +28,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicDownloadResult.FailureKind;
 import org.stapledon.common.dto.SaveResult;
+import org.stapledon.common.util.LogContext;
 import org.stapledon.engine.batch.BackfillStateService;
 import org.stapledon.engine.batch.ComicBackfillService;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
@@ -119,6 +122,9 @@ public class ComicBackfillJobConfig {
                     @Override
                     public ExitStatus afterStep(StepExecution stepExecution) {
                         backfillState.flush();
+                        log.info("Backfill step {}: read={}, filtered={} (cached or source stopped), written={}, skipped={}",
+                                stepExecution.getExitStatus().getExitCode(), stepExecution.getReadCount(), stepExecution.getFilterCount(),
+                                stepExecution.getWriteCount(), stepExecution.getSkipCount());
                         return stepExecution.getExitStatus();
                     }
                 }).build();
@@ -165,41 +171,60 @@ public class ComicBackfillJobConfig {
                 log.debug("Skipping {} backfill for {} - source was rate limited this run", source, task.comic().getName());
                 return null;
             }
-            try {
+            try (var _ = MDC.putCloseable(LogContext.COMIC, task.comic().getName());
+                    var _ = MDC.putCloseable(task instanceof StripBackfillTask ? LogContext.STRIP : LogContext.DATE, taskTarget(task))) {
                 // Add a small delay between comics to avoid overwhelming sources
                 if (delayBetweenComics > 0) {
                     Thread.sleep(delayBetweenComics);
                 }
 
-                if (task instanceof DateBackfillTask dateTask) {
-                    log.info("Backfilling {} for date: {}", dateTask.comic().getName(), dateTask.date());
-                    ComicDownloadResult result = managementFacade.downloadComicForDate(dateTask.comic(), dateTask.date(), true).orElse(null);
-                    backfillState.recordAttempt(source);
-                    recordOutcome(dateTask, result, stoppedSources);
-                    return result;
-                } else if (task instanceof StripBackfillTask stripTask) {
-                    log.info("Backfilling {} for strip #{}", stripTask.comic().getName(), stripTask.stripNumber());
-                    ComicDownloadResult result = managementFacade.downloadComicByStripNumber(
-                            stripTask.comic(), stripTask.stripNumber()).orElse(null);
-                    backfillState.recordAttempt(source);
-                    if (result != null && result.isRateLimited()) {
-                        stopSource(source, stoppedSources);
+                return switch (task) {
+                    case DateBackfillTask dateTask -> {
+                        log.info("Backfilling {} for date: {}", dateTask.comic().getName(), dateTask.date());
+                        ComicDownloadResult result = managementFacade.downloadComicForDate(dateTask.comic(), dateTask.date(), true).orElse(null);
+                        backfillState.recordAttempt(source);
+                        recordOutcome(dateTask, result, stoppedSources);
+                        yield result;
                     }
-                    return result;
-                } else {
-                    log.error("Unknown backfill task type: {}", task.getClass().getName());
-                    return null;
-                }
-
+                    case StripBackfillTask(var comic, var stripNumber) -> {
+                        log.info("Backfilling {} for strip #{}", comic.getName(), stripNumber);
+                        ComicDownloadResult result = managementFacade.downloadComicByStripNumber(comic, stripNumber).orElse(null);
+                        backfillState.recordAttempt(source);
+                        if (result != null && result.isRateLimited()) {
+                            stopSource(source, stoppedSources);
+                        }
+                        yield result;
+                    }
+                };
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.warn("Backfill interrupted for {}: {}", task.comic().getName(), e.getMessage());
-                return null;
+                log.warn("Backfill interrupted for {} ({})", task.comic().getName(), taskTarget(task));
+                return failedResult(task, "Backfill interrupted");
             } catch (Exception e) {
-                log.error("Error backfilling {}: {}", task.comic().getName(), e.getMessage(), e);
-                return null;
+                // Return a failure rather than null: null would be counted as filtered and the error would vanish from the step counts
+                log.error("Error backfilling {} ({})", task.comic().getName(), taskTarget(task), e);
+                return failedResult(task, "Error backfilling: " + e.getMessage());
             }
         };
+    }
+
+    private static String taskTarget(BackfillTask task) {
+        return switch (task) {
+            case DateBackfillTask(var _, var date) -> date.toString();
+            case StripBackfillTask(var _, var stripNumber) -> "#" + stripNumber;
+        };
+    }
+
+    private static ComicDownloadResult failedResult(BackfillTask task, String message) {
+        ComicDownloadRequest.ComicDownloadRequestBuilder request = ComicDownloadRequest.builder()
+                .comicId(task.comic().getId())
+                .comicName(task.comic().getName())
+                .source(task.comic().getSource())
+                .sourceIdentifier(task.comic().getSourceIdentifier());
+        if (task instanceof DateBackfillTask(var _, var date)) {
+            request.date(date);
+        }
+        return ComicDownloadResult.failure(request.build(), message, FailureKind.ERROR);
     }
 
     /**
@@ -240,11 +265,6 @@ public class ComicBackfillJobConfig {
             int failureCount = 0;
 
             for (ComicDownloadResult result : chunk.getItems()) {
-                if (result == null) {
-                    failureCount++;
-                    continue;
-                }
-
                 if (result.isSuccessful() && result.getSaveOutcome() == SaveResult.Outcome.DUPLICATE_SKIPPED) {
                     duplicateCount++;
                     log.info("Backfill got a duplicate image: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());

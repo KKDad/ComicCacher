@@ -102,8 +102,7 @@
 - Steps:
   1. Rewrite `GoComicsIntegrationIT` to exercise `GoComicsDownloaderStrategy` against the live site, paced through `SourceThrottleService` and with a small number of fetches
   2. Delete the legacy `GoComics` class (and whatever in `DailyComic`/`IDailyComic` only it needs), and drop `selenium-java` / `webdrivermanager` from the root, `comic-api` and `comic-engine` `build.gradle`
-  3. Delete `comic-common/.../infrastructure/web/DefaultTrustManager.java`, which nothing references
-  4. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
+  3. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
 - Priority: Medium
 
 ## Feature Ideas

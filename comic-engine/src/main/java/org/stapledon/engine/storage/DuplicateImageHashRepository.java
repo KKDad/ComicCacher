@@ -71,15 +71,16 @@ public class DuplicateImageHashRepository {
      * @param comicName The comic name
      * @param year      The year
      * @param record    The hash record to add
+     * @return true if the hash file was written; false if only the in-memory cache holds the record
      */
-    public void addHash(int comicId, String comicName, int year, ImageHashRecord record) {
+    public boolean addHash(int comicId, String comicName, int year, ImageHashRecord record) {
         Map<String, ImageHashRecord> yearHashes = loadHashes(comicId, comicName, year);
 
         // Add to cache
         yearHashes.put(record.getHash(), record);
 
         // Persist to disk
-        saveHashes(comicId, comicName, year, yearHashes);
+        return saveHashes(comicId, comicName, year, yearHashes);
     }
 
     /**
@@ -111,10 +112,10 @@ public class DuplicateImageHashRepository {
                 if (loaded != null) {
                     hashes.putAll(loaded);
                 }
-                log.info("Loaded {} hash records for comic {} year {} from {}", hashes.size(), comicName, year,
+                log.debug("Loaded {} hash records for comic {} year {} from {}", hashes.size(), comicName, year,
                         hashFile.toAbsolutePath());
             } catch (IOException e) {
-                log.error("Failed to load hash file {}: {}", hashFile.toAbsolutePath(), e.getMessage(), e);
+                log.error("Failed to load hash file {}", hashFile.toAbsolutePath(), e);
             }
         } else {
             log.info("No existing hash file for comic {} year {}, creating new hash cache", comicName, year);
@@ -130,15 +131,17 @@ public class DuplicateImageHashRepository {
      * Saves hash records to disk for a specific comic and year using atomic write
      * for NFS safety.
      */
-    private void saveHashes(int comicId, String comicName, int year, Map<String, ImageHashRecord> hashes) {
+    private boolean saveHashes(int comicId, String comicName, int year, Map<String, ImageHashRecord> hashes) {
         Path hashFile = getHashFile(comicId, comicName, year);
 
         try {
             String json = gson.toJson(hashes);
             NfsFileOperations.atomicWrite(hashFile, json);
-            log.info("Saved {} hash records to {}", hashes.size(), hashFile.toAbsolutePath());
+            log.debug("Saved {} hash records to {}", hashes.size(), hashFile.toAbsolutePath());
+            return true;
         } catch (IOException e) {
-            log.error("Failed to save hash file {}: {}", hashFile.toAbsolutePath(), e.getMessage(), e);
+            log.error("Failed to save hash file {}", hashFile.toAbsolutePath(), e);
+            return false;
         }
     }
 
