@@ -1,5 +1,7 @@
 package org.stapledon.common.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -12,6 +14,7 @@ import java.nio.file.StandardCopyOption;
  * Provides atomic write operations using the "write-to-temp-then-move" pattern
  * to prevent corruption during network hiccups on NFS filesystems.
  */
+@Slf4j
 public final class NfsFileOperations {
 
     private NfsFileOperations() {
@@ -32,6 +35,17 @@ public final class NfsFileOperations {
      * This is safe for NFS where network hiccups could corrupt direct writes.
      */
     public static void atomicWrite(Path target, String content, Charset charset) throws IOException {
+        writeViaTempFile(target, tempFile -> Files.writeString(tempFile, content, charset));
+    }
+
+    /**
+     * Atomically write binary content (images) using the write-to-temp-then-move pattern, so a failed write never leaves a truncated file.
+     */
+    public static void atomicWrite(Path target, byte[] content) throws IOException {
+        writeViaTempFile(target, tempFile -> Files.write(tempFile, content));
+    }
+
+    private static void writeViaTempFile(Path target, TempFileWriter writer) throws IOException {
         // Ensure parent directory exists
         Path parent = target.getParent();
         if (parent != null && !Files.exists(parent)) {
@@ -42,18 +56,23 @@ public final class NfsFileOperations {
         Path tempFile = target
                 .resolveSibling(target.getFileName() + ".tmp." + System.nanoTime());
         try {
-            Files.writeString(tempFile, content, charset);
+            writer.write(tempFile);
             // Atomic move to target location
             Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            // Clean up temp file if move failed
+            log.error("Atomic write to {} failed via temp file {}: {}", target, tempFile, e.toString());
             try {
                 Files.deleteIfExists(tempFile);
-            } catch (IOException ignored) {
-                // Best effort cleanup
+            } catch (IOException cleanupFailure) {
+                log.warn("Could not remove temp file {} after failed write: {}", tempFile, cleanupFailure.toString());
             }
             throw e;
         }
+    }
+
+    @FunctionalInterface
+    private interface TempFileWriter {
+        void write(Path tempFile) throws IOException;
     }
 
     /**

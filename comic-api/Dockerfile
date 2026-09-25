@@ -1,4 +1,4 @@
-FROM docker.io/library/eclipse-temurin:21.0.12_8-jre-alpine-3.24
+FROM docker.io/library/eclipse-temurin:25.0.4_7-jre-alpine-3.24
 LABEL MAINTAINER="adrian@gilbert.ca"
 
 RUN apk add --no-cache wget && \

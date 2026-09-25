@@ -248,6 +248,7 @@ public class BatchJobResolver {
 
             Long executionId = schedulerOpt.get().triggerManually(stringParams);
             if (executionId == null) {
+                log.warn("Manual trigger of {} did not start a run (already running, or the launch failed: see the scheduler log above)", jobName);
                 return new TriggerBatchJobPayload(null, List.of(new UserError("Failed to start job " + jobName, "jobName", null)));
             }
             JobExecution execution = monitoringService.getJobExecution(executionId);
@@ -419,7 +420,7 @@ public class BatchJobResolver {
                     .map(ZonedDateTime::toOffsetDateTime)
                     .orElse(null);
         } catch (Exception e) {
-            log.error("Failed to compute next run time for {}: {}", scheduler.getJobName(), e.getMessage());
+            log.error("Failed to compute next run time for {} from cron '{}'", scheduler.getJobName(), scheduler.getCronExpression(), e);
             return null;
         }
     }

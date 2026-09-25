@@ -59,7 +59,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         String imageUrl = extractImageFromOpenGraph(doc);
 
         if (imageUrl == null) {
-            log.error("No Open Graph image found for URL: {}", url);
+            log.warn("No Open Graph image found for {} on {} at {}", request.getComicName(), request.getDate(), url);
             return null;
         }
 
@@ -95,7 +95,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         // Try to find badge image in HTML using different potential CSS classes
         Element badgeImage = doc.select("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]").first();
         if (badgeImage == null) {
-            log.error("No avatar image found for comic {}", comicName);
+            log.warn("No avatar image found for comic {} at {}", comicName, url);
             return null;
         }
 
@@ -105,6 +105,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
     // GoComics serves Content-Encoding: br; Jsoup only auto-decompresses gzip, so we wrap the body stream manually when needed.
     // Headers mirror a desktop Chrome navigation. Chrome also advertises zstd, which we can't decode, so it is left out of Accept-Encoding.
     private Document fetchDocument(String url) throws IOException {
+        long start = System.nanoTime();
         String userAgent = userAgentService.getUserAgent(SOURCE_IDENTIFIER);
         Connection connection = Jsoup.connect(url)
                 .userAgent(userAgent)
@@ -124,6 +125,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
                 .timeout(TIMEOUT)
                 .ignoreHttpErrors(true)
                 .execute();
+        log.debug("GET {} [{}] -> HTTP {} in {}ms", url, SOURCE_IDENTIFIER, response.statusCode(), (System.nanoTime() - start) / 1_000_000);
 
         if (response.statusCode() == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
             throw RateLimitedException.of(url, response.header("Retry-After"));
@@ -230,7 +232,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
                             if (width > 400 && height > 200) {
                                 elements.add(src);
                             }
-                        } catch (NumberFormatException ignored) {
+                        } catch (NumberFormatException _) {
                             // If we can't parse the dimensions, just ignore this element
                         }
                     }
@@ -259,7 +261,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
                             largest = img;
                         }
                     }
-                } catch (NumberFormatException ignored) {
+                } catch (NumberFormatException _) {
                     // Continue to next element if we can't parse dimensions
                 }
             }

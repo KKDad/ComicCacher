@@ -65,7 +65,7 @@ public class ImageAnalysisService implements AnalysisService {
                     .sourceUrl(sourceUrl)
                     .build();
         } catch (IOException e) {
-            log.error("Error analyzing image file {}: {}", imageFile.getAbsolutePath(), e.getMessage());
+            log.error("Error analyzing image file {}", imageFile.getAbsolutePath(), e);
             return buildUnknownMetadata(comicId, comicName, imageFile.getAbsolutePath(), validation, sourceUrl);
         }
     }
@@ -106,7 +106,7 @@ public class ImageAnalysisService implements AnalysisService {
 
             return builder.build();
         } catch (IOException e) {
-            log.error("Error analyzing image data for path {}: {}", filePath, e.getMessage());
+            log.error("Error analyzing image data for path {}", filePath, e);
             return buildUnknownMetadata(comicId, comicName, filePath, validation, sourceUrl);
         }
     }
@@ -125,7 +125,7 @@ public class ImageAnalysisService implements AnalysisService {
 
             return detectColorModeFromImage(image);
         } catch (IOException e) {
-            log.error("Error detecting color mode: {}", e.getMessage());
+            log.error("Error detecting color mode", e);
             return ImageMetadata.ColorMode.UNKNOWN;
         }
     }

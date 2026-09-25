@@ -2,9 +2,11 @@ package org.stapledon.core.mail.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.stapledon.common.util.LogContext;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +36,7 @@ public class GmailMailService implements MailService {
     @Override
     public void sendPasswordResetEmail(String email, String resetToken) {
         if (mailSender == null) {
-            log.warn("Mail not configured, password reset requested for: {}", email);
+            log.warn("Mail not configured, password reset email for {} not sent", LogContext.maskEmail(email));
             return;
         }
 
@@ -50,7 +52,12 @@ public class GmailMailService implements MailService {
                 + "This link expires in 15 minutes.\n\n"
                 + "If you did not request this, please ignore this email.");
 
-        mailSender.send(message);
-        log.info("Password reset email sent to: {}", email);
+        try {
+            mailSender.send(message);
+            log.info("Password reset email sent to {}", LogContext.maskEmail(email));
+        } catch (MailException e) {
+            // Not rethrown: an error only for known addresses would reveal which emails have accounts
+            log.error("Failed to send password reset email to {}", LogContext.maskEmail(email), e);
+        }
     }
 }

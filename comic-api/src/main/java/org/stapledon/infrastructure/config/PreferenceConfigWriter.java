@@ -196,13 +196,8 @@ public class PreferenceConfigWriter {
             return preferenceConfig;
         }
 
-        try {
-            preferenceConfig = configurationFacade.loadPreferenceConfig();
-            return preferenceConfig;
-        } catch (Exception e) {
-            log.error("Error reading preferences: {}", e.getMessage(), e);
-            preferenceConfig = new PreferenceConfig();
-            return preferenceConfig;
-        }
+        // A read failure propagates: caching an empty config here would let the next save wipe every user's preferences
+        preferenceConfig = configurationFacade.loadPreferenceConfig();
+        return preferenceConfig;
     }
 }

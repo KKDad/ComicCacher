@@ -366,6 +366,7 @@ class AbstractComicDownloaderStrategyTest {
 
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getFailureKind()).isEqualTo(ComicDownloadResult.FailureKind.UNAVAILABLE);
+        assertThat(result.getHttpStatus()).isEqualTo(404);
         verify(throttleService, never()).backOff(any(), anyInt(), any());
     }
 
@@ -376,6 +377,8 @@ class AbstractComicDownloaderStrategyTest {
         ComicDownloadResult result = strategy.downloadComic(testRequest());
 
         assertThat(result.getFailureKind()).isEqualTo(ComicDownloadResult.FailureKind.ERROR);
+        assertThat(result.getHttpStatus()).isEqualTo(503);
+        assertThat(result.getErrorMessage()).contains("HTTP 503");
     }
 
     @Test
@@ -387,8 +390,31 @@ class AbstractComicDownloaderStrategyTest {
         ComicDownloadResult result = strategy.downloadComic(testRequest());
 
         assertThat(result.isRateLimited()).isTrue();
+        assertThat(result.getHttpStatus()).isEqualTo(429);
         assertThat(strategy.getDownloadCalls()).isEqualTo(1);
         verify(throttleService).backOff("test-source", 1, Optional.empty());
+    }
+
+    @Test
+    void downloadImageData_whenServerReturns404_throwsHttpStatusExceptionWithStatus() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/img", exchange -> {
+            exchange.sendResponseHeaders(404, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/img";
+
+            // Before, a 404 surfaced as a bare FileNotFoundException and the status was lost
+            assertThatThrownBy(() -> strategy.downloadImageData(url))
+                    .isInstanceOfSatisfying(HttpStatusException.class, e -> {
+                        assertThat(e.getStatusCode()).isEqualTo(404);
+                        assertThat(e.getUrl()).isEqualTo(url);
+                    });
+        } finally {
+            server.stop(0);
+        }
     }
 
     @Test

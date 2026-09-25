@@ -7,6 +7,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.stapledon.common.util.MdcTaskDecorator;
+
 
 /**
  * Provides the {@code sourceDownloadExecutor} bean used by {@link ComicManagementFacade} to run per-source download work in parallel. Pool sized for the known set of comic sources
@@ -27,6 +29,8 @@ public class SourceDownloadExecutorConfig {
         executor.setQueueCapacity(16);
         executor.setThreadNamePrefix("comic-source-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        // Carry the batch job's MDC onto the pool threads so their lines reach the per-execution batch log
+        executor.setTaskDecorator(new MdcTaskDecorator());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
         executor.initialize();

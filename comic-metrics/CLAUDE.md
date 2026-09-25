@@ -21,7 +21,7 @@ Cache and storage metrics. Tracks comic access counts, error rates per comic, an
 
 ## Standards
 
-- DTOs use Lombok (`@Builder`, `@Getter`, `@Setter`, etc.). Records are not the preferred pattern in this codebase.
+- DTOs use Lombok (`@Builder`, `@Getter`, `@Setter`, etc.) when mutable or persisted with Gson. Records are fine for immutable values (see the Modern Java rules in comic-api/CLAUDE.md).
 - Counters and aggregates are in-memory primitives or `LongAdder`/`AtomicLong` — never raw `int`/`long` for shared state.
 - Read paths must be safe under concurrent updates from collectors.
 - All on-disk metric files use Gson via `GsonUtils` and the project's standard adapters.

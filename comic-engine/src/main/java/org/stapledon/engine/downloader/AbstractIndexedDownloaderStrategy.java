@@ -55,10 +55,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
             IndexedStripData data = fetchLatestStrip(comic);
             return buildSuccessResult(comic, data);
         } catch (Exception e) {
-            String errorMessage = String.format("Error downloading latest strip for %s: %s",
-                    comic.getName(), e.getMessage());
-            log.error(errorMessage, e);
-            return ComicDownloadResult.failure(buildRequest(comic, LocalDate.now()), errorMessage);
+            return failureFor(comic, "latest strip", e);
         }
     }
 
@@ -72,26 +69,41 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
             IndexedStripData data = fetchStrip(comic, stripNumber);
             return buildSuccessResult(comic, data);
         } catch (Exception e) {
-            ComicDownloadRequest request = buildRequest(comic, LocalDate.now());
-            int status = httpStatus(e);
-            if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
-                Optional<Duration> retryAfter = e instanceof RateLimitedException rateLimited ? rateLimited.getRetryAfter() : Optional.empty();
-                Duration backoff = throttleService.backOff(getSource(), 1, retryAfter);
-                String errorMessage = String.format("Rate limited (HTTP 429) downloading strip #%d for %s (source backing off %ds): %s",
-                        stripNumber, comic.getName(), backoff.toSeconds(), e.getMessage());
-                log.warn(errorMessage);
-                return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED);
-            }
-            if (isNotFoundStatus(status)) {
-                String errorMessage = String.format("Strip #%d for %s not found at source (HTTP %d)", stripNumber, comic.getName(), status);
-                log.warn(errorMessage);
-                return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE);
-            }
-            String errorMessage = String.format("Error downloading strip #%d for %s: %s",
-                    stripNumber, comic.getName(), e.getMessage());
-            log.error(errorMessage, e);
-            return ComicDownloadResult.failure(request, errorMessage, FailureKind.ERROR);
+            return failureFor(comic, "strip #" + stripNumber, e);
         }
+    }
+
+    /**
+     * Turns a failed fetch into a result: a 429 backs the whole source off (no retry here; callers decide), 404/410 means the strip does not
+     * exist, any other HTTP status is logged without a stack trace, and anything else is logged with one.
+     */
+    private ComicDownloadResult failureFor(ComicItem comic, String what, Exception e) {
+        ComicDownloadRequest request = buildRequest(comic, LocalDate.now());
+        int status = httpStatus(e);
+        if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
+            Optional<Duration> retryAfter = e instanceof RateLimitedException rateLimited ? rateLimited.getRetryAfter() : Optional.empty();
+            Duration backoff = throttleService.backOff(getSource(), 1, retryAfter);
+            String errorMessage = String.format("Rate limited (HTTP 429) downloading %s for %s (source backing off %ds): %s",
+                    what, comic.getName(), backoff.toSeconds(), e.getMessage());
+            log.warn(errorMessage);
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED, status);
+        }
+        if (isNotFoundStatus(status)) {
+            String errorMessage = String.format("%s for %s not found at source (HTTP %d)", capitalize(what), comic.getName(), status);
+            log.warn(errorMessage);
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE, status);
+        }
+        String errorMessage = String.format("Error downloading %s for %s: %s", what, comic.getName(), e.getMessage());
+        if (status > 0) {
+            log.warn("{} (HTTP {})", errorMessage, status);
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.ERROR, status);
+        }
+        log.error(errorMessage, e);
+        return ComicDownloadResult.failure(request, errorMessage, FailureKind.ERROR);
+    }
+
+    private static String capitalize(String text) {
+        return Character.toUpperCase(text.charAt(0)) + text.substring(1);
     }
 
     private ComicDownloadResult buildSuccessResult(ComicItem comic, IndexedStripData data) {
@@ -102,7 +114,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
             String detail = validation != null ? validation.getErrorMessage() : "empty data";
             ComicDownloadRequest request = buildRequest(comic, data.actualDate());
             return ComicDownloadResult.failure(request,
-                    String.format("Invalid image for strip #%d: %s", data.stripNumber(), detail));
+                    String.format("Invalid image for strip #%d: %s", data.stripNumber(), detail), FailureKind.UNAVAILABLE);
         }
 
         ComicDownloadRequest request = buildRequest(comic, data.actualDate());

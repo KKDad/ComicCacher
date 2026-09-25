@@ -3,6 +3,7 @@ package org.stapledon.core.user.service;
 import org.springframework.stereotype.Service;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.common.util.LogContext;
 import org.stapledon.infrastructure.config.UserConfigWriter;
 
 import java.util.Optional;
@@ -20,31 +21,31 @@ public class JsonUserService implements UserService {
 
     @Override
     public Optional<User> registerUser(UserRegistrationDto registrationDto) {
-        log.info("Registering new user: {}", registrationDto.getUsername());
+        log.debug("Registering new user: {}", registrationDto.getUsername());
         return userConfigWriter.registerUser(registrationDto);
     }
 
     @Override
     public Optional<User> authenticateUser(String username, String password) {
-        log.info("Authenticating user: {}", username);
+        log.debug("Authenticating user: {}", username);
         return userConfigWriter.authenticateUser(username, password);
     }
 
     @Override
     public Optional<User> getUser(String username) {
-        log.info("Getting user: {}", username);
+        log.debug("Getting user: {}", username);
         return userConfigWriter.getUser(username);
     }
 
     @Override
     public Optional<User> updateUser(User user) {
-        log.info("Updating user: {}", user.getUsername());
+        log.debug("Updating user: {}", user.getUsername());
         return userConfigWriter.updateUser(user);
     }
 
     @Override
     public Optional<User> updatePassword(String username, String newPassword) {
-        log.info("Updating password for user: {}", username);
+        log.debug("Updating password for user: {}", username);
         return userConfigWriter.updatePassword(username, newPassword);
     }
 
@@ -55,7 +56,7 @@ public class JsonUserService implements UserService {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        log.info("Finding user by email: {}", email);
+        log.debug("Finding user by email {}", LogContext.maskEmail(email));
         return userConfigWriter.loadUsers().getUsers().values().stream()
                 .filter(user -> email.equalsIgnoreCase(user.getEmail()))
                 .findFirst();
@@ -63,7 +64,7 @@ public class JsonUserService implements UserService {
 
     @Override
     public boolean deleteUser(String username) {
-        log.info("Deleting user: {}", username);
+        log.debug("Deleting user: {}", username);
         return userConfigWriter.deleteUser(username);
     }
 }

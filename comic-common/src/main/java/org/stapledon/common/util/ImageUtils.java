@@ -31,6 +31,9 @@ public final class ImageUtils {
         ImageDto imageDto = null;
         try (InputStream is = new ByteArrayInputStream(media)) {
             BufferedImage bi = ImageIO.read(is);
+            if (bi == null) {
+                throw new IOException("No ImageIO reader could decode " + image.getAbsolutePath() + " (" + media.length + " bytes)");
+            }
             imageDto = ImageDto.builder()
                     .mimeType("image/png")
                     .imageData(Base64.getEncoder().withoutPadding().encodeToString(media))
@@ -40,9 +43,8 @@ public final class ImageUtils {
             imageDto.setImageDate(LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()),
                     DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-        } catch (DateTimeParseException dte) {
-            // Ignore parse errors - filename may not be a valid date, imageDate remains
-            // null
+        } catch (DateTimeParseException _) {
+            // Filename is not a date (e.g. avatar.png), so imageDate stays null
         }
         return imageDto;
     }

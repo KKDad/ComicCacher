@@ -153,7 +153,7 @@ public class ImageMetadataBackfillJobConfig {
                                 counters[1]++;
                             } catch (Exception e) {
                                 counters[2]++;
-                                log.error("Failed to backfill metadata for {}: {}", path.toAbsolutePath(), e.getMessage());
+                                log.error("Failed to backfill metadata for {}", path.toAbsolutePath(), e);
                             }
 
                             counters[0]++;

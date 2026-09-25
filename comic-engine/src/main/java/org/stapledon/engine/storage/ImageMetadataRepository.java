@@ -135,7 +135,7 @@ public class ImageMetadataRepository {
             log.debug("Deleted metadata for image: {}", imageFilePath);
             return true;
         } catch (IOException e) {
-            log.warn("Failed to delete metadata for image: {}", imageFilePath);
+            log.warn("Failed to delete metadata {} for image {}: {}", metadataFile, imageFilePath, e.toString());
             return false;
         }
     }

@@ -1,5 +1,6 @@
 package org.stapledon.core.auth.service;
 
+import io.jsonwebtoken.JwtException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -7,6 +8,7 @@ import org.stapledon.api.dto.auth.AuthRequest;
 import org.stapledon.api.dto.auth.AuthResponse;
 import org.stapledon.api.dto.user.User;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.common.util.LogContext;
 import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.mail.service.MailService;
 import org.stapledon.core.user.service.UserService;
@@ -68,6 +70,7 @@ public class JwtAuthService implements AuthService {
         }
 
         User user = userOpt.get();
+        log.info("Login succeeded for user: {}", user.getUsername());
         String token = jwtTokenUtil.generateToken(user);
         String refreshToken = jwtTokenUtil.generateRefreshToken(user);
 
@@ -118,8 +121,11 @@ public class JwtAuthService implements AuthService {
             }
 
             return Optional.empty();
+        } catch (JwtException e) {
+            log.warn("Refresh token rejected: {}: {}", e.getClass().getSimpleName(), e.getMessage());
+            throw new AuthenticationException("Invalid refresh token");
         } catch (Exception e) {
-            log.error("Error refreshing token: {}", e.getMessage(), e);
+            log.error("Error refreshing token", e);
             throw new AuthenticationException("Invalid refresh token");
         }
     }
@@ -135,8 +141,11 @@ public class JwtAuthService implements AuthService {
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             return jwtTokenUtil.validateToken(token, userDetails);
+        } catch (JwtException e) {
+            log.warn("Token rejected: {}: {}", e.getClass().getSimpleName(), e.getMessage());
+            return false;
         } catch (Exception e) {
-            log.error("Token validation error: {}", e.getMessage(), e);
+            log.error("Token validation error", e);
             return false;
         }
     }
@@ -159,16 +168,17 @@ public class JwtAuthService implements AuthService {
 
     @Override
     public void forgotPassword(String email) {
-        log.info("Password reset requested for email: {}", email);
+        log.info("Password reset requested for {}", LogContext.maskEmail(email));
 
         // Always return silently to prevent email enumeration
         Optional<User> userOpt = userService.findByEmail(email);
         if (userOpt.isEmpty()) {
-            log.debug("No user found for email: {}", email);
+            log.debug("No user found for {}", LogContext.maskEmail(email));
             return;
         }
 
         User user = userOpt.get();
+        log.info("Sending password reset email to user {}", user.getUsername());
         String resetToken = jwtTokenUtil.generatePasswordResetToken(user.getUsername());
         mailService.sendPasswordResetEmail(email, resetToken);
     }

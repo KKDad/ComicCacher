@@ -37,13 +37,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ComicNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleComicNotFoundException(ComicNotFoundException ex, WebRequest request) {
-        log.warn("Comic not found: {}", sanitizeAndTruncate(ex.getMessage()), ex);
+        log.warn("Comic not found: {}", sanitizeAndTruncate(ex.getMessage()));
         return problem(HttpStatus.NOT_FOUND, "The requested comic could not be found", request);
     }
 
     @ExceptionHandler(ComicImageNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleComicImageNotFoundException(ComicImageNotFoundException ex, WebRequest request) {
-        log.warn("Comic image not found: {}", sanitizeAndTruncate(ex.getMessage()), ex);
+        log.warn("Comic image not found: {}", sanitizeAndTruncate(ex.getMessage()));
         return problem(HttpStatus.NOT_FOUND, "The requested comic image could not be found", request);
     }
 
@@ -61,19 +61,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({AuthenticationException.class, BadCredentialsException.class})
     public ResponseEntity<ProblemDetail> handleAuthenticationException(Exception ex, WebRequest request) {
-        log.warn("Authentication failed: {}", sanitizeAndTruncate(ex.getMessage()), ex);
+        log.warn("Authentication failed: {}", sanitizeAndTruncate(ex.getMessage()));
         return problem(HttpStatus.UNAUTHORIZED, "Authentication failed. Please verify your credentials.", request);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleUsernameNotFoundException(UsernameNotFoundException ex, WebRequest request) {
-        log.warn("Username not found: {}", sanitizeAndTruncate(ex.getMessage()), ex);
+        log.warn("Username not found: {}", sanitizeAndTruncate(ex.getMessage()));
         return problem(HttpStatus.UNAUTHORIZED, "Authentication failed. Please verify your credentials.", request);
     }
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ProblemDetail> handleResponseStatusException(ResponseStatusException ex, WebRequest request) {
-        log.warn("Response status exception: {}", sanitizeAndTruncate(ex.getReason()), ex);
+        log.warn("Response status exception: {}", sanitizeAndTruncate(ex.getReason()));
 
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         String detail = switch (status) {
@@ -103,13 +103,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ProblemDetail> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
-        log.warn("Invalid argument: {}", sanitizeAndTruncate(ex.getMessage()), ex);
+        log.warn("Invalid argument: {}", sanitizeAndTruncate(ex.getMessage()));
         return problem(HttpStatus.BAD_REQUEST, "Invalid request parameter", request);
     }
 
     @ExceptionHandler(DateTimeParseException.class)
     public ResponseEntity<ProblemDetail> handleDateTimeParseException(DateTimeParseException ex, WebRequest request) {
-        log.warn("Date parsing exception for input: {}", sanitizeAndTruncate(ex.getParsedString(), 30), ex);
+        log.warn("Date parsing exception for input: {}", sanitizeAndTruncate(ex.getParsedString(), 30));
         return problem(HttpStatus.BAD_REQUEST, "Invalid date format. Expected format: yyyy-MM-dd", request);
     }
 

@@ -82,20 +82,12 @@
 - If not needed, remove the springdoc dependency, openApi task config, and related tasks from comic-api/build.gradle
 - Priority: Medium
 
-### Upgrade to Java 25
-
-- Upgrade from Java 21 to Java 25
-- Update `build.gradle` Java toolchain/sourceCompatibility settings
-- Update CI/CD pipeline and Docker base images
-- Clean up deprecated API usage first (see below)
-- Priority: Low
-
 ### Clean Up Deprecated Java APIs
 
 - **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — in `GoComics`, `GoComicsDownloaderStrategy`, `ComicsKingdom`, `ComicsKingdomDownloaderStrategy` in comic-engine (the `GoComics` ones go away with the Selenium removal)
 - **Guava `@VisibleForTesting` → remove or replace** — 3 instances (`RetrievalStatusRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`)
 - **Guava `Files.getNameWithoutExtension()` → plain Java** — 2 instances (`ImageUtils`, `FileSystemComicStorageFacade`)
-- Priority: Medium (do before Java 25 upgrade)
+- Priority: Medium
 
 ### Move the Cache-Root JSON Files into a Data Folder
 
@@ -110,8 +102,7 @@
 - Steps:
   1. Rewrite `GoComicsIntegrationIT` to exercise `GoComicsDownloaderStrategy` against the live site, paced through `SourceThrottleService` and with a small number of fetches
   2. Delete the legacy `GoComics` class (and whatever in `DailyComic`/`IDailyComic` only it needs), and drop `selenium-java` / `webdrivermanager` from the root, `comic-api` and `comic-engine` `build.gradle`
-  3. Delete `comic-common/.../infrastructure/web/DefaultTrustManager.java`, which nothing references
-  4. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
+  3. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
 - Priority: Medium
 
 ## Feature Ideas

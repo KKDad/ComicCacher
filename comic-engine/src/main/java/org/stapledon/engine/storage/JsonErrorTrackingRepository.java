@@ -97,7 +97,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
             String json = gson.toJson(errorCache);
             NfsFileOperations.atomicWrite(storageFile, json);
         } catch (IOException e) {
-            log.error("Failed to save error records: {}", e.getMessage(), e);
+            log.error("Failed to save error records to {}", storageFile, e);
         }
     }
 
@@ -172,7 +172,7 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
                     java.time.OffsetDateTime errorTime = error.getTimestamp();
                     return errorTime != null && errorTime.isBefore(cutoff);
                 } catch (Exception e) {
-                    log.warn("Error checking timestamp for comic {}: {}", entry.getKey(), e.getMessage());
+                    log.warn("Error checking timestamp for comic {}: {}", entry.getKey(), e.toString());
                     return false; // Keep errors if timestamp check fails
                 }
             });

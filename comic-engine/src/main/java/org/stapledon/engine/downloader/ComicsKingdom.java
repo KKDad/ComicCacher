@@ -59,7 +59,7 @@ public class ComicsKingdom extends DailyComic {
             }
             return Optional.empty();
         } catch (IOException e) {
-            log.error("Error extracting comic image for {}: {}", comicUrl, e.getMessage());
+            log.error("Error extracting comic image for {}", comicUrl, e);
             return Optional.empty();
         }
     }
@@ -103,7 +103,7 @@ public class ComicsKingdom extends DailyComic {
             if (!avatarCached.exists()) {
                 Element featureAvatars = doc.select("img[src^=https://api.kingdigital.com/img/features/]").last();
                 if (featureAvatars == null) {
-                    log.error("Unable to determine site avatar");
+                    log.warn("Unable to determine site avatar");
                 } else {
                     cacheImage(featureAvatars.attr("abs:src"), avatarCached.getAbsolutePath());
                     log.trace("Avatar has been cached");
@@ -111,7 +111,7 @@ public class ComicsKingdom extends DailyComic {
             }
 
         } catch (IOException ioe) {
-            log.error(ioe.getMessage());
+            log.error("Error updating comic metadata", ioe);
         }
     }
 

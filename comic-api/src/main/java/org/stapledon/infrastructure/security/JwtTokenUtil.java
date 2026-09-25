@@ -150,7 +150,7 @@ public class JwtTokenUtil {
             }
             return iat.toInstant().isBefore(cutoff.toInstant());
         } catch (Exception e) {
-            log.error("Error checking logout invalidation: {}", e.getMessage());
+            log.warn("Error checking logout invalidation: {}", e.toString());
             return false;
         }
     }
@@ -221,7 +221,7 @@ public class JwtTokenUtil {
             }
             return java.util.Optional.ofNullable(claims.getSubject());
         } catch (Exception e) {
-            log.error("Invalid password reset token: {}", e.getMessage());
+            log.warn("Invalid password reset token: {}", e.toString());
             return java.util.Optional.empty();
         }
     }

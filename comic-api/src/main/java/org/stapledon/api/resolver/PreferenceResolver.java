@@ -44,7 +44,7 @@ public class PreferenceResolver {
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
     public UserPreference preferences(@AuthenticationPrincipal UserDetails userDetails) {
-        log.info("Getting preferences for user: {}", userDetails.getUsername());
+        log.debug("Getting preferences for user: {}", userDetails.getUsername());
         return preferenceService.getPreference(userDetails.getUsername())
                 .orElse(null);
     }

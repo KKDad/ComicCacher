@@ -36,7 +36,7 @@ public class JsonUserRepository implements UserRepository {
     public void saveUserConfig(UserConfig config) {
         boolean success = configurationFacade.saveUserConfig(config);
         if (!success) {
-            log.error("Failed to save user configuration");
+            log.warn("Failed to save user configuration");
         }
     }
 
@@ -58,7 +58,7 @@ public class JsonUserRepository implements UserRepository {
     public void saveUser(User user) {
         boolean success = userConfigWriter.saveUser(user);
         if (!success) {
-            log.error("Failed to save user: {}", user.getUsername());
+            log.warn("Failed to save user: {}", user.getUsername());
         }
     }
 

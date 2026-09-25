@@ -33,7 +33,7 @@ public class JsonComicRepository implements ComicRepository {
     public void saveComicConfig(ComicConfig config) {
         boolean success = configurationFacade.saveComicConfig(config);
         if (!success) {
-            log.error("Failed to save comic configuration");
+            log.warn("Failed to save comic configuration");
         }
     }
 
@@ -81,6 +81,7 @@ public class JsonComicRepository implements ComicRepository {
             config.setItems(new java.util.concurrent.ConcurrentHashMap<>());
         }
         config.getItems().put(comic.getId(), comic);
+        log.debug("Saving comic {} (id={})", comic.getName(), comic.getId());
         saveComicConfig(config);
     }
 
@@ -88,7 +89,8 @@ public class JsonComicRepository implements ComicRepository {
     public void deleteComic(int id) {
         ComicConfig config = loadComicConfig();
         if (config.getItems() != null) {
-            config.getItems().remove(id);
+            ComicItem removed = config.getItems().remove(id);
+            log.debug("Deleting comic id={} ({})", id, removed != null ? removed.getName() : "not present");
             saveComicConfig(config);
         }
     }

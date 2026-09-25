@@ -36,7 +36,7 @@ public class JsonPreferenceRepository implements PreferenceRepository {
     public void savePreferences(PreferenceConfig config) {
         boolean success = configurationFacade.savePreferenceConfig(config);
         if (!success) {
-            log.error("Failed to save preference configuration");
+            log.warn("Failed to save preference configuration");
         }
     }
 
@@ -58,7 +58,7 @@ public class JsonPreferenceRepository implements PreferenceRepository {
     public void savePreference(UserPreference preference) {
         boolean success = preferenceConfigWriter.savePreference(preference);
         if (!success) {
-            log.error("Failed to save preference for user: {}", preference.getUsername());
+            log.warn("Failed to save preference for user: {}", preference.getUsername());
         }
     }
 
@@ -80,7 +80,7 @@ public class JsonPreferenceRepository implements PreferenceRepository {
     public void addFavoriteComic(String username, int comicId) {
         Optional<UserPreference> preferenceOpt = preferenceConfigWriter.addFavorite(username, comicId);
         if (preferenceOpt.isEmpty()) {
-            log.error("Failed to add favorite comic {} for user {}", comicId, username);
+            log.warn("Failed to add favorite comic {} for user {}", comicId, username);
         }
     }
 
@@ -88,7 +88,7 @@ public class JsonPreferenceRepository implements PreferenceRepository {
     public void removeFavoriteComic(String username, int comicId) {
         Optional<UserPreference> preferenceOpt = preferenceConfigWriter.removeFavorite(username, comicId);
         if (preferenceOpt.isEmpty()) {
-            log.error("Failed to remove favorite comic {} for user {}", comicId, username);
+            log.warn("Failed to remove favorite comic {} for user {}", comicId, username);
         }
     }
 
@@ -96,7 +96,7 @@ public class JsonPreferenceRepository implements PreferenceRepository {
     public void updateLastReadDate(String username, int comicId, LocalDate date) {
         Optional<UserPreference> preferenceOpt = preferenceConfigWriter.updateLastRead(username, comicId, date);
         if (preferenceOpt.isEmpty()) {
-            log.error("Failed to update last read date for comic {} for user {}", comicId, username);
+            log.warn("Failed to update last read date for comic {} for user {}", comicId, username);
         }
     }
 }

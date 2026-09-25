@@ -77,7 +77,7 @@ public class ImageValidationService implements ValidationService {
             return ImageValidationResult.success(format, width, height, imageData.length);
 
         } catch (IOException e) {
-            log.error("Image validation failed: {}", e.getMessage());
+            log.warn("Image validation failed ({} bytes): {}", imageData.length, e.toString());
             return ImageValidationResult.failure("Failed to read image: " + e.getMessage());
         }
     }
@@ -138,7 +138,7 @@ public class ImageValidationService implements ValidationService {
                 };
             }
         } catch (IOException e) {
-            log.warn("Could not determine image format: {}", e.getMessage());
+            log.warn("Could not determine image format: {}", e.toString());
         }
 
         return ImageFormat.UNKNOWN;

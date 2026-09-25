@@ -2,6 +2,7 @@ package org.stapledon.engine.management;
 
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -40,6 +41,7 @@ import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.Direction;
+import org.stapledon.common.util.LogContext;
 import org.stapledon.engine.downloader.DownloaderFacade;
 
 /**
@@ -176,27 +178,20 @@ public class ComicManagementFacade implements ManagementFacade {
             // Download the comic
             ComicDownloadResult result = downloaderFacade.downloadComic(request);
 
-            if (result.isSuccessful()) {
-                // Save the comic to storage
-                if (saveDownloadResult(comic, request.getDate(), result)) {
-                    // Update comic item metadata
-                    ComicItem updated = comic.toBuilder().newest(request.getDate()).build();
-
-                    updateComic(comic.getId(), updated);
-                }
-            } else {
-                log.error("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
+            if (!result.isSuccessful()) {
+                // The strategy already logged the cause at the right level
+                log.debug("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
+                return false;
             }
-
-            // Always return true if the comic exists and we attempted to update it,
-            // regardless of whether the update succeeded
+            if (!saveDownloadResult(comic, request.getDate(), result)) {
+                return false;
+            }
+            ComicItem updated = comic.toBuilder().newest(request.getDate()).build();
+            updateComic(comic.getId(), updated);
             return true;
-
         } catch (Exception e) {
             log.error("Error occurred while updating comic with ID {}", comicId, e);
-            // Still return true since we successfully triggered the update for an existing
-            // comic
-            return true;
+            return false;
         }
     }
 
@@ -258,7 +253,7 @@ public class ComicManagementFacade implements ManagementFacade {
                             }))
                     .orElseGet(() -> ComicNavigationResult.notFound("NO_COMICS_AVAILABLE", null, null, null));
         } catch (Exception e) {
-            log.error("Error retrieving comic strip: {}", e.getMessage(), e);
+            log.error("Error retrieving comic strip for {}", comic.getName(), e);
             return ComicNavigationResult.notFound("ERROR", null, null, null);
         }
     }
@@ -268,7 +263,7 @@ public class ComicManagementFacade implements ManagementFacade {
      */
     private ComicNavigationResult getComicStripInternal(int comicId, String comicName, Direction direction,
             LocalDate from) {
-        log.info("getComicStrip: comicId={}, comicName={}, direction={}, from={}", comicId, comicName, direction, from);
+        log.debug("getComicStrip: comicId={}, comicName={}, direction={}, from={}", comicId, comicName, direction, from);
 
         ComicIdentifier identifier = new ComicIdentifier(comicId, comicName);
 
@@ -278,26 +273,26 @@ public class ComicManagementFacade implements ManagementFacade {
                     ? storageFacade.getNextDateWithComic(identifier, from)
                     : storageFacade.getPreviousDateWithComic(identifier, from);
 
-            log.info("get{}DateWithComic returned: {} (from: {})",
+            log.debug("get{}DateWithComic returned: {} (from: {})",
                     direction == Direction.FORWARD ? "Next" : "Previous",
                     dateOpt.orElse(null), from);
 
             if (dateOpt.isEmpty()) {
                 String reason = direction == Direction.FORWARD ? "AT_END" : "AT_BEGINNING";
-                log.info("No comic found going {} from {}, reason={}", direction, from, reason);
+                log.debug("No comic found going {} from {}, reason={}", direction, from, reason);
 
                 // Get the nearest dates for navigation hints
                 LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(identifier, from).orElse(null);
                 LocalDate nearestNext = storageFacade.getNextDateWithComic(identifier, from).orElse(null);
 
-                log.info("Returning navigation result: found=false, currentDate=null, nearestPrev={}, nearestNext={}",
+                log.debug("Returning navigation result: found=false, currentDate=null, nearestPrev={}, nearestNext={}",
                         nearestPrev, nearestNext);
                 return ComicNavigationResult.notFound(reason, from, nearestPrev, nearestNext);
             }
 
             // Get the image for the found date
             LocalDate targetDate = dateOpt.get();
-            log.info("Found comic at {}, loading image and calculating boundaries...", targetDate);
+            log.debug("Found comic at {}, loading image and calculating boundaries...", targetDate);
 
             return storageFacade.getComicStrip(identifier, targetDate)
                     .map(image -> {
@@ -307,7 +302,7 @@ public class ComicManagementFacade implements ManagementFacade {
                         LocalDate nearestNext = storageFacade.getNextDateWithComic(identifier, targetDate)
                                 .orElse(null);
 
-                        log.info("Returning navigation result: found=true, currentDate={}, nearestPrev={}, nearestNext={}",
+                        log.debug("Returning navigation result: found=true, currentDate={}, nearestPrev={}, nearestNext={}",
                                 targetDate, nearestPrev, nearestNext);
                         return ComicNavigationResult.found(image, nearestPrev, nearestNext);
                     })
@@ -316,7 +311,7 @@ public class ComicManagementFacade implements ManagementFacade {
                         return ComicNavigationResult.notFound("ERROR", targetDate, null, null);
                     });
         } catch (Exception e) {
-            log.error("Error retrieving comic strip: {}", e.getMessage(), e);
+            log.error("Error retrieving comic strip for {}", comicName, e);
             return ComicNavigationResult.notFound("ERROR", from, null, null);
         }
     }
@@ -341,7 +336,7 @@ public class ComicManagementFacade implements ManagementFacade {
 
     private ComicNavigationResult getComicStripWithNavigationInternal(ComicItem comic, LocalDate date) {
         ComicIdentifier identifier = ComicIdentifier.from(comic);
-        log.info("getComicStripWithNavigation: comicId={}, comicName={}, date={}", comic.getId(), comic.getName(), date);
+        log.debug("getComicStripWithNavigation: comicId={}, comicName={}, date={}", comic.getId(), comic.getName(), date);
 
         try {
             // Calculate navigation boundaries
@@ -351,12 +346,12 @@ public class ComicManagementFacade implements ManagementFacade {
             // Get the image for the exact date requested
             return storageFacade.getComicStrip(identifier, date)
                     .map(image -> {
-                        log.info("Found comic strip for {} on {}, prev={}, next={}",
+                        log.debug("Found comic strip for {} on {}, prev={}, next={}",
                                 comic.getName(), date, nearestPrev, nearestNext);
                         return ComicNavigationResult.found(image, nearestPrev, nearestNext);
                     })
                     .orElseGet(() -> {
-                        log.info("No comic strip found for {} on {}, returning navigation hints: prev={}, next={}",
+                        log.debug("No comic strip found for {} on {}, returning navigation hints: prev={}, next={}",
                                 comic.getName(), date, nearestPrev, nearestNext);
                         return ComicNavigationResult.notFound("NOT_AVAILABLE", date, nearestPrev, nearestNext);
                     });
@@ -420,7 +415,7 @@ public class ComicManagementFacade implements ManagementFacade {
             return true;
         } catch (Exception e) {
             log.error("Error occurred while updating all comics", e);
-            return true;
+            return false;
         }
     }
 
@@ -436,7 +431,7 @@ public class ComicManagementFacade implements ManagementFacade {
         try {
             // Log if attempting to download future dates
             if (date.isAfter(LocalDate.now())) {
-                log.warn("⚠️ FUTURE DATE DETECTED: Attempting to download comics for {} which is AFTER today ({})",
+                log.warn("Future date: attempting to download comics for {} which is AFTER today ({})",
                         date, LocalDate.now());
             } else {
                 log.info("Downloading comics for date: {} (today: {}, sourceFilter: {})", date, LocalDate.now(), sourceFilter);
@@ -478,8 +473,8 @@ public class ComicManagementFacade implements ManagementFacade {
                     .flatMap(f -> f.join().stream())
                     .collect(Collectors.toCollection(ArrayList::new));
         } catch (Exception e) {
-            log.error("Error occurred while updating comics for date {}", date, e);
-            return new ArrayList<>();
+            // Let the caller fail (the batch step, so the job ends FAILED instead of COMPLETED with nothing downloaded)
+            throw new IllegalStateException("Comic download run for " + date + " failed: " + e.getMessage(), e);
         }
     }
 
@@ -514,7 +509,8 @@ public class ComicManagementFacade implements ManagementFacade {
         try {
             boolean indexed = downloaderFacade.isIndexedSource(source);
             for (ComicItem comic : comics) {
-                try {
+                try (var _ = MDC.putCloseable(LogContext.COMIC, comic.getName());
+                        var _ = MDC.putCloseable(LogContext.DATE, date.toString())) {
                     if (indexed) {
                         downloadLatestIndexedComic(comic).ifPresent(sourceResults::add);
                         continue;
@@ -534,10 +530,11 @@ public class ComicManagementFacade implements ManagementFacade {
                         ComicItem updated = comic.toBuilder().newest(date).build();
                         updateComic(comic.getId(), updated);
                     } else {
-                        log.error("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
+                        // The strategy already logged the cause at the right level
+                        log.debug("Failed to download comic {}: {}", comic.getName(), result.getErrorMessage());
                     }
                 } catch (Exception e) {
-                    log.error("Error processing comic {} on {}: {}", comic.getName(), date, e.getMessage(), e);
+                    log.error("Error processing comic {} on {}", comic.getName(), date, e);
                 }
             }
         } finally {
@@ -681,7 +678,7 @@ public class ComicManagementFacade implements ManagementFacade {
             return saveResult.getOutcome();
         }
 
-        log.error("Failed to save comic {} to storage: {}", comic.getName(), saveResult.getMessage());
+        log.error("Failed to save comic {} for {} to storage: {}", comic.getName(), date, saveResult.getMessage());
         retrievalStatusService.recordRetrievalResult(ComicRetrievalRecord.failure(
                 comic.getName(), date, comic.getSource(), ComicRetrievalStatus.STORAGE_ERROR,
                 "Save failed: " + saveResult.getMessage(), 0, null));

@@ -96,11 +96,8 @@ public class AvatarBackfillJobConfig {
             int downloaded = managementFacade.downloadMissingAvatars();
             long duration = System.currentTimeMillis() - startTime;
 
-            if (downloaded == 0) {
-                log.info("Avatar backfill complete: no missing avatars found ({}ms)", duration);
-            } else {
-                log.info("Avatar backfill complete: {} avatars downloaded in {}ms", downloaded, duration);
-            }
+            // downloadMissingAvatars logs the skipped and failed counts; zero downloads can mean every download failed
+            log.info("Avatar backfill job finished in {}ms: {} avatars downloaded", duration, downloaded);
             return RepeatStatus.FINISHED;
         };
     }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.stapledon.api.dto.auth.AuthRequest;
 import org.stapledon.api.dto.auth.AuthResponse;
 import org.stapledon.api.dto.user.UserRegistrationDto;
+import org.stapledon.common.util.LogContext;
 import org.stapledon.core.auth.model.AuthenticationException;
 import org.stapledon.core.auth.service.AuthService;
 
@@ -119,7 +120,7 @@ public class AuthResolver {
      */
     @MutationMapping
     public boolean forgotPassword(@Argument String email) {
-        log.info("GraphQL: Password reset requested for email: {}", email);
+        log.debug("GraphQL: Password reset requested for {}", LogContext.maskEmail(email));
         authService.forgotPassword(email);
         return true;
     }

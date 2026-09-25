@@ -213,7 +213,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
                 }
             }
         } catch (Exception e) {
-            log.error("Error updating comic metadata: {}", e.getMessage());
+            log.error("Error updating comic metadata", e);
             // Ensure we always have valid data even after errors
             if (comicItem.getDescription() == null) {
                 comicItem.setDescription("A comic strip published on GoComics");
@@ -352,7 +352,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
 
             // Get page title to confirm we're on the right page
             String pageTitle = (String) jsExecutor.executeScript("return document.title;");
-            log.info("Page title: {}", pageTitle);
+            log.debug("Page title: {}", pageTitle);
 
             // Get body HTML (first 2000 chars to avoid overwhelming logs)
             String bodyHtml = (String) jsExecutor.executeScript("return document.body.innerHTML.substring(0, 2000);");
@@ -371,7 +371,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
                             + "  });"
                             + "}"
                             + "return JSON.stringify(result);");
-            log.info("All img tags found: {}", imgResult);
+            log.debug("All img tags found: {}", imgResult);
 
             // Get all meta tags
             Object metaResult = jsExecutor.executeScript(
@@ -385,7 +385,7 @@ public class GoComics extends DailyComic implements AutoCloseable {
                             + "  });"
                             + "}"
                             + "return JSON.stringify(result);");
-            log.info("All meta tags found: {}", metaResult);
+            log.debug("All meta tags found: {}", metaResult);
 
             // Extract comic image using CSS selector for current GoComics structure
             List<org.openqa.selenium.WebElement> imgElements = driver

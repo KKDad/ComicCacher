@@ -57,17 +57,10 @@ public final class GsonUtils {
                 while (jsonReader.peek() != JsonToken.END_OBJECT) {
                     var name = jsonReader.nextName();
                     switch (name) {
-                        case "year":
-                            year = jsonReader.nextInt();
-                            break;
-                        case "month":
-                            month = jsonReader.nextInt();
-                            break;
-                        case "day":
-                            day = jsonReader.nextInt();
-                            break;
-                        default:
-                            jsonReader.skipValue();
+                        case "year" -> year = jsonReader.nextInt();
+                        case "month" -> month = jsonReader.nextInt();
+                        case "day" -> day = jsonReader.nextInt();
+                        default -> jsonReader.skipValue();
                     }
                 }
                 jsonReader.endObject();

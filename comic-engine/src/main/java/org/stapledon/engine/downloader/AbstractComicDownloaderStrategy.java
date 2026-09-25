@@ -3,7 +3,9 @@ package org.stapledon.engine.downloader;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
+import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +29,8 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
 
     private static final int HTTP_NOT_FOUND = 404;
     private static final int HTTP_GONE = 410;
+    private static final int HTTP_OK_MIN = 200;
+    private static final int HTTP_OK_MAX = 299;
 
     @Getter
     private final String source;
@@ -77,7 +81,12 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
 
             return Optional.of(avatarData);
         } catch (Exception e) {
-            log.error("Error downloading avatar for comic {}: {}", comicName, e.getMessage(), e);
+            int status = httpStatus(e);
+            if (status > 0) {
+                log.warn("Avatar download for comic {} from {} failed with HTTP {}: {}", comicName, source, status, e.getMessage());
+            } else {
+                log.error("Error downloading avatar for comic {} from {}", comicName, source, e);
+            }
             return Optional.empty();
         }
     }
@@ -130,21 +139,48 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
      * All strategies should use this instead of raw {@code URL.openStream()}.
      *
      * @throws RateLimitedException if the server answers HTTP 429
+     * @throws HttpStatusException for any other non-2xx answer, so callers can see the status
      */
     protected byte[] downloadImageData(String imageUrl) throws IOException {
+        long start = System.nanoTime();
         HttpURLConnection conn = (HttpURLConnection) URI.create(imageUrl).toURL().openConnection();
         conn.setRequestProperty("User-Agent", userAgentService.getUserAgent(source));
         conn.setConnectTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
         conn.setReadTimeout(DownloaderConstants.DEFAULT_TIMEOUT);
+        int status = -1;
+        int bytes = -1;
         try {
-            if (conn.getResponseCode() == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
+            status = conn.getResponseCode();
+            if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
                 throw RateLimitedException.of(imageUrl, conn.getHeaderField("Retry-After"));
             }
+            if (status < HTTP_OK_MIN || status > HTTP_OK_MAX) {
+                throw new HttpStatusException("HTTP error fetching image", status, imageUrl);
+            }
             try (InputStream in = conn.getInputStream()) {
-                return in.readAllBytes();
+                byte[] data = in.readAllBytes();
+                bytes = data.length;
+                return data;
             }
         } finally {
             conn.disconnect();
+            log.debug("GET {} [{}] -> HTTP {}, {} bytes in {}ms", imageUrl, source, status, bytes, (System.nanoTime() - start) / 1_000_000);
+        }
+    }
+
+    /**
+     * Runs a Jsoup GET, logging the URL, outcome and time at DEBUG. Non-2xx answers still throw Jsoup's {@link HttpStatusException}.
+     */
+    protected Document getPage(Connection connection) throws IOException {
+        long start = System.nanoTime();
+        String url = connection.request().url().toExternalForm();
+        try {
+            Document document = connection.get();
+            log.debug("GET {} [{}] -> OK in {}ms", url, source, (System.nanoTime() - start) / 1_000_000);
+            return document;
+        } catch (HttpStatusException e) {
+            log.debug("GET {} [{}] -> HTTP {} in {}ms", url, source, e.getStatusCode(), (System.nanoTime() - start) / 1_000_000);
+            throw e;
         }
     }
 

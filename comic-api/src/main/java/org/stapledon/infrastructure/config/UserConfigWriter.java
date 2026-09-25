@@ -44,7 +44,7 @@ public class UserConfigWriter {
      */
     public boolean saveUser(User user) {
         if (user == null || user.getUsername() == null || user.getUsername().isEmpty()) {
-            log.error("Cannot save user: User or username is null/empty");
+            log.warn("Cannot save user: User or username is null/empty");
             return false;
         }
 
@@ -54,7 +54,7 @@ public class UserConfigWriter {
 
             // Add user to map
             userConfig.getUsers().put(user.getUsername(), user);
-            log.info("Saving user: {}", user.getUsername());
+            log.debug("Saving user: {}", user.getUsername());
 
             // Save to file using the configuration facade
             return configurationFacade.saveUserConfig(userConfig);
@@ -75,7 +75,7 @@ public class UserConfigWriter {
         if (registrationDto == null
                 || registrationDto.getUsername() == null || registrationDto.getUsername().isEmpty()
                 || registrationDto.getPassword() == null || registrationDto.getPassword().isEmpty()) {
-            log.error("Cannot register user: Missing required fields (username or password)");
+            log.warn("Cannot register user: Missing required fields (username or password)");
             return Optional.empty();
         }
 
@@ -123,7 +123,7 @@ public class UserConfigWriter {
     public Optional<User> authenticateUser(String username, String password) {
         // Validate input
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            log.error("Cannot authenticate: Username or password is null/empty");
+            log.warn("Cannot authenticate: Username or password is null/empty");
             return Optional.empty();
         }
 
@@ -174,7 +174,7 @@ public class UserConfigWriter {
     public Optional<User> getUser(String username) {
         // Validate input
         if (username == null || username.isEmpty()) {
-            log.error("Cannot get user: Username is null/empty");
+            log.warn("Cannot get user: Username is null/empty");
             return Optional.empty();
         }
 
@@ -202,7 +202,7 @@ public class UserConfigWriter {
     public Optional<User> updateUser(User user) {
         // Validate input
         if (user == null || user.getUsername() == null || user.getUsername().isEmpty()) {
-            log.error("Cannot update user: User or username is null/empty");
+            log.warn("Cannot update user: User or username is null/empty");
             return Optional.empty();
         }
 
@@ -229,6 +229,10 @@ public class UserConfigWriter {
 
             // If roles are provided and not empty, update them
             if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+                if (!user.getRoles().equals(existingUser.getRoles())) {
+                    // The acting admin is in the log context (user=...)
+                    log.info("AUDIT roles changed for user {}: {} -> {}", user.getUsername(), existingUser.getRoles(), user.getRoles());
+                }
                 existingUser.setRoles(user.getRoles());
             }
 
@@ -256,7 +260,7 @@ public class UserConfigWriter {
     public Optional<User> updatePassword(String username, String newPassword) {
         // Validate input
         if (username == null || username.isEmpty() || newPassword == null || newPassword.isEmpty()) {
-            log.error("Cannot update password: Username or new password is null/empty");
+            log.warn("Cannot update password: Username or new password is null/empty");
             return Optional.empty();
         }
 
@@ -300,17 +304,9 @@ public class UserConfigWriter {
             return userConfig;
         }
 
-        try {
-            userConfig = configurationFacade.loadUserConfig();
-            return userConfig;
-        } catch (JsonParseException e) {
-            // For integration testing, propagate the original exception
-            throw e;
-        } catch (Exception e) {
-            log.error("Error reading user configuration: {}", e.getMessage(), e);
-            userConfig = new UserConfig();
-            return userConfig;
-        }
+        // A read failure propagates: caching an empty config here would let the next save wipe every user
+        userConfig = configurationFacade.loadUserConfig();
+        return userConfig;
     }
 
     public boolean existsByUsername(String username) {
@@ -323,7 +319,7 @@ public class UserConfigWriter {
      */
     public boolean deleteUser(String username) {
         if (username == null || username.isEmpty()) {
-            log.error("Cannot delete user: Username is null/empty");
+            log.warn("Cannot delete user: Username is null/empty");
             return false;
         }
 

@@ -8,7 +8,7 @@ ComicCacher is a web comic downloader and viewer application built as a multi-mo
 
 ```mermaid
 graph TD
-    subgraph Backend ["Backend (Java 21 / Spring Boot 4)"]
+    subgraph Backend ["Backend (Java 25 / Spring Boot 4)"]
         COMMON["comic-common<br/>DTOs, interfaces, config, utilities"]
         METRICS["comic-metrics<br/>Cache & storage metrics"]
         ENGINE["comic-engine<br/>Downloaders, facades, Spring Batch"]
@@ -78,6 +78,19 @@ Each module has its own coding standards. **Module-level standards override this
 | **GraphQL wire format** | `DateTime` scalar = ISO-8601 with offset (e.g., `2026-03-18T10:00:00-04:00`) |
 | **Frontend** | `new Date(isoString)` for parsing, `toLocaleString()` for display. Never assume a timezone |
 | **Gson** | `OffsetDateTimeAdapter` for new code. `LocalDateTimeAdapter` for backward compat only |
+
+## Logging Conventions
+
+| Rule | Detail |
+|------|--------|
+| **Levels** | ERROR = unexpected failure someone should look at. WARN = expected failure or degraded result (404, 429, bad input, rejected token). INFO = state changes and one summary line per request, job or download run. DEBUG = per-item detail and read paths |
+| **Exceptions** | Unexpected failures pass the exception as the last argument (`log.error("... {}", id, e)`) for a compact stack trace. Expected ones log one line: `e.toString()` or status + message, no trace |
+| **Stack traces** | Compact by design: `logging.exception-conversion-word` in `application.properties` (12 frames per cause, framework frames folded) applies to the console and the per-execution batch logs |
+| **Context** | MDC keys in `LogContext` (`requestId`, `user`, `gqlOp`, `comic`, `date`, `strip`) plus `batchJobExecutionId` print as `[req=… user=… comic=…]` via `%ctx`. Set them with `MDC.putCloseable` in try-with-resources; pools use `MdcTaskDecorator` |
+| **Requests** | `RequestLoggingFilter` logs one line per `/graphql` and `/api/**` request and returns `X-Request-Id`, so a user report can be matched to its log lines |
+| **Audit** | Admin changes log `AUDIT …` at INFO; the acting user comes from the log context |
+| **Never log** | Passwords, tokens, Authorization headers, or full email addresses (use `LogContext.maskEmail`) |
+| **One ERROR per failure** | Log the cause where it happens; callers that only pass the result on log at DEBUG |
 
 ## Data Flow: Comic Download Pipeline
 

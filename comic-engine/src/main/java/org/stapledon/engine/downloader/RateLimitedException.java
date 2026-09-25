@@ -1,6 +1,7 @@
 package org.stapledon.engine.downloader;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -14,6 +15,7 @@ import java.util.Optional;
  * Thrown when a source answers HTTP 429 (Too Many Requests). Carries the server's {@code Retry-After} hint, if it sent a usable one.
  */
 @Getter
+@Slf4j
 public class RateLimitedException extends IOException {
 
     public static final int HTTP_TOO_MANY_REQUESTS = 429;
@@ -47,14 +49,15 @@ public class RateLimitedException extends IOException {
         try {
             long seconds = Long.parseLong(value);
             return seconds < 0 ? Optional.empty() : Optional.of(Duration.ofSeconds(seconds));
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException _) {
             // Not delta-seconds; fall through to HTTP-date
         }
         try {
             OffsetDateTime at = OffsetDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME);
             Duration wait = Duration.between(now, at);
             return Optional.of(wait.isNegative() ? Duration.ZERO : wait);
-        } catch (DateTimeParseException ignored) {
+        } catch (DateTimeParseException _) {
+            log.warn("Ignoring unparseable Retry-After header '{}'; using the configured backoff instead", value);
             return Optional.empty();
         }
     }

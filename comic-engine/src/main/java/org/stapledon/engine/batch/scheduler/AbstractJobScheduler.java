@@ -115,10 +115,12 @@ public abstract class AbstractJobScheduler {
             JobParameters parameters = buildJobParameters(trigger, extraParams);
             org.springframework.batch.core.job.JobExecution execution = jobOperator.start(job, parameters);
             Long executionId = execution.getId();
-            log.info("{} started with execution ID: {}", getJobName(), executionId);
+            // jobOperator.start runs the job synchronously, so the execution has finished here
+            log.info("{} execution {} ended: {} (exit code {})", getJobName(), executionId, execution.getStatus(),
+                    execution.getExitStatus().getExitCode());
             return executionId;
         } catch (Exception e) {
-            log.error("Failed to launch {}: {}", getJobName(), e.getMessage(), e);
+            log.error("Failed to launch {}", getJobName(), e);
             return null;
         } finally {
             running.set(false);
@@ -131,10 +133,10 @@ public abstract class AbstractJobScheduler {
      * @param scheduleDescription human-readable schedule description
      */
     protected void logInitialization(String scheduleDescription) {
-        log.warn("======== INITIALIZING SCHEDULER: {} ========", getClass().getSimpleName());
+        log.info("======== INITIALIZING SCHEDULER: {} ========", getClass().getSimpleName());
         log.info("  Job: {}", getJobName());
         log.info("  Type: {}", getScheduleType());
         log.info("  Schedule: {}", scheduleDescription);
-        log.warn("{} scheduler SUCCESSFULLY initialized", getJobName());
+        log.info("{} scheduler initialized", getJobName());
     }
 }

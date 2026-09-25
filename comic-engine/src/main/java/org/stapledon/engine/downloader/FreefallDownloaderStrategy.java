@@ -62,8 +62,8 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         String url = BASE_URL + "/default.htm";
         log.info("Fetching latest Freefall strip from {}", url);
 
-        Document doc = Jsoup.connect(url)
-                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+        Document doc = getPage(Jsoup.connect(url)
+                .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT));
 
         return fetchStripFromDocument(doc);
     }
@@ -89,8 +89,8 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
 
         Document doc;
         try {
-            doc = Jsoup.connect(primaryUrl)
-                    .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+            doc = getPage(Jsoup.connect(primaryUrl)
+                    .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT));
         } catch (org.jsoup.HttpStatusException e) {
             if (e.getStatusCode() == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
                 // Rate limited, not missing: trying the other page would just be another request to a source that asked us to slow down
@@ -98,11 +98,11 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
             }
             log.debug("Primary page not found ({}), trying fallback: {}", primaryUrl, fallbackUrl);
             try {
-                doc = Jsoup.connect(fallbackUrl)
-                        .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
+                doc = getPage(Jsoup.connect(fallbackUrl)
+                        .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT));
             } catch (org.jsoup.HttpStatusException e2) {
-                log.error("Both color and grayscale pages failed for strip #{}: {} and {}", stripNumber,
-                        buildStripPageUrl(stripNumber), buildGrayscaleStripPageUrl(stripNumber));
+                log.warn("Both color and grayscale pages failed for strip #{}: {} (HTTP {}) and {} (HTTP {})", stripNumber,
+                        primaryUrl, e.getStatusCode(), fallbackUrl, e2.getStatusCode());
                 throw e2;
             }
         }
@@ -198,19 +198,24 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         }
 
         for (Node node : parent.childNodes()) {
-            if (node instanceof org.jsoup.nodes.Comment comment) {
-                String commentText = comment.getData().trim();
-                // Strip leading/trailing dashes that Jsoup may add
-                commentText = commentText.replaceAll("^-+\\s*", "").replaceAll("\\s*-+$", "");
-                try {
-                    return LocalDate.parse(commentText.trim(), TITLE_DATE_FORMAT);
-                } catch (DateTimeParseException e) {
-                    // Not a date comment, continue
+            switch (node) {
+                case org.jsoup.nodes.Comment comment -> {
+                    // Strip leading/trailing dashes that Jsoup may add
+                    String commentText = comment.getData().trim().replaceAll("^-+\\s*", "").replaceAll("\\s*-+$", "");
+                    try {
+                        return LocalDate.parse(commentText.trim(), TITLE_DATE_FORMAT);
+                    } catch (DateTimeParseException _) {
+                        // Not a date comment, continue
+                    }
                 }
-            } else if (node instanceof Element) {
-                LocalDate found = findDateInCommentNodes(node);
-                if (found != null) {
-                    return found;
+                case Element element -> {
+                    LocalDate found = findDateInCommentNodes(element);
+                    if (found != null) {
+                        return found;
+                    }
+                }
+                default -> {
+                    // Text and other nodes cannot hold the date comment
                 }
             }
         }

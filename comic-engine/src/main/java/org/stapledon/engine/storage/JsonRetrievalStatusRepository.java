@@ -94,7 +94,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
             String json = gson.toJson(recordStorage);
             NfsFileOperations.atomicWrite(storageFile, json);
         } catch (IOException e) {
-            log.error("Failed to save retrieval records: {}", e.getMessage(), e);
+            log.error("Failed to save retrieval records to {}", storageFile, e);
         }
     }
 

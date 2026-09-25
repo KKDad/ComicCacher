@@ -9,9 +9,6 @@ ext {
     // Project version (can be overridden via -PbuildVersion=X.Y.Z)
     projectVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : '2.4.8'
 
-    // Core dependency versions — keep in sync with plugin version above
-    springBootVersion = '4.0.6'
-
     // Library versions
     bcryptVersion = '0.4'
     brotliDecVersion = '0.1.2'
@@ -49,7 +46,7 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+            languageVersion = JavaLanguageVersion.of(25)
         }
     }
 
@@ -83,11 +80,13 @@ subprojects {
         enabled = false  // Skip checkstyle on test code initially
     }
 
-    // Apply Spring Boot BOM to all modules using dependency-management plugin
+    // Apply Spring Boot BOM to all modules using dependency-management plugin.
+    // BOM_COORDINATES comes from the Spring Boot plugin declared above, so Dependabot's
+    // plugin bump is the only Spring Boot version to maintain.
     pluginManager.withPlugin('io.spring.dependency-management') {
         dependencyManagement {
             imports {
-                mavenBom "org.springframework.boot:spring-boot-dependencies:${rootProject.ext.springBootVersion}"
+                mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
             }
         }
     }
@@ -96,6 +95,8 @@ subprojects {
         compileOnly {
             extendsFrom annotationProcessor
         }
+        // Mockito's inline mock maker is loaded as a javaagent instead of self-attaching (JEP 451)
+        mockitoAgent
     }
 
     dependencies {
@@ -111,14 +112,20 @@ subprojects {
         // Common test dependencies
         testImplementation "org.assertj:assertj-core"
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        mockitoAgent('org.mockito:mockito-core') {
+            transitive = false
+        }
 
         // OpenRewrite Recipes
         rewrite("org.openrewrite.recipe:rewrite-testing-frameworks:3.44.0")
         rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.41.1")
+        rewrite("org.openrewrite.recipe:rewrite-migrate-java:3.42.1")
     }
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+        def mockitoAgentFiles = configurations.mockitoAgent
+        jvmArgumentProviders.add({ ["-javaagent:${mockitoAgentFiles.singleFile}"] } as CommandLineArgumentProvider)
     }
 
     test {

@@ -198,12 +198,12 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     private void logInitializationWithNextRun() {
         try {
             ZonedDateTime nextRun = getNextScheduledTime(ZonedDateTime.now(ZoneId.of(timezone)));
-            log.warn("======== INITIALIZING SCHEDULER: {} ========", getClass().getSimpleName());
+            log.info("======== INITIALIZING SCHEDULER: {} ========", getClass().getSimpleName());
             log.info("  Job: {}", getJobName());
             log.info("  Type: {}", getScheduleType());
             log.info("  Cron: {} ({})", cronExpression, timezone);
             if (nextRun != null) {
-                log.warn("{} scheduler SUCCESSFULLY initialized - Next run: {} ({})", getJobName(), nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), nextRun.getZone());
+                log.info("{} scheduler initialized - next run: {} ({})", getJobName(), nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), nextRun.getZone());
             }
         } catch (Exception e) {
             log.error("======== FAILED TO INITIALIZE SCHEDULER: {} ========", getClass().getSimpleName(), e);
@@ -219,7 +219,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
             CronExpression cron = CronExpression.parse(cronExpression);
             return cron.next(from);
         } catch (Exception e) {
-            log.error("Failed to parse cron expression '{}': {}", cronExpression, e.getMessage());
+            log.error("Failed to parse cron expression '{}' for {}", cronExpression, getJobName(), e);
             return null;
         }
     }

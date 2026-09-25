@@ -139,7 +139,7 @@ public class ComicIndexService {
         if (dates == null || dates.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(dates.get(dates.size() - 1));
+        return Optional.of(dates.getLast());
     }
 
     /**
@@ -154,7 +154,7 @@ public class ComicIndexService {
         if (dates == null || dates.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(dates.get(0));
+        return Optional.of(dates.getFirst());
     }
 
     /**
@@ -223,7 +223,7 @@ public class ComicIndexService {
                 // Clear verified empty marker since we now have data
                 verifiedEmptyComics.remove(comicId);
 
-                log.info("Added date {} to index for comic {}", date, comicName);
+                log.debug("Added date {} to index for comic {}", date, comicName);
             } else {
                 log.debug("Date {} already exists in index at position {}, skipping", date, pos);
             }
@@ -287,7 +287,7 @@ public class ComicIndexService {
                 } catch (IOException e) {
                     // Roll back cache on disk failure
                     strips.remove(stripNumber);
-                    log.error("Failed to persist strip index for {}: {}", comicName, e.getMessage());
+                    log.error("Failed to persist strip index for {}", comicName, e);
                     throw new RuntimeException("Failed to persist strip index to disk", e);
                 }
                 log.debug("Added strip #{} to index for comic {}", stripNumber, comicName);
@@ -310,7 +310,7 @@ public class ComicIndexService {
                     return result;
                 }
             } catch (IOException e) {
-                log.error("Failed to load strip index for '{}' (id={}): {}", comicName, comicId, e.getMessage());
+                log.error("Failed to load strip index {} for '{}' (id={}); starting from an empty strip index", indexFile, comicName, comicId, e);
             }
         }
         return ConcurrentHashMap.newKeySet();
@@ -417,15 +417,15 @@ public class ComicIndexService {
 
                                 dateSet.add(date);
                             } catch (DateTimeParseException | StringIndexOutOfBoundsException e) {
-                                log.warn("Skipping invalid file '{}': {}", name, e.getMessage());
+                                log.warn("Skipping invalid file '{}': {}", image, e.getMessage());
                             } catch (Exception e) {
-                                log.error("Error processing file '{}': {}", name, e.getMessage(), e);
+                                log.error("Error processing file '{}'", image, e);
                             }
                         }
                     }
                 }
             } catch (IOException e) {
-                log.error("Failed to scan directory {}: {}", comicDir, e.getMessage());
+                log.error("Failed to scan directory {}", comicDir, e);
             }
         }
 
@@ -522,7 +522,7 @@ public class ComicIndexService {
                     return index;
                 }
             } catch (IOException e) {
-                log.error("Failed to load index for comic '{}' (id={}): {}", comicName, comicId, e.getMessage());
+                log.error("Failed to load index {} for comic '{}' (id={}); it will be rebuilt from the files on disk", indexFile, comicName, comicId, e);
             }
         }
 
@@ -538,15 +538,11 @@ public class ComicIndexService {
     private void saveIndex(ComicDateIndex index, String comicName) throws IOException {
         Path indexFile = getIndexFile(index.getComicId(), comicName);
 
-        log.info("Saving index to: {}", indexFile);
-        log.info("Index contains {} dates: {}", index.getAvailableDates().size(),
-                 index.getAvailableDates().isEmpty() ? "[]"
-                 : "[" + index.getAvailableDates().get(0) + "..."
-                 + index.getAvailableDates().get(index.getAvailableDates().size() - 1) + "]");
-
+        List<LocalDate> dates = index.getAvailableDates();
         String json = gson.toJson(index);
         NfsFileOperations.atomicWrite(indexFile, json);
-        log.info("Successfully saved index for {} with {} dates", comicName, index.getAvailableDates().size());
+        log.debug("Saved index {} for {} with {} dates ({} to {})", indexFile, comicName, dates.size(),
+                dates.isEmpty() ? "-" : dates.getFirst(), dates.isEmpty() ? "-" : dates.getLast());
     }
 
     private Path getIndexFile(int comicId, String comicName) {

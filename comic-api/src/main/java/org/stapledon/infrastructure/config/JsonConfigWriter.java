@@ -51,13 +51,13 @@ public class JsonConfigWriter {
     public ComicItem fetch(String name) {
         try {
             loadComics();
-            log.info("Fetching {}", name);
+            log.debug("Fetching {}", name);
 
             if (this.comics.getItems().containsKey(name.hashCode())) {
                 return this.comics.getItems().get(name.hashCode());
             }
         } catch (Exception e) {
-            log.error("Failed to fetch comic: {}", e.getMessage(), e);
+            log.error("Failed to fetch comic {}", name, e);
         }
         return null;
     }
@@ -72,12 +72,8 @@ public class JsonConfigWriter {
             return comics;
         }
 
-        try {
-            comics = configurationFacade.loadComicConfig();
-        } catch (Exception e) {
-            log.error("Failed to load comics: {}", e.getMessage(), e);
-            comics = new ComicConfig();
-        }
+        // A read failure propagates: caching an empty config here would let the next save wipe the comic list
+        comics = configurationFacade.loadComicConfig();
         return comics;
     }
 }
