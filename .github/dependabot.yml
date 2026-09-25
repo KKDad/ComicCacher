@@ -11,7 +11,7 @@ updates:
       interval: "monthly"
       
   - package-ecosystem: "npm"
-    directory: "/ComicViewer"
+    directory: "/comic-hub"
     schedule:
       interval: "weekly"
     allow:
