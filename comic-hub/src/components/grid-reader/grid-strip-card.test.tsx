@@ -101,7 +101,7 @@ describe('GridStripCard', () => {
     vi.mocked(useUser).mockReturnValue({ username: 'user', email: 'u@test.com', displayName: 'User', roles: ['USER'], created: '2026-01-01' });
     render(<GridStripCard comic={mockComic} date="2026-03-29" onImageClick={vi.fn()} />);
     // Open hamburger menu
-    await userEvent.click(screen.getByRole('button', { name: /strip actions/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Garfield actions' }));
     expect(screen.queryByText('Statistics')).not.toBeInTheDocument();
     expect(screen.queryByText('Batch refresh')).not.toBeInTheDocument();
   });
@@ -109,7 +109,7 @@ describe('GridStripCard', () => {
   it('shows admin items for admin user', async () => {
     vi.mocked(useUser).mockReturnValue({ username: 'admin', email: 'a@test.com', displayName: 'Admin', roles: ['USER', 'ADMIN'], created: '2026-01-01' });
     render(<GridStripCard comic={mockComic} date="2026-03-29" onImageClick={vi.fn()} />);
-    await userEvent.click(screen.getByRole('button', { name: /strip actions/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Garfield actions' }));
     expect(screen.getByText('Statistics')).toBeInTheDocument();
     expect(screen.getByText('Batch refresh')).toBeInTheDocument();
   });

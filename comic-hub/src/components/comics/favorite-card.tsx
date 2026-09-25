@@ -25,9 +25,9 @@ export function FavoriteCard({ comic }: FavoriteCardProps) {
       className="flex-shrink-0 w-[140px] group"
     >
       <div className="space-y-2">
-        <Avatar className="h-[140px] w-[140px] ring-2 ring-border group-hover:ring-primary transition-all">
+        <Avatar aria-hidden="true" className="h-[140px] w-[140px] ring-2 ring-border group-hover:ring-primary transition-all">
           {comic.avatarUrl && (
-            <AvatarImage src={comic.avatarUrl} alt={comic.name} />
+            <AvatarImage src={comic.avatarUrl} alt="" />
           )}
           <AvatarFallback className="bg-primary-subtle text-primary text-2xl font-semibold">
             {initials}

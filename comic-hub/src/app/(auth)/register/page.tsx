@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { AuthHeader } from '@/components/auth/auth-header';
 import { ErrorBanner } from '@/components/auth/error-banner';
 
 export default function RegisterPage() {
@@ -22,11 +23,10 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
-    watch,
+    formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    mode: 'onChange',
+    mode: 'onTouched',
     defaultValues: {
       username: '',
       email: '',
@@ -35,14 +35,6 @@ export default function RegisterPage() {
       confirmPassword: '',
     },
   });
-
-  const watchedFields = watch();
-  const hasAllFields =
-    watchedFields.username &&
-    watchedFields.email &&
-    watchedFields.displayName &&
-    watchedFields.password &&
-    watchedFields.confirmPassword;
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
@@ -72,22 +64,12 @@ export default function RegisterPage() {
 
   return (
     <Card className="bg-surface shadow-lg">
-      <CardHeader className="space-y-1 text-center">
-        <div className="flex justify-center mb-4">
-          <h1
-            className="text-3xl font-bold text-primary"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Comics Hub
-          </h1>
-        </div>
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>
-          Join Comics Hub to start building your collection
-        </CardDescription>
-      </CardHeader>
+      <AuthHeader
+        title="Create an account"
+        description="Join Comics Hub to start building your collection"
+      />
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {errorMessage && (
             <ErrorBanner
               message={errorMessage}
@@ -103,11 +85,12 @@ export default function RegisterPage() {
               placeholder="Choose a username"
               autoComplete="username"
               disabled={isSubmitting}
+              aria-invalid={!!errors.username}
+              aria-describedby={errors.username ? 'username-error' : undefined}
               {...register('username')}
-              className={errors.username ? 'border-error' : ''}
             />
             {errors.username && (
-              <p className="text-sm text-error">{errors.username.message}</p>
+              <p id="username-error" className="text-sm text-error">{errors.username.message}</p>
             )}
           </div>
 
@@ -119,11 +102,12 @@ export default function RegisterPage() {
               placeholder="Enter your email"
               autoComplete="email"
               disabled={isSubmitting}
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? 'email-error' : undefined}
               {...register('email')}
-              className={errors.email ? 'border-error' : ''}
             />
             {errors.email && (
-              <p className="text-sm text-error">{errors.email.message}</p>
+              <p id="email-error" className="text-sm text-error">{errors.email.message}</p>
             )}
           </div>
 
@@ -134,11 +118,12 @@ export default function RegisterPage() {
               type="text"
               placeholder="How should we call you?"
               disabled={isSubmitting}
+              aria-invalid={!!errors.displayName}
+              aria-describedby={errors.displayName ? 'displayName-error' : undefined}
               {...register('displayName')}
-              className={errors.displayName ? 'border-error' : ''}
             />
             {errors.displayName && (
-              <p className="text-sm text-error">{errors.displayName.message}</p>
+              <p id="displayName-error" className="text-sm text-error">{errors.displayName.message}</p>
             )}
           </div>
 
@@ -149,11 +134,12 @@ export default function RegisterPage() {
               placeholder="Create a strong password"
               autoComplete="new-password"
               disabled={isSubmitting}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? 'password-error' : undefined}
               {...register('password')}
-              className={errors.password ? 'border-error' : ''}
             />
             {errors.password && (
-              <p className="text-sm text-error">{errors.password.message}</p>
+              <p id="password-error" className="text-sm text-error">{errors.password.message}</p>
             )}
           </div>
 
@@ -164,18 +150,19 @@ export default function RegisterPage() {
               placeholder="Re-enter your password"
               autoComplete="new-password"
               disabled={isSubmitting}
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
               {...register('confirmPassword')}
-              className={errors.confirmPassword ? 'border-error' : ''}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-error">{errors.confirmPassword.message}</p>
+              <p id="confirmPassword-error" className="text-sm text-error">{errors.confirmPassword.message}</p>
             )}
           </div>
 
           <Button
             type="submit"
             className="w-full"
-            disabled={!hasAllFields || !isValid || isSubmitting}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

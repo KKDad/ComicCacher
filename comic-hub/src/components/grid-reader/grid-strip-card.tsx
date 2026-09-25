@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import Link from 'next/link';
 import { MoreVertical, Shuffle, ExternalLink, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,10 +47,10 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
         ) : (
           <div className="h-8 w-8 rounded-full bg-muted shrink-0" />
         )}
-        <span className="font-medium text-sm text-ink truncate flex-1">{comic.name}</span>
+        <h2 className="font-sans font-medium text-sm text-ink truncate flex-1">{comic.name}</h2>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Strip actions">
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`${comic.name} actions`}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -61,25 +62,25 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
-              <a href={`/comics/${comic.id}/read?date=${date}`}>
+              <Link href={`/comics/${comic.id}/read?date=${date}`}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open standalone
-              </a>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <a href={`/comics/${comic.id}`}>
+              <Link href={`/comics/${comic.id}`}>
                 <Info className="h-4 w-4 mr-2" />
                 About
-              </a>
+              </Link>
             </DropdownMenuItem>
             {admin && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <a href="/metrics">Statistics</a>
+                  <Link href="/metrics">Statistics</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="/batch-jobs">Batch refresh</a>
+                  <Link href="/batch-jobs">Batch refresh</Link>
                 </DropdownMenuItem>
               </>
             )}
@@ -110,7 +111,7 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
             </div>
             {imageError ? (
               <div className="absolute inset-0 bg-card flex items-center justify-center">
-                <p className="text-sm text-ink-muted">Failed to load strip</p>
+                <p className="text-sm text-ink-subtle">Failed to load strip</p>
               </div>
             ) : (
               <img
@@ -125,7 +126,7 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
           </div>
         </button>
       ) : (
-        <div className="flex items-center justify-center py-8 text-sm text-ink-muted">
+        <div className="flex items-center justify-center py-8 text-sm text-ink-subtle">
           No strip available for {formattedDate}
         </div>
       )}
@@ -138,18 +139,21 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
 
 function TranscriptToggle({ transcript }: { transcript: string }) {
   const [expanded, setExpanded] = useState(false);
+  const id = useId();
 
   return (
     <div className="px-4 py-2 border-t border-border">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="text-xs text-ink-subtle hover:text-ink transition-colors"
+        aria-expanded={expanded}
+        aria-controls={id}
+        className="text-xs text-ink-subtle hover:text-ink transition-colors py-1"
       >
         {expanded ? 'Hide transcript' : 'Show transcript'}
       </button>
       {expanded && (
-        <p className="text-xs text-ink-muted mt-1 whitespace-pre-wrap">{transcript}</p>
+        <p id={id} className="text-xs text-ink-subtle mt-1 whitespace-pre-wrap">{transcript}</p>
       )}
     </div>
   );

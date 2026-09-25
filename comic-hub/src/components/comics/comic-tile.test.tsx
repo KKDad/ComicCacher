@@ -17,11 +17,7 @@ describe('ComicTile', () => {
 
   it('renders formatted date', () => {
     render(<ComicTile comic={mockComic} />);
-    const formattedDate = new Date('2024-01-15').toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-    expect(screen.getByText(formattedDate)).toBeInTheDocument();
+    expect(screen.getByText('Jan 15')).toBeInTheDocument();
   });
 
   it('renders thumbnail image when provided', () => {
@@ -31,7 +27,7 @@ describe('ComicTile', () => {
     };
     render(<ComicTile comic={comicWithThumbnail} />);
 
-    const image = screen.getByRole('img', { name: 'Test Comic' });
+    const image = screen.getByRole('presentation');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'https://example.com/thumbnail.jpg');
   });
@@ -86,13 +82,13 @@ describe('ComicTile', () => {
   it('renders heart button when onToggleFavorite is provided', () => {
     const handler = vi.fn();
     render(<ComicTile comic={mockComic} onToggleFavorite={handler} />);
-    expect(screen.getByRole('button', { name: /add to favorites/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add Test Comic to favorites' })).toBeInTheDocument();
   });
 
   it('renders filled heart when isFavorite', () => {
     const handler = vi.fn();
     render(<ComicTile comic={mockComic} isFavorite onToggleFavorite={handler} />);
-    expect(screen.getByRole('button', { name: /remove from favorites/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Test Comic from favorites' })).toBeInTheDocument();
   });
 
   it('does not render heart button when onToggleFavorite is not provided', () => {
@@ -103,17 +99,24 @@ describe('ComicTile', () => {
   it('calls onToggleFavorite when heart is clicked', async () => {
     const handler = vi.fn();
     render(<ComicTile comic={mockComic} onToggleFavorite={handler} />);
-    await userEvent.click(screen.getByRole('button', { name: /add to favorites/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Test Comic to favorites' }));
     expect(handler).toHaveBeenCalledOnce();
   });
 
   it('formats different dates correctly', () => {
     const comic = { ...mockComic, date: '2024-07-04' };
     render(<ComicTile comic={comic} />);
-    const formattedDate = new Date('2024-07-04').toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-    expect(screen.getByText(formattedDate)).toBeInTheDocument();
+    expect(screen.getByText('Jul 4')).toBeInTheDocument();
+  });
+
+  it('makes the title the card link and keeps the favorite button outside it', () => {
+    const { container } = render(<ComicTile comic={mockComic} onToggleFavorite={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Test Comic' })).toBeInTheDocument();
+    expect(container.querySelector('a button')).toBeNull();
+  });
+
+  it('exposes favorite state with aria-pressed', () => {
+    render(<ComicTile comic={mockComic} isFavorite onToggleFavorite={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Remove Test Comic from favorites' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

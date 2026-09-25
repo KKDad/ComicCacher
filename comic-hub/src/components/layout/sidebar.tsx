@@ -2,36 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  BookOpen,
-  Newspaper,
-  BarChart3,
-  RefreshCw,
-  Code,
-  Settings,
-  LogOut,
-  Cog,
-} from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isOperator, isAdmin } from '@/lib/roles';
+import { isOperator } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import { useLogout } from '@/hooks/use-auth';
 import { useUser } from '@/contexts/user-context';
+import { baseNavItems, operationsNavItems, isNavActive, type NavItem } from './nav-items';
 
-const baseNavItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/read', label: 'Daily Reader', icon: Newspaper },
-  { href: '/comics', label: 'Comics List', icon: BookOpen },
-  { href: '/api', label: 'API', icon: Code },
-  { href: '/preferences', label: 'Preferences', icon: Settings },
-];
-
-const operationsNavItems = [
-  { href: '/metrics', label: 'Metrics', icon: BarChart3 },
-  { href: '/retrieval-status', label: 'Retrieval Status', icon: RefreshCw },
-  { href: '/batch-jobs', label: 'Batch Jobs', icon: Cog },
-];
+function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Button
+      asChild
+      variant="ghost"
+      className={cn(
+        'w-full justify-start gap-3',
+        active && 'bg-primary-subtle text-primary font-medium hover:bg-primary-subtle hover:text-primary',
+      )}
+    >
+      <Link href={item.href} aria-current={active ? 'page' : undefined}>
+        <Icon className="h-5 w-5" aria-hidden="true" />
+        {item.label}
+      </Link>
+    </Button>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -40,56 +36,28 @@ export function Sidebar() {
   const showOperations = isOperator(user?.roles ?? []);
 
   return (
-    <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100vh-var(--header-height))] w-[var(--sidebar-width)] bg-surface border-r border-border flex flex-col">
-      <nav className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-1">
-          {baseNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-
-            return (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  className={cn(
-                    'w-full justify-start gap-3',
-                    isActive && 'bg-primary-subtle text-primary font-medium'
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  {item.label}
-                </Button>
-              </Link>
-            );
-          })}
-        </div>
+    <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100dvh-var(--header-height))] w-[var(--sidebar-width)] bg-surface border-r border-border flex flex-col">
+      <nav aria-label="Main" className="flex-1 overflow-y-auto p-4">
+        <ul className="space-y-1">
+          {baseNavItems.map((item) => (
+            <li key={item.href}>
+              <SidebarLink item={item} active={isNavActive(pathname, item.href)} />
+            </li>
+          ))}
+        </ul>
 
         {showOperations && (
           <div className="mt-6">
-            <div className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <h2 id="sidebar-ops" className="px-3 mb-2 font-sans text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Operations
-            </div>
-            <div className="space-y-1">
-              {operationsNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <Button
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      className={cn(
-                        'w-full justify-start gap-3',
-                        isActive && 'bg-primary-subtle text-primary font-medium'
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                );
-              })}
-            </div>
+            </h2>
+            <ul aria-labelledby="sidebar-ops" className="space-y-1">
+              {operationsNavItems.map((item) => (
+                <li key={item.href}>
+                  <SidebarLink item={item} active={isNavActive(pathname, item.href)} />
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </nav>
@@ -101,8 +69,8 @@ export function Sidebar() {
           onClick={logout}
           disabled={isLoggingOut}
         >
-          <LogOut className="h-5 w-5" />
-          {isLoggingOut ? 'Signing out...' : 'Logout'}
+          <LogOut className="h-5 w-5" aria-hidden="true" />
+          {isLoggingOut ? 'Signing out...' : 'Sign out'}
         </Button>
       </div>
     </aside>

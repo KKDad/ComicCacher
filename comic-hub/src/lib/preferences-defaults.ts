@@ -7,8 +7,6 @@ export interface DisplaySettings {
   showContinueReading: boolean;
   showFavorites: boolean;
   showRecentlyAdded: boolean;
-  comicsPerPage: number;
-  defaultZoom: number;
   readerNavMode: ReaderNavMode;
   readerScrollOrder: ReaderScrollOrder;
 }
@@ -18,8 +16,6 @@ export const DEFAULT_DISPLAY_SETTINGS: DisplaySettings = {
   showContinueReading: true,
   showFavorites: true,
   showRecentlyAdded: true,
-  comicsPerPage: 24,
-  defaultZoom: 100,
   readerNavMode: 'favorites',
   readerScrollOrder: 'catchup',
 };

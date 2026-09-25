@@ -30,13 +30,7 @@ describe('StripCard', () => {
   it('renders formatted date for available strip', () => {
     render(<StripCard strip={availableStrip} comicName="Garfield" />);
 
-    const formatted = new Date('2026-03-15').toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    expect(screen.getByText(formatted)).toBeInTheDocument();
+    expect(screen.getByText('Sun, March 15, 2026')).toBeInTheDocument();
   });
 
   it('renders unavailable message for missing strip', () => {

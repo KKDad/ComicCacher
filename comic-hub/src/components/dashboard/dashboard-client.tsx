@@ -3,23 +3,26 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  useGetComicsQuery,
   useGetMeQuery,
   useGetUserPreferencesQuery,
   useAddFavoriteMutation,
   useRemoveFavoriteMutation,
 } from '@/generated/graphql';
+import { useAllComics } from '@/hooks/use-all-comics';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ContinueReading } from '@/components/dashboard/continue-reading';
 import { FavoritesSection } from '@/components/dashboard/favorites-section';
-import { TodaysComics } from '@/components/dashboard/todays-comics';
+import { LatestUpdates } from '@/components/dashboard/latest-updates';
 import { usePreferencesStore } from '@/stores/preferences-store';
+
+/** How many comics the "Latest updates" grid shows before "View all". */
+const LATEST_LIMIT = 12;
 
 export function DashboardClient() {
   const queryClient = useQueryClient();
   const { data: meData } = useGetMeQuery();
 
-  const { data: comicsData, isLoading: comicsLoading, error: comicsError } = useGetComicsQuery({ first: 20 });
+  const { comics, isLoading: comicsLoading, error: comicsError } = useAllComics();
 
   const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useGetUserPreferencesQuery();
 
@@ -59,7 +62,6 @@ export function DashboardClient() {
     );
   }
 
-  const comics = comicsData?.comics?.edges?.map((e) => e.node) ?? [];
   const prefs = prefsData?.preferences ?? null;
 
   const favoriteIds = new Set(prefs?.favoriteComics ?? []);
@@ -67,27 +69,35 @@ export function DashboardClient() {
     (prefs?.lastReadDates ?? []).map((entry) => [entry.comicId, entry.date]),
   );
 
-  const todaysComics = comics.map((c) => {
-    const latestDate = c.lastStrip?.date ?? c.newest;
-    const lastRead = lastReadMap.get(c.id);
-    const isNew = !lastRead || latestDate > lastRead;
+  const latestComics = comics
+    .filter((c) => c.lastStrip?.date ?? c.newest)
+    .map((c) => {
+      const latestDate: string = c.lastStrip?.date ?? c.newest;
+      const lastRead = lastReadMap.get(c.id);
+      const isFavorite = favoriteIds.has(c.id);
 
-    return {
-      id: c.id,
-      name: c.name,
-      date: latestDate,
-      thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl ?? undefined,
-      isNew,
-      isFavorite: favoriteIds.has(c.id),
-      onToggleFavorite: () => {
-        if (favoriteIds.has(c.id)) {
-          removeFavorite.mutate({ comicId: c.id });
-        } else {
-          addFavorite.mutate({ comicId: c.id });
-        }
-      },
-    };
-  });
+      return {
+        id: c.id,
+        name: c.name,
+        date: latestDate,
+        thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl ?? undefined,
+        isNew: !lastRead || latestDate > lastRead,
+        isFavorite,
+        onToggleFavorite: () => {
+          if (isFavorite) {
+            removeFavorite.mutate({ comicId: c.id });
+          } else {
+            addFavorite.mutate({ comicId: c.id });
+          }
+        },
+      };
+    })
+    // Newest strip first; favorites lead within a day, then alphabetical.
+    .sort((a, b) =>
+      b.date.localeCompare(a.date)
+      || Number(b.isFavorite) - Number(a.isFavorite)
+      || a.name.localeCompare(b.name))
+    .slice(0, LATEST_LIMIT);
 
   const favorites = comics
     .filter((c) => favoriteIds.has(c.id))
@@ -95,28 +105,27 @@ export function DashboardClient() {
       id: c.id,
       name: c.name,
       avatarUrl: c.avatarUrl,
-    }));
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  let lastRead = null;
-  if (prefs?.lastReadDates?.length) {
-    const sorted = [...prefs.lastReadDates].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
-    const most = sorted[0];
-    const comic = comics.find((c) => c.id === most.comicId);
-    if (comic) {
-      lastRead = {
+  // Last-read dates are strip dates, not reading timestamps, so "continue" means
+  // the furthest-along comic that still has unread strips (or, if everything is
+  // caught up, the furthest-along one).
+  const readEntries = (prefs?.lastReadDates ?? [])
+    .map((entry) => ({ entry, comic: comics.find((c) => c.id === entry.comicId) }))
+    .filter((r) => r.comic !== undefined)
+    .sort((a, b) => b.entry.date.localeCompare(a.entry.date));
+  const next = readEntries.find((r) => (r.comic!.newest ?? '') > r.entry.date) ?? readEntries[0];
+  const lastRead = next
+    ? {
         comic: {
-          id: comic.id,
-          name: comic.name,
-          lastStrip: comic.lastStrip
-            ? { imageUrl: comic.lastStrip.imageUrl }
-            : null,
+          id: next.comic!.id,
+          name: next.comic!.name,
+          lastStrip: next.comic!.lastStrip ? { imageUrl: next.comic!.lastStrip.imageUrl } : null,
         },
-        date: most.date,
-      };
-    }
-  }
+        date: next.entry.date,
+      }
+    : null;
 
   const isLoading = comicsLoading || prefsLoading;
 
@@ -130,7 +139,7 @@ export function DashboardClient() {
         <FavoritesSection favorites={favorites.length > 0 ? favorites : null} isLoading={isLoading} />
       )}
       {showRecentlyAdded && (
-        <TodaysComics comics={todaysComics.length > 0 ? todaysComics : null} isLoading={comicsLoading} />
+        <LatestUpdates comics={latestComics.length > 0 ? latestComics : null} isLoading={comicsLoading} />
       )}
     </div>
   );

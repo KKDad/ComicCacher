@@ -47,9 +47,42 @@ describe('LoginPage', () => {
     expect(screen.getByRole('link', { name: /forgot password/i })).toHaveAttribute('href', '/forgot-password');
   });
 
-  it('disables submit button when fields are empty', () => {
+  it('keeps submit enabled and explains empty fields on submit', async () => {
+    const user = userEvent.setup();
     render(<LoginPage />);
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeDisabled();
+    const submit = screen.getByRole('button', { name: /sign in/i });
+    expect(submit).toBeEnabled();
+
+    await user.click(submit);
+
+    expect(await screen.findByText('Username or email is required')).toBeInTheDocument();
+    expect(screen.getByText('Password is required')).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('ignores an off-site "from" param', async () => {
+    vi.mocked(useSearchParams).mockReturnValue(
+      new URLSearchParams('from=https://evil.example') as ReturnType<typeof useSearchParams>,
+    );
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/username or email/i), 'testuser');
+    await user.type(screen.getByLabelText(/^password$/i), 'Password1!');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(mockRouter.push).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('lets the user reveal the password', async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+    const input = screen.getByLabelText(/^password$/i);
+    expect(input).toHaveAttribute('type', 'password');
+    await user.click(screen.getByRole('button', { name: /show password/i }));
+    expect(input).toHaveAttribute('type', 'text');
   });
 
   it('calls /api/login on form submit', async () => {
@@ -189,7 +222,8 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       const input = screen.getByLabelText(/username or email/i);
-      expect(input.className).toContain('border-error');
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      expect(input).toHaveAccessibleDescription('Username or email is required');
     });
   });
 

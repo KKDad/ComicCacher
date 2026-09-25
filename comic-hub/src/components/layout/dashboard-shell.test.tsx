@@ -19,9 +19,7 @@ vi.mock('@/components/layout/mobile-nav', () => ({
 }));
 
 vi.mock('@/components/layout/header', () => ({
-  Header: ({ showMenuButton }: { showMenuButton?: boolean }) => (
-    <div data-testid="header" data-menu-button={showMenuButton} />
-  ),
+  Header: () => <div data-testid="header" />,
 }));
 
 describe('DashboardShell', () => {
@@ -53,10 +51,11 @@ describe('DashboardShell', () => {
     expect(screen.queryByTestId('nav-rail')).not.toBeInTheDocument();
   });
 
-  it('passes showMenuButton=true to Header on mobile', () => {
-    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'mobile' });
+  it('renders a skip link to the main content', () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'desktop' });
     render(<DashboardShell>content</DashboardShell>);
-    expect(screen.getByTestId('header')).toHaveAttribute('data-menu-button', 'true');
+    expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main-content');
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
   });
 
   it('renders children', () => {

@@ -2,6 +2,10 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+// Run tests west of UTC so date-only strings parsed as UTC midnight show up
+// as off-by-one-day failures instead of passing on UTC CI runners.
+process.env.TZ = 'America/Toronto';
+
 export default defineConfig({
   plugins: [react()],
   test: {

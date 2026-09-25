@@ -5,6 +5,8 @@ import {
   formatAbsoluteTime,
   formatRelativeTime,
   formatDuration,
+  formatMediumDate,
+  parseDate,
 } from './date-utils';
 
 describe('date-utils', () => {
@@ -99,6 +101,23 @@ describe('date-utils', () => {
 
     it('formats minutes and seconds', () => {
       expect(formatDuration(192_000)).toBe('3m 12s');
+    });
+  });
+
+  describe('strip dates (YYYY-MM-DD)', () => {
+    it('parseDate reads a bare date as that local calendar day', () => {
+      const d = parseDate('2026-03-18');
+      expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([2026, 2, 18]);
+    });
+
+    it('parseDate leaves full timestamps to the Date constructor', () => {
+      expect(parseDate('2026-03-18T12:00:00Z').getTime()).toBe(Date.UTC(2026, 2, 18, 12));
+    });
+
+    it('formats a bare date without shifting the day', () => {
+      expect(formatShortDate('2026-03-18')).toBe('Mar 18');
+      expect(formatFullDate('2026-03-18')).toBe('Wed, March 18, 2026');
+      expect(formatMediumDate('2026-03-18')).toBe('Mar 18, 2026');
     });
   });
 });

@@ -1,13 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  BookOpen,
-  Newspaper,
-  Menu,
-} from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isOperator } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
@@ -19,26 +15,15 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { useState } from 'react';
 import { useLogout } from '@/hooks/use-auth';
 import { useUser } from '@/contexts/user-context';
+import { baseNavItems, operationsNavItems, isNavActive, type NavItem } from './nav-items';
 
-const bottomNavItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/read', label: 'Daily', icon: Newspaper },
-  { href: '/comics', label: 'Comics', icon: BookOpen },
-];
+const bottomNavItems = baseNavItems.filter((item) => item.shortLabel);
+const menuItems = baseNavItems.filter((item) => !item.shortLabel);
 
-const menuItems = [
-  { href: '/api', label: 'API' },
-  { href: '/preferences', label: 'Preferences' },
-];
-
-const operationsMenuItems = [
-  { href: '/metrics', label: 'Metrics' },
-  { href: '/retrieval-status', label: 'Retrieval Status' },
-  { href: '/batch-jobs', label: 'Batch Jobs' },
-];
+const barItemClass =
+  'flex flex-col items-center justify-center flex-1 h-full min-h-11 gap-1 transition-colors';
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -52,98 +37,91 @@ export function MobileNav() {
     await logout();
   };
 
+  const renderMenuLink = (item: NavItem) => {
+    const active = isNavActive(pathname, item.href);
+    return (
+      <li key={item.href}>
+        <Button
+          asChild
+          variant="ghost"
+          className={cn('w-full justify-start text-base h-12', active && 'text-primary')}
+        >
+          <Link
+            href={item.href}
+            aria-current={active ? 'page' : undefined}
+            onClick={() => setIsOpen(false)}
+          >
+            {item.label}
+          </Link>
+        </Button>
+      </li>
+    );
+  };
+
   return (
-    <>
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 h-[var(--mobile-nav-height)] bg-surface border-t border-border z-fixed">
-        <div className="flex items-center justify-around h-full">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
+    <nav
+      aria-label="Main"
+      className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-fixed pb-[env(safe-area-inset-bottom)]"
+    >
+      <div className="flex items-center justify-around h-[var(--mobile-nav-height)]">
+        {bottomNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = isNavActive(pathname, item.href);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors',
-                  isActive
-                    ? 'text-primary'
-                    : 'text-ink-muted hover:text-ink'
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              className={cn(barItemClass, active ? 'text-primary' : 'text-ink-subtle hover:text-ink')}
+            >
+              <Icon className="h-5 w-5" aria-hidden="true" />
+              <span className="text-xs font-medium">{item.shortLabel}</span>
+            </Link>
+          );
+        })}
 
-          {/* Hamburger Menu */}
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <button
-                className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-ink-muted hover:text-ink transition-colors"
-              >
-                <Menu className="h-5 w-5" />
-                <span className="text-xs font-medium">More</span>
-              </button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-xl">
-              <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6 space-y-1">
-                {menuItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-base h-12"
-                    >
-                      {item.label}
-                    </Button>
-                  </Link>
-                ))}
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <button type="button" className={cn(barItemClass, 'text-ink-subtle hover:text-ink')}>
+              <Menu className="h-5 w-5" aria-hidden="true" />
+              <span className="text-xs font-medium">More</span>
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-xl pb-[env(safe-area-inset-bottom)]">
+            <SheetHeader>
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <ul className="mt-2 space-y-1 px-2">
+              {menuItems.map(renderMenuLink)}
+            </ul>
 
-                {showOperations && (
-                  <>
-                    <Separator className="my-2" />
-                    <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Operations
-                    </div>
-                    {operationsMenuItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-base h-12"
-                        >
-                          {item.label}
-                        </Button>
-                      </Link>
-                    ))}
-                  </>
-                )}
-
+            {showOperations && (
+              <>
                 <Separator className="my-2" />
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-base h-12 text-error hover:text-error hover:bg-error-subtle"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </nav>
-    </>
+                <h2 id="mobile-ops" className="px-4 py-1 font-sans text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Operations
+                </h2>
+                <ul aria-labelledby="mobile-ops" className="space-y-1 px-2">
+                  {operationsNavItems.map(renderMenuLink)}
+                </ul>
+              </>
+            )}
+
+            <Separator className="my-2" />
+            <div className="px-2 pb-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-base h-12 text-error hover:text-error hover:bg-error-subtle"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? 'Signing out...' : 'Sign out'}
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </nav>
   );
 }

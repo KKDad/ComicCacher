@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { TodaysComics } from './todays-comics';
+import { LatestUpdates } from './latest-updates';
 
-describe('TodaysComics', () => {
+describe('LatestUpdates', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
@@ -17,36 +17,41 @@ describe('TodaysComics', () => {
   ];
 
   it('renders loading skeletons when isLoading', () => {
-    render(<TodaysComics isLoading />);
-    expect(screen.getByText("Today's Comics")).toBeInTheDocument();
+    render(<LatestUpdates isLoading />);
+    expect(screen.getByText('Latest Updates')).toBeInTheDocument();
     expect(screen.queryByText('No comics for today')).not.toBeInTheDocument();
   });
 
   it('renders empty state when no comics', () => {
-    render(<TodaysComics />);
-    expect(screen.getByText('No comics for today')).toBeInTheDocument();
-    expect(screen.getByText('View Archive')).toBeInTheDocument();
+    render(<LatestUpdates />);
+    expect(screen.getByText('No new strips yet')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Browse comics' })).toHaveAttribute('href', '/comics');
   });
 
   it('renders empty state for empty array', () => {
-    render(<TodaysComics comics={[]} />);
-    expect(screen.getByText('No comics for today')).toBeInTheDocument();
+    render(<LatestUpdates comics={[]} />);
+    expect(screen.getByText('No new strips yet')).toBeInTheDocument();
   });
 
   it('renders comic tiles when comics provided', () => {
-    render(<TodaysComics comics={comics} />);
+    render(<LatestUpdates comics={comics} />);
     expect(screen.getByText('Garfield')).toBeInTheDocument();
     expect(screen.getByText('Peanuts')).toBeInTheDocument();
   });
 
   it('shows View All button as link to /comics', () => {
-    render(<TodaysComics comics={comics} />);
+    render(<LatestUpdates comics={comics} />);
     const viewAllLink = screen.getByRole('link', { name: /view all/i });
     expect(viewAllLink).toHaveAttribute('href', '/comics');
   });
 
-  it('displays formatted date', () => {
-    render(<TodaysComics comics={comics} />);
-    expect(screen.getByText('Monday, January 15, 2024')).toBeInTheDocument();
+  it('shows each strip date on its tile', () => {
+    render(<LatestUpdates comics={comics} />);
+    expect(screen.getAllByText('Jan 15')).toHaveLength(2);
+  });
+
+  it('renders tiles as a list', () => {
+    render(<LatestUpdates comics={comics} />);
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 });

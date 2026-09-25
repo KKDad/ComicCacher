@@ -11,11 +11,14 @@ import { ReaderControls } from './reader-controls';
 import { StripSkeleton } from './strip-skeleton';
 import { ReadingListDrawer } from './reading-list-drawer';
 import { DatePickerPopover } from './date-picker-popover';
+import { formatMediumDate } from '@/lib/date-utils';
 
 /** Duration (ms) for the swipe transition animation. */
 const SWIPE_TRANSITION_MS = 200;
 /** Duration (ms) for the rubber-band bounce snap-back. */
 const BOUNCE_SNAP_MS = 100;
+/** How long (ms) the controls stay up when the reader first opens. */
+const INITIAL_CONTROLS_MS = 3000;
 
 interface MobileReaderProps {
   comicId: number;
@@ -42,7 +45,8 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
     isLoadingRandom,
   } = reader;
 
-  const [controlsVisible, setControlsVisible] = useState(false);
+  // Start with controls showing so readers learn they exist, then get out of the way.
+  const [controlsVisible, setControlsVisible] = useState(true);
   const [translateY, setTranslateY] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,13 +57,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
   const prevStrip = strips[currentIndex - 1] ?? null;
   const nextStrip = strips[currentIndex + 1] ?? null;
 
-  const formattedDate = currentStrip
-    ? new Date(currentStrip.date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : '';
+  const formattedDate = currentStrip ? formatMediumDate(currentStrip.date) : '';
 
   // Auto-hide controls after navigation
   const hideControlsAfterNav = useCallback(() => {
@@ -141,8 +139,16 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
 
   const toggleControls = useCallback(() => {
     if (isZoomed) return;
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     setControlsVisible((v) => !v);
   }, [isZoomed]);
+
+  useEffect(() => {
+    hideTimerRef.current = setTimeout(() => setControlsVisible(false), INITIAL_CONTROLS_MS);
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
 
   // Reset zoom when strip changes
   useEffect(() => {
@@ -196,10 +202,10 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
                     transition: isZoomed ? 'none' : 'transform 200ms ease-out',
                   }}
                 />
-                <p className="text-sm text-ink-subtle mt-3">{formattedDate}</p>
+                <p className="text-sm text-ink-subtle mt-3" aria-live="polite">{formattedDate}</p>
               </>
             ) : (
-              <p className="text-sm text-ink-muted">
+              <p className="text-sm text-ink-subtle">
                 {currentStrip ? 'No strip available for this date' : 'No strips loaded'}
               </p>
             )}
@@ -207,8 +213,9 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
         )}
       </div>
 
-      {/* Controls overlay */}
+      {/* Controls overlay — inert while hidden so invisible buttons can't take taps or focus */}
       <div
+        inert={!controlsVisible}
         className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${controlsVisible ? 'opacity-100' : 'opacity-0'}`}
       >
         {/* Top bar */}
@@ -222,7 +229,6 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
             onClick={() => router.back()}
             aria-label="Go back"
             className="text-ink-subtle hover:text-ink hover:bg-muted"
-            tabIndex={controlsVisible ? 0 : -1}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -245,8 +251,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               disabled={currentIndex === 0 && !hasOlder}
               aria-label="Older strip"
               className="text-ink-subtle hover:text-ink hover:bg-muted"
-              tabIndex={controlsVisible ? 0 : -1}
-            >
+              >
               <ChevronDown className="h-5 w-5" />
             </Button>
 
@@ -272,8 +277,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               disabled={currentIndex === strips.length - 1 && !hasNewer}
               aria-label="Newer strip"
               className="text-ink-subtle hover:text-ink hover:bg-muted"
-              tabIndex={controlsVisible ? 0 : -1}
-            >
+              >
               <ChevronUp className="h-5 w-5" />
             </Button>
           </div>

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import ComicDetailPage from './page';
 import { useParams, useRouter } from 'next/navigation';
 import { useGetComicQuery } from '@/generated/graphql';
@@ -71,7 +70,7 @@ describe('ComicDetailPage', () => {
 
   it('renders year range', () => {
     render(<ComicDetailPage />);
-    expect(screen.getByText('1978 - 2024')).toBeInTheDocument();
+    expect(screen.getByText('1978–2024')).toBeInTheDocument();
   });
 
   it('renders description', () => {
@@ -92,7 +91,7 @@ describe('ComicDetailPage', () => {
   it('renders latest strip section', () => {
     render(<ComicDetailPage />);
     expect(screen.getByText('Latest Strip')).toBeInTheDocument();
-    expect(screen.getByText('Read Latest Strip')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Read latest strip' })).toBeInTheDocument();
   });
 
   it('renders back link to /comics', () => {
@@ -101,11 +100,15 @@ describe('ComicDetailPage', () => {
     expect(backLink).toBeInTheDocument();
   });
 
-  it('clicks Browse Comics button in not-found state', async () => {
+  it('links to the comics list in not-found state', () => {
     vi.mocked(useGetComicQuery).mockReturnValue({ data: { comic: null }, isLoading: false } as any);
     render(<ComicDetailPage />);
-    await userEvent.click(screen.getByRole('button', { name: /browse comics/i }));
-    expect(mockRouter.push).toHaveBeenCalledWith('/comics');
+    expect(screen.getByRole('link', { name: /browse comics/i })).toHaveAttribute('href', '/comics');
+  });
+
+  it('labels the icon-only back link', () => {
+    render(<ComicDetailPage />);
+    expect(screen.getByRole('link', { name: 'Back to comics list' })).toHaveAttribute('href', '/comics');
   });
 
   it('renders initial fallback when no avatar', () => {

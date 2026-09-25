@@ -19,8 +19,8 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
 
     if (!strip.available || !strip.imageUrl) {
       return (
-        <div ref={ref} className="py-4" aria-live="polite">
-          <p className="text-sm text-ink-muted text-center py-8">
+        <div ref={ref} className="py-4">
+          <p className="text-sm text-ink-subtle text-center py-8">
             No strip available for {formattedDate}
           </p>
         </div>
@@ -28,8 +28,8 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
     }
 
     return (
-      <div ref={ref} className="py-4" aria-live="polite">
-        <p className="text-sm text-ink-subtle mb-2">{formattedDate}</p>
+      <div ref={ref} className="py-4">
+        <h2 className="font-sans text-sm font-normal text-ink-subtle mb-2">{formattedDate}</h2>
         <div
           className={`relative overflow-hidden rounded-lg ${strip.width && strip.height ? '' : 'aspect-[3/1]'}`}
           style={strip.width && strip.height ? { aspectRatio: `${strip.width}/${strip.height}` } : undefined}
@@ -40,7 +40,7 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
           </div>
           {error ? (
             <div className="absolute inset-0 bg-card flex items-center justify-center">
-              <p className="text-sm text-ink-muted">Failed to load strip</p>
+              <p className="text-sm text-ink-subtle">Failed to load strip</p>
             </div>
           ) : (
             <img

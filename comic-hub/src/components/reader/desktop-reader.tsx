@@ -141,6 +141,9 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Popovers, menus and the calendar mark the keys they handle (e.g. the
+      // Escape that closes them); modifier combos belong to the browser.
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       switch (e.key) {
@@ -154,10 +157,8 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
           break;
         case 'r':
         case 'R':
-          if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            goToRandom();
-          }
+          e.preventDefault();
+          goToRandom();
           break;
         case 'Escape':
           e.preventDefault();

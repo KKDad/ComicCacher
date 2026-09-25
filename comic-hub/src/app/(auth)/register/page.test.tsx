@@ -44,9 +44,16 @@ describe('RegisterPage', () => {
     expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/login');
   });
 
-  it('disables submit when fields are empty', () => {
+  it('keeps submit enabled and explains empty fields on submit', async () => {
+    const user = userEvent.setup();
     render(<RegisterPage />);
-    expect(screen.getByRole('button', { name: /create account/i })).toBeDisabled();
+    const submit = screen.getByRole('button', { name: /create account/i });
+    expect(submit).toBeEnabled();
+
+    await user.click(submit);
+
+    expect(await screen.findByText('Username must be at least 3 characters')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^username$/i)).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('calls /api/register on submit and redirects', async () => {

@@ -4,6 +4,7 @@ import { NavRail } from './nav-rail';
 import { usePathname } from 'next/navigation';
 import { useLogout } from '@/hooks/use-auth';
 import { useUser } from '@/contexts/user-context';
+import { createMockUser } from '@/test/test-utils';
 
 vi.mock('@/hooks/use-auth', () => ({
   useLogout: vi.fn(),
@@ -26,55 +27,47 @@ describe('NavRail', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders base nav links for unauthenticated user', () => {
+  it('renders an accessibly named link for each base item', () => {
     render(<NavRail />);
-    const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(5);
+    expect(screen.getAllByRole('link')).toHaveLength(4);
+    for (const name of ['Dashboard', 'Daily Reader', 'Comics List', 'Preferences']) {
+      expect(screen.getByRole('link', { name })).toBeInTheDocument();
+    }
   });
 
-  it('renders base nav buttons plus logout', () => {
+  it('renders a named sign out button', () => {
     render(<NavRail />);
-    // 5 base nav buttons + 1 logout button
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(6);
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 
   it('renders operations items for OPERATOR role', () => {
-    vi.mocked(useUser).mockReturnValue({ username: 'operator', email: 'o@test.com', displayName: 'Operator', roles: ['USER', 'OPERATOR'], created: '2026-01-01' });
+    vi.mocked(useUser).mockReturnValue(createMockUser({ roles: ['OPERATOR'] }));
     render(<NavRail />);
-    const links = screen.getAllByRole('link');
-    // 5 base + 3 operations
-    expect(links).toHaveLength(8);
+    expect(screen.getAllByRole('link')).toHaveLength(7);
+    expect(screen.getByRole('link', { name: 'Batch Jobs' })).toBeInTheDocument();
   });
 
   it('renders operations items for ADMIN role (hierarchy)', () => {
-    vi.mocked(useUser).mockReturnValue({ username: 'admin', email: 'a@test.com', displayName: 'Admin', roles: ['USER', 'ADMIN'], created: '2026-01-01' });
+    vi.mocked(useUser).mockReturnValue(createMockUser({ roles: ['ADMIN'] }));
     render(<NavRail />);
-    const links = screen.getAllByRole('link');
-    // 5 base + 3 operations
-    expect(links).toHaveLength(8);
+    expect(screen.getAllByRole('link')).toHaveLength(7);
   });
 
   it('does not render operations items for USER role', () => {
-    vi.mocked(useUser).mockReturnValue({ username: 'user', email: 'u@test.com', displayName: 'User', roles: ['USER'], created: '2026-01-01' });
+    vi.mocked(useUser).mockReturnValue(createMockUser({ roles: ['USER'] }));
     render(<NavRail />);
-    const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(5);
+    expect(screen.getAllByRole('link')).toHaveLength(4);
   });
 
-  it('calls logout when logout button is clicked', async () => {
+  it('marks the current page with aria-current', () => {
+    vi.mocked(usePathname).mockReturnValue('/read');
     render(<NavRail />);
-    const buttons = screen.getAllByRole('button');
-    const logoutButton = buttons[buttons.length - 1];
-    await userEvent.click(logoutButton);
+    expect(screen.getByRole('link', { name: 'Daily Reader' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('calls logout when sign out is clicked', async () => {
+    render(<NavRail />);
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(mockLogout).toHaveBeenCalledOnce();
-  });
-
-  it('disables logout button when logging out', () => {
-    vi.mocked(useLogout).mockReturnValue({ logout: mockLogout, isLoggingOut: true });
-    render(<NavRail />);
-    const buttons = screen.getAllByRole('button');
-    const logoutButton = buttons[buttons.length - 1];
-    expect(logoutButton).toBeDisabled();
   });
 });

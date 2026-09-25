@@ -71,20 +71,18 @@ describe('Header', () => {
     expect(screen.getByText('jane@example.com')).toBeInTheDocument();
   });
 
-  it('renders menu button when showMenuButton is true', () => {
-    renderHeader({ showMenuButton: true });
-    // The menu button should be visible
-    const buttons = screen.getAllByRole('button');
-    // Find the menu button (it contains the Menu icon)
-    expect(buttons.length).toBeGreaterThan(0);
+  it('has no notification bell or sidebar toggle', () => {
+    renderHeader();
+    // Only the mobile search toggle and the account menu remain.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Search comics' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Account menu/ })).toBeInTheDocument();
   });
 
-  it('does not render menu button by default', () => {
+  it('links the brand to the dashboard instead of using a second h1', () => {
     renderHeader();
-    const buttons = screen.getAllByRole('button');
-    // When showMenuButton=false, no button should contain the Menu icon's sr-only text or toggle behavior
-    // The only buttons should be: search (mobile), notifications, and avatar
-    expect(buttons).toHaveLength(3);
+    expect(screen.getByRole('link', { name: 'Comics Hub' })).toHaveAttribute('href', '/');
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
   });
 
   it('computes gravatar URL when user has email', async () => {
@@ -113,15 +111,17 @@ describe('Header', () => {
 
 describe('Header - search', () => {
   const mockPush = vi.fn();
+  const mockReplace = vi.fn();
   const mockLogout = vi.fn();
 
   beforeEach(() => {
     mockPush.mockClear();
+    mockReplace.mockClear();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.mocked(useLogout).mockReturnValue({ logout: mockLogout, isLoggingOut: false });
     vi.mocked(gravatar.getGravatarUrl).mockResolvedValue(null);
     vi.mocked(useRouter).mockReturnValue({
-      push: mockPush, replace: vi.fn(), prefetch: vi.fn(),
+      push: mockPush, replace: mockReplace, prefetch: vi.fn(),
       back: vi.fn(), refresh: vi.fn(), forward: vi.fn(),
     } as any);
     vi.mocked(usePathname).mockReturnValue('/comics');
@@ -133,13 +133,24 @@ describe('Header - search', () => {
     vi.restoreAllMocks();
   });
 
-  it('navigates after debounce when user types', async () => {
+  it('pushes a search URL when arriving from another page', async () => {
+    vi.mocked(usePathname).mockReturnValue('/');
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderHeader();
     const input = screen.getAllByPlaceholderText('Search comics...')[0];
     await user.type(input, 'baby');
     vi.advanceTimersByTime(300);
     expect(mockPush).toHaveBeenCalledWith('/comics?q=baby');
+  });
+
+  it('replaces the history entry while refining a search on /comics', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderHeader();
+    const input = screen.getAllByPlaceholderText('Search comics...')[0];
+    await user.type(input, 'baby');
+    vi.advanceTimersByTime(300);
+    expect(mockReplace).toHaveBeenCalledWith('/comics?q=baby');
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('does not navigate before debounce fires', async () => {
@@ -154,12 +165,9 @@ describe('Header - search', () => {
     vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('q=baby') as any);
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderHeader();
-    const clearBtn = screen.getAllByRole('button').find(
-      (btn) => btn.closest('.relative')?.querySelector('input[type="search"]'),
-    )!;
-    await user.click(clearBtn);
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
     vi.advanceTimersByTime(300);
-    expect(mockPush).toHaveBeenCalledWith('/comics');
+    expect(mockReplace).toHaveBeenCalledWith('/comics');
   });
 
   it('initializes search value from URL on /comics', () => {
