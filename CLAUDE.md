@@ -8,7 +8,7 @@ ComicCacher is a web comic downloader and viewer application built as a multi-mo
 
 ```mermaid
 graph TD
-    subgraph Backend ["Backend (Java 21 / Spring Boot 4)"]
+    subgraph Backend ["Backend (Java 25 / Spring Boot 4)"]
         COMMON["comic-common<br/>DTOs, interfaces, config, utilities"]
         METRICS["comic-metrics<br/>Cache & storage metrics"]
         ENGINE["comic-engine<br/>Downloaders, facades, Spring Batch"]

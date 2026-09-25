@@ -155,7 +155,7 @@ The single active cache stores `ComicItem` configuration data:
 
 Gradle multi-module project with centralized dependency management in the root `build.gradle`. All modules share:
 
-- Java 21 toolchain
+- Java 25 toolchain
 - JaCoCo coverage enforcement (per-module thresholds)
 - Checkstyle via `config/checkstyle/checkstyle.xml`
 - OpenRewrite recipes for style enforcement
