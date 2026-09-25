@@ -31,3 +31,9 @@ updates:
       - "/comic-hub"
     schedule:
       interval: "weekly"
+    # Stay on the LTS runtimes; move to the next LTS major by hand.
+    ignore:
+      - dependency-name: "library/eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "library/node"
+        update-types: ["version-update:semver-major"]
