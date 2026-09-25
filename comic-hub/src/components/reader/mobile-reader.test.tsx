@@ -64,6 +64,8 @@ function createMockReader(overrides?: Partial<ReturnType<typeof useReader>>): Re
     hasOlder: true,
     hasNewer: true,
     isLoading: false,
+    isFetchingOlder: false,
+    isFetchingNewer: false,
     loadOlder: vi.fn(),
     loadNewer: vi.fn(),
     goToDate: vi.fn(),

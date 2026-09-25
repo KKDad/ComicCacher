@@ -37,6 +37,8 @@ const mockReader = {
   hasOlder: true,
   hasNewer: true,
   isLoading: false,
+  isFetchingOlder: false,
+  isFetchingNewer: false,
   loadOlder: vi.fn(),
   loadNewer: vi.fn(),
   goToDate: vi.fn(),
