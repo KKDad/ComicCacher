@@ -1,11 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   useGetStripWindowQuery,
+  useInfiniteGetStripWindowQuery,
   useGetRandomStripQuery,
   useUpdateLastReadMutation,
+  type GetStripWindowQuery,
 } from '@/generated/graphql';
 
 export interface Strip {
@@ -33,6 +36,8 @@ interface UseReaderReturn {
   hasOlder: boolean;
   hasNewer: boolean;
   isLoading: boolean;
+  isFetchingOlder: boolean;
+  isFetchingNewer: boolean;
   loadOlder: () => void;
   loadNewer: () => void;
   goToDate: (date: string) => void;
@@ -44,7 +49,14 @@ interface UseReaderReturn {
   isLoadingRandom: boolean;
 }
 
-const WINDOW_SIZE = 2;
+/** Strips either side of the date the reader opens on. */
+const INITIAL_SPAN = 10;
+/** Strips per older/newer page. The backend caps `stripWindow` before/after at 20. */
+const PAGE_SIZE = 20;
+/** Strips before the newest shown when the reader opens without a date. */
+const LATEST_SPAN = 2;
+
+type StripPage = GetStripWindowQuery;
 
 function preloadImage(url: string | null) {
   if (url) {
@@ -53,37 +65,47 @@ function preloadImage(url: string | null) {
   }
 }
 
+/**
+ * Flattens the pages into one chronological list. Every page repeats the strip it is
+ * centred on (the edge strip of its neighbour), so dates are de-duplicated.
+ */
+function flattenStrips(pages: StripPage[] | undefined): Strip[] {
+  const seen = new Set<string>();
+  const strips: Strip[] = [];
+  for (const page of pages ?? []) {
+    for (const s of page.comic?.stripWindow ?? []) {
+      if (seen.has(s.date)) continue;
+      seen.add(s.date);
+      strips.push({
+        date: s.date,
+        available: s.available,
+        imageUrl: s.imageUrl ?? null,
+        width: s.width ?? null,
+        height: s.height ?? null,
+      });
+    }
+  }
+  return strips;
+}
+
 export function useReader({ comicId, initialDate, mode }: UseReaderOptions): UseReaderReturn {
-  const [centerDate, setCenterDate] = useState<string | undefined>(initialDate);
-  const [strips, setStrips] = useState<Strip[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [hasOlder, setHasOlder] = useState(true);
-  const [hasNewer, setHasNewer] = useState(true);
-  const [randomComicId, setRandomComicId] = useState<number | null>(null);
+  // The date the strip list is built around (set by goToDate). Changing it starts a
+  // fresh list. Without one, the list is built around the newest strip.
+  const [chosenAnchor, setChosenAnchor] = useState<string | undefined>(initialDate);
+  // The strip being read. Tracked by date so strips loading above it don't move it.
+  const [chosenDate, setChosenDate] = useState<string | undefined>(initialDate);
+  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
 
   const queryClient = useQueryClient();
 
-  // Main strip window query
-  const { data: windowData, isLoading: windowLoading } = useGetStripWindowQuery(
-    {
-      comicId,
-      center: centerDate ?? '',
-      before: WINDOW_SIZE,
-      after: WINDOW_SIZE,
-    },
-    {
-      enabled: !!centerDate,
-      staleTime: 5 * 60 * 1000,
-    },
-  );
-
-  // If no initial date, fetch the comic to get its newest date
-  const needsLatest = !initialDate && !centerDate;
+  // If no date was given, fetch the comic to find its newest date. The window's last entry
+  // is the far-future centre itself (returned as unavailable), so read `newest` instead.
+  const needsLatest = !chosenAnchor;
   const { data: latestData } = useGetStripWindowQuery(
     {
       comicId,
-      center: '9999-12-31', // Far future — BE clamps to newest
-      before: WINDOW_SIZE,
+      center: '9999-12-31',
+      before: LATEST_SPAN,
       after: 0,
     },
     {
@@ -91,87 +113,66 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
       staleTime: 5 * 60 * 1000,
     },
   );
+  const latestDate: string | undefined = latestData?.comic?.newest ?? undefined;
+  const anchorDate = chosenAnchor ?? latestDate;
+  const currentDate = chosenDate ?? anchorDate;
 
-  // Set center date from latest data when no initial date provided
-  useEffect(() => {
-    if (needsLatest && latestData?.comic?.stripWindow?.length) {
-      const latestStrips = latestData.comic.stripWindow;
-      const last = latestStrips[latestStrips.length - 1];
-      setCenterDate(last.date);
-    }
-  }, [needsLatest, latestData]);
-
-  // Random strip query
-  const [fetchRandom, setFetchRandom] = useState(false);
-  const { data: randomData, isLoading: isLoadingRandom } = useGetRandomStripQuery(
-    { comicId: randomComicId ?? comicId },
+  // Strip list: one page around the anchor, extended a page at a time in either direction
+  const {
+    data: stripData,
+    isLoading: stripsLoading,
+    isFetching,
+    isFetchingPreviousPage,
+    isFetchingNextPage,
+    hasPreviousPage,
+    hasNextPage,
+    fetchPreviousPage,
+    fetchNextPage,
+  } = useInfiniteGetStripWindowQuery(
     {
-      enabled: fetchRandom,
-      staleTime: 0, // Always fresh
+      comicId,
+      center: anchorDate ?? '',
+      before: INITIAL_SPAN,
+      after: INITIAL_SPAN,
+    },
+    {
+      enabled: !!anchorDate,
+      staleTime: 5 * 60 * 1000,
+      initialPageParam: {},
+      getPreviousPageParam: (firstPage) => {
+        const comic = firstPage.comic;
+        const first = comic?.stripWindow[0]?.date;
+        if (!first || !comic?.oldest || first <= comic.oldest) return undefined;
+        return { center: first, before: PAGE_SIZE, after: 0 };
+      },
+      getNextPageParam: (lastPage) => {
+        const comic = lastPage.comic;
+        const last = comic?.stripWindow.at(-1)?.date;
+        if (!last || !comic?.newest || last >= comic.newest) return undefined;
+        return { center: last, before: 0, after: PAGE_SIZE };
+      },
     },
   );
 
-  // Process strip window data
-  useEffect(() => {
-    if (!windowData?.comic) return;
+  const strips = useMemo(() => flattenStrips(stripData?.pages), [stripData]);
+  const comicMeta = stripData?.pages[0]?.comic;
 
-    const comic = windowData.comic;
-    const newStrips: Strip[] = comic.stripWindow.map((s) => ({
-      date: s.date,
-      available: s.available,
-      imageUrl: s.imageUrl ?? null,
-      width: s.width ?? null,
-      height: s.height ?? null,
-    }));
+  const foundIndex = strips.findIndex((s) => s.date === currentDate);
+  const currentIndex = foundIndex >= 0 ? foundIndex : 0;
 
-    // Empty windows are expected at date-range boundaries — nothing to merge
-    if (newStrips.length === 0) return;
-
-    setStrips((prev) => {
-      if (prev.length === 0) return newStrips;
-
-      // Merge new strips into existing array, maintaining chronological order
-      const dateSet = new Set(prev.map((s) => s.date));
-      const toAdd = newStrips.filter((s) => !dateSet.has(s.date));
-
-      if (toAdd.length === 0) return prev;
-
-      const merged = [...prev, ...toAdd].sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-      );
-      return merged;
-    });
-
-    // Determine boundary flags
-    const oldest = comic.oldest;
-    const newest = comic.newest;
-    if (oldest && newStrips.length > 0) {
-      setHasOlder(newStrips[0].date > oldest);
-    }
-    if (newest && newStrips.length > 0) {
-      setHasNewer(newStrips[newStrips.length - 1].date < newest);
-    }
-  }, [windowData]);
-
-  // Set initial currentIndex to the center strip
-  const initialIndexSet = useRef(false);
-  useEffect(() => {
-    if (!initialIndexSet.current && strips.length > 0 && centerDate) {
-      const idx = strips.findIndex((s) => s.date === centerDate);
-      if (idx >= 0) {
-        setCurrentIndex(idx);
-        initialIndexSet.current = true;
-      }
-    }
-  }, [strips, centerDate]);
+  const setCurrentIndex = useCallback(
+    (index: number) => {
+      const strip = strips[index];
+      if (strip) setChosenDate(strip.date);
+    },
+    [strips],
+  );
 
   // Preload adjacent strip images
   useEffect(() => {
     if (strips.length === 0) return;
-    const prevStrip = strips[currentIndex - 1];
-    const nextStrip = strips[currentIndex + 1];
-    if (prevStrip) preloadImage(prevStrip.imageUrl);
-    if (nextStrip) preloadImage(nextStrip.imageUrl);
+    preloadImage(strips[currentIndex - 1]?.imageUrl ?? null);
+    preloadImage(strips[currentIndex + 1]?.imageUrl ?? null);
   }, [strips, currentIndex]);
 
   // Last-read tracking
@@ -186,16 +187,16 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
   const lastReadRef = useRef<string | null>(null);
   const lastReadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const currentStrip = foundIndex >= 0 ? strips[foundIndex] : undefined;
   useEffect(() => {
-    const strip = strips[currentIndex];
-    if (!strip || !strip.available || !strip.imageUrl) return;
+    if (!currentStrip || !currentStrip.available || !currentStrip.imageUrl) return;
 
-    const key = `${comicId}:${strip.date}`;
+    const key = `${comicId}:${currentStrip.date}`;
     if (lastReadRef.current === key) return;
 
     const doUpdate = () => {
       lastReadRef.current = key;
-      updateLastRead.mutate({ comicId, date: strip.date });
+      updateLastRead.mutate({ comicId, date: currentStrip.date });
     };
 
     if (mode === 'snap') {
@@ -209,37 +210,26 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
     return () => {
       if (lastReadTimerRef.current) clearTimeout(lastReadTimerRef.current);
     };
-  }, [strips, currentIndex, comicId, mode, updateLastRead]);
+  }, [currentStrip, comicId, mode, updateLastRead]);
 
   // Navigation functions — declared before effects that use them
   const goToDate = useCallback((date: string) => {
-    setStrips([]);
-    initialIndexSet.current = false;
-    setCenterDate(date);
+    setChosenAnchor(date);
+    setChosenDate(date);
   }, []);
 
-  // Handle random strip result
-  useEffect(() => {
-    if (randomData?.randomStrip && fetchRandom) {
-      setFetchRandom(false);
-      goToDate(randomData.randomStrip.date);
-    }
-  }, [randomData, fetchRandom, goToDate]);
-
+  // One page request at a time: TanStack Query warns that overlapping fetches of an
+  // infinite query can overwrite each other.
   const loadOlder = useCallback(() => {
-    if (strips.length === 0 || !hasOlder) return;
-    const oldestStrip = strips[0];
-    setCenterDate(oldestStrip.date);
-  }, [strips, hasOlder]);
+    if (hasPreviousPage && !isFetching) fetchPreviousPage();
+  }, [hasPreviousPage, isFetching, fetchPreviousPage]);
 
   const loadNewer = useCallback(() => {
-    if (strips.length === 0 || !hasNewer) return;
-    const newestStrip = strips[strips.length - 1];
-    setCenterDate(newestStrip.date);
-  }, [strips, hasNewer]);
+    if (hasNextPage && !isFetching) fetchNextPage();
+  }, [hasNextPage, isFetching, fetchNextPage]);
 
   const goToFirst = useCallback((): 'already' | 'scrolled' | 'loading' => {
-    const oldestDate = windowData?.comic?.oldest;
+    const oldestDate = comicMeta?.oldest;
     if (!oldestDate) return 'loading';
 
     const firstIdx = strips.findIndex((s) => s.date === oldestDate);
@@ -256,10 +246,10 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
     // Not loaded — fetch it
     goToDate(oldestDate);
     return 'loading';
-  }, [windowData, strips, currentIndex, goToDate]);
+  }, [comicMeta, strips, currentIndex, setCurrentIndex, goToDate]);
 
   const goToLast = useCallback((): 'already' | 'scrolled' | 'loading' => {
-    const newestDate = windowData?.comic?.newest;
+    const newestDate = comicMeta?.newest;
     if (!newestDate) return 'loading';
 
     const lastIdx = strips.findIndex((s) => s.date === newestDate);
@@ -276,36 +266,59 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
     // Not loaded — fetch it
     goToDate(newestDate);
     return 'loading';
-  }, [windowData, strips, currentIndex, goToDate]);
+  }, [comicMeta, strips, currentIndex, setCurrentIndex, goToDate]);
 
-  const goToRandom = useCallback(() => {
-    setRandomComicId(null);
-    setFetchRandom(true);
-    // Invalidate to force refetch
-    queryClient.invalidateQueries({ queryKey: ['GetRandomStrip'] });
-  }, [queryClient]);
+  const goToRandom = useCallback(async () => {
+    const variables = { comicId };
+    setIsLoadingRandom(true);
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: useGetRandomStripQuery.getKey(variables),
+        queryFn: useGetRandomStripQuery.fetcher(variables),
+        staleTime: 0, // A new random strip every time
+      });
+      if (data.randomStrip) goToDate(data.randomStrip.date);
+    } catch {
+      toast.error('Could not load a random strip');
+    } finally {
+      setIsLoadingRandom(false);
+    }
+  }, [comicId, queryClient, goToDate]);
+
+  // Step one strip from `from` once a page has loaded past the edge
+  const stepAfterLoad = useCallback(
+    (result: { data?: InfiniteData<StripPage> }, from: string | undefined, step: -1 | 1) => {
+      const loaded = flattenStrips(result.data?.pages);
+      const idx = loaded.findIndex((s) => s.date === from);
+      const target = idx >= 0 ? loaded[idx + step] : undefined;
+      if (target) setChosenDate(target.date);
+    },
+    [],
+  );
 
   const goNewer = useCallback(() => {
     if (currentIndex < strips.length - 1) {
       setCurrentIndex(currentIndex + 1);
-    } else if (hasNewer) {
-      loadNewer();
+    } else if (hasNextPage && !isFetching) {
+      fetchNextPage().then((result) => stepAfterLoad(result, currentDate, 1));
     }
-  }, [currentIndex, strips.length, hasNewer, loadNewer]);
+  }, [currentIndex, strips.length, setCurrentIndex, hasNextPage, isFetching, fetchNextPage, stepAfterLoad, currentDate]);
 
   const goOlder = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
-    } else if (hasOlder) {
-      loadOlder();
+    } else if (hasPreviousPage && !isFetching) {
+      fetchPreviousPage().then((result) => stepAfterLoad(result, currentDate, -1));
     }
-  }, [currentIndex, hasOlder, loadOlder]);
+  }, [currentIndex, setCurrentIndex, hasPreviousPage, isFetching, fetchPreviousPage, stepAfterLoad, currentDate]);
 
-  const comicName = windowData?.comic?.name ?? latestData?.comic?.name ?? '';
-  const oldest = windowData?.comic?.oldest ?? latestData?.comic?.oldest ?? null;
-  const newest = windowData?.comic?.newest ?? latestData?.comic?.newest ?? null;
-  const avatarUrl = windowData?.comic?.avatarUrl ?? latestData?.comic?.avatarUrl ?? null;
-  const isLoading = windowLoading || (needsLatest && !centerDate);
+  const comicName = comicMeta?.name ?? latestData?.comic?.name ?? '';
+  const oldest = comicMeta?.oldest ?? latestData?.comic?.oldest ?? null;
+  const newest = comicMeta?.newest ?? latestData?.comic?.newest ?? null;
+  const avatarUrl = comicMeta?.avatarUrl ?? latestData?.comic?.avatarUrl ?? null;
+  const isLoading = stripsLoading || !anchorDate;
+  const hasOlder = !!hasPreviousPage;
+  const hasNewer = !!hasNextPage;
 
   return useMemo(
     () => ({
@@ -319,6 +332,8 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
       hasOlder,
       hasNewer,
       isLoading,
+      isFetchingOlder: isFetchingPreviousPage,
+      isFetchingNewer: isFetchingNextPage,
       loadOlder,
       loadNewer,
       goToDate,
@@ -332,6 +347,7 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
     [
       strips,
       currentIndex,
+      setCurrentIndex,
       comicName,
       oldest,
       newest,
@@ -339,6 +355,8 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
       hasOlder,
       hasNewer,
       isLoading,
+      isFetchingPreviousPage,
+      isFetchingNextPage,
       loadOlder,
       loadNewer,
       goToDate,

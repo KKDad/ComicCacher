@@ -29,6 +29,8 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
     hasOlder,
     hasNewer,
     isLoading,
+    isFetchingOlder,
+    isFetchingNewer,
     loadOlder,
     loadNewer,
     goToDate,
@@ -49,11 +51,16 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
   }, [goToLast]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const initialScrollDone = useRef(false);
+  // Date of the strip the view was last scrolled to (or scrolled onto by the reader)
+  const scrolledToDate = useRef<string | null>(null);
 
   const virtualizer = useVirtualizer({
     count: strips.length,
     getScrollElement: () => scrollContainerRef.current,
+    // Key by date so measured heights follow their strip when older strips are prepended
+    getItemKey: (index) => strips[index].date,
+    // Keep the strip in view in place when strips are added above it
+    anchorTo: 'end',
     estimateSize: (index) => {
       const strip = strips[index];
       if (strip.width && strip.height) {
@@ -67,27 +74,24 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
     paddingEnd: 32,
   });
 
-  // Scroll to starting strip on initial load
+  // Scroll to the current strip on initial load and after goToFirst/goToLast/goToDate.
+  // Keyed on the date, not the index: prepending older strips shifts the index but
+  // not the strip being read.
+  const currentDate = strips[currentIndex]?.date ?? null;
   useEffect(() => {
-    if (!initialScrollDone.current && strips.length > 0 && currentIndex >= 0) {
-      virtualizer.scrollToIndex(currentIndex, { align: 'center' });
-      initialScrollDone.current = true;
-    }
-  }, [strips.length, currentIndex, virtualizer]);
-
-  // Scroll to strip when currentIndex changes via goToFirst/goToLast/goToDate
-  const prevCurrentIndex = useRef(currentIndex);
-  useEffect(() => {
-    if (initialScrollDone.current && currentIndex !== prevCurrentIndex.current) {
-      virtualizer.scrollToIndex(currentIndex, { align: 'center', behavior: 'smooth' });
-    }
-    prevCurrentIndex.current = currentIndex;
-  }, [currentIndex, virtualizer]);
+    if (!currentDate || currentDate === scrolledToDate.current) return;
+    const isInitial = scrolledToDate.current === null;
+    virtualizer.scrollToIndex(currentIndex, {
+      align: 'center',
+      behavior: isInitial ? 'auto' : 'smooth',
+    });
+    scrolledToDate.current = currentDate;
+  }, [currentDate, currentIndex, virtualizer]);
 
   // Track current strip from scroll position
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!initialScrollDone.current || strips.length === 0) return;
+    if (scrolledToDate.current === null || strips.length === 0) return;
 
     const scrollEl = scrollContainerRef.current;
     if (!scrollEl) return;
@@ -109,6 +113,8 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
             closestIdx = item.index;
           }
         }
+        // The user is already looking at this strip; don't scroll to it again
+        scrolledToDate.current = strips[closestIdx]?.date ?? scrolledToDate.current;
         setCurrentIndex(closestIdx);
       }, 100);
     };
@@ -118,25 +124,30 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
       scrollEl.removeEventListener('scroll', handleScroll);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [strips.length, setCurrentIndex, virtualizer]);
+  }, [strips, setCurrentIndex, virtualizer]);
 
-  // Infinite scroll — load more when near boundaries
+  // Infinite scroll, following TanStack Virtual's infinite-scroll example: load a page
+  // when the first or last rendered strip is the edge of the list, one request at a time.
+  // The anchoring above keeps the view still when older strips arrive, so the first
+  // rendered strip moves away from the edge and this doesn't fire again.
+  // Nothing loads until the rendered range reaches the current strip: on open, the first
+  // render is laid out from the top before the scroll to the current strip lands, and
+  // loading older strips then would anchor the view on the wrong strip.
+  const virtualItems = virtualizer.getVirtualItems();
+  const firstRenderedIndex = virtualItems[0]?.index;
+  const lastRenderedIndex = virtualItems.at(-1)?.index;
+  const isFetchingPage = isFetchingOlder || isFetchingNewer;
   useEffect(() => {
-    if (!initialScrollDone.current || strips.length === 0) return;
+    if (scrolledToDate.current === null || isFetchingPage) return;
+    if (firstRenderedIndex === undefined || lastRenderedIndex === undefined) return;
+    if (currentIndex < firstRenderedIndex || currentIndex > lastRenderedIndex) return;
 
-    const items = virtualizer.getVirtualItems();
-    if (items.length === 0) return;
-
-    const firstVisible = items[0];
-    const lastVisible = items[items.length - 1];
-
-    if (firstVisible.index <= 1 && hasOlder) {
+    if (firstRenderedIndex === 0 && hasOlder) {
       loadOlder();
-    }
-    if (lastVisible.index >= strips.length - 2 && hasNewer) {
+    } else if (lastRenderedIndex >= strips.length - 1 && hasNewer) {
       loadNewer();
     }
-  }, [virtualizer.getVirtualItems(), strips.length, hasOlder, hasNewer, loadOlder, loadNewer]);
+  }, [firstRenderedIndex, lastRenderedIndex, currentIndex, strips.length, hasOlder, hasNewer, isFetchingPage, loadOlder, loadNewer]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -205,7 +216,7 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
                 width: '100%',
               }}
             >
-              {virtualizer.getVirtualItems().map((virtualItem) => (
+              {virtualItems.map((virtualItem) => (
                 <div
                   key={strips[virtualItem.index].date}
                   data-index={virtualItem.index}
