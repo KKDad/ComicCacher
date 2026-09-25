@@ -14,10 +14,11 @@ updates:
     directory: "/comic-hub"
     schedule:
       interval: "weekly"
-    allow:
-      - dependency-name: "lodash"
-      - dependency-name: "react*"
-      - dependency-name: "angular*"
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
       
   - package-ecosystem: "gradle"
     directory: "/"
