@@ -24,6 +24,7 @@ describe('useReadingList', () => {
       back: vi.fn(),
       refresh: vi.fn(),
       forward: vi.fn(),
+      bfcacheId: 'test-bfcache-id',
     });
     usePreferencesStore.setState({
       settings: { readerNavMode: 'all' } as any,

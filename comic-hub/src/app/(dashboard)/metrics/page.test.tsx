@@ -123,7 +123,7 @@ describe('MetricsPage', () => {
   it('renders combined metrics table with all comic data', () => {
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Metrics by Comic')).toBeInTheDocument();
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     expect(within(table).getByText('Garfield')).toBeInTheDocument();
     expect(within(table).getByText('Calvin and Hobbes')).toBeInTheDocument();
     expect(within(table).getByText('Peanuts')).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('MetricsPage', () => {
 
   it('shows dash for null averageAccessTimeMs and lastAccessed', () => {
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const peanutsRow = within(table).getByText('Peanuts').closest('tr')!;
     const cells = peanutsRow.querySelectorAll('td');
     // cols: Comic, Images, Storage, Avg Size, Accesses, Avg Response, Last Accessed
@@ -143,7 +143,7 @@ describe('MetricsPage', () => {
   it('sorts by comic name when header clicked', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const comicSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Comic')
     )!;
@@ -164,7 +164,7 @@ describe('MetricsPage', () => {
   it('toggles sort direction on repeated click', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const storageSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Storage')
     )!;
@@ -182,7 +182,7 @@ describe('MetricsPage', () => {
   it('sorts by accesses', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const accessSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Accesses')
     )!;
@@ -201,7 +201,7 @@ describe('MetricsPage', () => {
   it('sorts by avg response time', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const avgBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Avg Response')
     )!;
@@ -216,7 +216,7 @@ describe('MetricsPage', () => {
   it('sorts by image count', async () => {
     const user = userEvent.setup();
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const imgBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Images')
     )!;
@@ -245,7 +245,7 @@ describe('MetricsPage', () => {
       error: null,
     } as any);
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const row = within(table).getByText('Empty').closest('tr')!;
     const cells = row.querySelectorAll('td');
     expect(cells[3].textContent).toBe('—');
@@ -341,7 +341,7 @@ describe('MetricsPage', () => {
       error: null,
     } as any);
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const rows = within(table).getAllByRole('row').slice(1);
     // Should be 2 rows (merged), not 4
     expect(rows).toHaveLength(2);
@@ -368,7 +368,7 @@ describe('MetricsPage', () => {
       error: null,
     } as any);
     renderWithQuery(<MetricsPage />);
-    const table = screen.getByText('Metrics by Comic').closest('[class*="card"]')!;
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     expect(within(table).getByText('Dilbert')).toBeInTheDocument();
     const row = within(table).getByText('Dilbert').closest('tr')!;
     const cells = row.querySelectorAll('td');

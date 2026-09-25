@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
@@ -16,6 +16,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
     refresh: vi.fn(),
     forward: vi.fn(),
+    bfcacheId: 'test-bfcache-id',
   })),
   usePathname: vi.fn(() => '/'),
   useSearchParams: vi.fn(() => new URLSearchParams()),

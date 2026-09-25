@@ -13,6 +13,7 @@ export function mockRouter(overrides?: Partial<ReturnType<typeof useRouter>>) {
     back: vi.fn(),
     refresh: vi.fn(),
     forward: vi.fn(),
+    bfcacheId: 'test-bfcache-id',
   };
   vi.mocked(useRouter).mockReturnValue({ ...router, ...overrides });
   return router;

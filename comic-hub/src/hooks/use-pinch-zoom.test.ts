@@ -12,7 +12,7 @@ function createTouchEvent(
       getBoundingClientRect: () => rect,
       ...currentTarget,
     } as HTMLElement,
-  } as React.TouchEvent;
+  } as unknown as React.TouchEvent;
 }
 
 describe('usePinchZoom', () => {

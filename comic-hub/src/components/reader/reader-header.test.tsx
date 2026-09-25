@@ -22,6 +22,7 @@ describe('ReaderHeader', () => {
       back: mockBack,
       refresh: vi.fn(),
       forward: vi.fn(),
+      bfcacheId: 'test-bfcache-id',
     });
     vi.clearAllMocks();
   });

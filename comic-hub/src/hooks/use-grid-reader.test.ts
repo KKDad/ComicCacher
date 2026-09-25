@@ -4,6 +4,8 @@ import { useGetComicsForDateQuery, useGetUserPreferencesQuery } from '@/generate
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { useQueryClient } from '@tanstack/react-query';
 
+type PreferencesState = ReturnType<typeof usePreferencesStore.getState>;
+
 vi.mock('@/generated/graphql', () => ({
   useGetComicsForDateQuery: Object.assign(vi.fn(), {
     getKey: vi.fn().mockReturnValue(['GetComicsForDate', {}]),
@@ -60,8 +62,8 @@ describe('useGridReader', () => {
     vi.clearAllMocks();
     vi.mocked(useGetComicsForDateQuery).mockReturnValue({ data: mockComicsData, isLoading: false } as ReturnType<typeof useGetComicsForDateQuery>);
     vi.mocked(useGetUserPreferencesQuery).mockReturnValue({ data: mockPrefsData, isLoading: false } as ReturnType<typeof useGetUserPreferencesQuery>);
-    vi.mocked(usePreferencesStore).mockImplementation((selector: (s: { settings: { readerNavMode: string } }) => string) =>
-      selector({ settings: { readerNavMode: 'all' } }),
+    vi.mocked(usePreferencesStore).mockImplementation((selector) =>
+      selector({ settings: { readerNavMode: 'all' } } as PreferencesState),
     );
     vi.mocked(useQueryClient).mockReturnValue({ prefetchQuery: vi.fn() } as unknown as ReturnType<typeof useQueryClient>);
   });
@@ -79,8 +81,8 @@ describe('useGridReader', () => {
   });
 
   it('filters to favorites when navMode is favorites', () => {
-    vi.mocked(usePreferencesStore).mockImplementation((selector: (s: { settings: { readerNavMode: string } }) => string) =>
-      selector({ settings: { readerNavMode: 'favorites' } }),
+    vi.mocked(usePreferencesStore).mockImplementation((selector) =>
+      selector({ settings: { readerNavMode: 'favorites' } } as PreferencesState),
     );
     const { result } = renderHook(() => useGridReader());
     expect(result.current.comics).toHaveLength(1);
