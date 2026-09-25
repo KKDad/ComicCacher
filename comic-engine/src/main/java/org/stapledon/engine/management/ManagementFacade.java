@@ -162,7 +162,16 @@ public interface ManagementFacade {
      * @param date  The date for which to download the comic
      * @return The download result, or empty if the comic couldn't be downloaded
      */
-    Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date);
+    default Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date) {
+        return downloadComicForDate(comic, date, false);
+    }
+
+    /**
+     * Downloads and saves a specific comic strip for the specified date. The result's {@code saveOutcome} says whether the image was saved or skipped as a
+     * duplicate of another date. With {@code failFastOnRateLimit}, an HTTP 429 fails at once (the source still backs off) instead of being retried. Returns
+     * empty if the strip was already cached, the comic has no source, or the save failed.
+     */
+    Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date, boolean failFastOnRateLimit);
 
     /**
      * Downloads and saves the latest strip for an indexed comic.

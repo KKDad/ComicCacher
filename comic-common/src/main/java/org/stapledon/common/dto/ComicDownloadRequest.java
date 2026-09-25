@@ -12,7 +12,7 @@ import lombok.ToString;
  * a specific date.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class ComicDownloadRequest {
     /**
@@ -42,4 +42,9 @@ public class ComicDownloadRequest {
      */
     @ToString.Include
     private final LocalDate date;
+
+    /**
+     * When true, an HTTP 429 fails the download at once instead of retrying. The source-wide backoff still applies. Used by backfill, which can simply try again later.
+     */
+    private final boolean failFastOnRateLimit;
 }

@@ -123,7 +123,7 @@ Template method for date-based downloads:
 2. Calls `downloadComicImage(request)` (abstract — implemented by each source strategy).
 3. On `RateLimitedException` (HTTP 429), backs off and retries from step 1 until the source's `retry.max-attempts` is used up (see [Throttling and Rate Limits](#throttling-and-rate-limits)).
 4. Validates the image via `validateImage()`.
-5. Returns `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`.
+5. Returns `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`. A failure carries a `FailureKind`: `UNAVAILABLE` (no image, empty or invalid image data, HTTP 404 or 410), `RATE_LIMITED` (HTTP 429), or `ERROR` (anything else).
 
 Subclasses only implement `downloadComicImage()` and `downloadAvatarImage()`.
 
@@ -137,7 +137,7 @@ Template method for strip-number-based downloads:
    - `LocalDate actualDate` — the date parsed from the page
    - `int stripNumber` — the strip number
    - `String transcript` — optional transcript text
-3. Validates the image and builds a `ComicDownloadResult` with the discovered metadata.
+3. Validates the image and builds a `ComicDownloadResult` with the discovered metadata. `downloadStrip()` classifies failures with the same `FailureKind` values as daily downloads; a 429 backs the source off once and is not retried.
 
 Subclasses only implement `fetchLatestStrip()`, `fetchStrip()`, and `downloadAvatarImage()`.
 
@@ -160,7 +160,9 @@ All outbound requests are paced per source by `SourceThrottleService`, configure
 3. `backOff()` pushes the **whole source's** next-allowed time forward, so other comics from the same source also wait rather than hitting the limit again.
 4. Each 429 is logged at WARN with the URL, attempt, `Retry-After` and backoff. When attempts run out the download fails with a `Rate limited (HTTP 429)` message.
 
-Only daily sources retry; indexed sources (Freefall) and avatar downloads still fail on the first 429.
+A 429 that surfaces as a Jsoup `HttpStatusException` (sources that fetch pages with `Jsoup.connect().get()`) is not retried, but still backs the source off and is reported as `RATE_LIMITED`.
+
+Only daily sources retry; indexed sources (Freefall) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
 
 **Browser identity:** GoComics sits behind Cloudflare, so requests present as desktop Chrome. `downloader.user-agent.default-value` carries the Chrome UA, and `GoComicsDownloaderStrategy` derives matching `Sec-Ch-Ua` client hints from the Chrome major version in that UA (omitted for non-Chrome UAs). Keep the Chrome major version current ([Chromium Dash](https://chromiumdash.appspot.com/releases)); a stale browser version is a bot signal. The legacy UA constants (`UserAgentService.FALLBACK_USER_AGENT`, `DailyComic.USER_AGENT`, the rotation list in `GoComics`) should be bumped at the same time. `Accept-Encoding` omits `zstd`, since only gzip and Brotli are decoded.
 

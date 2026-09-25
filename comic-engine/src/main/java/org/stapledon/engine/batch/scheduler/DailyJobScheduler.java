@@ -11,11 +11,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 
 /**
- * Scheduler for daily batch jobs that run once per day on a cron schedule.
+ * Scheduler for batch jobs that run on a cron schedule, by default once per day.
  *
  * <p>
  * Features:
@@ -23,6 +24,7 @@ import org.stapledon.engine.batch.JsonBatchExecutionTracker;
  * <li>Cron-based scheduling with timezone support</li>
  * <li>Missed execution detection on startup using batch-executions.json</li>
  * <li>Automatic job execution if missed scheduled time</li>
+ * <li>Optionally, a run at every cron time ({@link #setMultipleRunsPerDay}) and a precondition that skips runs with nothing to do ({@link #setPrecondition})</li>
  * </ul>
  *
  * <p>
@@ -44,6 +46,9 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     private final List<JobParameterDefinition> parameterDefinitions;
     private final String timezone;
     private SchedulerStateService schedulerStateService;
+    private boolean multipleRunsPerDay;
+    private BooleanSupplier precondition;
+    private String preconditionSkipMessage;
 
     /**
      * Creates a new DailyJobScheduler without a description.
@@ -79,6 +84,22 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         this.schedulerStateService = schedulerStateService;
     }
 
+    /**
+     * Lets the job run at every cron time instead of once a day. Such jobs also get no catch-up run at startup: the next cron time picks up the work.
+     */
+    public void setMultipleRunsPerDay(boolean multipleRunsPerDay) {
+        this.multipleRunsPerDay = multipleRunsPerDay;
+    }
+
+    /**
+     * Sets a cheap check made before each scheduled run. When it returns false the run is skipped (nothing launched, nothing recorded) and
+     * {@code skipMessage} is logged. Manual triggers ignore it.
+     */
+    public void setPrecondition(BooleanSupplier precondition, String skipMessage) {
+        this.precondition = precondition;
+        this.preconditionSkipMessage = skipMessage;
+    }
+
     @Override
     public ScheduleType getScheduleType() {
         return ScheduleType.DAILY;
@@ -101,8 +122,12 @@ public class DailyJobScheduler extends AbstractJobScheduler {
             return;
         }
 
-        if (executionTracker.hasJobRunToday(getJobName())) {
+        if (!multipleRunsPerDay && executionTracker.hasJobRunToday(getJobName())) {
             log.info("{} already ran today, skipping scheduled execution", getJobName());
+            return;
+        }
+
+        if (!preconditionMet()) {
             return;
         }
 
@@ -130,6 +155,11 @@ public class DailyJobScheduler extends AbstractJobScheduler {
      * Checks if the job missed its scheduled execution time and runs if needed. Called by StartupJobRunner after ApplicationReadyEvent ensures all beans are ready.
      */
     public void runMissedExecutionIfNeeded() {
+        if (multipleRunsPerDay) {
+            log.info("{} runs several times a day, no makeup run needed", getJobName());
+            return;
+        }
+
         if (executionTracker.hasJobRunToday(getJobName())) {
             log.info("{} has already run today, no makeup run needed", getJobName());
             return;
@@ -142,6 +172,23 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         if (todayScheduledTime != null && now.isAfter(todayScheduledTime)) {
             log.warn("{} missed scheduled time ({}), running now", getJobName(), todayScheduledTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
             runJob("STARTUP_MAKEUP");
+        }
+    }
+
+    private boolean preconditionMet() {
+        if (precondition == null) {
+            return true;
+        }
+        try {
+            if (precondition.getAsBoolean()) {
+                return true;
+            }
+            log.info("{}: {}, skipping scheduled execution", getJobName(), preconditionSkipMessage);
+            return false;
+        } catch (Exception e) {
+            // A broken check shouldn't stop the job for good; run it and let the job report problems
+            log.warn("{} precondition check failed, running anyway: {}", getJobName(), e.getMessage(), e);
+            return true;
         }
     }
 

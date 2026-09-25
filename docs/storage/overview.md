@@ -12,6 +12,7 @@ ComicCacher uses a flat-file JSON storage model on an NFS-mounted filesystem. Th
   batch-executions.json                     # Spring Batch job history
   retrieval-status.json                     # Comic retrieval attempt records
   scheduler-state.json                      # Scheduler pause/resume state
+  backfill-state.json                       # Comic backfill: given-up dates, learned history horizons, daily attempt counts
   last_errors.json                          # Recent errors per comic
   access-metrics.json                       # Per-comic access counts
   combined-metrics.json                     # Global + per-comic storage/access metrics

@@ -3,6 +3,7 @@ package org.stapledon.engine.downloader;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,6 +24,9 @@ import org.stapledon.common.service.ValidationService;
 @Slf4j
 @ToString
 public abstract class AbstractComicDownloaderStrategy implements ComicDownloaderStrategy {
+
+    private static final int HTTP_NOT_FOUND = 404;
+    private static final int HTTP_GONE = 410;
 
     @Getter
     private final String source;
@@ -99,6 +103,26 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
                 validation.getWidth(), validation.getHeight(), validation.getSizeInBytes());
 
         return validation;
+    }
+
+    /**
+     * The HTTP status behind {@code e}: 429 for a {@link RateLimitedException}, the status of a Jsoup {@link HttpStatusException}, otherwise -1.
+     */
+    protected static int httpStatus(Throwable e) {
+        if (e instanceof RateLimitedException) {
+            return RateLimitedException.HTTP_TOO_MANY_REQUESTS;
+        }
+        if (e instanceof HttpStatusException statusException) {
+            return statusException.getStatusCode();
+        }
+        return -1;
+    }
+
+    /**
+     * True for statuses meaning the source has no such strip (404 Not Found, 410 Gone), as opposed to a transient failure.
+     */
+    protected static boolean isNotFoundStatus(int status) {
+        return status == HTTP_NOT_FOUND || status == HTTP_GONE;
     }
 
     /**

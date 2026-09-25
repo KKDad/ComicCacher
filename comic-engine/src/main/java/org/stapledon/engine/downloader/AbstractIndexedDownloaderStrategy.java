@@ -3,10 +3,13 @@ package org.stapledon.engine.downloader;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicDownloadResult.FailureKind;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageValidationResult;
 import org.stapledon.common.infrastructure.web.InspectorService;
@@ -69,10 +72,25 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
             IndexedStripData data = fetchStrip(comic, stripNumber);
             return buildSuccessResult(comic, data);
         } catch (Exception e) {
+            ComicDownloadRequest request = buildRequest(comic, LocalDate.now());
+            int status = httpStatus(e);
+            if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
+                Optional<Duration> retryAfter = e instanceof RateLimitedException rateLimited ? rateLimited.getRetryAfter() : Optional.empty();
+                Duration backoff = throttleService.backOff(getSource(), 1, retryAfter);
+                String errorMessage = String.format("Rate limited (HTTP 429) downloading strip #%d for %s (source backing off %ds): %s",
+                        stripNumber, comic.getName(), backoff.toSeconds(), e.getMessage());
+                log.warn(errorMessage);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED);
+            }
+            if (isNotFoundStatus(status)) {
+                String errorMessage = String.format("Strip #%d for %s not found at source (HTTP %d)", stripNumber, comic.getName(), status);
+                log.warn(errorMessage);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE);
+            }
             String errorMessage = String.format("Error downloading strip #%d for %s: %s",
                     stripNumber, comic.getName(), e.getMessage());
             log.error(errorMessage, e);
-            return ComicDownloadResult.failure(buildRequest(comic, LocalDate.now()), errorMessage);
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.ERROR);
         }
     }
 

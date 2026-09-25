@@ -53,6 +53,47 @@ class BackfillConfigurationServiceTest {
     }
 
     @Test
+    void getMaxPerDayForSource_unsetMeansNoCeiling() {
+        BackfillConfigurationService service = BackfillConfigurationService.builder().build();
+
+        assertThat(service.getMaxPerDayForSource("gocomics")).isZero();
+    }
+
+    @Test
+    void getMaxPerRunForSource_usesSourceThenDefaultThenFallback() {
+        BackfillConfigurationService service = defaultBuilder().defaultMaxPerRun(25).sources(Map.of(
+                "gocomics", BackfillSourceConfig.builder().source("gocomics").maxPerRun(40).build())).build();
+
+        assertThat(service.getMaxPerRunForSource("gocomics")).isEqualTo(40);
+        assertThat(service.getMaxPerRunForSource("comicskingdom")).isEqualTo(25);
+        assertThat(BackfillConfigurationService.builder().build().getMaxPerRunForSource("gocomics"))
+                .isEqualTo(BackfillConfigurationService.FALLBACK_MAX_PER_RUN);
+    }
+
+    @Test
+    void getRecentDaysForSource_usesSourceThenDefaultThenFallback() {
+        BackfillConfigurationService service = defaultBuilder().defaultRecentDays(5).sources(Map.of(
+                "gocomics", BackfillSourceConfig.builder().source("gocomics").recentDays(10).build())).build();
+
+        assertThat(service.getRecentDaysForSource("gocomics")).isEqualTo(10);
+        assertThat(service.getRecentDaysForSource("comicskingdom")).isEqualTo(5);
+        assertThat(BackfillConfigurationService.builder().build().getRecentDaysForSource("gocomics"))
+                .isEqualTo(BackfillConfigurationService.FALLBACK_RECENT_DAYS);
+    }
+
+    @Test
+    void learningThresholds_fallBackWhenUnset() {
+        BackfillConfigurationService service = BackfillConfigurationService.builder().build();
+
+        assertThat(service.getGiveUpAfter()).isEqualTo(BackfillConfigurationService.FALLBACK_GIVE_UP_AFTER);
+        assertThat(service.getHorizonConsecutiveFailures()).isEqualTo(BackfillConfigurationService.FALLBACK_HORIZON_CONSECUTIVE_FAILURES);
+        assertThat(service.getHorizonMinComics()).isEqualTo(BackfillConfigurationService.FALLBACK_HORIZON_MIN_COMICS);
+        assertThat(service.getHorizonToleranceDays()).isEqualTo(BackfillConfigurationService.FALLBACK_HORIZON_TOLERANCE_DAYS);
+        assertThat(service.getRetryGivenUpAfterDays()).isEqualTo(BackfillConfigurationService.FALLBACK_RETRY_GIVEN_UP_AFTER_DAYS);
+        assertThat(BackfillConfigurationService.builder().giveUpAfter(4).build().getGiveUpAfter()).isEqualTo(4);
+    }
+
+    @Test
     void getMaxDaysBackForSource_withNoSourceConfig_returnsDefault() {
         BackfillConfigurationService service = defaultBuilder().build();
 

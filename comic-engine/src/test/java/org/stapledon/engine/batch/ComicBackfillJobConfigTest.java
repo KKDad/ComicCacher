@@ -2,7 +2,11 @@ package org.stapledon.engine.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,9 +32,12 @@ import java.util.Optional;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicDownloadResult.FailureKind;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.SaveResult;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
 import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.StripBackfillTask;
 import org.stapledon.engine.batch.config.ComicBackfillJobConfig;
 import org.stapledon.engine.management.ManagementFacade;
 
@@ -52,11 +59,14 @@ class ComicBackfillJobConfigTest {
     @Mock
     private JsonBatchExecutionTracker jsonBatchExecutionTracker;
 
+    @Mock
+    private BackfillStateService backfillState;
+
     private ComicBackfillJobConfig config;
 
     @BeforeEach
     void setUp() {
-        config = new ComicBackfillJobConfig(managementFacade, backfillService);
+        config = new ComicBackfillJobConfig(managementFacade, backfillService, backfillState);
         setField(config, "chunkSize", 10);
         setField(config, "delayBetweenComics", 0L); // No delay for tests
     }
@@ -95,7 +105,7 @@ class ComicBackfillJobConfigTest {
 
         when(backfillService.findMissingStrips(null)).thenReturn(List.of(task));
 
-        ItemReader<BackfillTask> reader = config.backfillTaskReader(null);
+        ItemReader<BackfillTask> reader = config.backfillTaskReader(null, null);
 
         BackfillTask result = reader.read();
         assertThat(result).isNotNull();
@@ -120,7 +130,7 @@ class ComicBackfillJobConfigTest {
 
         ComicDownloadResult result = ComicDownloadResult.success(request, new byte[0]);
 
-        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class), anyBoolean()))
                 .thenReturn(Optional.of(result));
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
@@ -129,7 +139,8 @@ class ComicBackfillJobConfigTest {
 
         assertThat(processedResult).isNotNull();
         assertThat(processedResult.isSuccessful()).isTrue();
-        verify(managementFacade).downloadComicForDate(comic, task.date());
+        verify(managementFacade).downloadComicForDate(comic, task.date(), true);
+        verify(backfillState).recordSuccess(comic, task.date());
     }
 
     @Test
@@ -138,7 +149,7 @@ class ComicBackfillJobConfigTest {
         BackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
         // Return empty (comic already cached or couldn't be downloaded)
-        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class), anyBoolean()))
                 .thenReturn(Optional.empty());
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
@@ -153,7 +164,7 @@ class ComicBackfillJobConfigTest {
         ComicItem comic = createComic(1, "Test Comic");
         BackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
-        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class)))
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class), anyBoolean()))
                 .thenThrow(new RuntimeException("Test exception"));
 
         ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
@@ -187,11 +198,121 @@ class ComicBackfillJobConfigTest {
     }
 
     @Test
+    void backfillTaskWriter_flushesBackfillStateAfterEachChunk() throws Exception {
+        config.backfillTaskWriter().write(Chunk.of((ComicDownloadResult) null));
+
+        verify(backfillState).flush();
+    }
+
+    @Test
+    void backfillTaskProcessor_stripRateLimitStopsThatSourceForTheRun() throws Exception {
+        ComicItem freefall = createComic(1, "Freefall");
+        freefall.setSource("freefall");
+        ComicDownloadResult rateLimited = ComicDownloadResult.failure(request(freefall, LocalDate.of(2025, 1, 1)), "429", FailureKind.RATE_LIMITED);
+        when(managementFacade.downloadComicByStripNumber(freefall, 100)).thenReturn(Optional.of(rateLimited));
+
+        ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
+
+        assertThat(processor.process(new StripBackfillTask(freefall, 100)).isRateLimited()).isTrue();
+        assertThat(processor.process(new StripBackfillTask(freefall, 99))).isNull();
+        verify(managementFacade, never()).downloadComicByStripNumber(freefall, 99);
+    }
+
+    @Test
     void backfillTaskWriter_handlesNullResults() throws Exception {
         ItemWriter<ComicDownloadResult> writer = config.backfillTaskWriter();
 
         // Should handle nulls gracefully
         Assertions.assertThatCode(() -> writer.write(Chunk.of((ComicDownloadResult) null))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void backfillTaskReader_resetStateClearsLearnedState() throws Exception {
+        when(backfillService.findMissingStrips(null)).thenReturn(List.of());
+
+        config.backfillTaskReader(null, "true");
+
+        verify(backfillState).reset();
+    }
+
+    @Test
+    void backfillTaskProcessor_rateLimitStopsThatSourceForTheRun() throws Exception {
+        ComicItem first = createComic(1, "First");
+        ComicItem second = createComic(2, "Second");
+        ComicItem other = createComic(3, "Other");
+        other.setSource("other-source");
+        LocalDate date = LocalDate.of(2025, 1, 1);
+
+        when(managementFacade.downloadComicForDate(eq(first), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.failure(request(first, date), "429", FailureKind.RATE_LIMITED)));
+        when(managementFacade.downloadComicForDate(eq(other), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.success(request(other, date), new byte[0])));
+
+        ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
+
+        assertThat(processor.process(new DateBackfillTask(first, date)).isRateLimited()).isTrue();
+        assertThat(processor.process(new DateBackfillTask(second, date))).isNull();
+        assertThat(processor.process(new DateBackfillTask(other, date))).isNotNull();
+
+        verify(managementFacade, never()).downloadComicForDate(eq(second), any(LocalDate.class), anyBoolean());
+        verify(backfillState, never()).recordUnavailable(any(), any(), any());
+    }
+
+    @Test
+    void backfillTaskProcessor_newRunStartsWithNoStoppedSources() throws Exception {
+        ComicItem comic = createComic(1, "Comic");
+        LocalDate date = LocalDate.of(2025, 1, 1);
+        when(managementFacade.downloadComicForDate(eq(comic), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.failure(request(comic, date), "429", FailureKind.RATE_LIMITED)));
+
+        config.backfillTaskProcessor().process(new DateBackfillTask(comic, date));
+        config.backfillTaskProcessor().process(new DateBackfillTask(comic, date));
+
+        verify(managementFacade, times(2)).downloadComicForDate(eq(comic), any(LocalDate.class), anyBoolean());
+    }
+
+    @Test
+    void backfillTaskProcessor_recordsUnavailableResults() throws Exception {
+        ComicItem comic = createComic(1, "Comic");
+        LocalDate date = LocalDate.of(2025, 1, 1);
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.failure(request(comic, date), "empty", FailureKind.UNAVAILABLE)));
+
+        config.backfillTaskProcessor().process(new DateBackfillTask(comic, date));
+
+        verify(backfillState).recordUnavailable(comic, date, BackfillStateService.OUTCOME_UNAVAILABLE);
+        verify(backfillState).recordAttempt("test-source");
+    }
+
+    @Test
+    void backfillTaskProcessor_recordsDuplicatesAsUnavailable() throws Exception {
+        ComicItem comic = createComic(1, "Comic");
+        LocalDate date = LocalDate.of(2025, 1, 1);
+        ComicDownloadResult duplicate = ComicDownloadResult.success(request(comic, date), new byte[0]).toBuilder()
+                .saveOutcome(SaveResult.Outcome.DUPLICATE_SKIPPED).build();
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class), anyBoolean())).thenReturn(Optional.of(duplicate));
+
+        config.backfillTaskProcessor().process(new DateBackfillTask(comic, date));
+
+        verify(backfillState).recordUnavailable(comic, date, BackfillStateService.OUTCOME_DUPLICATE);
+        verify(backfillState, never()).recordSuccess(any(), any());
+    }
+
+    @Test
+    void backfillTaskProcessor_ignoresTransientErrors() throws Exception {
+        ComicItem comic = createComic(1, "Comic");
+        LocalDate date = LocalDate.of(2025, 1, 1);
+        when(managementFacade.downloadComicForDate(any(ComicItem.class), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.failure(request(comic, date), "timeout", FailureKind.ERROR)));
+
+        config.backfillTaskProcessor().process(new DateBackfillTask(comic, date));
+
+        verify(backfillState, never()).recordUnavailable(any(), any(), any());
+        verify(backfillState, never()).recordSuccess(any(), any());
+    }
+
+    private static ComicDownloadRequest request(ComicItem comic, LocalDate date) {
+        return ComicDownloadRequest.builder().comicId(comic.getId()).comicName(comic.getName()).source(comic.getSource()).date(date).build();
     }
 
     private ComicItem createComic(int id, String name) {

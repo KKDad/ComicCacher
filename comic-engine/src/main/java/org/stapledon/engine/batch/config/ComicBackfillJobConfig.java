@@ -2,12 +2,15 @@ package org.stapledon.engine.batch.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
+import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.batch.infrastructure.item.ItemReader;
@@ -20,9 +23,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.stapledon.common.dto.ComicDownloadResult;
+import org.stapledon.common.dto.ComicDownloadResult.FailureKind;
+import org.stapledon.common.dto.SaveResult;
+import org.stapledon.engine.batch.BackfillStateService;
 import org.stapledon.engine.batch.ComicBackfillService;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
 import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
@@ -34,7 +42,11 @@ import org.stapledon.engine.batch.scheduler.JobParameterDefinition.Option;
 import org.stapledon.engine.management.ManagementFacade;
 
 /**
- * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips for a configurable target year.
+ * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips: recent days first, then older history.
+ * <p>
+ * The job runs at every cron time (several times a day), but a scheduled run is skipped without any web request when
+ * {@link ComicBackfillService#hasMissingStrips(String)} finds nothing to do. Within a run, the first HTTP 429 from a source stops backfill for that source
+ * until the next run. Unavailable and duplicate results are recorded in {@link BackfillStateService} so later runs can skip them.
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
@@ -44,6 +56,7 @@ public class ComicBackfillJobConfig {
 
     private final ManagementFacade managementFacade;
     private final ComicBackfillService backfillService;
+    private final BackfillStateService backfillState;
 
     @Value("${batch.comic-backfill.chunk-size:10}")
     private int chunkSize;
@@ -62,16 +75,22 @@ public class ComicBackfillJobConfig {
                     List.of(new Option("ALL", "All Sources"),
                             new Option("gocomics", "GoComics"),
                             new Option("comicskingdom", "Comics Kingdom"),
-                            new Option("freefall", "Freefall")))
+                            new Option("freefall", "Freefall"))),
+            new JobParameterDefinition("resetState", "Forget given-up dates and learned horizons", "ENUM", false, "false",
+                    List.of(new Option("false", "No"),
+                            new Option("true", "Yes")))
     );
 
     /**
-     * Scheduler for ComicBackfillJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
+     * Scheduler for ComicBackfillJob - runs at every configured cron time, skipping runs with nothing to backfill. Triggered by SchedulerTriggers component.
      */
     @Bean
     public DailyJobScheduler comicBackfillJobScheduler(@Qualifier("comicBackfillJob") Job comicBackfillJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
-        return new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker,
-                "Backfills missing comic strips for gaps in the archive", BACKFILL_PARAMETERS);
+        DailyJobScheduler scheduler = new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker,
+                "Backfills missing comic strips: recent days first, then older gaps", BACKFILL_PARAMETERS);
+        scheduler.setMultipleRunsPerDay(true);
+        scheduler.setPrecondition(() -> backfillService.hasMissingStrips(null), "nothing to backfill");
+        return scheduler;
     }
 
     /**
@@ -87,7 +106,7 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Step for processing comic backfill tasks
+     * Step for processing comic backfill tasks. Writes the backfill state once more when the step ends, in case the last chunk had nothing to write.
      */
     @Bean
     @Qualifier("comicBackfillStep")
@@ -96,17 +115,27 @@ public class ComicBackfillJobConfig {
             @Qualifier("backfillTaskWriter") ItemWriter<ComicDownloadResult> backfillTaskWriter) {
 
         return new StepBuilder("comicBackfillStep", jobRepository).<BackfillTask, ComicDownloadResult>chunk(chunkSize).transactionManager(transactionManager).reader(backfillTaskReader)
-                .processor(backfillTaskProcessor).writer(backfillTaskWriter).build();
+                .processor(backfillTaskProcessor).writer(backfillTaskWriter).listener(new StepExecutionListener() {
+                    @Override
+                    public ExitStatus afterStep(StepExecution stepExecution) {
+                        backfillState.flush();
+                        return stepExecution.getExitStatus();
+                    }
+                }).build();
     }
 
     /**
      * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup. Accepts an
-     * optional "source" job parameter to filter by comic source.
+     * optional "source" job parameter to filter by comic source, and "resetState=true" to forget what earlier runs learned first.
      */
     @Bean
     @StepScope
     @Qualifier("backfillTaskReader")
-    public ItemReader<BackfillTask> backfillTaskReader(@Value("#{jobParameters['source']}") String sourceFilter) {
+    public ItemReader<BackfillTask> backfillTaskReader(@Value("#{jobParameters['source']}") String sourceFilter,
+            @Value("#{jobParameters['resetState']}") String resetState) {
+        if (Boolean.parseBoolean(resetState)) {
+            backfillState.reset();
+        }
         log.debug("Building backfill task list for job execution (sourceFilter={})", sourceFilter);
         List<BackfillTask> tasks = backfillService.findMissingStrips(sourceFilter);
         if (tasks.isEmpty()) {
@@ -119,12 +148,23 @@ public class ComicBackfillJobConfig {
 
     /**
      * Processor that downloads a comic for a specific date. Uses downloadComicForDate for efficient single-comic downloads - the comic has already been validated and filtered by
-     * ComicBackfillService.
+     * ComicBackfillService. Step-scoped so each run starts with an empty set of rate-limited sources.
+     * <ul>
+     * <li>A 429 fails at once (the source still backs off) and stops that source's remaining tasks for this run.</li>
+     * <li>Unavailable and duplicate results are recorded so later runs can give up on the date or learn the source's history horizon.</li>
+     * </ul>
      */
     @Bean
+    @StepScope
     @Qualifier("backfillTaskProcessor")
     public ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor() {
+        Set<String> stoppedSources = new HashSet<>();
         return task -> {
+            String source = task.comic().getSource();
+            if (stoppedSources.contains(source)) {
+                log.debug("Skipping {} backfill for {} - source was rate limited this run", source, task.comic().getName());
+                return null;
+            }
             try {
                 // Add a small delay between comics to avoid overwhelming sources
                 if (delayBetweenComics > 0) {
@@ -133,11 +173,19 @@ public class ComicBackfillJobConfig {
 
                 if (task instanceof DateBackfillTask dateTask) {
                     log.info("Backfilling {} for date: {}", dateTask.comic().getName(), dateTask.date());
-                    return managementFacade.downloadComicForDate(dateTask.comic(), dateTask.date()).orElse(null);
+                    ComicDownloadResult result = managementFacade.downloadComicForDate(dateTask.comic(), dateTask.date(), true).orElse(null);
+                    backfillState.recordAttempt(source);
+                    recordOutcome(dateTask, result, stoppedSources);
+                    return result;
                 } else if (task instanceof StripBackfillTask stripTask) {
                     log.info("Backfilling {} for strip #{}", stripTask.comic().getName(), stripTask.stripNumber());
-                    return managementFacade.downloadComicByStripNumber(
+                    ComicDownloadResult result = managementFacade.downloadComicByStripNumber(
                             stripTask.comic(), stripTask.stripNumber()).orElse(null);
+                    backfillState.recordAttempt(source);
+                    if (result != null && result.isRateLimited()) {
+                        stopSource(source, stoppedSources);
+                    }
+                    return result;
                 } else {
                     log.error("Unknown backfill task type: {}", task.getClass().getName());
                     return null;
@@ -155,13 +203,40 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Writer that logs the backfill results
+     * Feeds one date task's result to the backfill state, and stops the source for this run on a 429.
+     */
+    private void recordOutcome(DateBackfillTask task, ComicDownloadResult result, Set<String> stoppedSources) {
+        if (result == null) {
+            // Already cached, or the save failed: nothing learned about the source
+            return;
+        }
+        String source = task.comic().getSource();
+        if (result.isRateLimited()) {
+            stopSource(source, stoppedSources);
+        } else if (result.isSuccessful() && result.getSaveOutcome() == SaveResult.Outcome.DUPLICATE_SKIPPED) {
+            backfillState.recordUnavailable(task.comic(), task.date(), BackfillStateService.OUTCOME_DUPLICATE);
+        } else if (result.isSuccessful()) {
+            backfillState.recordSuccess(task.comic(), task.date());
+        } else if (result.getFailureKind() == FailureKind.UNAVAILABLE) {
+            backfillState.recordUnavailable(task.comic(), task.date(), BackfillStateService.OUTCOME_UNAVAILABLE);
+        }
+        // Other failures (network errors, exceptions) are transient: retry next run
+    }
+
+    private static void stopSource(String source, Set<String> stoppedSources) {
+        stoppedSources.add(source);
+        log.warn("Source {} rate limited backfill (HTTP 429); skipping its remaining backfill tasks until the next run", source);
+    }
+
+    /**
+     * Writer that logs the backfill results and writes what this chunk taught the backfill state.
      */
     @Bean
     @Qualifier("backfillTaskWriter")
     public ItemWriter<ComicDownloadResult> backfillTaskWriter() {
         return chunk -> {
             int successCount = 0;
+            int duplicateCount = 0;
             int failureCount = 0;
 
             for (ComicDownloadResult result : chunk.getItems()) {
@@ -170,7 +245,10 @@ public class ComicBackfillJobConfig {
                     continue;
                 }
 
-                if (result.isSuccessful()) {
+                if (result.isSuccessful() && result.getSaveOutcome() == SaveResult.Outcome.DUPLICATE_SKIPPED) {
+                    duplicateCount++;
+                    log.info("Backfill got a duplicate image: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());
+                } else if (result.isSuccessful()) {
                     successCount++;
                     log.info("Successfully backfilled: {} for {}", result.getRequest().getComicName(), result.getRequest().getDate());
                 } else {
@@ -179,7 +257,8 @@ public class ComicBackfillJobConfig {
                 }
             }
 
-            log.info("Backfill chunk complete: {} successful, {} failed", successCount, failureCount);
+            log.info("Backfill chunk complete: {} successful, {} duplicate, {} failed", successCount, duplicateCount, failureCount);
+            backfillState.flush();
         };
     }
 }

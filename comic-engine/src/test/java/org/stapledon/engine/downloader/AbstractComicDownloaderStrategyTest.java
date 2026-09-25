@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sun.net.httpserver.HttpServer;
+import org.jsoup.HttpStatusException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -332,6 +333,65 @@ class AbstractComicDownloaderStrategyTest {
     }
 
     @Test
+    void shouldFailFastOnRateLimitWhenRequested() {
+        ComicDownloadRequest request = testRequest().toBuilder().failFastOnRateLimit(true).build();
+
+        strategy.setRateLimitsRemaining(10);
+        when(throttleService.maxAttempts("test-source")).thenReturn(4);
+        when(throttleService.backOff(eq("test-source"), anyInt(), any())).thenReturn(Duration.ofSeconds(7));
+
+        ComicDownloadResult result = strategy.downloadComic(request);
+
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.isRateLimited()).isTrue();
+        assertThat(strategy.getDownloadCalls()).isEqualTo(1);
+        // The source still backs off, so other callers slow down too
+        verify(throttleService).backOff("test-source", 1, Optional.of(Duration.ofSeconds(7)));
+    }
+
+    @Test
+    void shouldClassifyEmptyImageAsUnavailable() {
+        strategy.setMockImageData(new byte[0]);
+
+        ComicDownloadResult result = strategy.downloadComic(testRequest());
+
+        assertThat(result.getFailureKind()).isEqualTo(ComicDownloadResult.FailureKind.UNAVAILABLE);
+    }
+
+    @Test
+    void shouldClassifyHttp404AsUnavailable() {
+        strategy.setExceptionToThrow(new HttpStatusException("HTTP error fetching URL", 404, "https://example.com/strip"));
+
+        ComicDownloadResult result = strategy.downloadComic(testRequest());
+
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getFailureKind()).isEqualTo(ComicDownloadResult.FailureKind.UNAVAILABLE);
+        verify(throttleService, never()).backOff(any(), anyInt(), any());
+    }
+
+    @Test
+    void shouldClassifyOtherHttpErrorsAsError() {
+        strategy.setExceptionToThrow(new HttpStatusException("HTTP error fetching URL", 503, "https://example.com/strip"));
+
+        ComicDownloadResult result = strategy.downloadComic(testRequest());
+
+        assertThat(result.getFailureKind()).isEqualTo(ComicDownloadResult.FailureKind.ERROR);
+    }
+
+    @Test
+    void shouldTreatHttpStatus429AsRateLimited() {
+        // Jsoup's get() reports a 429 as an HttpStatusException rather than a RateLimitedException
+        strategy.setExceptionToThrow(new HttpStatusException("HTTP error fetching URL", 429, "https://example.com/strip"));
+        when(throttleService.backOff(eq("test-source"), anyInt(), any())).thenReturn(Duration.ofSeconds(30));
+
+        ComicDownloadResult result = strategy.downloadComic(testRequest());
+
+        assertThat(result.isRateLimited()).isTrue();
+        assertThat(strategy.getDownloadCalls()).isEqualTo(1);
+        verify(throttleService).backOff("test-source", 1, Optional.empty());
+    }
+
+    @Test
     void downloadImageData_whenServerReturns429_throwsRateLimitedWithRetryAfter() throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         server.createContext("/img", exchange -> {
@@ -394,6 +454,7 @@ class AbstractComicDownloaderStrategyTest {
         private byte[] mockImageData;
         private byte[] mockAvatarData;
         private boolean throwException;
+        private Exception exceptionToThrow;
         private int rateLimitsRemaining;
         private int downloadCalls;
 
@@ -417,6 +478,10 @@ class AbstractComicDownloaderStrategyTest {
             this.throwException = throwException;
         }
 
+        public void setExceptionToThrow(Exception exceptionToThrow) {
+            this.exceptionToThrow = exceptionToThrow;
+        }
+
         public void setRateLimitsRemaining(int rateLimitsRemaining) {
             this.rateLimitsRemaining = rateLimitsRemaining;
         }
@@ -431,6 +496,9 @@ class AbstractComicDownloaderStrategyTest {
             if (rateLimitsRemaining > 0) {
                 rateLimitsRemaining--;
                 throw RateLimitedException.of("https://example.com/strip", "7");
+            }
+            if (exceptionToThrow != null) {
+                throw exceptionToThrow;
             }
             if (throwException) {
                 throw new Exception("Test exception");

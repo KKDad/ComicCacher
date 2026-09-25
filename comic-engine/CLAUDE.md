@@ -11,7 +11,7 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 | `engine.validation` | Image validation, dedup, metadata backfill |
 | `engine.analysis` | Color/grayscale detection |
 | `engine.storage` | `FileSystemComicStorageFacade` and supporting classes |
-| `engine.caching` | Caffeine cache wiring (navigation, boundary, metadata, lookahead) |
+| `engine.caching` | `CacheException` only (no cache implementations live here) |
 | `engine.management` | Comic management facade |
 | `engine.health` | Custom health indicators |
 
@@ -28,6 +28,8 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 
 - One job per `@Configuration` class under `engine.batch.config/`. Naming: `<Purpose>JobConfig.java`.
 - Use chunk-based steps with explicit `chunk-size`, `max-consecutive-failures`, and per-source overrides where applicable (see `ComicBackfillJobConfig`).
+- A job that should run several times a day uses `DailyJobScheduler.setMultipleRunsPerDay(true)`, and `setPrecondition(...)` to skip runs with nothing to do (see `ComicBackfillJobConfig`). Keep preconditions local-only: no web requests.
+- Backfill downloads pass `failFastOnRateLimit=true`: a 429 returns `FailureKind.RATE_LIMITED` at once instead of retrying. Indexed `downloadStrip()` never retries and reports a 429 the same way. An HTTP 404/410 is `FailureKind.UNAVAILABLE`. Classify outcomes with `ComicDownloadResult.getFailureKind()` / `getSaveOutcome()`, not by parsing error messages.
 - Schedule via `@Scheduled` annotations driven by `batch.<job>.cron` properties; jobs auto-run is disabled (`spring.batch.job.enabled=false`).
 - Use modern `JobOperator.start(Job, JobParameters)` — never the deprecated `JobLauncher`/`SimpleJobLauncher`.
 - Execution tracking lands in `${comics.cache.location}/batch-executions.json` via `JsonBatchExecutionTracker`. Don't bypass it.
@@ -49,5 +51,11 @@ See [@~/docs/design/image-validation.md](../docs/design/image-validation.md).
 
 ## Caching
 
-- Caffeine caches are the only in-memory cache. Configured via `comics.cache.caffeine.*` properties; sizes/TTL bound through `CaffeineCacheProperties`.
-- If you add a new cache, also add it to `CaffeineCacheConfiguration` so the property binding is real (the `navigation`, `boundary`, and `navigation-dates` caches were historically unbound — verify your additions are wired).
+- **Do not cache images, strips or navigation results in memory.** Caching has served the wrong images before, which is why no such caches exist.
+- The only Caffeine cache is `comicMetadata`, which holds the comic configuration list (`@Cacheable` on `ComicManagementFacade.getAllComics()`; `@CacheEvict` on create, update and delete). It is wired in comic-api's `CaffeineCacheConfiguration` and configured with `comics.cache.caffeine.*` (`CaffeineCacheProperties`). Don't add caches to it without a clear need.
+- Where a small in-memory memo is justified, keep it away from anything that serves images. It needs:
+  - a property that switches it off (off when unset);
+  - a recheck against disk where correctness matters;
+  - a WARN log on any mismatch, and a summary log line per use.
+
+  See `remember-cached-strips` in `ComicBackfillService`.
