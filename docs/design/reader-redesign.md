@@ -196,11 +196,11 @@ Comic strips vary significantly in aspect ratio (single panels ~1:1, daily strip
 ### Strip Fetching
 
 **Desktop (scroll view):**
-1. Primary query: `stripWindow(center, before, after)` — fetches a centered window of strips in one round trip
-2. Initial load: `stripWindow(lastRead, 2, 2)` — 5 strips centered on last-read
-3. Prefetch: 3 strips ahead in scroll direction, triggered when 2nd-to-last loaded strip enters viewport
-4. Each strip's `previous`/`next` fields provide adjacent dates without extra queries
-5. TanStack Query caching: `staleTime: Infinity` for individual strip data (immutable once published); `staleTime: 5 * 60 * 1000` (5 min) for range/boundary queries so new strips are discovered
+1. `use-reader.ts` builds the strip list from an infinite `stripWindow(center, before, after)` query
+2. Initial load: 10 strips either side of the anchor date (the requested or last-read date). With no date, it reads the comic's `newest` field and opens on the newest strip with the 2 before it
+3. Paging: 20 strips at a time (the backend caps `before`/`after` at 20), older from the first strip and newer from the last. A page loads only once the edge strip is rendered and the view has reached the current strip, so the first render doesn't trigger a load
+4. The virtualizer keys strips by date and anchors to the end (`anchorTo: 'end'`), so prepending older strips doesn't move the view. The current strip is tracked by date, not index
+5. TanStack Query caching: `staleTime: 5 * 60 * 1000` (5 min) for the strip window and newest-date queries, so new strips are discovered; `staleTime: 0` for random strips
 
 **Mobile (snap view):**
 1. Initial load: 3 strips (current + 1 in each direction)

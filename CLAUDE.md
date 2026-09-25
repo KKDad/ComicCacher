@@ -122,6 +122,9 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 - **`utils/fetch-prod-logs.sh [api|ui] [lines]`** — Fetch Docker logs from production `comics-api` or `comics-ui` container (default 500 lines)
 - **`utils/tunnel-to-prod-api.sh`** — SSH tunnel: `localhost:8888` to production API
 - **`utils/dev-build-and-run.sh <ver> [--skip-build]`** — Build, push, and deploy the dev instance (`comics-api-dev`). Stages `utils/dev-run.sh` on the Docker host and runs it over ssh, so it works from a Podman workstation
-- **`utils/prod-build-and-run.sh [--api <ver>] [--ui <ver>] [--skip-build]`** — Build, push, and deploy prod containers via Docker context. Pre-flight gates (master branch, clean tree, semver tag, registry verification, confirm prompt) and post-deploy health-poll with auto-rollback. Audit log at `~/.comiccacher-prod-deploy.log`.
+- **`utils/dev-run.sh <ver> [--dry-run]`** — Runs on the Docker host: replaces `comics-api-dev` and polls its health (no rollback). Creates `dev-token.env` beside itself on first run, which turns on the dev-only `devToken` mutation with a random secret (see "Dev Tokens" in [@~/docs/api/overview.md](docs/api/overview.md))
+- **`utils/prod-build-and-run.sh [--api <ver>] [--ui <ver>] [--skip-build]`** — Build and push with `prod-build.sh`, stage `prod-run.sh` and `utils/prod/docker-compose.yml` on the Docker host, and deploy over ssh
+- **`utils/prod-build.sh [--api <ver>] [--ui <ver>]`** — Workstation build and push only. Gates: master branch, clean tree, semver tag, image present in the registry
+- **`utils/prod-run.sh [--api <ver>[@sha256:…]] [--ui <ver>] [--dry-run]`** — Runs on the Docker host: confirm prompt, compose pull/up for the changed services, health poll with automatic rollback to the previous digests. Audit log at `~/.comiccacher-prod-deploy.log` on the host
 - **`utils/verify-json-files.sh`** — Validate JSON storage files in the comics cache
 

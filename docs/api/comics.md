@@ -135,6 +135,26 @@ query {
 
 ---
 
+### randomStrip
+
+Get a random strip. With `comicId`, a random strip from that comic; without it, a random comic and date.
+
+```graphql
+query {
+  randomStrip(comicId: Int): ComicStrip
+}
+```
+
+**Auth:** `@authenticated`
+
+| Parameter | Type | Description |
+|---|---|---|
+| `comicId` | `Int` | Comic to pick from (null = any comic) |
+
+**Returns:** `ComicStrip` (null if there is nothing to pick)
+
+---
+
 ### search
 
 Full-text search across comic names, authors, and descriptions.
@@ -363,9 +383,10 @@ GET /api/v1/comics/42/strip/2026-03-19
 | `publicationDays` | `[DayOfWeek!]` | Days the comic publishes (null = daily) |
 | `active` | `Boolean` | Whether actively publishing |
 | `strip(date: Date)` | `ComicStrip` | Strip for a specific date (null = latest) |
-| `strips(dates: [Date!]!)` | `[ComicStrip!]!` | Strips for multiple dates |
+| `strips(dates: [Date!]!)` | `[ComicStrip!]!` | Strips for multiple dates (first 30 only) |
 | `firstStrip` | `ComicStrip` | First (oldest) available strip |
 | `lastStrip` | `ComicStrip` | Last (newest) available strip |
+| `stripWindow(center: Date!, before: Int!, after: Int!)` | `[ComicStrip!]!` | Up to `before` older strips, the centre date and up to `after` newer strips, in chronological order. `before` and `after` are capped at 20. A centre date with no strip (e.g. a far-future date) comes back as an unavailable entry rather than being moved to the nearest strip; use `newest` to find the latest date |
 
 ### ComicStrip
 
@@ -374,6 +395,9 @@ GET /api/v1/comics/42/strip/2026-03-19
 | `date` | `Date!` | Date of the strip |
 | `available` | `Boolean!` | Whether a strip exists for this date |
 | `imageUrl` | `String` | URL to the strip image (null if not available) |
+| `width` | `Int` | Image width in pixels (null if not available) |
+| `height` | `Int` | Image height in pixels (null if not available) |
+| `transcript` | `String` | Transcript text from the comic page (null if not available) |
 | `previous` | `ComicStrip` | Previous strip (null if at beginning) |
 | `next` | `ComicStrip` | Next strip (null if at end) |
 

@@ -21,7 +21,7 @@
 ## Verify the gocomics 429 fix in prod
 
 - Since 2026-09-22 about six gocomics comics have failed every day with HTTP 429. It's rate limiting across the whole source, not per-comic blocking
-- #318 added 429 retries with backoff (`downloader.sources.gocomics.retry.*`) and moved the User-Agent to Chrome 154
+- 2.4.7 added 429 retries with backoff (`downloader.sources.gocomics.retry.*`) and moved the User-Agent to Chrome 154
 - Check the next 07:30 `ComicDownloadJob` run for `Rate limited (HTTP 429)` warnings and whether the retries succeed. If they don't, lower `downloader.sources.gocomics.throttle.*` or spread the run out
 - 429s are recorded as `COMIC_UNAVAILABLE`, which hides them among real "no strip today" days. Give them their own status (e.g. `RATE_LIMITED`)
 - Optional: advertise and decode `zstd` like real Chrome (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
@@ -29,7 +29,7 @@
 
 ## Backfill Mother Goose & Grimm and Sherman's Lagoon
 
-- The save bug is fixed (#322), and the 139 strips per comic that dev had were copied to prod
+- The save bug is fixed (2.4.8), and the 139 strips per comic that dev had were copied to prod
 - Still missing: 2026-01-10 to about 2026-02-10, plus any other days dev didn't have
 - Run a backfill from 2026-01-10 for both comics once 2.4.8 is on prod. Delete any `comic_*` folders the old version recreated in the cache root first
 - Priority: High
@@ -48,12 +48,6 @@
 - In `prod-build-and-run.sh` the staging `ssh`/`scp` calls eat stdin, so `echo y | …` never reaches the `Continue?` prompt and the script exits without saying why. Use `ssh -n` there, and print a message when `read` gets no input
 - Priority: Low
 
-## Forgot Password Flow
-
-- Wire up `requestPasswordReset` mutation in `comic-hub/src/app/(auth)/forgot-password/page.tsx`
-- Currently the form submission is a no-op that immediately shows the success view
-- Priority: Low
-
 ## Configure SMTP for Password Reset
 
 - Mail is disabled by default (`spring.mail.host` is empty, `management.health.mail.enabled=false`)
@@ -66,7 +60,8 @@
   - `MAIL_RESET_URL_BASE` — password reset page URL (default: `http://localhost:3000/reset-password`)
 - Once SMTP is configured, re-enable the health indicator: `management.health.mail.enabled=true`
 - Config file: `comic-api/src/main/resources/application.properties`
-- Priority: Low (blocked until Forgot Password Flow is wired up)
+- The forgot-password and reset-password pages are wired up; without SMTP the reset email is never sent
+- Priority: Low
 
 ## Performance Improvements
 

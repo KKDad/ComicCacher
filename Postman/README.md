@@ -2,6 +2,8 @@
 
 This directory contains the Postman collection and environment settings for testing the ComicCacher API.
 
+> **Out of date:** the collection was written for the old REST API (`/api/v1/auth/*`, `/api/v1/users/*`, `/api/v1/preferences/*`, `/api/v1/metrics/*` and so on), which has been replaced by GraphQL at `/graphql`. Only the image endpoints `/api/v1/comics/{id}/avatar` and `/api/v1/comics/{id}/strip/{date}` remain, so most requests below will fail. See [`docs/api/overview.md`](../docs/api/overview.md) for the current API.
+
 ## Contents
 
 - `collection.json` - Postman collection 
@@ -18,7 +20,7 @@ This directory contains the Postman collection and environment settings for test
 
 1. Open Postman
 2. Click on "Import" in the upper left corner
-3. Select both `updated_collection.json` and `environment.json` files
+3. Select both `collection.json` and `environment.json` files
 4. Confirm the import
 
 ### 3. Configure Environment
