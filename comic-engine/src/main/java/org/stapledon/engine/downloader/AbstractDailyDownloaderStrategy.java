@@ -4,6 +4,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
@@ -91,6 +92,21 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
 
             return ComicDownloadResult.success(request, imageData);
         } catch (Exception e) {
+            int status = httpStatus(e);
+            if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
+                // A 429 raised as a plain HTTP error (e.g. by Jsoup's get()) rather than a RateLimitedException: back off, don't retry
+                Duration backoff = throttleService.backOff(getSource(), 1, Optional.empty());
+                String errorMessage = String.format("Rate limited (HTTP 429) downloading comic %s for date %s (source backing off %ds): %s",
+                        request.getComicName(), request.getDate(), backoff.toSeconds(), e.getMessage());
+                log.warn(errorMessage);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED);
+            }
+            if (isNotFoundStatus(status)) {
+                String errorMessage = String.format("Comic %s for date %s not found at source (HTTP %d)",
+                        request.getComicName(), request.getDate(), status);
+                log.warn(errorMessage);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE);
+            }
             String errorMessage = String.format("Error downloading comic %s for date %s: %s",
                     request.getComicName(), request.getDate(), e.getMessage());
             log.error(errorMessage, e);

@@ -10,6 +10,7 @@ import org.springframework.batch.core.launch.JobOperator;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract base class for job schedulers. Provides common functionality for all batch job schedulers using the modern JobOperator API.
@@ -35,6 +36,9 @@ public abstract class AbstractJobScheduler {
 
     protected final Job job;
     protected final JobOperator jobOperator;
+
+    // JobOperator.start runs the job on the calling thread, so this is held for the whole run
+    private final AtomicBoolean running = new AtomicBoolean();
 
     /**
      * Schedule type for categorization and health checks.
@@ -91,16 +95,20 @@ public abstract class AbstractJobScheduler {
      * Executes the job with the given trigger source. Uses JobOperator.start(Job, JobParameters) which is the modern Spring Batch 6 approach.
      *
      * @param trigger source of the trigger ("SCHEDULED", "MANUAL", "STARTUP")
-     * @return the job execution ID, or null if execution failed to start
+     * @return the job execution ID, or null if execution failed to start or the job was already running
      */
     protected Long runJob(String trigger) {
         return runJob(trigger, Map.of());
     }
 
     /**
-     * Executes the job with the given trigger source and extra parameters.
+     * Executes the job with the given trigger source and extra parameters. Returns null without launching when a run of this job is already in progress.
      */
     protected Long runJob(String trigger, Map<String, String> extraParams) {
+        if (!running.compareAndSet(false, true)) {
+            log.warn("{} is already running, not launching another run (triggered by: {})", getJobName(), trigger);
+            return null;
+        }
         log.info("Launching {} (triggered by: {}, params: {})", getJobName(), trigger, extraParams);
 
         try {
@@ -112,6 +120,8 @@ public abstract class AbstractJobScheduler {
         } catch (Exception e) {
             log.error("Failed to launch {}: {}", getJobName(), e.getMessage(), e);
             return null;
+        } finally {
+            running.set(false);
         }
     }
 

@@ -2,12 +2,15 @@ package org.stapledon.engine.batch.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
+import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.batch.infrastructure.item.ItemReader;
@@ -103,7 +106,7 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Step for processing comic backfill tasks
+     * Step for processing comic backfill tasks. Writes the backfill state once more when the step ends, in case the last chunk had nothing to write.
      */
     @Bean
     @Qualifier("comicBackfillStep")
@@ -112,7 +115,13 @@ public class ComicBackfillJobConfig {
             @Qualifier("backfillTaskWriter") ItemWriter<ComicDownloadResult> backfillTaskWriter) {
 
         return new StepBuilder("comicBackfillStep", jobRepository).<BackfillTask, ComicDownloadResult>chunk(chunkSize).transactionManager(transactionManager).reader(backfillTaskReader)
-                .processor(backfillTaskProcessor).writer(backfillTaskWriter).build();
+                .processor(backfillTaskProcessor).writer(backfillTaskWriter).listener(new StepExecutionListener() {
+                    @Override
+                    public ExitStatus afterStep(StepExecution stepExecution) {
+                        backfillState.flush();
+                        return stepExecution.getExitStatus();
+                    }
+                }).build();
     }
 
     /**
@@ -173,6 +182,9 @@ public class ComicBackfillJobConfig {
                     ComicDownloadResult result = managementFacade.downloadComicByStripNumber(
                             stripTask.comic(), stripTask.stripNumber()).orElse(null);
                     backfillState.recordAttempt(source);
+                    if (result != null && result.isRateLimited()) {
+                        stopSource(source, stoppedSources);
+                    }
                     return result;
                 } else {
                     log.error("Unknown backfill task type: {}", task.getClass().getName());
@@ -200,8 +212,7 @@ public class ComicBackfillJobConfig {
         }
         String source = task.comic().getSource();
         if (result.isRateLimited()) {
-            stoppedSources.add(source);
-            log.warn("Source {} rate limited backfill (HTTP 429); skipping its remaining backfill tasks until the next run", source);
+            stopSource(source, stoppedSources);
         } else if (result.isSuccessful() && result.getSaveOutcome() == SaveResult.Outcome.DUPLICATE_SKIPPED) {
             backfillState.recordUnavailable(task.comic(), task.date(), BackfillStateService.OUTCOME_DUPLICATE);
         } else if (result.isSuccessful()) {
@@ -212,8 +223,13 @@ public class ComicBackfillJobConfig {
         // Other failures (network errors, exceptions) are transient: retry next run
     }
 
+    private static void stopSource(String source, Set<String> stoppedSources) {
+        stoppedSources.add(source);
+        log.warn("Source {} rate limited backfill (HTTP 429); skipping its remaining backfill tasks until the next run", source);
+    }
+
     /**
-     * Writer that logs the backfill results
+     * Writer that logs the backfill results and writes what this chunk taught the backfill state.
      */
     @Bean
     @Qualifier("backfillTaskWriter")
@@ -242,6 +258,7 @@ public class ComicBackfillJobConfig {
             }
 
             log.info("Backfill chunk complete: {} successful, {} duplicate, {} failed", successCount, duplicateCount, failureCount);
+            backfillState.flush();
         };
     }
 }

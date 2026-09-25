@@ -36,7 +36,10 @@ import org.stapledon.engine.batch.BackfillState.SourceState;
  * every comic on the source stops there.</li>
  * </ul>
  * Given-up dates and horizons expire after {@code retry-given-up-after-days}, so a site that relaxes its paywall is noticed. A successful download older than a
- * horizon clears it. State lives in {@code backfill-state.json} in the cache root and is written atomically.
+ * horizon clears it.
+ * <p>
+ * State is kept in memory and written to {@code backfill-state.json} in the cache root by {@link #flush()} (the backfill job calls it after each chunk), atomically
+ * and with expired entries dropped.
  */
 @Slf4j
 @Service
@@ -52,6 +55,7 @@ public class BackfillStateService {
     private final Clock clock;
 
     private BackfillState state;
+    private boolean dirty;
 
     @Autowired
     public BackfillStateService(CacheProperties cacheProperties, @Qualifier("gsonWithLocalDate") Gson gson, BackfillConfigurationService config) {
@@ -114,7 +118,7 @@ public class BackfillStateService {
             src.setAttemptsOnDate(0);
         }
         src.setAttemptsOnDate(src.getAttemptsOnDate() + 1);
-        save();
+        dirty = true;
     }
 
     /**
@@ -144,7 +148,7 @@ public class BackfillStateService {
                 setComicHorizon(comic, c, c.getConsecutiveOldFailuresNewest());
             }
         }
-        save();
+        dirty = true;
     }
 
     /**
@@ -176,7 +180,7 @@ public class BackfillStateService {
             changed = true;
         }
         if (changed) {
-            save();
+            dirty = true;
         }
     }
 
@@ -187,6 +191,40 @@ public class BackfillStateService {
         state = new BackfillState();
         save();
         log.info("Backfill state reset");
+    }
+
+    /**
+     * Writes the in-memory state to {@code backfill-state.json} if it changed since the last write, first dropping entries that have expired.
+     */
+    public synchronized void flush() {
+        if (!dirty) {
+            return;
+        }
+        pruneExpired();
+        save();
+    }
+
+    private void pruneExpired() {
+        BackfillState s = load();
+        s.getComics().values().forEach(c -> {
+            c.getFailures().values().removeIf(f -> isExpired(f.getLastAttempt()));
+            if (c.getFailures().isEmpty()) {
+                // The dates behind any run of old failures have expired too
+                c.setConsecutiveOldFailures(0);
+                c.setConsecutiveOldFailuresNewest(null);
+            }
+            if (c.getHorizonDate() != null && isExpired(c.getHorizonDetectedAt())) {
+                c.setHorizonDate(null);
+                c.setHorizonDetectedAt(null);
+            }
+        });
+        s.getComics().values().removeIf(c -> c.getFailures().isEmpty() && c.getHorizonDate() == null && c.getConsecutiveOldFailures() == 0);
+        s.getSources().values().forEach(src -> {
+            if (src.getHorizonDays() != null && isExpired(src.getHorizonDetectedAt())) {
+                src.setHorizonDays(null);
+                src.setHorizonDetectedAt(null);
+            }
+        });
     }
 
     private void setComicHorizon(ComicItem comic, ComicState c, LocalDate horizon) {
@@ -287,7 +325,8 @@ public class BackfillStateService {
     private void save() {
         Path file = stateFile();
         try {
-            NfsFileOperations.atomicWrite(file, gson.toJson(state));
+            NfsFileOperations.atomicWrite(file, gson.toJson(load()));
+            dirty = false;
         } catch (IOException e) {
             log.error("Failed to write {}: {}", file, e.getMessage(), e);
         }

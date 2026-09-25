@@ -1,9 +1,11 @@
 package org.stapledon.engine.batch.scheduler;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +19,8 @@ import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.launch.JobOperator;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 
@@ -100,6 +104,36 @@ class DailyJobSchedulerTest {
         scheduler.triggerManually();
 
         verify(jobOperator).start(eq(job), any(JobParameters.class));
+    }
+
+    @Test
+    @DisplayName("does not start a second run while one is in progress")
+    void skipsLaunchWhileRunning() throws Exception {
+        scheduler.setMultipleRunsPerDay(true);
+        AtomicReference<Long> overlapping = new AtomicReference<>(-1L);
+        when(jobOperator.start(eq(job), any(JobParameters.class))).thenAnswer(inv -> {
+            // A manual trigger arriving while the scheduled run is still going
+            overlapping.set(scheduler.triggerManually());
+            return execution;
+        });
+
+        scheduler.executeScheduled();
+
+        assertThat(overlapping.get()).isNull();
+        verify(jobOperator, times(1)).start(any(Job.class), any(JobParameters.class));
+    }
+
+    @Test
+    @DisplayName("can run again once the previous run has finished, even if it failed")
+    void runsAgainAfterPreviousRunEnds() throws Exception {
+        when(jobOperator.start(eq(job), any(JobParameters.class)))
+                .thenThrow(new IllegalStateException("boom"))
+                .thenReturn(execution);
+
+        assertThat(scheduler.triggerManually()).isNull();
+        scheduler.triggerManually();
+
+        verify(jobOperator, times(2)).start(any(Job.class), any(JobParameters.class));
     }
 
     @Test

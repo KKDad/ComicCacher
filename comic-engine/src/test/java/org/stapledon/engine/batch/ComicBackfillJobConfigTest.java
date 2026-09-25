@@ -37,6 +37,7 @@ import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.SaveResult;
 import org.stapledon.engine.batch.ComicBackfillService.BackfillTask;
 import org.stapledon.engine.batch.ComicBackfillService.DateBackfillTask;
+import org.stapledon.engine.batch.ComicBackfillService.StripBackfillTask;
 import org.stapledon.engine.batch.config.ComicBackfillJobConfig;
 import org.stapledon.engine.management.ManagementFacade;
 
@@ -194,6 +195,27 @@ class ComicBackfillJobConfigTest {
 
         // Should not throw exception
         Assertions.assertThatCode(() -> writer.write(Chunk.of(success, failure))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void backfillTaskWriter_flushesBackfillStateAfterEachChunk() throws Exception {
+        config.backfillTaskWriter().write(Chunk.of((ComicDownloadResult) null));
+
+        verify(backfillState).flush();
+    }
+
+    @Test
+    void backfillTaskProcessor_stripRateLimitStopsThatSourceForTheRun() throws Exception {
+        ComicItem freefall = createComic(1, "Freefall");
+        freefall.setSource("freefall");
+        ComicDownloadResult rateLimited = ComicDownloadResult.failure(request(freefall, LocalDate.of(2025, 1, 1)), "429", FailureKind.RATE_LIMITED);
+        when(managementFacade.downloadComicByStripNumber(freefall, 100)).thenReturn(Optional.of(rateLimited));
+
+        ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
+
+        assertThat(processor.process(new StripBackfillTask(freefall, 100)).isRateLimited()).isTrue();
+        assertThat(processor.process(new StripBackfillTask(freefall, 99))).isNull();
+        verify(managementFacade, never()).downloadComicByStripNumber(freefall, 99);
     }
 
     @Test

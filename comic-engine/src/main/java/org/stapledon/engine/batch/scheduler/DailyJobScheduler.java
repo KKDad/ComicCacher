@@ -92,13 +92,6 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     }
 
     /**
-     * Returns whether the job runs at every cron time rather than once a day.
-     */
-    public boolean isMultipleRunsPerDay() {
-        return multipleRunsPerDay;
-    }
-
-    /**
      * Sets a cheap check made before each scheduled run. When it returns false the run is skipped (nothing launched, nothing recorded) and
      * {@code skipMessage} is logged. Manual triggers ignore it.
      */

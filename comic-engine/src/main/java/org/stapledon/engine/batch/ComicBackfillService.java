@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
@@ -49,6 +50,11 @@ public class ComicBackfillService {
     private final DownloaderFacade downloaderFacade;
     private final ComicIndexService comicIndexService;
     private final BackfillStateService backfillState;
+
+    // Strips already seen cached today, so the repeated scans (each scheduled run's precondition, then the run's own scan) don't ask NFS about them again.
+    // Only hits are kept, and the memo starts over each day, so a strip deleted from the cache is noticed by the next day.
+    private final Map<Integer, Set<LocalDate>> knownCached = new ConcurrentHashMap<>();
+    private volatile LocalDate knownCachedOn;
 
     /**
      * Sealed interface representing a backfill task for either date-based or indexed comics.
@@ -91,9 +97,7 @@ public class ComicBackfillService {
      * </ol>
      * Both passes honour the publication-day schedule, the source's {@code max-days-back}, the comic's known oldest date, and what
      * {@link BackfillStateService} has learned (given-up dates and history horizons). The history pass also stops a comic after
-     * {@code max-consecutive-failures} missing strips in a row (it likely didn't exist that far back).
-     *
-     * @return backfill tasks in the order they should run
+     * {@code max-consecutive-failures} missing strips in a row (it likely didn't exist that far back). Returns the tasks in the order they should run.
      */
     public List<BackfillTask> findMissingStrips(String sourceFilter) {
         return selectTasks(sourceFilter, true, Integer.MAX_VALUE);
@@ -273,7 +277,7 @@ public class ComicBackfillService {
          */
         boolean isMissing(LocalDate date) {
             return !date.isAfter(range.start()) && !date.isBefore(range.end()) && shouldCheckDate(comic, date)
-                    && !storageFacade.comicStripExists(ComicIdentifier.from(comic), date)
+                    && !isCached(comic, date)
                     && !backfillState.isGivenUp(comic, date);
         }
 
@@ -295,7 +299,7 @@ public class ComicBackfillService {
                 if (!shouldCheckDate(comic, date)) {
                     continue;
                 }
-                if (storageFacade.comicStripExists(ComicIdentifier.from(comic), date)) {
+                if (isCached(comic, date)) {
                     consecutiveMissing = 0;
                     continue;
                 }
@@ -312,6 +316,26 @@ public class ComicBackfillService {
             }
             return null;
         }
+    }
+
+    /**
+     * Whether the comic's strip for this date is in the cache, remembering hits for the rest of the day.
+     */
+    private boolean isCached(ComicItem comic, LocalDate date) {
+        LocalDate today = LocalDate.now();
+        if (!today.equals(knownCachedOn)) {
+            knownCached.clear();
+            knownCachedOn = today;
+        }
+        Set<LocalDate> dates = knownCached.computeIfAbsent(comic.getId(), k -> ConcurrentHashMap.newKeySet());
+        if (dates.contains(date)) {
+            return true;
+        }
+        if (storageFacade.comicStripExists(ComicIdentifier.from(comic), date)) {
+            dates.add(date);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -415,13 +439,8 @@ public class ComicBackfillService {
     }
 
     /**
-     * Scans an indexed comic for missing strips by iterating strip numbers
-     * backwards from the last known strip number.
-     *
-     * @param comic        the indexed comic to scan
-     * @param maxTasks     maximum number of tasks to return
-     * @param allowNetwork whether an unknown latest strip number may be discovered with a web request
-     * @return list of backfill tasks for missing strips
+     * Scans an indexed comic for missing strips by iterating strip numbers backwards from the last known strip number, returning at most {@code maxTasks} tasks.
+     * An unknown latest strip number is discovered with a web request only when {@code allowNetwork} is true; otherwise the comic yields no tasks.
      */
     private List<BackfillTask> scanIndexedComicForMissingStrips(ComicItem comic, int maxTasks, boolean allowNetwork) {
         List<BackfillTask> tasks = new ArrayList<>();

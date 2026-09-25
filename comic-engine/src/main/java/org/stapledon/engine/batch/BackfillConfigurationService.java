@@ -123,22 +123,37 @@ public class BackfillConfigurationService {
                 .orElse(orFallback(defaultRecentDays, FALLBACK_RECENT_DAYS));
     }
 
+    /**
+     * How many unavailable or duplicate results for one date make backfill give up on it.
+     */
     public int getGiveUpAfter() {
         return orFallback(giveUpAfter, FALLBACK_GIVE_UP_AFTER);
     }
 
+    /**
+     * How many different old dates in a row must come back unavailable before a comic's history horizon is learned.
+     */
     public int getHorizonConsecutiveFailures() {
         return orFallback(horizonConsecutiveFailures, FALLBACK_HORIZON_CONSECUTIVE_FAILURES);
     }
 
+    /**
+     * How many comics on a source must reach a horizon of about the same age before it becomes the source's horizon.
+     */
     public int getHorizonMinComics() {
         return orFallback(horizonMinComics, FALLBACK_HORIZON_MIN_COMICS);
     }
 
+    /**
+     * How many days apart comic horizons may be and still count as the same source horizon.
+     */
     public int getHorizonToleranceDays() {
         return orFallback(horizonToleranceDays, FALLBACK_HORIZON_TOLERANCE_DAYS);
     }
 
+    /**
+     * How many days a given-up date or learned horizon is remembered before backfill tries again.
+     */
     public int getRetryGivenUpAfterDays() {
         return orFallback(retryGivenUpAfterDays, FALLBACK_RETRY_GIVEN_UP_AFTER_DAYS);
     }

@@ -19,12 +19,12 @@ public class ComicDownloadResult {
      * Why a download failed, so callers can tell a missing strip from a transient problem.
      */
     public enum FailureKind {
-        /** The source had nothing usable for the date (no image, empty or invalid image data). */
-        UNAVAILABLE,
+        /** Anything else: network errors, exceptions, unknown problems. */
+        ERROR,
         /** The source answered HTTP 429 (Too Many Requests). */
         RATE_LIMITED,
-        /** Anything else: network errors, exceptions, unknown problems. */
-        ERROR
+        /** The source had nothing usable for the date (no image, empty or invalid image data, HTTP 404 or 410). */
+        UNAVAILABLE
     }
 
     /**

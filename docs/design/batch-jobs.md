@@ -121,15 +121,15 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 **Config class:** `ComicBackfillJobConfig`
 
-**Schedule:** Runs at every cron time (default `0 30 7-19/2 * * ?`, every 2 h from 90 minutes after the daily download until evening). Before each scheduled run, `ComicBackfillService.hasMissingStrips()` checks local storage only. If nothing is missing, the run is skipped: no web requests, and no execution recorded. There is no catch-up run at startup; the next cron time picks up the work. Manual triggers always run.
+**Schedule:** Runs at every cron time (default `0 30 7-19/2 * * ?`, every 2 h from 90 minutes after the daily download until evening). A run that would overlap one still in progress is not launched. Before each scheduled run, `ComicBackfillService.hasMissingStrips()` checks local storage only. Strips it finds cached are remembered in memory for the rest of the day, so later checks and the run's own scan only look at the gaps again. If nothing is missing, the run is skipped: no web requests, and no execution recorded. There is no catch-up run at startup; the next cron time picks up the work. Manual triggers always run.
 
 **Pattern:** Chunk-oriented with configurable chunk size (`batch.comic-backfill.chunk-size`, default 10).
 
 - **Reader:** `ListItemReader<BackfillTask>` from `ComicBackfillService.findMissingStrips()` (step-scoped, evaluated at job run time). Per source, up to `max-per-run` tasks (capped by what's left of the optional `max-per-day`):
   1. **Recent pass:** the last `recent-days` (default 7) days, newest first, across every comic.
   2. **History pass:** older gaps, round-robin one per comic per round, so comics early in the alphabet can't take the whole budget.
-- **Processor:** Calls `managementFacade.downloadComicForDate(comic, date, true)` per task, with a delay between downloads (`batch.comic-backfill.delay-between-comics-ms`, 10000 ms in `application.properties`). The `true` makes an HTTP 429 fail at once. The source still backs off through `SourceThrottleService`, and the processor skips that source's remaining tasks for the rest of the run.
-- **Writer:** Logs per-chunk success, duplicate and failure counts
+- **Processor:** Calls `managementFacade.downloadComicForDate(comic, date, true)` per task, with a delay between downloads (`batch.comic-backfill.delay-between-comics-ms`, 10000 ms in `application.properties`). The `true` makes an HTTP 429 fail at once. The source still backs off through `SourceThrottleService`, and the processor skips that source's remaining tasks for the rest of the run. Strip-number tasks (Freefall) stop the same way on a 429.
+- **Writer:** Logs per-chunk success, duplicate and failure counts, then flushes `BackfillStateService` (also flushed when the step ends)
 - **Job parameters:** `source` (filter), `resetState=true` (forget learned state before the run)
 
 **Learned state (`backfill-state.json`, `BackfillStateService`):**
@@ -137,7 +137,8 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 - `horizon-consecutive-failures` (default 3) different dates in a row, older than the recent window, coming back unavailable set a **comic horizon**: dates on or before the newest of them are no longer scanned.
 - When `horizon-min-comics` (default 3) comics on one source have horizons within `horizon-tolerance-days` (default 2) of each other, that age becomes the **source horizon**, for example a paywall after about 7 days.
 - Given-up dates and horizons expire after `retry-given-up-after-days` (default 30). A successful download older than a horizon clears it.
-- Transient errors and 429s are never recorded.
+- Transient errors and 429s are never recorded. An HTTP 404 or 410 counts as unavailable.
+- The state is kept in memory and written once per chunk; expired entries are dropped when it is written.
 
 **Data source:** `ComicBackfillService` identifies gaps; `ManagementFacade` downloads individual strips; `BackfillStateService` remembers what didn't work
 

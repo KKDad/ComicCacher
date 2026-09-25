@@ -29,7 +29,7 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 - One job per `@Configuration` class under `engine.batch.config/`. Naming: `<Purpose>JobConfig.java`.
 - Use chunk-based steps with explicit `chunk-size`, `max-consecutive-failures`, and per-source overrides where applicable (see `ComicBackfillJobConfig`).
 - A job that should run several times a day uses `DailyJobScheduler.setMultipleRunsPerDay(true)`, and `setPrecondition(...)` to skip runs with nothing to do (see `ComicBackfillJobConfig`). Keep preconditions local-only: no web requests.
-- Backfill downloads pass `failFastOnRateLimit=true`: a 429 returns `FailureKind.RATE_LIMITED` at once instead of retrying. Classify outcomes with `ComicDownloadResult.getFailureKind()` / `getSaveOutcome()`, not by parsing error messages.
+- Backfill downloads pass `failFastOnRateLimit=true`: a 429 returns `FailureKind.RATE_LIMITED` at once instead of retrying. Indexed `downloadStrip()` never retries and reports a 429 the same way. An HTTP 404/410 is `FailureKind.UNAVAILABLE`. Classify outcomes with `ComicDownloadResult.getFailureKind()` / `getSaveOutcome()`, not by parsing error messages.
 - Schedule via `@Scheduled` annotations driven by `batch.<job>.cron` properties; jobs auto-run is disabled (`spring.batch.job.enabled=false`).
 - Use modern `JobOperator.start(Job, JobParameters)` — never the deprecated `JobLauncher`/`SimpleJobLauncher`.
 - Execution tracking lands in `${comics.cache.location}/batch-executions.json` via `JsonBatchExecutionTracker`. Don't bypass it.

@@ -3,8 +3,11 @@ package org.stapledon.engine.batch;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -19,6 +22,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 import org.stapledon.common.dto.ComicIdentifier;
@@ -130,6 +134,38 @@ class ComicBackfillServiceTest {
         List<BackfillTask> result = service.findMissingStrips();
 
         assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void repeatedScans_doNotRecheckStripsAlreadySeenCached() {
+        ComicItem comic = createComic(1, "Complete Comic", true);
+        when(managementFacade.getAllComics()).thenReturn(List.of(comic));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(true);
+
+        assertThat(service.hasMissingStrips(null)).isFalse();
+        clearInvocations(storageFacade);
+
+        assertThat(service.hasMissingStrips(null)).isFalse();
+        assertThat(service.findMissingStrips()).isEmpty();
+
+        verify(storageFacade, never()).comicStripExists(any(ComicIdentifier.class), any(LocalDate.class));
+    }
+
+    @Test
+    void repeatedScans_recheckMissingStrips() {
+        ComicItem comic = createComic(1, "Partial Comic", true);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        AtomicBoolean saved = new AtomicBoolean();
+        when(managementFacade.getAllComics()).thenReturn(List.of(comic));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class)))
+                .thenAnswer(invocation -> saved.get() || !invocation.getArgument(1).equals(yesterday));
+
+        assertThat(service.hasMissingStrips(null)).isTrue();
+        // Another job saves the strip between scans
+        saved.set(true);
+
+        assertThat(service.hasMissingStrips(null)).isFalse();
+        verify(storageFacade, times(2)).comicStripExists(any(ComicIdentifier.class), eq(yesterday));
     }
 
     @Test

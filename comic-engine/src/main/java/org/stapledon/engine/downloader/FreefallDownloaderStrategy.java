@@ -92,6 +92,10 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
             doc = Jsoup.connect(primaryUrl)
                     .userAgent(userAgentService.getUserAgent(SOURCE_IDENTIFIER)).timeout(DownloaderConstants.DEFAULT_TIMEOUT).get();
         } catch (org.jsoup.HttpStatusException e) {
+            if (e.getStatusCode() == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
+                // Rate limited, not missing: trying the other page would just be another request to a source that asked us to slow down
+                throw e;
+            }
             log.debug("Primary page not found ({}), trying fallback: {}", primaryUrl, fallbackUrl);
             try {
                 doc = Jsoup.connect(fallbackUrl)

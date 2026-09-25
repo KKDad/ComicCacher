@@ -64,6 +64,7 @@ class BackfillStateServiceTest {
         LocalDate date = LocalDate.of(2026, 7, 5);
         service.recordUnavailable(comic, date, BackfillStateService.OUTCOME_DUPLICATE);
         service.recordUnavailable(comic, date, BackfillStateService.OUTCOME_DUPLICATE);
+        service.flush();
 
         BackfillStateService later = new BackfillStateService(cacheProperties, gson, config, clockAt(TODAY.plusDays(31)));
 
@@ -178,16 +179,45 @@ class BackfillStateServiceTest {
     }
 
     @Test
-    @DisplayName("persists to backfill-state.json and reloads")
+    @DisplayName("keeps changes in memory until flushed, then persists to backfill-state.json and reloads")
     void persistsAndReloads() {
         ComicItem comic = comic(1, "BC");
         LocalDate date = LocalDate.of(2025, 6, 29);
         service.recordUnavailable(comic, date, BackfillStateService.OUTCOME_UNAVAILABLE);
         service.recordUnavailable(comic, date, BackfillStateService.OUTCOME_UNAVAILABLE);
+        assertThat(Files.exists(tempDir.resolve(BackfillStateService.STATE_FILENAME))).isFalse();
+
+        service.flush();
 
         assertThat(Files.exists(tempDir.resolve(BackfillStateService.STATE_FILENAME))).isTrue();
         BackfillStateService reloaded = new BackfillStateService(cacheProperties, gson, config, clock);
         assertThat(reloaded.isGivenUp(comic, date)).isTrue();
+    }
+
+    @Test
+    @DisplayName("flush does nothing when nothing changed")
+    void flushWithoutChangesDoesNotWrite() {
+        service.isGivenUp(comic(1, "BC"), TODAY);
+
+        service.flush();
+
+        assertThat(Files.exists(tempDir.resolve(BackfillStateService.STATE_FILENAME))).isFalse();
+    }
+
+    @Test
+    @DisplayName("flush drops expired failures and horizons from the file")
+    void flushDropsExpiredEntries() throws Exception {
+        ComicItem comic = comic(1, "Agnes");
+        service.recordUnavailable(comic, LocalDate.of(2026, 7, 5), BackfillStateService.OUTCOME_UNAVAILABLE);
+        hitWall(comic(2, "Luann"), 8);
+        service.flush();
+        assertThat(Files.readString(tempDir.resolve(BackfillStateService.STATE_FILENAME))).contains("2026-07-05", "Luann");
+
+        BackfillStateService later = new BackfillStateService(cacheProperties, gson, config, clockAt(TODAY.plusDays(31)));
+        later.recordAttempt("gocomics");
+        later.flush();
+
+        assertThat(Files.readString(tempDir.resolve(BackfillStateService.STATE_FILENAME))).doesNotContain("2026-07-05", "Luann");
     }
 
     @Test

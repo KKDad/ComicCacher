@@ -12,13 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backfill waits 10 s between downloads (was 5 s)
 
 ### Added
-- Backfill stops a source for the rest of the run on its first HTTP 429, with no retries (the source-wide backoff still applies)
+- Backfill stops a source for the rest of the run on its first HTTP 429, with no retries (the source-wide backoff still applies). This includes indexed sources (Freefall)
 - `backfill-state.json`: backfill gives up on dates that keep coming back unavailable or as duplicates, and learns how far back each comic and source serves strips. Settings: `give-up-after`, `horizon-consecutive-failures`, `horizon-min-comics`, `horizon-tolerance-days`, `retry-given-up-after-days`. The `resetState` job parameter clears it
 - `DailyJobScheduler` options for several runs a day and a precondition that skips runs with nothing to do
+- Schedulers no longer launch a job while a run of it is still in progress (a manual trigger then reports that the job failed to start)
 
 ### Fixed
 - All checkstyle warnings in integration tests
 - Backfill counted duplicate images as successful downloads and moved the comic's oldest date back to them
+- An HTTP 404 or 410 from a source is reported as unavailable rather than a transient error, so backfill can give up on the date instead of retrying it every run
+- A 429 reported as a plain HTTP error (Jsoup `HttpStatusException`, e.g. from Comics Kingdom or Freefall pages) now backs the source off and counts as rate limited. Freefall no longer tries the fallback page after a 429
 
 ## [2.4.5] - 2026-03-19
 ### Added
