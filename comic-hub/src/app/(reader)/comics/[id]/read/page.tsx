@@ -24,7 +24,7 @@ export default function ReaderPage() {
 
   if (prefsLoading && !dateParam) {
     return (
-      <div className="min-h-screen bg-canvas flex items-center justify-center">
+      <div className="min-h-dvh bg-canvas flex items-center justify-center">
         <div className="w-full max-w-3xl mx-auto p-4 space-y-4">
           <Skeleton className="h-8 w-48 bg-muted" />
           <Skeleton className="w-full aspect-[3/1] bg-muted" />

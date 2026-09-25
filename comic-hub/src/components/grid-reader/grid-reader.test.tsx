@@ -50,4 +50,10 @@ describe('GridReader', () => {
     render(<GridReader initialDate="2026-01-15" />);
     expect(useGridReader).toHaveBeenCalledWith({ initialDate: '2026-01-15' });
   });
+
+  it('shows a skeleton instead of guessing while the viewport is unknown', () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: null });
+    const { container } = render(<GridReader />);
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+  });
 });

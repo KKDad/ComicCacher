@@ -1,10 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { DashboardShell } from './dashboard-shell';
-import { useResponsiveNav } from '@/hooks/use-responsive-nav';
-
-vi.mock('@/hooks/use-responsive-nav', () => ({
-  useResponsiveNav: vi.fn(),
-}));
 
 vi.mock('@/components/layout/sidebar', () => ({
   Sidebar: () => <div data-testid="sidebar" />,
@@ -23,44 +18,30 @@ vi.mock('@/components/layout/header', () => ({
 }));
 
 describe('DashboardShell', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it('renders every navigation and lets CSS breakpoints pick one', () => {
+    render(<DashboardShell>content</DashboardShell>);
+    expect(screen.getByTestId('sidebar').parentElement).toHaveClass('hidden', 'lg:block');
+    expect(screen.getByTestId('nav-rail').parentElement).toHaveClass('hidden', 'md:block', 'lg:hidden');
+    expect(screen.getByTestId('mobile-nav').parentElement).toHaveClass('md:hidden');
   });
 
-  it('renders Sidebar on desktop layout', () => {
-    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'desktop' });
+  it('offsets main content for each navigation in CSS', () => {
     render(<DashboardShell>content</DashboardShell>);
-    expect(screen.getByTestId('sidebar')).toBeInTheDocument();
-    expect(screen.queryByTestId('nav-rail')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('mobile-nav')).not.toBeInTheDocument();
+    const main = screen.getByRole('main');
+    expect(main.className).toContain('md:pl-[var(--sidebar-collapsed)]');
+    expect(main.className).toContain('lg:pl-[var(--sidebar-width)]');
+    expect(main.className).toContain('md:pb-0');
   });
 
-  it('renders NavRail on tablet layout', () => {
-    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'tablet' });
-    render(<DashboardShell>content</DashboardShell>);
-    expect(screen.getByTestId('nav-rail')).toBeInTheDocument();
-    expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('mobile-nav')).not.toBeInTheDocument();
-  });
-
-  it('renders MobileNav on mobile layout', () => {
-    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'mobile' });
-    render(<DashboardShell>content</DashboardShell>);
-    expect(screen.getByTestId('mobile-nav')).toBeInTheDocument();
-    expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('nav-rail')).not.toBeInTheDocument();
+  it('renders the header and children', () => {
+    render(<DashboardShell><div>child content</div></DashboardShell>);
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByText('child content')).toBeInTheDocument();
   });
 
   it('renders a skip link to the main content', () => {
-    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'desktop' });
     render(<DashboardShell>content</DashboardShell>);
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main-content');
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
-  });
-
-  it('renders children', () => {
-    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'desktop' });
-    render(<DashboardShell><div>child content</div></DashboardShell>);
-    expect(screen.getByText('child content')).toBeInTheDocument();
   });
 });

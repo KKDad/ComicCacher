@@ -9,6 +9,8 @@
  */
 
 :root {
+  color-scheme: light;
+
   /* ===================================
      COLORS - Light Mode
      =================================== */
@@ -208,6 +210,7 @@
    ===================================== */
 [data-theme="dark"],
 .dark {
+  color-scheme: dark;
   --color-canvas: #111827;
   --color-surface: #1F2937;
   --color-surface-raised: #374151;

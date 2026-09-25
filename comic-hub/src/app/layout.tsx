@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, DynaPuff, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
@@ -23,8 +23,19 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Comics Hub",
+  title: {
+    default: "Comics Hub",
+    template: "%s · Comics Hub",
+  },
   description: "Your personal comic strip collection",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#1F2937" },
+  ],
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -33,7 +44,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // next-themes sets the theme class on <html> before React hydrates.
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${dynaPuff.variable} ${jetBrainsMono.variable} antialiased`}
       >

@@ -97,4 +97,11 @@ describe('ComicReader', () => {
       expect.objectContaining({ comicId: 1, initialDate: '2026-03-15' }),
     );
   });
+
+  it('shows a skeleton instead of guessing while the viewport is unknown', () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: null });
+    const { container } = render(<ComicReader comicId={1} />);
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+  });
+
 });

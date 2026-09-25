@@ -1,8 +1,10 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import { useState, type ReactNode } from 'react';
 import { Toaster } from '@/components/ui/sonner';
+import { ThemeSync } from '@/components/theme/theme-sync';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -18,9 +20,18 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster />
-    </QueryClientProvider>
+    <ThemeProvider
+      attribute={['class', 'data-theme']}
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+      storageKey="comic-hub-theme"
+    >
+      <QueryClientProvider client={queryClient}>
+        <ThemeSync />
+        {children}
+        <Toaster />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

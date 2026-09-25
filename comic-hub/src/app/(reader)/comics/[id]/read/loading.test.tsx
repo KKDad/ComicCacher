@@ -12,6 +12,6 @@ describe('ReaderLoading', () => {
 
   it('renders without crashing', () => {
     render(<ReaderLoading />);
-    expect(document.querySelector('.min-h-screen')).toBeInTheDocument();
+    expect(document.querySelector('.min-h-dvh')).toBeInTheDocument();
   });
 });

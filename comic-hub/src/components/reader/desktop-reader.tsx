@@ -172,7 +172,7 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
   }, [handleGoToFirst, handleGoToLast, goToRandom]);
 
   return (
-    <div ref={scrollContainerRef} className="h-screen overflow-y-auto bg-canvas">
+    <div ref={scrollContainerRef} className="h-dvh overflow-y-auto bg-canvas">
       <ReaderHeader
         comicName={comicName}
         onFirst={handleGoToFirst}
