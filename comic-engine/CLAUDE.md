@@ -11,7 +11,7 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 | `engine.validation` | Image validation, dedup, metadata backfill |
 | `engine.analysis` | Color/grayscale detection |
 | `engine.storage` | `FileSystemComicStorageFacade` and supporting classes |
-| `engine.caching` | Caffeine cache wiring (navigation, boundary, metadata, lookahead) |
+| `engine.caching` | `CacheException` only (no cache implementations live here) |
 | `engine.management` | Comic management facade |
 | `engine.health` | Custom health indicators |
 
@@ -51,5 +51,11 @@ See [@~/docs/design/image-validation.md](../docs/design/image-validation.md).
 
 ## Caching
 
-- Caffeine caches are the only in-memory cache. Configured via `comics.cache.caffeine.*` properties; sizes/TTL bound through `CaffeineCacheProperties`.
-- If you add a new cache, also add it to `CaffeineCacheConfiguration` so the property binding is real (the `navigation`, `boundary`, and `navigation-dates` caches were historically unbound — verify your additions are wired).
+- **Do not cache images, strips or navigation results in memory.** Caching has served the wrong images before, which is why no such caches exist.
+- The only Caffeine cache is `comicMetadata`, which holds the comic configuration list (`@Cacheable` on `ComicManagementFacade.getAllComics()`; `@CacheEvict` on create, update and delete). It is wired in comic-api's `CaffeineCacheConfiguration` and configured with `comics.cache.caffeine.*` (`CaffeineCacheProperties`). Don't add caches to it without a clear need.
+- Where a small in-memory memo is justified, keep it away from anything that serves images. It needs:
+  - a property that switches it off (off when unset);
+  - a recheck against disk where correctness matters;
+  - a WARN log on any mismatch, and a summary log line per use.
+
+  See `remember-cached-strips` in `ComicBackfillService`.
