@@ -27,7 +27,7 @@ public class BuildVersion {
             props.load(stream);
             buildProps = props;
         } catch (IOException e) {
-            log.error("Unable to load build properties");
+            log.error("Unable to load build properties from {}", url, e);
         }
         logProperties();
     }

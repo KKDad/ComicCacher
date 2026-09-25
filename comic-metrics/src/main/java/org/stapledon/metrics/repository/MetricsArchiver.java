@@ -103,7 +103,7 @@ public class MetricsArchiver {
                             log.debug("Deleted old metrics archive: {}", filename);
                         }
                     } catch (Exception e) {
-                        log.warn("Could not parse date from filename: {}", filename);
+                        log.warn("Skipping metrics archive {}: {}", file, e.toString());
                     }
                 }
             }
@@ -151,7 +151,7 @@ public class MetricsArchiver {
                         LocalDate fileDate = LocalDate.parse(dateStr, DATE_FORMATTER);
                         dates.add(fileDate);
                     } catch (Exception e) {
-                        log.warn("Could not parse date from filename: {}", filename);
+                        log.warn("Skipping metrics archive {}: {}", file, e.toString());
                     }
                 }
             }

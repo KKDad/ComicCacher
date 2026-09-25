@@ -33,12 +33,12 @@ This module is the foundation everything else builds on. Treat changes here as b
 
 - DTOs intended for JSON-on-disk MUST round-trip through `GsonUtils`. Test the round-trip.
 - Use `@SerializedName` if the JSON key differs from the field name.
-- For Records (rare in this codebase — see Lombok preference below): register `RecordAdapterFactory`.
+- For Records (used for immutable values; see the Modern Java rules in comic-api/CLAUDE.md): register `RecordAdapterFactory`.
 - Use the `@Qualifier("gsonWithLocalDate")` Gson bean for date-time serialization. Prefer `OffsetDateTimeAdapter` for new code; `LocalDateTimeAdapter` is for backward-compat reads only.
 
 ## DTO Standard
 
-Use Lombok (`@Builder`, `@Getter`, `@Setter`, `@AllArgsConstructor`, `@NoArgsConstructor`) for all DTOs. Java records are not the preferred pattern in this codebase.
+Use Lombok (`@Builder`, `@Getter`, `@Setter`, `@AllArgsConstructor`, `@NoArgsConstructor`) for mutable and Gson-persisted DTOs. Records are fine for immutable values, keys and results (see the Modern Java rules in comic-api/CLAUDE.md).
 
 ## Time Handling
 

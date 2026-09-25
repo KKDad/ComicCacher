@@ -9,11 +9,13 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Schema mappings for the ComicStorageMetric GraphQL type.
  * Converts internal storageByYear Map to the yearlyBreakdown list.
  */
+@Slf4j
 @Controller
 public class ComicStorageMetricTypeResolver {
 
@@ -31,7 +33,8 @@ public class ComicStorageMetricTypeResolver {
             Map<String, Object> yearly = new LinkedHashMap<>();
             try {
                 yearly.put("year", Integer.parseInt(entry.getKey()));
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
+                log.debug("Storage metrics for comic {} have a non-numeric year key '{}'; reporting it as year 0", comic.comicName(), entry.getKey());
                 yearly.put("year", 0);
             }
             yearly.put("bytes", (double) entry.getValue());

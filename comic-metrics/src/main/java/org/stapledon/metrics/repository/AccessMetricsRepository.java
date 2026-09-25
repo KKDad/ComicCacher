@@ -87,7 +87,8 @@ public class AccessMetricsRepository {
                         log.info("Access metrics file was empty, initialized new metrics");
                     }
                 } catch (Exception e) {
-                    log.error("Failed to load access metrics, initializing empty", e);
+                    // Starts empty; the next save replaces the unreadable file, losing its history. Kept as-is because the metrics can be rebuilt.
+                    log.error("Failed to load access metrics from {}, initializing empty", filePath, e);
                     cachedMetrics = createEmpty();
                 }
             } else {
@@ -125,7 +126,7 @@ public class AccessMetricsRepository {
             log.debug("Saved access metrics for {} comics", metrics.getComicMetrics().size());
             return true;
         } catch (IOException e) {
-            log.error("Failed to save access metrics", e);
+            log.error("Failed to save access metrics to {}", NfsFileOperations.resolvePath(cacheLocation, ACCESS_METRICS_FILE), e);
             return false;
         } finally {
             lock.writeLock().unlock();

@@ -1,8 +1,10 @@
 package org.stapledon.common.util;
 
 /**
- * MDC keys shared by every module. The log pattern prints whichever of them are set (see {@code MdcContextConverter} in comic-api), so a support
- * search for {@code req=}, {@code user=} or {@code comic=} finds every line of one request, user or comic.
+ * MDC keys shared by every module, and helpers for keeping personal data out of logs.
+ * <p>
+ * The log pattern prints whichever keys are set (see {@code MdcContextConverter} in comic-api), so a support search for {@code req=},
+ * {@code user=} or {@code comic=} finds every line of one request, user or comic.
  */
 public final class LogContext {
 
@@ -26,5 +28,19 @@ public final class LogContext {
 
     private LogContext() {
         // Constants only
+    }
+
+    /**
+     * An email address safe to log: first character and domain only ({@code a***@example.com}).
+     */
+    public static String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "<none>";
+        }
+        int at = email.indexOf('@');
+        if (at <= 0) {
+            return "***";
+        }
+        return email.charAt(0) + "***" + email.substring(at);
     }
 }

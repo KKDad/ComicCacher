@@ -50,7 +50,8 @@ public class GraphQLExceptionHandlerConfig {
                     .extensions(java.util.Map.of("errorCode", "UNAUTHENTICATED"))
                     .build();
         }
-        log.warn("GraphQL access denied on field '{}': {}", env.getField().getName(), sanitize(ex.getMessage()));
+        log.warn("GraphQL access denied on {} for user {} (roles {}): {}", location(env), authentication.getName(),
+                authentication.getAuthorities(), sanitize(ex.getMessage()));
         return GraphQLError.newError()
                 .errorType(ErrorClassification.errorClassification("FORBIDDEN"))
                 .message("You don't have permission to access this resource.")
@@ -80,7 +81,7 @@ public class GraphQLExceptionHandlerConfig {
 
     @GraphQlExceptionHandler(ComicOperationException.class)
     public GraphQLError handleComicOperationException(ComicOperationException ex, DataFetchingEnvironment env) {
-        log.error("GraphQL comic operation failed on field '{}': {}", env.getField().getName(), sanitize(ex.getMessage()));
+        log.error("GraphQL comic operation failed on {}: {}", location(env), sanitize(ex.getMessage()), ex);
         return GraphQLError.newError()
                 .errorType(ErrorClassification.errorClassification("INTERNAL_ERROR"))
                 .message("The comic operation failed.")
@@ -90,7 +91,7 @@ public class GraphQLExceptionHandlerConfig {
 
     @GraphQlExceptionHandler({ComicCachingException.class, CacheException.class})
     public GraphQLError handleCacheException(Exception ex, DataFetchingEnvironment env) {
-        log.error("GraphQL cache error on field '{}': {}", env.getField().getName(), sanitize(ex.getMessage()));
+        log.error("GraphQL cache error on {}: {}", location(env), sanitize(ex.getMessage()), ex);
         return GraphQLError.newError()
                 .errorType(ErrorClassification.errorClassification("INTERNAL_ERROR"))
                 .message("The requested data could not be retrieved.")
@@ -110,7 +111,7 @@ public class GraphQLExceptionHandlerConfig {
 
     @GraphQlExceptionHandler(IllegalStateException.class)
     public GraphQLError handleIllegalStateException(IllegalStateException ex, DataFetchingEnvironment env) {
-        log.error("GraphQL illegal state on field '{}': {}", env.getField().getName(), sanitize(ex.getMessage()));
+        log.error("GraphQL illegal state on {}: {}", location(env), sanitize(ex.getMessage()), ex);
         return GraphQLError.newError()
                 .errorType(ErrorClassification.errorClassification("INTERNAL_ERROR"))
                 .message("An unexpected error occurred.")
@@ -126,6 +127,14 @@ public class GraphQLExceptionHandlerConfig {
                 .message("An unexpected error occurred.")
                 .extensions(java.util.Map.of("errorCode", "INTERNAL_ERROR"))
                 .build();
+    }
+
+    /**
+     * Where in the query the error happened: the full path (e.g. /comics[3]/strip) when known, otherwise the field name.
+     */
+    private static Object location(DataFetchingEnvironment env) {
+        var stepInfo = env.getExecutionStepInfo();
+        return stepInfo != null ? stepInfo.getPath() : env.getField().getName();
     }
 
     private String sanitize(String input) {

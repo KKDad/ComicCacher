@@ -338,6 +338,7 @@ public class ComicResolver {
 
         ComicItem created = comicManagementFacade.createComic(newComic)
                 .orElseThrow(ComicOperationException::createFailed);
+        log.info("AUDIT comic created: id={}, name={}, source={}/{}", created.getId(), created.getName(), created.getSource(), created.getSourceIdentifier());
         return new CreateComicPayload(created, List.of());
     }
 
@@ -361,6 +362,7 @@ public class ComicResolver {
 
         ComicItem result = comicManagementFacade.updateComic(id, updated)
                 .orElseThrow(() -> ComicOperationException.updateFailed(id));
+        log.info("AUDIT comic updated: id={}, name={}, changed fields: {}", id, result.getName(), input);
         return new UpdateComicPayload(result, List.of());
     }
 
@@ -371,6 +373,7 @@ public class ComicResolver {
     @PreAuthorize("hasRole('ADMIN')")
     public DeleteComicPayload deleteComic(@Argument int id) {
         boolean deleted = comicManagementFacade.deleteComic(id);
+        log.info("AUDIT comic delete: id={}, deleted={}", id, deleted);
         return new DeleteComicPayload(deleted, List.of());
     }
 

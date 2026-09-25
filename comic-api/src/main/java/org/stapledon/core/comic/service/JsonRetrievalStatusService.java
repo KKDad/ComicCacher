@@ -90,11 +90,15 @@ public class JsonRetrievalStatusService implements RetrievalStatusService {
 
     @Override
     public boolean deleteRetrievalRecord(String id) {
-        return repository.deleteRecord(id);
+        boolean deleted = repository.deleteRecord(id);
+        log.info("Retrieval record {} delete: deleted={}", id, deleted);
+        return deleted;
     }
 
     @Override
     public int purgeOldRecords(int daysToKeep) {
-        return repository.purgeOldRecords(daysToKeep);
+        int purged = repository.purgeOldRecords(daysToKeep);
+        log.info("Purged {} retrieval records older than {} days", purged, daysToKeep);
+        return purged;
     }
 }

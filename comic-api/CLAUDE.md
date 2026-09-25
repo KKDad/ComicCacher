@@ -39,11 +39,19 @@
 - Use `{@inheritDoc}` for overridden methods. Use `//` for internal notes.
 
 ## 6. Java & Collections Style
-- **DTO standard:** Use Lombok (`@Builder`, `@Getter`, `@Setter`, `@AllArgsConstructor`, `@NoArgsConstructor`) for all DTOs and JSON metadata mappings. Java records are not the preferred pattern in this codebase.
+- **DTO standard:** Use Lombok (`@Builder`, `@Getter`, `@Setter`, `@AllArgsConstructor`, `@NoArgsConstructor`) for mutable DTOs and for JSON metadata persisted with Gson. Records are fine for immutable values, keys, results and GraphQL inputs/views (see Modern Java below).
 - Use `Map.of()`, `List.of()`, `Set.of()` for small/fixed collections.
 - Use `new ArrayList<>(List.of(...))` if the collection must be modifiable.
 - Prefer `.computeIfAbsent()` over `containsKey()` + `put()`.
 - Leverage Virtual Threads for I/O-bound NFS reads.
+
+### Modern Java (25)
+- Prefer pattern-matching `switch` (type patterns, record patterns, `case null`) over `instanceof` chains, and arrow cases over `break`-style switches.
+- Use `sealed` interfaces for closed hierarchies (e.g. `BackfillTask`), unless tests need to mock the type (Mockito cannot mock sealed types).
+- Use `_` for intentionally unused variables: ignored exceptions, lambda parameters, record-pattern components, `try (var _ = MDC.putCloseable(...))`.
+- Use `getFirst()` / `getLast()` instead of `get(0)` / `get(size() - 1)`.
+- `var` is fine where the type is obvious from the right-hand side.
+- Records are allowed for immutable value, key and result types. A record persisted with Gson needs `RecordAdapterFactory`; keep mutable or Gson-persisted DTOs on Lombok.
 
 ## 7. GraphQL Implementation
 - **Schema-First:** Update `.graphqls` schema before modifying Resolvers.

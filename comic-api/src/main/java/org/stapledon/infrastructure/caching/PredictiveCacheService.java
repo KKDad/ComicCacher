@@ -43,7 +43,7 @@ public class PredictiveCacheService {
 
         // Warn if attempting to prefetch from a future date
         if (currentDate.isAfter(LocalDate.now())) {
-            log.warn("⚠️ FUTURE DATE PREFETCH: Attempting to prefetch from {} which is AFTER today ({})",
+            log.warn("Future date prefetch: attempting to prefetch from {} which is AFTER today ({})",
                     currentDate, LocalDate.now());
         }
 
@@ -72,8 +72,7 @@ public class PredictiveCacheService {
                     comicId, successCount, lookaheadCount);
 
         } catch (Exception e) {
-            log.warn("Error during predictive cache prefetch for comic {}: {}",
-                    comicId, e.getMessage());
+            log.warn("Error during predictive cache prefetch for comic {}: {}", comicId, e.toString());
         }
     }
 

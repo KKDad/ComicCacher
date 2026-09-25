@@ -35,7 +35,7 @@ public class CacheConfiguration {
             directory.mkdirs();
         }
 
-        log.warn("Serving from {}", normalizedPath);
+        log.info("Serving from {}", normalizedPath);
         return normalizedPath;
     }
 

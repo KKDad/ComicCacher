@@ -1,5 +1,7 @@
 package org.stapledon.infrastructure.security;
 
+import io.jsonwebtoken.JwtException;
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.stapledon.api.dto.user.User;
+import org.stapledon.common.util.LogContext;
 import org.stapledon.core.user.service.UserService;
 
 import jakarta.servlet.FilterChain;
@@ -69,9 +72,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
+                        MDC.put(LogContext.USER, username);
                         log.debug("Authentication set in SecurityContext for user: {}", username);
                     } else {
-                        log.warn("Invalid JWT token for user: {}", username);
+                        log.warn("Invalid JWT token for user {} on {} {}", username, request.getMethod(), request.getRequestURI());
                     }
                 } else {
                     if (username == null) {
@@ -84,8 +88,11 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             } else {
                 log.debug("No JWT token found in request");
             }
+        } catch (JwtException e) {
+            // Expired, malformed or badly signed token: routine, so one line without a stack trace. The request goes on unauthenticated.
+            log.warn("JWT rejected on {} {}: {}: {}", request.getMethod(), request.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
         } catch (Exception e) {
-            log.error("Cannot set user authentication: {}", e.getMessage(), e);
+            log.error("Cannot set user authentication on {} {}", request.getMethod(), request.getRequestURI(), e);
         }
 
         filterChain.doFilter(request, response);
@@ -111,8 +118,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
 
         if (!headerAuth.startsWith("Bearer ")) {
-            log.debug("Authorization header does not start with 'Bearer ': {}",
-                    headerAuth.length() > 10 ? headerAuth.substring(0, 10) + "..." : headerAuth);
+            // Never log the header itself: it can carry Basic credentials
+            log.debug("Authorization header is not a Bearer token");
             return null;
         }
 

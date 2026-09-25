@@ -40,7 +40,7 @@ public class UserResolver {
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
     public User me(@AuthenticationPrincipal UserDetails userDetails) {
-        log.info("Getting profile for user: {}", userDetails.getUsername());
+        log.debug("Getting profile for user: {}", userDetails.getUsername());
         return userService.getUser(userDetails.getUsername())
                 .orElse(null);
     }
@@ -104,8 +104,8 @@ public class UserResolver {
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
     public DeleteAccountPayload deleteAccount(@Argument String username) {
-        log.info("Deleting user account: {}", username);
         boolean deleted = userService.deleteUser(username);
+        log.info("AUDIT user account delete: username={}, deleted={}", username, deleted);
         return new DeleteAccountPayload(deleted, List.of());
     }
 
