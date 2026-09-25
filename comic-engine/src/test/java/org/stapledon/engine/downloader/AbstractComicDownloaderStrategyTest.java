@@ -332,6 +332,32 @@ class AbstractComicDownloaderStrategyTest {
     }
 
     @Test
+    void shouldFailFastOnRateLimitWhenRequested() {
+        ComicDownloadRequest request = testRequest().toBuilder().failFastOnRateLimit(true).build();
+
+        strategy.setRateLimitsRemaining(10);
+        when(throttleService.maxAttempts("test-source")).thenReturn(4);
+        when(throttleService.backOff(eq("test-source"), anyInt(), any())).thenReturn(Duration.ofSeconds(7));
+
+        ComicDownloadResult result = strategy.downloadComic(request);
+
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.isRateLimited()).isTrue();
+        assertThat(strategy.getDownloadCalls()).isEqualTo(1);
+        // The source still backs off, so other callers slow down too
+        verify(throttleService).backOff("test-source", 1, Optional.of(Duration.ofSeconds(7)));
+    }
+
+    @Test
+    void shouldClassifyEmptyImageAsUnavailable() {
+        strategy.setMockImageData(new byte[0]);
+
+        ComicDownloadResult result = strategy.downloadComic(testRequest());
+
+        assertThat(result.getFailureKind()).isEqualTo(ComicDownloadResult.FailureKind.UNAVAILABLE);
+    }
+
+    @Test
     void downloadImageData_whenServerReturns429_throwsRateLimitedWithRetryAfter() throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         server.createContext("/img", exchange -> {

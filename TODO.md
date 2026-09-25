@@ -5,6 +5,7 @@
 - `StartupJobRunner` runs any daily job that missed its time today on the main thread, inside the `ApplicationReadyEvent` listener
 - Readiness isn't reported until those jobs finish, so `/actuator/health` returns 503 `OUT_OF_SERVICE` the whole time. On dev (2.4.7 deploy) a gocomics backfill kept it unhealthy for many minutes
 - This matters for prod: `prod-run.sh` rolls back if the container isn't healthy within 180s, so a restart on a day a job hasn't run yet will roll the deploy back
+- ComicBackfillJob no longer has a catch-up run (it runs every 2 h), so the slow gocomics case is gone; the other daily jobs still run inline
 - Run the catch-up jobs in the background (e.g. on the batch `TaskExecutor`), keeping their order, and add a test that the listener returns straight away
 - Also check whether `hasJobRunToday` uses UTC or `batch.timezone` for "today"
 - Priority: High

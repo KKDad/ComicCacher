@@ -5,8 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Comic backfill fills the last 7 days across every comic first, then older gaps round-robin, so recent misses are no longer starved by old gaps in comics early in the alphabet
+- Comic backfill runs every 2 hours during the day (`0 30 7-19/2 * * ?`). A run with nothing to do is skipped without any web request, and there is no startup catch-up run
+- Backfill limits are per run: `batch.comic-backfill.default-max-per-run` and `sources.<source>.max-per-run` replace the old per-day meaning of `max-per-day`. `max-per-day` is now an optional ceiling across all of a day's runs (0 = none). New `recent-days` setting
+- Backfill waits 10 s between downloads (was 5 s)
+
+### Added
+- Backfill stops a source for the rest of the run on its first HTTP 429, with no retries (the source-wide backoff still applies)
+- `backfill-state.json`: backfill gives up on dates that keep coming back unavailable or as duplicates, and learns how far back each comic and source serves strips. Settings: `give-up-after`, `horizon-consecutive-failures`, `horizon-min-comics`, `horizon-tolerance-days`, `retry-given-up-after-days`. The `resetState` job parameter clears it
+- `DailyJobScheduler` options for several runs a day and a precondition that skips runs with nothing to do
+
 ### Fixed
 - All checkstyle warnings in integration tests
+- Backfill counted duplicate images as successful downloads and moved the comic's oldest date back to them
 
 ## [2.4.5] - 2026-03-19
 ### Added

@@ -28,10 +28,22 @@ public class BackfillSourceConfig {
     private String source;
 
     /**
-     * Maximum number of comics to backfill per day for this source.
-     * Set to 0 or null for unlimited (uses global default).
+     * Maximum number of strips to backfill in one run for this source.
+     * Set to 0 or null to use the global default.
+     */
+    private Integer maxPerRun;
+
+    /**
+     * Optional ceiling on strips backfilled per day for this source, across all runs.
+     * Set to 0 or null to use the global default (which is no ceiling unless configured).
      */
     private Integer maxPerDay;
+
+    /**
+     * How many of the most recent days are backfilled first, across every comic, before any older history.
+     * Set to 0 or null to use the global default.
+     */
+    private Integer recentDays;
 
     /**
      * Maximum number of days back this source allows.

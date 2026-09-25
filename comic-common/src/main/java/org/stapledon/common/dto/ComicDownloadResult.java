@@ -11,9 +11,22 @@ import lombok.ToString;
  * Contains the downloaded image data and status information about the download.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class ComicDownloadResult {
+
+    /**
+     * Why a download failed, so callers can tell a missing strip from a transient problem.
+     */
+    public enum FailureKind {
+        /** The source had nothing usable for the date (no image, empty or invalid image data). */
+        UNAVAILABLE,
+        /** The source answered HTTP 429 (Too Many Requests). */
+        RATE_LIMITED,
+        /** Anything else: network errors, exceptions, unknown problems. */
+        ERROR
+    }
+
     /**
      * The request that initiated this download.
      */
@@ -55,6 +68,18 @@ public class ComicDownloadResult {
     private final String transcript;
 
     /**
+     * Why the download failed. Null for successful results, and for failures that were not classified.
+     */
+    @ToString.Include
+    private final FailureKind failureKind;
+
+    /**
+     * What happened when the downloaded image was saved (for example a duplicate of another date). Null when the result was not saved.
+     */
+    @ToString.Include
+    private final SaveResult.Outcome saveOutcome;
+
+    /**
      * Factory method to create a successful result.
      */
     public static ComicDownloadResult success(ComicDownloadRequest request, byte[] imageData) {
@@ -84,10 +109,25 @@ public class ComicDownloadResult {
      * Factory method to create a failed result.
      */
     public static ComicDownloadResult failure(ComicDownloadRequest request, String errorMessage) {
+        return failure(request, errorMessage, null);
+    }
+
+    /**
+     * Factory method to create a failed result with the reason it failed.
+     */
+    public static ComicDownloadResult failure(ComicDownloadRequest request, String errorMessage, FailureKind failureKind) {
         return ComicDownloadResult.builder()
                 .request(request)
                 .successful(false)
                 .errorMessage(errorMessage)
+                .failureKind(failureKind)
                 .build();
+    }
+
+    /**
+     * True when the source rate-limited this download.
+     */
+    public boolean isRateLimited() {
+        return failureKind == FailureKind.RATE_LIMITED;
     }
 }

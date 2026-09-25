@@ -11,6 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.stapledon.common.dto.BackfillSourceConfig;
 
@@ -20,18 +21,21 @@ import org.stapledon.common.dto.BackfillSourceConfig;
  * This service provides centralized access to backfill configuration,
  * supporting:
  * <ul>
- * <li>Global default limits for max comics per day and max days back</li>
+ * <li>Global default limits for strips per run, strips per day, the recent window and max days back</li>
  * <li>Source-specific overrides for individual comic sources</li>
  * <li>Per-source enable/disable control</li>
+ * <li>Thresholds for giving up on dates and learning how far back a source serves strips</li>
  * </ul>
+ * Unset (zero) numeric settings fall back to the built-in defaults below.
  *
  * <p>
  * Configuration example in application.properties:
  *
  * <pre>
- * batch.comic-backfill.default-max-per-day=50
+ * batch.comic-backfill.default-max-per-run=30
+ * batch.comic-backfill.default-recent-days=7
  * batch.comic-backfill.default-max-days-back=365
- * batch.comic-backfill.sources.gocomics.max-per-day=20
+ * batch.comic-backfill.sources.gocomics.max-per-run=30
  * batch.comic-backfill.sources.gocomics.max-days-back=730
  * </pre>
  */
@@ -44,6 +48,14 @@ import org.stapledon.common.dto.BackfillSourceConfig;
 @ConfigurationProperties(prefix = "batch.comic-backfill")
 public class BackfillConfigurationService {
 
+    static final int FALLBACK_MAX_PER_RUN = 30;
+    static final int FALLBACK_RECENT_DAYS = 7;
+    static final int FALLBACK_GIVE_UP_AFTER = 2;
+    static final int FALLBACK_HORIZON_CONSECUTIVE_FAILURES = 3;
+    static final int FALLBACK_HORIZON_MIN_COMICS = 3;
+    static final int FALLBACK_HORIZON_TOLERANCE_DAYS = 2;
+    static final int FALLBACK_RETRY_GIVEN_UP_AFTER_DAYS = 30;
+
     /** Whether backfill is enabled globally. */
     private final boolean enabled;
 
@@ -53,11 +65,32 @@ public class BackfillConfigurationService {
      */
     private final int maxConsecutiveFailures;
 
-    /** Global default for max comics per day per source (can be overridden per source). */
+    /** Global default for max strips per run per source (can be overridden per source). */
+    private final int defaultMaxPerRun;
+
+    /** Global default ceiling on strips per day per source across all runs; 0 means no ceiling. */
     private final int defaultMaxPerDay;
+
+    /** Global default for how many recent days are backfilled first (can be overridden per source). */
+    private final int defaultRecentDays;
 
     /** Global default for max days back (can be overridden per source). */
     private final int defaultMaxDaysBack;
+
+    /** A date that comes back unavailable (or a duplicate of another date) this many times is skipped from then on. */
+    private final int giveUpAfter;
+
+    /** Unavailable results in a row, older than the recent window, before a comic's history horizon is set. */
+    private final int horizonConsecutiveFailures;
+
+    /** Comics on one source that must reach about the same horizon before it becomes the source's horizon. */
+    private final int horizonMinComics;
+
+    /** How close (in days) comic horizons must be to count as the same source horizon. */
+    private final int horizonToleranceDays;
+
+    /** Given-up dates and learned horizons are forgotten after this many days, so they get another try. */
+    private final int retryGivenUpAfterDays;
 
     /**
      * Source-specific configurations.
@@ -66,16 +99,59 @@ public class BackfillConfigurationService {
     private final Map<String, BackfillSourceConfig> sources;
 
     /**
-     * Gets the effective max-per-day limit for a source.
-     * Returns the source-specific value if configured, otherwise falls back to the
-     * global default.
+     * Gets the effective max-per-run budget for a source.
+     * Returns the source-specific value if configured, otherwise the global default, otherwise {@value #FALLBACK_MAX_PER_RUN}.
+     */
+    public int getMaxPerRunForSource(String source) {
+        return sourceValue(source, BackfillSourceConfig::getMaxPerRun)
+                .orElse(orFallback(defaultMaxPerRun, FALLBACK_MAX_PER_RUN));
+    }
+
+    /**
+     * Gets the effective per-day ceiling for a source across all runs, or 0 when there is none.
      */
     public int getMaxPerDayForSource(String source) {
+        return sourceValue(source, BackfillSourceConfig::getMaxPerDay)
+                .orElse(Math.max(0, defaultMaxPerDay));
+    }
+
+    /**
+     * Gets how many recent days are backfilled first for a source.
+     */
+    public int getRecentDaysForSource(String source) {
+        return sourceValue(source, BackfillSourceConfig::getRecentDays)
+                .orElse(orFallback(defaultRecentDays, FALLBACK_RECENT_DAYS));
+    }
+
+    public int getGiveUpAfter() {
+        return orFallback(giveUpAfter, FALLBACK_GIVE_UP_AFTER);
+    }
+
+    public int getHorizonConsecutiveFailures() {
+        return orFallback(horizonConsecutiveFailures, FALLBACK_HORIZON_CONSECUTIVE_FAILURES);
+    }
+
+    public int getHorizonMinComics() {
+        return orFallback(horizonMinComics, FALLBACK_HORIZON_MIN_COMICS);
+    }
+
+    public int getHorizonToleranceDays() {
+        return orFallback(horizonToleranceDays, FALLBACK_HORIZON_TOLERANCE_DAYS);
+    }
+
+    public int getRetryGivenUpAfterDays() {
+        return orFallback(retryGivenUpAfterDays, FALLBACK_RETRY_GIVEN_UP_AFTER_DAYS);
+    }
+
+    private Optional<Integer> sourceValue(String source, Function<BackfillSourceConfig, Integer> getter) {
         return Optional.ofNullable(sources)
                 .map(s -> s.get(source))
-                .map(BackfillSourceConfig::getMaxPerDay)
-                .filter(max -> max != null && max > 0)
-                .orElse(defaultMaxPerDay);
+                .map(getter)
+                .filter(value -> value > 0);
+    }
+
+    private static int orFallback(int value, int fallback) {
+        return value > 0 ? value : fallback;
     }
 
     /**

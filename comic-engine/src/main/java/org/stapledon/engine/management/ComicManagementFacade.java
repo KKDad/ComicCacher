@@ -547,7 +547,7 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
-    public Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date) {
+    public Optional<ComicDownloadResult> downloadComicForDate(ComicItem comic, LocalDate date, boolean failFastOnRateLimit) {
         // Validate comic has a source
         if (comic.getSource() == null || comic.getSource().isEmpty()) {
             log.warn("Cannot download comic '{}' - has null or empty source", comic.getName());
@@ -563,16 +563,20 @@ public class ComicManagementFacade implements ManagementFacade {
         // Create download request and download
         ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(comic.getId()).comicName(comic.getName())
                 .source(comic.getSource())
-                .sourceIdentifier(comic.getSourceIdentifier()).date(date).build();
+                .sourceIdentifier(comic.getSourceIdentifier()).date(date).failFastOnRateLimit(failFastOnRateLimit).build();
 
         ComicDownloadResult result = downloaderFacade.downloadComic(request);
 
         if (result.isSuccessful()) {
             LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : date;
-            boolean saved = saveDownloadResult(comic, saveDate, result);
+            SaveResult.Outcome outcome = saveDownloadResultWithOutcome(comic, saveDate, result);
 
-            if (!saved) {
+            if (outcome == null) {
                 return Optional.empty();
+            }
+            result = result.toBuilder().saveOutcome(outcome).build();
+            if (outcome == SaveResult.Outcome.DUPLICATE_SKIPPED) {
+                return Optional.of(result);
             }
 
             // Update oldest date if this is earlier than known
@@ -659,6 +663,13 @@ public class ComicManagementFacade implements ManagementFacade {
      * recorded the retrieval as SUCCESS, so a failed save replaces that record with STORAGE_ERROR.
      */
     private boolean saveDownloadResult(ComicItem comic, LocalDate date, ComicDownloadResult result) {
+        return saveDownloadResultWithOutcome(comic, date, result) != null;
+    }
+
+    /**
+     * Saves a download result like {@link #saveDownloadResult}, returning the save outcome (SAVED or DUPLICATE_SKIPPED), or null when the save failed.
+     */
+    private SaveResult.Outcome saveDownloadResultWithOutcome(ComicItem comic, LocalDate date, ComicDownloadResult result) {
         ComicSaveData saveData = ComicSaveData.builder()
                 .imageData(result.getImageData())
                 .transcript(result.getTranscript())
@@ -667,14 +678,14 @@ public class ComicManagementFacade implements ManagementFacade {
 
         SaveResult saveResult = storageFacade.saveComicStripWithResult(ComicIdentifier.from(comic), date, saveData);
         if (saveResult.isSuccess()) {
-            return true;
+            return saveResult.getOutcome();
         }
 
         log.error("Failed to save comic {} to storage: {}", comic.getName(), saveResult.getMessage());
         retrievalStatusService.recordRetrievalResult(ComicRetrievalRecord.failure(
                 comic.getName(), date, comic.getSource(), ComicRetrievalStatus.STORAGE_ERROR,
                 "Save failed: " + saveResult.getMessage(), 0, null));
-        return false;
+        return null;
     }
 
     /**
