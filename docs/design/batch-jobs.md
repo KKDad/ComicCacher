@@ -121,7 +121,11 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 **Config class:** `ComicBackfillJobConfig`
 
-**Schedule:** Runs at every cron time (default `0 30 7-19/2 * * ?`, every 2 h from 90 minutes after the daily download until evening). A run that would overlap one still in progress is not launched. Before each scheduled run, `ComicBackfillService.hasMissingStrips()` checks local storage only. Strips it finds cached are remembered in memory for the rest of the day, so later checks and the run's own scan only look at the gaps again. If nothing is missing, the run is skipped: no web requests, and no execution recorded. There is no catch-up run at startup; the next cron time picks up the work. Manual triggers always run.
+**Schedule:** Runs at every cron time (default `0 30 7-19/2 * * ?`, every 2 h from 90 minutes after the daily download until evening). A run that would overlap one still in progress is not launched. Before each scheduled run, `ComicBackfillService.hasMissingStrips()` checks local storage only. With `batch.comic-backfill.remember-cached-strips=true` (off when unset), strips it finds on disk are remembered for the rest of the day, so later checks and the run's own scan only look at the gaps again. This memory only decides which dates are scanned; it never serves images. The recent window is always rechecked on disk. Logging:
+  - A remembered strip that has gone missing logs `Backfill cached-strip memory was wrong: ...` at WARN, and all of that comic's remembered strips are forgotten.
+  - Each scan logs `Backfill scan: N dates checked on disk, M skipped as remembered on disk, K memory mismatches (...)`, at INFO for a run and at DEBUG for the pre-run check.
+  - The daily reset logs `Backfill cached-strip memory reset for ...` at INFO.
+  - Set the property to `false` to check every date on disk on every scan. If nothing is missing, the run is skipped: no web requests, and no execution recorded. There is no catch-up run at startup; the next cron time picks up the work. Manual triggers always run.
 
 **Pattern:** Chunk-oriented with configurable chunk size (`batch.comic-backfill.chunk-size`, default 10).
 

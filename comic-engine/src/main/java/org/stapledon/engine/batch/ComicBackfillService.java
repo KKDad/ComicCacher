@@ -51,8 +51,9 @@ public class ComicBackfillService {
     private final ComicIndexService comicIndexService;
     private final BackfillStateService backfillState;
 
-    // Strips already seen cached today, so the repeated scans (each scheduled run's precondition, then the run's own scan) don't ask NFS about them again.
-    // Only hits are kept, and the memo starts over each day, so a strip deleted from the cache is noticed by the next day.
+    // Strips already seen on disk today (batch.comic-backfill.remember-cached-strips), so the repeated scans (each scheduled run's precondition, then the
+    // run's own scan) don't ask NFS about them again. This only decides which dates get scanned; it never serves images. Only hits are kept, the recent window
+    // is always rechecked on disk (a mismatch is logged at WARN and drops the comic's entries), and it starts over each day.
     private final Map<Integer, Set<LocalDate>> knownCached = new ConcurrentHashMap<>();
     private volatile LocalDate knownCachedOn;
 
@@ -133,6 +134,7 @@ public class ComicBackfillService {
         }
 
         List<BackfillTask> allTasks = new ArrayList<>();
+        ScanStats stats = new ScanStats();
         int sourcesWithTasks = 0;
         for (Map.Entry<String, List<ComicItem>> entry : comicsBySource.entrySet()) {
             String source = entry.getKey();
@@ -143,7 +145,7 @@ public class ComicBackfillService {
 
             List<BackfillTask> sourceTasks = downloaderFacade.isIndexedSource(source)
                     ? selectIndexedTasks(entry.getValue(), budget, allowNetwork)
-                    : selectDateTasks(entry.getValue(), source, budget);
+                    : selectDateTasks(entry.getValue(), source, budget, stats);
 
             if (!sourceTasks.isEmpty()) {
                 sourcesWithTasks++;
@@ -157,6 +159,7 @@ public class ComicBackfillService {
             }
         }
 
+        logScanStats(stats, allowNetwork);
         if (allowNetwork) {
             log.info("Total missing strips found: {} (across {} sources)", allTasks.size(), sourcesWithTasks);
         }
@@ -193,7 +196,7 @@ public class ComicBackfillService {
     /**
      * Recent pass across every comic, then a round-robin history pass (see {@link #findMissingStrips(String)}).
      */
-    private List<BackfillTask> selectDateTasks(List<ComicItem> comics, String source, int budget) {
+    private List<BackfillTask> selectDateTasks(List<ComicItem> comics, String source, int budget, ScanStats stats) {
         LocalDate today = LocalDate.now();
         LocalDate oldestRecent = today.minusDays(config.getRecentDaysForSource(source) - 1L);
 
@@ -204,7 +207,7 @@ public class ComicBackfillService {
                 log.debug("No valid scan range for comic '{}'", comic.getName());
                 continue;
             }
-            scans.add(new ComicScan(comic, range));
+            scans.add(new ComicScan(comic, range, stats));
         }
 
         List<BackfillTask> tasks = new ArrayList<>();
@@ -265,11 +268,13 @@ public class ComicBackfillService {
         private final int maxConsecutive = config.getMaxConsecutiveFailures();
         private LocalDate cursor;
         private int consecutiveMissing;
+        private final ScanStats stats;
         private boolean exhausted;
 
-        private ComicScan(ComicItem comic, DateRange range) {
+        private ComicScan(ComicItem comic, DateRange range, ScanStats stats) {
             this.comic = comic;
             this.range = range;
+            this.stats = stats;
         }
 
         /**
@@ -277,7 +282,7 @@ public class ComicBackfillService {
          */
         boolean isMissing(LocalDate date) {
             return !date.isAfter(range.start()) && !date.isBefore(range.end()) && shouldCheckDate(comic, date)
-                    && !isCached(comic, date)
+                    && !isCached(comic, date, true, stats)
                     && !backfillState.isGivenUp(comic, date);
         }
 
@@ -299,7 +304,7 @@ public class ComicBackfillService {
                 if (!shouldCheckDate(comic, date)) {
                     continue;
                 }
-                if (isCached(comic, date)) {
+                if (isCached(comic, date, false, stats)) {
                     consecutiveMissing = 0;
                     continue;
                 }
@@ -319,23 +324,66 @@ public class ComicBackfillService {
     }
 
     /**
-     * Whether the comic's strip for this date is in the cache, remembering hits for the rest of the day.
+     * Whether the comic's strip for this date is on disk. With {@code remember-cached-strips}, a hit is remembered for the rest of the day and later scans trust
+     * it, except when {@code verify} is set: then the disk is always checked, and a remembered strip that has gone missing is logged and forgets the comic's entries.
      */
-    private boolean isCached(ComicItem comic, LocalDate date) {
-        LocalDate today = LocalDate.now();
-        if (!today.equals(knownCachedOn)) {
-            knownCached.clear();
-            knownCachedOn = today;
+    private boolean isCached(ComicItem comic, LocalDate date, boolean verify, ScanStats stats) {
+        if (!config.isRememberCachedStrips()) {
+            stats.diskChecks++;
+            return storageFacade.comicStripExists(ComicIdentifier.from(comic), date);
         }
+        resetKnownCachedIfNewDay();
         Set<LocalDate> dates = knownCached.computeIfAbsent(comic.getId(), k -> ConcurrentHashMap.newKeySet());
-        if (dates.contains(date)) {
+        boolean remembered = dates.contains(date);
+        if (remembered && !verify) {
+            stats.rememberedHits++;
             return true;
         }
-        if (storageFacade.comicStripExists(ComicIdentifier.from(comic), date)) {
+        stats.diskChecks++;
+        boolean onDisk = storageFacade.comicStripExists(ComicIdentifier.from(comic), date);
+        if (onDisk) {
             dates.add(date);
-            return true;
+        } else if (remembered) {
+            stats.mismatches++;
+            int forgotten = dates.size();
+            knownCached.remove(comic.getId());
+            log.warn("Backfill cached-strip memory was wrong: {} (id {}) {} was remembered as on disk but is missing; forgetting all {} remembered strips for this comic",
+                    comic.getName(), comic.getId(), date, forgotten);
         }
-        return false;
+        return onDisk;
+    }
+
+    private synchronized void resetKnownCachedIfNewDay() {
+        LocalDate today = LocalDate.now();
+        if (today.equals(knownCachedOn)) {
+            return;
+        }
+        if (knownCachedOn != null) {
+            int strips = knownCached.values().stream().mapToInt(Set::size).sum();
+            log.info("Backfill cached-strip memory reset for {}: forgot {} strips across {} comics remembered on {}", today, strips, knownCached.size(), knownCachedOn);
+        }
+        knownCached.clear();
+        knownCachedOn = today;
+    }
+
+    private void logScanStats(ScanStats stats, boolean runScan) {
+        int remembered = knownCached.values().stream().mapToInt(Set::size).sum();
+        String message = "Backfill scan: {} dates checked on disk, {} skipped as remembered on disk, {} memory mismatches (memory {}: {} strips across {} comics)";
+        Object[] args = {stats.diskChecks, stats.rememberedHits, stats.mismatches, config.isRememberCachedStrips() ? "on" : "off", remembered, knownCached.size()};
+        if (runScan) {
+            log.info(message, args);
+        } else {
+            log.debug(message, args);
+        }
+    }
+
+    /**
+     * Counts for one scan, for the scan summary log.
+     */
+    private static final class ScanStats {
+        private int diskChecks;
+        private int rememberedHits;
+        private int mismatches;
     }
 
     /**

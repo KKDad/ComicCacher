@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -138,6 +139,7 @@ class ComicBackfillServiceTest {
 
     @Test
     void repeatedScans_doNotRecheckStripsAlreadySeenCached() {
+        when(configService.isRememberCachedStrips()).thenReturn(true);
         ComicItem comic = createComic(1, "Complete Comic", true);
         when(managementFacade.getAllComics()).thenReturn(List.of(comic));
         when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(true);
@@ -148,7 +150,39 @@ class ComicBackfillServiceTest {
         assertThat(service.hasMissingStrips(null)).isFalse();
         assertThat(service.findMissingStrips()).isEmpty();
 
-        verify(storageFacade, never()).comicStripExists(any(ComicIdentifier.class), any(LocalDate.class));
+        // Only the recent window is rechecked on disk; the older history comes from memory
+        verify(storageFacade, times(2 * RECENT_DAYS)).comicStripExists(any(ComicIdentifier.class), any(LocalDate.class));
+    }
+
+    @Test
+    void repeatedScans_withMemoryOff_checkEveryDateOnDisk() {
+        ComicItem comic = createComic(1, "Complete Comic", true);
+        when(managementFacade.getAllComics()).thenReturn(List.of(comic));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(true);
+
+        service.hasMissingStrips(null);
+        int firstScanChecks = mockingDetails(storageFacade).getInvocations().size();
+        service.hasMissingStrips(null);
+
+        assertThat(mockingDetails(storageFacade).getInvocations()).hasSize(2 * firstScanChecks);
+    }
+
+    @Test
+    void repeatedScans_noticeARememberedStripThatWentMissing() {
+        when(configService.isRememberCachedStrips()).thenReturn(true);
+        ComicItem comic = createComic(1, "Comic", true);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        AtomicBoolean deleted = new AtomicBoolean();
+        when(managementFacade.getAllComics()).thenReturn(List.of(comic));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class)))
+                .thenAnswer(invocation -> !(deleted.get() && invocation.getArgument(1).equals(yesterday)));
+
+        assertThat(service.hasMissingStrips(null)).isFalse();
+        deleted.set(true);
+
+        List<BackfillTask> tasks = service.findMissingStrips();
+
+        assertThat(tasks).containsExactly(new DateBackfillTask(comic, yesterday));
     }
 
     @Test
@@ -160,6 +194,7 @@ class ComicBackfillServiceTest {
         when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class)))
                 .thenAnswer(invocation -> saved.get() || !invocation.getArgument(1).equals(yesterday));
 
+        when(configService.isRememberCachedStrips()).thenReturn(true);
         assertThat(service.hasMissingStrips(null)).isTrue();
         // Another job saves the strip between scans
         saved.set(true);

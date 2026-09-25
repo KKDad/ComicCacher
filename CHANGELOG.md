@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backfill stops a source for the rest of the run on its first HTTP 429, with no retries (the source-wide backoff still applies). This includes indexed sources (Freefall)
 - `backfill-state.json`: backfill gives up on dates that keep coming back unavailable or as duplicates, and learns how far back each comic and source serves strips. Settings: `give-up-after`, `horizon-consecutive-failures`, `horizon-min-comics`, `horizon-tolerance-days`, `retry-given-up-after-days`. The `resetState` job parameter clears it
 - `DailyJobScheduler` options for several runs a day and a precondition that skips runs with nothing to do
+- `batch.comic-backfill.remember-cached-strips`: backfill scans remember for the day which strips are on disk and recheck only the gaps and the recent window. It only steers which dates are scanned. A mismatch is logged at WARN and each scan logs a summary line. Off when unset; on in `application.properties`
 - Schedulers no longer launch a job while a run of it is still in progress (a manual trigger then reports that the job failed to start)
 
 ### Fixed

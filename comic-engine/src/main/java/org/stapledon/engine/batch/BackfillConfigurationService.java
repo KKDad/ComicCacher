@@ -93,6 +93,12 @@ public class BackfillConfigurationService {
     private final int retryGivenUpAfterDays;
 
     /**
+     * Whether task selection remembers, for the rest of the day, which strips it found on disk, so repeated scans only recheck the gaps. It only steers which
+     * dates are scanned, never which image is served. Off when unset.
+     */
+    private final boolean rememberCachedStrips;
+
+    /**
      * Source-specific configurations.
      * Key is the source identifier (e.g., "gocomics", "comicskingdom").
      */
