@@ -33,7 +33,7 @@ This module is the foundation everything else builds on. Treat changes here as b
 
 - DTOs intended for JSON-on-disk MUST round-trip through `GsonUtils`. Test the round-trip.
 - Use `@SerializedName` if the JSON key differs from the field name.
-- For Records (used for immutable values; see the Modern Java rules in comic-api/CLAUDE.md): register `RecordAdapterFactory`.
+- Records (used for immutable values; see the Modern Java rules in comic-api/CLAUDE.md) need no adapter: Gson 2.10+ handles them natively.
 - Use the `@Qualifier("gsonWithLocalDate")` Gson bean for date-time serialization. Prefer `OffsetDateTimeAdapter` for new code; `LocalDateTimeAdapter` is for backward-compat reads only.
 
 ## DTO Standard

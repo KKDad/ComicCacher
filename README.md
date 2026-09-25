@@ -5,7 +5,7 @@
 [![Backend CI](https://github.com/KKDad/ComicCacher/actions/workflows/gradle.yml/badge.svg)](https://github.com/KKDad/ComicCacher/actions/workflows/gradle.yml)
 [![Frontend CI](https://github.com/KKDad/ComicCacher/actions/workflows/comic-hub.yml/badge.svg)](https://github.com/KKDad/ComicCacher/actions/workflows/comic-hub.yml)
 ![Java](https://img.shields.io/badge/Java-25-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-6DB33F)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -73,7 +73,7 @@ Full architecture docs, Mermaid diagrams, and module reference in [`docs/`](docs
 ## Prerequisites
 
 - **Java 25** and **Gradle** (for backend)
-- **Node.js 22 LTS** and **npm** (for frontend)
+- **Node.js 24 LTS** and **npm** (for frontend)
 - **Docker** (for containerized deployment)
 
 ## Quick Start
@@ -90,6 +90,12 @@ Full architecture docs, Mermaid diagrams, and module reference in [`docs/`](docs
 API docs at [localhost:8080/swagger-ui](http://localhost:8080/swagger-ui/index.html) | GraphQL at [localhost:8080/graphql](http://localhost:8080/graphql)
 
 #### Frontend
+
+```bash
+./utils/dev-ui.sh    # dev server against the dev API, no .env.local needed
+```
+
+Or by hand:
 
 ```bash
 cd comic-hub
@@ -111,6 +117,8 @@ Runs as two Docker containers on a home server. Build the images with:
 # Frontend
 cd comic-hub && ./build-docker.sh
 ```
+
+The `utils/` scripts do the build, push and deploy: `dev-build-and-run.sh` for the dev instance, `prod-build-and-run.sh` for prod (pre-flight checks, health polling and automatic rollback). See the Utility Scripts section of [`CLAUDE.md`](CLAUDE.md).
 
 ## Project Structure
 

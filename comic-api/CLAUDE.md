@@ -51,13 +51,13 @@
 - Use `_` for intentionally unused variables: ignored exceptions, lambda parameters, record-pattern components, `try (var _ = MDC.putCloseable(...))`.
 - Use `getFirst()` / `getLast()` instead of `get(0)` / `get(size() - 1)`.
 - `var` is fine where the type is obvious from the right-hand side.
-- Records are allowed for immutable value, key and result types. A record persisted with Gson needs `RecordAdapterFactory`; keep mutable or Gson-persisted DTOs on Lombok.
+- Records are allowed for immutable value, key and result types. Gson (2.10+) serializes records natively; keep mutable or Gson-persisted DTOs on Lombok.
 
 ## 7. GraphQL Implementation
-- **Schema-First:** Update `.graphqls` schema before modifying Resolvers.
+- **Schema-First:** Update the `.graphql` schema (`src/main/resources/graphql/`) before modifying Resolvers. Schema that only some environments load (e.g. the dev-only `devToken` mutation in `graphql-dev/`) lives outside that folder and is added by a conditional `GraphQlSourceBuilderCustomizer`.
 - **Cursor-based Pagination:** Relay-style (`edges`/`node`) for all comic lists. No offset-based pagination.
 - **N+1 Prevention:** Use `DataLoader` for all nested metadata lookups from JSON files.
-- **Scalars:** Custom scalars for `Date` and `FilePath`.
+- **Scalars:** Custom scalars `Date`, `DateTime` and `JSON`.
 - **Mutations:** Return a "Payload" object containing the updated object and a list of user-friendly errors.
 - **Binary Data:** GQL handles metadata only. Binary streams stay on REST using `FileSystemResource`.
 - **Authorization:** Three roles — `USER` (default), `OPERATOR` (batch/metrics read-only), `ADMIN` (full access). Schema directives: `@public`, `@authenticated`, `@hasRole(role: "ROLE")`.
@@ -65,7 +65,7 @@
 ## 8. JSON Serialization
 - **Gson is the standard for persisted/domain JSON** — anything written to NFS or read back through `GsonUtils`. Do not use Jackson annotations (`@JsonProperty`, `@JsonFormat`, `@JsonIgnore`) on these DTOs.
 - **Jackson is allowed at Spring framework boundaries only:** actuator endpoints (health/info DTOs) and the generic REST response wrapper (`ApiResponse`). Spring serializes these via its built-in `ObjectMapper`; using Gson there fights the framework.
-- Use `GsonBuilder().registerTypeAdapterFactory(new RecordAdapterFactory())` for Records.
+- Records need no adapter: Gson 2.10+ handles them natively.
 - Use `@SerializedName` if JSON key differs from Java field name.
 - Use `@Qualifier("gsonWithLocalDate")` bean for date-time serialization. Prefer `OffsetDateTimeAdapter` for new code (`LocalDateTimeAdapter` remains for read-back compatibility with legacy JSON files).
 

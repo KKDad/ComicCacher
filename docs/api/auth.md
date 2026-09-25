@@ -134,6 +134,45 @@ mutation {
 
 ---
 
+### logout
+
+Revoke every token issued to the authenticated user so far. The backend stores a `tokensInvalidatedBefore` cutoff, and both the JWT filter and `refreshToken` reject tokens issued before it. comic-hub's `/api/logout` calls this before clearing its cookies.
+
+```graphql
+mutation {
+  logout: Boolean!
+}
+```
+
+**Auth:** `@authenticated`
+
+**Returns:** `Boolean!` -- `true` on success.
+
+Logging out ends the user's sessions on every device, not just the current one.
+
+---
+
+### devToken (dev instance only)
+
+Issue tokens for an existing user without their password. It only exists when `comics.dev-token.enabled=true`; otherwise it isn't in the schema. `utils/dev-run.sh` turns it on for the dev instance. See "Dev Tokens" in [overview.md](overview.md).
+
+```graphql
+mutation {
+  devToken(secret: String!, username: String): AuthPayload!
+}
+```
+
+**Auth:** `@public` (the `secret` is the check)
+
+| Parameter | Type | Description |
+|---|---|---|
+| `secret` | `String!` | Must match `comics.dev-token.secret` (at least 32 characters) |
+| `username` | `String` | User to issue tokens for. Defaults to `comics.dev-token.default-username` |
+
+**Returns:** `AuthPayload!`. Each token issued logs an `AUDIT` line.
+
+---
+
 ### forgotPassword
 
 Request a password reset email. Always returns `true` to prevent email enumeration.
@@ -197,6 +236,8 @@ mutation {
 2. **Use the access token** in the `Authorization` header for authenticated requests: `Bearer <token>`.
 3. **When the access token expires**, the API returns an `UNAUTHENTICATED` error with code `TOKEN_EXPIRED`.
 4. **Refresh the token** by calling `refreshToken` with the refresh token. A new `AuthPayload` with fresh tokens is returned.
+
+Access tokens last 15 minutes (`jwt.expiration`) and refresh tokens 24 hours (`jwt.refresh-expiration`).
 5. **Password reset flow**: Call `forgotPassword` with the user's email, then `resetPassword` with the emailed token and the new password. A new `AuthPayload` is returned on success.
 
 ## Types

@@ -38,9 +38,10 @@ Metrics collection and archival. Depends on comic-common only.
 
 | Area | Key Classes |
 |------|-------------|
-| Collectors | `CacheMetricsCollector`, `StorageMetricsCollector` |
-| Writers | `StatsWriter` (JSON/Console output) |
-| Archive | `MetricsArchiveService` (used by `MetricsArchiveJobConfig` in comic-engine) |
+| Collectors | `AccessMetricsCollector`, `StorageMetricsCollector` |
+| Services | `MetricsService` (`JsonMetricsService`, or `NoOpMetricsService` when metrics are off), `MetricsUpdateService` |
+| Persistence | `AccessMetricsRepository` |
+| Archive | `MetricsArchiveService`, `MetricsArchiver` (used by `MetricsArchiveJobConfig` in comic-engine) |
 
 ### comic-engine
 
@@ -119,7 +120,7 @@ Coordinates comic downloads using a strategy registry (`Map<String, ComicDownloa
 4. Supports batch downloads via `downloadComicsForDate()` with day-of-week filtering and inactive comic filtering
 5. Provides indexed-comic-specific methods: `downloadLatestStrip()`, `downloadStrip()`, `isIndexedSource()`
 
-See [Downloader Strategies](design/downloader-strategies.md) for the full class hierarchy and guide for adding new sources.
+See [Downloader Strategies](downloader-strategies.md) for the full class hierarchy and guide for adding new sources.
 
 ### ComicStorageFacade (FileSystemComicStorageFacade)
 
