@@ -28,6 +28,14 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 - **Server Actions are intentionally NOT adopted.** Mutations route through `/api/*` handlers because token refresh logic lives there. Revisit if/when refresh moves to a centralized middleware layer.
 - **Logout flow:** `/api/logout` calls the GraphQL `logout` mutation before clearing cookies. The backend sets the user's `tokensInvalidatedBefore` timestamp; the JWT filter and refresh path reject any token issued before the cutoff. The mutation is best-effort — if it fails, cookies are still cleared client-side.
 
+## Layout, Theme & Titles
+- **Responsive layout is CSS.** `DashboardShell` renders the sidebar, nav rail and mobile nav together and Tailwind breakpoints (`md`, `lg`) pick one, so server HTML is already correct. Only use `useResponsiveNav` when a component must render a different tree per device (the readers); it returns `null` on the server and during hydration — render a skeleton for `null`, never guess.
+- **Theme is owned by `next-themes`** (`ThemeProvider` in `src/lib/providers.tsx`; its inline script sets the `<html>` class before paint). Never touch `document.documentElement` for theming. `ThemeSync` copies the saved `displaySettings.theme` into next-themes.
+- **Colour contrast:** text tokens must hold 4.5:1 on `canvas` and `surface` in both themes (WCAG AA). The brand `#3EAEFF` is only 2.4:1 on white, so light mode's `--color-primary` is the deeper `#0F6FB5`. Check new colour pairs with a contrast calculation, not by eye.
+- **Utilities need `@theme` entries.** A `--color-*` token defined only in `:root` generates no Tailwind class; add it to the `@theme inline` block too.
+- **Page titles** use the Next metadata API (root template `%s · Comics Hub`). Client pages get theirs from a sibling `layout.tsx` exporting `metadata`; comic pages use `generateMetadata` with `comicTitle()`. A layout's string `title` stops the template for everything below it, so keep title layouts on leaf segments (hence `comics/(list)/`).
+- **Strip dates** are `YYYY-MM-DD` calendar days: format them with `src/lib/date-utils.ts` (`parseDate`), never `new Date(date)`, which reads them as UTC midnight and shows the previous day west of Greenwich. Tests run in `America/Toronto` to catch this.
+
 ## Error Boundaries & Loading States
 
 The App Router requires explicit error and not-found handlers. The repo standard:

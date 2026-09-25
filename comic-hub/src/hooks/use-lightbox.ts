@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseLightboxReturn {
   isOpen: boolean;
@@ -14,8 +14,11 @@ interface UseLightboxReturn {
 export function useLightbox(itemCount: number): UseLightboxReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  // The lightbox unmounts on close, so Radix can't hand focus back itself.
+  const openerRef = useRef<HTMLElement | null>(null);
 
   const open = useCallback((index: number) => {
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setCurrentIndex(index);
     setIsOpen(true);
   }, []);
@@ -61,6 +64,14 @@ export function useLightbox(itemCount: number): UseLightboxReturn {
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, close, next, previous]);
+
+  // Return focus to whatever opened the lightbox once it closes.
+  useEffect(() => {
+    if (isOpen) return;
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (opener?.isConnected) opener.focus();
+  }, [isOpen]);
 
   // Lock body scroll when open
   useEffect(() => {

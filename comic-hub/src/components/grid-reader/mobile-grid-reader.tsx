@@ -52,7 +52,7 @@ export function MobileGridReader({ reader }: MobileGridReaderProps) {
   });
 
   return (
-    <div className="h-screen overflow-y-auto bg-canvas" {...swipeHandlers}>
+    <div className="h-dvh overflow-y-auto bg-canvas" {...swipeHandlers}>
       <GridHeader
         date={date}
         onPreviousDate={goToPreviousDate}

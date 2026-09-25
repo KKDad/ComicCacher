@@ -95,3 +95,32 @@ describe('useLightbox', () => {
     expect(document.body.style.overflow).toBe('');
   });
 });
+
+describe('useLightbox focus return', () => {
+  it('refocuses the element that opened it after closing', () => {
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    opener.focus();
+
+    const { result } = renderHook(() => useLightbox(3));
+    act(() => result.current.open(0));
+    (document.activeElement as HTMLElement).blur();
+    act(() => result.current.close());
+
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
+
+  it('skips an opener that is no longer in the page', () => {
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    opener.focus();
+
+    const { result } = renderHook(() => useLightbox(3));
+    act(() => result.current.open(0));
+    opener.remove();
+    act(() => result.current.close());
+
+    expect(document.activeElement).toBe(document.body);
+  });
+});
