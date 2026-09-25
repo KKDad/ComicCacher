@@ -39,7 +39,8 @@ public class MetricsArchiver {
         this.cacheLocation = cacheLocation;
     }
 
-    private static final String HISTORY_DIRECTORY = "metrics-history";
+    /** Archive directory under the cache root; not a comic, so storage scans skip it. */
+    public static final String HISTORY_DIRECTORY = "metrics-history";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final int DEFAULT_RETENTION_DAYS = 90;
 

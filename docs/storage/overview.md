@@ -15,7 +15,7 @@ ComicCacher uses a flat-file JSON storage model on an NFS-mounted filesystem. Th
   backfill-state.json                       # Comic backfill: given-up dates, learned history horizons, daily attempt counts
   last_errors.json                          # Recent errors per comic
   access-metrics.json                       # Per-comic access counts
-  combined-metrics.json                     # Global + per-comic storage/access metrics
+  metrics-history/{yyyy-MM-dd}.json         # Daily combined-metrics snapshots (MetricsArchiveJob)
   {ComicDirName}/                           # One directory per comic
     avatar.png                              # Comic avatar image
     available-dates.json                    # Date index for fast navigation
@@ -59,7 +59,7 @@ NfsFileOperations.atomicWrite(target, content)
   -> Files.move(tmp, target, ATOMIC_MOVE, REPLACE_EXISTING)
 ```
 
-This pattern is used by: `ComicIndexService`, `JsonBatchExecutionTracker`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, `AccessMetricsRepository`, and `JsonMetricsRepository`.
+This pattern is used by: `ComicIndexService`, `JsonBatchExecutionTracker`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, and `AccessMetricsRepository`.
 
 **Exception:** `SchedulerStateService` uses plain `Files.writeString()` without the atomic pattern. `ApplicationConfigurationFacade` (for `comics.json`, `users.json`, `preferences.json`) uses `FileWriter` directly.
 

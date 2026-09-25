@@ -124,6 +124,19 @@ class StorageMetricsCollectorTest {
     }
 
     @Test
+    void updateStats_skipsNonComicDirectories() throws IOException {
+        File history = new File(cacheRoot, "metrics-history");
+        history.mkdir();
+        Files.writeString(new File(history, "2026-09-24.json").toPath(), "{}");
+        new File(cacheRoot, "batch-logs").mkdir();
+        new File(cacheRoot, "@eaDir").mkdir();
+
+        cacheStatsUpdater.updateStats();
+
+        assertThat(cacheStatsUpdater.cacheStats().getPerComicMetrics()).containsOnlyKeys("CalvinAndHobbes", "Garfield");
+    }
+
+    @Test
     void updateStats_createsStorageByYearMetrics() {
         // Act
         boolean result = cacheStatsUpdater.updateStats();
