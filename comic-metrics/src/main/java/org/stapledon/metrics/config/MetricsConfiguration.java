@@ -7,9 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
-import org.stapledon.metrics.repository.JsonMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
-import org.stapledon.metrics.repository.MetricsRepository;
 import org.stapledon.metrics.service.JsonMetricsService;
 import org.stapledon.metrics.service.MetricsService;
 import org.stapledon.metrics.service.NoOpMetricsService;
@@ -92,18 +90,6 @@ public class MetricsConfiguration {
             @Qualifier("cacheLocation") String cacheLocation) {
         log.debug("Creating AccessMetricsRepository");
         return new AccessMetricsRepository(gson, cacheLocation);
-    }
-
-    /**
-     * Creates MetricsRepository when metrics are enabled. Uses JSON file backend by
-     * default.
-     */
-    @Bean
-    @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public MetricsRepository metricsRepository(@Qualifier("gsonWithLocalDate") Gson gson,
-            @Qualifier("cacheLocation") String cacheLocation) {
-        log.debug("Creating JsonMetricsRepository");
-        return new JsonMetricsRepository(gson, cacheLocation);
     }
 
     /**

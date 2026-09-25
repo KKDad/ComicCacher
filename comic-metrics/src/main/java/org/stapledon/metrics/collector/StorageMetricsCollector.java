@@ -15,8 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Collector for storage metrics. Scans the cache directory and computes storage
  * utilization statistics. This collector only computes metrics in-memory;
- * persistence is handled by
- * MetricsRepository.
+ * they are combined on demand by MetricsUpdateService.
  */
 @Slf4j
 @ToString

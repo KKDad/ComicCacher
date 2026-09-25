@@ -11,7 +11,7 @@ Six JSON files track runtime state, job history, errors, and metrics. All are lo
 | `scheduler-state.json` | Scheduler pause/resume state | `comic-engine` | `SchedulerStateService` | No |
 | `last_errors.json` | Recent errors per comic | `comic-engine` | `JsonErrorTrackingRepository` | Yes |
 | `access-metrics.json` | Per-comic access statistics | `comic-metrics` | `AccessMetricsRepository` | Yes |
-| `combined-metrics.json` | Global + per-comic combined metrics | `comic-metrics` | `JsonMetricsRepository` | Yes |
+| `metrics-history/{yyyy-MM-dd}.json` | Daily snapshot of combined metrics | `comic-metrics` | `MetricsArchiver` | No |
 
 ---
 
@@ -257,9 +257,9 @@ Derived fields (computed, not persisted): `averageAccessTime` = `totalAccessTime
 
 ---
 
-## 6. combined-metrics.json
+## 6. metrics-history/{yyyy-MM-dd}.json
 
-Pre-computed aggregate metrics combining storage and access data. Loaded on startup via `@PostConstruct`. Thread-safe with `ReentrantReadWriteLock`.
+Daily snapshots of combined metrics. `MetricsArchiveJob` builds combined metrics on demand (`MetricsUpdateService.buildCombinedMetrics()`, from a storage scan plus `access-metrics.json`) and `MetricsArchiver` writes them under the previous day's date. Archives older than `comics.metrics.history-retention-days` (default 90) are deleted after each successful run. Combined metrics are never persisted anywhere else; a leftover `combined-metrics.json` in the cache root is obsolete and unused.
 
 **DTO:** `CombinedMetricsData` (`comic-metrics`)
 
@@ -354,5 +354,5 @@ Pre-computed aggregate metrics combining storage and access data. Loaded on star
 | `ComicErrorRecord.java` | `comic-common` |
 | `AccessMetricsRepository.java` | `comic-metrics` |
 | `AccessMetricsData.java` | `comic-metrics` |
-| `JsonMetricsRepository.java` | `comic-metrics` |
+| `MetricsArchiver.java` / `MetricsArchiveService.java` | `comic-metrics` |
 | `CombinedMetricsData.java` / `GlobalMetrics.java` / `YearlyStorageMetrics.java` | `comic-metrics` |

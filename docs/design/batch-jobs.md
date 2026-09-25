@@ -187,7 +187,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 - Delegates to `metricsArchiveService.archiveMetricsForDate(yesterday)`
 - Throws `IllegalStateException` on failure to mark the job as FAILED
 
-**Data source:** `MetricsArchiveService` (from comic-metrics module)
+**Data source:** `MetricsArchiveService` (from comic-metrics module), which builds combined metrics on demand via `MetricsUpdateService.buildCombinedMetrics()` and prunes archives past `comics.metrics.history-retention-days`
 
 ### RetrievalRecordPurgeJob
 
@@ -211,7 +211,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 | ComicBackfillJob | Chunk (R/P/W) | `0 30 7-19/2 * * ?` (several runs a day) | `true` | `ComicBackfillService` gap detection | `ManagementFacade`, `ComicBackfillService` |
 | AvatarBackfillJob | Tasklet | `0 15 7 * * ?` | `false` | Web scraping (avatar pages) | `ManagementFacade` |
 | ImageMetadataBackfillJob | Tasklet | `0 30 6 * * ?` | `true` | Filesystem walk | `ValidationService`, `AnalysisService`, `ImageMetadataRepository` |
-| MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | In-memory metrics | `MetricsArchiveService` |
+| MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | Combined metrics built on demand | `MetricsArchiveService` |
 | RetrievalRecordPurgeJob | Tasklet (2 steps) | `0 45 6 * * ?` | `true` | JSON retrieval records, batch log files | `ManagementFacade`, `BatchJobLogService` |
 
 All jobs run in `America/Toronto` timezone. Cron expressions are configurable via `batch.<job-key>.cron` properties.
