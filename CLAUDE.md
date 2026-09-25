@@ -44,7 +44,7 @@ graph TD
 **Frontend (comic-hub):**
 | Command | Purpose |
 |---------|---------|
-| `cd comic-hub && npm run dev` | Dev server (http://localhost:3000) |
+| `utils/dev-ui.sh` | Dev server (http://localhost:3000) against the dev API |
 | `cd comic-hub && npm run build` | Production build |
 | `cd comic-hub && npm test` | Run tests |
 | `cd comic-hub && npm run codegen` | GraphQL codegen |
@@ -114,8 +114,11 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 | **Design** | [@~/docs/design/architecture.md](docs/design/architecture.md), [@~/docs/design/batch-jobs.md](docs/design/batch-jobs.md), [@~/docs/design/downloader-strategies.md](docs/design/downloader-strategies.md) |
 | **Storage** | [@~/docs/storage/overview.md](docs/storage/overview.md) (NFS layout, atomic writes), [@~/docs/storage/comic-data.md](docs/storage/comic-data.md) |
 
-## Debug Utilities
+## Utility Scripts
 
+**Always use the `utils/` scripts** to run, deploy, or inspect ComicCacher. Don't hand-roll the equivalent `npm`, `docker`, or `ssh` commands: the scripts carry the hosts, ports, Node setup, and safety checks. If a task needs something no script covers, add or extend a script in `utils/` rather than running one-off commands.
+
+- **`utils/dev-ui.sh [--api <url>]`** — Run the comic-hub dev server locally against the dev API (`comics-api-dev`, `http://portainer.stapledon.ca:8087/graphql`). Loads nvm, installs dependencies if missing, and checks the API first. No `comic-hub/.env.local` needed
 - **`utils/fetch-prod-logs.sh [api|ui] [lines]`** — Fetch Docker logs from production `comics-api` or `comics-ui` container (default 500 lines)
 - **`utils/tunnel-to-prod-api.sh`** — SSH tunnel: `localhost:8888` to production API
 - **`utils/dev-build-and-run.sh <ver> [--skip-build]`** — Build, push, and deploy the dev instance (`comics-api-dev`). Stages `utils/dev-run.sh` on the Docker host and runs it over ssh, so it works from a Podman workstation
