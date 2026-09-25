@@ -46,6 +46,22 @@ The schema uses three directives to declare authorization requirements on each f
 | `@authenticated` | Requires a valid JWT token (any role). |
 | `@hasRole(role: "ROLE")` | Requires a valid JWT token with the specified role. |
 
+### Dev Tokens (dev instance only)
+
+For testing against the dev instance, the `devToken` mutation issues tokens for an existing user without their password:
+
+```graphql
+mutation { devToken(secret: "<secret>", username: "admin") { token refreshToken } }
+```
+
+`username` is optional and defaults to `comics.dev-token.default-username`. The mutation and its schema file (`graphql-dev/dev-token.graphql`, outside the scanned schema locations) are only loaded when `comics.dev-token.enabled=true`, so it doesn't exist in production or in comic-hub codegen. Startup fails if `comics.dev-token.secret` is under 32 characters. Each issued token logs an `AUDIT` line.
+
+| Property | Environment variable |
+|---|---|
+| `comics.dev-token.enabled` | `COMICS_DEVTOKEN_ENABLED` |
+| `comics.dev-token.secret` | `COMICS_DEVTOKEN_SECRET` |
+| `comics.dev-token.default-username` | `COMICS_DEVTOKEN_DEFAULTUSERNAME` |
+
 ## Custom Scalars
 
 | Scalar | Format | Example |

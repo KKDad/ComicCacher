@@ -1,0 +1,15 @@
+# =============================================================================
+# Dev Token (dev instance only)
+# =============================================================================
+# Loaded only when comics.dev-token.enabled=true, so this mutation is absent
+# from the production schema and from comic-hub codegen.
+# =============================================================================
+
+extend type Mutation {
+    """
+    Issue tokens for a user without their password, for testing against the dev
+    instance. Requires the shared secret from comics.dev-token.secret. Issues for
+    comics.dev-token.default-username when no username is given.
+    """
+    devToken(secret: String!, username: String): AuthPayload! @public
+}
