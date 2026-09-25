@@ -203,6 +203,26 @@ describe('JobCard', () => {
     expect(screen.getByText('Connection timeout')).toBeInTheDocument();
   });
 
+  it('shows the exception message and collapses the stack trace', async () => {
+    const trace = '\tat org.example.Job.run(Job.java:86)\n\tat org.example.Launcher.start(Launcher.java:12)';
+    renderWithProviders(
+      <JobCard
+        scheduler={createScheduler()}
+        recentExecutions={[createExecution({
+          status: 'FAILED' as BatchStatusEnum,
+          exitDescription: `java.lang.IllegalStateException: Archiving failed\n${trace}\n`,
+        })]}
+      />
+    );
+    await userEvent.click(screen.getByRole('button', { name: /show details/i }));
+
+    expect(screen.getByText('java.lang.IllegalStateException: Archiving failed')).toBeInTheDocument();
+    const pre = screen.getByText(/Job\.java:86/);
+    expect(pre.tagName).toBe('PRE');
+    expect(pre.textContent).toBe(trace);
+    expect(pre.closest('details')).not.toHaveAttribute('open');
+  });
+
   it('renders UNKNOWN status badge when no execution exists', () => {
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     expect(screen.getByText('UNKNOWN')).toBeInTheDocument();

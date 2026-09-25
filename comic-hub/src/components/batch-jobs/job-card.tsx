@@ -33,6 +33,26 @@ import {
 import type { BatchSchedulerInfo, BatchJob } from '@/generated/graphql';
 import { formatAbsoluteTime, formatRelativeTime, formatDuration } from '@/lib/date-utils';
 
+/**
+ * A failed run's exit description: the first line (the exception message) up front, and
+ * any stack trace collapsed into a scrolling block so it can't widen the card.
+ */
+function ExecutionError({ description }: { description: string }) {
+  const [summary, ...rest] = description.trim().split('\n');
+  const trace = rest.join('\n');
+  return (
+    <div className="text-xs text-destructive space-y-1">
+      <div className="break-words">{summary}</div>
+      {trace && (
+        <details>
+          <summary className="cursor-pointer text-muted-foreground">Stack trace</summary>
+          <pre className="mt-1 max-h-64 overflow-auto rounded bg-muted p-2 font-mono whitespace-pre">{trace}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
 const JOB_LABELS: Record<string, string> = {
   ComicDownloadJob: 'Comic Download',
   ComicBackfillJob: 'Comic Backfill',
@@ -157,7 +177,8 @@ export function JobCard({ scheduler, recentExecutions, onJobTriggered }: JobCard
 
   return (
     <>
-      <Card className={accentClass}>
+      {/* min-w-0 lets the card shrink to its grid column instead of growing to fit long content */}
+      <Card className={`min-w-0 ${accentClass}`}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <TooltipProvider>
@@ -240,8 +261,8 @@ export function JobCard({ scheduler, recentExecutions, onJobTriggered }: JobCard
               <div className="divide-y">
                 {recentExecutions.map((execution, idx) => (
                   <div key={`${execution.executionId}-${idx}`} className="py-2 first:pt-0 last:pb-0 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-x-2">
+                      <div className="flex flex-wrap items-center gap-x-2">
                         {getSmallStatusBadge(execution.status)}
                         <span className="text-sm text-muted-foreground">
                           {execution.startTime ? formatAbsoluteTime(execution.startTime) : 'Unknown'}
@@ -262,9 +283,7 @@ export function JobCard({ scheduler, recentExecutions, onJobTriggered }: JobCard
                         View Logs
                       </Button>
                     </div>
-                    {execution.exitDescription && (
-                      <div className="text-xs text-destructive">{execution.exitDescription}</div>
-                    )}
+                    {execution.exitDescription && <ExecutionError description={execution.exitDescription} />}
                   </div>
                 ))}
               </div>
