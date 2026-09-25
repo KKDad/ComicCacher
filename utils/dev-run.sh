@@ -8,6 +8,8 @@
 # Steps:
 #   - Pull the image first, so a tag missing from the registry fails before anything is removed
 #   - Create the comicdata-dev NFS volume if it doesn't exist
+#   - Create dev-token.env beside this script if it doesn't exist: turns on the dev-only
+#     devToken mutation with a random secret. Kept on the Docker host, never in git
 #   - Replace comics-api-dev with a container running the new image
 #   - Poll Docker health status. There is no rollback: this is dev, and a failed
 #     container is left running so its logs can be read
@@ -27,6 +29,8 @@ VOLUME_NAME="comicdata-dev"
 HEALTH_TIMEOUT_SECS=300
 HEALTH_POLL_INTERVAL=5
 SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+DEV_TOKEN_ENV="${SCRIPT_DIR}/dev-token.env"
 
 usage() {
     cat <<EOF
@@ -91,6 +95,7 @@ RUN_ARGS=(
     -v "${VOLUME_NAME}:/comics"
     -e CACHE_DIRECTORY=/comics
     -e COMICS_CACHE_LOCATION=/comics
+    --env-file "$DEV_TOKEN_ENV"
     "$FULL_IMAGE"
 )
 
@@ -99,6 +104,7 @@ if [[ $DRY_RUN -eq 1 ]]; then
     echo "--- Would run ---"
     echo "  docker pull $FULL_IMAGE"
     echo "  docker volume create ... $VOLUME_NAME   (only if missing)"
+    echo "  create ${DEV_TOKEN_ENV} with a random secret   (only if missing)"
     [[ -n "$CURRENT_IMAGE" ]] && echo "  docker stop $DEV_CONTAINER_NAME && docker rm $DEV_CONTAINER_NAME"
     echo "  docker run ${RUN_ARGS[*]}"
     echo ""
@@ -120,6 +126,15 @@ if ! docker volume ls -q | grep -q "^${VOLUME_NAME}$"; then
         --opt "o=addr=10.0.0.48,rsize=1048576,wsize=1048576,timeo=600,retrans=2,noresvport,rw,noatime,nconnect=16,vers=4.1" \
         --opt "device=:/volume1/PodGeneral/comics-dev" \
         "$VOLUME_NAME"
+fi
+
+# --- Dev token settings: generated once, then reused so the secret stays stable ---
+if [[ ! -f "$DEV_TOKEN_ENV" ]]; then
+    echo "Creating ${DEV_TOKEN_ENV} with a new devToken secret..."
+    (
+        umask 077
+        printf 'COMICS_DEVTOKEN_ENABLED=true\nCOMICS_DEVTOKEN_SECRET=%s\n' "$(openssl rand -hex 32)" > "$DEV_TOKEN_ENV"
+    )
 fi
 
 # --- Replace the container ---
