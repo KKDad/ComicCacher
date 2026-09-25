@@ -1,5 +1,13 @@
 # ComicCacher TODO
 
+## Refresh expired sessions on page load
+
+- The access token lasts 15 minutes (`jwt.expiration=900000`). Once it expires, any full page load sends the user to `/login`, even with a valid 24-hour refresh token
+- `getSession()` in `comic-hub/src/lib/auth/session.ts` only sends the access cookie to `me` and returns null when it's rejected. The `(dashboard)` and `(reader)` layouts then `redirect('/login')`. Only `/api/graphql` refreshes on 401, so client requests recover but server renders don't
+- Found while testing on dev 2026-09-25: reloading the reader after 15 minutes landed on the login page
+- Fix: when `me` is rejected and a refresh cookie exists, refresh in `getSession()` (reuse the `/api/graphql` refresh logic) and set the new cookies. Server components can't set cookies, so this likely belongs in `proxy.ts` or a route handler. Honour the remember-me cookie as the refresh path does, and add tests for expired-access / valid-refresh
+- Priority: High
+
 ## Fix startup catch-up jobs blocking readiness
 
 - `StartupJobRunner` runs any daily job that missed its time today on the main thread, inside the `ApplicationReadyEvent` listener
