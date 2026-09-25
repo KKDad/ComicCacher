@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PreferencesPage from './page';
 import {
@@ -50,7 +50,8 @@ describe('PreferencesPage', () => {
     expect(screen.getByText('Appearance')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Reading')).toBeInTheDocument();
-    expect(screen.getByText('Display')).toBeInTheDocument();
+    // Comics-per-page and default-zoom were never read by any page, so they're gone.
+    expect(screen.queryByText('Display')).not.toBeInTheDocument();
   });
 
   it('renders theme toggle buttons', () => {
@@ -66,9 +67,9 @@ describe('PreferencesPage', () => {
 
     expect(screen.getByText('Continue Reading')).toBeInTheDocument();
     // "Favorites" appears as both a dashboard switch label and a reader button
-    const switches = screen.getAllByRole('switch');
-    expect(switches).toHaveLength(3);
-    expect(screen.getByText('Recently Added')).toBeInTheDocument();
+    expect(screen.getAllByRole('switch')).toHaveLength(3);
+    expect(screen.getByRole('switch', { name: 'Latest Updates' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Continue Reading' })).toHaveAccessibleDescription('Show your most recently read comic');
   });
 
   it('updates store when theme button is clicked', async () => {
@@ -95,8 +96,6 @@ describe('PreferencesPage', () => {
     expect(calledWith).toHaveProperty('showContinueReading');
     expect(calledWith).toHaveProperty('showFavorites');
     expect(calledWith).toHaveProperty('showRecentlyAdded');
-    expect(calledWith).toHaveProperty('comicsPerPage');
-    expect(calledWith).toHaveProperty('defaultZoom');
   });
 
   it('shows loading state when not hydrated', () => {
@@ -201,13 +200,14 @@ describe('PreferencesPage', () => {
     });
   });
 
-  it('renders comics per page and zoom selects', () => {
+  it('marks the selected option in each toggle group', () => {
     renderWithQuery(<PreferencesPage />);
 
-    const comboboxes = screen.getAllByRole('combobox');
-    expect(comboboxes).toHaveLength(2);
-    expect(screen.getByText('Comics per page')).toBeInTheDocument();
-    expect(screen.getByText('Default zoom')).toBeInTheDocument();
+    const theme = screen.getByRole('group', { name: 'Theme' });
+    expect(within(theme).getByRole('button', { name: /system/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(theme).getByRole('button', { name: /dark/i })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('group', { name: 'Reading list' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Scroll order' })).toBeInTheDocument();
   });
 
   it('toggles favorites switch', async () => {

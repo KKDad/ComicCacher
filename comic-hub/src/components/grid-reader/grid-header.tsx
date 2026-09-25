@@ -6,6 +6,11 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DatePickerPopover } from '@/components/reader/date-picker-popover';
 import { formatFullDate } from '@/lib/date-utils';
 
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 interface GridHeaderProps {
   date: string;
   onPreviousDate: () => void;
@@ -55,7 +60,7 @@ export function GridHeader({ date, onPreviousDate, onNextDate, onSelectDate, onT
 
       <DatePickerPopover
         oldest={null}
-        newest={null}
+        newest={todayIso()}
         currentDate={date}
         onSelectDate={onSelectDate}
       />

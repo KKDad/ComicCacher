@@ -1,13 +1,13 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { EmptyState } from '@/components/ui/empty-state';
-import { formatRelativeTime } from '@/lib/date-utils';
+import { formatMediumDate } from '@/lib/date-utils';
 
 interface LastRead {
   comic: {
@@ -24,7 +24,7 @@ interface ContinueReadingProps {
 }
 
 export function ContinueReading({ lastRead = null, isLoading = false }: ContinueReadingProps) {
-  const timeAgo = lastRead ? formatRelativeTime(lastRead.date) : '';
+  const readUpTo = lastRead ? formatMediumDate(lastRead.date) : '';
 
   if (isLoading) {
     return (
@@ -72,15 +72,20 @@ export function ContinueReading({ lastRead = null, isLoading = false }: Continue
           <div className="aspect-[3/4] bg-canvas rounded-lg mb-4 overflow-hidden">
             <ImageWithFallback
               src={lastRead.comic.lastStrip?.imageUrl}
-              alt={lastRead.comic.name}
+              alt=""
               fallbackText={lastRead.comic.name[0]}
             />
           </div>
-          <CardTitle className="text-lg mb-1">{lastRead.comic.name}</CardTitle>
-          <CardDescription>Last read: {timeAgo}</CardDescription>
-          <Link href={`/comics/${lastRead.comic.id}/read?date=${lastRead.date}`}>
-            <Button className="w-full mt-4">Continue Reading</Button>
-          </Link>
+          <h3 className="font-sans text-lg font-semibold mb-1">{lastRead.comic.name}</h3>
+          <CardDescription>Read up to {readUpTo}</CardDescription>
+          <Button asChild className="w-full mt-4">
+            <Link
+              href={`/comics/${lastRead.comic.id}/read?date=${lastRead.date}`}
+              aria-label={`Continue reading ${lastRead.comic.name}`}
+            >
+              Continue reading
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     </section>

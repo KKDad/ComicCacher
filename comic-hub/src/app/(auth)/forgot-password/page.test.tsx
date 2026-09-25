@@ -2,20 +2,31 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ForgotPasswordPage from './page';
 
+function ok() {
+  return new Response(JSON.stringify({ ok: true }));
+}
+
 describe('ForgotPasswordPage', () => {
-  it('renders email field', () => {
+  beforeEach(() => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(ok());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function submit(email = 'test@example.com') {
+    const user = userEvent.setup();
     render(<ForgotPasswordPage />);
+    await user.type(screen.getByLabelText(/email/i), email);
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
+    return user;
+  }
+
+  it('renders a single page heading and the email field', () => {
+    render(<ForgotPasswordPage />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Reset your password' })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-  });
-
-  it('renders send button', () => {
-    render(<ForgotPasswordPage />);
-    expect(screen.getByRole('button', { name: /send reset instructions/i })).toBeInTheDocument();
-  });
-
-  it('disables submit when email is empty', () => {
-    render(<ForgotPasswordPage />);
-    expect(screen.getByRole('button', { name: /send reset instructions/i })).toBeDisabled();
   });
 
   it('has link back to sign in', () => {
@@ -23,77 +34,62 @@ describe('ForgotPasswordPage', () => {
     expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/login');
   });
 
-  it('shows success view after submit', async () => {
+  it('explains an empty email instead of disabling submit', async () => {
     const user = userEvent.setup();
     render(<ForgotPasswordPage />);
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
+    expect(await screen.findByText('Email is required')).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-
+  it('posts the email to /api/forgot-password', async () => {
+    await submit();
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /send reset instructions/i })).not.toBeDisabled();
-    });
-
-    await user.click(screen.getByRole('button', { name: /send reset instructions/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Check your email')).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith('/api/forgot-password', expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ email: 'test@example.com' }),
+      }));
     });
   });
 
-  it('shows "try again" button on success view', async () => {
-    const user = userEvent.setup();
-    render(<ForgotPasswordPage />);
-
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /send reset instructions/i })).not.toBeDisabled();
-    });
-
-    await user.click(screen.getByRole('button', { name: /send reset instructions/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('try again')).toBeInTheDocument();
-    });
+  it('shows a non-committal success view after the request succeeds', async () => {
+    await submit();
+    expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
+    expect(screen.getByText(/If an account uses test@example.com/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /return to sign in/i })).toHaveAttribute('href', '/login');
   });
 
-  it('returns to form when "try again" is clicked', async () => {
-    const user = userEvent.setup();
-    render(<ForgotPasswordPage />);
-
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /send reset instructions/i })).not.toBeDisabled();
-    });
-
-    await user.click(screen.getByRole('button', { name: /send reset instructions/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('try again')).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByText('try again'));
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    });
+  it('returns to the form from the success view', async () => {
+    const user = await submit();
+    await user.click(await screen.findByRole('button', { name: /try a different email/i }));
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
 
-  it('shows "Return to sign in" link on success', async () => {
-    const user = userEvent.setup();
-    render(<ForgotPasswordPage />);
+  it('shows the server error when the request fails', async () => {
+    vi.mocked(global.fetch).mockResolvedValue(
+      new Response(JSON.stringify({ error: 'Could not send reset email. Please try again later.' }), { status: 502 }),
+    );
+    await submit();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not send reset email');
+    expect(screen.queryByText('Check your email')).not.toBeInTheDocument();
+  });
 
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+  it('falls back to a generic error when the server gives none', async () => {
+    vi.mocked(global.fetch).mockResolvedValue(new Response(JSON.stringify({}), { status: 500 }));
+    await submit();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not send reset email');
+  });
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /send reset instructions/i })).not.toBeDisabled();
-    });
+  it('shows a network error when fetch throws', async () => {
+    vi.mocked(global.fetch).mockRejectedValue(new Error('offline'));
+    await submit();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
+  });
 
-    await user.click(screen.getByRole('button', { name: /send reset instructions/i }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('link', { name: /return to sign in/i })).toHaveAttribute('href', '/login');
-    });
+  it('dismisses the error banner', async () => {
+    vi.mocked(global.fetch).mockRejectedValue(new Error('offline'));
+    const user = await submit();
+    await user.click(await screen.findByRole('button', { name: /dismiss error/i }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

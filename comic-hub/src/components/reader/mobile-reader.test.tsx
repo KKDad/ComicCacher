@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MobileReader } from './mobile-reader';
 import type { useReader } from '@/hooks/use-reader';
@@ -128,17 +128,34 @@ describe('MobileReader', () => {
   it('toggles controls visibility on click', async () => {
     const { container } = render(<MobileReader comicId={1} reader={createMockReader()} />);
 
-    // Controls start hidden (opacity-0)
+    // Controls start visible so readers discover them
     const overlay = container.querySelector('.pointer-events-none');
-    expect(overlay?.className).toContain('opacity-0');
-
-    // Click content area to toggle controls
-    const contentArea = container.querySelector('.flex-1.flex');
-    if (contentArea) {
-      await userEvent.click(contentArea);
-    }
-
     expect(overlay?.className).toContain('opacity-100');
+    expect(overlay).not.toHaveAttribute('inert');
+
+    const contentArea = container.querySelector('.flex-1.flex')!;
+    await userEvent.click(contentArea);
+    expect(overlay?.className).toContain('opacity-0');
+    // Hidden controls must not take taps or focus
+    expect(overlay).toHaveAttribute('inert');
+
+    await userEvent.click(contentArea);
+    expect(overlay?.className).toContain('opacity-100');
+  });
+
+  it('auto-hides the initial controls after a few seconds', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<MobileReader comicId={1} reader={createMockReader()} />);
+      const overlay = container.querySelector('.pointer-events-none');
+      expect(overlay?.className).toContain('opacity-100');
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(overlay?.className).toContain('opacity-0');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders Go back button in controls overlay', async () => {
@@ -192,12 +209,7 @@ describe('MobileReader', () => {
   it('dismisses controls on Escape key', async () => {
     const { container } = render(<MobileReader comicId={1} reader={createMockReader()} />);
 
-    // Show controls
-    const contentArea = container.querySelector('.flex-1.flex');
-    if (contentArea) {
-      await userEvent.click(contentArea);
-    }
-
+    // Controls start visible
     const overlay = container.querySelector('.pointer-events-none');
     expect(overlay?.className).toContain('opacity-100');
 
@@ -257,15 +269,15 @@ describe('MobileReader', () => {
     const { container } = render(<MobileReader comicId={1} reader={createMockReader()} />);
 
     const overlay = container.querySelector('.pointer-events-none');
-    expect(overlay?.className).toContain('opacity-0');
+    expect(overlay?.className).toContain('opacity-100');
 
     const contentArea = container.querySelector('.flex-1.flex');
     if (contentArea) {
       await userEvent.click(contentArea);
     }
 
-    // Controls should remain hidden when zoomed
-    expect(overlay?.className).toContain('opacity-0');
+    // A tap while zoomed doesn't toggle the controls
+    expect(overlay?.className).toContain('opacity-100');
   });
 
   it('passes undefined swipe handlers when zoomed', () => {
@@ -579,9 +591,10 @@ describe('MobileReader', () => {
     vi.useRealTimers();
   });
 
-  it('does not dismiss controls on Escape when already hidden', () => {
+  it('does not dismiss controls on Escape when already hidden', async () => {
     const { container } = render(<MobileReader comicId={1} reader={createMockReader()} />);
 
+    await userEvent.click(container.querySelector('.flex-1.flex')!);
     const overlay = container.querySelector('.pointer-events-none');
     expect(overlay?.className).toContain('opacity-0');
 

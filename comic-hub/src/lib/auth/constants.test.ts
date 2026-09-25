@@ -17,5 +17,6 @@ describe('auth constants', () => {
     expect(PUBLIC_PATHS).toContain('/login');
     expect(PUBLIC_PATHS).toContain('/register');
     expect(PUBLIC_PATHS).toContain('/forgot-password');
+    expect(PUBLIC_PATHS).toContain('/reset-password');
   });
 });

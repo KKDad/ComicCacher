@@ -68,7 +68,7 @@ export function MobileGridReader({ reader }: MobileGridReaderProps) {
             <StripSkeleton className="bg-card rounded-lg p-4" />
           </div>
         ) : comics.length === 0 ? (
-          <div className="flex items-center justify-center h-[50vh] text-ink-muted text-sm">
+          <div className="flex items-center justify-center h-[50vh] text-ink-subtle text-sm">
             No comics to display.
           </div>
         ) : (

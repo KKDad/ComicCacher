@@ -1,12 +1,16 @@
 import { renderHook } from '@testing-library/react';
 import { useReadingList } from './use-reading-list';
-import { useGetComicsQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
+import { useGetUserPreferencesQuery } from '@/generated/graphql';
+import { useAllComics } from '@/hooks/use-all-comics';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { useRouter } from 'next/navigation';
 
 vi.mock('@/generated/graphql', () => ({
-  useGetComicsQuery: vi.fn(),
   useGetUserPreferencesQuery: vi.fn(),
+}));
+
+vi.mock('@/hooks/use-all-comics', () => ({
+  useAllComics: vi.fn(),
 }));
 
 const mockPush = vi.fn();
@@ -33,15 +37,10 @@ describe('useReadingList', () => {
     lastReadDates: Array<{ comicId: number; date: string }> = [],
     favoriteComics: number[] = [],
   ) {
-    vi.mocked(useGetComicsQuery).mockReturnValue({
-      data: {
-        comics: {
-          edges: comics.map((c) => ({
-            node: { ...c, avatarUrl: c.avatarUrl ?? null, newest: c.newest ?? null },
-          })),
-        },
-      },
+    vi.mocked(useAllComics).mockReturnValue({
+      comics: comics.map((c) => ({ ...c, avatarUrl: c.avatarUrl ?? null, newest: c.newest ?? null })),
       isLoading: false,
+      error: null,
     } as any);
 
     vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
@@ -148,7 +147,7 @@ describe('useReadingList', () => {
   });
 
   it('returns loading true when queries are loading', () => {
-    vi.mocked(useGetComicsQuery).mockReturnValue({ data: null, isLoading: true } as any);
+    vi.mocked(useAllComics).mockReturnValue({ comics: [], isLoading: true, error: null } as any);
     vi.mocked(useGetUserPreferencesQuery).mockReturnValue({ data: null, isLoading: true } as any);
 
     const { result } = renderHook(() => useReadingList(1));
@@ -157,7 +156,7 @@ describe('useReadingList', () => {
   });
 
   it('returns empty list when no data', () => {
-    vi.mocked(useGetComicsQuery).mockReturnValue({ data: null, isLoading: false } as any);
+    vi.mocked(useAllComics).mockReturnValue({ comics: [], isLoading: false, error: null } as any);
     vi.mocked(useGetUserPreferencesQuery).mockReturnValue({ data: null, isLoading: false } as any);
 
     const { result } = renderHook(() => useReadingList(1));

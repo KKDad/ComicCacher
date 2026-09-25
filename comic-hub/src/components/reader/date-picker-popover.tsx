@@ -47,7 +47,7 @@ export function DatePickerPopover({
           aria-label="Pick a date"
           className="text-ink-subtle hover:text-ink hover:bg-muted"
         >
-          <CalendarDays className="h-4 w-4" />
+          <CalendarDays className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 bg-card border-border" align="center">
@@ -58,6 +58,10 @@ export function DatePickerPopover({
           defaultMonth={selectedDate}
           startMonth={fromDate}
           endMonth={toDate}
+          disabled={[
+            ...(fromDate ? [{ before: fromDate }] : []),
+            ...(toDate ? [{ after: toDate }] : []),
+          ]}
           className="text-ink"
         />
       </PopoverContent>

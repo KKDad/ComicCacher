@@ -2,17 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  BookOpen,
-  Newspaper,
-  BarChart3,
-  RefreshCw,
-  Code,
-  Settings,
-  LogOut,
-  Cog,
-} from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isOperator } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
@@ -24,20 +14,30 @@ import {
 } from '@/components/ui/tooltip';
 import { useLogout } from '@/hooks/use-auth';
 import { useUser } from '@/contexts/user-context';
+import { baseNavItems, operationsNavItems, isNavActive, type NavItem } from './nav-items';
 
-const baseNavItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/read', label: 'Daily Reader', icon: Newspaper },
-  { href: '/comics', label: 'Comics List', icon: BookOpen },
-  { href: '/api', label: 'API', icon: Code },
-  { href: '/preferences', label: 'Preferences', icon: Settings },
-];
-
-const operationsNavItems = [
-  { href: '/metrics', label: 'Metrics', icon: BarChart3 },
-  { href: '/retrieval-status', label: 'Retrieval Status', icon: RefreshCw },
-  { href: '/batch-jobs', label: 'Batch Jobs', icon: Cog },
-];
+function RailLink({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          asChild
+          variant="ghost"
+          className={cn(
+            'w-full h-12 justify-center',
+            active && 'bg-primary-subtle text-primary hover:bg-primary-subtle hover:text-primary',
+          )}
+        >
+          <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined}>
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          </Link>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{item.label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 export function NavRail() {
   const pathname = usePathname();
@@ -45,48 +45,26 @@ export function NavRail() {
   const user = useUser();
   const showOperations = isOperator(user?.roles ?? []);
 
-  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) => {
-    const Icon = item.icon;
-    const isActive = pathname === item.href;
-
-    return (
-      <Tooltip key={item.href}>
-        <TooltipTrigger asChild>
-          <Link href={item.href}>
-            <Button
-              variant={isActive ? 'secondary' : 'ghost'}
-              size="sm"
-              className={cn(
-                'w-full h-12 justify-center',
-                isActive && 'bg-primary-subtle text-primary'
-              )}
-            >
-              <Icon className="h-5 w-5" />
-            </Button>
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent side="right">
-          <p>{item.label}</p>
-        </TooltipContent>
-      </Tooltip>
-    );
-  };
-
   return (
-    <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100vh-var(--header-height))] w-[var(--sidebar-collapsed)] bg-surface border-r border-border flex flex-col">
+    <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100dvh-var(--header-height))] w-[var(--sidebar-collapsed)] bg-surface border-r border-border flex flex-col">
       <TooltipProvider delayDuration={0}>
-        <nav className="flex-1 overflow-y-auto p-2">
-          <div className="space-y-1">
-            {baseNavItems.map(renderNavItem)}
-          </div>
+        <nav aria-label="Main" className="flex-1 overflow-y-auto p-2">
+          <ul className="space-y-1">
+            {baseNavItems.map((item) => (
+              <li key={item.href}>
+                <RailLink item={item} active={isNavActive(pathname, item.href)} />
+              </li>
+            ))}
+          </ul>
 
           {showOperations && (
-            <>
-              <div className="my-2 border-t border-border" />
-              <div className="space-y-1">
-                {operationsNavItems.map(renderNavItem)}
-              </div>
-            </>
+            <ul aria-label="Operations" className="space-y-1 mt-2 pt-2 border-t border-border">
+              {operationsNavItems.map((item) => (
+                <li key={item.href}>
+                  <RailLink item={item} active={isNavActive(pathname, item.href)} />
+                </li>
+              ))}
+            </ul>
           )}
         </nav>
 
@@ -95,17 +73,15 @@ export function NavRail() {
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
                 className="w-full h-12 justify-center text-error hover:text-error hover:bg-error-subtle"
                 onClick={logout}
                 disabled={isLoggingOut}
+                aria-label="Sign out"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-5 w-5" aria-hidden="true" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Logout</p>
-            </TooltipContent>
+            <TooltipContent side="right">Sign out</TooltipContent>
           </Tooltip>
         </div>
       </TooltipProvider>

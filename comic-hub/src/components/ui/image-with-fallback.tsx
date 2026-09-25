@@ -16,6 +16,8 @@ export function ImageWithFallback({ src, alt, fallbackText, fit = 'cover', class
       <img
         src={src}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className={cn(`w-full h-full object-${fit}`, className)}
       />
     );

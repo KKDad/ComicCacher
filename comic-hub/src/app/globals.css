@@ -20,32 +20,34 @@
   --color-surface-overlay: rgba(0, 0, 0, 0.5);
 
   /* Text Colors */
+  /* ink-subtle and ink-muted both clear WCAG AA (4.5:1) on canvas and surface */
   --color-ink: #1F2937;
-  --color-ink-subtle: #6B7280;
-  --color-ink-muted: #9CA3AF;
+  --color-ink-subtle: #4B5563;
+  --color-ink-muted: #6B7280;
   --color-ink-inverse: #FFFFFF;
 
-  /* Primary (Comic Blue) */
-  --color-primary: #3EAEFF;
-  --color-primary-hover: #2A75B1;
-  --color-primary-active: #1E5A8A;
+  /* Primary (Comic Blue). #3EAEFF is only 2.4:1 against white, so light mode
+     uses a deeper shade that holds 4.5:1 for text and for white-on-primary. */
+  --color-primary: #0F6FB5;
+  --color-primary-hover: #0B5C96;
+  --color-primary-active: #094A78;
   --color-primary-subtle: rgba(62, 174, 255, 0.1);
 
   /* Semantic Colors */
-  --color-success: #22C55E;
+  --color-success: #15803D;
   --color-success-subtle: rgba(34, 197, 94, 0.1);
   --color-warning: #F59E0B;
   --color-warning-subtle: rgba(245, 158, 11, 0.1);
-  --color-error: #EF4444;
-  --color-error-subtle: rgba(239, 68, 68, 0.1);
+  --color-error: #DC2626;
+  --color-error-subtle: rgba(220, 38, 38, 0.1);
   --color-info: #3B82F6;
   --color-info-subtle: rgba(59, 130, 246, 0.1);
 
   /* Borders */
   --color-border: #E5E7EB;
   --color-border-subtle: #F3F4F6;
-  --color-border-focus: #3EAEFF;
-  --color-border-error: #EF4444;
+  --color-border-focus: #0F6FB5;
+  --color-border-error: #DC2626;
 
   /* shadcn mappings */
   --background: var(--color-canvas);
@@ -152,8 +154,8 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --shadow-focus: 0 0 0 3px rgba(62, 174, 255, 0.4);
-  --shadow-error: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  --shadow-focus: 0 0 0 3px rgba(15, 111, 181, 0.4);
+  --shadow-error: 0 0 0 3px rgba(220, 38, 38, 0.3);
 
   /* ===================================
      TRANSITIONS & ANIMATIONS
@@ -213,7 +215,7 @@
 
   --color-ink: #F9FAFB;
   --color-ink-subtle: #9CA3AF;
-  --color-ink-muted: #6B7280;
+  --color-ink-muted: #8B93A1;
   --color-ink-inverse: #1F2937;
 
   --color-primary: #60A5FA;
@@ -224,6 +226,10 @@
   --color-border: #374151;
   --color-border-subtle: #1F2937;
   --color-border-focus: #60A5FA;
+
+  --color-error: #F87171;
+  --color-error-subtle: rgba(248, 113, 113, 0.15);
+  --color-success: #22C55E;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
@@ -284,7 +290,16 @@
   --color-ink-subtle: var(--color-ink-subtle);
   --color-ink-muted: var(--color-ink-muted);
   --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-active: var(--color-primary-active);
+  --color-primary-subtle: var(--color-primary-subtle);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-border-subtle: var(--color-border-subtle);
   --color-success: var(--color-success);
+  --color-success-subtle: var(--color-success-subtle);
+  --color-warning-subtle: var(--color-warning-subtle);
+  --color-error-subtle: var(--color-error-subtle);
+  --color-info-subtle: var(--color-info-subtle);
   --color-warning: var(--color-warning);
   --color-error: var(--color-error);
   --color-info: var(--color-info);
@@ -349,6 +364,7 @@
   --z-index-modal: 500;
   --z-index-popover: 600;
   --z-index-tooltip: 700;
+  --z-index-toast: 800;
 }
 
 @layer base {

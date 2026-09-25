@@ -3,7 +3,8 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { keepPreviousData } from '@tanstack/react-query';
-import { useGetComicsQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
+import { useGetUserPreferencesQuery } from '@/generated/graphql';
+import { useAllComics } from '@/hooks/use-all-comics';
 import { usePreferencesStore } from '@/stores/preferences-store';
 
 interface ReadingListComic {
@@ -27,10 +28,7 @@ export function useReadingList(currentComicId: number): UseReadingListReturn {
   const router = useRouter();
   const navMode = usePreferencesStore((s) => s.settings.readerNavMode);
 
-  const { data: comicsData, isLoading: comicsLoading } = useGetComicsQuery(
-    { first: 200 },
-    { staleTime: 5 * 60 * 1000, placeholderData: keepPreviousData },
-  );
+  const { comics: allComics, isLoading: comicsLoading } = useAllComics();
 
   const { data: prefsData, isLoading: prefsLoading } = useGetUserPreferencesQuery(
     undefined,
@@ -38,7 +36,7 @@ export function useReadingList(currentComicId: number): UseReadingListReturn {
   );
 
   const comics = useMemo(() => {
-    if (!comicsData?.comics?.edges || !prefsData?.preferences) return [];
+    if (comicsLoading || !prefsData?.preferences) return [];
 
     const favorites = new Set(prefsData.preferences.favoriteComics ?? []);
     const lastReadMap = new Map<number, string>();
@@ -46,9 +44,8 @@ export function useReadingList(currentComicId: number): UseReadingListReturn {
       lastReadMap.set(lr.comicId, lr.date);
     }
 
-    const allComics: ReadingListComic[] = comicsData.comics.edges
-      .map((edge) => {
-        const node = edge.node;
+    const list: ReadingListComic[] = allComics
+      .map((node) => {
         const lastRead = lastReadMap.get(node.id) ?? null;
         return {
           id: node.id,
@@ -62,10 +59,10 @@ export function useReadingList(currentComicId: number): UseReadingListReturn {
       .sort((a, b) => a.name.localeCompare(b.name));
 
     if (navMode === 'favorites') {
-      return allComics.filter((c) => favorites.has(c.id));
+      return list.filter((c) => favorites.has(c.id));
     }
-    return allComics;
-  }, [comicsData, prefsData, navMode]);
+    return list;
+  }, [allComics, comicsLoading, prefsData, navMode]);
 
   const currentIdx = comics.findIndex((c) => c.id === currentComicId);
   const previousComic = currentIdx > 0 ? comics[currentIdx - 1] : null;

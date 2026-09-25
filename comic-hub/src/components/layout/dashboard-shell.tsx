@@ -15,7 +15,13 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <Header showMenuButton={layout === 'mobile'} />
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-toast focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:shadow-lg focus:text-primary"
+      >
+        Skip to content
+      </a>
+      <Header />
 
       {/* Desktop Sidebar */}
       {layout === 'desktop' && <Sidebar />}
@@ -25,7 +31,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
       {/* Main content */}
       <main
-        className={`
+        id="main-content"
+        tabIndex={-1}
+        className={`outline-none
           relative z-0
           pt-[var(--header-height)]
           ${layout === 'desktop' ? 'pl-[var(--sidebar-width)]' : ''}

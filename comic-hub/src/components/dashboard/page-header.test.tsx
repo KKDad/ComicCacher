@@ -82,6 +82,6 @@ describe('PageHeader', () => {
   it('displays subtitle text', () => {
     vi.setSystemTime(new Date('2024-01-15T10:00:00'));
     render(<PageHeader displayName="User" />);
-    expect(screen.getByText("Here's what's happening with your comics today")).toBeInTheDocument();
+    expect(screen.getByText("Here's what's new in your comics")).toBeInTheDocument();
   });
 });

@@ -34,12 +34,12 @@ describe('ContinueReading', () => {
 
   it('renders comic name when lastRead is provided', () => {
     render(<ContinueReading lastRead={lastRead} />);
-    expect(screen.getByText('Garfield')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Garfield' })).toBeInTheDocument();
   });
 
   it('renders strip image when available', () => {
     render(<ContinueReading lastRead={lastRead} />);
-    const img = screen.getByAltText('Garfield');
+    const img = screen.getByRole('presentation');
     expect(img).toHaveAttribute('src', 'https://example.com/strip.png');
   });
 
@@ -52,22 +52,9 @@ describe('ContinueReading', () => {
     expect(screen.getByText('G')).toBeInTheDocument();
   });
 
-  it('shows "just now" for same-time reads', () => {
-    const justNow = { ...lastRead, date: '2024-01-15T12:00:00Z' };
-    render(<ContinueReading lastRead={justNow} />);
-    expect(screen.getByText('Last read: just now')).toBeInTheDocument();
-  });
-
-  it('shows "1 day ago" for yesterday', () => {
-    const yesterday = { ...lastRead, date: '2024-01-14' };
-    render(<ContinueReading lastRead={yesterday} />);
-    expect(screen.getByText('Last read: 1 day ago')).toBeInTheDocument();
-  });
-
-  it('shows "N days ago" for older dates', () => {
-    const old = { ...lastRead, date: '2024-01-10' };
-    render(<ContinueReading lastRead={old} />);
-    expect(screen.getByText('Last read: 5 days ago')).toBeInTheDocument();
+  it('shows the strip date the reader has reached', () => {
+    render(<ContinueReading lastRead={{ ...lastRead, date: '2024-01-10' }} />);
+    expect(screen.getByText('Read up to Jan 10, 2024')).toBeInTheDocument();
   });
 
   it('links to the correct comic strip page', () => {

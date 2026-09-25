@@ -37,9 +37,9 @@ describe('preferences-store', () => {
       const { settings, isHydrated } = usePreferencesStore.getState();
       expect(isHydrated).toBe(true);
       expect(settings.theme).toBe('dark');
-      expect(settings.comicsPerPage).toBe(48);
+      // Keys the UI no longer uses survive, so saving doesn't erase them server-side.
+      expect((settings as unknown as Record<string, unknown>).comicsPerPage).toBe(48);
       expect(settings.showContinueReading).toBe(true);
-      expect(settings.defaultZoom).toBe(100);
     });
 
     it('uses all defaults when server data is null', () => {
@@ -90,11 +90,11 @@ describe('preferences-store', () => {
       hydrate({});
 
       const { setSettings } = usePreferencesStore.getState();
-      setSettings({ showFavorites: false, defaultZoom: 150 });
+      setSettings({ showFavorites: false, readerNavMode: 'all' });
 
       const { settings } = usePreferencesStore.getState();
       expect(settings.showFavorites).toBe(false);
-      expect(settings.defaultZoom).toBe(150);
+      expect(settings.readerNavMode).toBe('all');
       expect(settings.showContinueReading).toBe(true);
     });
 
@@ -117,7 +117,7 @@ describe('preferences-store', () => {
       mockClassList.add.mockClear();
 
       const { setSettings } = usePreferencesStore.getState();
-      setSettings({ comicsPerPage: 96 });
+      setSettings({ showFavorites: false });
 
       expect(mockClassList.remove).not.toHaveBeenCalled();
     });

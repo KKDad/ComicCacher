@@ -74,6 +74,9 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
   // Keyboard navigation (bubble phase — lightbox captures first if open)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Popovers, menus and the calendar mark the keys they handle (e.g. the
+      // Escape that closes them); modifier combos belong to the browser.
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       switch (e.key) {
@@ -128,7 +131,7 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
               <StripSkeleton className="bg-card rounded-lg p-4" />
             </div>
           ) : comics.length === 0 ? (
-            <div className="flex items-center justify-center h-[50vh] text-ink-muted text-sm">
+            <div className="flex items-center justify-center h-[50vh] text-ink-subtle text-sm">
               No comics to display. Check your favorites or subscription settings.
             </div>
           ) : (

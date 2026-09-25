@@ -5,9 +5,22 @@
  * Never assume a timezone — let the browser handle it via toLocaleString().
  */
 
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Parses an ISO string, reading a bare `YYYY-MM-DD` (a strip date) as that
+ * calendar day in local time. `new Date('2026-03-18')` is UTC midnight, which
+ * renders as March 17 anywhere west of Greenwich.
+ */
+export function parseDate(dateStr: string): Date {
+  const m = DATE_ONLY.exec(dateStr);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(dateStr);
+}
+
 /** "Mar 18" — compact date for cards and lists. */
 export function formatShortDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return parseDate(dateStr).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   });
@@ -15,11 +28,20 @@ export function formatShortDate(dateStr: string): string {
 
 /** "Wed, March 18, 2026" — full date for reader strips. */
 export function formatFullDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return parseDate(dateStr).toLocaleDateString('en-US', {
     weekday: 'short',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+  });
+}
+
+/** "Mar 18, 2026" — medium date for captions. */
+export function formatMediumDate(dateStr: string): string {
+  return parseDate(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
 }
 

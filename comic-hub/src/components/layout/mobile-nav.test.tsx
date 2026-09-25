@@ -4,6 +4,7 @@ import { MobileNav } from './mobile-nav';
 import { usePathname } from 'next/navigation';
 import { useLogout } from '@/hooks/use-auth';
 import { useUser } from '@/contexts/user-context';
+import { createMockUser } from '@/test/test-utils';
 
 vi.mock('@/hooks/use-auth', () => ({
   useLogout: vi.fn(),
@@ -26,80 +27,55 @@ describe('MobileNav', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders bottom nav items', () => {
+  it('renders the three bottom bar links with short labels', () => {
     render(<MobileNav />);
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Comics')).toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(3);
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Daily' })).toHaveAttribute('href', '/read');
+    expect(screen.getByRole('link', { name: 'Comics' })).toHaveAttribute('href', '/comics');
   });
 
-  it('does not show Metrics in bottom nav', () => {
+  it('marks the current page with aria-current', () => {
+    vi.mocked(usePathname).mockReturnValue('/comics/3');
     render(<MobileNav />);
-    // Metrics is no longer in the bottom bar — it's in the operations menu
-    const bottomLinks = screen.getAllByRole('link');
-    expect(bottomLinks).toHaveLength(3);
+    expect(screen.getByRole('link', { name: 'Comics' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
 
-  it('renders More button', () => {
+  it('opens the More sheet with preferences and no API link', async () => {
     render(<MobileNav />);
-    expect(screen.getByText('More')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(screen.getByRole('link', { name: 'Preferences' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'API' })).not.toBeInTheDocument();
   });
 
-  it('opens sheet with base menu items', async () => {
+  it('does not show operations for USER role', async () => {
+    vi.mocked(useUser).mockReturnValue(createMockUser({ roles: ['USER'] }));
     render(<MobileNav />);
-    await userEvent.click(screen.getByText('More'));
-    expect(screen.getByText('Menu')).toBeInTheDocument();
-    expect(screen.getByText('API')).toBeInTheDocument();
-    expect(screen.getByText('Preferences')).toBeInTheDocument();
-  });
-
-  it('does not show operations items for USER role', async () => {
-    vi.mocked(useUser).mockReturnValue({ username: 'user', email: 'u@test.com', displayName: 'User', roles: ['USER'], created: '2026-01-01' });
-    render(<MobileNav />);
-    await userEvent.click(screen.getByText('More'));
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(screen.queryByText('Operations')).not.toBeInTheDocument();
-    expect(screen.queryByText('Metrics')).not.toBeInTheDocument();
-    expect(screen.queryByText('Retrieval Status')).not.toBeInTheDocument();
-    expect(screen.queryByText('Batch Jobs')).not.toBeInTheDocument();
   });
 
-  it('shows operations items for OPERATOR role', async () => {
-    vi.mocked(useUser).mockReturnValue({ username: 'operator', email: 'o@test.com', displayName: 'Operator', roles: ['USER', 'OPERATOR'], created: '2026-01-01' });
+  it('shows operations for OPERATOR role', async () => {
+    vi.mocked(useUser).mockReturnValue(createMockUser({ roles: ['OPERATOR'] }));
     render(<MobileNav />);
-    await userEvent.click(screen.getByText('More'));
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(screen.getByText('Operations')).toBeInTheDocument();
-    expect(screen.getByText('Metrics')).toBeInTheDocument();
-    expect(screen.getByText('Retrieval Status')).toBeInTheDocument();
-    expect(screen.getByText('Batch Jobs')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Metrics' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Batch Jobs' })).toBeInTheDocument();
   });
 
-  it('renders logout button in sheet menu', async () => {
+  it('closes the sheet when a menu link is clicked', async () => {
     render(<MobileNav />);
-    await userEvent.click(screen.getByText('More'));
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Preferences' }));
+    expect(screen.queryByRole('link', { name: 'Preferences' })).not.toBeInTheDocument();
   });
 
-  it('calls logout when logout is clicked in sheet', async () => {
+  it('calls logout from the sheet', async () => {
     render(<MobileNav />);
-    await userEvent.click(screen.getByText('More'));
-    await userEvent.click(screen.getByText('Logout'));
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(mockLogout).toHaveBeenCalledOnce();
-  });
-
-  it('closes sheet when a base menu item is clicked', async () => {
-    render(<MobileNav />);
-    await userEvent.click(screen.getByText('More'));
-    expect(screen.getByText('Menu')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('API'));
-    // Sheet header should no longer be visible after clicking an item
-    expect(screen.queryByText('Menu')).not.toBeInTheDocument();
-  });
-
-  it('closes sheet when an operations menu item is clicked', async () => {
-    vi.mocked(useUser).mockReturnValue({ username: 'op', email: 'o@test.com', displayName: 'Op', roles: ['USER', 'OPERATOR'], created: '2026-01-01' });
-    render(<MobileNav />);
-    await userEvent.click(screen.getByText('More'));
-    expect(screen.getByText('Operations')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('Metrics'));
-    expect(screen.queryByText('Menu')).not.toBeInTheDocument();
   });
 });

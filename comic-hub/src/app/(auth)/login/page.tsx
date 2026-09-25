@@ -9,10 +9,13 @@ import { Loader2 } from 'lucide-react';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { AuthHeader } from '@/components/auth/auth-header';
 import { ErrorBanner } from '@/components/auth/error-banner';
+import { safeRedirectPath } from '@/lib/safe-redirect';
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -22,7 +25,7 @@ function LoginForm() {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onChange',
+    mode: 'onTouched',
     defaultValues: {
       username: '',
       password: '',
@@ -30,10 +33,9 @@ function LoginForm() {
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isValid }, watch } = form;
+  const { register, handleSubmit, formState: { errors }, watch } = form;
 
-  const watchedFields = watch();
-  const hasInput = watchedFields.username && watchedFields.password;
+  const rememberMe = watch('rememberMe');
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
@@ -52,7 +54,7 @@ function LoginForm() {
         return;
       }
 
-      const redirectTo = searchParams.get('from') ?? '/';
+      const redirectTo = safeRedirectPath(searchParams.get('from'));
       router.push(redirectTo);
       router.refresh();
     } catch {
@@ -64,22 +66,12 @@ function LoginForm() {
 
   return (
     <Card className="bg-surface shadow-lg">
-      <CardHeader className="space-y-1 text-center">
-        <div className="flex justify-center mb-4">
-          <h1
-            className="text-3xl font-bold text-primary"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Comics Hub
-          </h1>
-        </div>
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>
-          Sign in to continue to your comic collection
-        </CardDescription>
-      </CardHeader>
+      <AuthHeader
+        title="Welcome back"
+        description="Sign in to continue to your comic collection"
+      />
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {errorMessage && (
             <ErrorBanner
               message={errorMessage}
@@ -95,11 +87,12 @@ function LoginForm() {
               placeholder="Enter your username or email"
               autoComplete="username"
               disabled={isSubmitting}
+              aria-invalid={!!errors.username}
+              aria-describedby={errors.username ? 'username-error' : undefined}
               {...register('username')}
-              className={errors.username ? 'border-error' : ''}
             />
             {errors.username && (
-              <p className="text-sm text-error">{errors.username.message}</p>
+              <p id="username-error" className="text-sm text-error">{errors.username.message}</p>
             )}
           </div>
 
@@ -113,17 +106,17 @@ function LoginForm() {
                 Forgot password?
               </Link>
             </div>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="Enter your password"
               autoComplete="current-password"
               disabled={isSubmitting}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? 'password-error' : undefined}
               {...register('password')}
-              className={errors.password ? 'border-error' : ''}
             />
             {errors.password && (
-              <p className="text-sm text-error">{errors.password.message}</p>
+              <p id="password-error" className="text-sm text-error">{errors.password.message}</p>
             )}
           </div>
 
@@ -131,7 +124,7 @@ function LoginForm() {
             <Checkbox
               id="rememberMe"
               disabled={isSubmitting}
-              checked={watchedFields.rememberMe}
+              checked={rememberMe}
               onCheckedChange={(checked) => {
                 form.setValue('rememberMe', checked === true);
               }}
@@ -147,7 +140,7 @@ function LoginForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={!hasInput || !isValid || isSubmitting}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
@@ -160,7 +153,7 @@ function LoginForm() {
           </Button>
 
           <div className="text-center text-sm text-ink-subtle">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link
               href="/register"
               className="text-primary hover:text-primary-hover font-medium transition-colors"

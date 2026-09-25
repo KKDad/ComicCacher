@@ -37,8 +37,8 @@ describe('FavoriteCard', () => {
   });
 
   it('renders avatar image when avatarUrl is provided', () => {
-    render(<FavoriteCard comic={{ id: 1, name: 'Garfield', avatarUrl: 'https://example.com/garfield.png' }} />);
-    const img = screen.getByRole('img', { name: 'Garfield' });
+    const { container } = render(<FavoriteCard comic={{ id: 1, name: 'Garfield', avatarUrl: 'https://example.com/garfield.png' }} />);
+    const img = container.querySelector('img')!;
     expect(img).toHaveAttribute('src', 'https://example.com/garfield.png');
   });
 
