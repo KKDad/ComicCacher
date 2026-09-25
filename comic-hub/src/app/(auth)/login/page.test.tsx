@@ -14,7 +14,7 @@ const mockRouter = {
 
 describe('LoginPage', () => {
   beforeEach(() => {
-    vi.mocked(useRouter).mockReturnValue(mockRouter);
+    vi.mocked(useRouter).mockReturnValue({ ...mockRouter, bfcacheId: 'test-bfcache-id' });
     vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as ReturnType<typeof useSearchParams>);
     vi.spyOn(global, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ user: { username: 'testuser', displayName: 'Test' } })),

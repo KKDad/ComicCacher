@@ -17,12 +17,12 @@ vi.mock('@/lib/gravatar', () => ({
 }));
 
 
-function renderHeader(props: { showMenuButton?: boolean } = {}, user = createMockUser()) {
+function renderHeader(user = createMockUser()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <UserProvider user={user}>
-        <Header {...props} />
+        <Header />
       </UserProvider>
     </QueryClientProvider>,
   );
@@ -53,17 +53,17 @@ describe('Header', () => {
   });
 
   it('renders user initials in avatar', () => {
-    renderHeader({}, createMockUser({ displayName: 'John Doe' }));
+    renderHeader(createMockUser({ displayName: 'John Doe' }));
     expect(screen.getByText('JD')).toBeInTheDocument();
   });
 
   it('shows "U" fallback when no user', () => {
-    renderHeader({}, null as any);
+    renderHeader(null as any);
     expect(screen.getByText('U')).toBeInTheDocument();
   });
 
   it('shows user info in dropdown', async () => {
-    renderHeader({}, createMockUser({ displayName: 'Jane Smith', email: 'jane@example.com' }));
+    renderHeader(createMockUser({ displayName: 'Jane Smith', email: 'jane@example.com' }));
     // Click avatar to open dropdown
     const avatar = screen.getByText('JS');
     await userEvent.click(avatar);
@@ -86,7 +86,7 @@ describe('Header', () => {
   });
 
   it('computes gravatar URL when user has email', async () => {
-    renderHeader({}, createMockUser({ email: 'avatar@test.com' }));
+    renderHeader(createMockUser({ email: 'avatar@test.com' }));
     // Wait for the async effect to resolve
     await vi.waitFor(() => {
       expect(gravatar.getGravatarUrl).toHaveBeenCalledWith('avatar@test.com');
@@ -95,7 +95,7 @@ describe('Header', () => {
 
   it('does not compute gravatar when no email', () => {
     vi.mocked(gravatar.getGravatarUrl).mockClear();
-    renderHeader({}, createMockUser({ email: '' }));
+    renderHeader(createMockUser({ email: '' }));
     expect(gravatar.getGravatarUrl).not.toHaveBeenCalled();
   });
 
@@ -119,7 +119,7 @@ describe('Header - search', () => {
     mockReplace.mockClear();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.mocked(useLogout).mockReturnValue({ logout: mockLogout, isLoggingOut: false });
-    vi.mocked(gravatar.getGravatarUrl).mockResolvedValue(null);
+    vi.mocked(gravatar.getGravatarUrl).mockResolvedValue('');
     vi.mocked(useRouter).mockReturnValue({
       push: mockPush, replace: mockReplace, prefetch: vi.fn(),
       back: vi.fn(), refresh: vi.fn(), forward: vi.fn(),
@@ -193,7 +193,7 @@ describe('Header - search', () => {
 
   it('toggles mobile search panel', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    renderHeader({ showMenuButton: true });
+    renderHeader();
     // Mobile search button is the first button in the right section with md:hidden
     const buttons = screen.getAllByRole('button');
     const mobileSearchBtn = buttons.find((b) => b.className.includes('md:hidden'));
@@ -208,7 +208,7 @@ describe('Header - search', () => {
 
   it('clears search and closes mobile panel when mobile clear is clicked', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    renderHeader({ showMenuButton: true });
+    renderHeader();
     // Open mobile search
     const buttons = screen.getAllByRole('button');
     const mobileSearchBtn = buttons.find((b) => b.className.includes('md:hidden'))!;

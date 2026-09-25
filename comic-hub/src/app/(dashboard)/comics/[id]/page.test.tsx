@@ -34,7 +34,7 @@ const mockComic = {
 describe('ComicDetailPage', () => {
   beforeEach(() => {
     vi.mocked(useParams).mockReturnValue({ id: '1' });
-    vi.mocked(useRouter).mockReturnValue(mockRouter);
+    vi.mocked(useRouter).mockReturnValue({ ...mockRouter, bfcacheId: 'test-bfcache-id' });
     vi.mocked(useGetComicQuery).mockReturnValue({
       data: { comic: mockComic },
       isLoading: false,

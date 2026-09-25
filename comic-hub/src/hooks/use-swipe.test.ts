@@ -4,7 +4,7 @@ import { useSwipe } from './use-swipe';
 function createTouchEvent(clientY: number, clientX = 0): React.TouchEvent {
   return {
     touches: [{ clientY, clientX } as React.Touch],
-  } as React.TouchEvent;
+  } as unknown as React.TouchEvent;
 }
 
 function createEmptyTouchEvent(): React.TouchEvent {

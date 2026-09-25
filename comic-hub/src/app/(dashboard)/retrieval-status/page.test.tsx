@@ -158,7 +158,7 @@ describe('RetrievalStatusPage', () => {
   it('renders status breakdown badges', () => {
     renderWithQuery(<RetrievalStatusPage />);
     expect(screen.getByText('Status Breakdown')).toBeInTheDocument();
-    const breakdownCard = screen.getByText('Status Breakdown').closest('[class*="card"]')!;
+    const breakdownCard = screen.getByText('Status Breakdown').closest<HTMLElement>('[class*="card"]')!;
     expect(within(breakdownCard).getByText('1,350')).toBeInTheDocument();
   });
 
@@ -172,7 +172,7 @@ describe('RetrievalStatusPage', () => {
 
   it('renders status badges with correct text', () => {
     renderWithQuery(<RetrievalStatusPage />);
-    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     expect(within(table).getByText('SUCCESS')).toBeInTheDocument();
     expect(within(table).getByText('NETWORK ERROR')).toBeInTheDocument();
     expect(within(table).getByText('COMIC UNAVAILABLE')).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe('RetrievalStatusPage', () => {
 
   it('shows dash for null duration', () => {
     renderWithQuery(<RetrievalStatusPage />);
-    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const calvinRow = within(table).getByText('Calvin and Hobbes').closest('tr')!;
     const cells = calvinRow.querySelectorAll('td');
     expect(cells[4].textContent).toBe('—');
@@ -193,7 +193,7 @@ describe('RetrievalStatusPage', () => {
 
   it('shows dash for null image size', () => {
     renderWithQuery(<RetrievalStatusPage />);
-    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const peanutsRow = within(table).getByText('Peanuts').closest('tr')!;
     const cells = peanutsRow.querySelectorAll('td');
     expect(cells[5].textContent).toBe('—');
@@ -212,7 +212,7 @@ describe('RetrievalStatusPage', () => {
   it('sorts records by comic name when header clicked', async () => {
     const user = userEvent.setup();
     renderWithQuery(<RetrievalStatusPage />);
-    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const comicSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Comic')
     )!;
@@ -233,7 +233,7 @@ describe('RetrievalStatusPage', () => {
   it('sorts records by status when header clicked', async () => {
     const user = userEvent.setup();
     renderWithQuery(<RetrievalStatusPage />);
-    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const statusSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Status')
     )!;
@@ -247,7 +247,7 @@ describe('RetrievalStatusPage', () => {
   it('sorts records by duration when header clicked', async () => {
     const user = userEvent.setup();
     renderWithQuery(<RetrievalStatusPage />);
-    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const durationSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Duration')
     )!;
@@ -262,7 +262,7 @@ describe('RetrievalStatusPage', () => {
   it('sorts records by date when header clicked', async () => {
     const user = userEvent.setup();
     renderWithQuery(<RetrievalStatusPage />);
-    const table = screen.getByText('Retrieval Records').closest('[class*="card"]')!;
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const dateSortBtn = within(table).getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Date')
     )!;
@@ -286,7 +286,7 @@ describe('RetrievalStatusPage', () => {
       error: null,
     } as any);
     renderWithQuery(<RetrievalStatusPage />);
-    const cards = screen.getByText('Avg Duration').closest('[class*="card"]')!;
+    const cards = screen.getByText('Avg Duration').closest<HTMLElement>('[class*="card"]')!;
     expect(within(cards).getByText('—')).toBeInTheDocument();
   });
 });

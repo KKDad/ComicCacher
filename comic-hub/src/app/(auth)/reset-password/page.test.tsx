@@ -20,7 +20,7 @@ function withToken(token: string | null) {
 
 describe('ResetPasswordPage', () => {
   beforeEach(() => {
-    vi.mocked(useRouter).mockReturnValue(mockRouter);
+    vi.mocked(useRouter).mockReturnValue({ ...mockRouter, bfcacheId: 'test-bfcache-id' });
     withToken('abc123');
     vi.spyOn(global, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ user: { username: 'u', displayName: 'U' } })),

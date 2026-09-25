@@ -63,8 +63,6 @@ describe('ComicReader', () => {
   it('renders desktop reader on desktop layout', () => {
     vi.mocked(useResponsiveNav).mockReturnValue({
       layout: 'desktop',
-      isCollapsed: false,
-      toggle: vi.fn(),
     });
 
     render(<ComicReader comicId={1} />);
@@ -75,8 +73,6 @@ describe('ComicReader', () => {
   it('renders mobile reader on mobile layout', () => {
     vi.mocked(useResponsiveNav).mockReturnValue({
       layout: 'mobile',
-      isCollapsed: false,
-      toggle: vi.fn(),
     });
 
     render(<ComicReader comicId={1} />);
@@ -87,8 +83,6 @@ describe('ComicReader', () => {
   it('passes initialDate to useReader', () => {
     vi.mocked(useResponsiveNav).mockReturnValue({
       layout: 'desktop',
-      isCollapsed: false,
-      toggle: vi.fn(),
     });
 
     render(<ComicReader comicId={1} initialDate="2026-03-15" />);
