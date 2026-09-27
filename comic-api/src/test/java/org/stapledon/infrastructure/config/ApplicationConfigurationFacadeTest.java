@@ -98,19 +98,8 @@ class ApplicationConfigurationFacadeTest {
         }
 
         @Override
-        public boolean configExists(String configName) {
-            File file = getConfigFile(configName);
-            return file.exists();
-        }
-
-        @Override
         public File getConfigFile(String configName) {
             return new File(configRoot, configName);
-        }
-
-        @Override
-        public String getConfigPath(String configName) {
-            return new File(configRoot, configName).getAbsolutePath();
         }
     }
 
@@ -132,36 +121,6 @@ class ApplicationConfigurationFacadeTest {
 
         // Use our test-specific implementation
         configFacade = new TestConfigurationFacade(gson, cacheProperties, configRoot);
-    }
-
-    @Test
-    void getConfigPath_shouldReturnCorrectPath() {
-        // Act
-        String path = configFacade.getConfigPath("test.json");
-
-        // Assert
-        assertThat(path).isEqualTo(configRoot.getAbsolutePath() + File.separator + "test.json");
-    }
-
-    @Test
-    void configExists_shouldReturnTrueWhenExists() throws Exception {
-        // Arrange
-        createTestFile(COMIC_CONFIG_NAME, "{}");
-
-        // Act
-        boolean exists = configFacade.configExists(COMIC_CONFIG_NAME);
-
-        // Assert
-        assertThat(exists).isTrue();
-    }
-
-    @Test
-    void configExists_shouldReturnFalseWhenNotExists() {
-        // Act
-        boolean exists = configFacade.configExists("nonexistent.json");
-
-        // Assert
-        assertThat(exists).isFalse();
     }
 
     @Test

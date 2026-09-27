@@ -48,10 +48,4 @@ public class NoOpMetricsService implements MetricsService {
     public void refreshAllMetrics() {
         log.debug("Metrics disabled - refresh all metrics no-op");
     }
-
-    @Override
-    public boolean archiveCurrentMetrics() {
-        log.debug("Metrics disabled - archive metrics no-op");
-        return false;
-    }
 }

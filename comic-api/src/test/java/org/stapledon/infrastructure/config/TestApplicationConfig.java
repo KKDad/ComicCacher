@@ -7,10 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.stapledon.common.config.CacheProperties;
-import org.stapledon.common.config.properties.DailyRunnerProperties;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.core.auth.service.AuthService;
-import org.stapledon.core.comic.service.UpdateService;
 import org.stapledon.core.preference.service.PreferenceService;
 import org.stapledon.core.user.service.UserService;
 import org.stapledon.infrastructure.config.properties.JwtProperties;
@@ -72,12 +70,6 @@ public class TestApplicationConfig {
 
     @Bean
     @Primary
-    public UpdateService updateService() {
-        return Mockito.mock(UpdateService.class);
-    }
-
-    @Bean
-    @Primary
     public UserService userService() {
         return Mockito.mock(UserService.class);
     }
@@ -118,12 +110,6 @@ public class TestApplicationConfig {
                 .preferencesConfig("./test-preferences.json")
                 .build();
         return properties;
-    }
-
-    @Bean
-    @Primary
-    public DailyRunnerProperties dailyRunnerProperties() {
-        return Mockito.mock(DailyRunnerProperties.class);
     }
 
     @Bean

@@ -51,12 +51,4 @@ public interface MetricsService {
      * and combined metrics rebuild.
      */
     void refreshAllMetrics();
-
-    /**
-     * Archive current metrics for historical analysis.
-     * Creates a snapshot of combined metrics for the current day.
-     *
-     * @return true if archiving was successful
-     */
-    boolean archiveCurrentMetrics();
 }

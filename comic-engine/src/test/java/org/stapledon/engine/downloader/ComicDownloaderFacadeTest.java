@@ -275,43 +275,6 @@ class ComicDownloaderFacadeTest {
     }
 
     @Test
-    void shouldUseCurrentDateWhenDownloadingLatestComics() {
-        // Arrange
-        List<ComicItem> comics = new ArrayList<>();
-        comics.add(
-                ComicItem.builder()
-                        .id(1)
-                        .name("calvin")
-                        .source("gocomics")
-                        .sourceIdentifier("calvinandhobbes")
-                        .build());
-
-        ComicConfig config = new ComicConfig();
-        config.setComics(comics);
-
-        ComicDownloadResult mockResult = ComicDownloadResult.success(
-                ComicDownloadRequest.builder()
-                        .comicId(1)
-                        .comicName("calvin")
-                        .source("gocomics")
-                        .sourceIdentifier("calvinandhobbes")
-                        .date(LocalDate.now())
-                        .build(),
-                testImageData);
-
-        when(goComicsStrategy.downloadComic(any(ComicDownloadRequest.class))).thenReturn(mockResult);
-
-        // Act
-        List<ComicDownloadResult> results = facade.downloadLatestComics(config);
-
-        // Assert
-        assertThat(results.size()).isEqualTo(1);
-        assertThat(results.get(0).isSuccessful()).isTrue();
-
-        verify(goComicsStrategy).downloadComic(any(ComicDownloadRequest.class));
-    }
-
-    @Test
     void shouldSkipInactiveComics() {
         // Arrange
         List<ComicItem> comics = new ArrayList<>();

@@ -6,9 +6,9 @@ Three JSON files define the application's persistent configuration, all configur
 
 | File | Purpose | Property | Default | Responsible Class |
 |:---|:---|:---|:---|:---|
-| `comics.json` | Comic registry/metadata | `comics.cache.config` | `comics.json` | `JsonComicRepository` via `ConfigurationFacade` |
+| `comics.json` | Comic registry/metadata | `comics.cache.config` | `comics.json` | `ApplicationConfigurationFacade` |
 | `users.json` | User accounts | `comics.cache.usersConfig` | `users.json` | `JsonUserRepository` via `ConfigurationFacade` |
-| `preferences.json` | User preferences | `comics.cache.preferencesConfig` | `preferences.json` | `JsonPreferenceRepository` via `ConfigurationFacade` |
+| `preferences.json` | User preferences | `comics.cache.preferencesConfig` | `preferences.json` | `ApplicationConfigurationFacade` |
 
 All three files are resolved relative to `comics.cache.location` by `ApplicationConfigurationFacade.getConfigFile()`.
 
@@ -141,9 +141,7 @@ Stores per-user favorites and reading history. Keyed by username string.
 | File | Module |
 |:---|:---|
 | `ApplicationConfigurationFacade.java` | `comic-api` |
-| `JsonComicRepository.java` | `comic-api` |
 | `JsonUserRepository.java` | `comic-api` |
-| `JsonPreferenceRepository.java` | `comic-api` |
 | `CacheProperties.java` | `comic-common` |
 | `ComicConfig.java` / `ComicItem.java` | `comic-common` |
 | `UserConfig.java` / `User.java` | `comic-api` |

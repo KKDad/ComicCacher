@@ -57,7 +57,7 @@ Download engine, filesystem storage, image validation, and Spring Batch job infr
 | Analysis | `ImageAnalysisService` (color/grayscale detection via pixel sampling) |
 | Batch infrastructure | `AbstractJobScheduler`, `DailyJobScheduler`, `PeriodicJobScheduler`, `SchedulerTriggers`, `StartupJobRunner`, `SchedulerStateService`, `SchedulerStateWiring`, `JsonBatchExecutionTracker`, `BatchJobBaseConfig` |
 | Batch jobs | `ComicRetrievalJobConfig`, `ComicBackfillJobConfig`, `AvatarBackfillJobConfig`, `ImageMetadataBackfillJobConfig`, `MetricsArchiveJobConfig`, `RetrievalRecordPurgeJobConfig` |
-| Batch support | `ComicBackfillService`, `BackfillConfigurationService`, `BatchJobMonitoringService`, `ComicJobSummary`, `LoggingJobExecutionListener` |
+| Batch support | `ComicBackfillService`, `BackfillConfigurationService`, `BatchJobMonitoringService`, `LoggingJobExecutionListener` |
 
 ### comic-api
 
@@ -67,8 +67,8 @@ REST + GraphQL API layer. Depends on all three backend modules.
 |------|-------------|
 | GraphQL Resolvers | `AuthResolver`, `BatchJobResolver`, `ComicResolver`, `HealthResolver`, `MetricsResolver`, `PreferenceResolver`, `RetrievalResolver`, `UserResolver` (plus dataloaders and type resolvers in `api/resolver/`) |
 | REST Controllers | `ComicController` (binary image streaming only) |
-| Services | `UpdateService` / `ComicUpdateService`, `JsonRetrievalStatusService`, `AuthService` / `JwtAuthService`, `UserService` / `JsonUserService`, `PreferenceService` / `JsonPreferenceService`, `HealthService`, `SystemHealthService` |
-| Repositories | `JsonComicRepository`, `JsonUserRepository`, `JsonPreferenceRepository` (under `infrastructure/repository/`) |
+| Services | `JsonRetrievalStatusService`, `AuthService` / `JwtAuthService`, `UserService` / `JsonUserService`, `PreferenceService` / `JsonPreferenceService`, `HealthService`, `SystemHealthService` |
+| Repositories | `JsonUserRepository` (under `infrastructure/repository/`); comics and preferences are read and written through `ApplicationConfigurationFacade` |
 | Security | JWT-based authentication via `JwtAuthService` |
 
 ### comic-hub
@@ -141,15 +141,6 @@ The single active cache stores `ComicItem` configuration data:
 **Cached operations** (in `ComicManagementFacade`):
 - `getAllComics()` -- cached under key `allComics`
 - Evicted on: `createComic()`, `updateComic()`, `deleteComic()`, `downloadMissingAvatars()`
-
-### Predictive Lookahead
-
-`PredictiveCacheService` asynchronously prefetches adjacent comic strips when a user navigates, warming the cache with N strips in the navigation direction.
-
-| Setting | Property | Default |
-|---------|----------|---------|
-| Enabled | `comics.cache.caffeine.lookahead.enabled` | `false` |
-| Prefetch count | `comics.cache.caffeine.lookahead.count` | `3` |
 
 ## Build System
 

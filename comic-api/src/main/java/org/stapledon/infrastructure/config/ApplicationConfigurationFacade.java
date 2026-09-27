@@ -164,16 +164,6 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
     }
 
     @Override
-    public String getConfigPath(String configName) {
-        return Paths.get(cacheLocation, configName).toString();
-    }
-
-    @Override
-    public boolean configExists(String configName) {
-        return getConfigFile(configName).exists();
-    }
-
-    @Override
     public File getConfigFile(String configName) {
         File parentDir = new File(cacheLocation);
 

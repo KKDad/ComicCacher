@@ -1,9 +1,8 @@
 package org.stapledon.engine.downloader;
 
 /**
- * Shared constants for comic downloader strategies.
- *
- * <p>Note: User-Agent strings are no longer kept here — use {@link org.stapledon.common.infrastructure.web.UserAgentService} instead.
+ * Shared constants for comic downloader strategies. User-Agent strings come from
+ * {@link org.stapledon.common.infrastructure.web.UserAgentService}.
  */
 public final class DownloaderConstants {
 

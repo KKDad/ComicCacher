@@ -81,11 +81,4 @@ public class PeriodicJobScheduler extends AbstractJobScheduler {
     public Long triggerManually() {
         return runJob("MANUAL");
     }
-
-    /**
-     * Returns the fixed delay in milliseconds.
-     */
-    public long getFixedDelayMs() {
-        return fixedDelayMs;
-    }
 }

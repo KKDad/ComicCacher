@@ -393,45 +393,6 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     /**
-     * Gets all execution history across all jobs, sorted most recent first.
-     */
-    public List<BatchExecutionSummary> getAllExecutionHistory(int count) {
-        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
-        return executions.values().stream()
-                .flatMap(List::stream)
-                .sorted((a, b) -> {
-                    if (a.getStartTime() == null && b.getStartTime() == null) {
-                        return 0;
-                    }
-                    if (a.getStartTime() == null) {
-                        return 1;
-                    }
-                    if (b.getStartTime() == null) {
-                        return -1;
-                    }
-                    return b.getStartTime().compareTo(a.getStartTime());
-                })
-                .limit(count)
-                .toList();
-    }
-
-    /**
-     * Gets all execution history for a date range across all jobs, sorted most recent first.
-     */
-    public List<BatchExecutionSummary> getAllExecutionHistoryForDateRange(LocalDate start, LocalDate end) {
-        Map<String, List<BatchExecutionSummary>> executions = readExecutions();
-        return executions.values().stream()
-                .flatMap(List::stream)
-                .filter(s -> s.getStartTime() != null)
-                .filter(s -> {
-                    LocalDate executionDate = s.getStartTime().toLocalDate();
-                    return !executionDate.isBefore(start) && !executionDate.isAfter(end);
-                })
-                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
-                .toList();
-    }
-
-    /**
      * Checks if a job has already run today (based on recorded end time).
      */
     public boolean hasJobRunToday(String jobName) {
@@ -441,13 +402,4 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
                 .isPresent();
     }
 
-    /**
-     * Checks if a job has run since the specified time.
-     */
-    public boolean hasJobRunSince(String jobName, OffsetDateTime since) {
-        return getLastExecution(jobName)
-                .filter(summary -> summary.getEndTime() != null)
-                .filter(summary -> summary.getEndTime().isAfter(since))
-                .isPresent();
-    }
 }

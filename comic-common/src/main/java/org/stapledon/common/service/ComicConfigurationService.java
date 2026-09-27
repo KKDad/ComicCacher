@@ -24,16 +24,6 @@ public interface ComicConfigurationService {
     boolean saveComicConfig(ComicConfig config);
 
     /**
-     * Gets the path for a configuration file.
-     */
-    String getConfigPath(String configName);
-
-    /**
-     * Checks if a configuration file exists.
-     */
-    boolean configExists(String configName);
-
-    /**
      * Gets the File object for a configuration.
      */
     File getConfigFile(String configName);

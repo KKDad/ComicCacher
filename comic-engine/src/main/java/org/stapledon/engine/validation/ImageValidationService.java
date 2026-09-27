@@ -101,11 +101,6 @@ public class ImageValidationService implements ValidationService {
         return result;
     }
 
-    @Override
-    public boolean isValidImage(byte[] imageData) {
-        return validate(imageData).isValid();
-    }
-
     /**
      * Determines the image format by inspecting the image readers registered with ImageIO.
      * This works for standard formats (PNG, JPEG, GIF) and any additional formats

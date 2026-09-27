@@ -102,10 +102,4 @@ public interface ComicStorageFacade {
 
     Path getCacheRoot();
 
-    String getComicCacheRoot(ComicIdentifier comic);
-
-    // Cache statistics
-    List<String> getYearsWithContent(ComicIdentifier comic);
-
-    long getStorageSize(ComicIdentifier comic);
 }

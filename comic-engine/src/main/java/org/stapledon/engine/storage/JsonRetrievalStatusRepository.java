@@ -174,13 +174,4 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
 
         return removedCount;
     }
-
-    @Override
-    public int getRecordCountByStatus(ComicRetrievalStatus status) {
-        ComicRetrievalRecordStorage storage = loadRecords();
-
-        return (int) storage.getRecords().stream()
-                .filter(record -> record.getStatus() == status)
-                .count();
-    }
 }

@@ -121,26 +121,6 @@ public class ImageMetadataRepository {
     }
 
     /**
-     * Deletes metadata for an image file.
-     */
-    public boolean deleteMetadata(String imageFilePath) {
-        Path metadataFile = getMetadataFile(imageFilePath);
-
-        if (!NfsFileOperations.exists(metadataFile)) {
-            return true; // Already deleted
-        }
-
-        try {
-            Files.delete(metadataFile);
-            log.debug("Deleted metadata for image: {}", imageFilePath);
-            return true;
-        } catch (IOException e) {
-            log.warn("Failed to delete metadata {} for image {}: {}", metadataFile, imageFilePath, e.toString());
-            return false;
-        }
-    }
-
-    /**
      * Gets the metadata file path for an image file.
      * Replaces the image extension with .json
      */

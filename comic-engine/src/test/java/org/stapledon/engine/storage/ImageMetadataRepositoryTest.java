@@ -109,36 +109,6 @@ class ImageMetadataRepositoryTest {
     }
 
     @Test
-    void shouldDeleteMetadata() throws Exception {
-        // Given
-        String imagePath = tempDir.resolve("test.png").toString();
-        createEmptyFile(imagePath);
-
-        ImageMetadata metadata = createTestMetadata(imagePath);
-        repository.saveMetadata(metadata);
-        assertThat(repository.metadataExists(imagePath)).isTrue();
-
-        // When
-        boolean result = repository.deleteMetadata(imagePath);
-
-        // Then
-        assertThat(result).isTrue();
-        assertThat(repository.metadataExists(imagePath)).isFalse();
-    }
-
-    @Test
-    void shouldReturnTrueWhenDeletingNonExistentMetadata() {
-        // Given
-        String imagePath = tempDir.resolve("nonexistent.png").toString();
-
-        // When
-        boolean result = repository.deleteMetadata(imagePath);
-
-        // Then
-        assertThat(result).isTrue(); // Already deleted
-    }
-
-    @Test
     void shouldHandleDifferentImageExtensions() throws Exception {
         // Test PNG
         String pngPath = tempDir.resolve("image.png").toString();

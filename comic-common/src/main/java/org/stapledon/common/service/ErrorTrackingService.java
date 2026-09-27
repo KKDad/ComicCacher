@@ -46,12 +46,4 @@ public interface ErrorTrackingService {
      * @return Number of comics with at least one error
      */
     int getComicErrorCount();
-
-    /**
-     * Clears errors older than the specified number of hours.
-     * This prevents error accumulation over multiple days/weeks.
-     *
-     * @param hoursToKeep Number of hours of errors to retain (e.g., 48 for last 2 days)
-     */
-    void clearOldErrors(int hoursToKeep);
 }

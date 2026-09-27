@@ -9,7 +9,6 @@ import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 import org.stapledon.metrics.repository.MetricsArchiver;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -59,17 +58,5 @@ public class JsonMetricsService implements MetricsService {
     public void refreshAllMetrics() {
         log.info("Refreshing all metrics");
         metricsUpdateService.forceRefreshAll();
-    }
-
-    @Override
-    public boolean archiveCurrentMetrics() {
-        log.info("Archiving current metrics");
-        try {
-            CombinedMetricsData currentMetrics = metricsUpdateService.buildCombinedMetrics();
-            return metricsArchiver.archiveMetrics(currentMetrics, LocalDate.now());
-        } catch (Exception e) {
-            log.error("Failed to archive metrics", e);
-            return false;
-        }
     }
 }

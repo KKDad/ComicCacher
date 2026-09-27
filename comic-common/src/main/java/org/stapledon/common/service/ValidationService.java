@@ -28,12 +28,4 @@ public interface ValidationService {
      */
     ImageValidationResult validateWithMinDimensions(byte[] imageData, int minWidth, int minHeight);
 
-    /**
-     * Simple boolean check to determine if image data is valid.
-     * Convenience method that calls validate() and returns the success status.
-     *
-     * @param imageData The raw image bytes to validate
-     * @return true if the image is valid, false otherwise
-     */
-    boolean isValidImage(byte[] imageData);
 }

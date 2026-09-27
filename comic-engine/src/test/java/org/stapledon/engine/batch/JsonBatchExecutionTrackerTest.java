@@ -202,17 +202,6 @@ class JsonBatchExecutionTrackerTest {
         assertThat(tracker.hasJobRunToday("TestJob")).isFalse();
     }
 
-    @Test
-    void hasJobRunSinceReturnsTrueWhenJobRanAfterThreshold() {
-        OffsetDateTime threshold = OffsetDateTime.now().minusHours(2);
-        JobExecution execution = createJobExecutionWithTimes("TestJob", 1L,
-                LocalDateTime.now().minusHours(1), LocalDateTime.now().minusMinutes(30));
-
-        tracker.afterJob(execution);
-
-        assertThat(tracker.hasJobRunSince("TestJob", threshold)).isTrue();
-    }
-
     @ParameterizedTest
     @CsvSource({
             "COMPLETED, COMPLETED",
@@ -290,22 +279,6 @@ class JsonBatchExecutionTrackerTest {
 
         assertThat(tracker.getExecutionHistory("JobA", 10)).hasSize(2);
         assertThat(tracker.getExecutionHistory("JobB", 10)).hasSize(1);
-    }
-
-    @Test
-    void getAllExecutionHistorySortsByStartTimeDescending() {
-        tracker.afterJob(createJobExecutionWithTimes("JobA", 1L,
-                LocalDateTime.of(2026, 3, 15, 6, 0), LocalDateTime.of(2026, 3, 15, 6, 30)));
-        tracker.afterJob(createJobExecutionWithTimes("JobB", 2L,
-                LocalDateTime.of(2026, 3, 17, 6, 0), LocalDateTime.of(2026, 3, 17, 6, 30)));
-        tracker.afterJob(createJobExecutionWithTimes("JobA", 3L,
-                LocalDateTime.of(2026, 3, 16, 6, 0), LocalDateTime.of(2026, 3, 16, 6, 30)));
-
-        List<BatchExecutionSummary> all = tracker.getAllExecutionHistory(10);
-        assertThat(all).hasSize(3);
-        assertThat(all.get(0).getExecutionId()).isEqualTo(2L);
-        assertThat(all.get(1).getExecutionId()).isEqualTo(3L);
-        assertThat(all.get(2).getExecutionId()).isEqualTo(1L);
     }
 
     @Test

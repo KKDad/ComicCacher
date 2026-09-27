@@ -37,14 +37,11 @@ class ComicIndexServiceTest {
     @Mock
     private CacheProperties cacheProperties;
 
-    @Mock
-    private ImageMetadataRepository metadataRepository;
-
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         when(cacheProperties.getLocation()).thenReturn(tempDir.toString());
-        indexService = new ComicIndexService(gson, cacheProperties, metadataRepository);
+        indexService = new ComicIndexService(gson, cacheProperties);
     }
 
     @Test

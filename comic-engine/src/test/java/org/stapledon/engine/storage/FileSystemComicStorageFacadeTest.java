@@ -183,8 +183,6 @@ class FileSystemComicStorageFacadeTest {
         assertThat(Files.readAllBytes(expectedFile.toPath())).isEqualTo(avatarData);
     }
 
-    // Test removed - on-demand downloads via CacheMissEvent no longer supported
-
     @Test
     void getNextDateWithComic_shouldReturnNextAvailableDate() {
         // Arrange
@@ -313,24 +311,6 @@ class FileSystemComicStorageFacadeTest {
 
         // Assert
         assertThat(result).isFalse();
-    }
-
-    @Test
-    void getYearsWithContent_shouldReturnCorrectYears() {
-        // Act
-        List<String> years = storageFacade.getYearsWithContent(COMIC_IDENTIFIER);
-
-        // Assert
-        assertThat(years).containsExactly(YEAR_2023);
-    }
-
-    @Test
-    void getStorageSize_shouldReturnCorrectSize() {
-        // Act
-        long size = storageFacade.getStorageSize(COMIC_IDENTIFIER);
-
-        // Assert
-        assertThat(size).isGreaterThan(0);
     }
 
     @Test

@@ -258,24 +258,6 @@ class ImageValidationServiceTest {
     }
 
     @Test
-    void isValidImageValid() throws Exception {
-        byte[] imageData = createTestImage(100, 100, "PNG");
-
-        boolean isValid = imageValidationService.isValidImage(imageData);
-
-        assertThat(isValid).isTrue();
-    }
-
-    @Test
-    void isValidImageInvalid() {
-        byte[] invalidData = "not an image".getBytes();
-
-        boolean isValid = imageValidationService.isValidImage(invalidData);
-
-        assertThat(isValid).isFalse();
-    }
-
-    @Test
     void typicalComicStripDimensions() throws Exception {
         // Test with typical comic strip dimensions
         byte[] imageData = createTestImage(900, 300, "PNG");

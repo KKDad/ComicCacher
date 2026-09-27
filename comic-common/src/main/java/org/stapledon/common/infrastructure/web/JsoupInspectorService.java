@@ -16,22 +16,6 @@ public class JsoupInspectorService implements InspectorService {
     public static final String CONTENT = "content";
 
     @Override
-    public void dumpLinks(Elements links) {
-        print("\nLinks: (%d)", links.size());
-        for (Element link : links) {
-            print(" * a: <%s>  (%s)", link.attr(ABS_SRC), trim(link.text(), 35));
-        }
-    }
-
-    @Override
-    public void dumpImports(Elements imports) {
-        print("\nImports: (%d)", imports.size());
-        for (Element link : imports) {
-            print(" * %s <%s> (%s)", link.tagName(), link.attr("abs:href"), link.attr("rel"));
-        }
-    }
-
-    @Override
     public void dumpMedia(Elements media) {
         print("Media: (%d)", media.size());
         for (Element src : media) {

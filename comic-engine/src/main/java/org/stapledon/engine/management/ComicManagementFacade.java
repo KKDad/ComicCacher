@@ -840,17 +840,6 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
-    public List<ComicRetrievalRecord> getRetrievalRecordsForDate(String comicName, LocalDate date) {
-        return retrievalStatusService.getRetrievalRecords(comicName, null, date, date, 100);
-    }
-
-    @Override
-    public List<ComicRetrievalRecord> getFilteredRetrievalRecords(String comicName, ComicRetrievalStatus status,
-            LocalDate fromDate, LocalDate toDate, int limit) {
-        return retrievalStatusService.getRetrievalRecords(comicName, status, fromDate, toDate, limit);
-    }
-
-    @Override
     public Map<String, Object> getRetrievalSummary(LocalDate fromDate, LocalDate toDate) {
         return retrievalStatusService.getRetrievalSummary(fromDate, toDate);
     }
