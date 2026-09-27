@@ -34,14 +34,6 @@
 - Run a backfill from 2026-01-10 for both comics once 2.4.8 is on prod. Delete any `comic_*` folders the old version recreated in the cache root first
 - Priority: High
 
-## Fix comic mutations dropping fields
-
-- `updateComic` and `createComic` in `ComicResolver` ignore `publicationDays` and `active` from their inputs, so changes to them are silently lost
-- Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
-- For now, prod config changes mean stopping the API and editing `comics.json` by hand
-- Add resolver tests that each input field reaches the saved `ComicItem`
-- Priority: Medium
-
 ## Dependency upgrades held back from 2.5.0
 
 Dependabot opened these on 2026-09-27; each passed CI (or failed it) without showing the real problem, because CI neither regenerates GraphQL code nor runs ESLint.
@@ -49,6 +41,14 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 - **TypeScript 7 (#391):** typescript-eslint doesn't support TS 7 yet, so `npm run lint` crashes. Wait for typescript-eslint support (tracked in typescript-eslint#10940) or run TS 6 side by side for linting
 - **`@types/node` 26 (#389):** fails the build and would describe Node 26 while we run Node 24 LTS. Take it with the move to Node 26 once it becomes LTS (late October 2026), and ignore `@types/node` majors in `dependabot.yml` until then
 - Also: add `npm run codegen` (with a check that `src/generated` is unchanged) and `npm run lint` to the comic-hub CI job, so the next bump like these fails in CI
+- Priority: High
+
+## Fix comic mutations dropping fields
+
+- `updateComic` and `createComic` in `ComicResolver` ignore `publicationDays` and `active` from their inputs, so changes to them are silently lost
+- Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
+- For now, prod config changes mean stopping the API and editing `comics.json` by hand
+- Add resolver tests that each input field reaches the saved `ComicItem`
 - Priority: Medium
 
 ## Fix prod deploy script quirks
