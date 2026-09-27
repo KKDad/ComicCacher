@@ -5,7 +5,7 @@
 - The access token lasts 15 minutes (`jwt.expiration=900000`). Once it expires, any full page load sends the user to `/login`, even with a valid 24-hour refresh token
 - `getSession()` in `comic-hub/src/lib/auth/session.ts` only sends the access cookie to `me` and returns null when it's rejected. The `(dashboard)` and `(reader)` layouts then `redirect('/login')`. Only `/api/graphql` refreshes on 401, so client requests recover but server renders don't
 - Found while testing on dev 2026-09-25: reloading the reader after 15 minutes landed on the login page
-- Fix: when `me` is rejected and a refresh cookie exists, refresh in `getSession()` (reuse the `/api/graphql` refresh logic) and set the new cookies. Server components can't set cookies, so this likely belongs in `proxy.ts` or a route handler. Honour the remember-me cookie as the refresh path does, and add tests for expired-access / valid-refresh
+- Fix: when `me` is rejected and a refresh cookie exists, refresh in `getSession()` (reuse the `/api/graphql` refresh logic) and set the new cookies. Server components can't set cookies, so this likely belongs in a new `proxy.ts` (Next middleware; the no-op one was removed in 2.5.0) or a route handler. Honour the remember-me cookie as the refresh path does, and add tests for expired-access / valid-refresh
 - Priority: High
 
 ## Fix startup catch-up jobs blocking readiness
@@ -40,6 +40,15 @@
 - Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
 - For now, prod config changes mean stopping the API and editing `comics.json` by hand
 - Add resolver tests that each input field reaches the saved `ComicItem`
+- Priority: Medium
+
+## Dependency upgrades held back from 2.5.0
+
+Dependabot opened these on 2026-09-27; each passed CI (or failed it) without showing the real problem, because CI neither regenerates GraphQL code nor runs ESLint.
+- **`@graphql-codegen/typescript-operations` 6 (#387):** the regenerated `src/generated/graphql.ts` no longer compiles. v6 also emits the input and enum types the `typescript` plugin generates (duplicate identifiers), and no longer types custom scalars as `any` (`Date` fields became `{}`). Migrate `codegen.yml`: drop or reconfigure the `typescript` plugin, and map `scalars` (`Date`/`DateTime` to `string`, `JSON` to `any`), then fix the call sites that relied on `any`
+- **TypeScript 7 (#391):** typescript-eslint doesn't support TS 7 yet, so `npm run lint` crashes. Wait for typescript-eslint support (tracked in typescript-eslint#10940) or run TS 6 side by side for linting
+- **`@types/node` 26 (#389):** fails the build and would describe Node 26 while we run Node 24 LTS. Take it with the move to Node 26 once it becomes LTS (late October 2026), and ignore `@types/node` majors in `dependabot.yml` until then
+- Also: add `npm run codegen` (with a check that `src/generated` is unchanged) and `npm run lint` to the comic-hub CI job, so the next bump like these fails in CI
 - Priority: Medium
 
 ## Fix prod deploy script quirks
