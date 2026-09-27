@@ -20,13 +20,12 @@ services:
     ports:
       - 8888:8888
     environment:
-      - "CACHE_DIRECTORY=/comics"
       - "COMICS_CACHE_LOCATION=/comics"
       - "BATCH_COMICDOWNLOAD_CRON=0 30 7 * * ?"
       - "BATCH_METRICSARCHIVE_CRON=0 0 8 * * ?"
       - "BATCH_IMAGEBACKFILL_CRON=0 0 8 * * ?"
       - "BATCH_RECORDPURGE_CRON=0 15 8 * * ?"
-      - "BATCH_COMICBACKFILL_CRON=0 30 8 * * ?"
+      - "BATCH_COMICBACKFILL_CRON=0 0 9-21/2 * * ?"
       - "BATCH_AVATARBACKFILL_CRON=0 45 8 * * ?"
 
   frontend:

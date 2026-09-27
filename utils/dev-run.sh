@@ -93,7 +93,6 @@ RUN_ARGS=(
     --network stapledon-network
     -p 8087:8888
     -v "${VOLUME_NAME}:/comics"
-    -e CACHE_DIRECTORY=/comics
     -e COMICS_CACHE_LOCATION=/comics
     --env-file "$DEV_TOKEN_ENV"
     "$FULL_IMAGE"
