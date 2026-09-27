@@ -224,7 +224,7 @@ Create an IT class in `comic-api/src/integration/java/`:
 class MyNewJobIT extends AbstractBatchJobIntegrationTest {
 
     @Autowired
-    private JobLauncher jobLauncher;
+    private JobOperator jobOperator;
 
     @Autowired
     @Qualifier("myNewJob")
@@ -232,7 +232,7 @@ class MyNewJobIT extends AbstractBatchJobIntegrationTest {
 
     @Test
     void testMyNewJobCompletes() throws Exception {
-        JobExecution execution = jobLauncher.run(myNewJob,
+        JobExecution execution = jobOperator.start(myNewJob,
                 new JobParametersBuilder()
                         .addLong("runId", System.currentTimeMillis())
                         .toJobParameters());

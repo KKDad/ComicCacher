@@ -16,10 +16,10 @@ Shared types and contracts. Sits at the bottom of the dependency graph — every
 
 ## What Does NOT Live Here
 
-- **No Spring controllers, resolvers, or `@Component` beans.** This module is type/interface only.
+- **No Spring controllers, resolvers, or `@Component` beans.** This module is type/interface only. Known exceptions: `@ConfigurationProperties` classes (`CacheProperties`, `CaffeineCacheProperties`, `DownloaderProperties`) and `UserAgentService` (`@Service`), which every downloader shares.
 - **No Spring Batch jobs.** Those are in `comic-engine`.
 - **No business logic.** Implementations belong in the consuming module.
-- **No HTTP clients, no Jsoup.** Scraping lives in `comic-engine`.
+- **No HTTP clients.** Scraping lives in `comic-engine`. The one Jsoup use is `JsoupInspectorService`, a debug helper for dumping page media.
 
 ## Stability
 

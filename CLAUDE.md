@@ -99,7 +99,7 @@ graph LR
     DL["Downloader<br/>(GoComics / ComicsKingdom)"] --> VAL["ImageValidationService<br/>size, decode, dimensions"]
     VAL --> DEDUP["DuplicateImageValidationService<br/>perceptual + crypto hashes"]
     DEDUP --> ANALYZE["ImageAnalysisService<br/>color/grayscale detection"]
-    ANALYZE --> STORE["NFS Storage<br/>strips/{date}.{ext}"]
+    ANALYZE --> STORE["NFS Storage<br/>{ComicDir}/{yyyy}/{yyyy-MM-dd}.png"]
 ```
 
 See [@~/docs/design/download-pipeline.md](docs/design/download-pipeline.md) and [@~/docs/design/image-validation.md](docs/design/image-validation.md).

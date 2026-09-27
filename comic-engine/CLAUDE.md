@@ -24,7 +24,7 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 - The global `downloader.user-agent.default-value` applies unless `downloader.sources.<source>.user-agent` overrides it. Keep its Chrome major version current, and bump `UserAgentService.FALLBACK_USER_AGENT` at the same time.
 - Details: [@~/docs/design/downloader-strategies.md](../docs/design/downloader-strategies.md#throttling-and-rate-limits).
 
-## Spring Batch 5 Conventions
+## Spring Batch 6 Conventions
 
 - One job per `@Configuration` class under `engine.batch.config/`. Naming: `<Purpose>JobConfig.java`.
 - Use chunk-based steps with explicit `chunk-size`, `max-consecutive-failures`, and per-source overrides where applicable (see `ComicBackfillJobConfig`).
@@ -47,7 +47,7 @@ See [@~/docs/design/image-validation.md](../docs/design/image-validation.md).
 ## Storage
 
 - All persistence goes through `FileSystemComicStorageFacade`. Atomic writes (write-temp-then-move). Never write directly with `Files.write` for JSON metadata.
-- Layout: `${comics.cache.location}/<comicId>/{strips,thumbnails,...}`. See [@~/docs/storage/comic-data.md](../docs/storage/comic-data.md).
+- Layout: `${comics.cache.location}/<ComicDirName>/<yyyy>/<yyyy-MM-dd>.png` with a `.json` metadata sidecar beside each strip, plus per-comic `avatar.png` and index files; `ComicIdentifier.getDirectoryName()` gives the directory name. See [@~/docs/storage/comic-data.md](../docs/storage/comic-data.md).
 
 ## Caching
 

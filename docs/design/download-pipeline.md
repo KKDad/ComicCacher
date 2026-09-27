@@ -90,29 +90,7 @@ sequenceDiagram
 
 ## Strategy Dispatch
 
-The `ComicDownloaderFacade` maintains a `ConcurrentHashMap<String, ComicDownloaderStrategy>` of registered strategies. Strategies self-register at startup via `registerDownloaderStrategy(source, strategy)`. The facade routes to the correct download method based on the strategy type (daily vs. indexed).
-
-| Source | Strategy Class | Comic Model | Scraping Method | Image Extraction |
-|--------|---------------|-------------|-----------------|------------------|
-| `gocomics` | `GoComicsDownloaderStrategy` | Daily | Jsoup HTTP client | `og:image` meta tag from Open Graph metadata |
-| `comicskingdom` | `ComicsKingdomDownloaderStrategy` | Daily | Jsoup HTTP client | `og:image` meta tags (selects 2nd for hi-res) |
-| `freefall` | `FreefallDownloaderStrategy` | Indexed | Jsoup HTTP client | `<img>` tag matching strip number |
-
-The strategy hierarchy supports two comic models — daily (date-based) and indexed (strip-number-based). See [Downloader Strategies](downloader-strategies.md) for the full class hierarchy, interfaces, and guide for adding new sources.
-
-**Daily comics** extend `AbstractDailyDownloaderStrategy` which provides the template method pattern:
-
-1. Call `downloadComicImage(request)` (abstract, implemented by each strategy)
-2. Validate the result with `imageValidationService.validate(imageData)`
-3. Return `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`
-
-**Indexed comics** extend `AbstractIndexedDownloaderStrategy` which provides a similar template:
-
-1. Call `fetchLatestStrip(comic)` or `fetchStrip(comic, stripNumber)` (abstract)
-2. Parse the actual date and optional transcript from the page
-3. Validate the image and return `ComicDownloadResult` with discovered metadata
-
-Avatar downloads follow the same pattern through `downloadAvatar()` / `downloadAvatarImage()`.
+`ComicDownloaderFacade` keeps a map of registered strategies keyed by source (`gocomics`, `comicskingdom`, `freefall`) and routes each request to the daily (date-based) or indexed (strip-number) download path. Each strategy fetches the page with Jsoup, extracts the image and validates it before returning a `ComicDownloadResult`. [Downloader Strategies](downloader-strategies.md) has the class hierarchy, the per-source extraction details, throttling, and how to add a source.
 
 ## Storage Pipeline
 

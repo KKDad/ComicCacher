@@ -27,10 +27,7 @@ ComicCacher uses a flat-file JSON storage model on an NFS-mounted filesystem. Th
 
 ## Comic Directory Naming
 
-Directory names are derived from the comic name with spaces stripped. The logic lives in two places:
-
-- **`ComicIdentifier.getDirectoryName()`** (`comic-common`) -- used by `FileSystemComicStorageFacade` for all read/write operations. Strips spaces from `name`. Falls back to `comic_{id}` if the name is null or empty.
-- **`ComicIndexService.sanitizeComicName()`** (`comic-engine`) -- used for index file paths. Validates against the pattern `^[a-zA-Z0-9 _-]+$`. Falls back to `comic_{id}` if the name contains invalid characters.
+Directory names are derived from the comic name with spaces stripped, in one place: **`ComicIdentifier.getDirectoryName()`** (`comic-common`). It falls back to `comic_{id}` when the name is null, empty, `.` or `..`, or contains a path separator. Storage, the date and strip indexes, duplicate hashes and the metadata backfill all use it.
 
 Examples:
 
@@ -61,7 +58,7 @@ NfsFileOperations.atomicWrite(target, content)
 
 This pattern is used by: `ComicIndexService`, `JsonBatchExecutionTracker`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, and `AccessMetricsRepository`.
 
-**Exception:** `SchedulerStateService` uses plain `Files.writeString()` without the atomic pattern. `ApplicationConfigurationFacade` (for `comics.json`, `users.json`, `preferences.json`) uses `FileWriter` directly.
+`ApplicationConfigurationFacade` (`comics.json`, `users.json`, `preferences.json`), `SchedulerStateService`, `BackfillStateService` and `MetricsArchiver` write the same way. Nothing writes JSON to the cache without it.
 
 ## `@eaDir` Exclusion
 
