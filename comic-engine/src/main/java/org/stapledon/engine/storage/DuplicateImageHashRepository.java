@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ImageHashRecord;
 import org.stapledon.common.util.NfsFileOperations;
 
@@ -154,19 +155,8 @@ public class DuplicateImageHashRepository {
         return NfsFileOperations.resolvePath(cacheProperties.getLocation(), comicNameParsed, yearPath, HASH_FILE_NAME);
     }
 
-    /**
-     * Gets a directory name for a comic - uses the comic name if available,
-     * otherwise falls back to the comic ID.
-     *
-     * @param comicId   The comic ID
-     * @param comicName The comic name (can be null)
-     * @return A string to use as the directory name
-     */
     private String getComicNameParsed(int comicId, String comicName) {
-        if (comicName == null) {
-            return "comic_" + comicId;
-        }
-        return comicName.replace(" ", "");
+        return new ComicIdentifier(comicId, comicName).getDirectoryName();
     }
 
     /**

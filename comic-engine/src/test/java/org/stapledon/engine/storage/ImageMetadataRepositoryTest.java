@@ -3,11 +3,6 @@ package org.stapledon.engine.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,15 +10,14 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
+import org.stapledon.common.util.GsonUtils;
 
 class ImageMetadataRepositoryTest {
 
@@ -35,11 +29,7 @@ class ImageMetadataRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeAdapter())
-                .setPrettyPrinting()
-                .create();
+        gson = GsonUtils.createGson();
 
         repository = new ImageMetadataRepository(gson);
     }
@@ -400,52 +390,5 @@ class ImageMetadataRepositoryTest {
         File file = new File(path);
         file.getParentFile().mkdirs();
         file.createNewFile();
-    }
-
-    // Gson adapter
-    static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
-        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
-        @Override
-        public void write(JsonWriter jsonWriter, LocalDateTime localDateTime) throws IOException {
-            if (localDateTime == null) {
-                jsonWriter.nullValue();
-            } else {
-                jsonWriter.value(formatter.format(localDateTime));
-            }
-        }
-
-        @Override
-        public LocalDateTime read(JsonReader jsonReader) throws IOException {
-            if (jsonReader.peek() == JsonToken.NULL) {
-                jsonReader.nextNull();
-                return null;
-            }
-            String dateTimeStr = jsonReader.nextString();
-            return LocalDateTime.parse(dateTimeStr, formatter);
-        }
-    }
-
-    static class OffsetDateTimeAdapter extends TypeAdapter<OffsetDateTime> {
-        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-
-        @Override
-        public void write(JsonWriter jsonWriter, OffsetDateTime offsetDateTime) throws IOException {
-            if (offsetDateTime == null) {
-                jsonWriter.nullValue();
-            } else {
-                jsonWriter.value(formatter.format(offsetDateTime));
-            }
-        }
-
-        @Override
-        public OffsetDateTime read(JsonReader jsonReader) throws IOException {
-            if (jsonReader.peek() == JsonToken.NULL) {
-                jsonReader.nextNull();
-                return null;
-            }
-            String dateTimeStr = jsonReader.nextString();
-            return OffsetDateTime.parse(dateTimeStr, formatter);
-        }
     }
 }

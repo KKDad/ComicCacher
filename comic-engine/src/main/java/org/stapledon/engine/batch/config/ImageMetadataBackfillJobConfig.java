@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
@@ -82,7 +83,7 @@ public class ImageMetadataBackfillJobConfig {
             synchronized (comicDirectoryMap) {
                 if (!initialized) {
                     comicConfigurationService.loadComicConfig().getItems().values().forEach(comic -> {
-                        String dirName = comic.getName().replace(" ", "");
+                        String dirName = ComicIdentifier.from(comic).getDirectoryName();
                         comicDirectoryMap.put(dirName.toLowerCase(), comic);
                     });
                     initialized = true;

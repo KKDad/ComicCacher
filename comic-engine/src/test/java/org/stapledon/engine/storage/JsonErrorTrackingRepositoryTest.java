@@ -3,22 +3,13 @@ package org.stapledon.engine.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +17,7 @@ import java.util.Map;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicErrorRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
+import org.stapledon.common.util.GsonUtils;
 
 class JsonErrorTrackingRepositoryTest {
 
@@ -38,12 +30,7 @@ class JsonErrorTrackingRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .registerTypeAdapter(OffsetDateTime.class, new OffsetDateTimeAdapter())
-                .setPrettyPrinting()
-                .create();
+        gson = GsonUtils.createGson();
 
         cacheProperties = CacheProperties.builder()
                 .location(tempDir.toString())
@@ -239,73 +226,5 @@ class JsonErrorTrackingRepositoryTest {
                 .timestamp(OffsetDateTime.now())
                 .retrievalDurationMs(100L)
                 .build();
-    }
-
-    // Gson adapters
-    static class LocalDateAdapter extends TypeAdapter<LocalDate> {
-        @Override
-        public void write(final JsonWriter jsonWriter, final LocalDate localDate) throws IOException {
-            if (localDate == null) {
-                jsonWriter.nullValue();
-            } else {
-                jsonWriter.value(localDate.toString());
-            }
-        }
-
-        @Override
-        public LocalDate read(final JsonReader jsonReader) throws IOException {
-            if (jsonReader.peek() == JsonToken.NULL) {
-                jsonReader.nextNull();
-                return null;
-            } else {
-                return LocalDate.parse(jsonReader.nextString());
-            }
-        }
-    }
-
-    static class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
-        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
-        @Override
-        public void write(JsonWriter jsonWriter, LocalDateTime localDateTime) throws IOException {
-            if (localDateTime == null) {
-                jsonWriter.nullValue();
-            } else {
-                jsonWriter.value(formatter.format(localDateTime));
-            }
-        }
-
-        @Override
-        public LocalDateTime read(JsonReader jsonReader) throws IOException {
-            if (jsonReader.peek() == JsonToken.NULL) {
-                jsonReader.nextNull();
-                return null;
-            }
-            String dateTimeStr = jsonReader.nextString();
-            return LocalDateTime.parse(dateTimeStr, formatter);
-        }
-    }
-
-    static class OffsetDateTimeAdapter extends TypeAdapter<OffsetDateTime> {
-        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-
-        @Override
-        public void write(JsonWriter jsonWriter, OffsetDateTime offsetDateTime) throws IOException {
-            if (offsetDateTime == null) {
-                jsonWriter.nullValue();
-            } else {
-                jsonWriter.value(formatter.format(offsetDateTime));
-            }
-        }
-
-        @Override
-        public OffsetDateTime read(JsonReader jsonReader) throws IOException {
-            if (jsonReader.peek() == JsonToken.NULL) {
-                jsonReader.nextNull();
-                return null;
-            }
-            String dateTimeStr = jsonReader.nextString();
-            return OffsetDateTime.parse(dateTimeStr, formatter);
-        }
     }
 }

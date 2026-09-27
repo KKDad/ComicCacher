@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.MDC;
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.util.DateTimeUtils;
 import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 import org.stapledon.engine.batch.dto.BatchStepSummary;
@@ -76,7 +77,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
             CacheProperties cacheProperties,
             @Qualifier("gsonWithLocalDate") Gson gson,
             @Value("${batch.tracking.max-history-per-job:30}") int maxHistoryPerJob,
-            @Value("${batch.timezone:UTC}") String batchTimezone) {
+            @Value("${batch.timezone:America/Toronto}") String batchTimezone) {
         this.cacheProperties = cacheProperties;
         this.gson = gson;
         this.maxHistoryPerJob = maxHistoryPerJob;
@@ -84,10 +85,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     private OffsetDateTime toOffset(LocalDateTime localDateTime) {
-        if (localDateTime == null) {
-            return null;
-        }
-        return localDateTime.atZone(batchZone).toOffsetDateTime();
+        return DateTimeUtils.toOffset(localDateTime, batchZone);
     }
 
     @Override
