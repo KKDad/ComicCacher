@@ -1,4 +1,4 @@
-# ComicAPI Coding Standards
+# comic-api Coding Standards
 
 ## 1. Documentation & Storage
 - **Source of Truth:** All comic metadata resides in JSON files on the NFS filesystem. Treat the filesystem as a "Read-Through Cache." See [@~/docs/storage/overview.md](../docs/storage/overview.md) and [@~/docs/storage/comic-data.md](../docs/storage/comic-data.md) for schema.
@@ -26,7 +26,7 @@
 - **Binary Operations:** Wrap if long; operator (`&&`, `||`, `+`) must be first character on the new line.
 - **Control Statements:** Braces `{}` mandatory for all `if`, `else`, `for`, `while`. No single-line statements.
 - **Spacing:** 2 blank lines around class definitions. No blank lines before first import. Up to 3 blank lines inside methods.
-- **Indentation:** Smart Tabs.
+- **Indentation:** 4 spaces (`.editorconfig`).
 
 ## 4. Enum Standards
 - **Naming:** Singular form (e.g., `ComicType`). Values in `ALL_CAPS` with `ADJECTIVE_NOUN` order.
@@ -43,7 +43,6 @@
 - Use `Map.of()`, `List.of()`, `Set.of()` for small/fixed collections.
 - Use `new ArrayList<>(List.of(...))` if the collection must be modifiable.
 - Prefer `.computeIfAbsent()` over `containsKey()` + `put()`.
-- Leverage Virtual Threads for I/O-bound NFS reads.
 
 ### Modern Java (25)
 - Prefer pattern-matching `switch` (type patterns, record patterns, `case null`) over `instanceof` chains, and arrow cases over `break`-style switches.
@@ -59,7 +58,7 @@
 - **N+1 Prevention:** Use `DataLoader` for all nested metadata lookups from JSON files.
 - **Scalars:** Custom scalars `Date`, `DateTime` and `JSON`.
 - **Mutations:** Return a "Payload" object containing the updated object and a list of user-friendly errors.
-- **Binary Data:** GQL handles metadata only. Binary streams stay on REST using `FileSystemResource`.
+- **Binary Data:** GQL handles metadata only. Binary streams (strip and avatar images) stay on REST in `ComicController`, returned as `ResponseEntity<byte[]>`.
 - **Authorization:** Three roles — `USER` (default), `OPERATOR` (batch/metrics read-only), `ADMIN` (full access). Schema directives: `@public`, `@authenticated`, `@hasRole(role: "ROLE")`.
 
 ## 8. JSON Serialization

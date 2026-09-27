@@ -1,6 +1,6 @@
 # Operational State Files
 
-Six JSON files track runtime state, job history, errors, and metrics. All are located in the cache root directory (`comics.cache.location`).
+Seven JSON files track runtime state, job history, errors, and metrics. All are located in the cache root directory (`comics.cache.location`).
 
 ## File Inventory
 
@@ -8,10 +8,11 @@ Six JSON files track runtime state, job history, errors, and metrics. All are lo
 |:---|:---|:---|:---|:---|
 | `batch-executions.json` | Spring Batch job execution history | `comic-engine` | `JsonBatchExecutionTracker` | Yes |
 | `retrieval-status.json` | Comic retrieval attempt records | `comic-engine` | `JsonRetrievalStatusRepository` | Yes |
-| `scheduler-state.json` | Scheduler pause/resume state | `comic-engine` | `SchedulerStateService` | No |
+| `scheduler-state.json` | Scheduler pause/resume state | `comic-engine` | `SchedulerStateService` | Yes |
+| `backfill-state.json` | What the comic backfill learned: given-up dates, history horizons, daily attempt counts | `comic-engine` | `BackfillStateService` | Yes |
 | `last_errors.json` | Recent errors per comic | `comic-engine` | `JsonErrorTrackingRepository` | Yes |
 | `access-metrics.json` | Per-comic access statistics | `comic-metrics` | `AccessMetricsRepository` | Yes |
-| `metrics-history/{yyyy-MM-dd}.json` | Daily snapshot of combined metrics | `comic-metrics` | `MetricsArchiver` | No |
+| `metrics-history/{yyyy-MM-dd}.json` | Daily snapshot of combined metrics | `comic-metrics` | `MetricsArchiver` | Yes |
 
 ---
 
@@ -149,7 +150,7 @@ Records individual comic retrieval attempts with outcomes. Used for troubleshoot
 
 Persists pause/resume state for batch job schedulers so it survives application restarts. Loaded on startup, written on every state change.
 
-**Note:** This file does NOT use the `NfsFileOperations.atomicWrite()` pattern. It writes directly via `Files.writeString()`.
+Written with `NfsFileOperations.atomicWrite()`, like the other state files.
 
 **DTO:** `Map<String, SchedulerState>` (`comic-engine`)
 
@@ -350,6 +351,7 @@ Daily snapshots of combined metrics. `MetricsArchiveJob` builds combined metrics
 | `JsonRetrievalStatusRepository.java` | `comic-engine` |
 | `ComicRetrievalRecord.java` / `ComicRetrievalRecordStorage.java` | `comic-common` |
 | `SchedulerStateService.java` | `comic-engine` |
+| `BackfillStateService.java` | `comic-engine` |
 | `JsonErrorTrackingRepository.java` | `comic-engine` |
 | `ComicErrorRecord.java` | `comic-common` |
 | `AccessMetricsRepository.java` | `comic-metrics` |

@@ -58,7 +58,7 @@ The authoritative registry of all known comics and their metadata. Keyed by comi
 | `publicationDays` | `List<DayOfWeek>` | `null` | Days comic publishes (null = daily) |
 | `active` | `boolean` | `true` | Whether comic is actively publishing |
 
-> **Note:** The `comics` list field on `ComicConfig` is marked `@JsonIgnore` and never serialized. Only the `items` map is persisted.
+> **Note:** The `comics` list field on `ComicConfig` is `transient`, so Gson never serializes it. Only the `items` map is persisted.
 
 ---
 

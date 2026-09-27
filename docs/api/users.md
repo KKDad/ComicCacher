@@ -271,7 +271,7 @@ mutation {
 
 ### updateDisplaySettings
 
-Update display settings (theme, layout, etc.).
+Update display settings (theme, dashboard sections, reader behaviour).
 
 ```graphql
 mutation {
@@ -289,7 +289,7 @@ mutation {
 
 ```graphql
 mutation {
-  updateDisplaySettings(settings: { theme: "dark", layout: "grid", stripsPerPage: 10 }) {
+  updateDisplaySettings(settings: { theme: "dark", showFavorites: true, readerNavMode: "favorites", readerScrollOrder: "newest-first" }) {
     preference {
       displaySettings
     }
@@ -299,6 +299,8 @@ mutation {
   }
 }
 ```
+
+Comics Hub stores these keys (see `comic-hub/src/lib/preferences-defaults.ts`): `theme` (`light` / `dark` / `system`), `showContinueReading`, `showFavorites`, `showRecentlyAdded`, `readerNavMode` (`favorites` / `all`) and `readerScrollOrder` (`catchup` / `newest-first`). The backend stores whatever JSON it is given.
 
 ---
 

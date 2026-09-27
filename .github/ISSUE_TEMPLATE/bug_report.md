@@ -1,38 +1,25 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Something in Comics Hub, the API or a batch job isn't working
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**What happened**
+What went wrong, and what you expected instead.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Where**
+- Part: Comics Hub page (which one), GraphQL/REST API, or a batch job (which one)
+- Instance: prod or dev, and the version if you know it
+- Browser and device, for Comics Hub problems
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Steps to reproduce**
+1.
+2.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Request ID**
+If it came from a request, the `X-Request-Id` response header (browser DevTools, Network tab) matches the report to its log lines.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
-
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
-
-**Additional context**
-Add any other context about the problem here.
+**Screenshots or log lines**

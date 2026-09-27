@@ -209,7 +209,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 |-----|---------|-------------|----------------|-------------|-----------------|
 | ComicDownloadJob | Chunk (R/P/W) | `0 0 6 * * ?` | `true` | Web scraping (GoComics, ComicsKingdom) | `ManagementFacade` |
 | ComicBackfillJob | Chunk (R/P/W) | `0 30 7-19/2 * * ?` (several runs a day) | `true` | `ComicBackfillService` gap detection | `ManagementFacade`, `ComicBackfillService` |
-| AvatarBackfillJob | Tasklet | `0 15 7 * * ?` | `false` | Web scraping (avatar pages) | `ManagementFacade` |
+| AvatarBackfillJob | Tasklet | `0 15 7 * * ?` | `true` | Web scraping (avatar pages) | `ManagementFacade` |
 | ImageMetadataBackfillJob | Tasklet | `0 30 6 * * ?` | `true` | Filesystem walk | `ValidationService`, `AnalysisService`, `ImageMetadataRepository` |
 | MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | Combined metrics built on demand | `MetricsArchiveService` |
 | RetrievalRecordPurgeJob | Tasklet (2 steps) | `0 45 6 * * ?` | `true` | JSON retrieval records, batch log files | `ManagementFacade`, `BatchJobLogService` |

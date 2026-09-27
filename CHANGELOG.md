@@ -5,6 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Comics Hub visual refresh: Newsprint and Ink themes, new type, navigation, logo, app icons and empty-state illustrations (#372)
+- Desktop reader keyboard shortcuts (J/K, Home/End, R, F, Escape), and the reader keeps your place across refreshes and back navigation (#370)
+- The reader's "Newest first" scroll order now works: newest strip on top, scrolling back through older ones (#376)
+- Dev-only `devToken` mutation for signing in to the dev instance in tests, turned on by `utils/dev-run.sh` (#365, #366)
+- `utils/dev-ui.sh` runs Comics Hub against the dev API; `utils/readme-screenshots.sh` regenerates the README images from invented demo comics (#362, #374)
+
+### Changed
+- Comics Hub runs on Node 24 LTS, with a dependency sweep (#341, #361)
+- Stable dashboard layout, a full sortable comics list and page titles (#371)
+- Every comic list (library, reader, grid, admin tables) sorts names the same way (#382)
+- Prod backfill runs every 2 hours like dev, shifted 90 minutes later; it had been left on once a day (#375)
+- Removed the legacy Selenium downloaders and `ComicCacher.json` bootstrap loader, OpenAPI/Swagger, and unused backend classes, methods, properties and dependencies (#378, #379, #381)
+- CI uses `gradle/actions/setup-gradle` and skips comic-hub and docs-only changes (#379)
+
+### Fixed
+- The saved theme applies on every page load, and toasts follow it instead of the OS theme (#369, #376)
+- Desktop reader infinite scroll (#363); batch job cards overflowing their column (#364); broken and inaccessible parts of the public UI (#342)
+- Signing out, or signing in without "remember me", now clears the remember-me cookie (#376)
+- Status badges and card shadows follow the Ink theme, and reduced-motion is honoured (#376)
+- `npm run codegen` produced a file that didn't compile (#382)
+- `utils/verify-json-files.sh` always failed on a current cache and never checked metadata sidecars (#375)
+- Scheduler state and metrics archives are written atomically; access times are stored with a UTC offset (#383)
+- The JaCoCo integration-test report was never produced (#379)
 
 ## [2.4.9] - 2026-09-25
 ### Changed
