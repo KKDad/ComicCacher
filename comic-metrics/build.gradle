@@ -9,9 +9,6 @@ ext.jacocoCoverageMinimum = 0.33
 // repositories inherited from root build.gradle
 
 dependencies {
-	// comic-common dependency for shared types
+	// comic-common dependency for shared types (also brings spring-boot-starter)
 	implementation project(':comic-common')
-
-	// Spring Boot for web layer
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 }

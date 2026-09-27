@@ -83,7 +83,7 @@ The backend and frontend each build into an image:
 
 ```bash
 ./gradlew :comic-api:build && ./comic-api/build-docker.sh <tag>   # API, port 8888
-cd comic-hub && ./build-docker.sh                                  # web app, port 8080
+cd comic-hub && ./build-docker.sh <tag>                            # web app, port 8080
 ```
 
 Mount a folder (local or NFS) at `/comics` in the API container; that folder is the whole data store. [`utils/prod/docker-compose.yml`](utils/prod/docker-compose.yml) is a working example, including the batch schedules.
@@ -93,7 +93,7 @@ Mount a folder (local or NFS) at `/comics` in the API container; that folder is 
 You'll need **Java 25** and **Node.js 24 LTS**.
 
 ```bash
-./gradlew :comic-api:bootRun      # API on localhost:8080 (GraphQL at /graphql, Swagger at /swagger-ui)
+./gradlew :comic-api:bootRun      # API on localhost:8888 (GraphQL at /graphql)
 
 cd comic-hub
 cp .env.example .env.local        # point NEXT_PUBLIC_GRAPHQL_ENDPOINT at your API

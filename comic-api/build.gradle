@@ -2,16 +2,14 @@ plugins {
     id "com.coditory.integration-test" version '2.2.5'
     id "io.spring.dependency-management"
     id "org.springframework.boot"
-    id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
 }
 
-// Integration test configuration
-integrationTest {
-    useJUnitPlatform()
+// Integration test configuration. The coditory plugin runs the ITs in the 'integration' task;
+// 'integrationTest' only aggregates it. The ITs pick their profile with @ActiveProfiles.
+integration {
     testLogging {
         events "passed", "skipped", "failed"
     }
-    systemProperty 'spring.profiles.active', 'integration'
 }
 
 // Ensure main resources (including graphql schema files) are on integration test classpath
@@ -75,12 +73,9 @@ dependencies {
     // Caffeine cache
     implementation "com.github.ben-manes.caffeine:caffeine:${rootProject.ext.caffeineVersion}"
 
-    // JDBC and H2 database for Spring Batch job repository (use Spring Boot managed versions)
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    // H2 database for the Spring Batch job repository (JDBC comes with starter-batch-jdbc)
     runtimeOnly 'com.h2database:h2'
 
-    // OpenAPI documentation
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${rootProject.ext.springdocVersion}"
 
     // JWT dependencies - use consistent versions
     implementation "io.jsonwebtoken:jjwt-api:${rootProject.ext.jjwtVersion}"
@@ -130,8 +125,8 @@ ext.jacocoCoverageMinimum = 0.40
 
 // Integration test coverage
 tasks.register('jacocoIntegrationTestReport', JacocoReport) {
-    dependsOn integrationTest
-    executionData fileTree(project.layout.buildDirectory).include("/jacoco/integrationTest.exec")
+    dependsOn integration
+    executionData fileTree(project.layout.buildDirectory).include("/jacoco/integration.exec")
     sourceSets sourceSets.main
     reports {
         xml.required = true
@@ -139,59 +134,17 @@ tasks.register('jacocoIntegrationTestReport', JacocoReport) {
     }
 }
 
-integrationTest {
+integration {
     finalizedBy jacocoIntegrationTestReport
 }
 
 // Combined coverage report
 tasks.register('jacocoAllReport', JacocoReport) {
-    dependsOn test, integrationTest
+    dependsOn test, integration
     executionData fileTree(project.layout.buildDirectory).include("/jacoco/*.exec")
     sourceSets sourceSets.main
     reports {
         xml.required = true
         html.required = true
-    }
-}
-
-// OpenAPI documentation configuration
-openApi {
-    apiDocsUrl.set("http://localhost:8888/v3/api-docs")
-    outputDir.set(file("${project.layout.buildDirectory}"))
-    outputFileName.set("openapi.json")
-    waitTimeInSeconds.set(30)
-
-    // Configure the Spring Boot application to use the 'apidocs' profile
-    // This will disable comic caching during API docs generation
-    customBootRun {
-        args = ["--spring.profiles.active=apidocs"]
-    }
-}
-
-// The API docs generation is temporarily disabled in the build process
-// to prevent build failures. Use the updateApiDocs task manually when needed.
-
-// Manual API docs generation task
-tasks.register("updateApiDocs") {
-    doLast {
-        logger.lifecycle("Generating OpenAPI docs manually using script...")
-        exec {
-            workingDir project.projectDir
-            commandLine "./generate-openapi-docs.sh"
-        }
-    }
-}
-
-// Task to run the application with apidocs profile for manual testing
-tasks.register('bootRunApiDocs') {
-    dependsOn 'classes'
-    group = 'application'
-    description = 'Runs the Spring Boot application with the apidocs profile (caching disabled)'
-
-    doLast {
-        exec {
-            workingDir project.projectDir
-            commandLine "${project.getRootDir().getAbsolutePath()}/gradlew", "bootRun", "--args=--spring.profiles.active=apidocs"
-        }
     }
 }
