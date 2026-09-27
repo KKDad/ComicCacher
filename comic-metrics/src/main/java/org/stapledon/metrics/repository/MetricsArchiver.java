@@ -1,12 +1,11 @@
 package org.stapledon.metrics.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
 import com.google.gson.Gson;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,12 +57,9 @@ public class MetricsArchiver {
             String filename = date.format(DATE_FORMATTER) + ".json";
             Path filePath = historyDir.resolve(filename);
 
-            try (Writer writer = new FileWriter(filePath.toFile())) {
-                gson.toJson(metrics, writer);
-                writer.flush();
-                log.info("Archived metrics snapshot for {}", date);
-                return true;
-            }
+            NfsFileOperations.atomicWrite(filePath, gson.toJson(metrics));
+            log.info("Archived metrics snapshot for {}", date);
+            return true;
         } catch (IOException e) {
             log.error("Failed to archive metrics for date {}", date, e);
             return false;

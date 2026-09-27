@@ -3,7 +3,8 @@ package org.stapledon.metrics.collector;
 import org.stapledon.metrics.dto.AccessMetricsData;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -115,7 +116,8 @@ public class AccessMetricsCollector {
      */
     public void trackAccess(String comicName, boolean isHit, long accessTime) {
         accessCounters.computeIfAbsent(comicName, k -> new AtomicInteger(0)).incrementAndGet();
-        lastAccessTime.put(comicName, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        // Stored with an explicit offset; DateTimeUtils.parseDateTime still reads older offset-less values as UTC
+        lastAccessTime.put(comicName, OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         // Track hit/miss statistics
         if (isHit) {

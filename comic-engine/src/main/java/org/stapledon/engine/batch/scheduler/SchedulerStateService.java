@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.stapledon.common.config.CacheProperties;
+import org.stapledon.common.util.NfsFileOperations;
 
 /**
  * Manages runtime pause/resume state for batch job schedulers.
@@ -105,7 +106,7 @@ public class SchedulerStateService {
         try {
             Files.createDirectories(filePath.getParent());
             String json = gson.toJson(new HashMap<>(states));
-            Files.writeString(filePath, json);
+            NfsFileOperations.atomicWrite(filePath, json);
             log.debug("Scheduler states persisted to {}", filePath);
         } catch (IOException e) {
             log.error("Failed to persist scheduler states", e);

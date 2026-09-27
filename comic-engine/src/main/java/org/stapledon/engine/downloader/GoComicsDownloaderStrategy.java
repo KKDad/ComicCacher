@@ -86,7 +86,6 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
      */
     @Override
     protected byte[] downloadAvatarImage(int comicId, String comicName, String sourceIdentifier) throws Exception {
-        String comicNameParsed = comicName.replace(" ", "");
         String url = String.format("https://www.gocomics.com/%s/about", sourceIdentifier);
         log.debug("Fetching avatar from {}", url);
 

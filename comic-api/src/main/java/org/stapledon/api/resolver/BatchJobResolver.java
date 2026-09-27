@@ -19,6 +19,7 @@ import org.stapledon.api.dto.batch.DailyJobStatsDto;
 import org.stapledon.api.dto.payload.MutationPayloads.ToggleJobSchedulerPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.TriggerBatchJobPayload;
 import org.stapledon.api.dto.payload.UserError;
+import org.stapledon.common.util.DateTimeUtils;
 import org.stapledon.engine.batch.BatchJobBaseConfig;
 import org.stapledon.engine.batch.BatchJobMonitoringService;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
@@ -365,9 +366,7 @@ public class BatchJobResolver {
     }
 
     private OffsetDateTime toOffset(java.time.LocalDateTime ldt) {
-        return Optional.ofNullable(ldt)
-                .map(t -> t.atZone(ZoneId.of(batchTimezone)).toOffsetDateTime())
-                .orElse(null);
+        return DateTimeUtils.toOffset(ldt, ZoneId.of(batchTimezone));
     }
 
     private BatchSchedulerInfoDto mapSchedulerInfo(DailyJobScheduler scheduler) {
