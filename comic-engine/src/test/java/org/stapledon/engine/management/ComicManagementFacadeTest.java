@@ -20,13 +20,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.stapledon.common.config.IComicsBootstrap;
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
@@ -42,7 +40,6 @@ import org.stapledon.common.infrastructure.config.ExecutionTracker;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
-import org.stapledon.common.util.Bootstrap;
 import org.stapledon.common.util.Direction;
 import org.stapledon.engine.downloader.DownloaderFacade;
 
@@ -64,12 +61,6 @@ class ComicManagementFacadeTest {
     @Mock
     private ExecutionTracker taskExecutionTracker;
 
-    @Mock
-    private IComicsBootstrap goComicsBootstrap;
-
-    @Mock
-    private IComicsBootstrap kingComicsBootstrap;
-
     private ComicManagementFacade facade;
     private ComicItem testComic;
     private final byte[] testImageData = "test image data".getBytes();
@@ -86,13 +77,6 @@ class ComicManagementFacadeTest {
         Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
         items.put(testComic.getId(), testComic);
         comicConfig.setItems(items);
-
-        // Create test bootstrap
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.setDailyComics(new ArrayList<>());
-        bootstrap.setKingComics(new ArrayList<>());
-        bootstrap.getDailyComics().add(goComicsBootstrap);
-        bootstrap.getKingComics().add(kingComicsBootstrap);
 
         // Configure the minimal mocks needed for basic setup
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);

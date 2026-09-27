@@ -164,7 +164,7 @@ A 429 that surfaces as a Jsoup `HttpStatusException` (sources that fetch pages w
 
 Only daily sources retry; indexed sources (Freefall) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
 
-**Browser identity:** GoComics sits behind Cloudflare, so requests present as desktop Chrome. `downloader.user-agent.default-value` carries the Chrome UA, and `GoComicsDownloaderStrategy` derives matching `Sec-Ch-Ua` client hints from the Chrome major version in that UA (omitted for non-Chrome UAs). Keep the Chrome major version current ([Chromium Dash](https://chromiumdash.appspot.com/releases)); a stale browser version is a bot signal. The legacy UA constants (`UserAgentService.FALLBACK_USER_AGENT`, `DailyComic.USER_AGENT`, the rotation list in `GoComics`) should be bumped at the same time. `Accept-Encoding` omits `zstd`, since only gzip and Brotli are decoded.
+**Browser identity:** GoComics sits behind Cloudflare, so requests present as desktop Chrome. `downloader.user-agent.default-value` carries the Chrome UA, and `GoComicsDownloaderStrategy` derives matching `Sec-Ch-Ua` client hints from the Chrome major version in that UA (omitted for non-Chrome UAs). Keep the Chrome major version current ([Chromium Dash](https://chromiumdash.appspot.com/releases)); a stale browser version is a bot signal. Bump `UserAgentService.FALLBACK_USER_AGENT` at the same time. `Accept-Encoding` omits `zstd`, since only gzip and Brotli are decoded.
 
 ## Strategy Dispatch
 

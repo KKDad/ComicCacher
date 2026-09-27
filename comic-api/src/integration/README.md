@@ -21,4 +21,4 @@ Spring Boot integration tests for comic-api, run with the `com.coditory.integrat
 
 ## Live-Network Tests
 
-`downloader.GoComicsIntegrationIT` and `downloader.ComicsKingdomIntegrationIT` fetch from the real sites, so they can fail when a site changes or rate limits, independent of the code under test. Both exercise the legacy `IDailyComic` classes (`GoComics` uses Selenium, `ComicsKingdom` Jsoup), not the production `*DownloaderStrategy` classes; see "Replace the Selenium GoComics IT" in `TODO.md`.
+None at present: every IT runs against local fixtures. See "Add Live-Site Downloader ITs" in `TODO.md`.

@@ -35,6 +35,6 @@ File-based persistence layer on NFS.
 | Document | Description |
 |----------|-------------|
 | [@~/docs/storage/overview.md](storage/overview.md) | Directory layout, naming conventions, atomic writes |
-| [@~/docs/storage/configuration-files.md](storage/configuration-files.md) | comics.json, users.json, preferences.json, bootstrap |
+| [@~/docs/storage/configuration-files.md](storage/configuration-files.md) | comics.json, users.json, preferences.json |
 | [@~/docs/storage/operational-state.md](storage/operational-state.md) | Batch executions, retrieval status, scheduler state, metrics |
 | [@~/docs/storage/comic-data.md](storage/comic-data.md) | Strip images, date indexes, hash caches, metadata sidecars |

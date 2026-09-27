@@ -6,15 +6,12 @@ import org.stapledon.api.dto.preference.PreferenceConfig;
 import org.stapledon.api.dto.user.UserConfig;
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.util.Bootstrap;
 import org.stapledon.common.util.NfsFileOperations;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +39,6 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
     private ComicConfig comicConfig;
     private UserConfig userConfig;
     private PreferenceConfig preferenceConfig;
-    private Bootstrap bootstrapConfig;
 
     public ApplicationConfigurationFacade(
             @Qualifier("gsonWithLocalDate") Gson gson,
@@ -74,42 +70,6 @@ public class ApplicationConfigurationFacade implements ConfigurationFacade {
             this.comicConfig = config;
             return true;
         }
-        return false;
-    }
-
-    @Override
-    public Bootstrap loadBootstrapConfig() {
-        if (bootstrapConfig != null) {
-            return bootstrapConfig;
-        }
-
-        // Note: This method assumes ComicCacher.json is in the classpath resources
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("ComicCacher.json")) {
-            if (is != null) {
-                Reader reader = new InputStreamReader(is);
-                bootstrapConfig = gson.fromJson(reader, Bootstrap.class);
-                log.info("Loaded bootstrap configuration with {} daily comics and {} king comics",
-                        bootstrapConfig.getDailyComics().size(),
-                        bootstrapConfig.getKingComics().size());
-                return bootstrapConfig;
-            } else {
-                log.error("ComicCacher.json not found in classpath");
-                bootstrapConfig = Bootstrap.builder().build();
-                return bootstrapConfig;
-            }
-        } catch (IOException e) {
-            log.error("Error loading bootstrap configuration", e);
-            bootstrapConfig = Bootstrap.builder().build();
-            return bootstrapConfig;
-        }
-    }
-
-    @Override
-    public boolean saveBootstrapConfig(Bootstrap config) {
-        // Bootstrap config is typically read-only from resources
-        // This implementation would need to be adapted if saving to resources is
-        // required
-        log.warn("Saving bootstrap configuration is not supported");
         return false;
     }
 

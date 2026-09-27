@@ -1,56 +1,20 @@
 # Configuration Files
 
-Four JSON files define the application's persistent configuration. Three are user-configurable via `CacheProperties` (prefix `comics.cache`); one is a read-only classpath resource.
+Three JSON files define the application's persistent configuration, all configurable via `CacheProperties` (prefix `comics.cache`).
 
 ## File Inventory
 
 | File | Purpose | Property | Default | Responsible Class |
 |:---|:---|:---|:---|:---|
-| `ComicCacher.json` | Bootstrap comic list | N/A (classpath) | `src/main/resources/ComicCacher.json` | `ApplicationConfigurationFacade` |
 | `comics.json` | Comic registry/metadata | `comics.cache.config` | `comics.json` | `JsonComicRepository` via `ConfigurationFacade` |
 | `users.json` | User accounts | `comics.cache.usersConfig` | `users.json` | `JsonUserRepository` via `ConfigurationFacade` |
 | `preferences.json` | User preferences | `comics.cache.preferencesConfig` | `preferences.json` | `JsonPreferenceRepository` via `ConfigurationFacade` |
 
-All three configurable files are resolved relative to `comics.cache.location` by `ApplicationConfigurationFacade.getConfigFile()`.
+All three files are resolved relative to `comics.cache.location` by `ApplicationConfigurationFacade.getConfigFile()`.
 
 ---
 
-## 1. ComicCacher.json (Bootstrap)
-
-Read-only classpath resource loaded via `getClass().getClassLoader().getResourceAsStream("ComicCacher.json")`. Defines which comics to download and their starting dates. Not writable at runtime.
-
-**DTO:** `Bootstrap` (`comic-common`)
-
-```json
-{
-  "dailyComics": [
-    {
-      "stripName": "String",
-      "startDate": "LocalDate (yyyy-MM-dd)",
-      "source": "String (e.g., gocomics)",
-      "sourceIdentifier": "String (e.g., calvinandhobbes)",
-      "publicationDays": ["MONDAY", "TUESDAY", ...],
-      "active": true
-    }
-  ],
-  "kingComics": [
-    {
-      "stripName": "String",
-      "startDate": "LocalDate (yyyy-MM-dd)",
-      "source": "String (e.g., comicskingdom)",
-      "sourceIdentifier": "String (e.g., beetle-bailey)",
-      "publicationDays": null,
-      "active": true
-    }
-  ]
-}
-```
-
-Each entry implements `IComicsBootstrap`. `publicationDays` defaults to `null` (daily). `active` defaults to `true`.
-
----
-
-## 2. comics.json (Comic Registry)
+## 1. comics.json (Comic Registry)
 
 The authoritative registry of all known comics and their metadata. Keyed by comic ID (integer). Loaded once and cached in memory by `ApplicationConfigurationFacade`.
 
@@ -98,7 +62,7 @@ The authoritative registry of all known comics and their metadata. Keyed by comi
 
 ---
 
-## 3. users.json (User Accounts)
+## 2. users.json (User Accounts)
 
 Stores user accounts with hashed passwords. Keyed by username string.
 
@@ -136,7 +100,7 @@ Stores user accounts with hashed passwords. Keyed by username string.
 
 ---
 
-## 4. preferences.json (User Preferences)
+## 3. preferences.json (User Preferences)
 
 Stores per-user favorites and reading history. Keyed by username string.
 
@@ -184,4 +148,3 @@ Stores per-user favorites and reading history. Keyed by username string.
 | `ComicConfig.java` / `ComicItem.java` | `comic-common` |
 | `UserConfig.java` / `User.java` | `comic-api` |
 | `PreferenceConfig.java` / `UserPreference.java` | `comic-api` |
-| `Bootstrap.java` / `IComicsBootstrap.java` | `comic-common` |

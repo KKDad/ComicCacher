@@ -22,10 +22,6 @@ dependencies {
 	implementation "com.twelvemonkeys.imageio:imageio-tiff:${rootProject.ext.twelvemonkeysVersion}"
 	implementation "com.twelvemonkeys.imageio:imageio-bmp:${rootProject.ext.twelvemonkeysVersion}"
 
-	// Selenium for web scraping
-	implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
-	implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
-
 	// Brotli decoder (pure Java) — required because GoComics serves Content-Encoding: br
 	// and Jsoup only auto-decompresses gzip.
 	implementation "org.brotli:dec:${rootProject.ext.brotliDecVersion}"

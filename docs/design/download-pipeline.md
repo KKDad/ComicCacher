@@ -114,10 +114,6 @@ The strategy hierarchy supports two comic models — daily (date-based) and inde
 
 Avatar downloads follow the same pattern through `downloadAvatar()` / `downloadAvatarImage()`.
 
-## Legacy Downloaders
-
-The `IDailyComic` / `DailyComic` hierarchy predates the strategy pattern. `GoComics` uses Selenium WebDriver for JavaScript-rendered pages. `ComicsKingdom` uses Jsoup. These are being replaced by the `*DownloaderStrategy` classes, which production already uses for every source (all via Jsoup); the legacy `GoComics` class is only exercised by `GoComicsIntegrationIT`.
-
 ## Storage Pipeline
 
 `FileSystemComicStorageFacade.saveComicStripWithResult()` executes a multi-step pipeline:
