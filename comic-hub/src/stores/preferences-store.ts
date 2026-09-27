@@ -1,20 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { type DisplaySettings, DEFAULT_DISPLAY_SETTINGS, mergeWithDefaults } from '@/lib/preferences-defaults';
+import { PREFERENCES_STORAGE_KEY } from '@/lib/theme';
 
-function applyTheme(theme: DisplaySettings['theme']) {
-  const root = document.documentElement;
-  root.classList.remove('light', 'dark');
-
-  if (theme === 'system') {
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    root.classList.add(systemTheme);
-    root.setAttribute('data-theme', systemTheme);
-  } else {
-    root.classList.add(theme);
-    root.setAttribute('data-theme', theme);
-  }
-}
+// The theme itself is applied to <html> by ThemeSync (and the inline script in the root layout),
+// which follow settings.theme; the store only holds the value.
 
 interface PreferencesState {
   settings: DisplaySettings;
@@ -29,20 +19,16 @@ export const usePreferencesStore = create<PreferencesState>()(
       settings: DEFAULT_DISPLAY_SETTINGS,
       isHydrated: false,
       hydrate: (serverSettings) => {
-        const merged = mergeWithDefaults(serverSettings);
-        set({ settings: merged, isHydrated: true });
-        applyTheme(merged.theme);
+        set({ settings: mergeWithDefaults(serverSettings), isHydrated: true });
       },
       setSettings: (partial) => {
-        const next = { ...get().settings, ...partial };
-        set({ settings: next });
-        if (partial.theme !== undefined) {
-          applyTheme(next.theme);
-        }
+        set({ settings: { ...get().settings, ...partial } });
       },
     }),
     {
-      name: 'comic-hub-preferences',
+      name: PREFERENCES_STORAGE_KEY,
+      // isHydrated means "synced with the server this session", so it isn't persisted
+      partialize: (state) => ({ settings: state.settings }),
     },
   ),
 );

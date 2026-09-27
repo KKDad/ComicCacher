@@ -268,25 +268,6 @@ describe('DashboardClient', () => {
     expect(addMutate).toHaveBeenCalledWith({ comicId: 2 });
   });
 
-  it('hydrates preferences store from displaySettings', () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
-      data: {
-        preferences: {
-          favoriteComics: [],
-          lastReadDates: [],
-          displaySettings: { theme: 'dark', showFavorites: false },
-        },
-      },
-      isLoading: false,
-      error: null,
-    } as any);
-    renderWithQuery(<DashboardClient />);
-    const { settings, isHydrated } = usePreferencesStore.getState();
-    expect(isHydrated).toBe(true);
-    expect(settings.theme).toBe('dark');
-    expect(settings.showFavorites).toBe(false);
-  });
-
   it('finds favorites beyond the first page of comics', () => {
     const many = Array.from({ length: 60 }, (_, i) => ({
       id: i + 1,

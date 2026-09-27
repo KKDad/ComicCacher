@@ -17,6 +17,10 @@ vi.mock('@/components/layout/dashboard-shell', () => ({
   ),
 }));
 
+vi.mock('@/components/theme/preferences-sync', () => ({
+  PreferencesSync: () => <div data-testid="preferences-sync" />,
+}));
+
 vi.mock('@/contexts/user-context', () => ({
   UserProvider: ({ children, user }: { children: React.ReactNode; user: unknown }) => (
     <div data-testid="user-provider" data-user={JSON.stringify(user)}>
@@ -40,6 +44,7 @@ describe('DashboardLayout', () => {
     render(result);
 
     expect(screen.getByTestId('user-provider')).toBeInTheDocument();
+    expect(screen.getByTestId('preferences-sync')).toBeInTheDocument();
     expect(screen.getByTestId('dashboard-shell')).toBeInTheDocument();
     expect(screen.getByText('dashboard content')).toBeInTheDocument();
   });

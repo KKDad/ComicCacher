@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
-import { useGetUserPreferencesQuery, useUpdateDisplaySettingsMutation } from '@/generated/graphql';
+import { useRef, useCallback } from 'react';
+import { useUpdateDisplaySettingsMutation } from '@/generated/graphql';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { type DisplaySettings, type Theme, type ReaderNavMode, type ReaderScrollOrder } from '@/lib/preferences-defaults';
@@ -15,10 +15,9 @@ import { toast } from 'sonner';
 
 export default function PreferencesPage() {
   const queryClient = useQueryClient();
-  const { data: prefsData } = useGetUserPreferencesQuery();
+  // PreferencesSync in the dashboard layout loads the saved settings into the store.
   const settings = usePreferencesStore((s) => s.settings);
   const isHydrated = usePreferencesStore((s) => s.isHydrated);
-  const hydrate = usePreferencesStore((s) => s.hydrate);
   const setSettings = usePreferencesStore((s) => s.setSettings);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -36,13 +35,6 @@ export default function PreferencesPage() {
       toast.error('Failed to save preferences');
     },
   });
-
-  // Hydrate store from server data on first load
-  useEffect(() => {
-    if (prefsData?.preferences?.displaySettings !== undefined) {
-      hydrate(prefsData.preferences.displaySettings);
-    }
-  }, [prefsData?.preferences?.displaySettings, hydrate]);
 
   const saveSettings = useCallback(
     (next: DisplaySettings) => {

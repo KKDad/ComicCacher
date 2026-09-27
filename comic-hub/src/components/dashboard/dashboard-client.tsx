@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetMeQuery,
@@ -26,14 +25,7 @@ export function DashboardClient() {
 
   const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useGetUserPreferencesQuery();
 
-  const hydrate = usePreferencesStore((s) => s.hydrate);
   const { showContinueReading, showFavorites, showRecentlyAdded } = usePreferencesStore((s) => s.settings);
-
-  useEffect(() => {
-    if (prefsData?.preferences?.displaySettings !== undefined) {
-      hydrate(prefsData.preferences.displaySettings);
-    }
-  }, [prefsData?.preferences?.displaySettings, hydrate]);
 
   const addFavorite = useAddFavoriteMutation({
     onSuccess: (data) => {
