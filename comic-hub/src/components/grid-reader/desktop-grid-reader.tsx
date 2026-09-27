@@ -8,6 +8,7 @@ import { useGetRandomStripQuery } from '@/generated/graphql';
 import { GridHeader } from './grid-header';
 import { GridStripCard } from './grid-strip-card';
 import { Lightbox } from './lightbox';
+import { TodayEmptyState } from './today-empty-state';
 import { StripSkeleton } from '@/components/reader/strip-skeleton';
 import { useLightbox } from '@/hooks/use-lightbox';
 import { toLightboxItems, type useGridReader } from '@/hooks/use-grid-reader';
@@ -131,9 +132,7 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
               <StripSkeleton className="bg-card rounded-lg p-4" />
             </div>
           ) : comics.length === 0 ? (
-            <div className="flex items-center justify-center h-[50vh] text-ink-subtle text-sm">
-              No comics to display. Check your favorites or subscription settings.
-            </div>
+            <TodayEmptyState />
           ) : (
             <div
               style={{

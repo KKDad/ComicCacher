@@ -25,7 +25,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Comics Hub",
+  title: { template: "%s · Comics Hub", default: "Comics Hub" },
   description: "Your personal comic strip collection",
 };
 

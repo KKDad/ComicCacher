@@ -288,7 +288,7 @@ describe('DashboardClient', () => {
     expect(screen.getByRole('link', { name: /continue reading comic 58/i })).toBeInTheDocument();
   });
 
-  it('orders latest updates newest first, favorites leading ties, capped at 12', () => {
+  it('orders latest updates newest first, then by name (favorites do not jump ahead), capped at 12', () => {
     const comics = [
       { id: 1, name: 'Old', avatarUrl: null, newest: '2024-01-01', lastStrip: null },
       { id: 2, name: 'Zed', avatarUrl: null, newest: '2024-01-15', lastStrip: null },
@@ -300,7 +300,7 @@ describe('DashboardClient', () => {
     ];
     mockAllComics(comics);
     vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
-      data: { preferences: { favoriteComics: [3], lastReadDates: [] } },
+      data: { preferences: { favoriteComics: [2], lastReadDates: [] } },
       isLoading: false,
       error: null,
     } as any);
@@ -337,6 +337,55 @@ describe('DashboardClient', () => {
       '/comics/2/read?date=2024-01-12',
     );
     expect(screen.getByText('Read up to Jan 12, 2024')).toBeInTheDocument();
+  });
+
+  it('lists unread comics first, then caught-up ones, in the continue row', () => {
+    mockAllComics([
+      { id: 1, name: 'Caught Up', avatarUrl: null, newest: '2024-01-15', lastStrip: null },
+      { id: 2, name: 'Behind', avatarUrl: null, newest: '2024-01-15', lastStrip: null },
+    ]);
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+      data: {
+        preferences: {
+          favoriteComics: [],
+          lastReadDates: [
+            { comicId: 1, date: '2024-01-15' },
+            { comicId: 2, date: '2024-01-12' },
+          ],
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    renderWithQuery(<DashboardClient />);
+
+    const links = screen.getAllByRole('link', { name: /^continue reading/i });
+    expect(links.map((l) => l.getAttribute('aria-label'))).toEqual(['Continue reading Behind', 'Continue reading Caught Up']);
+    expect(screen.getByText('All caught up')).toBeInTheDocument();
+  });
+
+  it('marks a strip New only when it is newer than where the user left off', () => {
+    mockAllComics([
+      { id: 1, name: 'Read Before', avatarUrl: null, newest: '2024-01-15', lastStrip: { date: '2024-01-15', imageUrl: null } },
+      { id: 2, name: 'Never Read', avatarUrl: null, newest: '2024-01-15', lastStrip: { date: '2024-01-15', imageUrl: null } },
+      { id: 3, name: 'Caught Up', avatarUrl: null, newest: '2024-01-15', lastStrip: { date: '2024-01-15', imageUrl: null } },
+    ]);
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+      data: {
+        preferences: {
+          favoriteComics: [],
+          lastReadDates: [
+            { comicId: 1, date: '2024-01-10' },
+            { comicId: 3, date: '2024-01-15' },
+          ],
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    renderWithQuery(<DashboardClient />);
+
+    expect(screen.getAllByText('New')).toHaveLength(1);
   });
 
   it('shows loading skeletons while comics are still paging in', () => {

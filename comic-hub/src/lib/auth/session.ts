@@ -1,3 +1,4 @@
+import 'server-only';
 import { cookies } from 'next/headers';
 import type { User } from '@/types/auth';
 import { JWT_COOKIE, GRAPHQL_ENDPOINT } from './constants';

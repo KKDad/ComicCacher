@@ -60,12 +60,12 @@ export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicT
           type="button"
           aria-label={isFavorite ? `Remove ${comic.name} from favorites` : `Add ${comic.name} to favorites`}
           aria-pressed={isFavorite}
-          className="absolute top-2 right-2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+          className="absolute top-2 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 transition-colors"
           onClick={onToggleFavorite}
         >
           <Heart
             aria-hidden="true"
-            className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`}
+            className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`}
           />
         </button>
       )}
