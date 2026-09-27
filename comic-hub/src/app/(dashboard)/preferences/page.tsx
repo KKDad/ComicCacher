@@ -163,7 +163,7 @@ export default function PreferencesPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p id="pref-scroll-order" className="text-sm font-medium">Scroll order</p>
-              <p className="text-xs text-muted-foreground">Order strips load when scrolling in the reader</p>
+              <p className="text-xs text-muted-foreground">Catch up reads oldest to newest; Newest first puts the latest strip on top and scrolls back in time</p>
             </div>
             <div className="flex gap-2" role="group" aria-labelledby="pref-scroll-order">
               <Button

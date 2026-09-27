@@ -18,6 +18,7 @@ interface ReaderHeaderProps {
   onFullscreen?: () => void;
   datePicker?: React.ReactNode;
   favoriteButton?: React.ReactNode;
+  newestFirst?: boolean;
 }
 
 export function ReaderHeader({

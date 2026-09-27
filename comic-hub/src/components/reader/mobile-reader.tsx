@@ -12,6 +12,7 @@ import { ReadingListDrawer } from './reading-list-drawer';
 import { DatePickerPopover } from './date-picker-popover';
 import { formatMediumDate } from '@/lib/date-utils';
 import { useGoBack } from '@/lib/navigation-history';
+import { useNewestFirst } from '@/hooks/use-newest-first';
 
 /** Duration (ms) for the swipe transition animation. */
 const SWIPE_TRANSITION_MS = 200;
@@ -54,8 +55,6 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
   const { state: zoomState, handlers: zoomHandlers, isZoomed, resetZoom } = usePinchZoom();
 
   const currentStrip = strips[currentIndex] ?? null;
-  const prevStrip = strips[currentIndex - 1] ?? null;
-  const nextStrip = strips[currentIndex + 1] ?? null;
 
   const formattedDate = currentStrip ? formatMediumDate(currentStrip.date) : '';
 
@@ -65,48 +64,49 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
     setControlsVisible(false);
   }, []);
 
-  const handleSwipeUp = useCallback(() => {
-    if (currentIndex >= strips.length - 1 && !hasNewer) {
-      // Rubber-band bounce
-      setTranslateY(-30);
-      setIsAnimating(true);
-      setTimeout(() => {
-        setTranslateY(0);
-        setTimeout(() => setIsAnimating(false), SWIPE_TRANSITION_MS);
-      }, BOUNCE_SNAP_MS);
-      return;
-    }
-    // Animate out then navigate
-    setTranslateY(-100);
-    setIsAnimating(true);
-    setTimeout(() => {
-      goNewer();
-      setTranslateY(0);
-      setIsAnimating(false);
-      hideControlsAfterNav();
-    }, SWIPE_TRANSITION_MS);
-  }, [currentIndex, strips.length, hasNewer, goNewer, hideControlsAfterNav]);
+  const atOldest = currentIndex === 0 && !hasOlder;
+  const atNewest = currentIndex >= strips.length - 1 && !hasNewer;
 
-  const handleSwipeDown = useCallback(() => {
-    if (currentIndex === 0 && !hasOlder) {
-      // Rubber-band bounce
-      setTranslateY(30);
+  /** Animates the strip off in `direction` (px sign) and runs `go`, or bounces at the end. */
+  const swipeTo = useCallback(
+    (direction: -1 | 1, atEnd: boolean, go: () => void) => {
+      if (atEnd) {
+        // Rubber-band bounce
+        setTranslateY(direction * 30);
+        setIsAnimating(true);
+        setTimeout(() => {
+          setTranslateY(0);
+          setTimeout(() => setIsAnimating(false), SWIPE_TRANSITION_MS);
+        }, BOUNCE_SNAP_MS);
+        return;
+      }
+      // Animate out then navigate
+      setTranslateY(direction * 100);
       setIsAnimating(true);
       setTimeout(() => {
+        go();
         setTranslateY(0);
-        setTimeout(() => setIsAnimating(false), SWIPE_TRANSITION_MS);
-      }, BOUNCE_SNAP_MS);
-      return;
-    }
-    setTranslateY(100);
-    setIsAnimating(true);
-    setTimeout(() => {
-      goOlder();
-      setTranslateY(0);
-      setIsAnimating(false);
-      hideControlsAfterNav();
-    }, SWIPE_TRANSITION_MS);
-  }, [currentIndex, hasOlder, goOlder, hideControlsAfterNav]);
+        setIsAnimating(false);
+        hideControlsAfterNav();
+      }, SWIPE_TRANSITION_MS);
+    },
+    [hideControlsAfterNav],
+  );
+
+  // Swiping up moves on to the next strip in the scroll order: newer when catching up,
+  // older with "Newest first".
+  const newestFirst = useNewestFirst();
+  const handleSwipeUp = useCallback(
+    () => (newestFirst ? swipeTo(-1, atOldest, goOlder) : swipeTo(-1, atNewest, goNewer)),
+    [newestFirst, swipeTo, atOldest, atNewest, goOlder, goNewer],
+  );
+  const handleSwipeDown = useCallback(
+    () => (newestFirst ? swipeTo(1, atNewest, goNewer) : swipeTo(1, atOldest, goOlder)),
+    [newestFirst, swipeTo, atOldest, atNewest, goOlder, goNewer],
+  );
+  // The older/newer buttons point the way their swipe goes
+  const OlderIcon = newestFirst ? ChevronUp : ChevronDown;
+  const NewerIcon = newestFirst ? ChevronDown : ChevronUp;
 
   const swipeHandlers = useSwipe({
     onSwipeUp: isZoomed ? undefined : handleSwipeUp,
@@ -248,11 +248,11 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               variant="ghost"
               size="icon"
               onClick={goOlder}
-              disabled={currentIndex === 0 && !hasOlder}
+              disabled={atOldest}
               aria-label="Older strip"
               className="h-11 w-11 text-ink-subtle hover:text-ink hover:bg-muted"
               >
-              <ChevronDown className="h-5 w-5" />
+              <OlderIcon className="h-5 w-5" />
             </Button>
 
             <ReaderControls
@@ -260,6 +260,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               onLast={goToLast}
               onRandom={goToRandom}
               isLoadingRandom={isLoadingRandom}
+              newestFirst={newestFirst}
               datePicker={
                 <DatePickerPopover
                   oldest={oldest}
@@ -274,11 +275,11 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               variant="ghost"
               size="icon"
               onClick={goNewer}
-              disabled={currentIndex === strips.length - 1 && !hasNewer}
+              disabled={atNewest}
               aria-label="Newer strip"
               className="h-11 w-11 text-ink-subtle hover:text-ink hover:bg-muted"
               >
-              <ChevronUp className="h-5 w-5" />
+              <NewerIcon className="h-5 w-5" />
             </Button>
           </div>
         </div>

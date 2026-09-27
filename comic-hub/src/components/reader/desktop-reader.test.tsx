@@ -2,6 +2,8 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DesktopReader } from './desktop-reader';
 import type { useReader, Strip } from '@/hooks/use-reader';
+import { usePreferencesStore } from '@/stores/preferences-store';
+import { DEFAULT_DISPLAY_SETTINGS } from '@/lib/preferences-defaults';
 
 // jsdom doesn't implement scrollIntoView or IntersectionObserver
 HTMLElement.prototype.scrollIntoView = vi.fn();
@@ -449,6 +451,89 @@ describe('DesktopReader', () => {
 
       fireEvent.click(screen.getAllByRole('button', { name: /fullscreen/i }).find((b) => b.getAttribute('aria-label')?.startsWith('View'))!);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+  });
+
+  describe('newest first', () => {
+    const strips = stripsEndingMarch31(21);
+
+    beforeEach(() => {
+      usePreferencesStore.setState({ settings: { ...DEFAULT_DISPLAY_SETTINGS, readerScrollOrder: 'newest-first' } });
+    });
+    afterEach(() => {
+      usePreferencesStore.setState({ settings: DEFAULT_DISPLAY_SETTINGS });
+    });
+
+    it('lists the newest strip first', () => {
+      render(<DesktopReader comicId={1} reader={createMockReader()} />);
+
+      const options = vi.mocked(useVirtualizer).mock.calls.at(-1)![0];
+      expect(options.getItemKey!(0)).toBe('2026-03-15');
+      expect(screen.getAllByRole('img')[0]).toHaveAttribute('src', 'https://example.com/15.png');
+    });
+
+    it('scrolls to the current strip at its reversed position', () => {
+      render(<DesktopReader comicId={1} reader={createMockReader({ strips, currentIndex: 18 })} />);
+
+      expect(virtual.scrollToIndex).toHaveBeenCalledWith(2, { align: 'center', behavior: 'auto' });
+    });
+
+    it('reports the strip scrolled to by its reader index', () => {
+      vi.useFakeTimers();
+      try {
+        const setCurrentIndex = vi.fn();
+        virtual.rendered = range(8, 12);
+        const { container } = render(
+          <DesktopReader comicId={1} reader={createMockReader({ strips, currentIndex: 10, setCurrentIndex })} />,
+        );
+        const scrollEl = container.firstChild as HTMLElement;
+        Object.defineProperty(scrollEl, 'clientHeight', { value: 600 });
+
+        scrollEl.scrollTop = 11 * 300 + 150 - 300; // centre of list position 11
+        fireEvent.scroll(scrollEl);
+        act(() => vi.advanceTimersByTime(150));
+        expect(setCurrentIndex).toHaveBeenCalledWith(9);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('loads newer strips at the top and older strips at the bottom', () => {
+      const top = createMockReader({ strips, currentIndex: 18 });
+      virtual.rendered = range(0, 5);
+      const { unmount } = render(<DesktopReader comicId={1} reader={top} />);
+      expect(top.loadNewer).toHaveBeenCalledOnce();
+      expect(top.loadOlder).not.toHaveBeenCalled();
+      unmount();
+
+      const bottom = createMockReader({ strips, currentIndex: 2 });
+      virtual.rendered = range(15, 20);
+      render(<DesktopReader comicId={1} reader={bottom} />);
+      expect(bottom.loadOlder).toHaveBeenCalledOnce();
+      expect(bottom.loadNewer).not.toHaveBeenCalled();
+    });
+
+    it('moves down the list with J and to the top with Home', () => {
+      const reader = createMockReader();
+      render(<DesktopReader comicId={1} reader={reader} />);
+
+      fireEvent.keyDown(window, { key: 'j' });
+      expect(reader.goOlder).toHaveBeenCalledOnce();
+      fireEvent.keyDown(window, { key: 'k' });
+      expect(reader.goNewer).toHaveBeenCalledOnce();
+      fireEvent.keyDown(window, { key: 'Home' });
+      expect(reader.goToLast).toHaveBeenCalledOnce();
+      fireEvent.keyDown(window, { key: 'End' });
+      expect(reader.goToFirst).toHaveBeenCalledOnce();
+    });
+
+    it('labels the header buttons with the swapped shortcuts', () => {
+      render(<DesktopReader comicId={1} reader={createMockReader()} />);
+
+      expect(screen.getByRole('button', { name: 'Previous strip' })).toHaveAttribute('aria-keyshortcuts', 'J');
+      expect(screen.getByRole('button', { name: 'Next strip' })).toHaveAttribute('aria-keyshortcuts', 'K');
+      expect(screen.getByRole('button', { name: 'First strip' })).toHaveAttribute('aria-keyshortcuts', 'End');
+      expect(screen.getByRole('button', { name: 'Latest strip' })).toHaveAttribute('aria-keyshortcuts', 'Home');
     });
   });
 });

@@ -22,6 +22,7 @@ describe('POST /api/logout', () => {
     expect(json).toEqual({ success: true });
     expect(response.cookies.get('comic-hub-jwt')?.value).toBe('');
     expect(response.cookies.get('comic-hub-refresh')?.value).toBe('');
+    expect(response.cookies.get('comic-hub-remember')?.value).toBe('');
   });
 
   it('still clears cookies when the logout mutation fails', async () => {
@@ -34,5 +35,6 @@ describe('POST /api/logout', () => {
     expect(json).toEqual({ success: true });
     expect(response.cookies.get('comic-hub-jwt')?.value).toBe('');
     expect(response.cookies.get('comic-hub-refresh')?.value).toBe('');
+    expect(response.cookies.get('comic-hub-remember')?.value).toBe('');
   });
 });

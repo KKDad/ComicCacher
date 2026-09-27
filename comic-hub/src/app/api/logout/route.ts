@@ -1,7 +1,7 @@
 import { gql } from 'graphql-request';
 import { NextResponse } from 'next/server';
 
-import { JWT_COOKIE, REFRESH_COOKIE } from '@/lib/auth/constants';
+import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE } from '@/lib/auth/constants';
 import { getAuthenticatedClient } from '@/lib/auth/graphql-server';
 
 const LOGOUT_MUTATION = gql`
@@ -31,6 +31,13 @@ export async function POST() {
     maxAge: 0,
   });
   response.cookies.set(REFRESH_COOKIE, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+  response.cookies.set(REMEMBER_COOKIE, '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
