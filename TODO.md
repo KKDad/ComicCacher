@@ -78,13 +78,6 @@
 - Reference: https://docs.gradle.org/current/userguide/configuration_cache_enabling.html
 - Priority: Low
 
-### Revisit OpenAPI/Swagger Generation
-
-- With the move to GraphQL, only 2 REST endpoints remain (binary image streaming)
-- Evaluate whether the openapi-gradle-plugin, `comic-api/generate-openapi-docs.sh`, and `openapi.json` are still worth maintaining
-- If not needed, remove the springdoc dependency, openApi task config, and related tasks from comic-api/build.gradle
-- Priority: Medium
-
 ### Clean Up Deprecated Java APIs
 
 - **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — in `GoComicsDownloaderStrategy` and `ComicsKingdomDownloaderStrategy` in comic-engine
