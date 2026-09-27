@@ -1,13 +1,9 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  useGetMeQuery,
-  useGetUserPreferencesQuery,
-  useAddFavoriteMutation,
-  useRemoveFavoriteMutation,
-} from '@/generated/graphql';
+import { useGetMeQuery, useGetUserPreferencesQuery } from '@/generated/graphql';
 import { useAllComics } from '@/hooks/use-all-comics';
+import { useFavorites } from '@/hooks/use-favorite';
+import { compareByName } from '@/lib/sort';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ContinueReading } from '@/components/dashboard/continue-reading';
 import { FavoritesSection } from '@/components/dashboard/favorites-section';
@@ -16,9 +12,10 @@ import { usePreferencesStore } from '@/stores/preferences-store';
 
 /** How many comics the "Latest updates" grid shows before "View all". */
 const LATEST_LIMIT = 12;
+/** How many comics "Continue where you left off" shows. */
+const RECENT_LIMIT = 3;
 
 export function DashboardClient() {
-  const queryClient = useQueryClient();
   const { data: meData } = useGetMeQuery();
 
   const { comics, isLoading: comicsLoading, error: comicsError } = useAllComics();
@@ -27,21 +24,7 @@ export function DashboardClient() {
 
   const { showContinueReading, showFavorites, showRecentlyAdded } = usePreferencesStore((s) => s.settings);
 
-  const addFavorite = useAddFavoriteMutation({
-    onSuccess: (data) => {
-      if (data.addFavorite.errors.length === 0) {
-        queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
-      }
-    },
-  });
-
-  const removeFavorite = useRemoveFavoriteMutation({
-    onSuccess: (data) => {
-      if (data.removeFavorite.errors.length === 0) {
-        queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
-      }
-    },
-  });
+  const { favoriteIds, toggle: toggleFavorite } = useFavorites();
 
   if (comicsError || prefsError) {
     return (
@@ -56,7 +39,6 @@ export function DashboardClient() {
 
   const prefs = prefsData?.preferences ?? null;
 
-  const favoriteIds = new Set(prefs?.favoriteComics ?? []);
   const lastReadMap = new Map(
     (prefs?.lastReadDates ?? []).map((entry) => [entry.comicId, entry.date]),
   );
@@ -73,22 +55,15 @@ export function DashboardClient() {
         name: c.name,
         date: latestDate,
         thumbnail: c.lastStrip?.imageUrl ?? c.avatarUrl ?? undefined,
-        isNew: !lastRead || latestDate > lastRead,
+        // New since you last read it; a comic you haven't started isn't flagged
+        isNew: lastRead !== undefined && latestDate > lastRead,
         isFavorite,
-        onToggleFavorite: () => {
-          if (isFavorite) {
-            removeFavorite.mutate({ comicId: c.id });
-          } else {
-            addFavorite.mutate({ comicId: c.id });
-          }
-        },
+        onToggleFavorite: () => toggleFavorite(c.id),
       };
     })
-    // Newest strip first; favorites lead within a day, then alphabetical.
-    .sort((a, b) =>
-      b.date.localeCompare(a.date)
-      || Number(b.isFavorite) - Number(a.isFavorite)
-      || a.name.localeCompare(b.name))
+    // Newest strip first, then alphabetical. Favoriting doesn't reorder the grid,
+    // so a heart click never moves the next card out from under the pointer.
+    .sort((a, b) => b.date.localeCompare(a.date) || compareByName(a, b))
     .slice(0, LATEST_LIMIT);
 
   const favorites = comics
@@ -98,26 +73,26 @@ export function DashboardClient() {
       name: c.name,
       avatarUrl: c.avatarUrl,
     }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort(compareByName);
 
-  // Last-read dates are strip dates, not reading timestamps, so "continue" means
-  // the furthest-along comic that still has unread strips (or, if everything is
-  // caught up, the furthest-along one).
-  const readEntries = (prefs?.lastReadDates ?? [])
-    .map((entry) => ({ entry, comic: comics.find((c) => c.id === entry.comicId) }))
-    .filter((r) => r.comic !== undefined)
-    .sort((a, b) => b.entry.date.localeCompare(a.entry.date));
-  const next = readEntries.find((r) => (r.comic!.newest ?? '') > r.entry.date) ?? readEntries[0];
-  const lastRead = next
-    ? {
-        comic: {
-          id: next.comic!.id,
-          name: next.comic!.name,
-          lastStrip: next.comic!.lastStrip ? { imageUrl: next.comic!.lastStrip.imageUrl } : null,
-        },
-        date: next.entry.date,
-      }
-    : null;
+  // Last-read dates are strip dates, not reading timestamps, so "continue" lists the
+  // furthest-along comics that still have unread strips first, then caught-up ones.
+  const recentReads = (prefs?.lastReadDates ?? [])
+    .flatMap((entry) => {
+      const comic = comics.find((c) => c.id === entry.comicId);
+      return comic ? [{ entry, comic, unread: (comic.newest ?? '') > entry.date }] : [];
+    })
+    .sort((a, b) => Number(b.unread) - Number(a.unread) || b.entry.date.localeCompare(a.entry.date))
+    .slice(0, RECENT_LIMIT)
+    .map(({ entry, comic, unread }) => ({
+      comic: {
+        id: comic.id,
+        name: comic.name,
+        lastStrip: comic.lastStrip ? { imageUrl: comic.lastStrip.imageUrl } : null,
+      },
+      date: entry.date,
+      caughtUp: !unread,
+    }));
 
   const isLoading = comicsLoading || prefsLoading;
 
@@ -125,7 +100,7 @@ export function DashboardClient() {
     <div className="space-y-8">
       <PageHeader displayName={meData?.me?.displayName ?? 'there'} />
       {showContinueReading && (
-        <ContinueReading lastRead={lastRead} isLoading={isLoading} />
+        <ContinueReading reads={recentReads} isLoading={isLoading} />
       )}
       {showFavorites && (
         <FavoritesSection favorites={favorites.length > 0 ? favorites : null} isLoading={isLoading} />

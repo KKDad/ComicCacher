@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetUserPreferencesQuery,
@@ -8,11 +8,12 @@ import {
   useRemoveFavoriteMutation,
 } from '@/generated/graphql';
 
-/** Whether a comic is a favorite, and a toggle that adds or removes it. */
-export function useFavorite(comicId: number) {
+/** The user's favorite comic ids, and a toggle that adds or removes one. */
+export function useFavorites() {
   const queryClient = useQueryClient();
   const { data } = useGetUserPreferencesQuery(undefined, { staleTime: 5 * 60 * 1000 });
-  const isFavorite = data?.preferences?.favoriteComics.includes(comicId) ?? false;
+  const favoriteComics = data?.preferences?.favoriteComics;
+  const favoriteIds = useMemo(() => new Set(favoriteComics ?? []), [favoriteComics]);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['GetUserPreferences'] });
   const add = useAddFavoriteMutation({
@@ -28,13 +29,23 @@ export function useFavorite(comicId: number) {
 
   const { mutate: addFavorite } = add;
   const { mutate: removeFavorite } = remove;
-  const toggle = useCallback(() => {
-    if (isFavorite) {
-      removeFavorite({ comicId });
-    } else {
-      addFavorite({ comicId });
-    }
-  }, [isFavorite, comicId, addFavorite, removeFavorite]);
+  const toggle = useCallback(
+    (comicId: number) => {
+      if (favoriteIds.has(comicId)) {
+        removeFavorite({ comicId });
+      } else {
+        addFavorite({ comicId });
+      }
+    },
+    [favoriteIds, addFavorite, removeFavorite],
+  );
 
-  return { isFavorite, toggle, isPending: add.isPending || remove.isPending };
+  return { favoriteIds, toggle, isPending: add.isPending || remove.isPending };
+}
+
+/** Whether one comic is a favorite, and a toggle for it. */
+export function useFavorite(comicId: number) {
+  const { favoriteIds, toggle, isPending } = useFavorites();
+  const toggleThis = useCallback(() => toggle(comicId), [toggle, comicId]);
+  return { isFavorite: favoriteIds.has(comicId), toggle: toggleThis, isPending };
 }

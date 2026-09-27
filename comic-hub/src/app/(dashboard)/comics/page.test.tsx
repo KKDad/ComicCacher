@@ -1,11 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import ComicsPage from './page';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useInfiniteGetComicsQuery, useSearchComicsQuery } from '@/generated/graphql';
+import { useSearchComicsQuery } from '@/generated/graphql';
+import { useAllComics } from '@/hooks/use-all-comics';
+import { useFavorites } from '@/hooks/use-favorite';
 
 vi.mock('@/generated/graphql', () => ({
-  useInfiniteGetComicsQuery: vi.fn(),
   useSearchComicsQuery: vi.fn(),
+}));
+
+vi.mock('@/hooks/use-all-comics', () => ({
+  useAllComics: vi.fn(),
+}));
+
+vi.mock('@/hooks/use-favorite', () => ({
+  useFavorites: vi.fn(),
 }));
 
 const mockSearchParams = new Map<string, string>();
@@ -15,305 +23,142 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-// Mock IntersectionObserver
-const mockObserve = vi.fn();
-const mockDisconnect = vi.fn();
+type AllComics = ReturnType<typeof useAllComics>;
+type Search = ReturnType<typeof useSearchComicsQuery>;
 
-class MockIntersectionObserver {
-  constructor(callback: IntersectionObserverCallback) {
-    (globalThis as any).__ioCallback = callback;
-  }
-  observe = mockObserve;
-  disconnect = mockDisconnect;
-  unobserve = vi.fn();
+function comic(id: number, name: string, extra: Record<string, unknown> = {}) {
+  return { id, name, newest: '2024-01-15', avatarUrl: null, lastStrip: null, ...extra };
 }
 
-vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+const catalogue = [
+  comic(1, 'BC'),
+  comic(2, 'Baby Blues', { lastStrip: { date: '2024-01-14', imageUrl: 'https://example.com/bb.png' } }),
+  comic(3, 'adam at home'),
+];
 
-function renderWithQuery(ui: React.ReactElement) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+const mockToggle = vi.fn();
+
+function mockCatalogue(comics: unknown[], isLoading = false) {
+  vi.mocked(useAllComics).mockReturnValue({ comics, isLoading, error: null } as unknown as AllComics);
 }
 
-const mockPage = {
-  comics: {
-    edges: [
-      {
-        node: {
-          id: 1,
-          name: 'Garfield',
-          newest: '2024-01-15',
-          avatarUrl: 'https://example.com/1.png',
-          lastStrip: { date: '2024-01-15', imageUrl: 'https://example.com/strip1.png' },
-        },
-      },
-      {
-        node: {
-          id: 2,
-          name: 'Peanuts',
-          newest: '2024-01-15',
-          avatarUrl: null,
-          lastStrip: null,
-        },
-      },
-    ],
-    pageInfo: {
-      hasNextPage: false,
-      hasPreviousPage: false,
-      startCursor: 'c1',
-      endCursor: 'c2',
-    },
-    totalCount: 42,
-  },
-};
+function mockSearch(result: unknown, isLoading = false) {
+  vi.mocked(useSearchComicsQuery).mockReturnValue({ data: result, isLoading } as unknown as Search);
+}
 
-const mockFetchNextPage = vi.fn();
+const tileNames = () =>
+  within(screen.getByRole('list'))
+    .getAllByRole('heading', { level: 3 })
+    .map((h) => h.textContent);
 
 describe('ComicsPage', () => {
   beforeEach(() => {
     mockSearchParams.clear();
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: { pages: [mockPage] },
-      isLoading: false,
-      isFetchingNextPage: false,
-      hasNextPage: false,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
-    vi.mocked(useSearchComicsQuery).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-    } as any);
-    mockFetchNextPage.mockClear();
-    mockObserve.mockClear();
-    mockDisconnect.mockClear();
+    mockToggle.mockClear();
+    mockCatalogue(catalogue);
+    mockSearch(undefined);
+    vi.mocked(useFavorites).mockReturnValue({ favoriteIds: new Set([2]), toggle: mockToggle, isPending: false });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it('renders loading skeletons while the catalogue loads', () => {
+    mockCatalogue([], true);
+    const { container } = render(<ComicsPage />);
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
   });
 
-  it('renders loading skeletons when isLoading', () => {
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      isFetchingNextPage: false,
-      hasNextPage: false,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
-    renderWithQuery(<ComicsPage />);
-    expect(screen.queryByText('Browse Comics')).not.toBeInTheDocument();
-  });
-
-  it('renders empty state when no comics', () => {
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: {
-        pages: [{
-          comics: {
-            edges: [],
-            pageInfo: { hasNextPage: false, hasPreviousPage: false, startCursor: null, endCursor: null },
-            totalCount: 0,
-          },
-        }],
-      },
-      isLoading: false,
-      isFetchingNextPage: false,
-      hasNextPage: false,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
-    renderWithQuery(<ComicsPage />);
+  it('renders the empty state when there are no comics', () => {
+    mockCatalogue([]);
+    render(<ComicsPage />);
     expect(screen.getByText('No comics available')).toBeInTheDocument();
   });
 
-  it('renders comic tiles', () => {
-    renderWithQuery(<ComicsPage />);
-    expect(screen.getByText('Garfield')).toBeInTheDocument();
-    expect(screen.getByText('Peanuts')).toBeInTheDocument();
+  it('lists every comic sorted by name, ignoring case', () => {
+    render(<ComicsPage />);
+    expect(screen.getByText('Explore all 3 available comics')).toBeInTheDocument();
+    expect(tileNames()).toEqual(['adam at home', 'Baby Blues', 'BC']);
   });
 
-  it('shows total count from server, not loaded count', () => {
-    renderWithQuery(<ComicsPage />);
-    expect(screen.getByText(/42 available comics/)).toBeInTheDocument();
+  it('links each tile to its latest strip', () => {
+    render(<ComicsPage />);
+    expect(screen.getByRole('link', { name: 'Baby Blues' })).toHaveAttribute('href', '/comics/2/read?date=2024-01-14');
   });
 
-  it('sets up IntersectionObserver on sentinel', () => {
-    renderWithQuery(<ComicsPage />);
-    expect(mockObserve).toHaveBeenCalled();
+  it('filters the list by name', () => {
+    render(<ComicsPage />);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Filter comics by name' }), { target: { value: 'b' } });
+
+    expect(tileNames()).toEqual(['Baby Blues', 'BC']);
   });
 
-  it('calls fetchNextPage when sentinel is intersecting', () => {
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: { pages: [mockPage] },
-      isLoading: false,
-      isFetchingNextPage: false,
-      hasNextPage: true,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
+  it('says so when nothing matches the filter', () => {
+    render(<ComicsPage />);
 
-    renderWithQuery(<ComicsPage />);
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Filter comics by name' }), { target: { value: 'zzz' } });
 
-    // Simulate intersection
-    const callback = (globalThis as any).__ioCallback;
-    callback([{ isIntersecting: true }]);
-
-    expect(mockFetchNextPage).toHaveBeenCalled();
+    expect(screen.getByText(/No comics match/)).toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 
-  it('does not call fetchNextPage when not intersecting', () => {
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: { pages: [mockPage] },
-      isLoading: false,
-      isFetchingNextPage: false,
-      hasNextPage: true,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
+  it('shows and toggles favorites from the tiles', () => {
+    render(<ComicsPage />);
 
-    renderWithQuery(<ComicsPage />);
+    expect(screen.getByRole('button', { name: 'Remove Baby Blues from favorites' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Add BC to favorites' }));
 
-    const callback = (globalThis as any).__ioCallback;
-    callback([{ isIntersecting: false }]);
-
-    expect(mockFetchNextPage).not.toHaveBeenCalled();
-  });
-
-  it('does not call fetchNextPage when already fetching', () => {
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: { pages: [mockPage] },
-      isLoading: false,
-      isFetchingNextPage: true,
-      hasNextPage: true,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
-
-    renderWithQuery(<ComicsPage />);
-
-    const callback = (globalThis as any).__ioCallback;
-    callback([{ isIntersecting: true }]);
-
-    expect(mockFetchNextPage).not.toHaveBeenCalled();
-  });
-
-  it('shows spinner when fetching next page', () => {
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: { pages: [mockPage] },
-      isLoading: false,
-      isFetchingNextPage: true,
-      hasNextPage: true,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
-
-    renderWithQuery(<ComicsPage />);
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
-  });
-
-  it('flattens multiple pages of comics', () => {
-    const page2 = {
-      comics: {
-        edges: [
-          {
-            node: {
-              id: 3,
-              name: 'Calvin and Hobbes',
-              newest: '2024-01-15',
-              avatarUrl: null,
-              lastStrip: null,
-            },
-          },
-        ],
-        pageInfo: { hasNextPage: false, hasPreviousPage: true, startCursor: 'c3', endCursor: 'c3' },
-        totalCount: 42,
-      },
-    };
-
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: { pages: [mockPage, page2] },
-      isLoading: false,
-      isFetchingNextPage: false,
-      hasNextPage: false,
-      fetchNextPage: mockFetchNextPage,
-    } as any);
-
-    renderWithQuery(<ComicsPage />);
-    expect(screen.getByText('Garfield')).toBeInTheDocument();
-    expect(screen.getByText('Calvin and Hobbes')).toBeInTheDocument();
-  });
-
-  it('disconnects observer on unmount', () => {
-    const { unmount } = renderWithQuery(<ComicsPage />);
-    unmount();
-    expect(mockDisconnect).toHaveBeenCalled();
+    expect(mockToggle).toHaveBeenCalledWith(1);
   });
 });
 
 describe('ComicsPage - search mode', () => {
   beforeEach(() => {
     mockSearchParams.set('q', 'garfield');
-    vi.mocked(useInfiniteGetComicsQuery).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetchingNextPage: false,
-      hasNextPage: false,
-      fetchNextPage: vi.fn(),
-    } as any);
+    mockToggle.mockClear();
+    mockCatalogue([]);
+    vi.mocked(useFavorites).mockReturnValue({ favoriteIds: new Set(), toggle: mockToggle, isPending: false });
   });
 
   afterEach(() => {
     mockSearchParams.clear();
-    vi.restoreAllMocks();
   });
 
   it('renders search results when query param is present', () => {
-    vi.mocked(useSearchComicsQuery).mockReturnValue({
-      data: {
-        search: {
-          comics: [
-            { id: 1, name: 'Garfield', newest: '2024-01-15', avatarUrl: null, lastStrip: null },
-          ],
-        },
-      },
-      isLoading: false,
-    } as any);
+    mockSearch({ search: { comics: [comic(1, 'Garfield')] } });
 
-    renderWithQuery(<ComicsPage />);
+    render(<ComicsPage />);
     expect(screen.getByText('Search Results')).toBeInTheDocument();
     expect(screen.getByText(/1 comic matching "garfield"/)).toBeInTheDocument();
     expect(screen.getByText('Garfield')).toBeInTheDocument();
   });
 
-  it('shows empty state when search has no results', () => {
-    vi.mocked(useSearchComicsQuery).mockReturnValue({
-      data: { search: { comics: [] } },
-      isLoading: false,
-    } as any);
+  it('lets a search result be favorited', () => {
+    mockSearch({ search: { comics: [comic(7, 'Garfield')] } });
 
-    renderWithQuery(<ComicsPage />);
+    render(<ComicsPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Add Garfield to favorites' }));
+
+    expect(mockToggle).toHaveBeenCalledWith(7);
+  });
+
+  it('shows empty state when search has no results', () => {
+    mockSearch({ search: { comics: [] } });
+
+    render(<ComicsPage />);
     expect(screen.getByText('No comics found')).toBeInTheDocument();
     expect(screen.getByText(/No comics matching "garfield"/)).toBeInTheDocument();
   });
 
   it('shows loading state during search', () => {
-    vi.mocked(useSearchComicsQuery).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    } as any);
+    mockSearch(undefined, true);
 
-    renderWithQuery(<ComicsPage />);
+    render(<ComicsPage />);
     expect(screen.queryByText('Search Results')).not.toBeInTheDocument();
   });
 
   it('pluralizes result count correctly', () => {
-    vi.mocked(useSearchComicsQuery).mockReturnValue({
-      data: {
-        search: {
-          comics: [
-            { id: 1, name: 'Garfield', newest: '2024-01-15', avatarUrl: null, lastStrip: null },
-            { id: 2, name: 'Garfield Minus Garfield', newest: '2024-01-15', avatarUrl: null, lastStrip: null },
-          ],
-        },
-      },
-      isLoading: false,
-    } as any);
+    mockSearch({ search: { comics: [comic(1, 'Garfield'), comic(2, 'Garfield Minus Garfield')] } });
 
-    renderWithQuery(<ComicsPage />);
+    render(<ComicsPage />);
     expect(screen.getByText(/2 comics matching "garfield"/)).toBeInTheDocument();
   });
 });
