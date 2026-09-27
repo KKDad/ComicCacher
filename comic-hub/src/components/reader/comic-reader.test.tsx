@@ -64,6 +64,15 @@ describe('ComicReader', () => {
     });
   });
 
+  it('shows a skeleton until the viewport is measured', () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: null });
+
+    const { container } = render(<ComicReader comicId={1} />);
+
+    expect(screen.queryByText('Garfield')).not.toBeInTheDocument();
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+  });
+
   it('renders desktop reader on desktop layout', () => {
     vi.mocked(useResponsiveNav).mockReturnValue({
       layout: 'desktop',

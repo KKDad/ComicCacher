@@ -29,6 +29,15 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 - **Server Actions are intentionally NOT adopted.** Mutations route through `/api/*` handlers because token refresh logic lives there. Revisit if/when refresh moves to a centralized middleware layer.
 - **Logout flow:** `/api/logout` calls the GraphQL `logout` mutation before clearing cookies. The backend sets the user's `tokensInvalidatedBefore` timestamp; the JWT filter and refresh path reject any token issued before the cutoff. The mutation is best-effort — if it fails, cookies are still cleared client-side.
 
+## Layout, Theme & Titles
+
+- **Responsive layout is CSS.** `DashboardShell` renders the sidebar, nav rail and mobile nav together and Tailwind breakpoints (`md`, `lg`) pick one, so the server HTML is already right. Use `useResponsiveNav` only when a component must render a different tree per device (the readers); it returns `null` on the server and during hydration, so render a skeleton for `null` rather than guess.
+- **Viewport height:** use `dvh` (`h-dvh`, `min-h-dvh`), not `h-screen`, so mobile browser bars don't cut pages off. `viewportFit: "cover"` in the root layout makes `env(safe-area-inset-*)` work.
+- **Theme:** the inline script in the root layout sets the `<html>` class before paint and `ThemeSync` owns it after hydration (`src/lib/theme.ts`). Read the theme from the preferences store; don't set it on `document.documentElement` anywhere else.
+- **Colour tokens:** text tokens must hold 4.5:1 on `canvas` and `surface` in both themes (WCAG AA); check new pairs with a contrast calculation. A `--color-*` token defined only in `:root` generates no Tailwind class: add it to the `@theme inline` block too.
+- **Page titles** use the metadata API with the root template `%s · Comics Hub`. Client pages get theirs from a sibling `layout.tsx` exporting `metadata`; comic pages use `generateMetadata` with `comicTitle()`.
+- **Strip dates** are `YYYY-MM-DD` calendar days: parse and format them with `src/lib/date-utils.ts`, never `new Date(date)`, which reads them as UTC midnight and shows the previous day west of Greenwich. Tests run in `America/Toronto` to catch this.
+
 ## Error Boundaries & Loading States
 
 The App Router requires explicit error and not-found handlers. The repo standard:

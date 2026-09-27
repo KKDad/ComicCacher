@@ -27,6 +27,14 @@ describe('GridReader', () => {
     vi.mocked(useGridReader).mockReturnValue(mockReader);
   });
 
+  it('shows a skeleton until the viewport is measured', () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: null });
+    const { container } = render(<GridReader />);
+    expect(screen.queryByTestId('desktop-grid-reader')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mobile-grid-reader')).not.toBeInTheDocument();
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+  });
+
   it('renders desktop grid reader on desktop', () => {
     vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'desktop' });
     render(<GridReader />);
