@@ -5,29 +5,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.5.0] - 2026-09-27
 ### Added
-- Comics Hub visual refresh: Newsprint and Ink themes, new type, navigation, logo, app icons and empty-state illustrations (#372)
-- Desktop reader keyboard shortcuts (J/K, Home/End, R, F, Escape), and the reader keeps your place across refreshes and back navigation (#370)
-- The reader's "Newest first" scroll order now works: newest strip on top, scrolling back through older ones (#376)
+- Comics Hub visual refresh: warm Newsprint (light) and charcoal Ink (dark) themes that clear WCAG AA, DynaPuff / Bricolage Grotesque / Figtree type, a Home / Today / Library / Preferences navigation with four direct tabs on phones, a new logo, app icons, web manifest and illustrations for empty and error states (#372)
+- Desktop reader: PageDown, Space and the arrow keys scroll it; J/K step one strip, Home/End jump to the ends, R picks a random strip and F opens fullscreen. Labelled Prev/Next buttons, a favorite heart, month and year dropdowns in the date picker, and click a strip to open it fullscreen (#370)
+- The reader keeps your place: `?date=` follows the strip being read, so refresh, back and shared links return to it, and Back / Escape stay inside the app (#370)
+- The "Newest first" scroll order works: newest strip on top, scrolling back through older ones, with the keys and swipes following it (#376)
+- Forgot and reset password pages, backed by new `/api/forgot-password` and `/api/reset-password` routes (emails still need SMTP; see TODO) (#342)
+- Comics list with a name filter and favorite hearts; Continue Reading shows up to three comics, unread first; "New" only marks strips newer than where you last read (#371)
+- Page titles on every page (`Library · Comics Hub`, the comic's name on its pages, the sign-in pages) (#371, #392)
 - Dev-only `devToken` mutation for signing in to the dev instance in tests, turned on by `utils/dev-run.sh` (#365, #366)
 - `utils/dev-ui.sh` runs Comics Hub against the dev API; `utils/readme-screenshots.sh` regenerates the README images from invented demo comics (#362, #374)
 
 ### Changed
-- Comics Hub runs on Node 24 LTS, with a dependency sweep (#341, #361)
-- Stable dashboard layout, a full sortable comics list and page titles (#371)
-- Every comic list (library, reader, grid, admin tables) sorts names the same way (#382)
-- Prod backfill runs every 2 hours like dev, shifted 90 minutes later; it had been left on once a day (#375)
-- Removed the legacy Selenium downloaders and `ComicCacher.json` bootstrap loader, OpenAPI/Swagger, and unused backend classes, methods, properties and dependencies (#378, #379, #381)
-- CI uses `gradle/actions/setup-gradle` and skips comic-hub and docs-only changes (#379)
+- Comics Hub runs on Node 24 LTS, with dependency updates: Next 16.3, React 19.3, vitest 5, react-day-picker 10, lucide-react 1.48, shadcn 4.21 (#341, #361, #393)
+- "Today's Comics" is now "Latest Updates": newest strip first, favorites first within a day. Dashboard sections keep their height, and favoriting no longer reorders the list under the pointer (#342, #371)
+- Favorites, Continue Reading and the reading list see every comic, not just the first page of 50 (#342)
+- The navigation is chosen by CSS breakpoints, so phones and tablets no longer render the desktop layout first; the readers show a skeleton until the screen size is known (#392)
+- Every comic list (library, reader, grid, admin tables) sorts names the same way ("Baby Blues" before "BC") (#371, #382)
+- Prod comic backfill runs every 2 hours from 09:00, like dev shifted by 90 minutes; it had been left on once a day (#375)
+- CI uses `gradle/actions/setup-gradle`, skips comic-hub and docs-only changes, and uploads module reports on failure; Gradle 9.8.0 (#379, #385, #386)
+- Docs, API docs, module notes and CLAUDE.md files match the code; GitHub bug report template asks for the `X-Request-Id` (#368, #384)
+
+### Removed
+- The legacy Selenium `GoComics` downloader and the `ComicsKingdom` / `DailyComic` classes, `selenium-java` and `webdrivermanager`, and the unused `ComicCacher.json` bootstrap loader. Production already downloaded every source with the Jsoup strategies (#378)
+- OpenAPI/Swagger (springdoc, the `apidocs` profile, `generate-openapi-docs.sh`); only the two image endpoints are REST (#379)
+- Unused backend classes, interface methods, properties (`comics.metrics.persist-interval-seconds`, `archive-directory`, `archive-cron`, `batch.tracking.json-file`, `comics.cache.chromeHeadless`, the Caffeine `lookahead` settings) and Spring starters; the boot jar is about 3 MB smaller (#379, #381)
+- Dead Comics Hub code and unused packages (date-fns, js-cookie, msw, happy-dom, next-themes and others), the no-op `proxy.ts`, and the Postman collection for the retired REST API (#368, #382)
+- Dead controls: the notification bell, the mobile hamburger, the "API" nav link and the unused comics-per-page and default-zoom settings (#342)
+- `test_backend.py` (#375)
 
 ### Fixed
-- The saved theme applies on every page load, and toasts follow it instead of the OS theme (#369, #376)
-- Desktop reader infinite scroll (#363); batch job cards overflowing their column (#364); broken and inaccessible parts of the public UI (#342)
+- Strip dates showed a day early west of Greenwich; tests now run in `America/Toronto` (#342)
+- Open redirect through `?from=` on login (#342)
+- The saved theme applies on every page load with no light flash, and toasts follow it instead of the OS theme (#369, #376)
+- Accessibility: WCAG AA contrast, one `<h1>` per page, a skip link, labelled icon buttons, `aria-current` navigation, forms that describe each error, and the lightbox traps focus and returns it to its opener (#342, #392)
+- Mobile: reader controls took taps while hidden; pages were cut off by browser bars (`dvh`); safe-area insets had no effect without `viewport-fit=cover`; the browser chrome now matches the theme (#342, #392)
+- Escape in the date picker also navigated back; the daily reader's date picker offered future dates (#342)
+- Desktop reader infinite scroll jumped and could loop (#363); a failed job's stack trace widened its card past the column (#364)
 - Signing out, or signing in without "remember me", now clears the remember-me cookie (#376)
-- Status badges and card shadows follow the Ink theme, and reduced-motion is honoured (#376)
+- Status badges, card shadows and reduced-motion follow the theme and OS setting (#376)
 - `npm run codegen` produced a file that didn't compile (#382)
 - `utils/verify-json-files.sh` always failed on a current cache and never checked metadata sidecars (#375)
-- Scheduler state and metrics archives are written atomically; access times are stored with a UTC offset (#383)
+- Scheduler state and metrics archives are written atomically; access times are stored with a UTC offset; comic directory names always go through the path-traversal guard (#383)
 - The JaCoCo integration-test report was never produced (#379)
 
 ## [2.4.9] - 2026-09-25
