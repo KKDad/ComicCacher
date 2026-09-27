@@ -51,7 +51,6 @@ vi.mock('@/hooks/use-reading-list', () => ({
 }));
 
 vi.mock('@/generated/graphql', () => ({
-  useGetComicsQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
   useGetUserPreferencesQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
 }));
 

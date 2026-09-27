@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Activity, CheckCircle, XCircle, Timer, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { useGetRetrievalSummaryQuery, useGetRetrievalRecordsQuery, RetrievalStatusEnum } from '@/generated/graphql';
+import { compareNames } from '@/lib/sort';
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms.toFixed(0)} ms`;
@@ -116,7 +117,7 @@ export default function RetrievalStatusPage() {
 
   const sortedRecords = [...(records ?? [])].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
-    if (sortKey === 'comicName') return dir * a.comicName.localeCompare(b.comicName);
+    if (sortKey === 'comicName') return dir * compareNames(a.comicName, b.comicName);
     if (sortKey === 'comicDate') return dir * String(a.comicDate).localeCompare(String(b.comicDate));
     if (sortKey === 'status') return dir * a.status.localeCompare(b.status);
     if (sortKey === 'retrievalDurationMs') return dir * ((a.retrievalDurationMs ?? 0) - (b.retrievalDurationMs ?? 0));

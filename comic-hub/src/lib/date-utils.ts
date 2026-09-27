@@ -18,6 +18,26 @@ export function parseDate(dateStr: string): Date {
   return new Date(dateStr);
 }
 
+/** A date's local calendar day as `YYYY-MM-DD`, the strip-date format. */
+export function toIsoDate(date: Date): string {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/** Today's local date as `YYYY-MM-DD`. */
+export function todayIsoDate(): string {
+  return toIsoDate(new Date());
+}
+
+/** The `YYYY-MM-DD` date `days` calendar days after (or before, if negative) `dateStr`. */
+export function shiftIsoDate(dateStr: string, days: number): string {
+  const d = parseDate(dateStr);
+  d.setDate(d.getDate() + days);
+  return toIsoDate(d);
+}
+
 /** "Mar 18" — compact date for cards and lists. */
 export function formatShortDate(dateStr: string): string {
   return parseDate(dateStr).toLocaleDateString('en-US', {
@@ -79,6 +99,17 @@ export function formatRelativeTime(dateStr: string): string {
   }
   if (hours > 0) return `${hours}h ${minutes % 60}m ago`;
   return `${minutes}m ago`;
+}
+
+/** "just now", "12m ago", "3h ago", "5d ago" — compact past time for summaries and tables. */
+export function formatTimeAgo(dateStr: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 /** "1.2s", "3m 12s", "450ms" — elapsed duration for job executions. */

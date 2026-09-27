@@ -37,7 +37,7 @@ yarn-error.log*
 # vercel
 .vercel
 
-# generated (keep graphql.ts stub for test imports)
+# generated (graphql.ts is committed: the build and tests use it without running codegen)
 src/generated/*
 !src/generated/graphql.ts
 

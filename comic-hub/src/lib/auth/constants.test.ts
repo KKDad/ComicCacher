@@ -1,4 +1,4 @@
-import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE, PUBLIC_PATHS } from './constants';
+import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE } from './constants';
 
 describe('auth constants', () => {
   it('exports JWT cookie name', () => {
@@ -11,12 +11,5 @@ describe('auth constants', () => {
 
   it('sets cookie max age to 7 days', () => {
     expect(COOKIE_MAX_AGE).toBe(60 * 60 * 24 * 7);
-  });
-
-  it('exports public paths', () => {
-    expect(PUBLIC_PATHS).toContain('/login');
-    expect(PUBLIC_PATHS).toContain('/register');
-    expect(PUBLIC_PATHS).toContain('/forgot-password');
-    expect(PUBLIC_PATHS).toContain('/reset-password');
   });
 });

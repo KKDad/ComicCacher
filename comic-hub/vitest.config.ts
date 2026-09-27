@@ -20,11 +20,9 @@ export default defineConfig({
         'src/test/',
         '**/*.d.ts',
         '**/*.config.*',
-        '**/mockData',
         'src/components/ui/**', // shadcn components
         'src/generated/**', // Auto-generated GraphQL types
         'src/types/**', // Type-only files
-        'src/proxy.ts', // Dev proxy utility
       ],
       all: true,
       include: ['src/**/*.{ts,tsx}'],

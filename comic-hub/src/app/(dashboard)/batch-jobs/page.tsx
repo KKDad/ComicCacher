@@ -6,6 +6,7 @@ import type { BatchJob } from '@/generated/graphql';
 import { JobCard } from '@/components/batch-jobs/job-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
+import { formatTimeAgo } from '@/lib/date-utils';
 
 function SummaryBar({
   schedulerCount,
@@ -45,19 +46,6 @@ function SummaryBar({
       )}
     </div>
   );
-}
-
-function formatTimeAgo(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const hours = Math.floor(diffMs / 3_600_000);
-  const days = Math.floor(hours / 24);
-
-  if (days > 0) return `${days}d ago`;
-  if (hours > 0) return `${hours}h ago`;
-  const minutes = Math.floor(diffMs / 60_000);
-  return `${minutes}m ago`;
 }
 
 export default function BatchJobsPage() {

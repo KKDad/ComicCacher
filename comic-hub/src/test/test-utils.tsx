@@ -14,24 +14,6 @@ export function createMockUser(overrides?: Partial<User>): User {
   };
 }
 
-export function createMockComic(overrides?: Record<string, unknown>) {
-  return {
-    id: '1',
-    name: 'Test Comic',
-    avatarUrl: 'https://example.com/avatar.png',
-    author: 'Test Author',
-    oldest: '2020-01-01',
-    newest: '2024-01-15',
-    description: 'A test comic',
-    source: 'gocomics',
-    lastStrip: {
-      date: '2024-01-15',
-      imageUrl: 'https://example.com/strip.png',
-    },
-    ...overrides,
-  };
-}
-
 function createTestQueryClient() {
   return new QueryClient({
     defaultOptions: {
@@ -64,5 +46,4 @@ export function renderWithProviders(
   return { ...render(ui, { wrapper: Wrapper, ...renderOptions }), queryClient: client };
 }
 
-export { createTestQueryClient };
 export * from '@testing-library/react';

@@ -6,6 +6,7 @@ import { keepPreviousData } from '@tanstack/react-query';
 import { useGetUserPreferencesQuery } from '@/generated/graphql';
 import { useAllComics } from '@/hooks/use-all-comics';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { compareByName } from '@/lib/sort';
 
 interface ReadingListComic {
   id: number;
@@ -56,7 +57,7 @@ export function useReadingList(currentComicId: number): UseReadingListReturn {
           hasUnread: lastRead !== null && node.newest !== null && lastRead < node.newest,
         };
       })
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(compareByName);
 
     if (navMode === 'favorites') {
       return list.filter((c) => favorites.has(c.id));

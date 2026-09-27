@@ -11,17 +11,18 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 - TanStack Query v5 + `graphql-request` for server-side GraphQL fetches
 - Radix UI primitives + shadcn/ui generated components
 - React Hook Form + Zod for forms
-- Vitest + React Testing Library + MSW for tests
+- Vitest + React Testing Library for tests
 
 ## App Router Rules
 
 - **Server components by default.** Add `'use client'` only when you need state, effects, refs, browser APIs, or event handlers.
 - Auth and session checks belong in **server layouts**, never in client components. The canonical example is `src/app/(dashboard)/layout.tsx`, which calls `getSession()` server-side and redirects unauthenticated users.
 - Route groups: `(auth)` for login/registration, `(dashboard)` for the authenticated app, `(reader)` for the comic-reader experience.
-- `proxy.ts` handles UX-only redirects. **It is not a security boundary.** Auth gates live in server layouts.
+- There is no `proxy.ts` (middleware). Auth gates live in server layouts; route handlers own the auth boundary for `/api/*`.
 
 ## Data Fetching & Auth
 
+- Every operation lives in `src/graphql/operations/*.graphql`; route handlers send the generated document (`LoginDocument.toString()`), never an inline query string.
 - All GraphQL traffic goes through `src/app/api/graphql/route.ts`. The route handler injects the JWT from httpOnly cookies, forwards to the backend, and rotates refresh tokens on 401 / `UNAUTHENTICATED` errors. Clone this pattern for any new authenticated route handler.
 - Auth cookies: `httpOnly: true`, `secure: process.env.NODE_ENV === 'production'`, `sameSite: 'lax'`. Never expose tokens to client JavaScript.
 - Session validation in server layouts uses `cache: 'no-store'` to ensure fresh JWT verification on every render.
@@ -63,7 +64,7 @@ All z-index values MUST use the project's semantic tokens defined in `globals.cs
 **Why portaled dropdowns use `z-popover` (600), not `z-dropdown` (100):**
 Radix UI portals render at `document.body`. They must float above the header/sidebar (200) and work correctly when triggered from inside modals (500). `z-popover` (600) satisfies both constraints.
 
-**Naming nuance:** CSS custom properties are `--z-*` (e.g., `--z-popover`). Tailwind v4's `@theme inline` block exports them as utility classes whose internal var names are `--z-index-*`. Use `z-popover` etc. as Tailwind utilities — they resolve through the theme correctly.
+**Naming nuance:** the scale is defined once, as `--z-index-*` in the `@theme inline` block, which is what generates the `z-popover` etc. utilities. There are no separate `--z-*` custom properties.
 
 **When adding new shadcn/ui components:** The generated code uses Tailwind's `z-50` by default. Always replace `z-50` with the correct semantic token from the table above.
 
@@ -71,10 +72,10 @@ Radix UI portals render at `document.body`. They must float above the header/sid
 
 ## Testing
 
-- Vitest + React Testing Library + MSW. Run with `npm test` or `npm run test:coverage`.
+- Vitest + React Testing Library. Run with `npm test` or `npm run test:coverage`.
 - Coverage thresholds enforced: 90% statements/lines/functions, 87% branches.
 - Excluded from coverage: `src/components/ui/**` (generated shadcn), `src/generated/**` (GraphQL codegen), `src/types/**`.
-- Mock backend calls with MSW handlers, not by stubbing `fetch`.
+- Mock backend calls by stubbing `fetch` (route handlers) or `vi.mock('@/generated/graphql')` (components).
 
 ## GraphQL Codegen
 
