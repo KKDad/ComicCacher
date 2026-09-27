@@ -260,7 +260,7 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   }, [goToTop, goToBottom, goToRandom, goDown, goUp, openFullscreen, currentDate, goBack, isLightboxOpen]);
 
   return (
-    <div ref={scrollContainerRef} tabIndex={-1} className="h-screen overflow-y-auto bg-canvas outline-none">
+    <div ref={scrollContainerRef} tabIndex={-1} className="h-dvh overflow-y-auto bg-canvas outline-none">
       <ReaderHeader
         comicName={comicName}
         onFirst={handleGoToFirst}

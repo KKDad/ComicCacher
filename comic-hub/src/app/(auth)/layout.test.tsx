@@ -9,6 +9,6 @@ describe('AuthLayout', () => {
 
   it('wraps children in a centered container', () => {
     const { container } = render(<AuthLayout><div>content</div></AuthLayout>);
-    expect(container.firstChild).toHaveClass('min-h-screen', 'flex', 'items-center', 'justify-center');
+    expect(container.firstChild).toHaveClass('min-h-dvh', 'flex', 'items-center', 'justify-center');
   });
 });

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Figtree, Bricolage_Grotesque, DynaPuff } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
@@ -33,6 +33,17 @@ const dynaPuff = DynaPuff({
 export const metadata: Metadata = {
   title: { template: "%s · Comics Hub", default: "Comics Hub" },
   description: "Your personal comic strip collection",
+};
+
+// Browser chrome matches the canvas (Newsprint / Ink). It follows the OS scheme, since a
+// saved theme choice isn't known when the page is served. viewportFit lets
+// env(safe-area-inset-*) pad the mobile nav and reader around notches.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F2ECDF" },
+    { media: "(prefers-color-scheme: dark)", color: "#151417" },
+  ],
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

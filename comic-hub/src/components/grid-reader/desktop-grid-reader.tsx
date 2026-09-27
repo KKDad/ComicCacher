@@ -114,7 +114,7 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
   }, [date]);
 
   return (
-    <div ref={scrollContainerRef} className="h-screen overflow-y-auto bg-canvas">
+    <div ref={scrollContainerRef} className="h-dvh overflow-y-auto bg-canvas">
       <GridHeader
         date={date}
         onPreviousDate={goToPreviousDate}
