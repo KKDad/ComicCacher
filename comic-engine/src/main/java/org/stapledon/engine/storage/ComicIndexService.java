@@ -45,7 +45,6 @@ public class ComicIndexService {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
-    private final ImageMetadataRepository metadataRepository;
 
     // In-memory cache of the indexes to avoid repeated disk reads.
     private final Map<Integer, ComicDateIndex> indexCache = new ConcurrentHashMap<>();
@@ -344,54 +343,10 @@ public class ComicIndexService {
     }
 
     /**
-     * Rebuild the entire index from scratch by scanning the filesystem.
-     */
-    public void rebuildIndex(int comicId, String comicName) {
-        rebuildIndex(comicId, comicName, false);
-    }
-
-    /**
-     * Rebuild the entire index from scratch by scanning the filesystem.
-     *
-     * @param validateMetadata If true, reads each sidecar JSON to verify the
-     *                         comicId matches.
-     */
-    public void rebuildIndex(int comicId, String comicName, boolean validateMetadata) {
-        ReadWriteLock lock = getLock(comicId);
-        lock.writeLock().lock();
-        try {
-            ComicDateIndex index = rebuildIndexInternal(comicId, comicName, validateMetadata);
-
-            // Write to disk first, then update cache
-            try {
-                saveIndex(index, comicName);
-            } catch (IOException e) {
-                log.error("Failed to persist rebuilt index for {}, cache NOT updated", comicName, e);
-                throw new RuntimeException("Failed to persist rebuilt index to disk", e);
-            }
-
-            indexCache.put(comicId, index);
-            log.info("Rebuilt index for '{}' with {} available dates on disk", comicName, index.getAvailableDates().size());
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    /**
-     * Internal rebuild method that does not acquire locks.
-     * Caller must hold write lock.
+     * Rebuilds the index by scanning the comic's directory. Does not acquire locks;
+     * the caller must hold the write lock.
      */
     private ComicDateIndex rebuildIndexInternal(int comicId, String comicName) {
-        return rebuildIndexInternal(comicId, comicName, false);
-    }
-
-    /**
-     * Internal rebuild method that does not acquire locks.
-     * Caller must hold write lock.
-     *
-     * @param validateMetadata If true, reads each sidecar JSON to verify the comicId matches.
-     */
-    private ComicDateIndex rebuildIndexInternal(int comicId, String comicName, boolean validateMetadata) {
         String parsedName = sanitizeComicName(comicName, comicId);
         Path comicDir = NfsFileOperations.resolvePath(cacheProperties.getLocation(), parsedName);
 
@@ -409,13 +364,7 @@ public class ComicIndexService {
                             String name = image.getFileName().toString();
                             try {
                                 String dateStr = name.substring(0, name.lastIndexOf('.'));
-                                LocalDate date = LocalDate.parse(dateStr);
-
-                                if (validateMetadata) {
-                                    validateImageMetadata(image, comicId, comicName, date);
-                                }
-
-                                dateSet.add(date);
+                                dateSet.add(LocalDate.parse(dateStr));
                             } catch (DateTimeParseException | StringIndexOutOfBoundsException e) {
                                 log.warn("Skipping invalid file '{}': {}", image, e.getMessage());
                             } catch (Exception e) {
@@ -548,22 +497,5 @@ public class ComicIndexService {
     private Path getIndexFile(int comicId, String comicName) {
         String parsedName = sanitizeComicName(comicName, comicId);
         return NfsFileOperations.resolvePath(cacheProperties.getLocation(), parsedName, INDEX_FILENAME);
-    }
-
-    /**
-     * Validates that an image's metadata matches the expected comic ID.
-     */
-    private void validateImageMetadata(Path image, int comicId, String comicName, LocalDate date) {
-        String imagePath = image.toAbsolutePath().toString();
-        if (metadataRepository.metadataExists(imagePath)) {
-            metadataRepository.loadMetadata(imagePath).ifPresent(md -> {
-                if (md.getComicId() != comicId) {
-                    log.error("MISMATCH: Comic ID mismatch for '{}' on {}. Expected {}, found {}", comicName, date,
-                            comicId, md.getComicId());
-                }
-            });
-        } else {
-            log.warn("MISSING: Metadata sidecar missing for '{}' on {}", comicName, date);
-        }
     }
 }

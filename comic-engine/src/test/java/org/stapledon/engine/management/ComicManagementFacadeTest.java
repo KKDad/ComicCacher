@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,7 +35,6 @@ import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.SaveResult;
-import org.stapledon.common.infrastructure.config.ExecutionTracker;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
@@ -57,9 +55,6 @@ class ComicManagementFacadeTest {
 
     @Mock
     private RetrievalStatusService retrievalStatusService;
-
-    @Mock
-    private ExecutionTracker taskExecutionTracker;
 
     private ComicManagementFacade facade;
     private ComicItem testComic;
@@ -88,8 +83,6 @@ class ComicManagementFacadeTest {
         facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
                 retrievalStatusService, Runnable::run);
     }
-
-    // Test removed - on-demand downloads via CacheMissEvent no longer supported
 
     @Test
     void shouldGetAllComics() {

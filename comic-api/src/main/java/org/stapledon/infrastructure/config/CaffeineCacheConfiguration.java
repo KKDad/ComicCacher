@@ -8,8 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.stapledon.common.config.CaffeineCacheProperties;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,26 +58,5 @@ public class CaffeineCacheConfiguration {
         return String.format("maximumSize=%d,expireAfterWrite=%dm",
                 cacheProperties.getMetadata().getMaxSize(),
                 cacheProperties.getMetadata().getTtlMinutes());
-    }
-
-    /**
-     * Creates a Caffeine cache builder for metadata cache.
-     */
-    @Bean(name = "metadataCaffeine")
-    public Caffeine<Object, Object> metadataCaffeine() {
-        return buildCaffeine(cacheProperties.getMetadata());
-    }
-
-    /**
-     * Builds a Caffeine cache instance with the given configuration.
-     */
-    private Caffeine<Object, Object> buildCaffeine(CaffeineCacheProperties.CacheConfig config) {
-        log.debug("Building Caffeine cache with maxSize={}, ttlMinutes={}",
-                config.getMaxSize(), config.getTtlMinutes());
-
-        return Caffeine.newBuilder()
-                .maximumSize(config.getMaxSize())
-                .expireAfterWrite(config.getTtlMinutes(), TimeUnit.MINUTES)
-                .recordStats();
     }
 }

@@ -37,14 +37,6 @@ public interface DownloaderFacade {
     Optional<byte[]> downloadAvatar(int comicId, String comicName, String source, String sourceIdentifier);
 
     /**
-     * Downloads the latest comic strip for all comics in the provided configuration.
-     *
-     * @param config The comic configuration containing all comic information
-     * @return List of download results for each comic
-     */
-    List<ComicDownloadResult> downloadLatestComics(ComicConfig config);
-
-    /**
      * Downloads the comic strips for all comics in the provided configuration for the specified date.
      *
      * @param config The comic configuration containing all comic information

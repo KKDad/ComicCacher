@@ -10,7 +10,6 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicNavigationResult;
 import org.stapledon.common.dto.ComicRetrievalRecord;
-import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.StripLoaderKey;
 import org.stapledon.common.util.Direction;
@@ -19,8 +18,6 @@ import org.stapledon.common.util.Direction;
  * Facade for managing comic operations. This is the highest-level facade in the
  * application,
  * acting as the central coordinator between all other facades.
- * It consolidates functionality from ComicsService, UpdateService, and
- * StartupReconciler interfaces.
  */
 public interface ManagementFacade {
 
@@ -230,21 +227,6 @@ public interface ManagementFacade {
      * Gets retrieval records for a specific comic
      */
     List<ComicRetrievalRecord> getRetrievalRecords(String comicName, int limit);
-
-    /**
-     * Gets retrieval records for a specific comic on a specific date
-     */
-    List<ComicRetrievalRecord> getRetrievalRecordsForDate(String comicName, LocalDate date);
-
-    /**
-     * Gets filtered retrieval records
-     */
-    List<ComicRetrievalRecord> getFilteredRetrievalRecords(
-            String comicName,
-            ComicRetrievalStatus status,
-            LocalDate fromDate,
-            LocalDate toDate,
-            int limit);
 
     /**
      * Gets retrieval summary statistics

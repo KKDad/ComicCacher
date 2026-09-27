@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -386,46 +384,6 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     @Override
     public Path getCacheRoot() {
         return Path.of(cacheProperties.getLocation());
-    }
-
-    @Override
-    public String getComicCacheRoot(@lombok.NonNull ComicIdentifier comic) {
-        return String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath(), comic.getDirectoryName());
-    }
-
-    @Override
-    public List<String> getYearsWithContent(@lombok.NonNull ComicIdentifier comic) {
-
-        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath(),
-                comic.getDirectoryName()));
-
-        if (!comicRoot.exists()) {
-            return new ArrayList<>();
-        }
-
-        File[] yearDirs = comicRoot
-                .listFiles(file -> file.isDirectory() && !EXCLUDED_SYNOLOGY_DIR.equals(file.getName()));
-        if (yearDirs == null) {
-            return new ArrayList<>();
-        }
-
-        return Arrays.stream(yearDirs)
-                .map(File::getName)
-                .sorted()
-                .toList();
-    }
-
-    @Override
-    public long getStorageSize(@lombok.NonNull ComicIdentifier comic) {
-
-        File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath(),
-                comic.getDirectoryName()));
-
-        if (!comicRoot.exists()) {
-            return 0;
-        }
-
-        return calculateDirectorySize(comicRoot);
     }
 
     private long calculateDirectorySize(File directory) {

@@ -47,11 +47,6 @@ public interface RetrievalStatusRepository {
     int purgeOldRecords(int daysToKeep);
 
     /**
-     * Get count of records by status
-     */
-    int getRecordCountByStatus(ComicRetrievalStatus status);
-
-    /**
      * Reset all records (for testing purposes)
      */
     @com.google.common.annotations.VisibleForTesting

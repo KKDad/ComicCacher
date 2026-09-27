@@ -97,15 +97,13 @@ Load sequence in `getOrLoadIndex()`:
 
 ### Rebuild from Filesystem
 
-`rebuildIndex(comicId, comicName)` scans the filesystem to regenerate the index:
+When the index is missing or empty, `ComicIndexService` scans the filesystem to regenerate it:
 
 1. Resolve comic directory: `{CacheRoot}/{sanitizedComicName}/`
 2. Iterate year directories (skip `@`-prefixed Synology metadata dirs)
 3. For each `*.png` file, parse the date from the filename (`yyyy-MM-dd`)
 4. Collect into a sorted list
 5. Write to disk, then update the in-memory cache
-
-Optional `validateMetadata` flag reads each sidecar JSON to verify the `comicId` matches the expected value.
 
 The `invalidateCache(comicId)` method evicts the in-memory entry, forcing a reload on next access.
 

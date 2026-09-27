@@ -129,14 +129,6 @@ public class ComicDownloaderFacade implements DownloaderFacade {
      * {@inheritDoc}
      */
     @Override
-    public List<ComicDownloadResult> downloadLatestComics(ComicConfig config) {
-        return downloadComicsForDate(config, LocalDate.now());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public List<ComicDownloadResult> downloadComicsForDate(ComicConfig config, LocalDate date) {
         List<ComicDownloadResult> results = new ArrayList<>();
 

@@ -13,9 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -126,41 +123,5 @@ public class MetricsArchiver {
      */
     public int cleanupOldArchives() {
         return cleanupOldArchives(DEFAULT_RETENTION_DAYS);
-    }
-
-    /**
-     * Get list of available archived dates.
-     *
-     * @return List of dates for which archives exist
-     */
-    public List<LocalDate> getAvailableArchives() {
-        try {
-            Path historyDir = Paths.get(cacheLocation, HISTORY_DIRECTORY);
-            if (!Files.exists(historyDir)) {
-                return Collections.emptyList();
-            }
-
-            List<LocalDate> dates = new ArrayList<>();
-
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDir, "*.json")) {
-                for (Path file : stream) {
-                    String filename = file.getFileName().toString();
-                    String dateStr = filename.replace(".json", "");
-
-                    try {
-                        LocalDate fileDate = LocalDate.parse(dateStr, DATE_FORMATTER);
-                        dates.add(fileDate);
-                    } catch (Exception e) {
-                        log.warn("Skipping metrics archive {}: {}", file, e.toString());
-                    }
-                }
-            }
-
-            Collections.sort(dates);
-            return dates;
-        } catch (IOException e) {
-            log.error("Failed to list archived metrics", e);
-            return Collections.emptyList();
-        }
     }
 }

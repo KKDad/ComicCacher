@@ -8,8 +8,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.stapledon.common.config.CaffeineCacheProperties;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-
 /**
  * Unit tests for CaffeineCacheConfiguration.
  */
@@ -23,7 +21,6 @@ class CaffeineCacheConfigurationTest {
         properties = CaffeineCacheProperties.builder()
                 .enabled(true)
                 .metadata(CaffeineCacheProperties.CacheConfig.builder().maxSize(60).ttlMinutes(60).build())
-                .lookahead(CaffeineCacheProperties.LookaheadConfig.builder().enabled(true).count(3).build())
                 .build();
 
         configuration = new CaffeineCacheConfiguration(properties);
@@ -42,13 +39,6 @@ class CaffeineCacheConfigurationTest {
         // Verify metadata cache is registered
         assertThat(caffeineCacheManager.getCacheNames().contains(CaffeineCacheConfiguration.COMIC_METADATA_CACHE))
                 .as("Should contain comicMetadata cache").isTrue();
-    }
-
-    @Test
-    void metadataCaffeineBuilder() {
-        Caffeine<Object, Object> caffeine = configuration.metadataCaffeine();
-
-        assertThat(caffeine).as("Metadata Caffeine builder should not be null").isNotNull();
     }
 
     @Test

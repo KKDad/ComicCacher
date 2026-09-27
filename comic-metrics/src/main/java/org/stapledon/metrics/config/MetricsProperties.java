@@ -20,15 +20,6 @@ public class MetricsProperties {
     /** Enable/disable metrics collection and persistence. */
     private final boolean enabled;
 
-    /** Interval in seconds for persisting metrics. */
-    private final int persistIntervalSeconds;
-
     /** Number of days to retain historical metrics archives. */
     private final int historyRetentionDays;
-
-    /** Directory name for storing historical metrics archives (relative to cache location). */
-    private final String archiveDirectory;
-
-    /** Cron expression for daily archiving. */
-    private final String archiveCron;
 }

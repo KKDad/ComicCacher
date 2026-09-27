@@ -65,7 +65,7 @@ class ComicIndexIntegrationTest {
         lenient().when(metadataRepository.saveMetadata(any())).thenReturn(true);
 
         // Real ComicIndexService - this is what we're testing
-        indexService = new ComicIndexService(gson, cacheProperties, metadataRepository);
+        indexService = new ComicIndexService(gson, cacheProperties);
 
         // Mock validation services (not critical for this test)
         ValidationService validationService = mock(ValidationService.class);
@@ -160,7 +160,7 @@ class ComicIndexIntegrationTest {
         CacheProperties cacheProperties = CacheProperties.builder()
                 .location(tempDir.toAbsolutePath().toString())
                 .build();
-        ComicIndexService newIndexService = new ComicIndexService(gson, cacheProperties, metadataRepository);
+        ComicIndexService newIndexService = new ComicIndexService(gson, cacheProperties);
 
         ValidationService validationService = mock(ValidationService.class);
         when(validationService.validateWithMinDimensions(any(byte[].class), anyInt(), anyInt()))

@@ -33,8 +33,6 @@ class SystemHealthServiceTest {
 
     @Mock private StorageMetricsCollector mockCacheStatsUpdater;
 
-    // Removed unused AccessMetricsCollector mock
-
     @Mock private CacheProperties mockCacheProperties;
 
     @InjectMocks private SystemHealthService healthService;
