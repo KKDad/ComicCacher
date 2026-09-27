@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { UserProvider } from '@/contexts/user-context';
+import { PreferencesSync } from '@/components/theme/preferences-sync';
 
 export default async function ReaderLayout({
   children,
@@ -13,5 +14,10 @@ export default async function ReaderLayout({
     redirect('/login');
   }
 
-  return <UserProvider user={user}>{children}</UserProvider>;
+  return (
+    <UserProvider user={user}>
+      <PreferencesSync />
+      {children}
+    </UserProvider>
+  );
 }

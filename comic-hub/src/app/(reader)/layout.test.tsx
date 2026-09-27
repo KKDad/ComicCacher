@@ -19,6 +19,10 @@ vi.mock('@/contexts/user-context', () => ({
   ),
 }));
 
+vi.mock('@/components/theme/preferences-sync', () => ({
+  PreferencesSync: () => <div data-testid="preferences-sync" />,
+}));
+
 describe('ReaderLayout', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -33,6 +37,7 @@ describe('ReaderLayout', () => {
     render(result);
 
     expect(screen.getByTestId('user-provider')).toBeInTheDocument();
+    expect(screen.getByTestId('preferences-sync')).toBeInTheDocument();
     expect(screen.getByText('reader content')).toBeInTheDocument();
   });
 

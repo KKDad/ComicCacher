@@ -1,30 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { usePreferencesStore } from './preferences-store';
 import { DEFAULT_DISPLAY_SETTINGS } from '@/lib/preferences-defaults';
+import { PREFERENCES_STORAGE_KEY } from '@/lib/theme';
 
 describe('preferences-store', () => {
-  let mockClassList: { add: ReturnType<typeof vi.fn>; remove: ReturnType<typeof vi.fn> };
-  let mockSetAttribute: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
+    localStorage.clear();
     usePreferencesStore.setState({
       settings: DEFAULT_DISPLAY_SETTINGS,
       isHydrated: false,
-    });
-
-    mockClassList = { add: vi.fn(), remove: vi.fn() };
-    mockSetAttribute = vi.fn();
-
-    Object.defineProperty(document, 'documentElement', {
-      value: { classList: mockClassList, setAttribute: mockSetAttribute },
-      writable: true,
-      configurable: true,
-    });
-
-    Object.defineProperty(window, 'matchMedia', {
-      value: vi.fn().mockReturnValue({ matches: false }),
-      writable: true,
-      configurable: true,
     });
   });
 
@@ -50,38 +34,6 @@ describe('preferences-store', () => {
       const { settings } = usePreferencesStore.getState();
       expect(settings).toEqual(DEFAULT_DISPLAY_SETTINGS);
     });
-
-    it('applies theme to DOM', () => {
-      const { hydrate } = usePreferencesStore.getState();
-
-      hydrate({ theme: 'dark' });
-
-      expect(mockClassList.remove).toHaveBeenCalledWith('light', 'dark');
-      expect(mockClassList.add).toHaveBeenCalledWith('dark');
-      expect(mockSetAttribute).toHaveBeenCalledWith('data-theme', 'dark');
-    });
-
-    it('applies system theme as dark when prefers-color-scheme is dark', () => {
-      Object.defineProperty(window, 'matchMedia', {
-        value: vi.fn().mockReturnValue({ matches: true }),
-        writable: true,
-        configurable: true,
-      });
-
-      const { hydrate } = usePreferencesStore.getState();
-      hydrate({ theme: 'system' });
-
-      expect(mockClassList.add).toHaveBeenCalledWith('dark');
-      expect(mockSetAttribute).toHaveBeenCalledWith('data-theme', 'dark');
-    });
-
-    it('applies system theme as light when prefers-color-scheme is light', () => {
-      const { hydrate } = usePreferencesStore.getState();
-      hydrate({ theme: 'system' });
-
-      expect(mockClassList.add).toHaveBeenCalledWith('light');
-      expect(mockSetAttribute).toHaveBeenCalledWith('data-theme', 'light');
-    });
   });
 
   describe('setSettings', () => {
@@ -97,29 +49,15 @@ describe('preferences-store', () => {
       expect(settings.readerNavMode).toBe('all');
       expect(settings.showContinueReading).toBe(true);
     });
+  });
 
-    it('applies theme to DOM when theme changes', () => {
-      const { hydrate } = usePreferencesStore.getState();
-      hydrate({});
-      mockClassList.remove.mockClear();
-      mockClassList.add.mockClear();
+  describe('persistence', () => {
+    it('persists settings but not the per-session hydrated flag', () => {
+      usePreferencesStore.getState().hydrate({ theme: 'dark' });
 
-      const { setSettings } = usePreferencesStore.getState();
-      setSettings({ theme: 'light' });
-
-      expect(mockClassList.add).toHaveBeenCalledWith('light');
-    });
-
-    it('does not apply theme to DOM when theme is unchanged', () => {
-      const { hydrate } = usePreferencesStore.getState();
-      hydrate({});
-      mockClassList.remove.mockClear();
-      mockClassList.add.mockClear();
-
-      const { setSettings } = usePreferencesStore.getState();
-      setSettings({ showFavorites: false });
-
-      expect(mockClassList.remove).not.toHaveBeenCalled();
+      const stored = JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? '{}');
+      expect(stored.state.settings.theme).toBe('dark');
+      expect(stored.state).not.toHaveProperty('isHydrated');
     });
   });
 });

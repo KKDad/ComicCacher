@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, DynaPuff, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
+import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
+import { InlineScript } from "@/components/theme/inline-script";
 
 const inter = Inter({
   variable: "--font-primary",
@@ -33,7 +35,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: the inline script sets the theme class on <html> before React hydrates
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <InlineScript html={THEME_BOOTSTRAP_SCRIPT} />
+      </head>
       <body
         className={`${inter.variable} ${dynaPuff.variable} ${jetBrainsMono.variable} antialiased`}
       >
