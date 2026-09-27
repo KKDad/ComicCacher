@@ -175,6 +175,18 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
     preloadImage(strips[currentIndex + 1]?.imageUrl ?? null);
   }, [strips, currentIndex]);
 
+  // Keep ?date= on the strip being read, so a refresh, back navigation or shared link
+  // returns to it. replaceState updates the URL without a navigation (Next.js syncs
+  // useSearchParams with it).
+  const currentStripDate = foundIndex >= 0 ? strips[foundIndex].date : undefined;
+  useEffect(() => {
+    if (!currentStripDate) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('date') === currentStripDate) return;
+    params.set('date', currentStripDate);
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [currentStripDate]);
+
   // Last-read tracking
   const updateLastRead = useUpdateLastReadMutation({
     onSuccess: (data) => {

@@ -13,6 +13,9 @@ global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
 } as any;
 
+vi.mock('@/components/reader/favorite-button', () => ({
+  FavoriteButton: () => null,
+}));
 vi.mock('@/hooks/use-responsive-nav');
 vi.mock('@/hooks/use-reader');
 vi.mock('@/hooks/use-reading-list');

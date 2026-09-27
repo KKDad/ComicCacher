@@ -4,6 +4,10 @@ import { ReaderHeader } from './reader-header';
 import { useRouter } from 'next/navigation';
 
 const mockBack = vi.fn();
+const mockGoBack = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/navigation-history', () => ({
+  useGoBack: (fallback: string) => () => mockGoBack(fallback),
+}));
 
 describe('ReaderHeader', () => {
   const defaultProps = {
@@ -39,11 +43,30 @@ describe('ReaderHeader', () => {
     expect(screen.getByRole('button', { name: /go back/i })).toBeInTheDocument();
   });
 
-  it('navigates back when back button clicked', async () => {
+  it('goes back, falling back to the comics list, when back button clicked', async () => {
     render(<ReaderHeader {...defaultProps} />);
 
     await userEvent.click(screen.getByRole('button', { name: /go back/i }));
-    expect(mockBack).toHaveBeenCalledOnce();
+    expect(mockGoBack).toHaveBeenCalledWith('/comics');
+  });
+
+  it('renders prev/next and a favorite button when given', async () => {
+    const onOlder = vi.fn();
+    const onNewer = vi.fn();
+    render(
+      <ReaderHeader
+        {...defaultProps}
+        onOlder={onOlder}
+        onNewer={onNewer}
+        canGoNewer={false}
+        favoriteButton={<button type="button">fav</button>}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Previous strip' }));
+    expect(onOlder).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Next strip' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'fav' })).toBeInTheDocument();
   });
 
   it('renders reader controls', () => {

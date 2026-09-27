@@ -5,7 +5,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarDays } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface DatePickerPopoverProps {
   oldest: string | null;
@@ -53,6 +52,7 @@ export function DatePickerPopover({
       <PopoverContent className="w-auto p-0 bg-card border-border" align="center">
         <Calendar
           mode="single"
+          captionLayout="dropdown"
           selected={selectedDate}
           onSelect={handleSelect}
           defaultMonth={selectedDate}

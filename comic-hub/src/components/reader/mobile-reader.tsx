@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { useReader } from '@/hooks/use-reader';
 import { useSwipe } from '@/hooks/use-swipe';
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
@@ -12,6 +11,7 @@ import { StripSkeleton } from './strip-skeleton';
 import { ReadingListDrawer } from './reading-list-drawer';
 import { DatePickerPopover } from './date-picker-popover';
 import { formatMediumDate } from '@/lib/date-utils';
+import { useGoBack } from '@/lib/navigation-history';
 
 /** Duration (ms) for the swipe transition animation. */
 const SWIPE_TRANSITION_MS = 200;
@@ -26,7 +26,7 @@ interface MobileReaderProps {
 }
 
 export function MobileReader({ comicId, reader }: MobileReaderProps) {
-  const router = useRouter();
+  const goBack = useGoBack('/comics');
   const {
     strips,
     currentIndex,
@@ -226,7 +226,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.back()}
+            onClick={goBack}
             aria-label="Go back"
             className="text-ink-subtle hover:text-ink hover:bg-muted"
           >

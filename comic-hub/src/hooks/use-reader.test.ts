@@ -110,6 +110,25 @@ describe('useReader', () => {
     vi.mocked(toast.error).mockClear();
   });
 
+  describe('URL', () => {
+    it('keeps ?date= on the strip being read', async () => {
+      window.history.replaceState(null, '', '/comics/1/read?date=2026-02-15');
+      const { result } = await renderReader();
+
+      act(() => result.current.goToDate('2026-02-20'));
+
+      await waitFor(() => expect(new URLSearchParams(window.location.search).get('date')).toBe('2026-02-20'));
+      expect(window.location.pathname).toBe('/comics/1/read');
+    });
+
+    it('adds ?date= when the reader opens on the newest strip', async () => {
+      window.history.replaceState(null, '', '/comics/1/read');
+      await renderReader({ initialDate: undefined });
+
+      await waitFor(() => expect(new URLSearchParams(window.location.search).get('date')).toBe('2026-03-31'));
+    });
+  });
+
   describe('initial load', () => {
     it('loads 10 strips either side of the initial date in one request', async () => {
       const { result } = await renderReader();

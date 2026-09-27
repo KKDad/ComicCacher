@@ -8,6 +8,11 @@ vi.mock('next/navigation', () => ({
   usePathname: vi.fn().mockReturnValue('/comics/1/read'),
 }));
 
+const mockGoBack = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/navigation-history', () => ({
+  useGoBack: (fallback: string) => () => mockGoBack(fallback),
+}));
+
 import { useSwipe } from '@/hooks/use-swipe';
 
 vi.mock('@/hooks/use-swipe', () => ({
@@ -604,11 +609,7 @@ describe('MobileReader', () => {
     expect(overlay?.className).toContain('opacity-0');
   });
 
-  it('calls router.back when go back button clicked', async () => {
-    const mockBack = vi.fn();
-    const { useRouter } = await import('next/navigation');
-    vi.mocked(useRouter).mockReturnValue({ back: mockBack, push: vi.fn() } as any);
-
+  it('goes back, falling back to the comics list, when go back button clicked', async () => {
     const { container } = render(<MobileReader comicId={1} reader={createMockReader()} />);
 
     // Show controls
@@ -618,6 +619,6 @@ describe('MobileReader', () => {
     }
 
     await userEvent.click(screen.getByRole('button', { name: /go back/i }));
-    expect(mockBack).toHaveBeenCalledOnce();
+    expect(mockGoBack).toHaveBeenCalledWith('/comics');
   });
 });

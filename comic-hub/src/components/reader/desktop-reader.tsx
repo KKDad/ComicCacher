@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { toast } from 'sonner';
 import type { useReader } from '@/hooks/use-reader';
@@ -8,6 +8,10 @@ import { ReaderHeader } from './reader-header';
 import { StripCard } from './strip-card';
 import { StripSkeleton } from './strip-skeleton';
 import { DatePickerPopover } from './date-picker-popover';
+import { FavoriteButton } from './favorite-button';
+import { Lightbox } from '@/components/grid-reader/lightbox';
+import { useLightbox } from '@/hooks/use-lightbox';
+import { useGoBack } from '@/lib/navigation-history';
 
 const HEADER_HEIGHT = 56; // h-14 = 3.5rem = 56px
 const STRIP_PADDING = 60; // date label + vertical padding
@@ -15,10 +19,11 @@ const FALLBACK_ASPECT = 3; // 3:1 width:height for strips without dimensions
 const MAX_CONTENT_WIDTH = 768; // max-w-3xl
 
 interface DesktopReaderProps {
+  comicId: number;
   reader: ReturnType<typeof useReader>;
 }
 
-export function DesktopReader({ reader }: DesktopReaderProps) {
+export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   const {
     strips,
     currentIndex,
@@ -37,8 +42,40 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
     goToFirst,
     goToLast,
     goToRandom,
+    goOlder,
+    goNewer,
     isLoadingRandom,
   } = reader;
+
+  const goBack = useGoBack('/comics');
+
+  // Fullscreen view: steps through the strips that have an image
+  const viewable = useMemo(() => strips.filter((s) => s.available && s.imageUrl), [strips]);
+  const lightboxItems = useMemo(
+    () => viewable.map((s) => ({ title: comicName, date: s.date, imageUrl: s.imageUrl })),
+    [viewable, comicName],
+  );
+  const lightbox = useLightbox(viewable.length);
+  const { open: openLightbox, close: closeLightbox, isOpen: isLightboxOpen } = lightbox;
+
+  const openFullscreen = useCallback(
+    (date: string | undefined) => {
+      const idx = viewable.findIndex((s) => s.date === date);
+      if (idx >= 0) openLightbox(idx);
+    },
+    [viewable, openLightbox],
+  );
+
+  // Closing (button, backdrop or Escape) returns the reader to the strip the lightbox ended on
+  const lightboxDate = viewable[lightbox.currentIndex]?.date;
+  const wasLightboxOpen = useRef(false);
+  useEffect(() => {
+    if (wasLightboxOpen.current && !isLightboxOpen) {
+      const idx = strips.findIndex((s) => s.date === lightboxDate);
+      if (idx >= 0) setCurrentIndex(idx);
+    }
+    wasLightboxOpen.current = isLightboxOpen;
+  }, [isLightboxOpen, lightboxDate, strips, setCurrentIndex]);
 
   const handleGoToFirst = useCallback(() => {
     const result = goToFirst();
@@ -85,6 +122,8 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
       align: 'center',
       behavior: isInitial ? 'auto' : 'smooth',
     });
+    // Focus the scroll area so PageDown, Space and the arrow keys scroll the strips
+    if (isInitial) scrollContainerRef.current?.focus({ preventScroll: true });
     scrolledToDate.current = currentDate;
   }, [currentDate, currentIndex, virtualizer]);
 
@@ -155,6 +194,8 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
       // Popovers, menus and the calendar mark the keys they handle (e.g. the
       // Escape that closes them); modifier combos belong to the browser.
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+      // The lightbox handles its own keys while it's open
+      if (isLightboxOpen) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       switch (e.key) {
@@ -171,25 +212,46 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
           e.preventDefault();
           goToRandom();
           break;
+        case 'j':
+        case 'J':
+          e.preventDefault();
+          goNewer();
+          break;
+        case 'k':
+        case 'K':
+          e.preventDefault();
+          goOlder();
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          openFullscreen(currentDate ?? undefined);
+          break;
         case 'Escape':
           e.preventDefault();
-          window.history.back();
+          goBack();
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleGoToFirst, handleGoToLast, goToRandom]);
+  }, [handleGoToFirst, handleGoToLast, goToRandom, goNewer, goOlder, openFullscreen, currentDate, goBack, isLightboxOpen]);
 
   return (
-    <div ref={scrollContainerRef} className="h-screen overflow-y-auto bg-canvas">
+    <div ref={scrollContainerRef} tabIndex={-1} className="h-screen overflow-y-auto bg-canvas outline-none">
       <ReaderHeader
         comicName={comicName}
         onFirst={handleGoToFirst}
         onLast={handleGoToLast}
         onRandom={goToRandom}
         isLoadingRandom={isLoadingRandom}
+        onOlder={goOlder}
+        onNewer={goNewer}
+        canGoOlder={currentIndex > 0 || hasOlder}
+        canGoNewer={currentIndex < strips.length - 1 || hasNewer}
+        onFullscreen={viewable.length > 0 ? () => openFullscreen(currentDate ?? undefined) : undefined}
+        favoriteButton={<FavoriteButton comicId={comicId} comicName={comicName} />}
         datePicker={
           <DatePickerPopover
             oldest={oldest}
@@ -232,6 +294,8 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
                   <StripCard
                     strip={strips[virtualItem.index]}
                     comicName={comicName}
+                    priority={virtualItem.index === currentIndex}
+                    onOpen={() => openFullscreen(strips[virtualItem.index].date)}
                   />
                 </div>
               ))}
@@ -239,6 +303,16 @@ export function DesktopReader({ reader }: DesktopReaderProps) {
           )}
         </div>
       </main>
+
+      {lightbox.isOpen && (
+        <Lightbox
+          items={lightboxItems}
+          currentIndex={lightbox.currentIndex}
+          onClose={closeLightbox}
+          onNext={lightbox.next}
+          onPrevious={lightbox.previous}
+        />
+      )}
     </div>
   );
 }
