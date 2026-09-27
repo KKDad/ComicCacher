@@ -19,6 +19,24 @@ describe('StripCard', () => {
     height: null,
   };
 
+  it('loads lazily by default and eagerly with high priority when it is the priority strip', () => {
+    const { rerender } = render(<StripCard strip={availableStrip} comicName="Garfield" />);
+    expect(screen.getByRole('img')).toHaveAttribute('loading', 'lazy');
+
+    rerender(<StripCard strip={availableStrip} comicName="Garfield" priority />);
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute('loading', 'eager');
+    expect(img).toHaveAttribute('fetchpriority', 'high');
+  });
+
+  it('opens fullscreen when clicked', () => {
+    const onOpen = vi.fn();
+    render(<StripCard strip={availableStrip} comicName="Garfield" onOpen={onOpen} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /view garfield, .* fullscreen/i }));
+    expect(onOpen).toHaveBeenCalledOnce();
+  });
+
   it('renders image for available strip', () => {
     render(<StripCard strip={availableStrip} comicName="Garfield" />);
 

@@ -5,20 +5,25 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
-import type { GridComic } from '@/hooks/use-grid-reader';
 import { formatFullDate } from '@/lib/date-utils';
 
+/** One strip the lightbox can show: the comic's name, the strip date and its image. */
+export interface LightboxItem {
+  title: string;
+  date: string;
+  imageUrl: string | null;
+}
+
 interface LightboxProps {
-  comics: GridComic[];
+  items: LightboxItem[];
   currentIndex: number;
   onClose: () => void;
   onNext: () => void;
   onPrevious: () => void;
 }
 
-export function Lightbox({ comics, currentIndex, onClose, onNext, onPrevious }: LightboxProps) {
-  const comic = comics[currentIndex];
-  const strip = comic?.strip;
+export function Lightbox({ items, currentIndex, onClose, onNext, onPrevious }: LightboxProps) {
+  const item = items[currentIndex];
   const { state: zoom, handlers: zoomHandlers, isZoomed, resetZoom } = usePinchZoom();
 
   const handleBackdropClick = useCallback(
@@ -34,10 +39,10 @@ export function Lightbox({ comics, currentIndex, onClose, onNext, onPrevious }: 
     [isZoomed, resetZoom, onClose],
   );
 
-  if (!comic || !strip?.imageUrl) return null;
+  if (!item?.imageUrl) return null;
 
   const hasPrevious = currentIndex > 0;
-  const hasNext = currentIndex < comics.length - 1;
+  const hasNext = currentIndex < items.length - 1;
 
   // Radix Dialog supplies the focus trap, focus return and aria wiring. The
   // content fills the screen, so a click on its empty area is the backdrop click.
@@ -61,15 +66,15 @@ export function Lightbox({ comics, currentIndex, onClose, onNext, onPrevious }: 
             }}
           >
             <img
-              src={strip.imageUrl}
-              alt={`${comic.name}, ${formatFullDate(strip.date)}`}
+              src={item.imageUrl}
+              alt={`${item.title}, ${formatFullDate(item.date)}`}
               className="max-w-full max-h-[85vh] object-contain select-none"
               draggable={false}
             />
           </div>
 
           <DialogPrimitive.Title className="absolute top-4 left-4 font-sans text-white/80 text-sm font-medium">
-            {comic.name}
+            {item.title}
           </DialogPrimitive.Title>
 
           <Button
@@ -88,7 +93,7 @@ export function Lightbox({ comics, currentIndex, onClose, onNext, onPrevious }: 
               size="icon"
               onClick={onPrevious}
               className="absolute left-4 top-1/2 -translate-y-1/2 h-16 w-12 text-white/70 hover:text-white hover:bg-white/10"
-              aria-label="Previous comic"
+              aria-label="Previous strip"
             >
               <ChevronLeft className="h-8 w-8" />
             </Button>
@@ -100,7 +105,7 @@ export function Lightbox({ comics, currentIndex, onClose, onNext, onPrevious }: 
               size="icon"
               onClick={onNext}
               className="absolute right-4 top-1/2 -translate-y-1/2 h-16 w-12 text-white/70 hover:text-white hover:bg-white/10"
-              aria-label="Next comic"
+              aria-label="Next strip"
             >
               <ChevronRight className="h-8 w-8" />
             </Button>

@@ -10,7 +10,7 @@ import { GridStripCard } from './grid-strip-card';
 import { Lightbox } from './lightbox';
 import { StripSkeleton } from '@/components/reader/strip-skeleton';
 import { useLightbox } from '@/hooks/use-lightbox';
-import type { useGridReader } from '@/hooks/use-grid-reader';
+import { toLightboxItems, type useGridReader } from '@/hooks/use-grid-reader';
 import { useState } from 'react';
 
 const HEADER_HEIGHT = 56;
@@ -174,7 +174,7 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
 
       {lightbox.isOpen && (
         <Lightbox
-          comics={comics}
+          items={toLightboxItems(comics)}
           currentIndex={lightbox.currentIndex}
           onClose={lightbox.close}
           onNext={lightbox.next}

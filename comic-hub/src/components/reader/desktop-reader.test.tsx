@@ -27,6 +27,15 @@ vi.mock('@/generated/graphql', () => ({
   useGetUserPreferencesQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
 }));
 
+vi.mock('./favorite-button', () => ({
+  FavoriteButton: () => <button type="button">favorite</button>,
+}));
+
+const mockGoBack = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/navigation-history', () => ({
+  useGoBack: () => mockGoBack,
+}));
+
 import { toast } from 'sonner';
 
 vi.mock('sonner', () => ({
@@ -81,20 +90,20 @@ describe('DesktopReader', () => {
   });
 
   it('renders comic name in header', () => {
-    render(<DesktopReader reader={createMockReader()} />);
+    render(<DesktopReader comicId={1} reader={createMockReader()} />);
     expect(screen.getByText('Garfield')).toBeInTheDocument();
   });
 
   it('renders loading skeletons when isLoading is true', () => {
     const reader = createMockReader({ isLoading: true });
-    const { container } = render(<DesktopReader reader={reader} />);
+    const { container } = render(<DesktopReader comicId={1} reader={reader} />);
 
     // StripSkeleton renders when loading
     expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders strip cards for each virtual item', () => {
-    render(<DesktopReader reader={createMockReader()} />);
+    render(<DesktopReader comicId={1} reader={createMockReader()} />);
 
     // Should render 2 strips from the virtualizer mock
     const images = screen.getAllByRole('img');
@@ -103,7 +112,7 @@ describe('DesktopReader', () => {
 
   it('shows toast when goToFirst returns already', () => {
     const reader = createMockReader({ goToFirst: vi.fn().mockReturnValue('already') });
-    render(<DesktopReader reader={reader} />);
+    render(<DesktopReader comicId={1} reader={reader} />);
 
     fireEvent.keyDown(window, { key: 'Home' });
     expect(toast.info).toHaveBeenCalledWith('Already at the first strip');
@@ -111,7 +120,7 @@ describe('DesktopReader', () => {
 
   it('shows toast when goToLast returns already', () => {
     const reader = createMockReader({ goToLast: vi.fn().mockReturnValue('already') });
-    render(<DesktopReader reader={reader} />);
+    render(<DesktopReader comicId={1} reader={reader} />);
 
     fireEvent.keyDown(window, { key: 'End' });
     expect(toast.info).toHaveBeenCalledWith('Already at the latest strip');
@@ -119,7 +128,7 @@ describe('DesktopReader', () => {
 
   it('calls goToRandom on R key', () => {
     const goToRandom = vi.fn();
-    render(<DesktopReader reader={createMockReader({ goToRandom })} />);
+    render(<DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />);
 
     fireEvent.keyDown(window, { key: 'r' });
     expect(goToRandom).toHaveBeenCalledOnce();
@@ -127,19 +136,18 @@ describe('DesktopReader', () => {
 
   it('does not call goToRandom on Ctrl+R', () => {
     const goToRandom = vi.fn();
-    render(<DesktopReader reader={createMockReader({ goToRandom })} />);
+    render(<DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />);
 
     fireEvent.keyDown(window, { key: 'r', ctrlKey: true });
     expect(goToRandom).not.toHaveBeenCalled();
   });
 
-  it('calls window.history.back on Escape', () => {
-    const backSpy = vi.spyOn(window.history, 'back').mockImplementation(() => {});
-    render(<DesktopReader reader={createMockReader()} />);
+  it('goes back on Escape', () => {
+    mockGoBack.mockClear();
+    render(<DesktopReader comicId={1} reader={createMockReader()} />);
 
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(backSpy).toHaveBeenCalledOnce();
-    backSpy.mockRestore();
+    expect(mockGoBack).toHaveBeenCalledOnce();
   });
 
   it('renders with strips that have no dimensions (fallback aspect)', () => {
@@ -149,13 +157,13 @@ describe('DesktopReader', () => {
         { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: null, height: null },
       ],
     });
-    render(<DesktopReader reader={reader} />);
+    render(<DesktopReader comicId={1} reader={reader} />);
     expect(screen.getByText('Garfield')).toBeInTheDocument();
   });
 
   it('calls goToFirst on first button click in reader controls', () => {
     const goToFirst = vi.fn().mockReturnValue('scrolled');
-    render(<DesktopReader reader={createMockReader({ goToFirst })} />);
+    render(<DesktopReader comicId={1} reader={createMockReader({ goToFirst })} />);
 
     // The first button is in the ReaderControls which has role button with specific labels
     const firstBtn = screen.getByRole('button', { name: /first/i });
@@ -165,7 +173,7 @@ describe('DesktopReader', () => {
 
   it('calls goToLast on last button click in reader controls', () => {
     const goToLast = vi.fn().mockReturnValue('scrolled');
-    render(<DesktopReader reader={createMockReader({ goToLast })} />);
+    render(<DesktopReader comicId={1} reader={createMockReader({ goToLast })} />);
 
     const lastBtn = screen.getByRole('button', { name: /latest/i });
     fireEvent.click(lastBtn);
@@ -174,7 +182,7 @@ describe('DesktopReader', () => {
 
   it('handles metaKey+R without calling goToRandom', () => {
     const goToRandom = vi.fn();
-    render(<DesktopReader reader={createMockReader({ goToRandom })} />);
+    render(<DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />);
 
     fireEvent.keyDown(window, { key: 'R', metaKey: true });
     expect(goToRandom).not.toHaveBeenCalled();
@@ -182,7 +190,7 @@ describe('DesktopReader', () => {
 
   it('passes currentDate as null when currentIndex is out of bounds', () => {
     const reader = createMockReader({ currentIndex: 5 }); // out of bounds for 2 strips
-    render(<DesktopReader reader={reader} />);
+    render(<DesktopReader comicId={1} reader={reader} />);
     // Should render without crashing — DatePickerPopover receives null
     expect(screen.getByText('Garfield')).toBeInTheDocument();
   });
@@ -191,7 +199,7 @@ describe('DesktopReader', () => {
     const goToRandom = vi.fn();
     render(
       <div>
-        <DesktopReader reader={createMockReader({ goToRandom })} />
+        <DesktopReader comicId={1} reader={createMockReader({ goToRandom })} />
         <input data-testid="test-input" />
       </div>,
     );
@@ -204,7 +212,7 @@ describe('DesktopReader', () => {
   describe('virtualizer setup', () => {
     it('keys strips by date and anchors the view when strips are added', () => {
       const reader = createMockReader();
-      render(<DesktopReader reader={reader} />);
+      render(<DesktopReader comicId={1} reader={reader} />);
 
       const options = vi.mocked(useVirtualizer).mock.calls.at(-1)![0];
       expect(options.anchorTo).toBe('end');
@@ -214,7 +222,7 @@ describe('DesktopReader', () => {
 
   describe('scrolling to the current strip', () => {
     it('jumps to the current strip on first render', () => {
-      render(<DesktopReader reader={createMockReader({ currentIndex: 1 })} />);
+      render(<DesktopReader comicId={1} reader={createMockReader({ currentIndex: 1 })} />);
 
       expect(virtual.scrollToIndex).toHaveBeenCalledOnce();
       expect(virtual.scrollToIndex).toHaveBeenCalledWith(1, { align: 'center', behavior: 'auto' });
@@ -223,22 +231,22 @@ describe('DesktopReader', () => {
     it('does not scroll when older strips shift the current index', () => {
       const strips = stripsEndingMarch31(21);
       const { rerender } = render(
-        <DesktopReader reader={createMockReader({ strips: strips.slice(10), currentIndex: 5 })} />,
+        <DesktopReader comicId={1} reader={createMockReader({ strips: strips.slice(10), currentIndex: 5 })} />,
       );
       virtual.scrollToIndex.mockClear();
 
       // Ten older strips prepended; the reader is on the same strip at a new index
-      rerender(<DesktopReader reader={createMockReader({ strips, currentIndex: 15 })} />);
+      rerender(<DesktopReader comicId={1} reader={createMockReader({ strips, currentIndex: 15 })} />);
 
       expect(virtual.scrollToIndex).not.toHaveBeenCalled();
     });
 
     it('smooth-scrolls when the reader moves to a different strip', () => {
       const strips = stripsEndingMarch31(21);
-      const { rerender } = render(<DesktopReader reader={createMockReader({ strips, currentIndex: 20 })} />);
+      const { rerender } = render(<DesktopReader comicId={1} reader={createMockReader({ strips, currentIndex: 20 })} />);
       virtual.scrollToIndex.mockClear();
 
-      rerender(<DesktopReader reader={createMockReader({ strips, currentIndex: 0 })} />);
+      rerender(<DesktopReader comicId={1} reader={createMockReader({ strips, currentIndex: 0 })} />);
 
       expect(virtual.scrollToIndex).toHaveBeenCalledWith(0, { align: 'center', behavior: 'smooth' });
     });
@@ -250,7 +258,7 @@ describe('DesktopReader', () => {
         const setCurrentIndex = vi.fn();
         virtual.rendered = range(8, 12);
         const { container, rerender } = render(
-          <DesktopReader reader={createMockReader({ strips, currentIndex: 10, setCurrentIndex })} />,
+          <DesktopReader comicId={1} reader={createMockReader({ strips, currentIndex: 10, setCurrentIndex })} />,
         );
         virtual.scrollToIndex.mockClear();
         const scrollEl = container.firstChild as HTMLElement;
@@ -261,7 +269,7 @@ describe('DesktopReader', () => {
         act(() => vi.advanceTimersByTime(150));
         expect(setCurrentIndex).toHaveBeenCalledWith(11);
 
-        rerender(<DesktopReader reader={createMockReader({ strips, currentIndex: 11, setCurrentIndex })} />);
+        rerender(<DesktopReader comicId={1} reader={createMockReader({ strips, currentIndex: 11, setCurrentIndex })} />);
         expect(virtual.scrollToIndex).not.toHaveBeenCalled();
       } finally {
         vi.useRealTimers();
@@ -276,7 +284,7 @@ describe('DesktopReader', () => {
       const reader = createMockReader({ strips, currentIndex: 2 });
       virtual.rendered = range(0, 5);
 
-      render(<DesktopReader reader={reader} />);
+      render(<DesktopReader comicId={1} reader={reader} />);
 
       expect(reader.loadOlder).toHaveBeenCalledOnce();
       expect(reader.loadNewer).not.toHaveBeenCalled();
@@ -286,7 +294,7 @@ describe('DesktopReader', () => {
       const reader = createMockReader({ strips, currentIndex: 18 });
       virtual.rendered = range(15, 20);
 
-      render(<DesktopReader reader={reader} />);
+      render(<DesktopReader comicId={1} reader={reader} />);
 
       expect(reader.loadNewer).toHaveBeenCalledOnce();
       expect(reader.loadOlder).not.toHaveBeenCalled();
@@ -296,7 +304,7 @@ describe('DesktopReader', () => {
       const reader = createMockReader({ strips: strips.slice(0, 3), currentIndex: 1 });
       virtual.rendered = [0, 1, 2];
 
-      render(<DesktopReader reader={reader} />);
+      render(<DesktopReader comicId={1} reader={reader} />);
 
       expect(reader.loadOlder).toHaveBeenCalledOnce();
       expect(reader.loadNewer).not.toHaveBeenCalled();
@@ -307,8 +315,8 @@ describe('DesktopReader', () => {
       const newer = createMockReader({ strips: strips.slice(0, 3), isFetchingNewer: true });
       virtual.rendered = [0, 1, 2];
 
-      render(<DesktopReader reader={older} />);
-      render(<DesktopReader reader={newer} />);
+      render(<DesktopReader comicId={1} reader={older} />);
+      render(<DesktopReader comicId={1} reader={newer} />);
 
       for (const reader of [older, newer]) {
         expect(reader.loadOlder).not.toHaveBeenCalled();
@@ -320,7 +328,7 @@ describe('DesktopReader', () => {
       const reader = createMockReader({ strips: strips.slice(0, 3), hasOlder: false, hasNewer: false });
       virtual.rendered = [0, 1, 2];
 
-      render(<DesktopReader reader={reader} />);
+      render(<DesktopReader comicId={1} reader={reader} />);
 
       expect(reader.loadOlder).not.toHaveBeenCalled();
       expect(reader.loadNewer).not.toHaveBeenCalled();
@@ -330,9 +338,9 @@ describe('DesktopReader', () => {
       const reader = createMockReader({ strips, currentIndex: 10 });
       virtual.rendered = range(7, 13);
 
-      const { rerender } = render(<DesktopReader reader={reader} />);
-      rerender(<DesktopReader reader={reader} />);
-      rerender(<DesktopReader reader={reader} />);
+      const { rerender } = render(<DesktopReader comicId={1} reader={reader} />);
+      rerender(<DesktopReader comicId={1} reader={reader} />);
+      rerender(<DesktopReader comicId={1} reader={reader} />);
 
       expect(reader.loadOlder).not.toHaveBeenCalled();
       expect(reader.loadNewer).not.toHaveBeenCalled();
@@ -342,13 +350,13 @@ describe('DesktopReader', () => {
       // Opening on the newest strip: the first render is laid out from the top
       const reader = createMockReader({ strips, currentIndex: 20, hasNewer: false });
       virtual.rendered = range(0, 5);
-      const { rerender } = render(<DesktopReader reader={reader} />);
+      const { rerender } = render(<DesktopReader comicId={1} reader={reader} />);
 
       expect(reader.loadOlder).not.toHaveBeenCalled();
 
       // The scroll to the current strip lands
       virtual.rendered = range(16, 20);
-      rerender(<DesktopReader reader={reader} />);
+      rerender(<DesktopReader comicId={1} reader={reader} />);
 
       expect(reader.loadOlder).not.toHaveBeenCalled();
       expect(reader.loadNewer).not.toHaveBeenCalled();
@@ -357,19 +365,90 @@ describe('DesktopReader', () => {
     it('stops loading once the anchored page lands (no runaway loop)', () => {
       const reader = createMockReader({ strips, currentIndex: 2 });
       virtual.rendered = range(0, 5);
-      const { rerender } = render(<DesktopReader reader={reader} />);
+      const { rerender } = render(<DesktopReader comicId={1} reader={reader} />);
       expect(reader.loadOlder).toHaveBeenCalledOnce();
 
       // The page is in flight: re-renders must not ask again
-      rerender(<DesktopReader reader={{ ...reader, isFetchingOlder: true }} />);
-      rerender(<DesktopReader reader={{ ...reader, isFetchingOlder: true }} />);
+      rerender(<DesktopReader comicId={1} reader={{ ...reader, isFetchingOlder: true }} />);
+      rerender(<DesktopReader comicId={1} reader={{ ...reader, isFetchingOlder: true }} />);
 
       // 20 older strips land; anchoring keeps the same strips in view at new indexes
       const more = [...stripsEndingMarch31(41).slice(0, 20), ...strips];
       virtual.rendered = range(20, 25);
-      rerender(<DesktopReader reader={{ ...reader, strips: more, currentIndex: 22 }} />);
+      rerender(<DesktopReader comicId={1} reader={{ ...reader, strips: more, currentIndex: 22 }} />);
 
       expect(reader.loadOlder).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('keyboard and fullscreen', () => {
+    it('steps one strip with J and K', () => {
+      const reader = createMockReader();
+      render(<DesktopReader comicId={1} reader={reader} />);
+
+      fireEvent.keyDown(window, { key: 'j' });
+      expect(reader.goNewer).toHaveBeenCalledOnce();
+      fireEvent.keyDown(window, { key: 'K' });
+      expect(reader.goOlder).toHaveBeenCalledOnce();
+    });
+
+    it('steps with the Prev and Next buttons', () => {
+      const reader = createMockReader();
+      render(<DesktopReader comicId={1} reader={reader} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Previous strip' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Next strip' }));
+      expect(reader.goOlder).toHaveBeenCalledOnce();
+      expect(reader.goNewer).toHaveBeenCalledOnce();
+    });
+
+    it('disables Prev at the start of the archive', () => {
+      render(<DesktopReader comicId={1} reader={createMockReader({ hasOlder: false })} />);
+      expect(screen.getByRole('button', { name: 'Previous strip' })).toBeDisabled();
+    });
+
+    it('focuses the scroll area once the first strip is in view, so keys scroll it', () => {
+      const { container } = render(<DesktopReader comicId={1} reader={createMockReader()} />);
+      const scroller = container.querySelector('[tabindex="-1"]');
+      expect(document.activeElement).toBe(scroller);
+    });
+
+    it('opens the current strip fullscreen with F and returns to the strip it ends on', () => {
+      const reader = createMockReader();
+      render(<DesktopReader comicId={1} reader={reader} />);
+
+      fireEvent.keyDown(window, { key: 'f' });
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toBeInTheDocument();
+
+      // Keys belong to the lightbox while it is open
+      fireEvent.keyDown(window, { key: 'j' });
+      expect(reader.goNewer).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Next strip', hidden: false }));
+      fireEvent.click(screen.getByRole('button', { name: /close lightbox/i }));
+      expect(reader.setCurrentIndex).toHaveBeenLastCalledWith(1);
+    });
+
+    it('returns to the lightbox strip when closed with Escape', () => {
+      const reader = createMockReader();
+      render(<DesktopReader comicId={1} reader={reader} />);
+
+      fireEvent.keyDown(window, { key: 'f' });
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+      fireEvent.keyDown(window, { key: 'Escape' });
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(reader.setCurrentIndex).toHaveBeenLastCalledWith(1);
+      // Escape closed the lightbox; it did not also leave the reader
+      expect(mockGoBack).not.toHaveBeenCalled();
+    });
+
+    it('opens a strip fullscreen when it is clicked', () => {
+      render(<DesktopReader comicId={1} reader={createMockReader()} />);
+
+      fireEvent.click(screen.getAllByRole('button', { name: /fullscreen/i }).find((b) => b.getAttribute('aria-label')?.startsWith('View'))!);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
 });

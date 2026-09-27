@@ -30,9 +30,11 @@ const mockComics: GridComic[] = [
   },
 ];
 
+const mockItems = mockComics.map((c) => ({ title: c.name, date: c.strip!.date, imageUrl: c.strip!.imageUrl }));
+
 describe('Lightbox', () => {
   const defaultProps = {
-    comics: mockComics,
+    items: mockItems,
     currentIndex: 1,
     onClose: vi.fn(),
     onNext: vi.fn(),
@@ -86,12 +88,9 @@ describe('Lightbox', () => {
     expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
   });
 
-  it('returns null when comic has no strip image', () => {
-    const noStripComics: GridComic[] = [{
-      id: 1, name: 'Empty', avatarUrl: null, oldest: null, newest: null,
-      strip: { date: '2026-03-29', available: false, imageUrl: null, width: null, height: null, transcript: null },
-    }];
-    const { container } = render(<Lightbox {...defaultProps} comics={noStripComics} currentIndex={0} />);
+  it('returns null when the item has no image', () => {
+    const noImage = [{ title: 'Empty', date: '2026-03-29', imageUrl: null }];
+    const { container } = render(<Lightbox {...defaultProps} items={noImage} currentIndex={0} />);
     expect(container.innerHTML).toBe('');
   });
 

@@ -8,10 +8,14 @@ import { formatFullDate } from '@/lib/date-utils';
 interface StripCardProps {
   strip: Strip;
   comicName: string;
+  /** Load this strip first: the one the reader opens on is the page's largest image. */
+  priority?: boolean;
+  /** Opens the strip fullscreen. */
+  onOpen?: () => void;
 }
 
 export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
-  function StripCard({ strip, comicName }, ref) {
+  function StripCard({ strip, comicName, priority = false, onOpen }, ref) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
 
@@ -46,10 +50,19 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
             <img
               src={strip.imageUrl}
               alt={`${comicName} - ${formattedDate}`}
-              loading="lazy"
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'auto'}
               className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setLoaded(true)}
               onError={() => setError(true)}
+            />
+          )}
+          {onOpen && !error && (
+            <button
+              type="button"
+              onClick={onOpen}
+              aria-label={`View ${comicName}, ${formattedDate} fullscreen`}
+              className="absolute inset-0 cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-lg"
             />
           )}
         </div>

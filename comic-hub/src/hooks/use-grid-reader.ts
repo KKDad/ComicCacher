@@ -8,6 +8,7 @@ import {
   useGetUserPreferencesQuery,
 } from '@/generated/graphql';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import type { LightboxItem } from '@/components/grid-reader/lightbox';
 
 export interface GridComic {
   id: number;
@@ -47,6 +48,11 @@ function shiftDate(dateStr: string, days: number): string {
   const d = new Date(dateStr + 'T12:00:00'); // noon avoids DST edge cases
   d.setDate(d.getDate() + days);
   return d.toLocaleDateString('en-CA');
+}
+
+/** The comics' strips in the shape the lightbox shows. */
+export function toLightboxItems(comics: GridComic[]): LightboxItem[] {
+  return comics.map((c) => ({ title: c.name, date: c.strip?.date ?? '', imageUrl: c.strip?.imageUrl ?? null }));
 }
 
 export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGridReaderReturn {

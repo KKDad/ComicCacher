@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { useGoBack } from '@/lib/navigation-history';
 import { ReaderControls } from './reader-controls';
 
 interface ReaderHeaderProps {
@@ -11,27 +11,31 @@ interface ReaderHeaderProps {
   onLast: () => void;
   onRandom: () => void;
   isLoadingRandom: boolean;
+  onOlder?: () => void;
+  onNewer?: () => void;
+  canGoOlder?: boolean;
+  canGoNewer?: boolean;
+  onFullscreen?: () => void;
   datePicker?: React.ReactNode;
+  favoriteButton?: React.ReactNode;
 }
 
 export function ReaderHeader({
   comicName,
-  onFirst,
-  onLast,
-  onRandom,
-  isLoadingRandom,
   datePicker,
+  favoriteButton,
+  ...controls
 }: ReaderHeaderProps) {
-  const router = useRouter();
+  const goBack = useGoBack('/comics');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-sticky h-14 bg-canvas/90 backdrop-blur-sm border-b border-border flex items-center px-4 gap-3">
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => router.back()}
+        onClick={goBack}
         aria-label="Go back"
-        className="text-ink-subtle hover:text-ink hover:bg-muted"
+        className="h-11 w-11 text-ink-subtle hover:text-ink hover:bg-muted"
       >
         <ArrowLeft className="h-5 w-5" />
       </Button>
@@ -40,13 +44,8 @@ export function ReaderHeader({
         {comicName}
       </h1>
 
-      <ReaderControls
-        onFirst={onFirst}
-        onLast={onLast}
-        onRandom={onRandom}
-        isLoadingRandom={isLoadingRandom}
-        datePicker={datePicker}
-      />
+      <ReaderControls {...controls} datePicker={datePicker} />
+      {favoriteButton}
     </header>
   );
 }

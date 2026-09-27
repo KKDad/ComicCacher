@@ -9,7 +9,7 @@ import { Lightbox } from './lightbox';
 import { StripSkeleton } from '@/components/reader/strip-skeleton';
 import { useLightbox } from '@/hooks/use-lightbox';
 import { useSwipe } from '@/hooks/use-swipe';
-import type { useGridReader } from '@/hooks/use-grid-reader';
+import { toLightboxItems, type useGridReader } from '@/hooks/use-grid-reader';
 
 interface MobileGridReaderProps {
   reader: ReturnType<typeof useGridReader>;
@@ -86,7 +86,7 @@ export function MobileGridReader({ reader }: MobileGridReaderProps) {
 
       {lightbox.isOpen && (
         <Lightbox
-          comics={comics}
+          items={toLightboxItems(comics)}
           currentIndex={lightbox.currentIndex}
           onClose={lightbox.close}
           onNext={lightbox.next}
