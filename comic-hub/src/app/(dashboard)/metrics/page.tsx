@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Database, Image, MousePointerClick, ArrowUpDown } from 'lucide-react';
 import { useGetCombinedMetricsQuery } from '@/generated/graphql';
+import { formatTimeAgo } from '@/lib/date-utils';
+import { compareNames } from '@/lib/sort';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -12,19 +14,6 @@ function formatBytes(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   const value = bytes / Math.pow(1024, i);
   return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
-
-function timeAgo(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -148,7 +137,7 @@ export default function MetricsPage() {
 
   const combinedComics = [...comicMap.values()].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
-    if (sortKey === 'comicName') return dir * a.comicName.localeCompare(b.comicName);
+    if (sortKey === 'comicName') return dir * compareNames(a.comicName, b.comicName);
     return dir * ((a[sortKey] ?? 0) - (b[sortKey] ?? 0));
   });
 
@@ -165,7 +154,7 @@ export default function MetricsPage() {
         <h1 className="text-3xl font-bold text-ink">Metrics</h1>
         {metrics.lastUpdated && (
           <p className="text-ink-subtle mt-1">
-            Last updated {timeAgo(metrics.lastUpdated)}
+            Last updated {formatTimeAgo(metrics.lastUpdated)}
           </p>
         )}
       </div>
@@ -237,7 +226,7 @@ export default function MetricsPage() {
                       {comic.averageAccessTimeMs != null ? `${comic.averageAccessTimeMs.toFixed(1)} ms` : '—'}
                     </td>
                     <td className="px-6 py-3 text-right text-ink-subtle">
-                      {comic.lastAccessed ? timeAgo(comic.lastAccessed) : '—'}
+                      {comic.lastAccessed ? formatTimeAgo(comic.lastAccessed) : '—'}
                     </td>
                   </tr>
                 ))}

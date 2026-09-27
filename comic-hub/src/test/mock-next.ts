@@ -1,9 +1,5 @@
 import { vi } from 'vitest';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-
-export function mockPathname(path: string) {
-  vi.mocked(usePathname).mockReturnValue(path);
-}
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export function mockRouter(overrides?: Partial<ReturnType<typeof useRouter>>) {
   const router = {

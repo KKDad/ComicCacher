@@ -1,24 +1,4 @@
-import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
-
-export class TypedDocumentString<TResult, TVariables>
-  extends String
-  implements DocumentTypeDecoration<TResult, TVariables>
-{
-  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
-  private value: string;
-  public __meta__?: Record<string, any> | undefined;
-
-  constructor(value: string, __meta__?: Record<string, any> | undefined) {
-    super(value);
-    this.value = value;
-    this.__meta__ = __meta__;
-  }
-
-  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
-    return this.value;
-  }
-}
-
+import { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 import { useMutation, useQuery, useInfiniteQuery, UseMutationOptions, UseQueryOptions, UseInfiniteQueryOptions, InfiniteData } from '@tanstack/react-query';
 import { fetcher } from '../lib/graphql-client';
 export type Maybe<T> = T | null;
@@ -624,6 +604,12 @@ export type Mutation = {
    * Returns authentication payload with JWT token on success.
    */
   login: AuthPayload;
+  /**
+   * Invalidate all tokens previously issued to the authenticated user.
+   * The frontend should call this before clearing client-side cookies.
+   * Returns true on success.
+   */
+  logout: Scalars['Boolean']['output'];
   /**
    * Purge retrieval records older than specified days.
    * Returns the number of records purged.
@@ -1289,10 +1275,10 @@ export type ResetPasswordMutationVariables = Exact<{
 
 export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: { __typename?: 'AuthPayload', token: string, refreshToken: string, username: string, displayName?: string | null } };
 
-export type ValidateTokenQueryVariables = Exact<{ [key: string]: never; }>;
+export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ValidateTokenQuery = { __typename?: 'Query', validateToken: boolean };
+export type LogoutMutation = { __typename?: 'Mutation', logout: boolean };
 
 export type GetMeQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1355,14 +1341,6 @@ export type GetComicQueryVariables = Exact<{
 
 export type GetComicQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, description?: string | null, author?: string | null, source?: string | null, sourceIdentifier?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null, firstStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null } | null };
 
-export type GetComicStripQueryVariables = Exact<{
-  comicId: Scalars['Int']['input'];
-  date: Scalars['Date']['input'];
-}>;
-
-
-export type GetComicStripQuery = { __typename?: 'Query', strip?: { __typename?: 'ComicStrip', available: boolean, imageUrl?: string | null, date: any, width?: number | null, height?: number | null, previous?: { __typename?: 'ComicStrip', date: any } | null, next?: { __typename?: 'ComicStrip', date: any } | null } | null };
-
 export type SearchComicsQueryVariables = Exact<{
   query: Scalars['String']['input'];
 }>;
@@ -1416,14 +1394,6 @@ export type GetRandomStripQueryVariables = Exact<{
 
 export type GetRandomStripQuery = { __typename?: 'Query', randomStrip?: { __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null } | null };
 
-export type GetStripsQueryVariables = Exact<{
-  comicId: Scalars['Int']['input'];
-  dates: Array<Scalars['Date']['input']> | Scalars['Date']['input'];
-}>;
-
-
-export type GetStripsQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, strips: Array<{ __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null }> } | null };
-
 export type GetComicsForDateQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
   date: Scalars['Date']['input'];
@@ -1457,6 +1427,24 @@ export type GetRetrievalRecordsQueryVariables = Exact<{
 export type GetRetrievalRecordsQuery = { __typename?: 'Query', retrievalRecords: Array<{ __typename?: 'RetrievalRecord', id: string, comicName: string, comicDate: any, source?: string | null, status: RetrievalStatusEnum, retrievalDurationMs?: number | null, imageSize?: number | null, httpStatusCode?: number | null, errorMessage?: string | null }> };
 
 
+export class TypedDocumentString<TResult, TVariables>
+  extends String
+  implements DocumentTypeDecoration<TResult, TVariables>
+{
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
+  private value: string;
+  public __meta__?: Record<string, any> | undefined;
+
+  constructor(value: string, __meta__?: Record<string, any> | undefined) {
+    super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
+  }
+
+  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
+    return this.value;
+  }
+}
 
 export const LoginDocument = new TypedDocumentString(`
     mutation Login($input: LoginInput!) {
@@ -1588,53 +1576,27 @@ export const useResetPasswordMutation = <
 
 useResetPasswordMutation.fetcher = (variables: ResetPasswordMutationVariables, options?: RequestInit['headers']) => fetcher<ResetPasswordMutation, ResetPasswordMutationVariables>(ResetPasswordDocument, variables, options);
 
-export const ValidateTokenDocument = new TypedDocumentString(`
-    query ValidateToken {
-  validateToken
+export const LogoutDocument = new TypedDocumentString(`
+    mutation Logout {
+  logout
 }
     `);
 
-export const useValidateTokenQuery = <
-      TData = ValidateTokenQuery,
-      TError = unknown
-    >(
-      variables?: ValidateTokenQueryVariables,
-      options?: Omit<UseQueryOptions<ValidateTokenQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<ValidateTokenQuery, TError, TData>['queryKey'] }
-    ) => {
+export const useLogoutMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<LogoutMutation, TError, LogoutMutationVariables, TContext>) => {
     
-    return useQuery<ValidateTokenQuery, TError, TData>(
+    return useMutation<LogoutMutation, TError, LogoutMutationVariables, TContext>(
       {
-    queryKey: variables === undefined ? ['ValidateToken'] : ['ValidateToken', variables],
-    queryFn: fetcher<ValidateTokenQuery, ValidateTokenQueryVariables>(ValidateTokenDocument, variables),
+    mutationKey: ['Logout'],
+    mutationFn: (variables?: LogoutMutationVariables) => fetcher<LogoutMutation, LogoutMutationVariables>(LogoutDocument, variables)(),
     ...options
   }
     )};
 
-useValidateTokenQuery.getKey = (variables?: ValidateTokenQueryVariables) => variables === undefined ? ['ValidateToken'] : ['ValidateToken', variables];
 
-export const useInfiniteValidateTokenQuery = <
-      TData = InfiniteData<ValidateTokenQuery>,
-      TError = unknown
-    >(
-      variables: ValidateTokenQueryVariables,
-      options: Omit<UseInfiniteQueryOptions<ValidateTokenQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<ValidateTokenQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useInfiniteQuery<ValidateTokenQuery, TError, TData>(
-      (() => {
-    const { queryKey: optionsQueryKey, ...restOptions } = options;
-    return {
-      queryKey: optionsQueryKey ?? variables === undefined ? ['ValidateToken.infinite'] : ['ValidateToken.infinite', variables],
-      queryFn: (metaData) => fetcher<ValidateTokenQuery, ValidateTokenQueryVariables>(ValidateTokenDocument, {...variables, ...(metaData.pageParam ?? {})})(),
-      ...restOptions
-    }
-  })()
-    )};
-
-useInfiniteValidateTokenQuery.getKey = (variables?: ValidateTokenQueryVariables) => variables === undefined ? ['ValidateToken.infinite'] : ['ValidateToken.infinite', variables];
-
-
-useValidateTokenQuery.fetcher = (variables?: ValidateTokenQueryVariables, options?: RequestInit['headers']) => fetcher<ValidateTokenQuery, ValidateTokenQueryVariables>(ValidateTokenDocument, variables, options);
+useLogoutMutation.fetcher = (variables?: LogoutMutationVariables, options?: RequestInit['headers']) => fetcher<LogoutMutation, LogoutMutationVariables>(LogoutDocument, variables, options);
 
 export const GetMeDocument = new TypedDocumentString(`
     query GetMe {
@@ -2138,66 +2100,6 @@ useInfiniteGetComicQuery.getKey = (variables: GetComicQueryVariables) => ['GetCo
 
 useGetComicQuery.fetcher = (variables: GetComicQueryVariables, options?: RequestInit['headers']) => fetcher<GetComicQuery, GetComicQueryVariables>(GetComicDocument, variables, options);
 
-export const GetComicStripDocument = new TypedDocumentString(`
-    query GetComicStrip($comicId: Int!, $date: Date!) {
-  strip(comicId: $comicId, date: $date) {
-    available
-    imageUrl
-    date
-    width
-    height
-    previous {
-      date
-    }
-    next {
-      date
-    }
-  }
-}
-    `);
-
-export const useGetComicStripQuery = <
-      TData = GetComicStripQuery,
-      TError = unknown
-    >(
-      variables: GetComicStripQueryVariables,
-      options?: Omit<UseQueryOptions<GetComicStripQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetComicStripQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetComicStripQuery, TError, TData>(
-      {
-    queryKey: ['GetComicStrip', variables],
-    queryFn: fetcher<GetComicStripQuery, GetComicStripQueryVariables>(GetComicStripDocument, variables),
-    ...options
-  }
-    )};
-
-useGetComicStripQuery.getKey = (variables: GetComicStripQueryVariables) => ['GetComicStrip', variables];
-
-export const useInfiniteGetComicStripQuery = <
-      TData = InfiniteData<GetComicStripQuery>,
-      TError = unknown
-    >(
-      variables: GetComicStripQueryVariables,
-      options: Omit<UseInfiniteQueryOptions<GetComicStripQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetComicStripQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useInfiniteQuery<GetComicStripQuery, TError, TData>(
-      (() => {
-    const { queryKey: optionsQueryKey, ...restOptions } = options;
-    return {
-      queryKey: optionsQueryKey ?? ['GetComicStrip.infinite', variables],
-      queryFn: (metaData) => fetcher<GetComicStripQuery, GetComicStripQueryVariables>(GetComicStripDocument, {...variables, ...(metaData.pageParam ?? {})})(),
-      ...restOptions
-    }
-  })()
-    )};
-
-useInfiniteGetComicStripQuery.getKey = (variables: GetComicStripQueryVariables) => ['GetComicStrip.infinite', variables];
-
-
-useGetComicStripQuery.fetcher = (variables: GetComicStripQueryVariables, options?: RequestInit['headers']) => fetcher<GetComicStripQuery, GetComicStripQueryVariables>(GetComicStripDocument, variables, options);
-
 export const SearchComicsDocument = new TypedDocumentString(`
     query SearchComics($query: String!) {
   search(query: $query) {
@@ -2500,63 +2402,6 @@ useInfiniteGetRandomStripQuery.getKey = (variables?: GetRandomStripQueryVariable
 
 
 useGetRandomStripQuery.fetcher = (variables?: GetRandomStripQueryVariables, options?: RequestInit['headers']) => fetcher<GetRandomStripQuery, GetRandomStripQueryVariables>(GetRandomStripDocument, variables, options);
-
-export const GetStripsDocument = new TypedDocumentString(`
-    query GetStrips($comicId: Int!, $dates: [Date!]!) {
-  comic(id: $comicId) {
-    id
-    strips(dates: $dates) {
-      date
-      available
-      imageUrl
-      width
-      height
-    }
-  }
-}
-    `);
-
-export const useGetStripsQuery = <
-      TData = GetStripsQuery,
-      TError = unknown
-    >(
-      variables: GetStripsQueryVariables,
-      options?: Omit<UseQueryOptions<GetStripsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetStripsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useQuery<GetStripsQuery, TError, TData>(
-      {
-    queryKey: ['GetStrips', variables],
-    queryFn: fetcher<GetStripsQuery, GetStripsQueryVariables>(GetStripsDocument, variables),
-    ...options
-  }
-    )};
-
-useGetStripsQuery.getKey = (variables: GetStripsQueryVariables) => ['GetStrips', variables];
-
-export const useInfiniteGetStripsQuery = <
-      TData = InfiniteData<GetStripsQuery>,
-      TError = unknown
-    >(
-      variables: GetStripsQueryVariables,
-      options: Omit<UseInfiniteQueryOptions<GetStripsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetStripsQuery, TError, TData>['queryKey'] }
-    ) => {
-    
-    return useInfiniteQuery<GetStripsQuery, TError, TData>(
-      (() => {
-    const { queryKey: optionsQueryKey, ...restOptions } = options;
-    return {
-      queryKey: optionsQueryKey ?? ['GetStrips.infinite', variables],
-      queryFn: (metaData) => fetcher<GetStripsQuery, GetStripsQueryVariables>(GetStripsDocument, {...variables, ...(metaData.pageParam ?? {})})(),
-      ...restOptions
-    }
-  })()
-    )};
-
-useInfiniteGetStripsQuery.getKey = (variables: GetStripsQueryVariables) => ['GetStrips.infinite', variables];
-
-
-useGetStripsQuery.fetcher = (variables: GetStripsQueryVariables, options?: RequestInit['headers']) => fetcher<GetStripsQuery, GetStripsQueryVariables>(GetStripsDocument, variables, options);
 
 export const GetComicsForDateDocument = new TypedDocumentString(`
     query GetComicsForDate($first: Int, $date: Date!) {

@@ -1,18 +1,14 @@
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
+import { RefreshTokenDocument } from '@/generated/graphql';
 
 async function refreshTokens(refreshToken: string): Promise<{ token: string; refreshToken: string } | null> {
   const res = await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      query: `mutation RefreshToken($refreshToken: String!) {
-        refreshToken(refreshToken: $refreshToken) {
-          token
-          refreshToken
-        }
-      }`,
+      query: RefreshTokenDocument.toString(),
       variables: { refreshToken },
     }),
   });

@@ -8,13 +8,13 @@ Next.js web frontend for ComicCacher — browse, read, and manage comic strip su
 - **Styling:** Tailwind CSS 4, Radix UI / shadcn components
 - **Data Fetching:** TanStack Query v5, graphql-request v7, GraphQL Codegen
 - **Forms:** react-hook-form + Zod
-- **State:** Zustand v5 (display preferences — auth uses httpOnly cookies, theme via next-themes)
-- **Testing:** Vitest, React Testing Library, MSW (tests run in `America/Toronto` so date bugs show up on UTC CI)
+- **State:** Zustand v5 (display preferences, including the theme, applied by `ThemeSync` and an inline script in `<head>`); auth uses httpOnly cookies
+- **Testing:** Vitest, React Testing Library, with `fetch` and generated hooks stubbed per test (tests run in `America/Toronto` so date bugs show up on UTC CI)
 
 ## Prerequisites
 
 - Node 24 (see `.nvmrc`)
-- Backend GraphQL endpoint (default: `http://10.0.0.47:8087/graphql`)
+- Backend GraphQL endpoint (the dev API is `http://portainer.stapledon.ca:8087/graphql`)
 
 ## Getting Started
 
@@ -46,6 +46,7 @@ For a test login on the dev instance, see "Dev Tokens" in [`docs/api/overview.md
 | `npm test` | Run tests (Vitest) |
 | `npm run test:ui` | Vitest with browser UI |
 | `npm run test:coverage` | Coverage report |
+| `npm run lint` | ESLint |
 
 ## Project Structure
 
@@ -66,58 +67,65 @@ src/
 ├── components/
 │   ├── ui/                       # shadcn components
 │   ├── auth/                     # ErrorBanner
+│   ├── brand/                    # Comics Hub mark
+│   ├── illustrations/            # Empty-state illustrations
 │   ├── batch-jobs/               # JobCard, LogViewer
 │   ├── comics/                   # ComicTile, FavoriteCard
 │   ├── dashboard/                # Dashboard sections
 │   ├── grid-reader/              # Date-column grid reader, lightbox
 │   ├── reader/                   # Single-comic reader (desktop scroll, mobile snap)
-│   └── layout/                   # Sidebar, Header, NavRail, MobileNav
+│   ├── layout/                   # Sidebar, Header, NavRail, MobileNav, Logo
+│   └── theme/                    # ThemeSync, PreferencesSync, theme bootstrap script
 ├── contexts/
 │   └── user-context.tsx          # Server-fetched user data
 ├── hooks/
-│   ├── use-auth.ts               # Login/logout/register (calls API routes)
+│   ├── use-auth.ts               # useLogout (the auth pages call the API routes directly)
 │   ├── use-all-comics.ts         # Follows the comics cursor past the 50-per-page cap
+│   ├── use-favorite.ts           # Add/remove a favorite with an optimistic update
 │   ├── use-reader.ts             # Strip reader state (infinite stripWindow query)
+│   ├── use-newest-first.ts       # Reader scroll order preference
 │   ├── use-grid-reader.ts        # Grid reader state
 │   ├── use-reading-list.ts       # Reader's reading list
+│   ├── use-lightbox.ts, use-pinch-zoom.ts, use-swipe.ts
+│   ├── use-hydrated.ts           # False until hydration, for client-only state
 │   └── use-responsive-nav.ts     # Breakpoint detection
 ├── lib/
 │   ├── auth/
-│   │   ├── constants.ts          # Cookie names, endpoints, public paths
+│   │   ├── constants.ts          # Cookie names and the backend endpoint
 │   │   ├── session.ts            # getSession() — server-side user fetch
 │   │   └── graphql-server.ts     # getAuthenticatedClient() — server-side
 │   ├── graphql-client.ts         # Client fetcher for codegen (no auth logic)
-│   ├── date-utils.ts             # Strip dates (YYYY-MM-DD) as local calendar days
+│   ├── comic-title.ts            # Page titles
+│   ├── date-utils.ts             # Strip dates (YYYY-MM-DD) as local calendar days, display formats
+│   ├── navigation-history.ts     # In-app back navigation
 │   ├── gravatar.ts               # Gravatar URL generation
 │   ├── preferences-defaults.ts   # Default preference values
 │   ├── providers.tsx             # QueryClientProvider
 │   ├── roles.ts                  # Role utilities (USER, OPERATOR, ADMIN)
 │   ├── safe-redirect.ts          # Rejects off-site ?from= redirects
+│   ├── sort.ts                   # Name ordering shared by every comic list
+│   ├── theme.ts                  # Applies the theme to <html>
 │   ├── utils.ts                  # General utilities
 │   └── validations/auth.ts       # Zod schemas
 ├── stores/
 │   └── preferences-store.ts      # User display preferences
 ├── graphql/operations/           # .graphql query/mutation files
 ├── generated/graphql.ts          # Codegen output (do not edit)
-├── types/auth.ts                 # Auth type definitions
-└── proxy.ts                      # UX-only route redirect (not a security boundary)
+└── types/auth.ts                 # User type
 ```
 
 ## Auth Architecture
 
 Tokens are stored in **httpOnly cookies** (never accessible to JavaScript):
 
-1. `/api/login` and `/api/register` call the backend and set httpOnly cookies
+1. `/api/login` and `/api/register` call the backend and set httpOnly cookies (route handlers send the generated operation documents, so every query lives in `src/graphql/operations`)
 2. Client components fetch data via generated hooks → fetcher POSTs to `/api/graphql`
 3. The server proxy reads the cookie, attaches the Bearer header, and forwards to the backend
 4. On 401, the proxy attempts a token refresh server-side before returning an error
-5. `proxy.ts` handles UX redirects (unauthenticated → `/login`) but is not a security boundary
-6. Server layouts check the session with `getSession()`, which doesn't refresh yet: once the 15-minute access token expires, a full page load goes to `/login` (see `TODO.md`)
+5. Server layouts check the session with `getSession()`, which doesn't refresh yet: once the 15-minute access token expires, a full page load goes to `/login` (see `TODO.md`)
 
 ## Docker
 
-```bash
-./build-docker.sh    # builds and tags the image
-```
+Build and push the image with `utils/prod-build.sh --ui <version>` from the repo root (it calls `./build-docker.sh <tag>`, which builds, tags and pushes to the registry).
 
 Exposes port 8080. Uses multi-stage Node 24 Alpine build with standalone output.

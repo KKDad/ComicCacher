@@ -5,6 +5,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarDays } from 'lucide-react';
+import { parseDate, toIsoDate } from '@/lib/date-utils';
 
 interface DatePickerPopoverProps {
   oldest: string | null;
@@ -21,19 +22,14 @@ export function DatePickerPopover({
 }: DatePickerPopoverProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedDate = currentDate ? new Date(currentDate + 'T00:00:00') : undefined;
-  const fromDate = oldest ? new Date(oldest + 'T00:00:00') : undefined;
-  const toDate = newest ? new Date(newest + 'T00:00:00') : undefined;
+  const selectedDate = currentDate ? parseDate(currentDate) : undefined;
+  const fromDate = oldest ? parseDate(oldest) : undefined;
+  const toDate = newest ? parseDate(newest) : undefined;
 
   const handleSelect = (date: Date | undefined) => {
     if (!date) return;
 
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`;
-
-    onSelectDate(dateStr);
+    onSelectDate(toIsoDate(date));
     setOpen(false);
   };
 

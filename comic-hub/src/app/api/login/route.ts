@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
 import { loginSchema } from '@/lib/validations/auth';
+import { LoginDocument } from '@/generated/graphql';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -19,14 +20,7 @@ export async function POST(request: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      query: `mutation Login($input: LoginInput!) {
-        login(input: $input) {
-          token
-          refreshToken
-          username
-          displayName
-        }
-      }`,
+      query: LoginDocument.toString(),
       variables: { input: { username, password } },
     }),
   });

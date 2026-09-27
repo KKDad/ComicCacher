@@ -8,6 +8,8 @@ import {
   useGetUserPreferencesQuery,
 } from '@/generated/graphql';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { shiftIsoDate, todayIsoDate } from '@/lib/date-utils';
+import { compareByName } from '@/lib/sort';
 import type { LightboxItem } from '@/components/grid-reader/lightbox';
 
 export interface GridComic {
@@ -40,16 +42,6 @@ interface UseGridReaderReturn {
   goToToday: () => void;
 }
 
-function todayString(): string {
-  return new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-}
-
-function shiftDate(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T12:00:00'); // noon avoids DST edge cases
-  d.setDate(d.getDate() + days);
-  return d.toLocaleDateString('en-CA');
-}
-
 /** The comics' strips in the shape the lightbox shows. */
 export function toLightboxItems(comics: GridComic[]): LightboxItem[] {
   return comics.map((c) => ({ title: c.name, date: c.strip?.date ?? '', imageUrl: c.strip?.imageUrl ?? null }));
@@ -61,7 +53,7 @@ export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGr
   const queryClient = useQueryClient();
   const navMode = usePreferencesStore((s) => s.settings.readerNavMode);
 
-  const date = searchParams.get('date') ?? initialDate ?? todayString();
+  const date = searchParams.get('date') ?? initialDate ?? todayIsoDate();
 
   const { data: comicsData, isLoading: comicsLoading } = useGetComicsForDateQuery(
     { first: 200, date },
@@ -99,7 +91,7 @@ export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGr
             : null,
         };
       })
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(compareByName);
 
     if (navMode === 'favorites') {
       return allComics.filter((c) => favorites.has(c.id));
@@ -109,8 +101,8 @@ export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGr
 
   // Prefetch adjacent dates for instant Left/Right navigation
   useEffect(() => {
-    const prevDate = shiftDate(date, -1);
-    const nextDate = shiftDate(date, 1);
+    const prevDate = shiftIsoDate(date, -1);
+    const nextDate = shiftIsoDate(date, 1);
 
     const prefetchDate = (d: string) => {
       queryClient.prefetchQuery({
@@ -132,15 +124,15 @@ export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGr
   );
 
   const goToNextDate = useCallback(() => {
-    goToDate(shiftDate(date, 1));
+    goToDate(shiftIsoDate(date, 1));
   }, [date, goToDate]);
 
   const goToPreviousDate = useCallback(() => {
-    goToDate(shiftDate(date, -1));
+    goToDate(shiftIsoDate(date, -1));
   }, [date, goToDate]);
 
   const goToToday = useCallback(() => {
-    goToDate(todayString());
+    goToDate(todayIsoDate());
   }, [goToDate]);
 
   return useMemo(

@@ -1,6 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import type { User } from '@/types/auth';
+import { GetMeDocument } from '@/generated/graphql';
 import { JWT_COOKIE, GRAPHQL_ENDPOINT } from './constants';
 
 export async function getSession(): Promise<User | null> {
@@ -17,16 +18,7 @@ export async function getSession(): Promise<User | null> {
         Authorization: `Bearer ${jwt}`,
       },
       body: JSON.stringify({
-        query: `query GetMe {
-          me {
-            username
-            email
-            displayName
-            created
-            lastLogin
-            roles
-          }
-        }`,
+        query: GetMeDocument.toString(),
       }),
       // Don't cache — session should be fresh on each server render
       cache: 'no-store',

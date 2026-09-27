@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
+import { ForgotPasswordDocument } from '@/generated/graphql';
 import { forgotPasswordSchema } from '@/lib/validations/auth';
 
 export async function POST(request: NextRequest) {
@@ -17,9 +18,7 @@ export async function POST(request: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      query: `mutation ForgotPassword($email: String!) {
-        forgotPassword(email: $email)
-      }`,
+      query: ForgotPasswordDocument.toString(),
       variables: { email: parsed.data.email },
     }),
   });
