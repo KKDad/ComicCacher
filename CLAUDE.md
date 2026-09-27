@@ -126,5 +126,6 @@ Full docs live in [@~/docs/README.md](docs/README.md):
 - **`utils/prod-build-and-run.sh [--api <ver>] [--ui <ver>] [--skip-build]`** — Build and push with `prod-build.sh`, stage `prod-run.sh` and `utils/prod/docker-compose.yml` on the Docker host, and deploy over ssh
 - **`utils/prod-build.sh [--api <ver>] [--ui <ver>]`** — Workstation build and push only. Gates: master branch, clean tree, semver tag, image present in the registry
 - **`utils/prod-run.sh [--api <ver>[@sha256:…]] [--ui <ver>] [--dry-run]`** — Runs on the Docker host: confirm prompt, compose pull/up for the changed services, health poll with automatic rollback to the previous digests. Audit log at `~/.comiccacher-prod-deploy.log` on the host
+- **`utils/readme-screenshots.sh`** — Regenerate the README banner and screenshots in `docs/images/readme/`. Runs Comics Hub against `utils/readme-demo/demo-api.mjs` (the real GraphQL schema serving invented comics with original placeholder art), so no real strips appear. Needs Chrome and a free port 3000
 - **`utils/verify-json-files.sh`** — Validate JSON storage files in the comics cache
 

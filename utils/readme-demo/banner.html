@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>Comics Hub banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@700&family=Figtree:wght@500;600&display=block">
+<style>
+  /* Captured at 1280x320 by capture.mjs; the page outside the card is transparent */
+  html, body { margin: 0; background: transparent; }
+  .card {
+    box-sizing: border-box;
+    width: 1280px;
+    height: 320px;
+    border-radius: 28px;
+    background: #F2ECDF;
+    border: 3px solid #DDD3BF;
+    display: flex;
+    align-items: center;
+    gap: 56px;
+    padding: 0 72px;
+  }
+  .lockup { display: flex; align-items: center; gap: 14px; }
+  .lockup img { width: 190px; height: 190px; }
+  .words {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transform: rotate(-4deg);
+    transform-origin: left center;
+    font: 700 84px/1 'DynaPuff', system-ui, sans-serif;
+    color: #1E1B16;
+  }
+  .hub {
+    align-self: flex-start;
+    margin-left: -10px;
+    padding: 0 12px;
+    background: linear-gradient(transparent 52%, #F2B32A 52%, #F2B32A 92%, transparent 92%);
+  }
+  .tag {
+    margin-left: auto;
+    max-width: 470px;
+    font: 600 32px/1.3 'Figtree', system-ui, sans-serif;
+    color: #574F43;
+  }
+  .tag span { display: block; white-space: nowrap; }
+  .tag strong { color: #1E1B16; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="lockup">
+      <img src="/banner/icon.svg" alt="">
+      <div class="words"><span>Comics</span><span class="hub">Hub</span></div>
+    </div>
+    <p class="tag"><span><strong>Your daily comics.</strong></span><span>No ads. No paywalls.</span><span>No nonsense.</span></p>
+  </div>
+</body>
+</html>
