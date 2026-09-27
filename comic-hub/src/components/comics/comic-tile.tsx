@@ -28,13 +28,13 @@ export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicT
   const formattedDate = formatShortDate(comic.date);
 
   return (
-    <Card className="relative overflow-hidden hover:shadow-md transition-shadow group focus-within:ring-[3px] focus-within:ring-ring/50">
+    <Card className="relative overflow-hidden py-0 gap-0 hover:shadow-md transition-shadow group focus-within:ring-[3px] focus-within:ring-ring/50">
       <div className="aspect-[4/3] bg-canvas overflow-hidden">
         <ImageWithFallback
           src={comic.thumbnail}
           alt=""
           fallbackText={comic.name[0]}
-          className="motion-safe:group-hover:scale-105 transition-transform"
+          className="strip-image motion-safe:group-hover:scale-105 transition-transform"
         />
       </div>
       <CardContent className="p-3">
@@ -49,7 +49,7 @@ export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicT
         <div className="flex items-center justify-between mt-1">
           <p className="text-sm text-ink-subtle">{formattedDate}</p>
           {isNew && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge className="text-xs bg-highlight text-on-highlight border-transparent">
               New
             </Badge>
           )}
@@ -65,7 +65,7 @@ export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicT
         >
           <Heart
             aria-hidden="true"
-            className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`}
+            className={`h-5 w-5 ${isFavorite ? 'fill-favorite text-favorite' : 'text-white'}`}
           />
         </button>
       )}

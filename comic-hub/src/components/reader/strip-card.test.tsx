@@ -63,7 +63,7 @@ describe('StripCard', () => {
     const img = screen.getByRole('img');
     fireEvent.error(img);
 
-    expect(screen.getByText(/failed to load strip/i)).toBeInTheDocument();
+    expect(screen.getByText(/strip didn.t load/i)).toBeInTheDocument();
   });
 
   it('sets aspect ratio from width and height', () => {

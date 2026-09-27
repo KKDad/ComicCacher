@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 
 vi.mock('next/font/google', () => ({
-  Inter: () => ({ variable: '--font-primary' }),
+  Figtree: () => ({ variable: '--font-primary' }),
+  Bricolage_Grotesque: () => ({ variable: '--font-heading' }),
   DynaPuff: () => ({ variable: '--font-display' }),
-  JetBrains_Mono: () => ({ variable: '--font-mono' }),
 }));
 
 vi.mock('@/lib/providers', () => ({

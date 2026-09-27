@@ -1,16 +1,26 @@
 import type { Metadata } from "next";
-import { Inter, DynaPuff, JetBrains_Mono } from "next/font/google";
+import { Figtree, Bricolage_Grotesque, DynaPuff } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import { InlineScript } from "@/components/theme/inline-script";
 
-const inter = Inter({
+// Body text: rounder than a neutral grotesque, so it sits well beside DynaPuff
+const figtree = Figtree({
   variable: "--font-primary",
   subsets: ["latin"],
   display: "swap",
 });
 
+// Section headings, comic names and strip dates
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-heading",
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+});
+
+// The wordmark and page titles only
 const dynaPuff = DynaPuff({
   variable: "--font-display",
   subsets: ["latin"],
@@ -18,11 +28,7 @@ const dynaPuff = DynaPuff({
   display: "swap",
 });
 
-const jetBrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
+// JetBrains Mono loads only on the batch-jobs pages that use it (see its layout).
 
 export const metadata: Metadata = {
   title: { template: "%s · Comics Hub", default: "Comics Hub" },
@@ -41,7 +47,7 @@ export default function RootLayout({
         <InlineScript html={THEME_BOOTSTRAP_SCRIPT} />
       </head>
       <body
-        className={`${inter.variable} ${dynaPuff.variable} ${jetBrainsMono.variable} antialiased`}
+        className={`${figtree.variable} ${bricolage.variable} ${dynaPuff.variable} antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

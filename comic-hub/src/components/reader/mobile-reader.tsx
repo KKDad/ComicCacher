@@ -220,7 +220,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
       >
         {/* Top bar */}
         <div
-          className="absolute top-0 left-0 right-0 z-modal bg-canvas/80 backdrop-blur-sm flex items-center px-3 h-12 pointer-events-auto"
+          className="absolute top-0 left-0 right-0 z-modal bg-chrome/95 backdrop-blur-sm border-b border-border flex items-center px-3 h-12 pointer-events-auto"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <Button
@@ -240,7 +240,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
 
         {/* Bottom bar */}
         <div
-          className="absolute bottom-0 left-0 right-0 z-modal bg-canvas/80 backdrop-blur-sm px-3 py-2 pointer-events-auto"
+          className="absolute bottom-0 left-0 right-0 z-modal bg-chrome/95 backdrop-blur-sm border-t border-border px-3 py-2 pointer-events-auto"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <div className="flex items-center justify-between">
@@ -250,7 +250,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               onClick={goOlder}
               disabled={currentIndex === 0 && !hasOlder}
               aria-label="Older strip"
-              className="text-ink-subtle hover:text-ink hover:bg-muted"
+              className="h-11 w-11 text-ink-subtle hover:text-ink hover:bg-muted"
               >
               <ChevronDown className="h-5 w-5" />
             </Button>
@@ -276,7 +276,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               onClick={goNewer}
               disabled={currentIndex === strips.length - 1 && !hasNewer}
               aria-label="Newer strip"
-              className="text-ink-subtle hover:text-ink hover:bg-muted"
+              className="h-11 w-11 text-ink-subtle hover:text-ink hover:bg-muted"
               >
               <ChevronUp className="h-5 w-5" />
             </Button>

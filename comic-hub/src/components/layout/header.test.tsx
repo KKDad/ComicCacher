@@ -42,9 +42,10 @@ describe('Header', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders Comics Hub title', () => {
+  it('renders the Comics Hub logo', () => {
     renderHeader();
-    expect(screen.getByText('Comics Hub')).toBeInTheDocument();
+    expect(screen.getByText('Comics')).toBeInTheDocument();
+    expect(screen.getByText('Hub')).toBeInTheDocument();
   });
 
   it('renders search input', () => {
@@ -81,8 +82,20 @@ describe('Header', () => {
 
   it('links the brand to the dashboard instead of using a second h1', () => {
     renderHeader();
-    expect(screen.getByRole('link', { name: 'Comics Hub' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Comics Hub home' })).toHaveAttribute('href', '/');
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+  });
+
+  it('offers the operations pages in the account menu to operators', async () => {
+    renderHeader(createMockUser({ displayName: 'Op Erator', roles: ['OPERATOR'] }));
+    await userEvent.click(screen.getByText('OE'));
+    expect(screen.getByRole('menuitem', { name: 'Batch Jobs' })).toHaveAttribute('href', '/batch-jobs');
+  });
+
+  it('keeps the operations pages out of the account menu for readers', async () => {
+    renderHeader(createMockUser({ displayName: 'Re Ader', roles: ['USER'] }));
+    await userEvent.click(screen.getByText('RA'));
+    expect(screen.queryByText('Operations')).not.toBeInTheDocument();
   });
 
   it('computes gravatar URL when user has email', async () => {

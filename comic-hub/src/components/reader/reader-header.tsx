@@ -40,7 +40,7 @@ export function ReaderHeader({
         <ArrowLeft className="h-5 w-5" />
       </Button>
 
-      <h1 className="text-sm font-medium text-ink truncate flex-1">
+      <h1 className="font-heading text-lg font-bold text-ink truncate flex-1">
         {comicName}
       </h1>
 

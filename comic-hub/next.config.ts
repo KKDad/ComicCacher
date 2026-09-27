@@ -11,6 +11,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // The default bottom-left badge covers the sidebar's Sign out button (dev only)
+  devIndicators: { position: 'bottom-right' },
   async headers() {
     return [
       {

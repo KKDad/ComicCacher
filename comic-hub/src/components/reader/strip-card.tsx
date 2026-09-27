@@ -4,6 +4,7 @@ import { forwardRef, useState } from 'react';
 import type { Strip } from '@/hooks/use-reader';
 import { StripSkeleton } from './strip-skeleton';
 import { formatFullDate } from '@/lib/date-utils';
+import { BrokenIllustration } from '@/components/illustrations';
 
 interface StripCardProps {
   strip: Strip;
@@ -33,9 +34,11 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
 
     return (
       <div ref={ref} className="py-4">
-        <h2 className="font-sans text-sm font-normal text-ink-subtle mb-2">{formattedDate}</h2>
+        <h2 className="text-sm font-semibold text-ink-subtle mb-2">{formattedDate}</h2>
+        {/* The strip sits on a paper mat so white strips don't merge into the page */}
+        <div className="rounded-xl border border-border bg-strip-mat p-2 shadow-xs">
         <div
-          className={`relative overflow-hidden rounded-lg ${strip.width && strip.height ? '' : 'aspect-[3/1]'}`}
+          className={`relative overflow-hidden rounded-md ${strip.width && strip.height ? '' : 'aspect-[3/1]'}`}
           style={strip.width && strip.height ? { aspectRatio: `${strip.width}/${strip.height}` } : undefined}
         >
           {/* Skeleton stays behind image to prevent layout shift */}
@@ -43,16 +46,17 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
             <StripSkeleton />
           </div>
           {error ? (
-            <div className="absolute inset-0 bg-card flex items-center justify-center">
-              <p className="text-sm text-ink-subtle">Failed to load strip</p>
-            </div>
+            <div className="absolute inset-0 bg-card flex flex-col items-center justify-center gap-1 p-2">
+                <BrokenIllustration className="h-3/5 max-h-28 w-auto" />
+                <p className="text-sm text-ink-subtle">This strip didn&rsquo;t load</p>
+              </div>
           ) : (
             <img
               src={strip.imageUrl}
               alt={`${comicName} - ${formattedDate}`}
               loading={priority ? 'eager' : 'lazy'}
               fetchPriority={priority ? 'high' : 'auto'}
-              className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`strip-image absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setLoaded(true)}
               onError={() => setError(true)}
             />
@@ -62,9 +66,10 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
               type="button"
               onClick={onOpen}
               aria-label={`View ${comicName}, ${formattedDate} fullscreen`}
-              className="absolute inset-0 cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-lg"
+              className="absolute inset-0 cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-md"
             />
           )}
+        </div>
         </div>
       </div>
     );

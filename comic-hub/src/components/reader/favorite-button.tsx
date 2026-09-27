@@ -30,7 +30,7 @@ export function FavoriteButton({ comicId, comicName }: FavoriteButtonProps) {
       title={label}
       className={cn(
         'h-11 w-11 rounded-full border border-border hover:bg-muted',
-        isFavorite ? 'text-error hover:text-error' : 'text-ink-subtle hover:text-ink',
+        isFavorite ? 'text-favorite hover:text-favorite' : 'text-ink-subtle hover:text-ink',
       )}
     >
       <Heart className={cn('h-5 w-5', isFavorite && 'fill-current')} />

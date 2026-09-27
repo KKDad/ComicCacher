@@ -16,6 +16,7 @@ import { formatFullDate } from '@/lib/date-utils';
 import { useUser } from '@/contexts/user-context';
 import { isAdmin } from '@/lib/roles';
 import type { GridComic } from '@/hooks/use-grid-reader';
+import { BrokenIllustration } from '@/components/illustrations';
 
 interface GridStripCardProps {
   comic: GridComic;
@@ -35,7 +36,7 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
   const hasStrip = strip?.available && strip.imageUrl;
 
   return (
-    <div className="bg-card rounded-lg overflow-hidden">
+    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-xs">
       {/* Header: avatar + name + hamburger */}
       <div className="flex items-center gap-3 px-4 py-3">
         {comic.avatarUrl ? (
@@ -110,15 +111,16 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
               <StripSkeleton />
             </div>
             {imageError ? (
-              <div className="absolute inset-0 bg-card flex items-center justify-center">
-                <p className="text-sm text-ink-subtle">Failed to load strip</p>
+              <div className="absolute inset-0 bg-card flex flex-col items-center justify-center gap-1 p-2">
+                <BrokenIllustration className="h-3/5 max-h-28 w-auto" />
+                <p className="text-sm text-ink-subtle">This strip didn&rsquo;t load</p>
               </div>
             ) : (
               <img
                 src={strip.imageUrl!}
                 alt={`${comic.name} - ${formattedDate}`}
                 loading="lazy"
-                className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`strip-image absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => setImageError(true)}
               />

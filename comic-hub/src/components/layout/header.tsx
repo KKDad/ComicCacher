@@ -18,6 +18,9 @@ import {
 import { useUser } from '@/contexts/user-context';
 import { useLogout } from '@/hooks/use-auth';
 import { getGravatarUrl } from '@/lib/gravatar';
+import { isOperator } from '@/lib/roles';
+import { Logo } from './logo';
+import { operationsNavItems } from './nav-items';
 
 interface SearchFieldProps {
   value: string;
@@ -56,6 +59,8 @@ function SearchField({ value, onChange, onClear, autoFocus }: SearchFieldProps) 
 export function Header() {
   const user = useUser();
   const { logout } = useLogout();
+  // Operators reach the operations pages from here on phones, where there's no sidebar
+  const showOperations = isOperator(user?.roles ?? []);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -108,15 +113,10 @@ export function Header() {
     : 'U';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-sticky bg-surface border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-sticky bg-chrome border-b border-border">
       <div className="flex items-center justify-between gap-4 h-[var(--header-height)] px-4 lg:px-6">
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <Link
-            href="/"
-            className="font-display text-xl font-bold text-primary rounded-md"
-          >
-            Comics Hub
-          </Link>
+          <Logo />
 
           <div className="hidden md:flex items-center flex-1 max-w-md">
             <SearchField
@@ -166,6 +166,19 @@ export function Header() {
               <DropdownMenuItem asChild>
                 <Link href="/preferences">Preferences</Link>
               </DropdownMenuItem>
+              {showOperations && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+                    Operations
+                  </DropdownMenuLabel>
+                  {operationsNavItems.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild>
+                      <Link href={item.href}>{item.label}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-error">
                 Sign out
