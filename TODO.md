@@ -87,7 +87,7 @@
 
 ### Clean Up Deprecated Java APIs
 
-- **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — in `GoComics`, `GoComicsDownloaderStrategy`, `ComicsKingdom`, `ComicsKingdomDownloaderStrategy` in comic-engine (the `GoComics` ones go away with the Selenium removal)
+- **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — in `GoComicsDownloaderStrategy` and `ComicsKingdomDownloaderStrategy` in comic-engine
 - **Guava `@VisibleForTesting` → remove or replace** — 3 instances (`RetrievalStatusRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`)
 - **Guava `Files.getNameWithoutExtension()` → plain Java** — 2 instances (`ImageUtils`, `FileSystemComicStorageFacade`)
 - Priority: Medium
@@ -98,14 +98,10 @@
 - Move them into a `data/` folder, update the code paths, and migrate the existing prod and dev storage
 - Priority: Low
 
-### Replace the Selenium GoComics IT and Remove Selenium
+### Add Live-Site Downloader ITs
 
-- `GoComicsIntegrationIT` tests the legacy Selenium `GoComics` class, which prod has never used. Prod downloads through the Jsoup `GoComicsDownloaderStrategy`, and the prod image has no Chrome
-- So the IT can pass while prod is broken, and fail while prod is fine (`downloadAdamAtHomeFiveDaysAgo` fails on master today)
-- Steps:
-  1. Rewrite `GoComicsIntegrationIT` to exercise `GoComicsDownloaderStrategy` against the live site, paced through `SourceThrottleService` and with a small number of fetches
-  2. Delete the legacy `GoComics` class (and whatever in `DailyComic`/`IDailyComic` only it needs), and drop `selenium-java` / `webdrivermanager` from the root, `comic-api` and `comic-engine` `build.gradle`
-  3. Update the "Legacy downloaders" notes in `docs/design/architecture.md` and `docs/design/download-pipeline.md`
+- The legacy Selenium `GoComics` and Jsoup `ComicsKingdom` classes and their live-site ITs are gone; nothing now checks the production strategies against the real sites
+- Add ITs that run `GoComicsDownloaderStrategy` and `ComicsKingdomDownloaderStrategy` against the live sites, paced through `SourceThrottleService` with a handful of fetches, and keep them out of the default CI run so a site change doesn't block merges
 - Priority: Medium
 
 ## Feature Ideas

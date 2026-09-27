@@ -1,12 +1,11 @@
 package org.stapledon.common.service;
 
 import org.stapledon.common.dto.ComicConfig;
-import org.stapledon.common.util.Bootstrap;
 
 import java.io.File;
 
 /**
- * Service interface for comic and bootstrap configuration operations.
+ * Service interface for comic configuration operations.
  * This interface contains ONLY comic-related config (no user/preference).
  * Used by comic-engine to access configuration without depending on ComicAPI.
  */
@@ -23,19 +22,6 @@ public interface ComicConfigurationService {
      * @return true if successful
      */
     boolean saveComicConfig(ComicConfig config);
-
-    /**
-     * Loads the bootstrap configuration
-     * @return The bootstrap configuration
-     */
-    Bootstrap loadBootstrapConfig();
-
-    /**
-     * Saves the bootstrap configuration
-     * @param config The bootstrap configuration to save
-     * @return true if successful
-     */
-    boolean saveBootstrapConfig(Bootstrap config);
 
     /**
      * Gets the path for a configuration file.

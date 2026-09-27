@@ -56,10 +56,6 @@ dependencies {
     implementation project(':comic-metrics')
     implementation project(':comic-engine')
 
-    // Selenium dependencies
-    implementation "org.seleniumhq.selenium:selenium-java:${rootProject.ext.seleniumVersion}"
-    implementation "io.github.bonigarcia:webdrivermanager:${rootProject.ext.webdrivermanagerVersion}"
-
     // Spring Boot starters - use managed versions
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'

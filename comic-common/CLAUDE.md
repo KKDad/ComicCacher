@@ -19,7 +19,7 @@ Shared types and contracts. Sits at the bottom of the dependency graph — every
 - **No Spring controllers, resolvers, or `@Component` beans.** This module is type/interface only.
 - **No Spring Batch jobs.** Those are in `comic-engine`.
 - **No business logic.** Implementations belong in the consuming module.
-- **No HTTP clients, no Selenium, no Jsoup.** Scraping lives in `comic-engine`.
+- **No HTTP clients, no Jsoup.** Scraping lives in `comic-engine`.
 
 ## Stability
 

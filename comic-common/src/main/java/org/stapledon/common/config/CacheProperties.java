@@ -25,12 +25,6 @@ public class CacheProperties {
     private final String preferencesConfig;
 
     /**
-     * Whether to run Chrome in headless mode (without GUI).
-     * Default is true for better performance and CI/CD compatibility.
-     */
-    private final boolean chromeHeadless;
-
-    /**
      * Whether duplicate image detection is enabled.
      * When enabled, prevents saving the same comic strip multiple times within the same year.
      */
