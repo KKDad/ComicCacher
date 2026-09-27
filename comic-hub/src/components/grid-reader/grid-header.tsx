@@ -4,12 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DatePickerPopover } from '@/components/reader/date-picker-popover';
-import { formatFullDate } from '@/lib/date-utils';
-
-function todayIso(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+import { formatFullDate, todayIsoDate } from '@/lib/date-utils';
 
 interface GridHeaderProps {
   date: string;
@@ -60,7 +55,7 @@ export function GridHeader({ date, onPreviousDate, onNextDate, onSelectDate, onT
 
       <DatePickerPopover
         oldest={null}
-        newest={todayIso()}
+        newest={todayIsoDate()}
         currentDate={date}
         onSelectDate={onSelectDate}
       />

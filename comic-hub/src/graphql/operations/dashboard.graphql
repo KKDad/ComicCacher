@@ -64,24 +64,6 @@ query GetComic($id: Int!) {
   }
 }
 
-# Query for a specific comic strip
-# Uses the direct strip query for better performance
-query GetComicStrip($comicId: Int!, $date: Date!) {
-  strip(comicId: $comicId, date: $date) {
-    available
-    imageUrl
-    date
-    width
-    height
-    previous {
-      date
-    }
-    next {
-      date
-    }
-  }
-}
-
 # Search comics
 query SearchComics($query: String!) {
   search(query: $query) {
@@ -185,20 +167,6 @@ query GetRandomStrip($comicId: Int) {
     imageUrl
     width
     height
-  }
-}
-
-# Query for strips at specific dates
-query GetStrips($comicId: Int!, $dates: [Date!]!) {
-  comic(id: $comicId) {
-    id
-    strips(dates: $dates) {
-      date
-      available
-      imageUrl
-      width
-      height
-    }
   }
 }
 

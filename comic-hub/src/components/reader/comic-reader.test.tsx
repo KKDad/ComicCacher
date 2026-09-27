@@ -23,7 +23,6 @@ vi.mock('@/generated/graphql', () => ({
   useGetStripWindowQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
   useGetRandomStripQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
   useUpdateLastReadMutation: vi.fn().mockReturnValue({ mutate: vi.fn() }),
-  useGetComicsQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
   useGetUserPreferencesQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
 }));
 

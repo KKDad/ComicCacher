@@ -25,7 +25,6 @@ vi.mock('@tanstack/react-virtual', () => ({
 }));
 
 vi.mock('@/generated/graphql', () => ({
-  useGetComicsQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
   useGetUserPreferencesQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
 }));
 

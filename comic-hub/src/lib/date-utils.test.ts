@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
   formatShortDate,
   formatFullDate,
@@ -7,6 +7,7 @@ import {
   formatDuration,
   formatMediumDate,
   parseDate,
+  formatTimeAgo,
 } from './date-utils';
 
 describe('date-utils', () => {
@@ -119,5 +120,25 @@ describe('date-utils', () => {
       expect(formatFullDate('2026-03-18')).toBe('Wed, March 18, 2026');
       expect(formatMediumDate('2026-03-18')).toBe('Mar 18, 2026');
     });
+  });
+});
+
+describe('formatTimeAgo', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-18T12:00:00Z'));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('says just now under a minute', () => {
+    expect(formatTimeAgo('2026-03-18T11:59:30Z')).toBe('just now');
+  });
+
+  it('uses the largest whole unit', () => {
+    expect(formatTimeAgo('2026-03-18T11:48:00Z')).toBe('12m ago');
+    expect(formatTimeAgo('2026-03-18T08:30:00Z')).toBe('3h ago');
+    expect(formatTimeAgo('2026-03-13T12:00:00Z')).toBe('5d ago');
   });
 });

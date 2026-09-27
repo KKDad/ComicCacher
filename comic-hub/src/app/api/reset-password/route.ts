@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
 import { resetPasswordSchema } from '@/lib/validations/auth';
+import { ResetPasswordDocument } from '@/generated/graphql';
 
 const INVALID_LINK = 'This reset link is invalid or has expired. Request a new one.';
 
@@ -21,14 +22,7 @@ export async function POST(request: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      query: `mutation ResetPassword($token: String!, $newPassword: String!) {
-        resetPassword(token: $token, newPassword: $newPassword) {
-          token
-          refreshToken
-          username
-          displayName
-        }
-      }`,
+      query: ResetPasswordDocument.toString(),
       variables: { token, newPassword: password },
     }),
   });
