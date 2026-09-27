@@ -12,6 +12,7 @@ import { FavoriteButton } from './favorite-button';
 import { Lightbox } from '@/components/grid-reader/lightbox';
 import { useLightbox } from '@/hooks/use-lightbox';
 import { useGoBack } from '@/lib/navigation-history';
+import { useNewestFirst } from '@/hooks/use-newest-first';
 
 const HEADER_HEIGHT = 56; // h-14 = 3.5rem = 56px
 const STRIP_PADDING = 80; // date label, mat and vertical padding
@@ -48,6 +49,17 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   } = reader;
 
   const goBack = useGoBack('/comics');
+
+  // The reader keeps strips oldest to newest. With "Newest first" the list shows them
+  // reversed, so list positions (virtualizer indexes, top and bottom) map through toList.
+  const newestFirst = useNewestFirst();
+  const listStrips = useMemo(() => (newestFirst ? [...strips].reverse() : strips), [strips, newestFirst]);
+  // Converts between reader and list indexes (the mapping is its own inverse)
+  const toList = useCallback(
+    (index: number) => (newestFirst ? strips.length - 1 - index : index),
+    [newestFirst, strips.length],
+  );
+  const currentListIndex = toList(currentIndex);
 
   // Fullscreen view: steps through the strips that have an image
   const viewable = useMemo(() => strips.filter((s) => s.available && s.imageUrl), [strips]);
@@ -92,14 +104,14 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   const scrolledToDate = useRef<string | null>(null);
 
   const virtualizer = useVirtualizer({
-    count: strips.length,
+    count: listStrips.length,
     getScrollElement: () => scrollContainerRef.current,
-    // Key by date so measured heights follow their strip when older strips are prepended
-    getItemKey: (index) => strips[index].date,
+    // Key by date so measured heights follow their strip when strips are added above it
+    getItemKey: (index) => listStrips[index].date,
     // Keep the strip in view in place when strips are added above it
     anchorTo: 'end',
     estimateSize: (index) => {
-      const strip = strips[index];
+      const strip = listStrips[index];
       if (strip.width && strip.height) {
         const contentWidth = Math.min(MAX_CONTENT_WIDTH, window.innerWidth - 32);
         return (contentWidth * strip.height) / strip.width + STRIP_PADDING;
@@ -112,20 +124,20 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   });
 
   // Scroll to the current strip on initial load and after goToFirst/goToLast/goToDate.
-  // Keyed on the date, not the index: prepending older strips shifts the index but
+  // Keyed on the date, not the index: adding strips above shifts the index but
   // not the strip being read.
   const currentDate = strips[currentIndex]?.date ?? null;
   useEffect(() => {
     if (!currentDate || currentDate === scrolledToDate.current) return;
     const isInitial = scrolledToDate.current === null;
-    virtualizer.scrollToIndex(currentIndex, {
+    virtualizer.scrollToIndex(currentListIndex, {
       align: 'center',
       behavior: isInitial ? 'auto' : 'smooth',
     });
     // Focus the scroll area so PageDown, Space and the arrow keys scroll the strips
     if (isInitial) scrollContainerRef.current?.focus({ preventScroll: true });
     scrolledToDate.current = currentDate;
-  }, [currentDate, currentIndex, virtualizer]);
+  }, [currentDate, currentListIndex, virtualizer]);
 
   // Track current strip from scroll position
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,8 +165,8 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
           }
         }
         // The user is already looking at this strip; don't scroll to it again
-        scrolledToDate.current = strips[closestIdx]?.date ?? scrolledToDate.current;
-        setCurrentIndex(closestIdx);
+        scrolledToDate.current = listStrips[closestIdx]?.date ?? scrolledToDate.current;
+        setCurrentIndex(toList(closestIdx));
       }, 100);
     };
 
@@ -163,12 +175,13 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
       scrollEl.removeEventListener('scroll', handleScroll);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [strips, setCurrentIndex, virtualizer]);
+  }, [strips, listStrips, toList, setCurrentIndex, virtualizer]);
 
   // Infinite scroll, following TanStack Virtual's infinite-scroll example: load a page
   // when the first or last rendered strip is the edge of the list, one request at a time.
-  // The anchoring above keeps the view still when older strips arrive, so the first
-  // rendered strip moves away from the edge and this doesn't fire again.
+  // The top edge loads older strips, or newer ones with "Newest first". The anchoring above
+  // keeps the view still when strips arrive at the top, so the first rendered strip moves
+  // away from the edge and this doesn't fire again.
   // Nothing loads until the rendered range reaches the current strip: on open, the first
   // render is laid out from the top before the scroll to the current strip lands, and
   // loading older strips then would anchor the view on the wrong strip.
@@ -179,16 +192,24 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   useEffect(() => {
     if (scrolledToDate.current === null || isFetchingPage) return;
     if (firstRenderedIndex === undefined || lastRenderedIndex === undefined) return;
-    if (currentIndex < firstRenderedIndex || currentIndex > lastRenderedIndex) return;
+    if (currentListIndex < firstRenderedIndex || currentListIndex > lastRenderedIndex) return;
 
-    if (firstRenderedIndex === 0 && hasOlder) {
-      loadOlder();
-    } else if (lastRenderedIndex >= strips.length - 1 && hasNewer) {
-      loadNewer();
+    const [hasAbove, loadAbove, hasBelow, loadBelow] = newestFirst
+      ? [hasNewer, loadNewer, hasOlder, loadOlder]
+      : [hasOlder, loadOlder, hasNewer, loadNewer];
+    if (firstRenderedIndex === 0 && hasAbove) {
+      loadAbove();
+    } else if (lastRenderedIndex >= strips.length - 1 && hasBelow) {
+      loadBelow();
     }
-  }, [firstRenderedIndex, lastRenderedIndex, currentIndex, strips.length, hasOlder, hasNewer, isFetchingPage, loadOlder, loadNewer]);
+  }, [firstRenderedIndex, lastRenderedIndex, currentListIndex, strips.length, newestFirst, hasOlder, hasNewer, isFetchingPage, loadOlder, loadNewer]);
 
-  // Keyboard navigation
+  // Keyboard navigation. Home/End and J/K move to the top/bottom of the list and down/up it,
+  // so they follow the scroll order.
+  const goToTop = newestFirst ? handleGoToLast : handleGoToFirst;
+  const goToBottom = newestFirst ? handleGoToFirst : handleGoToLast;
+  const goDown = newestFirst ? goOlder : goNewer;
+  const goUp = newestFirst ? goNewer : goOlder;
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Popovers, menus and the calendar mark the keys they handle (e.g. the
@@ -201,11 +222,11 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
       switch (e.key) {
         case 'Home':
           e.preventDefault();
-          handleGoToFirst();
+          goToTop();
           break;
         case 'End':
           e.preventDefault();
-          handleGoToLast();
+          goToBottom();
           break;
         case 'r':
         case 'R':
@@ -215,12 +236,12 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
         case 'j':
         case 'J':
           e.preventDefault();
-          goNewer();
+          goDown();
           break;
         case 'k':
         case 'K':
           e.preventDefault();
-          goOlder();
+          goUp();
           break;
         case 'f':
         case 'F':
@@ -236,7 +257,7 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleGoToFirst, handleGoToLast, goToRandom, goNewer, goOlder, openFullscreen, currentDate, goBack, isLightboxOpen]);
+  }, [goToTop, goToBottom, goToRandom, goDown, goUp, openFullscreen, currentDate, goBack, isLightboxOpen]);
 
   return (
     <div ref={scrollContainerRef} tabIndex={-1} className="h-screen overflow-y-auto bg-canvas outline-none">
@@ -251,6 +272,7 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
         canGoOlder={currentIndex > 0 || hasOlder}
         canGoNewer={currentIndex < strips.length - 1 || hasNewer}
         onFullscreen={viewable.length > 0 ? () => openFullscreen(currentDate ?? undefined) : undefined}
+        newestFirst={newestFirst}
         favoriteButton={<FavoriteButton comicId={comicId} comicName={comicName} />}
         datePicker={
           <DatePickerPopover
@@ -280,7 +302,7 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
             >
               {virtualItems.map((virtualItem) => (
                 <div
-                  key={strips[virtualItem.index].date}
+                  key={listStrips[virtualItem.index].date}
                   data-index={virtualItem.index}
                   ref={virtualizer.measureElement}
                   style={{
@@ -292,10 +314,10 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
                   }}
                 >
                   <StripCard
-                    strip={strips[virtualItem.index]}
+                    strip={listStrips[virtualItem.index]}
                     comicName={comicName}
-                    priority={virtualItem.index === currentIndex}
-                    onOpen={() => openFullscreen(strips[virtualItem.index].date)}
+                    priority={virtualItem.index === currentListIndex}
+                    onOpen={() => openFullscreen(listStrips[virtualItem.index].date)}
                   />
                 </div>
               ))}

@@ -20,13 +20,13 @@ function formatBytes(bytes: number): string {
 }
 
 const statusColors: Record<RetrievalStatusEnum, string> = {
-  [RetrievalStatusEnum.Success]: 'bg-green-100 text-green-800',
-  [RetrievalStatusEnum.AuthenticationError]: 'bg-red-100 text-red-800',
-  [RetrievalStatusEnum.NetworkError]: 'bg-red-100 text-red-800',
-  [RetrievalStatusEnum.ParsingError]: 'bg-red-100 text-red-800',
-  [RetrievalStatusEnum.StorageError]: 'bg-red-100 text-red-800',
-  [RetrievalStatusEnum.ComicUnavailable]: 'bg-yellow-100 text-yellow-800',
-  [RetrievalStatusEnum.UnknownError]: 'bg-gray-100 text-gray-800',
+  [RetrievalStatusEnum.Success]: 'bg-success-subtle text-success',
+  [RetrievalStatusEnum.AuthenticationError]: 'bg-error-subtle text-error',
+  [RetrievalStatusEnum.NetworkError]: 'bg-error-subtle text-error',
+  [RetrievalStatusEnum.ParsingError]: 'bg-error-subtle text-error',
+  [RetrievalStatusEnum.StorageError]: 'bg-error-subtle text-error',
+  [RetrievalStatusEnum.ComicUnavailable]: 'bg-warning-subtle text-warning',
+  [RetrievalStatusEnum.UnknownError]: 'bg-muted text-muted-foreground',
 };
 
 function StatusBadge({ status }: { status: RetrievalStatusEnum }) {

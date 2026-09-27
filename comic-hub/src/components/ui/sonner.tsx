@@ -7,15 +7,20 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { useHydrated } from "@/hooks/use-hydrated"
+import { usePreferencesStore } from "@/stores/preferences-store"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  // Follow the reader's chosen theme (ThemeSync applies the same value to <html>). Until
+  // hydration the persisted value isn't known on the server, so start from "system".
+  const hydrated = useHydrated()
+  const preferred = usePreferencesStore((s) => s.settings.theme)
+  const theme = hydrated ? preferred : "system"
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

@@ -86,12 +86,12 @@ function getStatusBadge(status: string, paused: boolean) {
   }
   switch (status) {
     case 'COMPLETED':
-      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">COMPLETED</Badge>;
+      return <Badge className="bg-success-subtle text-success">COMPLETED</Badge>;
     case 'FAILED':
       return <Badge variant="destructive">FAILED</Badge>;
     case 'STARTED':
     case 'STARTING':
-      return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">RUNNING</Badge>;
+      return <Badge className="bg-info-subtle text-info">RUNNING</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -100,12 +100,12 @@ function getStatusBadge(status: string, paused: boolean) {
 function getSmallStatusBadge(status: string) {
   switch (status) {
     case 'COMPLETED':
-      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs px-1.5 py-0">COMPLETED</Badge>;
+      return <Badge className="bg-success-subtle text-success text-xs px-1.5 py-0">COMPLETED</Badge>;
     case 'FAILED':
       return <Badge variant="destructive" className="text-xs px-1.5 py-0">FAILED</Badge>;
     case 'STARTED':
     case 'STARTING':
-      return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs px-1.5 py-0">RUNNING</Badge>;
+      return <Badge className="bg-info-subtle text-info text-xs px-1.5 py-0">RUNNING</Badge>;
     default:
       return <Badge variant="outline" className="text-xs px-1.5 py-0">{status}</Badge>;
   }

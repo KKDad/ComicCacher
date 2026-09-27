@@ -28,6 +28,8 @@ interface ReaderControlsProps {
   canGoNewer?: boolean;
   onFullscreen?: () => void;
   datePicker?: React.ReactNode;
+  /** The reader lists the newest strip at the top, so the up/down keys swap: see useNewestFirst. */
+  newestFirst?: boolean;
 }
 
 const iconButton = 'h-11 w-11 text-ink-subtle hover:text-ink hover:bg-muted';
@@ -80,7 +82,14 @@ export function ReaderControls({
   canGoNewer = true,
   onFullscreen,
   datePicker,
+  newestFirst = false,
 }: ReaderControlsProps) {
+  // J/K and Home/End move down/up the list, so they follow the scroll order
+  const olderKey = newestFirst ? 'J' : 'K';
+  const newerKey = newestFirst ? 'K' : 'J';
+  const firstKey = newestFirst ? 'End' : 'Home';
+  const latestKey = newestFirst ? 'Home' : 'End';
+
   return (
     <TooltipProvider>
       <div className="flex items-center gap-1">
@@ -91,8 +100,8 @@ export function ReaderControls({
               onClick={onOlder}
               disabled={!canGoOlder}
               aria-label="Previous strip"
-              aria-keyshortcuts="K"
-              title="Previous strip (K)"
+              aria-keyshortcuts={olderKey}
+              title={`Previous strip (${olderKey})`}
               className="h-10 gap-1 pl-1.5 pr-2.5 text-ink hover:bg-muted"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -103,8 +112,8 @@ export function ReaderControls({
               onClick={onNewer}
               disabled={!canGoNewer}
               aria-label="Next strip"
-              aria-keyshortcuts="J"
-              title="Next strip (J)"
+              aria-keyshortcuts={newerKey}
+              title={`Next strip (${newerKey})`}
               className="h-10 gap-1 pl-2.5 pr-1.5 text-ink hover:bg-muted"
             >
               Next
@@ -113,7 +122,7 @@ export function ReaderControls({
           </div>
         )}
 
-        <ControlButton label="First strip" shortcut="Home" onClick={onFirst}>
+        <ControlButton label="First strip" shortcut={firstKey} onClick={onFirst}>
           <ChevronsLeft className="h-5 w-5" />
         </ControlButton>
 
@@ -123,7 +132,7 @@ export function ReaderControls({
 
         {datePicker}
 
-        <ControlButton label="Latest strip" shortcut="End" onClick={onLast}>
+        <ControlButton label="Latest strip" shortcut={latestKey} onClick={onLast}>
           <ChevronsRight className="h-5 w-5" />
         </ControlButton>
 

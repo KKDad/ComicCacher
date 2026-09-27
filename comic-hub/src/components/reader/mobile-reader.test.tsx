@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MobileReader } from './mobile-reader';
+import { usePreferencesStore } from '@/stores/preferences-store';
+import { DEFAULT_DISPLAY_SETTINGS } from '@/lib/preferences-defaults';
 import type { useReader } from '@/hooks/use-reader';
 
 vi.mock('next/navigation', () => ({
@@ -620,5 +622,50 @@ describe('MobileReader', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /go back/i }));
     expect(mockGoBack).toHaveBeenCalledWith('/comics');
+  });
+
+  describe('newest first', () => {
+    beforeEach(() => {
+      usePreferencesStore.setState({ settings: { ...DEFAULT_DISPLAY_SETTINGS, readerScrollOrder: 'newest-first' } });
+    });
+    afterEach(() => {
+      usePreferencesStore.setState({ settings: DEFAULT_DISPLAY_SETTINGS });
+      vi.useRealTimers();
+    });
+
+    function captureSwipes() {
+      const captured: { up?: () => void; down?: () => void } = {};
+      vi.mocked(useSwipe).mockImplementation((opts: Parameters<typeof useSwipe>[0]) => {
+        captured.up = opts.onSwipeUp;
+        captured.down = opts.onSwipeDown;
+        return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
+      });
+      return captured;
+    }
+
+    it('swipes up to the older strip and down to the newer one', () => {
+      vi.useFakeTimers();
+      const swipes = captureSwipes();
+      const reader = createMockReader();
+      render(<MobileReader comicId={1} reader={reader} />);
+
+      swipes.up!();
+      vi.advanceTimersByTime(200);
+      expect(reader.goOlder).toHaveBeenCalledOnce();
+      swipes.down!();
+      vi.advanceTimersByTime(200);
+      expect(reader.goNewer).toHaveBeenCalledOnce();
+    });
+
+    it('bounces when swiping up past the oldest strip', () => {
+      vi.useFakeTimers();
+      const swipes = captureSwipes();
+      const reader = createMockReader({ currentIndex: 0, hasOlder: false });
+      render(<MobileReader comicId={1} reader={reader} />);
+
+      swipes.up!();
+      vi.advanceTimersByTime(500);
+      expect(reader.goOlder).not.toHaveBeenCalled();
+    });
   });
 });

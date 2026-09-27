@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
       path: '/',
       maxAge: COOKIE_MAX_AGE,
     });
+  } else {
+    // Drop one left from an earlier "remember me" login, or token refresh would keep persisting the session
+    response.cookies.delete(REMEMBER_COOKIE);
   }
 
   return response;

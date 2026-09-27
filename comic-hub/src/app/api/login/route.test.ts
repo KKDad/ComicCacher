@@ -94,10 +94,12 @@ describe('POST /api/login', () => {
     expect(response.cookies.get('comic-hub-remember')?.value).toBe('1');
   });
 
-  it('does not set remember cookie when rememberMe is false', async () => {
+  it('clears any leftover remember cookie when rememberMe is false', async () => {
     const request = createRequest({ username: 'testuser', password: 'Password1!', rememberMe: false });
     const response = await POST(request);
     expect(response.cookies.get('comic-hub-jwt')?.value).toBe('jwt-token');
-    expect(response.cookies.get('comic-hub-remember')).toBeUndefined();
+    const remember = response.cookies.get('comic-hub-remember');
+    expect(remember?.value).toBe('');
+    expect(new Date(remember!.expires!).getTime()).toBeLessThan(Date.now());
   });
 });

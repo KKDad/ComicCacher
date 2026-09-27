@@ -167,37 +167,13 @@
   --border-width-2: 2px;
 
   /* ===================================
-     SHADOWS
+     SHADOWS (the shadow-* utilities, via @theme below)
      =================================== */
-  --shadow-xs: 0 1px 2px rgba(60, 40, 10, 0.06);
-  --shadow-sm: 0 1px 3px rgba(60, 40, 10, 0.08);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --shadow-focus: 0 0 0 3px rgba(31, 95, 168, 0.4);
-  --shadow-error: 0 0 0 3px rgba(220, 38, 38, 0.3);
-
-  /* ===================================
-     TRANSITIONS & ANIMATIONS
-     =================================== */
-  --duration-instant: 50ms;
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
-  --duration-slow: 400ms;
-  --duration-slower: 600ms;
-
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-  --transition-colors: color var(--duration-fast) var(--ease-default),
-                       background-color var(--duration-fast) var(--ease-default),
-                       border-color var(--duration-fast) var(--ease-default);
-  --transition-transform: transform var(--duration-fast) var(--ease-out);
-  --transition-shadow: box-shadow var(--duration-fast) var(--ease-default);
-  --transition-opacity: opacity var(--duration-normal) var(--ease-default);
+  --elevation-xs: 0 1px 2px rgba(60, 40, 10, 0.06);
+  --elevation-sm: 0 1px 3px rgba(60, 40, 10, 0.08);
+  --elevation-md: 0 4px 6px -1px rgba(60, 40, 10, 0.1);
+  --elevation-lg: 0 10px 15px -3px rgba(60, 40, 10, 0.1);
+  --elevation-xl: 0 20px 25px -5px rgba(60, 40, 10, 0.1);
 
   /* ===================================
      LAYOUT
@@ -269,11 +245,11 @@
   --strip-filter: brightness(0.9);
   --illustration-paper: #E9E2D4;
 
-  --shadow-xs: none;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  --shadow-focus: 0 0 0 3px rgba(127, 178, 240, 0.4);
+  --elevation-xs: none;
+  --elevation-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --elevation-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --elevation-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --elevation-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
 
   --chart-1: #7FB2F0;
   --chart-2: #4ADE80;
@@ -284,13 +260,15 @@
 /* =====================================
    REDUCED MOTION
    ===================================== */
+/* Tailwind's duration-* and animate-* utilities compile to fixed values, so cut them here */
 @media (prefers-reduced-motion: reduce) {
-  :root {
-    --duration-instant: 0ms;
-    --duration-fast: 0ms;
-    --duration-normal: 0ms;
-    --duration-slow: 0ms;
-    --duration-slower: 0ms;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -376,6 +354,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* Shadows */
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+  --shadow-xl: var(--elevation-xl);
 
   /* Z-index scale */
   --z-index-base: 0;
