@@ -1,0 +1,72 @@
+import { cn } from '@/lib/utils';
+
+interface ComicsHubMarkProps {
+  className?: string;
+  /** Accessible name; omit when the mark sits beside the visible name. */
+  title?: string;
+}
+
+/**
+ * The Comics Hub mark: a folded Sunday page with a three-panel strip across it
+ * (a kid and his dog, in a loose brush-ink style). Drawn on a 128-unit grid;
+ * the smallest size it's used at is 32px.
+ */
+export function ComicsHubMark({ className, title }: ComicsHubMarkProps) {
+  return (
+    <svg
+      viewBox="0 0 128 128"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn('shrink-0', className)}
+      role={title ? 'img' : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+    >
+      <g transform="rotate(-10 64 64) translate(5 5) scale(0.92)">
+      <rect x="14" y="20" width="80" height="100" rx="4" fill="#D9CFBC" stroke="#1b1b1b" strokeWidth="5"></rect>
+      <path d="M28 12h60l16 16v84a4 4 0 0 1-4 4H28a4 4 0 0 1-4-4V16a4 4 0 0 1 4-4z" fill="#FFFDF8" stroke="#1b1b1b" strokeWidth="6" strokeLinejoin="round"></path>
+      <path d="M88 12v16h16z" fill="#D9CFBC" stroke="#1b1b1b" strokeWidth="4" strokeLinejoin="round"></path>
+      <rect x="32" y="20" width="44" height="8" rx="2" fill="#1b1b1b"></rect>
+      <rect x="32" y="35" width="64" height="5" rx="2" fill="#1b1b1b"></rect>
+      <rect x="32" y="44" width="46" height="5" rx="2" fill="#1b1b1b"></rect>
+      <rect x="32" y="55" width="20" height="34" fill="#DCEBF5"></rect>
+      <rect x="32" y="80" width="20" height="9" fill="#C5DDA9"></rect>
+      <ellipse cx="43" cy="61.5" rx="7" ry="3.6" fill="#ffffff" stroke="#1b1b1b" strokeWidth="1.3"></ellipse>
+      <path d="M40 64.5l-1.5 3 3.5-2.4" fill="#ffffff" stroke="#1b1b1b" strokeWidth="1.2" strokeLinejoin="round"></path>
+      <path d="M37 71.5h6l.5 9h-7z" fill="#D9534F" stroke="#1b1b1b" strokeWidth="1.4" strokeLinejoin="round"></path>
+      <path d="M38.2 80.5v5M41.8 80.5v5" stroke="#1b1b1b" strokeWidth="1.6" strokeLinecap="round"></path>
+      <circle cx="40" cy="67.5" r="4.3" fill="#F3C9A0" stroke="#1b1b1b" strokeWidth="1.4"></circle>
+      <path d="M35.7 66.5l1-3.4 1.6 1.8 1.2-3.2 1.5 2.4 1.5-2.6 1 3.2 1.2-1 .1 2.8" fill="#6B4226" stroke="#1b1b1b" strokeWidth="1.1" strokeLinejoin="round"></path>
+      <ellipse cx="47.5" cy="84.2" rx="3.4" ry="2.3" fill="#B07A45" stroke="#1b1b1b" strokeWidth="1.2"></ellipse>
+      <circle cx="49.6" cy="80.8" r="2.3" fill="#B07A45" stroke="#1b1b1b" strokeWidth="1.2"></circle>
+      <path d="M48.2 79.3l-1.2 3" stroke="#1b1b1b" strokeWidth="1.2" strokeLinecap="round"></path>
+      <rect x="54" y="55" width="20" height="34" fill="#DCEBF5"></rect>
+      <rect x="54" y="80" width="20" height="9" fill="#C5DDA9"></rect>
+      <path d="M56 67h3M55.5 71h4M56 75h3" stroke="#1b1b1b" strokeWidth="1.1" strokeLinecap="round"></path>
+      <path d="M60 72.5l5.5-1.5 2.5 8.2-5.6 1.4z" fill="#D9534F" stroke="#1b1b1b" strokeWidth="1.4" strokeLinejoin="round"></path>
+      <path d="M63 80.3l-3 5.2M66.5 79.5l2.5 5" stroke="#1b1b1b" strokeWidth="1.6" strokeLinecap="round"></path>
+      <path d="M65 73l4-3" stroke="#1b1b1b" strokeWidth="1.5" strokeLinecap="round"></path>
+      <circle cx="61.8" cy="68.2" r="4.3" fill="#F3C9A0" stroke="#1b1b1b" strokeWidth="1.4"></circle>
+      <path d="M57.6 67l1.2-3.3 1.4 2 1.4-3 1.3 2.4 1.7-2.4.8 3.3 1.2-.8-.2 2.6" fill="#6B4226" stroke="#1b1b1b" strokeWidth="1.1" strokeLinejoin="round"></path>
+      <g transform="rotate(-24 69.5 74.5)">
+      <ellipse cx="69.5" cy="74.5" rx="3.8" ry="2.2" fill="#B07A45" stroke="#1b1b1b" strokeWidth="1.2"></ellipse>
+      <circle cx="73.2" cy="73.4" r="2.1" fill="#B07A45" stroke="#1b1b1b" strokeWidth="1.2"></circle>
+      </g>
+      <rect x="76" y="55" width="20" height="34" fill="#DCEBF5"></rect>
+      <rect x="76" y="78" width="20" height="11" fill="#C5DDA9"></rect>
+      <circle cx="91" cy="61.5" r="3" fill="#F2C14E" stroke="#1b1b1b" strokeWidth="1.2"></circle>
+      <circle cx="84" cy="74.5" r="0.9" fill="#1b1b1b"></circle>
+      <circle cx="85.8" cy="71" r="1.2" fill="#1b1b1b"></circle>
+      <path d="M84.5 80.5h9v3.6h-9z" fill="#D9534F" stroke="#1b1b1b" strokeWidth="1.4" strokeLinejoin="round"></path>
+      <circle cx="81" cy="82.2" r="3.6" fill="#F3C9A0" stroke="#1b1b1b" strokeWidth="1.3"></circle>
+      <path d="M77.6 80.4l1.6-2.4 1 1.6 1.4-2.3.9 2 1.4-1.6.2 2.2" fill="#6B4226" stroke="#1b1b1b" strokeWidth="1"></path>
+      <ellipse cx="89" cy="86.6" rx="3.5" ry="1.9" fill="#B07A45" stroke="#1b1b1b" strokeWidth="1.1"></ellipse>
+      <circle cx="93" cy="85.8" r="1.9" fill="#B07A45" stroke="#1b1b1b" strokeWidth="1.1"></circle>
+      <rect x="32" y="55" width="20" height="34" fill="none" stroke="#1b1b1b" strokeWidth="3"></rect>
+      <rect x="54" y="55" width="20" height="34" fill="none" stroke="#1b1b1b" strokeWidth="3"></rect>
+      <rect x="76" y="55" width="20" height="34" fill="none" stroke="#1b1b1b" strokeWidth="3"></rect>
+      <rect x="32" y="96" width="64" height="5" rx="2" fill="#1b1b1b"></rect>
+      <rect x="32" y="105" width="40" height="4.5" rx="2" fill="#1b1b1b"></rect>
+      </g>
+    </svg>
+  );
+}

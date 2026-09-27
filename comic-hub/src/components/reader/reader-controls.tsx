@@ -10,9 +10,9 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Maximize2,
-  SkipBack,
-  SkipForward,
   Shuffle,
   Loader2,
 } from 'lucide-react';
@@ -114,7 +114,7 @@ export function ReaderControls({
         )}
 
         <ControlButton label="First strip" shortcut="Home" onClick={onFirst}>
-          <SkipBack className="h-5 w-5" />
+          <ChevronsLeft className="h-5 w-5" />
         </ControlButton>
 
         <ControlButton label="Random strip" shortcut="R" onClick={onRandom} disabled={isLoadingRandom}>
@@ -124,7 +124,7 @@ export function ReaderControls({
         {datePicker}
 
         <ControlButton label="Latest strip" shortcut="End" onClick={onLast}>
-          <SkipForward className="h-5 w-5" />
+          <ChevronsRight className="h-5 w-5" />
         </ControlButton>
 
         {onFullscreen && (

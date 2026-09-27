@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
+import { FavoritesIllustration } from '@/components/illustrations';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,7 +48,7 @@ export function FavoritesSection({ favorites = null, isLoading = false }: Favori
       <section>
         <Heading />
         <Card className={`${ROW_HEIGHT} border-dashed flex-row items-center justify-center gap-4 p-6 text-center sm:text-left`}>
-          <Heart className="h-10 w-10 shrink-0 text-ink-muted" aria-hidden="true" />
+          <FavoritesIllustration className="h-20 w-auto shrink-0" />
           <div>
             <p className="font-medium text-ink">No favorite comics yet</p>
             <p className="text-sm text-ink-subtle">Tap the heart on any comic to add it here and to Today</p>

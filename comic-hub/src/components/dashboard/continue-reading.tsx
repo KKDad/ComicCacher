@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen } from 'lucide-react';
+import { HistoryIllustration } from '@/components/illustrations';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,7 +44,7 @@ function ReadCard({ read }: { read: RecentRead }) {
           alt=""
           fit="contain"
           fallbackText={read.comic.name[0]}
-          className="object-left"
+          className="strip-image object-left"
         />
       </div>
       <div className="min-w-0 space-y-1">
@@ -87,7 +87,7 @@ export function ContinueReading({ reads = [], isLoading = false }: ContinueReadi
       <section>
         <Heading />
         <Card className="min-h-[8.5rem] border-dashed flex-row items-center justify-center gap-4 p-6 text-center sm:text-left">
-          <BookOpen className="h-10 w-10 shrink-0 text-ink-muted" aria-hidden="true" />
+          <HistoryIllustration className="h-20 w-auto shrink-0" />
           <div>
             <p className="font-medium text-ink">No recent reading history</p>
             <p className="text-sm text-ink-subtle">Open any comic and your place is saved here</p>

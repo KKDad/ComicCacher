@@ -14,7 +14,7 @@ import { useLightbox } from '@/hooks/use-lightbox';
 import { useGoBack } from '@/lib/navigation-history';
 
 const HEADER_HEIGHT = 56; // h-14 = 3.5rem = 56px
-const STRIP_PADDING = 60; // date label + vertical padding
+const STRIP_PADDING = 80; // date label, mat and vertical padding
 const FALLBACK_ASPECT = 3; // 3:1 width:height for strips without dimensions
 const MAX_CONTENT_WIDTH = 768; // max-w-3xl
 

@@ -29,9 +29,9 @@ describe('Sidebar', () => {
 
   it('renders base nav items as links', () => {
     render(<Sidebar />);
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/');
-    expect(screen.getByRole('link', { name: 'Daily Reader' })).toHaveAttribute('href', '/read');
-    expect(screen.getByRole('link', { name: 'Comics List' })).toHaveAttribute('href', '/comics');
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Today' })).toHaveAttribute('href', '/read');
+    expect(screen.getByRole('link', { name: 'Library' })).toHaveAttribute('href', '/comics');
     expect(screen.getByRole('link', { name: 'Preferences' })).toHaveAttribute('href', '/preferences');
   });
 
@@ -70,14 +70,14 @@ describe('Sidebar', () => {
   it('marks the current page with aria-current', () => {
     vi.mocked(usePathname).mockReturnValue('/comics');
     render(<Sidebar />);
-    expect(screen.getByRole('link', { name: 'Comics List' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Dashboard' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
 
   it('keeps a section active on nested routes', () => {
     vi.mocked(usePathname).mockReturnValue('/comics/42');
     render(<Sidebar />);
-    expect(screen.getByRole('link', { name: 'Comics List' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('highlights active operations nav item', () => {

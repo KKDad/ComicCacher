@@ -4,7 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
-  icon: LucideIcon;
+  /** A spot illustration from components/illustrations; takes the place of the icon. */
+  illustration?: React.ComponentType<{ className?: string }>;
+  icon?: LucideIcon;
   title: string;
   description: string;
   actionLabel?: string;
@@ -12,7 +14,7 @@ interface EmptyStateProps {
   actionHref?: string;
 }
 
-export function EmptyState({ icon: Icon, title, description, actionLabel, onAction, actionHref }: EmptyStateProps) {
+export function EmptyState({ illustration: Illustration, icon: Icon, title, description, actionLabel, onAction, actionHref }: EmptyStateProps) {
   const button = actionLabel ? (
     actionHref ? (
       <Button asChild>
@@ -26,9 +28,13 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, onActi
   return (
     <Card className="border-dashed">
       <div className="flex flex-col items-center justify-center p-12 text-center">
-        <Icon className="h-12 w-12 text-ink-muted mb-4" aria-hidden="true" />
-        <p className="text-ink font-medium mb-2">{title}</p>
-        <p className="text-sm text-ink-subtle mb-4">{description}</p>
+        {Illustration ? (
+          <Illustration className="w-40 h-auto mb-4" />
+        ) : (
+          Icon && <Icon className="h-12 w-12 text-ink-muted mb-4" aria-hidden="true" />
+        )}
+        <p className="font-heading text-lg font-bold text-ink mb-2">{title}</p>
+        <p className="text-sm text-ink-subtle mb-4 max-w-xs">{description}</p>
         {button}
       </div>
     </Card>

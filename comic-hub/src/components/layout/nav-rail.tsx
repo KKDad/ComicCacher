@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useLogout } from '@/hooks/use-auth';
 import { useUser } from '@/contexts/user-context';
-import { baseNavItems, operationsNavItems, isNavActive, type NavItem } from './nav-items';
+import { baseNavItems, operationsNavItems, isNavActive, navIconStroke, type NavItem } from './nav-items';
 
 function RailLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
@@ -30,7 +30,7 @@ function RailLink({ item, active }: { item: NavItem; active: boolean }) {
           )}
         >
           <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined}>
-            <Icon className="h-5 w-5" aria-hidden="true" />
+            <Icon className="size-[22px]" strokeWidth={navIconStroke(active)} aria-hidden="true" />
           </Link>
         </Button>
       </TooltipTrigger>
@@ -46,7 +46,7 @@ export function NavRail() {
   const showOperations = isOperator(user?.roles ?? []);
 
   return (
-    <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100dvh-var(--header-height))] w-[var(--sidebar-collapsed)] bg-surface border-r border-border flex flex-col">
+    <aside className="fixed left-0 top-[var(--header-height)] z-sticky h-[calc(100dvh-var(--header-height))] w-[var(--sidebar-collapsed)] bg-chrome border-r border-border flex flex-col">
       <TooltipProvider delayDuration={0}>
         <nav aria-label="Main" className="flex-1 overflow-y-auto p-2">
           <ul className="space-y-1">

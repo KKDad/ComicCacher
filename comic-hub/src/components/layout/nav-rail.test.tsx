@@ -30,7 +30,7 @@ describe('NavRail', () => {
   it('renders an accessibly named link for each base item', () => {
     render(<NavRail />);
     expect(screen.getAllByRole('link')).toHaveLength(4);
-    for (const name of ['Dashboard', 'Daily Reader', 'Comics List', 'Preferences']) {
+    for (const name of ['Home', 'Today', 'Library', 'Preferences']) {
       expect(screen.getByRole('link', { name })).toBeInTheDocument();
     }
   });
@@ -62,7 +62,7 @@ describe('NavRail', () => {
   it('marks the current page with aria-current', () => {
     vi.mocked(usePathname).mockReturnValue('/read');
     render(<NavRail />);
-    expect(screen.getByRole('link', { name: 'Daily Reader' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Today' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('calls logout when sign out is clicked', async () => {
