@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Sandboxed tests for the deploy scripts (`utils/test/run-tests.sh`): each script runs against stub docker, ssh, registry and git, and its commands, output and audit log must match a recorded baseline. A new Utils CI job runs them with ShellCheck
+- Image provenance: `build.sh` labels every image with its commit, branch and whether the tree was dirty. `deploy.sh prod` only deploys a clean build of a commit on origin/master, pinned to the digest it checked, so a dev build pushed under a release tag can't reach prod. `build.sh prod` won't reuse a version that holds a master build or an unlabelled image. `--allow-unverified-image` covers images built before the labels, recorded in the audit log as `provenance=override`
 - `utils/dev/docker-compose.yml`: the dev API is deployed with compose like prod, as project `comics-dev` in `/root/comics-deploy-dev`. A test checks it shares no project, container, volume or port with prod
 
 ### Changed

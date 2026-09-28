@@ -8,8 +8,8 @@ docker inspect --format \{\{\ .Image\ \}\} comics-ui
 docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
 docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
 docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
-docker API_TAG=2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
-docker API_TAG=2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker API_TAG=2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
 docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
 == output
 
@@ -22,7 +22,7 @@ docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\
 
  Service    Current                        Target
  -------    -------                        ------
- api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
  ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
 ==================================================
 
@@ -33,12 +33,12 @@ docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\
   [t=  0s] comics-api      healthy
 
 Deploy successful.
-   api: comics-api @ 2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999 (port 8888)
+   api: comics-api @ 2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb (port 8888)
    ui:  comics-ui @ 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222  (port 8899)
 
    Tail logs: docker logs -f comics-api
               docker logs -f comics-ui
    Audit log: <SB>/home/.comiccacher-prod-deploy.log
 == file: home/.comiccacher-prod-deploy.log
-2026-01-01T00:00:00Z user=tester args=api:2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+2026-01-01T00:00:00Z user=tester args=api:2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=override
 == file: host/comics-deploy/docker-compose.last-good.yml (copy of comics-deploy/docker-compose.yml)

@@ -1,0 +1,4 @@
+== exit: 1
+== trace
+== output
+Error: --allow-unverified-image is for prod; dev doesn't check images.

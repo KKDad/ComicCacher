@@ -1,0 +1,12 @@
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+== output
+
+--- Checking image provenance ---
+Refusing to deploy to prod:
+  kkdad/comic-api:9.9.9-test: it was built from a working tree with uncommitted changes (ca.stapledon.dirty=true)
+Error: Deploy a clean build of master, or pass --allow-unverified-image if you're sure.

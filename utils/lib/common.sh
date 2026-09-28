@@ -92,3 +92,52 @@ remote() {
     # shellcheck disable=SC2086  # SSH_OPTS is a fixed word list
     ssh -n $SSH_OPTS "$DEPLOY_HOST" "$@"
 }
+
+# --- Image provenance ---
+# build.sh labels every image with the commit it was built from and whether the tree was dirty.
+# Prod only accepts an image that is a clean build of a commit on origin/master, whatever
+# branch or machine pushed the tag.
+LABEL_REVISION="org.opencontainers.image.revision"
+LABEL_SOURCE="org.opencontainers.image.source"
+LABEL_DIRTY="ca.stapledon.dirty"
+LABEL_BRANCH="ca.stapledon.branch"
+SOURCE_URL="https://github.com/KKDad/ComicCacher"
+
+# Brings origin/master up to date, so provenance is checked against what is really merged
+fetch_master() {
+    git -C "$PROJECT_ROOT" fetch -q origin master || die "git fetch origin master failed."
+}
+
+# Prints the HTTP status of image:tag's manifest in the registry (200 exists, 404 doesn't)
+registry_status() {
+    local image="$1"
+    local tag="$2"
+    curl -s -o /dev/null -w '%{http_code}' -I \
+        -H "Accept: application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json,application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json" \
+        "https://${DOCKER_REGISTRY}/v2/${image}/manifests/${tag}" || true
+}
+
+# Reads image:tag from the registry and sets IMAGE_DIGEST, IMAGE_REVISION and IMAGE_PROBLEM.
+# IMAGE_PROBLEM is empty only for a clean build of a commit on origin/master (fetch_master first).
+check_provenance() {
+    local image="$1"
+    local tag="$2"
+    local info dirty
+    info=$(skopeo inspect --format "{{.Digest}}|{{index .Labels \"${LABEL_REVISION}\"}}|{{index .Labels \"${LABEL_DIRTY}\"}}|" \
+        "docker://${DOCKER_REGISTRY}/${image}:${tag}") \
+        || die "Could not read ${image}:${tag} from the registry."
+    IMAGE_DIGEST="${info%%|*}"
+    info="${info#*|}"
+    IMAGE_REVISION="${info%%|*}"
+    info="${info#*|}"
+    dirty="${info%%|*}"
+    IMAGE_PROBLEM=""
+    [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || die "Unexpected digest for ${image}:${tag}: '${IMAGE_DIGEST}'"
+    if [[ -z "$IMAGE_REVISION" ]]; then
+        IMAGE_PROBLEM="it has no ${LABEL_REVISION} label (built before provenance labels, or not by build.sh)"
+    elif [[ "$dirty" != "false" ]]; then
+        IMAGE_PROBLEM="it was built from a working tree with uncommitted changes (${LABEL_DIRTY}=${dirty:-<none>})"
+    elif ! git -C "$PROJECT_ROOT" merge-base --is-ancestor "$IMAGE_REVISION" origin/master 2>/dev/null; then
+        IMAGE_PROBLEM="its commit ${IMAGE_REVISION} is not on origin/master (built from a branch, or not pushed yet)"
+    fi
+}

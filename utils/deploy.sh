@@ -12,7 +12,10 @@
 #      and rolls back; for dev it deploys and checks health. All docker commands run there.
 #
 # prod needs master with a clean tree, also for --skip-build, so prod always runs the
-# compose file that is on master. dev deploys from any branch and has no UI container.
+# compose file that is on master. Each image must also be a clean build of a commit on
+# origin/master (its build.sh labels, read from the registry), and is deployed pinned to the
+# digest that was checked, so the tag can't move in between. dev deploys from any branch,
+# skips the image check and has no UI container.
 #
 # Usage:
 #   ./utils/deploy.sh prod --api 2.4.6
@@ -20,6 +23,7 @@
 #   ./utils/deploy.sh prod --ui 2.4.1 --skip-build      # use an already-pushed image
 #   ./utils/deploy.sh prod --api 2.4.6 --dry-run        # stage the files, print the plan, deploy nothing
 #   ./utils/deploy.sh dev --api 2.4.8-rc1
+#   ./utils/deploy.sh prod --api 2.5.0 --skip-build --allow-unverified-image   # an image built before the labels
 #   PROD_HOST=root@otherhost ./utils/deploy.sh prod --api 2.4.6
 #
 
@@ -38,6 +42,10 @@ At least one of --api / --ui is required (dev: --api only).
   --ui <version>    Build, push, and deploy comic-ui at <version>
   --skip-build      Skip the build + push; the image must already be in the registry
   --dry-run         Skip the build, stage the files, and show the plan without deploying
+  --allow-unverified-image
+                    prod only: deploy an image that fails the provenance check (no
+                    labels, dirty tree, or a commit not on origin/master). Recorded
+                    in the audit log as provenance=override
   -h, --help        Show this help
 
 Environment overrides:
@@ -56,6 +64,7 @@ ARG_API_TAG=""
 ARG_UI_TAG=""
 SKIP_BUILD=0
 DRY_RUN=0
+ALLOW_UNVERIFIED=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -78,6 +87,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_BUILD=1
             shift
             ;;
+        --allow-unverified-image)
+            ALLOW_UNVERIFIED=1
+            shift
+            ;;
         -h|--help)
             usage
             exit 0
@@ -92,12 +105,14 @@ done
 # Validated before the tags are put into the remote command line
 check_versions "$ARG_API_TAG" "$ARG_UI_TAG"
 
-# Arguments shared by build.sh and run.sh (bash 3.2: no empty-array expansion under set -u)
+if is_dev && [[ $ALLOW_UNVERIFIED -eq 1 ]]; then
+    die "--allow-unverified-image is for prod; dev doesn't check images."
+fi
+
+# Arguments for build.sh (bash 3.2: no empty-array expansion under set -u)
 VERSION_ARGS=""
 [[ -n "$ARG_API_TAG" ]] && VERSION_ARGS="$VERSION_ARGS --api $ARG_API_TAG"
 [[ -n "$ARG_UI_TAG" ]] && VERSION_ARGS="$VERSION_ARGS --ui $ARG_UI_TAG"
-RUN_ARGS="$VERSION_ARGS"
-[[ $DRY_RUN -eq 1 ]] && RUN_ARGS="$RUN_ARGS --dry-run"
 
 if ! is_dev; then
     require_clean_master "deploying"
@@ -109,7 +124,57 @@ if [[ $SKIP_BUILD -eq 0 ]]; then
     "$UTILS_DIR/build.sh" "$DEPLOY_ENV" $VERSION_ARGS
 fi
 
-# --- Step 2: Stage run.sh + compose file on the Docker host ---
+# --- Step 2: prod: check where each image came from, and pin it by digest ---
+PROVENANCE="verified"
+UNVERIFIED=""
+
+# Sets PINNED_REF to <tag>@<digest> for run.sh, and adds any problem to UNVERIFIED.
+# Not called in $( ): it has to update UNVERIFIED in this shell
+pin_ref() {
+    local image="$1"
+    local tag="$2"
+    check_provenance "$image" "$tag"
+    if [[ -n "$IMAGE_PROBLEM" ]]; then
+        UNVERIFIED="${UNVERIFIED}  ${image}:${tag}: ${IMAGE_PROBLEM}
+"
+    else
+        echo "  ok: ${image}:${tag} is ${IMAGE_REVISION} on origin/master"
+    fi
+    PINNED_REF="${tag}@${IMAGE_DIGEST}"
+}
+
+if is_dev; then
+    RUN_ARGS="$VERSION_ARGS"
+else
+    echo ""
+    echo "--- Checking image provenance ---"
+    fetch_master
+    RUN_ARGS=""
+    if [[ -n "$ARG_API_TAG" ]]; then
+        pin_ref "$API_IMAGE" "$ARG_API_TAG"
+        RUN_ARGS="$RUN_ARGS --api $PINNED_REF"
+    fi
+    if [[ -n "$ARG_UI_TAG" ]]; then
+        pin_ref "$UI_IMAGE" "$ARG_UI_TAG"
+        RUN_ARGS="$RUN_ARGS --ui $PINNED_REF"
+    fi
+    if [[ -n "$UNVERIFIED" ]]; then
+        if [[ $ALLOW_UNVERIFIED -eq 0 ]]; then
+            printf 'Refusing to deploy to prod:\n%s' "$UNVERIFIED" >&2
+            die "Deploy a clean build of master, or pass --allow-unverified-image if you're sure."
+        fi
+        echo ""
+        echo "=================================================="
+        echo " WARNING: deploying unverified images to prod"
+        printf '%s' "$UNVERIFIED"
+        echo "=================================================="
+        PROVENANCE="override"
+    fi
+    RUN_ARGS="$RUN_ARGS --provenance $PROVENANCE"
+fi
+[[ $DRY_RUN -eq 1 ]] && RUN_ARGS="$RUN_ARGS --dry-run"
+
+# --- Step 3: Stage run.sh + compose file on the Docker host ---
 echo ""
 echo "--- Staging run.sh and docker-compose.yml on ${DEPLOY_HOST}:${REMOTE_DIR} ---"
 # shellcheck disable=SC2029  # REMOTE_DIR is a constant, expanded here on purpose
@@ -117,7 +182,7 @@ remote "install -d -m 700 '$REMOTE_DIR'"
 # shellcheck disable=SC2086
 scp $SSH_OPTS "$UTILS_DIR/remote/run.sh" "$COMPOSE_SOURCE" "${DEPLOY_HOST}:${REMOTE_DIR}/" < /dev/null
 
-# --- Step 3: Deploy on the Docker host ---
+# --- Step 4: Deploy on the Docker host ---
 echo ""
 echo "--- Running run.sh ${DEPLOY_ENV} on ${DEPLOY_HOST} ---"
 if is_dev; then

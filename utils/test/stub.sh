@@ -11,9 +11,15 @@
 #   FX_PROJECT_<container>        com.docker.compose.project label
 #   FX_HEALTH_<container>_<n>     health statuses after the n-th compose up / docker run
 #                                 (0 = before any), space separated; the last one repeats
-#   FX_FAIL                       space separated steps that fail: pull, up, up2, run, build, skopeo
+#   FX_FAIL                       space separated steps that fail: pull, up, up2, run, build, skopeo,
+#                                 fetch, and missing-after-push (a pushed image isn't found)
 #   FX_VOLUMES                    output of `docker volume ls -q`
-#   FX_REGISTRY_HAS               space separated image:tag pairs the registry has
+#   FX_REGISTRY_INFO              space separated image:tag=digest|revision|dirty entries: what the
+#                                 registry holds before the scenario pushes anything
+#   FX_PUSHED_INFO                digest|revision|dirty that skopeo inspect reports for an image
+#                                 the scenario pushed (default: digest aaa…, HEAD's revision, false)
+#   FX_REGISTRY_STATUS            HTTP status the registry answers for a missing tag (default 404)
+#   FX_ON_MASTER                  space separated revisions on origin/master
 #   FX_BRANCH, FX_DIRTY           git branch and `git status --porcelain` output
 #   FX_SSH_EXIT                   exit status of ssh (default 0)
 #
@@ -51,6 +57,23 @@ counter() {
 bump() {
     local file="$STATE/count-$1"
     echo $(( $(counter "$1") + 1 )) > "$file"
+}
+
+# What the registry reports for image:tag: prints digest|revision|dirty, or fails if it has no such tag
+registry_entry() {
+    local want="$1"
+    local entry
+    for entry in ${FX_REGISTRY_INFO:-}; do
+        if [[ "${entry%%=*}" == "$want" ]]; then
+            echo "${entry#*=}"
+            return 0
+        fi
+    done
+    if grep -qx "$want" "$STATE/pushed" 2>/dev/null && ! fails missing-after-push; then
+        echo "${FX_PUSHED_INFO:-sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|abc1234abc1234abc1234abc1234abc1234abc12|false}"
+        return 0
+    fi
+    return 1
 }
 
 health() {
@@ -189,14 +212,35 @@ case "$name" in
         ;;
     skopeo)
         trace "$@"
+        if [[ "$1" == "inspect" ]]; then
+            # Answers the --format the scripts use: digest|revision|dirty|
+            ref="${!#}"
+            ref="${ref#docker://registry.stapledon.ca/}"
+            if info=$(registry_entry "$ref"); then
+                echo "${info}|"
+                exit 0
+            fi
+            echo "stub: manifest unknown: $ref" >&2
+            exit 1
+        fi
         fails skopeo && exit 1
+        # skopeo copy ... docker://<push registry>/<image>:<tag>
+        dest="${!#}"
+        echo "${dest#docker://*/}" >> "$STATE/pushed"
         exit 0
         ;;
     curl)
         trace "$@"
         url="${!#}"
         if [[ "$url" =~ /v2/(.+)/manifests/(.+)$ ]]; then
-            [[ " ${FX_REGISTRY_HAS:-} " == *" ${BASH_REMATCH[1]}:${BASH_REMATCH[2]} "* ]] && exit 0
+            want="${BASH_REMATCH[1]}:${BASH_REMATCH[2]}"
+            found=1
+            registry_entry "$want" > /dev/null && found=0
+            if [[ " $* " == *" -w "* ]]; then
+                if [[ $found -eq 0 ]]; then echo -n 200; else echo -n "${FX_REGISTRY_STATUS:-404}"; fi
+                exit 0
+            fi
+            [[ $found -eq 0 ]] && exit 0
             exit 22
         fi
         exit 0
@@ -208,6 +252,14 @@ case "$name" in
             *"rev-parse --short HEAD"*) echo "abc1234" ;;
             *"rev-parse HEAD"*) echo "abc1234abc1234abc1234abc1234abc1234abc12" ;;
             *"status --porcelain"*) [[ -n "${FX_DIRTY:-}" ]] && echo "$FX_DIRTY" ;;
+            *"fetch"*) fails fetch && exit 1 ;;
+            *"merge-base --is-ancestor"*)
+                all="$*"
+                rev="${all##*--is-ancestor }"
+                rev="${rev%% *}"
+                [[ " ${FX_ON_MASTER:-} " == *" $rev "* ]] && exit 0
+                exit 1
+                ;;
         esac
         exit 0
         ;;

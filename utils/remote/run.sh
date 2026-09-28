@@ -7,7 +7,8 @@
 #   prod: /root/comics-deploy      (utils/prod/docker-compose.yml, compose project "comics")
 #   dev:  /root/comics-deploy-dev  (utils/dev/docker-compose.yml, compose project "comics-dev")
 # Self-contained on purpose (sources nothing), so it can also be staged and run by hand.
-# Run by hand, it skips the workstation's checks (master branch, clean tree, image provenance).
+# Run by hand, it skips the workstation's checks (master branch, clean tree, image provenance),
+# and the audit log records provenance=unchecked.
 #
 # Steps:
 #   - The environment must match the compose file beside this script (its `name:`),
@@ -45,7 +46,7 @@ LAST_GOOD_COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.last-good.yml"
 
 usage() {
     cat <<EOF
-Usage: $0 <dev|prod> [--api <ref>] [--ui <ref>] [--dry-run]
+Usage: $0 <dev|prod> [--api <ref>] [--ui <ref>] [--dry-run] [--provenance <verified|override>]
 
 Run on the Docker host. At least one of --api / --ui is required (dev: --api only).
 <ref> is a semver tag (2.4.6) or a tag pinned by digest (2.4.6@sha256:...).
@@ -54,6 +55,7 @@ Run on the Docker host. At least one of --api / --ui is required (dev: --api onl
   --ui <ref>    Deploy comic-ui at <ref>
   --dry-run     Print the plan, the rendered compose config and the docker
                 commands, then exit without changing anything
+  --provenance  Set by deploy.sh: the result of its image check, for the audit log
   -h, --help    Show this help
 
 Compose file: ${COMPOSE_FILE}
@@ -117,6 +119,7 @@ is_dev() {
 ARG_API_REF=""
 ARG_UI_REF=""
 DRY_RUN=0
+PROVENANCE="unchecked"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -133,6 +136,14 @@ while [[ $# -gt 0 ]]; do
         --dry-run)
             DRY_RUN=1
             shift
+            ;;
+        --provenance)
+            [[ $# -ge 2 ]] || die "--provenance requires verified or override"
+            case "$2" in
+                verified|override) PROVENANCE="$2" ;;
+                *) die "--provenance must be verified or override (got '$2')" ;;
+            esac
+            shift 2
             ;;
         -h|--help)
             usage
@@ -327,7 +338,7 @@ if ! is_dev; then
         touch "$AUDIT_LOG"
         chmod 600 "$AUDIT_LOG"
     fi
-    echo "$TS user=${SUDO_USER:-$USER} args=api:${ARG_API_REF:-skip},ui:${ARG_UI_REF:-skip} from=api:${CURRENT_API_REF:-none},ui:${CURRENT_UI_REF:-none} to=api:${EFFECTIVE_API_REF},ui:${EFFECTIVE_UI_REF}" >> "$AUDIT_LOG"
+    echo "$TS user=${SUDO_USER:-$USER} args=api:${ARG_API_REF:-skip},ui:${ARG_UI_REF:-skip} from=api:${CURRENT_API_REF:-none},ui:${CURRENT_UI_REF:-none} to=api:${EFFECTIVE_API_REF},ui:${EFFECTIVE_UI_REF} provenance=${PROVENANCE}" >> "$AUDIT_LOG"
 fi
 
 # --- Step 6: Compose pull + up ---

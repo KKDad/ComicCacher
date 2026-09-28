@@ -1,0 +1,11 @@
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+== output
+
+--- Checking image provenance ---
+stub: manifest unknown: kkdad/comic-api:9.9.9-test
+Error: Could not read kkdad/comic-api:9.9.9-test from the registry.

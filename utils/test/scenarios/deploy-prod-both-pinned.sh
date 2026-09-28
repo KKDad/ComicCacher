@@ -1,0 +1,5 @@
+# API and UI both verified; one unverified image refuses the whole deploy
+TARGET=repo:utils/deploy.sh
+ARGS=(prod --api 9.9.9-test --ui 9.9.9-test --skip-build)
+FX_ON_MASTER=abc1234abc1234abc1234abc1234abc1234abc12
+FX_REGISTRY_INFO="kkdad/comic-api:9.9.9-test=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|abc1234abc1234abc1234abc1234abc1234abc12|false kkdad/comic-ui:9.9.9-test=sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc|fff0000fff0000fff0000fff0000fff0000fff00|false"

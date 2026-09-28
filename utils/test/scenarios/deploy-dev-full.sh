@@ -3,4 +3,3 @@ TARGET=repo:utils/deploy.sh
 ARGS=(dev --api 9.9.9-test)
 FX_BRANCH=feature/x
 FX_DIRTY=" M README.md"
-FX_REGISTRY_HAS="kkdad/comic-api:9.9.9-test"

@@ -11,6 +11,9 @@
 #
 # Both: semver tags; images are pushed with Skopeo straight to the registry's port 5000
 # (bypassing Cloudflare's 100MB upload limit), then must be found in the registry.
+# Every image is labelled with its commit, branch and whether the tree was dirty; deploy.sh
+# prod only deploys a clean build of a commit on origin/master. prod also refuses to replace
+# a tag that already holds such a build, or an unlabelled one (versions are never reused).
 #
 # Usage:
 #   ./utils/build.sh prod --api 2.4.6
@@ -77,6 +80,52 @@ else
     echo "Building from master @ $(git -C "$PROJECT_ROOT" rev-parse --short HEAD)"
 fi
 
+# --- Provenance labels ---
+GIT_REVISION=$(git -C "$PROJECT_ROOT" rev-parse HEAD)
+GIT_BRANCH=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD)
+BUILD_DIRTY=false
+if [[ -n "$(git -C "$PROJECT_ROOT" status --porcelain)" ]]; then
+    BUILD_DIRTY=true
+fi
+
+# --- prod: never replace a release ---
+guard_existing_tag() {
+    local image="$1"
+    local tag="$2"
+    local status
+    status=$(registry_status "$image" "$tag")
+    case "$status" in
+        404)
+            ;;
+        200)
+            check_provenance "$image" "$tag"
+            if [[ -z "$IMAGE_PROBLEM" ]]; then
+                die "${image}:${tag} already holds a build of master (${IMAGE_REVISION}). Pick a new version."
+            fi
+            if [[ -z "$IMAGE_REVISION" ]]; then
+                die "${image}:${tag} already exists without provenance labels, so it may be a release. Pick a new version."
+            fi
+            echo "Replacing ${image}:${tag}, a dev build: ${IMAGE_PROBLEM}"
+            ;;
+        *)
+            die "Registry answered HTTP ${status:-<none>} for ${image}:${tag}; can't tell whether the tag is taken."
+            ;;
+    esac
+}
+
+if ! is_dev; then
+    fetch_master
+    if [[ -n "$ARG_API_TAG" ]]; then
+        guard_existing_tag "$API_IMAGE" "$ARG_API_TAG"
+    fi
+    if [[ -n "$ARG_UI_TAG" ]]; then
+        guard_existing_tag "$UI_IMAGE" "$ARG_UI_TAG"
+    fi
+fi
+
+LABEL_ARGS="--label ${LABEL_REVISION}=${GIT_REVISION} --label ${LABEL_SOURCE}=${SOURCE_URL}"
+LABEL_ARGS="$LABEL_ARGS --label ${LABEL_DIRTY}=${BUILD_DIRTY} --label ${LABEL_BRANCH}=${GIT_BRANCH}"
+
 # --- Build + push ---
 WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/comic-build.XXXXXX")
 trap 'rm -rf "$WORK_DIR"' EXIT
@@ -107,8 +156,9 @@ build_api() {
     echo "--- Building bootJar with version ${tag} ---"
     (cd "$PROJECT_ROOT" && ./gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion="$tag")
     echo "--- Building ${full_image} ---"
+    # shellcheck disable=SC2086  # LABEL_ARGS is a word list; branch names have no spaces
     (cd "$PROJECT_ROOT/comic-api" && BUILDAH_FORMAT=docker docker build -f Dockerfile . \
-        --tag "$full_image" --build-arg VERSION="$tag" --platform linux/amd64)
+        --tag "$full_image" --build-arg VERSION="$tag" --platform linux/amd64 $LABEL_ARGS)
     push_image "$full_image"
 }
 
@@ -118,8 +168,9 @@ build_ui() {
     echo ""
     echo "--- Building + pushing comic-ui $tag ---"
     echo "--- Building ${full_image} ---"
+    # shellcheck disable=SC2086
     (cd "$PROJECT_ROOT/comic-hub" && BUILDAH_FORMAT=docker docker build -f Dockerfile . \
-        --tag "$full_image" --platform linux/amd64)
+        --tag "$full_image" --platform linux/amd64 $LABEL_ARGS)
     push_image "$full_image"
 }
 
