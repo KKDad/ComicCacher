@@ -2,6 +2,7 @@ package org.stapledon.engine.batch.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -33,9 +34,14 @@ import java.util.concurrent.Executor;
  * The makeup runs happen one after another on a background thread. Run inline,
  * they held up the listener, and with it the readiness state, so
  * {@code /actuator/health} reported 503 until every missed job had finished.
+ *
+ * <p>
+ * Set {@code batch.startup-catch-up.enabled=false} to skip the makeup runs (the
+ * integration tests do, so a background run can't race the jobs they start).
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "batch.startup-catch-up.enabled", havingValue = "true", matchIfMissing = true)
 public class StartupJobRunner {
 
     private final Map<String, DailyJobScheduler> dailySchedulers;
