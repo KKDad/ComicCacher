@@ -18,15 +18,15 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 - **Server components by default.** Add `'use client'` only when you need state, effects, refs, browser APIs, or event handlers.
 - Auth and session checks belong in **server layouts**, never in client components. The canonical example is `src/app/(dashboard)/layout.tsx`, which calls `getSession()` server-side and redirects unauthenticated users.
 - Route groups: `(auth)` for login/registration, `(dashboard)` for the authenticated app, `(reader)` for the comic-reader experience.
-- There is no `proxy.ts` (middleware). Auth gates live in server layouts; route handlers own the auth boundary for `/api/*`.
+- `src/proxy.ts` refreshes an expired access token before a page renders (server components can't set cookies), forwarding the new cookies to the render and the browser. It never redirects: auth gates live in server layouts, and route handlers own the auth boundary and their own refresh for `/api/*`, which the proxy skips.
 
 ## Data Fetching & Auth
 
 - Every operation lives in `src/graphql/operations/*.graphql`; route handlers send the generated document (`LoginDocument.toString()`), never an inline query string.
-- All GraphQL traffic goes through `src/app/api/graphql/route.ts`. The route handler injects the JWT from httpOnly cookies, forwards to the backend, and rotates refresh tokens on 401 / `UNAUTHENTICATED` errors. Clone this pattern for any new authenticated route handler.
+- All GraphQL traffic goes through `src/app/api/graphql/route.ts`. The route handler injects the JWT from httpOnly cookies, forwards to the backend, and rotates refresh tokens on 401 / `UNAUTHENTICATED` errors, using the shared helpers in `src/lib/auth/tokens.ts`. Clone this pattern for any new authenticated route handler.
 - Auth cookies: `httpOnly: true`, `secure: process.env.NODE_ENV === 'production'`, `sameSite: 'lax'`. Never expose tokens to client JavaScript.
 - Session validation in server layouts uses `cache: 'no-store'` to ensure fresh JWT verification on every render.
-- **Server Actions are intentionally NOT adopted.** Mutations route through `/api/*` handlers because token refresh logic lives there. Revisit if/when refresh moves to a centralized middleware layer.
+- **Server Actions are intentionally NOT adopted.** Mutations route through `/api/*` handlers because token refresh logic lives there. `proxy.ts` refreshes only for page renders, so this still holds.
 - **Logout flow:** `/api/logout` calls the GraphQL `logout` mutation before clearing cookies. The backend sets the user's `tokensInvalidatedBefore` timestamp; the JWT filter and refresh path reject any token issued before the cutoff. The mutation is best-effort — if it fails, cookies are still cleared client-side.
 
 ## Layout, Theme & Titles
