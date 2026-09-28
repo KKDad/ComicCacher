@@ -81,6 +81,19 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 - Add resolver tests that each input field reaches the saved `ComicItem`
 - Priority: Medium
 
+## Get ready for Next.js 17
+
+- Next.js 17 was released 2026-06-15; comic-hub is on `next` 16.3.6 with React 19.3.0
+- What matters for comic-hub:
+  - **React 19 required:** already met, no change needed
+  - **Turbopack only, Webpack defaults removed:** `next.config.ts` has no `webpack` hook, so the build should carry over. Check that Vitest and the `standalone` output still work in the Docker image
+  - **New caching system:** we opt out of caching today (`cache: 'no-store'` in `getSession()`, `force-static` on `/api/health`). Check that both behave the same under the new model, and that authenticated pages and GraphQL responses are never cached across users
+  - **Server Actions changes:** we don't use Server Actions (mutations go through `/api/graphql`), so nothing to migrate. Leave any move to Server Actions as a separate decision
+  - **Partial hydration:** new and optional. Worth a look later for the reader page, not part of the upgrade
+- Before upgrading: read the official upgrade guide and run the codemod (`npx @next/codemod upgrade`), bump `eslint-config-next` with `next`, and wait for the dependency upgrades held back from 2.5.0 to be sorted out first
+- Verify with `npm run build`, `npm test`, `npm run lint` and a dev deploy before prod
+- Priority: Medium
+
 ## Fix prod deploy script quirks
 
 - `current_ref()` in `utils/prod-run.sh` takes the tag from after the last `:` of the image name. For a digest-pinned image that's the digest, so the plan output and audit log show the wrong version. Rollback still works. Fix: strip `@digest` first
