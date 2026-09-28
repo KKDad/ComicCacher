@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { ContinueReading } from './continue-reading';
+import { imageSrc } from '@/test/test-utils';
 
 describe('ContinueReading', () => {
   beforeEach(() => {
@@ -40,7 +41,7 @@ describe('ContinueReading', () => {
   it('renders strip image when available', () => {
     render(<ContinueReading reads={[lastRead]} />);
     const img = screen.getByRole('presentation');
-    expect(img).toHaveAttribute('src', 'https://example.com/strip.png');
+    expect(imageSrc(img)).toBe('https://example.com/strip.png');
   });
 
   it('renders initial fallback when no image', () => {

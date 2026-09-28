@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import type { useReader } from '@/hooks/use-reader';
 import { useSwipe } from '@/hooks/use-swipe';
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
@@ -192,9 +193,14 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
           >
             {currentStrip?.imageUrl && currentStrip.available ? (
               <>
-                <img
+                <Image
                   src={currentStrip.imageUrl}
                   alt={`${comicName} - ${formattedDate}`}
+                  // A 3:1 box for strips without recorded dimensions; h-auto takes the real ratio once loaded
+                  width={currentStrip.width ?? 900}
+                  height={currentStrip.height ?? 300}
+                  sizes="100vw"
+                  loading="eager"
                   className="w-full h-auto max-h-[75vh] object-contain"
                   style={{
                     transform: `scale(${zoomState.scale}) translate(${zoomState.translateX / zoomState.scale}px, ${zoomState.translateY / zoomState.scale}px)`,

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useGetComicQuery } from '@/generated/graphql';
 import { formatFullDate, formatMediumDate, parseDate } from '@/lib/date-utils';
@@ -71,12 +72,14 @@ export default function ComicDetailPage() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardContent className="p-6">
-            <div className="aspect-square bg-canvas rounded-lg mb-4 overflow-hidden flex items-center justify-center">
+            <div className="relative aspect-square bg-canvas rounded-lg mb-4 overflow-hidden flex items-center justify-center">
               {comic.avatarUrl ? (
-                <img
+                <Image
                   src={comic.avatarUrl}
                   alt={comic.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
                 />
               ) : (
                 <div className="text-6xl font-bold text-ink-muted">
@@ -148,9 +151,13 @@ export default function ComicDetailPage() {
                     href={`/comics/${comicId}/read?date=${comic.lastStrip.date}`}
                     className="block bg-canvas rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
                   >
-                    <img
+                    <Image
                       src={comic.lastStrip.imageUrl}
                       alt={`${comic.name}, ${formatFullDate(comic.lastStrip.date)}`}
+                      // A 3:1 box for strips without recorded dimensions; h-auto takes the real ratio once loaded
+                      width={comic.lastStrip.width ?? 900}
+                      height={comic.lastStrip.height ?? 300}
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="w-full h-auto object-contain"
                     />
                   </Link>

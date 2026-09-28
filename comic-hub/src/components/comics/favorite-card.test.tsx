@@ -2,9 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { FavoriteCard } from './favorite-card';
 
 vi.mock('@/components/ui/avatar', () => ({
-  Avatar: ({ children, ...props }: any) => <span data-slot="avatar" {...props}>{children}</span>,
-  AvatarImage: (props: any) => <img data-slot="avatar-image" {...props} />,
-  AvatarFallback: ({ children, ...props }: any) => <span data-slot="avatar-fallback" {...props}>{children}</span>,
+  Avatar: ({ children, ...props }: React.ComponentProps<'span'>) => <span data-slot="avatar" {...props}>{children}</span>,
+  // Stands in for Radix's image, which renders only once the image has loaded
+  AvatarImage: ({ src, alt }: { src?: string; alt?: string }) => (
+    <span role="img" aria-label={alt} data-slot="avatar-image" data-src={src} />
+  ),
+  AvatarFallback: ({ children, ...props }: React.ComponentProps<'span'>) => (
+    <span data-slot="avatar-fallback" {...props}>{children}</span>
+  ),
 }));
 
 describe('FavoriteCard', () => {
@@ -38,8 +43,8 @@ describe('FavoriteCard', () => {
 
   it('renders avatar image when avatarUrl is provided', () => {
     const { container } = render(<FavoriteCard comic={{ id: 1, name: 'Garfield', avatarUrl: 'https://example.com/garfield.png' }} />);
-    const img = container.querySelector('img')!;
-    expect(img).toHaveAttribute('src', 'https://example.com/garfield.png');
+    const img = container.querySelector('[data-slot="avatar-image"]');
+    expect(img).toHaveAttribute('data-src', 'https://example.com/garfield.png');
   });
 
   it('does not render avatar image when avatarUrl is null', () => {

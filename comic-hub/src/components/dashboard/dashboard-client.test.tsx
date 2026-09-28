@@ -5,6 +5,8 @@ import { useGetMeQuery, useGetUserPreferencesQuery, useAddFavoriteMutation, useR
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { DEFAULT_DISPLAY_SETTINGS } from '@/lib/preferences-defaults';
 import { useAllComics } from '@/hooks/use-all-comics';
+import { imageSrc, mockComic } from '@/test/test-utils';
+import { mockMutationResult, mockQueryResult, captureMutation } from '@/test/mock-query';
 
 vi.mock('@/hooks/use-all-comics', () => ({
   useAllComics: vi.fn(),
@@ -23,7 +25,7 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 const mockMutate = vi.fn();
-const mockMutation = { mutate: mockMutate, isLoading: false };
+const mockMutation = { mutate: mockMutate, isPending: false };
 
 const mockComics = [
   {
@@ -42,8 +44,11 @@ const mockComics = [
   },
 ];
 
-function mockAllComics(comics: unknown[], extra: Record<string, unknown> = {}) {
-  vi.mocked(useAllComics).mockReturnValue({ comics, isLoading: false, error: null, ...extra } as any);
+function mockAllComics(
+  comics: Parameters<typeof mockComic>[0][],
+  extra: Partial<ReturnType<typeof useAllComics>> = {},
+) {
+  vi.mocked(useAllComics).mockReturnValue({ comics: comics.map(mockComic), isLoading: false, error: null, ...extra });
 }
 
 describe('DashboardClient', () => {
@@ -52,9 +57,9 @@ describe('DashboardClient', () => {
       settings: DEFAULT_DISPLAY_SETTINGS,
       isHydrated: true,
     });
-    vi.mocked(useGetMeQuery).mockReturnValue({ data: { me: { displayName: 'Test User' } } } as any);
+    vi.mocked(useGetMeQuery).mockReturnValue(mockQueryResult({ data: { me: { displayName: 'Test User' } } }));
     mockAllComics(mockComics);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           favoriteComics: [1],
@@ -63,9 +68,9 @@ describe('DashboardClient', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
-    vi.mocked(useAddFavoriteMutation).mockReturnValue(mockMutation as any);
-    vi.mocked(useRemoveFavoriteMutation).mockReturnValue(mockMutation as any);
+    }));
+    vi.mocked(useAddFavoriteMutation).mockReturnValue(mockMutationResult(mockMutation));
+    vi.mocked(useRemoveFavoriteMutation).mockReturnValue(mockMutationResult(mockMutation));
   });
 
   afterEach(() => {
@@ -80,11 +85,11 @@ describe('DashboardClient', () => {
   });
 
   it('renders error state when prefs query fails', () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: null,
       isLoading: false,
       error: new Error('Prefs error'),
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     expect(screen.getByText('Failed to load dashboard')).toBeInTheDocument();
   });
@@ -111,7 +116,7 @@ describe('DashboardClient', () => {
   });
 
   it('sorts lastReadDates to find most recent', () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           favoriteComics: [],
@@ -124,7 +129,7 @@ describe('DashboardClient', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     // Most recent date is comicId 1 (2024-01-14) → Garfield should appear in continue-reading
     expect(screen.getByRole('link', { name: /continue reading garfield/i })).toBeInTheDocument();
@@ -133,18 +138,18 @@ describe('DashboardClient', () => {
   });
 
   it('handles null preferences', () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: { preferences: null },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     expect(screen.getByText('No favorite comics yet')).toBeInTheDocument();
     expect(screen.getByText('No recent reading history')).toBeInTheDocument();
   });
 
   it('handles lastReadDates with no matching comic', () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           favoriteComics: [],
@@ -153,23 +158,23 @@ describe('DashboardClient', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     expect(screen.getByText('No recent reading history')).toBeInTheDocument();
   });
 
   it('falls back to "there" when me query has no displayName', () => {
-    vi.mocked(useGetMeQuery).mockReturnValue({ data: { me: null } } as any);
+    vi.mocked(useGetMeQuery).mockReturnValue(mockQueryResult({ data: { me: null } }));
     renderWithQuery(<DashboardClient />);
     expect(screen.getByText(/there/i)).toBeInTheDocument();
   });
 
   it('shows prefs error message', () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: null,
       isLoading: false,
       error: new Error('Prefs failed'),
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     expect(screen.getByText('Prefs failed')).toBeInTheDocument();
   });
@@ -179,37 +184,29 @@ describe('DashboardClient', () => {
       { id: 2, name: 'Peanuts', avatarUrl: 'https://example.com/peanuts.png', newest: '2024-01-15', lastStrip: null },
     ]);
     const { container } = renderWithQuery(<DashboardClient />);
-    expect(container.querySelector('img[src="https://example.com/peanuts.png"]')).not.toBeNull();
+    expect([...container.querySelectorAll('img')].map(imageSrc)).toContain('https://example.com/peanuts.png');
   });
 
   it('invokes addFavorite onSuccess callback', () => {
-    let capturedOpts: any;
-    vi.mocked(useAddFavoriteMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return mockMutation as any;
-    });
+    const mutation = captureMutation(useAddFavoriteMutation, mockMutation);
     renderWithQuery(<DashboardClient />);
     // Calling onSuccess exercises the invalidateQueries branch
-    expect(() => capturedOpts.onSuccess({ addFavorite: { errors: [] } })).not.toThrow();
+    expect(() => mutation.succeed({ addFavorite: { preference: null, errors: [] } }, { comicId: 1 })).not.toThrow();
   });
 
   it('invokes removeFavorite onSuccess callback', () => {
-    let capturedOpts: any;
-    vi.mocked(useRemoveFavoriteMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return mockMutation as any;
-    });
+    const mutation = captureMutation(useRemoveFavoriteMutation, mockMutation);
     renderWithQuery(<DashboardClient />);
-    expect(() => capturedOpts.onSuccess({ removeFavorite: { errors: [] } })).not.toThrow();
+    expect(() => mutation.succeed({ removeFavorite: { preference: null, errors: [] } }, { comicId: 1 })).not.toThrow();
   });
 
   it('handles empty comics data', () => {
     mockAllComics([]);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: { preferences: { favoriteComics: [], lastReadDates: [] } },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     // Should show empty states
     expect(screen.getByText('No new strips yet')).toBeInTheDocument();
@@ -244,8 +241,8 @@ describe('DashboardClient', () => {
 
   it('calls removeFavorite when toggling an existing favorite', () => {
     const removeMutate = vi.fn();
-    vi.mocked(useRemoveFavoriteMutation).mockReturnValue({ mutate: removeMutate, isLoading: false } as any);
-    vi.mocked(useAddFavoriteMutation).mockReturnValue({ mutate: vi.fn(), isLoading: false } as any);
+    vi.mocked(useRemoveFavoriteMutation).mockReturnValue(mockMutationResult({ mutate: removeMutate, isPending: false }));
+    vi.mocked(useAddFavoriteMutation).mockReturnValue(mockMutationResult({ mutate: vi.fn(), isPending: false }));
 
     renderWithQuery(<DashboardClient />);
 
@@ -257,8 +254,8 @@ describe('DashboardClient', () => {
 
   it('calls addFavorite when toggling a non-favorite', () => {
     const addMutate = vi.fn();
-    vi.mocked(useAddFavoriteMutation).mockReturnValue({ mutate: addMutate, isLoading: false } as any);
-    vi.mocked(useRemoveFavoriteMutation).mockReturnValue({ mutate: vi.fn(), isLoading: false } as any);
+    vi.mocked(useAddFavoriteMutation).mockReturnValue(mockMutationResult({ mutate: addMutate, isPending: false }));
+    vi.mocked(useRemoveFavoriteMutation).mockReturnValue(mockMutationResult({ mutate: vi.fn(), isPending: false }));
 
     renderWithQuery(<DashboardClient />);
 
@@ -277,11 +274,11 @@ describe('DashboardClient', () => {
       lastStrip: null,
     }));
     mockAllComics(many);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: { preferences: { favoriteComics: [55], lastReadDates: [{ comicId: 58, date: '2024-01-10' }] } },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     const favorites = screen.getByText('Your Favorites').closest('section')!;
     expect(within(favorites).getByRole('link', { name: 'Comic 55' })).toHaveAttribute('href', '/comics/55');
@@ -299,11 +296,11 @@ describe('DashboardClient', () => {
       })),
     ];
     mockAllComics(comics);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: { preferences: { favoriteComics: [2], lastReadDates: [] } },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     const section = screen.getByText('Latest Updates').closest('section')!;
     const names = within(section).getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
@@ -318,7 +315,7 @@ describe('DashboardClient', () => {
       { id: 1, name: 'Caught Up', avatarUrl: null, newest: '2024-01-15', lastStrip: null },
       { id: 2, name: 'Behind', avatarUrl: null, newest: '2024-01-15', lastStrip: null },
     ]);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           favoriteComics: [],
@@ -330,7 +327,7 @@ describe('DashboardClient', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
     expect(screen.getByRole('link', { name: /continue reading behind/i })).toHaveAttribute(
       'href',
@@ -344,7 +341,7 @@ describe('DashboardClient', () => {
       { id: 1, name: 'Caught Up', avatarUrl: null, newest: '2024-01-15', lastStrip: null },
       { id: 2, name: 'Behind', avatarUrl: null, newest: '2024-01-15', lastStrip: null },
     ]);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           favoriteComics: [],
@@ -356,7 +353,7 @@ describe('DashboardClient', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
 
     const links = screen.getAllByRole('link', { name: /^continue reading/i });
@@ -370,7 +367,7 @@ describe('DashboardClient', () => {
       { id: 2, name: 'Never Read', avatarUrl: null, newest: '2024-01-15', lastStrip: { date: '2024-01-15', imageUrl: null } },
       { id: 3, name: 'Caught Up', avatarUrl: null, newest: '2024-01-15', lastStrip: { date: '2024-01-15', imageUrl: null } },
     ]);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           favoriteComics: [],
@@ -382,7 +379,7 @@ describe('DashboardClient', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<DashboardClient />);
 
     expect(screen.getAllByText('New')).toHaveLength(1);

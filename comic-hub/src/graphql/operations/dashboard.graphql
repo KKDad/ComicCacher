@@ -56,6 +56,8 @@ query GetComic($id: Int!) {
     lastStrip {
       imageUrl
       date
+      width
+      height
     }
     firstStrip {
       imageUrl

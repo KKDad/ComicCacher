@@ -44,13 +44,13 @@ export function DashboardClient() {
   );
 
   const latestComics = comics
-    .filter((c) => c.lastStrip?.date ?? c.newest)
-    .map((c) => {
-      const latestDate: string = c.lastStrip?.date ?? c.newest;
+    .flatMap((c) => {
+      const latestDate = c.lastStrip?.date ?? c.newest;
+      if (!latestDate) return [];
       const lastRead = lastReadMap.get(c.id);
       const isFavorite = favoriteIds.has(c.id);
 
-      return {
+      return [{
         id: c.id,
         name: c.name,
         date: latestDate,
@@ -59,7 +59,7 @@ export function DashboardClient() {
         isNew: lastRead !== undefined && latestDate > lastRead,
         isFavorite,
         onToggleFavorite: () => toggleFavorite(c.id),
-      };
+      }];
     })
     // Newest strip first, then alphabetical. Favoriting doesn't reorder the grid,
     // so a heart click never moves the next card out from under the pointer.

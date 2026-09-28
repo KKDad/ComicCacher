@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import {
   useGetStripWindowQuery,
   useInfiniteGetStripWindowQuery,
-  useGetRandomStripQuery,
   useUpdateLastReadMutation,
   type GetStripWindowQuery,
 } from '@/generated/graphql';
+import { useRandomStrip } from './use-random-strip';
 
 export interface Strip {
   date: string;
@@ -94,7 +93,6 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
   const [chosenAnchor, setChosenAnchor] = useState<string | undefined>(initialDate);
   // The strip being read. Tracked by date so strips loading above it don't move it.
   const [chosenDate, setChosenDate] = useState<string | undefined>(initialDate);
-  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -280,22 +278,8 @@ export function useReader({ comicId, initialDate, mode }: UseReaderOptions): Use
     return 'loading';
   }, [comicMeta, strips, currentIndex, setCurrentIndex, goToDate]);
 
-  const goToRandom = useCallback(async () => {
-    const variables = { comicId };
-    setIsLoadingRandom(true);
-    try {
-      const data = await queryClient.fetchQuery({
-        queryKey: useGetRandomStripQuery.getKey(variables),
-        queryFn: useGetRandomStripQuery.fetcher(variables),
-        staleTime: 0, // A new random strip every time
-      });
-      if (data.randomStrip) goToDate(data.randomStrip.date);
-    } catch {
-      toast.error('Could not load a random strip');
-    } finally {
-      setIsLoadingRandom(false);
-    }
-  }, [comicId, queryClient, goToDate]);
+  const { goToRandom: goToRandomOf, isLoadingRandom } = useRandomStrip(goToDate);
+  const goToRandom = useCallback(() => goToRandomOf(comicId), [goToRandomOf, comicId]);
 
   // Step one strip from `from` once a page has loaded past the edge
   const stepAfterLoad = useCallback(

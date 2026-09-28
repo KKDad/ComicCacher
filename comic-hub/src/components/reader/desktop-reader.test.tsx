@@ -38,6 +38,7 @@ vi.mock('@/lib/navigation-history', () => ({
 }));
 
 import { toast } from 'sonner';
+import { imageSrc } from '@/test/test-utils';
 
 vi.mock('sonner', () => ({
   toast: { info: vi.fn() },
@@ -468,7 +469,7 @@ describe('DesktopReader', () => {
 
       const options = vi.mocked(useVirtualizer).mock.calls.at(-1)![0];
       expect(options.getItemKey!(0)).toBe('2026-03-15');
-      expect(screen.getAllByRole('img')[0]).toHaveAttribute('src', 'https://example.com/15.png');
+      expect(imageSrc(screen.getAllByRole('img')[0])).toBe('https://example.com/15.png');
     });
 
     it('scrolls to the current strip at its reversed position', () => {

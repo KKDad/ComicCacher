@@ -44,7 +44,13 @@ interface UseGridReaderReturn {
 
 /** The comics' strips in the shape the lightbox shows. */
 export function toLightboxItems(comics: GridComic[]): LightboxItem[] {
-  return comics.map((c) => ({ title: c.name, date: c.strip?.date ?? '', imageUrl: c.strip?.imageUrl ?? null }));
+  return comics.map((c) => ({
+    title: c.name,
+    date: c.strip?.date ?? '',
+    imageUrl: c.strip?.imageUrl ?? null,
+    width: c.strip?.width ?? null,
+    height: c.strip?.height ?? null,
+  }));
 }
 
 export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGridReaderReturn {

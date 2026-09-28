@@ -6,10 +6,10 @@ import { useGridReader } from '@/hooks/use-grid-reader';
 vi.mock('@/hooks/use-responsive-nav');
 vi.mock('@/hooks/use-grid-reader');
 vi.mock('./desktop-grid-reader', () => ({
-  DesktopGridReader: ({ reader }: { reader: unknown }) => <div data-testid="desktop-grid-reader">Desktop</div>,
+  DesktopGridReader: () => <div data-testid="desktop-grid-reader">Desktop</div>,
 }));
 vi.mock('./mobile-grid-reader', () => ({
-  MobileGridReader: ({ reader }: { reader: unknown }) => <div data-testid="mobile-grid-reader">Mobile</div>,
+  MobileGridReader: () => <div data-testid="mobile-grid-reader">Mobile</div>,
 }));
 
 const mockReader = {

@@ -2,15 +2,16 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Lightbox } from './lightbox';
 import type { GridComic } from '@/hooks/use-grid-reader';
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
+import { imageSrc } from '@/test/test-utils';
 
 vi.mock('@/hooks/use-pinch-zoom', () => ({
   usePinchZoom: vi.fn(),
 }));
 
 const mockResetZoom = vi.fn();
-const defaultZoomState = {
+const defaultZoomState: ReturnType<typeof usePinchZoom> = {
   state: { scale: 1, translateX: 0, translateY: 0, originX: 50, originY: 50 },
-  handlers: {},
+  handlers: { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() },
   isZoomed: false,
   resetZoom: mockResetZoom,
 };
@@ -30,7 +31,13 @@ const mockComics: GridComic[] = [
   },
 ];
 
-const mockItems = mockComics.map((c) => ({ title: c.name, date: c.strip!.date, imageUrl: c.strip!.imageUrl }));
+const mockItems = mockComics.map((c) => ({
+  title: c.name,
+  date: c.strip!.date,
+  imageUrl: c.strip!.imageUrl,
+  width: c.strip!.width,
+  height: c.strip!.height,
+}));
 
 describe('Lightbox', () => {
   const defaultProps = {
@@ -43,13 +50,13 @@ describe('Lightbox', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(usePinchZoom).mockReturnValue(defaultZoomState as any);
+    vi.mocked(usePinchZoom).mockReturnValue(defaultZoomState);
   });
 
   it('renders the current comic strip image', () => {
     render(<Lightbox {...defaultProps} />);
     const img = screen.getByRole('img');
-    expect(img).toHaveAttribute('src', '/strip/2.png');
+    expect(imageSrc(img)).toBe('/strip/2.png');
   });
 
   it('displays comic name', () => {
@@ -89,7 +96,7 @@ describe('Lightbox', () => {
   });
 
   it('returns null when the item has no image', () => {
-    const noImage = [{ title: 'Empty', date: '2026-03-29', imageUrl: null }];
+    const noImage = [{ title: 'Empty', date: '2026-03-29', imageUrl: null, width: null, height: null }];
     const { container } = render(<Lightbox {...defaultProps} items={noImage} currentIndex={0} />);
     expect(container.innerHTML).toBe('');
   });
@@ -123,7 +130,7 @@ describe('Lightbox', () => {
     vi.mocked(usePinchZoom).mockReturnValue({
       ...defaultZoomState,
       isZoomed: true,
-    } as any);
+    });
     render(<Lightbox {...defaultProps} />);
     fireEvent.click(screen.getByRole('dialog'));
     expect(mockResetZoom).toHaveBeenCalledOnce();

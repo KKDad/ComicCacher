@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import ComicDetailPage from './page';
 import { useParams, useRouter } from 'next/navigation';
 import { useGetComicQuery } from '@/generated/graphql';
+import { imageSrc } from '@/test/test-utils';
+import { mockQueryResult } from '@/test/mock-query';
 
 vi.mock('@/generated/graphql', () => ({
   useGetComicQuery: vi.fn(),
@@ -35,10 +37,10 @@ describe('ComicDetailPage', () => {
   beforeEach(() => {
     vi.mocked(useParams).mockReturnValue({ id: '1' });
     vi.mocked(useRouter).mockReturnValue({ ...mockRouter, bfcacheId: 'test-bfcache-id' });
-    vi.mocked(useGetComicQuery).mockReturnValue({
+    vi.mocked(useGetComicQuery).mockReturnValue(mockQueryResult({
       data: { comic: mockComic },
       isLoading: false,
-    } as any);
+    }));
   });
 
   afterEach(() => {
@@ -47,13 +49,13 @@ describe('ComicDetailPage', () => {
   });
 
   it('renders loading skeleton when loading', () => {
-    vi.mocked(useGetComicQuery).mockReturnValue({ data: null, isLoading: true } as any);
+    vi.mocked(useGetComicQuery).mockReturnValue(mockQueryResult({ data: undefined, isLoading: true }));
     render(<ComicDetailPage />);
     expect(screen.queryByText('Garfield')).not.toBeInTheDocument();
   });
 
   it('renders not-found state when comic is null', () => {
-    vi.mocked(useGetComicQuery).mockReturnValue({ data: { comic: null }, isLoading: false } as any);
+    vi.mocked(useGetComicQuery).mockReturnValue(mockQueryResult({ data: { comic: null }, isLoading: false }));
     render(<ComicDetailPage />);
     expect(screen.getByText('Failed to load comic details')).toBeInTheDocument();
   });
@@ -85,7 +87,7 @@ describe('ComicDetailPage', () => {
 
   it('renders avatar image', () => {
     render(<ComicDetailPage />);
-    expect(screen.getByAltText('Garfield')).toHaveAttribute('src', 'https://example.com/garfield.png');
+    expect(imageSrc(screen.getByAltText('Garfield'))).toBe('https://example.com/garfield.png');
   });
 
   it('renders latest strip section', () => {
@@ -101,7 +103,7 @@ describe('ComicDetailPage', () => {
   });
 
   it('links to the comics list in not-found state', () => {
-    vi.mocked(useGetComicQuery).mockReturnValue({ data: { comic: null }, isLoading: false } as any);
+    vi.mocked(useGetComicQuery).mockReturnValue(mockQueryResult({ data: { comic: null }, isLoading: false }));
     render(<ComicDetailPage />);
     expect(screen.getByRole('link', { name: /browse comics/i })).toHaveAttribute('href', '/comics');
   });
@@ -112,10 +114,10 @@ describe('ComicDetailPage', () => {
   });
 
   it('renders initial fallback when no avatar', () => {
-    vi.mocked(useGetComicQuery).mockReturnValue({
+    vi.mocked(useGetComicQuery).mockReturnValue(mockQueryResult({
       data: { comic: { ...mockComic, avatarUrl: null } },
       isLoading: false,
-    } as any);
+    }));
     render(<ComicDetailPage />);
     expect(screen.getByText('G')).toBeInTheDocument();
   });

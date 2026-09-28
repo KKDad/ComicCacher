@@ -1,6 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { StripCard } from './strip-card';
 import type { Strip } from '@/hooks/use-reader';
+import { imageSrc } from '@/test/test-utils';
 
 describe('StripCard', () => {
   const availableStrip: Strip = {
@@ -41,7 +42,7 @@ describe('StripCard', () => {
     render(<StripCard strip={availableStrip} comicName="Garfield" />);
 
     const img = screen.getByRole('img');
-    expect(img).toHaveAttribute('src', 'https://example.com/strip.png');
+    expect(imageSrc(img)).toBe('https://example.com/strip.png');
     expect(img).toHaveAttribute('alt', expect.stringContaining('Garfield'));
   });
 
@@ -89,13 +90,14 @@ describe('StripCard', () => {
     expect(wrapper).toBeInTheDocument();
   });
 
-  it('transitions opacity on image load', () => {
+  it('transitions opacity on image load', async () => {
     render(<StripCard strip={availableStrip} comicName="Garfield" />);
 
     const img = screen.getByRole('img');
     expect(img.className).toContain('opacity-0');
 
+    // next/image calls onLoad once the image has decoded, after the load event
     fireEvent.load(img);
-    expect(img.className).toContain('opacity-100');
+    await waitFor(() => expect(img.className).toContain('opacity-100'));
   });
 });

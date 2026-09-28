@@ -30,7 +30,7 @@ import {
   useGetBatchSchedulersQuery,
   useGetRecentBatchJobsQuery,
 } from '@/generated/graphql';
-import type { BatchSchedulerInfo, BatchJob } from '@/generated/graphql';
+import type { BatchSchedulerInfo, BatchJob } from '@/types/batch-jobs';
 import { formatAbsoluteTime, formatRelativeTime, formatDuration } from '@/lib/date-utils';
 
 /**

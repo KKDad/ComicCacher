@@ -1,4 +1,11 @@
-export function fetcher<TData, TVariables>(query: string | String, variables?: TVariables, headers?: RequestInit['headers']) {
+import type { TypedDocumentString } from '@/generated/graphql';
+import { loginPath } from '@/lib/safe-redirect';
+
+export function fetcher<TData, TVariables>(
+  query: string | TypedDocumentString<unknown, unknown>,
+  variables?: TVariables,
+  headers?: RequestInit['headers'],
+) {
   return async (): Promise<TData> => {
     const res = await fetch('/api/graphql', {
       method: 'POST',
@@ -8,7 +15,9 @@ export function fetcher<TData, TVariables>(query: string | String, variables?: T
 
     if (!res.ok) {
       if (res.status === 401) {
-        window.location.href = '/login';
+        // A full page load, not router.push, so no client state from the expired session survives
+        const { pathname, search, origin } = window.location;
+        window.location.assign(new URL(loginPath(pathname + search), origin));
       }
       throw new Error(`Request failed: ${res.status}`);
     }

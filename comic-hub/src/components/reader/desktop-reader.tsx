@@ -64,7 +64,7 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   // Fullscreen view: steps through the strips that have an image
   const viewable = useMemo(() => strips.filter((s) => s.available && s.imageUrl), [strips]);
   const lightboxItems = useMemo(
-    () => viewable.map((s) => ({ title: comicName, date: s.date, imageUrl: s.imageUrl })),
+    () => viewable.map((s) => ({ title: comicName, date: s.date, imageUrl: s.imageUrl, width: s.width, height: s.height })),
     [viewable, comicName],
   );
   const lightbox = useLightbox(viewable.length);
@@ -103,6 +103,8 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   // Date of the strip the view was last scrolled to (or scrolled onto by the reader)
   const scrolledToDate = useRef<string | null>(null);
 
+  // TanStack Virtual returns functions the React Compiler can't memoize safely, so it skips this component
+  // eslint-disable-next-line react-hooks/incompatible-library -- no compiler-compatible virtualizer API yet
   const virtualizer = useVirtualizer({
     count: listStrips.length,
     getScrollElement: () => scrollContainerRef.current,

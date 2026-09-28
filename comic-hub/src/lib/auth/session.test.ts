@@ -1,20 +1,9 @@
 import { getSession } from './session';
-import { cookies } from 'next/headers';
+import { mockCookieStore } from '@/test/mock-cookies';
 
 vi.mock('next/headers', () => ({
   cookies: vi.fn(),
 }));
-
-function mockCookieStore(values: Record<string, string> = {}) {
-  const store = {
-    get: vi.fn((name: string) => {
-      const value = values[name];
-      return value ? { name, value } : undefined;
-    }),
-  };
-  vi.mocked(cookies).mockResolvedValue(store as any);
-  return store;
-}
 
 const mockUser = {
   username: 'testuser',

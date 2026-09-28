@@ -105,12 +105,23 @@ export function LogViewer({ open, onOpenChange, executionId, jobName, jobLabel }
     { enabled: open },
   );
 
+  const batchJobLog = data?.batchJobLog;
   const logContent = useMemo(
-    () => (data?.batchJobLog ? alignLoggerColumn(data.batchJobLog) : undefined),
-    [data?.batchJobLog],
+    () => (batchJobLog ? alignLoggerColumn(batchJobLog) : undefined),
+    [batchJobLog],
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [activeMatchIndex, setActiveMatchIndex] = useState(0);
+
+  // Reset search when the dialog closes, however the parent closes it
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) {
+      setSearchQuery('');
+      setActiveMatchIndex(0);
+    }
+  }
   const searchInputRef = useRef<HTMLInputElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
 
@@ -118,19 +129,6 @@ export function LogViewer({ open, onOpenChange, executionId, jobName, jobLabel }
     () => (searchQuery.length > 0 && logContent ? findAllMatches(logContent, searchQuery) : []),
     [logContent, searchQuery],
   );
-
-  // Reset active match when search changes
-  useEffect(() => {
-    setActiveMatchIndex(0);
-  }, [searchQuery]);
-
-  // Reset search when dialog closes
-  useEffect(() => {
-    if (!open) {
-      setSearchQuery('');
-      setActiveMatchIndex(0);
-    }
-  }, [open]);
 
   // Scroll to active match
   useEffect(() => {
@@ -188,7 +186,10 @@ export function LogViewer({ open, onOpenChange, executionId, jobName, jobLabel }
                   ref={searchInputRef}
                   placeholder="Search logs..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setActiveMatchIndex(0);
+                  }}
                   className="pl-8 h-8 text-sm"
                   aria-label="Search logs"
                 />

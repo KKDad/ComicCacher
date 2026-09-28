@@ -5,11 +5,15 @@ on:
     branches: [ "master" ]
     paths:
       - 'comic-hub/**'
+      # comic-hub generates its GraphQL types from the API schema
+      - 'comic-api/src/main/resources/graphql/**'
       - '.github/workflows/comic-hub.yml'
   pull_request:
     branches: [ "master" ]
     paths:
       - 'comic-hub/**'
+      # comic-hub generates its GraphQL types from the API schema
+      - 'comic-api/src/main/resources/graphql/**'
       - '.github/workflows/comic-hub.yml'
 
 permissions:
@@ -36,6 +40,17 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Check generated GraphQL code is current (run npm run codegen and commit)
+      run: |
+        npm run codegen
+        git diff --exit-code -- src/generated
+
+    - name: Type check
+      run: npx tsc --noEmit
 
     - name: Run tests with coverage
       run: npx vitest run --coverage

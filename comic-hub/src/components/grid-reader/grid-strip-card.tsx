@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { MoreVertical, Shuffle, ExternalLink, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { StripSkeleton } from '@/components/reader/strip-skeleton';
+import { STRIP_SIZES } from '@/components/reader/strip-sizes';
 import { formatFullDate } from '@/lib/date-utils';
 import { useUser } from '@/contexts/user-context';
 import { isAdmin } from '@/lib/roles';
@@ -40,9 +42,11 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
       {/* Header: avatar + name + hamburger */}
       <div className="flex items-center gap-3 px-4 py-3">
         {comic.avatarUrl ? (
-          <img
+          <Image
             src={comic.avatarUrl}
             alt=""
+            width={32}
+            height={32}
             className="h-8 w-8 rounded-full object-cover shrink-0"
           />
         ) : (
@@ -116,11 +120,12 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
                 <p className="text-sm text-ink-subtle">This strip didn&rsquo;t load</p>
               </div>
             ) : (
-              <img
+              <Image
                 src={strip.imageUrl!}
                 alt={`${comic.name} - ${formattedDate}`}
-                loading="lazy"
-                className={`strip-image absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                fill
+                sizes={STRIP_SIZES}
+                className={`strip-image object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => setImageError(true)}
               />

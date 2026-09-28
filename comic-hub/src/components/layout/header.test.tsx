@@ -2,11 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Header } from './header';
 import { useLogout } from '@/hooks/use-auth';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { UserProvider } from '@/contexts/user-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMockUser } from '@/test/test-utils';
 import * as gravatar from '@/lib/gravatar';
+import { mockRouter, mockSearchParams } from '@/test/mock-next';
+import type { User } from '@/types/auth';
 
 vi.mock('@/hooks/use-auth', () => ({
   useLogout: vi.fn(),
@@ -17,7 +19,7 @@ vi.mock('@/lib/gravatar', () => ({
 }));
 
 
-function renderHeader(user = createMockUser()) {
+function renderHeader(user: User | null = createMockUser()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -59,7 +61,7 @@ describe('Header', () => {
   });
 
   it('shows "U" fallback when no user', () => {
-    renderHeader(null as any);
+    renderHeader(null);
     expect(screen.getByText('U')).toBeInTheDocument();
   });
 
@@ -133,12 +135,9 @@ describe('Header - search', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.mocked(useLogout).mockReturnValue({ logout: mockLogout, isLoggingOut: false });
     vi.mocked(gravatar.getGravatarUrl).mockResolvedValue('');
-    vi.mocked(useRouter).mockReturnValue({
-      push: mockPush, replace: mockReplace, prefetch: vi.fn(),
-      back: vi.fn(), refresh: vi.fn(), forward: vi.fn(),
-    } as any);
+    mockRouter({ push: mockPush, replace: mockReplace });
     vi.mocked(usePathname).mockReturnValue('/comics');
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as any);
+    mockSearchParams();
   });
 
   afterEach(() => {
@@ -175,7 +174,7 @@ describe('Header - search', () => {
   });
 
   it('navigates to /comics when search is cleared', async () => {
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('q=baby') as any);
+    mockSearchParams({ q: 'baby' });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderHeader();
     await user.click(screen.getByRole('button', { name: 'Clear search' }));
@@ -184,7 +183,7 @@ describe('Header - search', () => {
   });
 
   it('initializes search value from URL on /comics', () => {
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('q=garfield') as any);
+    mockSearchParams({ q: 'garfield' });
     renderHeader();
     const input = screen.getAllByPlaceholderText('Search comics...')[0] as HTMLInputElement;
     expect(input.value).toBe('garfield');
@@ -198,7 +197,7 @@ describe('Header - search', () => {
   });
 
   it('does not navigate when value matches current query', () => {
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('q=test') as any);
+    mockSearchParams({ q: 'test' });
     renderHeader();
     vi.advanceTimersByTime(300);
     expect(mockPush).not.toHaveBeenCalled();
@@ -243,7 +242,7 @@ describe('Header - search', () => {
 
   it('does not navigate to /comics when clearing on non-comics page', async () => {
     vi.mocked(usePathname).mockReturnValue('/dashboard');
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as any);
+    mockSearchParams();
     renderHeader();
     vi.advanceTimersByTime(300);
     expect(mockPush).not.toHaveBeenCalled();

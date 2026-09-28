@@ -7,7 +7,9 @@ import {
   useTriggerJobMutation,
   useToggleJobSchedulerMutation,
 } from '@/generated/graphql';
-import type { BatchSchedulerInfo, BatchJob, BatchStatusEnum, BatchJobParameterType } from '@/generated/graphql';
+import type { BatchStatusEnum, BatchJobParameterType } from '@/generated/graphql';
+import type { BatchSchedulerInfo, BatchJob } from '@/types/batch-jobs';
+import { mockMutationResult, captureMutation } from '@/test/mock-query';
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -36,7 +38,6 @@ vi.mock('@/generated/graphql', async (importOriginal) => {
 
 function createScheduler(overrides?: Partial<BatchSchedulerInfo>): BatchSchedulerInfo {
   return {
-    __typename: 'BatchSchedulerInfo',
     jobName: 'ComicDownloadJob',
     cronExpression: '0 0 6 * * ?',
     timezone: 'America/Toronto',
@@ -53,7 +54,6 @@ function createScheduler(overrides?: Partial<BatchSchedulerInfo>): BatchSchedule
 
 function createExecution(overrides?: Partial<BatchJob>): BatchJob {
   return {
-    __typename: 'BatchJob',
     executionId: 42,
     jobName: 'ComicDownloadJob',
     status: 'COMPLETED' as BatchStatusEnum,
@@ -64,7 +64,6 @@ function createExecution(overrides?: Partial<BatchJob>): BatchJob {
     exitDescription: null,
     steps: [
       {
-        __typename: 'BatchStep',
         stepName: 'comicRetrievalStep',
         status: 'COMPLETED' as BatchStatusEnum,
         readCount: 50,
@@ -272,10 +271,10 @@ describe('JobCard', () => {
 
   it('calls toggleMutation when switch is clicked', () => {
     const toggleMutate = vi.fn();
-    vi.mocked(useToggleJobSchedulerMutation).mockReturnValue({
+    vi.mocked(useToggleJobSchedulerMutation).mockReturnValue(mockMutationResult({
       mutate: toggleMutate,
       isPending: false,
-    } as any);
+    }));
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     screen.getByRole('switch').click();
@@ -285,10 +284,10 @@ describe('JobCard', () => {
 
   it('calls triggerMutation when confirm dialog Run Now is clicked', async () => {
     const triggerMutate = vi.fn();
-    vi.mocked(useTriggerJobMutation).mockReturnValue({
+    vi.mocked(useTriggerJobMutation).mockReturnValue(mockMutationResult({
       mutate: triggerMutate,
       isPending: false,
-    } as any);
+    }));
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
     await userEvent.click(screen.getByRole('button', { name: /run now/i }));
@@ -318,79 +317,55 @@ describe('JobCard', () => {
   });
 
   it('shows toggle success toast on onSuccess without errors', () => {
-    let capturedOpts: any;
-    vi.mocked(useToggleJobSchedulerMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: vi.fn(), isPending: false } as any;
-    });
+    const mutation = captureMutation(useToggleJobSchedulerMutation);
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
-    capturedOpts.onSuccess({ toggleJobScheduler: { errors: [] } });
+    mutation.succeed({ toggleJobScheduler: { scheduler: null, errors: [] } }, { jobName: 'ComicDownloadJob', paused: true });
 
     expect(toast.success).toHaveBeenCalledWith('ComicDownloadJob paused');
   });
 
   it('shows toggle error toast on onSuccess with errors', () => {
-    let capturedOpts: any;
-    vi.mocked(useToggleJobSchedulerMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: vi.fn(), isPending: false } as any;
-    });
+    const mutation = captureMutation(useToggleJobSchedulerMutation);
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
-    capturedOpts.onSuccess({ toggleJobScheduler: { errors: [{ message: 'Not allowed' }] } });
+    mutation.succeed({ toggleJobScheduler: { scheduler: null, errors: [{ message: 'Not allowed', field: null, code: null }] } }, { jobName: 'ComicDownloadJob', paused: true });
 
     expect(toast.error).toHaveBeenCalledWith('Not allowed');
   });
 
   it('shows toggle error toast on onError', () => {
-    let capturedOpts: any;
-    vi.mocked(useToggleJobSchedulerMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: vi.fn(), isPending: false } as any;
-    });
+    const mutation = captureMutation(useToggleJobSchedulerMutation);
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
-    capturedOpts.onError(new Error('Network failure'));
+    mutation.fail(new Error('Network failure'), { jobName: 'ComicDownloadJob', paused: true });
 
     expect(toast.error).toHaveBeenCalledWith('Failed to toggle scheduler: Network failure');
   });
 
   it('shows trigger success toast on onSuccess without errors', () => {
-    let capturedOpts: any;
-    vi.mocked(useTriggerJobMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: vi.fn(), isPending: false } as any;
-    });
+    const mutation = captureMutation(useTriggerJobMutation);
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
-    capturedOpts.onSuccess({ triggerJob: { errors: [] } });
+    mutation.succeed({ triggerJob: { batchJob: null, errors: [] } }, { jobName: 'ComicDownloadJob' });
 
     expect(toast.success).toHaveBeenCalledWith('ComicDownloadJob triggered successfully');
   });
 
   it('shows trigger error toast on onSuccess with errors', () => {
-    let capturedOpts: any;
-    vi.mocked(useTriggerJobMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: vi.fn(), isPending: false } as any;
-    });
+    const mutation = captureMutation(useTriggerJobMutation);
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
-    capturedOpts.onSuccess({ triggerJob: { errors: [{ message: 'Conflict' }] } });
+    mutation.succeed({ triggerJob: { batchJob: null, errors: [{ message: 'Conflict', field: null, code: null }] } }, { jobName: 'ComicDownloadJob' });
 
     expect(toast.error).toHaveBeenCalledWith('Conflict');
   });
 
   it('shows trigger error toast on onError', () => {
-    let capturedOpts: any;
-    vi.mocked(useTriggerJobMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: vi.fn(), isPending: false } as any;
-    });
+    const mutation = captureMutation(useTriggerJobMutation);
 
     renderWithProviders(<JobCard scheduler={createScheduler()} recentExecutions={[]} />);
-    capturedOpts.onError(new Error('Timeout'));
+    mutation.fail(new Error('Timeout'), { jobName: 'ComicDownloadJob' });
 
     expect(toast.error).toHaveBeenCalledWith('Failed to trigger job: Timeout');
   });
@@ -469,15 +444,14 @@ describe('JobCard', () => {
     const scheduler = createScheduler({
       availableParameters: [
         {
-          __typename: 'BatchJobParameter',
           name: 'source',
           label: 'Source Filter',
           type: 'ENUM' as BatchJobParameterType,
           required: false,
           defaultValue: 'ALL',
           options: [
-            { __typename: 'BatchJobParameterOption', value: 'ALL', label: 'All Sources' },
-            { __typename: 'BatchJobParameterOption', value: 'gocomics', label: 'GoComics' },
+            { value: 'ALL', label: 'All Sources' },
+            { value: 'gocomics', label: 'GoComics' },
           ],
         },
       ],
@@ -491,23 +465,22 @@ describe('JobCard', () => {
 
   it('sends parameters when triggering job with available parameters', async () => {
     const triggerMutate = vi.fn();
-    vi.mocked(useTriggerJobMutation).mockReturnValue({
+    vi.mocked(useTriggerJobMutation).mockReturnValue(mockMutationResult({
       mutate: triggerMutate,
       isPending: false,
-    } as any);
+    }));
 
     const scheduler = createScheduler({
       availableParameters: [
         {
-          __typename: 'BatchJobParameter',
           name: 'source',
           label: 'Source Filter',
           type: 'ENUM' as BatchJobParameterType,
           required: false,
           defaultValue: 'ALL',
           options: [
-            { __typename: 'BatchJobParameterOption', value: 'ALL', label: 'All Sources' },
-            { __typename: 'BatchJobParameterOption', value: 'gocomics', label: 'GoComics' },
+            { value: 'ALL', label: 'All Sources' },
+            { value: 'gocomics', label: 'GoComics' },
           ],
         },
       ],

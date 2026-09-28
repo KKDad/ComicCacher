@@ -11,9 +11,13 @@ const nowSeconds = () => Math.floor(Date.now() / 1000);
 const validJwt = makeJwt({ exp: nowSeconds() + 600 });
 const expiredJwt = makeJwt({ exp: nowSeconds() - 60 });
 
-function createRequest(cookies: Record<string, string> = {}) {
-  const cookie = Object.entries(cookies).map(([name, value]) => `${name}=${value}`).join('; ');
-  return new NextRequest('http://localhost/comics/1/read', { headers: cookie ? { cookie } : {} });
+function cookieHeader(cookies: Record<string, string>) {
+  return Object.entries(cookies).map(([name, value]) => `${name}=${value}`).join('; ');
+}
+
+function createRequest(cookies: Record<string, string> = {}, url = 'http://localhost/comics/1/read') {
+  const cookie = cookieHeader(cookies);
+  return new NextRequest(url, { headers: cookie ? { cookie } : {} });
 }
 
 function refreshSucceeds() {
@@ -22,9 +26,9 @@ function refreshSucceeds() {
   );
 }
 
-// The cookie header proxy forwards to the render, or undefined when it didn't override it
-function forwardedCookieHeader(response: Response) {
-  return response.headers.get('x-middleware-request-cookie') ?? undefined;
+// A request header proxy forwards to the render
+function forwardedHeader(response: Response, name: string) {
+  return response.headers.get(`x-middleware-request-${name}`) ?? undefined;
 }
 
 describe('proxy', () => {
@@ -37,10 +41,21 @@ describe('proxy', () => {
   });
 
   it('passes through without a refresh cookie', async () => {
-    const response = await proxy(createRequest({ 'comic-hub-jwt': expiredJwt }));
+    const cookies = { 'comic-hub-jwt': expiredJwt };
+    const response = await proxy(createRequest(cookies));
     expect(global.fetch).not.toHaveBeenCalled();
     expect(response.cookies.getAll()).toEqual([]);
-    expect(forwardedCookieHeader(response)).toBeUndefined();
+    expect(forwardedHeader(response, 'cookie')).toBe(cookieHeader(cookies));
+  });
+
+  it('forwards the requested path and query to the render', async () => {
+    const response = await proxy(createRequest({}, 'http://localhost/comics/1/read?date=2026-09-01'));
+    expect(forwardedHeader(response, 'x-pathname')).toBe('/comics/1/read?date=2026-09-01');
+  });
+
+  it('leaves the RSC request marker out of the forwarded path', async () => {
+    const response = await proxy(createRequest({}, 'http://localhost/comics?q=dog&_rsc=abc123'));
+    expect(forwardedHeader(response, 'x-pathname')).toBe('/comics?q=dog');
   });
 
   it('passes through while the access token is still valid', async () => {
@@ -57,8 +72,8 @@ describe('proxy', () => {
     expect(body.variables).toEqual({ refreshToken: 'old-refresh' });
     expect(response.cookies.get('comic-hub-jwt')?.value).toBe('new-jwt');
     expect(response.cookies.get('comic-hub-refresh')?.value).toBe('new-refresh');
-    expect(forwardedCookieHeader(response)).toContain('comic-hub-jwt=new-jwt');
-    expect(forwardedCookieHeader(response)).toContain('comic-hub-refresh=new-refresh');
+    expect(forwardedHeader(response, 'cookie')).toContain('comic-hub-jwt=new-jwt');
+    expect(forwardedHeader(response, 'cookie')).toContain('comic-hub-refresh=new-refresh');
   });
 
   it('refreshes when the access cookie is missing', async () => {
@@ -87,15 +102,17 @@ describe('proxy', () => {
 
   it('clears the auth cookies when the refresh is rejected', async () => {
     vi.mocked(global.fetch).mockResolvedValue(new Response(JSON.stringify({ data: { refreshToken: null } })));
-    const response = await proxy(createRequest({
+    const cookies = {
       'comic-hub-jwt': expiredJwt,
       'comic-hub-refresh': 'revoked',
       'comic-hub-remember': '1',
-    }));
+    };
+    const response = await proxy(createRequest(cookies));
     for (const name of ['comic-hub-jwt', 'comic-hub-refresh', 'comic-hub-remember']) {
       expect(response.cookies.get(name)?.value).toBe('');
     }
-    expect(forwardedCookieHeader(response)).toBeUndefined();
+    // The render sees the request's own cookies, so getSession() rejects them and the layout redirects
+    expect(forwardedHeader(response, 'cookie')).toBe(cookieHeader(cookies));
   });
 
   it('clears the auth cookies when the backend is unreachable', async () => {

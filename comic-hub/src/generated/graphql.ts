@@ -1,1431 +1,290 @@
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+/** Internal type. DO NOT USE DIRECTLY. */
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 import { useMutation, useQuery, useInfiniteQuery, UseMutationOptions, UseQueryOptions, UseInfiniteQueryOptions, InfiniteData } from '@tanstack/react-query';
 import { fetcher } from '../lib/graphql-client';
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-/** All built-in and custom scalars, mapped to their actual values */
-export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  Date: { input: any; output: any; }
-  DateTime: { input: any; output: any; }
-  JSON: { input: any; output: any; }
-};
-
-/** Access metrics for all comics. */
-export type AccessMetrics = {
-  __typename?: 'AccessMetrics';
-  /** Per-comic access breakdown. */
-  comics?: Maybe<Array<ComicAccessMetric>>;
-  /** Last time metrics were updated. */
-  lastUpdated?: Maybe<Scalars['DateTime']['output']>;
-  /** Total number of access events tracked. */
-  totalAccesses?: Maybe<Scalars['Int']['output']>;
-};
-
-/**
- * Authentication payload returned after successful login or registration.
- * Contains JWT tokens and user information.
- */
-export type AuthPayload = {
-  __typename?: 'AuthPayload';
-  /** Display name of the authenticated user. */
-  displayName?: Maybe<Scalars['String']['output']>;
-  /** Refresh token for obtaining new access tokens. */
-  refreshToken: Scalars['String']['output'];
-  /**
-   * JWT access token for authenticating API requests.
-   * Include in Authorization header as: Bearer <token>
-   */
-  token: Scalars['String']['output'];
-  /** Username of the authenticated user. */
-  username: Scalars['String']['output'];
-};
-
-/** Batch job execution information. */
-export type BatchJob = {
-  __typename?: 'BatchJob';
-  /** Duration of the job in milliseconds. */
-  durationMs?: Maybe<Scalars['Float']['output']>;
-  /** When the job ended (null if still running). */
-  endTime?: Maybe<Scalars['DateTime']['output']>;
-  /** Unique execution ID. */
-  executionId: Scalars['Int']['output'];
-  /** Exit status code. */
-  exitCode?: Maybe<Scalars['String']['output']>;
-  /** Exit description. */
-  exitDescription?: Maybe<Scalars['String']['output']>;
-  /** Job name (e.g., "comicRetrievalJob"). */
-  jobName: Scalars['String']['output'];
-  /** Job parameters (key-value pairs). */
-  parameters?: Maybe<Scalars['JSON']['output']>;
-  /** When the job started. */
-  startTime: Scalars['DateTime']['output'];
-  /** Job execution status. */
-  status: BatchStatusEnum;
-  /** Step execution details. */
-  steps?: Maybe<Array<BatchStep>>;
-};
-
-/** Metadata describing an optional parameter accepted by a batch job. */
-export type BatchJobParameter = {
-  __typename?: 'BatchJobParameter';
-  /** Default value (as a string) when the parameter is not supplied. */
-  defaultValue?: Maybe<Scalars['String']['output']>;
-  /** Human-readable label for the parameter. */
-  label: Scalars['String']['output'];
-  /** Parameter key name passed to the job. */
-  name: Scalars['String']['output'];
-  /** Selectable options (only populated for ENUM type). */
-  options?: Maybe<Array<BatchJobParameterOption>>;
-  /** Whether the parameter must be provided. */
-  required: Scalars['Boolean']['output'];
-  /** Data type of the parameter. */
-  type: BatchJobParameterType;
-};
-
-/** A selectable option for an ENUM-type batch job parameter. */
-export type BatchJobParameterOption = {
-  __typename?: 'BatchJobParameterOption';
-  /** Display label for the option. */
-  label: Scalars['String']['output'];
-  /** Value submitted when this option is selected. */
-  value: Scalars['String']['output'];
-};
-
 /** Data types for batch job parameters. */
-export enum BatchJobParameterType {
-  Boolean = 'BOOLEAN',
-  Enum = 'ENUM',
-  Integer = 'INTEGER',
-  String = 'STRING'
-}
+export const BatchJobParameterType = {
+  Boolean: 'BOOLEAN',
+  Enum: 'ENUM',
+  Integer: 'INTEGER',
+  String: 'STRING'
+} as const;
 
-/** Summary statistics for batch job executions. */
-export type BatchJobSummary = {
-  __typename?: 'BatchJobSummary';
-  /** Average job duration in milliseconds. */
-  averageDurationMs?: Maybe<Scalars['Float']['output']>;
-  /** Daily breakdown of job executions. */
-  dailyBreakdown?: Maybe<Array<DailyJobStats>>;
-  /** Number of days included in the summary. */
-  daysIncluded: Scalars['Int']['output'];
-  /** Number of failed executions. */
-  failureCount: Scalars['Int']['output'];
-  /** Number of currently running jobs. */
-  runningCount: Scalars['Int']['output'];
-  /** Number of successful executions. */
-  successCount: Scalars['Int']['output'];
-  /** Total number of job executions. */
-  totalExecutions: Scalars['Int']['output'];
-  /** Total items processed (read) across all jobs. */
-  totalItemsProcessed?: Maybe<Scalars['Int']['output']>;
-};
-
-/** Scheduler information for a batch job, including runtime pause state. */
-export type BatchSchedulerInfo = {
-  __typename?: 'BatchSchedulerInfo';
-  /** Optional parameters this job accepts for manual triggers. */
-  availableParameters: Array<BatchJobParameter>;
-  /** Cron expression for scheduling. */
-  cronExpression: Scalars['String']['output'];
-  /** Human-readable description of what this job does. */
-  description?: Maybe<Scalars['String']['output']>;
-  /** Whether the job is enabled in configuration. */
-  enabled: Scalars['Boolean']['output'];
-  /** Job name (e.g., "ComicDownloadJob"). */
-  jobName: Scalars['String']['output'];
-  /** When the pause state was last toggled. */
-  lastToggled?: Maybe<Scalars['DateTime']['output']>;
-  /** Next scheduled run time. */
-  nextRunTime?: Maybe<Scalars['DateTime']['output']>;
-  /** Whether the job is currently paused at runtime. */
-  paused: Scalars['Boolean']['output'];
-  /** Timezone for cron evaluation. */
-  timezone: Scalars['String']['output'];
-  /** Who toggled the pause state. */
-  toggledBy?: Maybe<Scalars['String']['output']>;
-};
-
+export type BatchJobParameterType = typeof BatchJobParameterType[keyof typeof BatchJobParameterType];
 /** Possible batch job status values. */
-export enum BatchStatusEnum {
-  Abandoned = 'ABANDONED',
-  Completed = 'COMPLETED',
-  Failed = 'FAILED',
-  Started = 'STARTED',
-  Starting = 'STARTING',
-  Stopped = 'STOPPED',
-  Stopping = 'STOPPING',
-  Unknown = 'UNKNOWN'
-}
+export const BatchStatusEnum = {
+  Abandoned: 'ABANDONED',
+  Completed: 'COMPLETED',
+  Failed: 'FAILED',
+  Started: 'STARTED',
+  Starting: 'STARTING',
+  Stopped: 'STOPPED',
+  Stopping: 'STOPPING',
+  Unknown: 'UNKNOWN'
+} as const;
 
-/** Step execution within a batch job. */
-export type BatchStep = {
-  __typename?: 'BatchStep';
-  /** Number of commits. */
-  commitCount: Scalars['Int']['output'];
-  /** Step end time. */
-  endTime?: Maybe<Scalars['DateTime']['output']>;
-  /** Number of items filtered/skipped. */
-  filterCount: Scalars['Int']['output'];
-  /** Number of items read. */
-  readCount: Scalars['Int']['output'];
-  /** Number of rollbacks. */
-  rollbackCount: Scalars['Int']['output'];
-  /** Number of items that failed. */
-  skipCount: Scalars['Int']['output'];
-  /** Step start time. */
-  startTime?: Maybe<Scalars['DateTime']['output']>;
-  /** Step execution status. */
-  status: BatchStatusEnum;
-  /** Step name. */
-  stepName: Scalars['String']['output'];
-  /** Number of items written. */
-  writeCount: Scalars['Int']['output'];
-};
-
-/** Application build information. */
-export type BuildInfo = {
-  __typename?: 'BuildInfo';
-  /** Build timestamp. */
-  buildTime?: Maybe<Scalars['String']['output']>;
-  /** Git branch. */
-  gitBranch?: Maybe<Scalars['String']['output']>;
-  /** Git commit hash. */
-  gitCommit?: Maybe<Scalars['String']['output']>;
-  /** Application version. */
-  version?: Maybe<Scalars['String']['output']>;
-};
-
-/** Cache status information. */
-export type CacheStatus = {
-  __typename?: 'CacheStatus';
-  /** Directory where the cache is stored. */
-  cacheLocation?: Maybe<Scalars['String']['output']>;
-  /** Newest image in the cache. */
-  newestImage?: Maybe<Scalars['String']['output']>;
-  /** Oldest image in the cache. */
-  oldestImage?: Maybe<Scalars['String']['output']>;
-  /** Total number of comics cached. */
-  totalComics: Scalars['Int']['output'];
-  /** Total number of cached images. */
-  totalImages: Scalars['Int']['output'];
-  /** Total storage used in bytes. */
-  totalStorageBytes?: Maybe<Scalars['Float']['output']>;
-};
-
-/** Combined storage and access metrics. */
-export type CombinedMetrics = {
-  __typename?: 'CombinedMetrics';
-  /** Access metrics. */
-  access?: Maybe<AccessMetrics>;
-  /** Last time combined metrics were calculated. */
-  lastUpdated?: Maybe<Scalars['DateTime']['output']>;
-  /** Storage metrics. */
-  storage?: Maybe<StorageMetrics>;
-};
-
-/** A comic series/strip registered in the system. */
-export type Comic = {
-  __typename?: 'Comic';
-  /** Whether this comic is actively publishing new strips. */
-  active?: Maybe<Scalars['Boolean']['output']>;
-  /** Author/creator of the comic. */
-  author?: Maybe<Scalars['String']['output']>;
-  /** Whether an avatar image is available for this comic. */
-  avatarAvailable?: Maybe<Scalars['Boolean']['output']>;
-  /**
-   * URL to the comic's avatar image.
-   * Returns a path to the REST endpoint (e.g., /api/v1/comics/123/avatar).
-   */
-  avatarUrl?: Maybe<Scalars['String']['output']>;
-  /** Description of the comic. */
-  description?: Maybe<Scalars['String']['output']>;
-  /** Whether this comic is enabled for display. */
-  enabled?: Maybe<Scalars['Boolean']['output']>;
-  /** Get the first (oldest) available strip. */
-  firstStrip?: Maybe<ComicStrip>;
-  /** Unique identifier for the comic. */
-  id: Scalars['Int']['output'];
-  /** Get the last (newest) available strip. */
-  lastStrip?: Maybe<ComicStrip>;
-  /** Display name of the comic (e.g., "Dilbert", "Calvin and Hobbes"). */
-  name: Scalars['String']['output'];
-  /** Date of the newest cached strip. */
-  newest?: Maybe<Scalars['Date']['output']>;
-  /** Date of the oldest cached strip. */
-  oldest?: Maybe<Scalars['Date']['output']>;
-  /** Days of the week when this comic publishes (null/empty means daily). */
-  publicationDays?: Maybe<Array<DayOfWeek>>;
-  /** Source provider for this comic (e.g., "gocomics", "comicskingdom"). */
-  source?: Maybe<Scalars['String']['output']>;
-  /** Identifier used by the source to reference this comic. */
-  sourceIdentifier?: Maybe<Scalars['String']['output']>;
-  /**
-   * Get a strip for a specific date.
-   * If date is null, returns the latest (newest) strip.
-   */
-  strip?: Maybe<ComicStrip>;
-  /**
-   * Get a window of strips centered on a date.
-   * Returns `before` older strips + the center strip + `after` newer strips, in chronological order.
-   */
-  stripWindow: Array<ComicStrip>;
-  /**
-   * Get strips for multiple specific dates.
-   * Useful for dashboard views showing several dates at once.
-   */
-  strips: Array<ComicStrip>;
-};
-
-
-/** A comic series/strip registered in the system. */
-export type ComicStripArgs = {
-  date?: InputMaybe<Scalars['Date']['input']>;
-};
-
-
-/** A comic series/strip registered in the system. */
-export type ComicStripWindowArgs = {
-  after: Scalars['Int']['input'];
-  before: Scalars['Int']['input'];
-  center: Scalars['Date']['input'];
-};
-
-
-/** A comic series/strip registered in the system. */
-export type ComicStripsArgs = {
-  dates: Array<Scalars['Date']['input']>;
-};
-
-/** Access metrics for a single comic. */
-export type ComicAccessMetric = {
-  __typename?: 'ComicAccessMetric';
-  /** Total number of accesses for this comic. */
-  accessCount: Scalars['Int']['output'];
-  /** Average access time in milliseconds. */
-  averageAccessTimeMs?: Maybe<Scalars['Float']['output']>;
-  /** Comic name. */
-  comicName: Scalars['String']['output'];
-  /** Last access timestamp. */
-  lastAccessed?: Maybe<Scalars['DateTime']['output']>;
-};
-
-/** Paginated connection of comics. */
-export type ComicConnection = {
-  __typename?: 'ComicConnection';
-  /** List of comic edges. */
-  edges: Array<ComicEdge>;
-  /** Pagination information. */
-  pageInfo: PageInfo;
-  /** Total number of comics matching the filter (for UI display). */
-  totalCount: Scalars['Int']['output'];
-};
-
-/** Edge containing a comic node and its cursor. */
-export type ComicEdge = {
-  __typename?: 'ComicEdge';
-  /** Cursor for this edge (use with 'after' argument for pagination). */
-  cursor: Scalars['String']['output'];
-  /** The comic. */
-  node: Comic;
-};
-
-/** Retrieval summary for a specific comic. */
-export type ComicRetrievalSummary = {
-  __typename?: 'ComicRetrievalSummary';
-  /** Comic name. */
-  comicName: Scalars['String']['output'];
-  /** Failed retrievals. */
-  failureCount: Scalars['Int']['output'];
-  /** Successful retrievals. */
-  successCount: Scalars['Int']['output'];
-  /** Total attempts for this comic. */
-  totalAttempts: Scalars['Int']['output'];
-};
-
-/** Storage metrics for a single comic. */
-export type ComicStorageMetric = {
-  __typename?: 'ComicStorageMetric';
-  /** Comic ID. */
-  comicId?: Maybe<Scalars['Int']['output']>;
-  /** Comic name. */
-  comicName: Scalars['String']['output'];
-  /** Number of cached images for this comic. */
-  imageCount: Scalars['Int']['output'];
-  /** Total storage used by this comic in bytes. */
-  totalBytes: Scalars['Float']['output'];
-  /** Yearly breakdown of storage. */
-  yearlyBreakdown?: Maybe<Array<YearlyStorageMetric>>;
-};
-
-/**
- * A comic strip for a specific date.
- * Used by the strips query for batch date fetching.
- */
-export type ComicStrip = {
-  __typename?: 'ComicStrip';
-  /** Whether a strip exists for this date. */
-  available: Scalars['Boolean']['output'];
-  /** The date of this strip. */
-  date: Scalars['Date']['output'];
-  /** Image height in pixels (null if not available). */
-  height?: Maybe<Scalars['Int']['output']>;
-  /** URL to the strip image (null if not available). */
-  imageUrl?: Maybe<Scalars['String']['output']>;
-  /** The next strip after this date (null if at end). */
-  next?: Maybe<ComicStrip>;
-  /** The previous strip before this date (null if at beginning). */
-  previous?: Maybe<ComicStrip>;
-  /** Transcript text extracted from the comic page (null if not available). */
-  transcript?: Maybe<Scalars['String']['output']>;
-  /** Image width in pixels (null if not available). */
-  width?: Maybe<Scalars['Int']['output']>;
-};
-
-/** Health status of an individual component. */
-export type ComponentHealthEntry = {
-  __typename?: 'ComponentHealthEntry';
-  /** Additional details about the component. */
-  details?: Maybe<Scalars['String']['output']>;
-  /** Component name. */
-  name: Scalars['String']['output'];
-  /** Component health status. */
-  status: HealthStatusEnum;
-};
-
-/** Input for creating a new comic. */
-export type CreateComicInput = {
-  /** Whether this comic is actively publishing. */
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Author/creator of the comic. */
-  author?: InputMaybe<Scalars['String']['input']>;
-  /** Description of the comic. */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** Whether this comic is enabled for display. */
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Display name of the comic. */
-  name: Scalars['String']['input'];
-  /** Days of the week when this comic publishes. */
-  publicationDays?: InputMaybe<Array<DayOfWeek>>;
-  /** Source provider for this comic. */
-  source?: InputMaybe<Scalars['String']['input']>;
-  /** Identifier used by the source. */
-  sourceIdentifier?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Payload for createComic mutation. */
-export type CreateComicPayload = {
-  __typename?: 'CreateComicPayload';
-  /** The created comic, or null if errors occurred. */
-  comic?: Maybe<Comic>;
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-};
-
-/** Daily job execution statistics. */
-export type DailyJobStats = {
-  __typename?: 'DailyJobStats';
-  /** Date. */
-  date: Scalars['Date']['output'];
-  /** Number of job executions on this date. */
-  executionCount: Scalars['Int']['output'];
-  /** Number of failed executions. */
-  failureCount: Scalars['Int']['output'];
-  /** Number of successful executions. */
-  successCount: Scalars['Int']['output'];
-};
-
-/** Days of the week. */
-export enum DayOfWeek {
-  Friday = 'FRIDAY',
-  Monday = 'MONDAY',
-  Saturday = 'SATURDAY',
-  Sunday = 'SUNDAY',
-  Thursday = 'THURSDAY',
-  Tuesday = 'TUESDAY',
-  Wednesday = 'WEDNESDAY'
-}
-
-/** Payload for deleteAccount mutation. */
-export type DeleteAccountPayload = {
-  __typename?: 'DeleteAccountPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** Whether the deletion was successful. */
-  success: Scalars['Boolean']['output'];
-};
-
-/** Payload for deleteComic mutation. */
-export type DeleteComicPayload = {
-  __typename?: 'DeleteComicPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** Whether the deletion was successful. */
-  success: Scalars['Boolean']['output'];
-};
-
-/** Payload for deleteRetrievalRecord mutation. */
-export type DeleteRetrievalRecordPayload = {
-  __typename?: 'DeleteRetrievalRecordPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** Whether the deletion was successful. */
-  success: Scalars['Boolean']['output'];
-};
-
+export type BatchStatusEnum = typeof BatchStatusEnum[keyof typeof BatchStatusEnum];
 /**
  * Standard error codes returned by the API.
  * These codes appear in error responses to help clients handle errors programmatically.
  */
-export enum ErrorCode {
+export const ErrorCode = {
   /** Comic with the specified ID does not exist. */
-  ComicNotFound = 'COMIC_NOT_FOUND',
+  ComicNotFound: 'COMIC_NOT_FOUND',
   /** User does not have permission for this operation. */
-  Forbidden = 'FORBIDDEN',
+  Forbidden: 'FORBIDDEN',
   /** Internal server error. */
-  InternalError = 'INTERNAL_ERROR',
+  InternalError: 'INTERNAL_ERROR',
   /** Invalid credentials provided. */
-  InvalidCredentials = 'INVALID_CREDENTIALS',
+  InvalidCredentials: 'INVALID_CREDENTIALS',
   /** Password does not meet requirements. */
-  InvalidPassword = 'INVALID_PASSWORD',
+  InvalidPassword: 'INVALID_PASSWORD',
   /** Token is invalid or malformed. */
-  InvalidToken = 'INVALID_TOKEN',
+  InvalidToken: 'INVALID_TOKEN',
   /** Requested resource was not found. */
-  NotFound = 'NOT_FOUND',
+  NotFound: 'NOT_FOUND',
   /** Rate limit exceeded. */
-  RateLimited = 'RATE_LIMITED',
+  RateLimited: 'RATE_LIMITED',
   /** Comic strip not available for the requested date. */
-  StripNotFound = 'STRIP_NOT_FOUND',
+  StripNotFound: 'STRIP_NOT_FOUND',
   /** Token has expired. */
-  TokenExpired = 'TOKEN_EXPIRED',
+  TokenExpired: 'TOKEN_EXPIRED',
   /** Authentication required but not provided. */
-  Unauthenticated = 'UNAUTHENTICATED',
+  Unauthenticated: 'UNAUTHENTICATED',
   /** Username or email already exists. */
-  UserAlreadyExists = 'USER_ALREADY_EXISTS',
+  UserAlreadyExists: 'USER_ALREADY_EXISTS',
   /** User account not found. */
-  UserNotFound = 'USER_NOT_FOUND',
+  UserNotFound: 'USER_NOT_FOUND',
   /** Input validation failed. */
-  ValidationError = 'VALIDATION_ERROR'
-}
+  ValidationError: 'VALIDATION_ERROR'
+} as const;
 
-/** Payload for addFavorite and removeFavorite mutations. */
-export type FavoritePayload = {
-  __typename?: 'FavoritePayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** The updated preferences, or null if errors occurred. */
-  preference?: Maybe<UserPreference>;
-};
-
-/** Overall system health status. */
-export type HealthStatus = {
-  __typename?: 'HealthStatus';
-  /** Application build information. */
-  buildInfo?: Maybe<BuildInfo>;
-  /** Cache status information (only included when detailed=true). */
-  cacheStatus?: Maybe<CacheStatus>;
-  /** Individual component health statuses. */
-  components?: Maybe<Array<ComponentHealthEntry>>;
-  /** Current health status. */
-  status: HealthStatusEnum;
-  /** System resource metrics (only included when detailed=true). */
-  systemResources?: Maybe<SystemResources>;
-  /** Timestamp when the health check was performed. */
-  timestamp?: Maybe<Scalars['DateTime']['output']>;
-  /** Application uptime in milliseconds. */
-  uptime?: Maybe<Scalars['Float']['output']>;
-};
-
-/** Possible health status values. */
-export enum HealthStatusEnum {
-  Degraded = 'DEGRADED',
-  Down = 'DOWN',
-  Up = 'UP'
-}
-
-/** Entry representing the last read date for a comic. */
-export type LastReadEntry = {
-  __typename?: 'LastReadEntry';
-  /** Comic ID. */
-  comicId: Scalars['Int']['output'];
-  /** Last read date. */
-  date: Scalars['Date']['output'];
-};
-
+export type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode];
 /** Input for user login. */
 export type LoginInput = {
   /** User's password. */
-  password: Scalars['String']['input'];
+  password: string;
   /** Username or email address. */
-  username: Scalars['String']['input'];
-};
-
-export type Mutation = {
-  __typename?: 'Mutation';
-  /**
-   * Add a comic to the user's favorites.
-   * Requires authentication.
-   */
-  addFavorite: FavoritePayload;
-  /**
-   * Create a new comic entry.
-   * Requires admin role.
-   */
-  createComic: CreateComicPayload;
-  /**
-   * Delete a user account (admin only).
-   * This action is irreversible.
-   * Requires admin role.
-   */
-  deleteAccount: DeleteAccountPayload;
-  /**
-   * Delete a comic and its cached strips.
-   * Requires admin role.
-   */
-  deleteComic: DeleteComicPayload;
-  /** Delete a specific retrieval record. */
-  deleteRetrievalRecord: DeleteRetrievalRecordPayload;
-  /**
-   * Request a password reset email.
-   * Returns true if the email was sent (always returns true to prevent email enumeration).
-   */
-  forgotPassword: Scalars['Boolean']['output'];
-  /**
-   * Authenticate with username and password.
-   * Returns authentication payload with JWT token on success.
-   */
-  login: AuthPayload;
-  /**
-   * Invalidate all tokens previously issued to the authenticated user.
-   * The frontend should call this before clearing client-side cookies.
-   * Returns true on success.
-   */
-  logout: Scalars['Boolean']['output'];
-  /**
-   * Purge retrieval records older than specified days.
-   * Returns the number of records purged.
-   */
-  purgeRetrievalRecords: PurgeRetrievalRecordsPayload;
-  /** Force a refresh of all metrics (storage, access, combined). */
-  refreshAllMetrics: RefreshAllMetricsPayload;
-  /** Force a refresh of storage metrics. */
-  refreshStorageMetrics: RefreshStorageMetricsPayload;
-  /** Refresh an expired JWT token using a refresh token. */
-  refreshToken: AuthPayload;
-  /**
-   * Register a new user account.
-   * Returns authentication payload with JWT token on success.
-   */
-  register: AuthPayload;
-  /**
-   * Remove a comic from the user's favorites.
-   * Requires authentication.
-   */
-  removeFavorite: FavoritePayload;
-  /** Reset password using a token from the password reset email. */
-  resetPassword: AuthPayload;
-  /** Pause or resume a batch job scheduler. */
-  toggleJobScheduler: ToggleJobSchedulerPayload;
-  /** Trigger a backfill job to retrieve missing comics. */
-  triggerBackfillJob: TriggerBatchJobPayload;
-  /** Trigger a batch job for comic retrieval. */
-  triggerBatchJob: TriggerBatchJobPayload;
-  /** Trigger any batch job by name, with optional parameters. */
-  triggerJob: TriggerBatchJobPayload;
-  /**
-   * Update an existing comic's details.
-   * Requires admin role.
-   */
-  updateComic: UpdateComicPayload;
-  /**
-   * Update display settings (theme, layout, etc.).
-   * Requires authentication.
-   */
-  updateDisplaySettings: UpdateDisplaySettingsPayload;
-  /**
-   * Update the last read date for a comic.
-   * Requires authentication.
-   */
-  updateLastRead: UpdateLastReadPayload;
-  /**
-   * Update the current user's password.
-   * Requires authentication.
-   */
-  updatePassword: UpdatePasswordPayload;
-  /**
-   * Update the current user's profile.
-   * Requires authentication.
-   */
-  updateProfile: UpdateProfilePayload;
-};
-
-
-export type MutationAddFavoriteArgs = {
-  comicId: Scalars['Int']['input'];
-};
-
-
-export type MutationCreateComicArgs = {
-  input: CreateComicInput;
-};
-
-
-export type MutationDeleteAccountArgs = {
-  username: Scalars['String']['input'];
-};
-
-
-export type MutationDeleteComicArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteRetrievalRecordArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type MutationForgotPasswordArgs = {
-  email: Scalars['String']['input'];
-};
-
-
-export type MutationLoginArgs = {
-  input: LoginInput;
-};
-
-
-export type MutationPurgeRetrievalRecordsArgs = {
-  daysToKeep?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationRefreshTokenArgs = {
-  refreshToken: Scalars['String']['input'];
-};
-
-
-export type MutationRegisterArgs = {
-  input: RegisterInput;
-};
-
-
-export type MutationRemoveFavoriteArgs = {
-  comicId: Scalars['Int']['input'];
-};
-
-
-export type MutationResetPasswordArgs = {
-  newPassword: Scalars['String']['input'];
-  token: Scalars['String']['input'];
-};
-
-
-export type MutationToggleJobSchedulerArgs = {
-  jobName: Scalars['String']['input'];
-  paused: Scalars['Boolean']['input'];
-};
-
-
-export type MutationTriggerJobArgs = {
-  jobName: Scalars['String']['input'];
-  parameters?: InputMaybe<Scalars['JSON']['input']>;
-};
-
-
-export type MutationUpdateComicArgs = {
-  id: Scalars['Int']['input'];
-  input: UpdateComicInput;
-};
-
-
-export type MutationUpdateDisplaySettingsArgs = {
-  settings: Scalars['JSON']['input'];
-};
-
-
-export type MutationUpdateLastReadArgs = {
-  comicId: Scalars['Int']['input'];
-  date: Scalars['Date']['input'];
-};
-
-
-export type MutationUpdatePasswordArgs = {
-  newPassword: Scalars['String']['input'];
-};
-
-
-export type MutationUpdateProfileArgs = {
-  input: UpdateProfileInput;
-};
-
-/** Pagination metadata. */
-export type PageInfo = {
-  __typename?: 'PageInfo';
-  /** Cursor of the last edge. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** Whether there are more results after the last edge. */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** Whether there are results before the first edge. */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** Cursor of the first edge. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Payload for purgeRetrievalRecords mutation. */
-export type PurgeRetrievalRecordsPayload = {
-  __typename?: 'PurgeRetrievalRecordsPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** Number of records purged. */
-  purgedCount: Scalars['Int']['output'];
-};
-
-export type Query = {
-  __typename?: 'Query';
-  /** Get access metrics for all comics. */
-  accessMetrics?: Maybe<AccessMetrics>;
-  /** Get a specific batch job execution by ID. */
-  batchJob?: Maybe<BatchJob>;
-  /** Get the execution log for a specific batch job run. */
-  batchJobLog?: Maybe<Scalars['String']['output']>;
-  /** Get summary statistics for batch jobs. */
-  batchJobSummary: BatchJobSummary;
-  /** Get batch jobs within a date range. */
-  batchJobsByDateRange: Array<BatchJob>;
-  /** Get scheduler info for all batch jobs, including pause state. */
-  batchSchedulers: Array<BatchSchedulerInfo>;
-  /** Get combined storage and access metrics. */
-  combinedMetrics?: Maybe<CombinedMetrics>;
-  /** Get a specific comic by its ID. */
-  comic?: Maybe<Comic>;
-  /**
-   * Get comics with optional search, filtering, and pagination.
-   * Supports cursor-based pagination for efficient large archive handling.
-   */
-  comics: ComicConnection;
-  /** Get a list of all known error codes. */
-  errorCodes: Array<ErrorCode>;
-  /** Get the health status of the application. */
-  health: HealthStatus;
-  /**
-   * Get the current authenticated user's profile.
-   * Requires authentication.
-   */
-  me?: Maybe<User>;
-  /**
-   * Get the current authenticated user's preferences.
-   * Requires authentication.
-   */
-  preferences?: Maybe<UserPreference>;
-  /**
-   * Get a random comic strip.
-   * If comicId is provided, returns a random strip from that comic.
-   * If comicId is null, picks a random comic and random date.
-   */
-  randomStrip?: Maybe<ComicStrip>;
-  /** Get recent batch job executions. */
-  recentBatchJobs: Array<BatchJob>;
-  /** Get a specific retrieval record by ID. */
-  retrievalRecord?: Maybe<RetrievalRecord>;
-  /**
-   * Get retrieval records with optional filtering.
-   * Returns records from the last 7 days.
-   */
-  retrievalRecords: Array<RetrievalRecord>;
-  /** Get retrieval records for a specific comic. */
-  retrievalRecordsForComic: Array<RetrievalRecord>;
-  /** Get summary statistics of retrieval operations. */
-  retrievalSummary: RetrievalSummary;
-  /**
-   * Full-text search across comics.
-   * Searches comic names, authors, and descriptions.
-   */
-  search: SearchResults;
-  /** Get storage metrics for the comic cache. */
-  storageMetrics?: Maybe<StorageMetrics>;
-  /**
-   * Get a comic strip directly by comic ID and date.
-   * More efficient than querying comic.strip when you only need the strip.
-   */
-  strip?: Maybe<ComicStrip>;
-  /**
-   * Validate the current JWT token from Authorization header.
-   * Returns true if the token is valid, false otherwise.
-   */
-  validateToken: Scalars['Boolean']['output'];
-};
-
-
-export type QueryBatchJobArgs = {
-  executionId: Scalars['Int']['input'];
-};
-
-
-export type QueryBatchJobLogArgs = {
-  executionId: Scalars['Int']['input'];
-  jobName: Scalars['String']['input'];
-};
-
-
-export type QueryBatchJobSummaryArgs = {
-  days?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryBatchJobsByDateRangeArgs = {
-  endDate: Scalars['Date']['input'];
-  startDate: Scalars['Date']['input'];
-};
-
-
-export type QueryComicArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type QueryComicsArgs = {
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryHealthArgs = {
-  detailed?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-
-export type QueryRandomStripArgs = {
-  comicId?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryRecentBatchJobsArgs = {
-  count?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryRetrievalRecordArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type QueryRetrievalRecordsArgs = {
-  comicName?: InputMaybe<Scalars['String']['input']>;
-  fromDate?: InputMaybe<Scalars['Date']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  status?: InputMaybe<RetrievalStatusEnum>;
-  toDate?: InputMaybe<Scalars['Date']['input']>;
-};
-
-
-export type QueryRetrievalRecordsForComicArgs = {
-  comicName: Scalars['String']['input'];
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryRetrievalSummaryArgs = {
-  fromDate?: InputMaybe<Scalars['Date']['input']>;
-  toDate?: InputMaybe<Scalars['Date']['input']>;
-};
-
-
-export type QuerySearchArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  query: Scalars['String']['input'];
-};
-
-
-export type QueryStripArgs = {
-  comicId: Scalars['Int']['input'];
-  date: Scalars['Date']['input'];
-};
-
-/** Payload for refreshAllMetrics mutation. */
-export type RefreshAllMetricsPayload = {
-  __typename?: 'RefreshAllMetricsPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** Whether the refresh was successful. */
-  success: Scalars['Boolean']['output'];
-};
-
-/** Payload for refreshStorageMetrics mutation. */
-export type RefreshStorageMetricsPayload = {
-  __typename?: 'RefreshStorageMetricsPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** The refreshed storage metrics. */
-  storageMetrics?: Maybe<StorageMetrics>;
+  username: string;
 };
 
 /** Input for new user registration. */
 export type RegisterInput = {
   /** User's display name. */
-  displayName?: InputMaybe<Scalars['String']['input']>;
+  displayName?: string | null | undefined;
   /** User's email address. */
-  email: Scalars['String']['input'];
+  email: string;
   /** User's password. */
-  password: Scalars['String']['input'];
+  password: string;
   /** Desired username (must be unique). */
-  username: Scalars['String']['input'];
-};
-
-/** Record of a comic retrieval attempt. */
-export type RetrievalRecord = {
-  __typename?: 'RetrievalRecord';
-  /** Date for which the comic was retrieved. */
-  comicDate: Scalars['Date']['output'];
-  /** Name of the comic. */
-  comicName: Scalars['String']['output'];
-  /** Error message if retrieval failed. */
-  errorMessage?: Maybe<Scalars['String']['output']>;
-  /** HTTP status code from the comic source. */
-  httpStatusCode?: Maybe<Scalars['Int']['output']>;
-  /** Unique identifier (format: "ComicName_YYYY-MM-DD"). */
-  id: Scalars['String']['output'];
-  /** Size of the retrieved image in bytes (if successful). */
-  imageSize?: Maybe<Scalars['Float']['output']>;
-  /** Duration of the retrieval operation in milliseconds. */
-  retrievalDurationMs?: Maybe<Scalars['Float']['output']>;
-  /** Source provider (e.g., "gocomics", "comicskingdom"). */
-  source?: Maybe<Scalars['String']['output']>;
-  /** Retrieval status. */
-  status: RetrievalStatusEnum;
+  username: string;
 };
 
 /**
  * Possible retrieval status values.
  * Mirrors the Java ComicRetrievalStatus enum 1:1.
  */
-export enum RetrievalStatusEnum {
-  AuthenticationError = 'AUTHENTICATION_ERROR',
-  ComicUnavailable = 'COMIC_UNAVAILABLE',
-  NetworkError = 'NETWORK_ERROR',
-  ParsingError = 'PARSING_ERROR',
-  RateLimited = 'RATE_LIMITED',
-  StorageError = 'STORAGE_ERROR',
-  Success = 'SUCCESS',
-  UnknownError = 'UNKNOWN_ERROR'
-}
+export const RetrievalStatusEnum = {
+  AuthenticationError: 'AUTHENTICATION_ERROR',
+  ComicUnavailable: 'COMIC_UNAVAILABLE',
+  NetworkError: 'NETWORK_ERROR',
+  ParsingError: 'PARSING_ERROR',
+  RateLimited: 'RATE_LIMITED',
+  StorageError: 'STORAGE_ERROR',
+  Success: 'SUCCESS',
+  UnknownError: 'UNKNOWN_ERROR'
+} as const;
 
-/** Summary statistics for retrieval operations. */
-export type RetrievalSummary = {
-  __typename?: 'RetrievalSummary';
-  /** Average retrieval duration in milliseconds. */
-  averageDurationMs?: Maybe<Scalars['Float']['output']>;
-  /** Breakdown by comic. */
-  byComic?: Maybe<Array<ComicRetrievalSummary>>;
-  /** Breakdown by status. */
-  byStatus?: Maybe<Array<StatusCount>>;
-  /** Number of failed retrievals. */
-  failureCount: Scalars['Int']['output'];
-  /** Number of skipped retrievals. */
-  skippedCount: Scalars['Int']['output'];
-  /** Number of successful retrievals. */
-  successCount: Scalars['Int']['output'];
-  /** Success rate as a percentage (0-100). */
-  successRate: Scalars['Float']['output'];
-  /** Total number of retrieval attempts. */
-  totalAttempts: Scalars['Int']['output'];
-};
-
-/** Search results containing matched comics. */
-export type SearchResults = {
-  __typename?: 'SearchResults';
-  /** List of comics matching the search query. */
-  comics: Array<Comic>;
-  /** The search query that was executed. */
-  query: Scalars['String']['output'];
-  /** Total number of results found. */
-  totalCount: Scalars['Int']['output'];
-};
-
-/** Count of retrievals by status. */
-export type StatusCount = {
-  __typename?: 'StatusCount';
-  /** Number of records with this status. */
-  count: Scalars['Int']['output'];
-  /** Retrieval status. */
-  status: RetrievalStatusEnum;
-};
-
-/** Storage metrics for the comic cache. */
-export type StorageMetrics = {
-  __typename?: 'StorageMetrics';
-  /** Total number of comics being tracked. */
-  comicCount?: Maybe<Scalars['Int']['output']>;
-  /** Per-comic storage breakdown. */
-  comics?: Maybe<Array<ComicStorageMetric>>;
-  /** Last time metrics were calculated. */
-  lastUpdated?: Maybe<Scalars['DateTime']['output']>;
-  /** Total storage used in bytes across all comics. */
-  totalBytes?: Maybe<Scalars['Float']['output']>;
-};
-
-/** System resource metrics. */
-export type SystemResources = {
-  __typename?: 'SystemResources';
-  /** Number of available CPU processors. */
-  availableProcessors?: Maybe<Scalars['Int']['output']>;
-  /** Free memory in bytes. */
-  freeMemory?: Maybe<Scalars['Float']['output']>;
-  /** Maximum memory the JVM can use in bytes. */
-  maxMemory?: Maybe<Scalars['Float']['output']>;
-  /** Memory usage percentage (0-100). */
-  memoryUsagePercent?: Maybe<Scalars['Float']['output']>;
-  /** Total memory in bytes. */
-  totalMemory?: Maybe<Scalars['Float']['output']>;
-};
-
-/** Payload for toggleJobScheduler mutation. */
-export type ToggleJobSchedulerPayload = {
-  __typename?: 'ToggleJobSchedulerPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** The updated scheduler info, or null if errors occurred. */
-  scheduler?: Maybe<BatchSchedulerInfo>;
-};
-
-/** Payload for triggerBatchJob and triggerBackfillJob mutations. */
-export type TriggerBatchJobPayload = {
-  __typename?: 'TriggerBatchJobPayload';
-  /** The triggered batch job, or null if errors occurred. */
-  batchJob?: Maybe<BatchJob>;
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-};
-
-/**
- * Input for updating an existing comic.
- * All fields are optional - only provided fields will be updated.
- */
-export type UpdateComicInput = {
-  /** Whether this comic is actively publishing. */
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Author/creator of the comic. */
-  author?: InputMaybe<Scalars['String']['input']>;
-  /** Description of the comic. */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** Whether this comic is enabled for display. */
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Display name of the comic. */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** Days of the week when this comic publishes. */
-  publicationDays?: InputMaybe<Array<DayOfWeek>>;
-  /** Source provider for this comic. */
-  source?: InputMaybe<Scalars['String']['input']>;
-  /** Identifier used by the source. */
-  sourceIdentifier?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Payload for updateComic mutation. */
-export type UpdateComicPayload = {
-  __typename?: 'UpdateComicPayload';
-  /** The updated comic, or null if errors occurred. */
-  comic?: Maybe<Comic>;
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-};
-
-/** Payload for updateDisplaySettings mutation. */
-export type UpdateDisplaySettingsPayload = {
-  __typename?: 'UpdateDisplaySettingsPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** The updated preferences, or null if errors occurred. */
-  preference?: Maybe<UserPreference>;
-};
-
-/** Payload for updateLastRead mutation. */
-export type UpdateLastReadPayload = {
-  __typename?: 'UpdateLastReadPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** The updated preferences, or null if errors occurred. */
-  preference?: Maybe<UserPreference>;
-};
-
-/** Payload for updatePassword mutation. */
-export type UpdatePasswordPayload = {
-  __typename?: 'UpdatePasswordPayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** Whether the password was updated successfully. */
-  success: Scalars['Boolean']['output'];
-};
-
-/**
- * Input for updating user profile.
- * All fields are optional - only provided fields will be updated.
- */
-export type UpdateProfileInput = {
-  /** New display name. */
-  displayName?: InputMaybe<Scalars['String']['input']>;
-  /** New email address. */
-  email?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Payload for updateProfile mutation. */
-export type UpdateProfilePayload = {
-  __typename?: 'UpdateProfilePayload';
-  /** List of user-facing errors. */
-  errors: Array<UserError>;
-  /** The updated user, or null if errors occurred. */
-  user?: Maybe<User>;
-};
-
-/** User account information. */
-export type User = {
-  __typename?: 'User';
-  /** Account creation timestamp. */
-  created?: Maybe<Scalars['DateTime']['output']>;
-  /** User's display name. */
-  displayName?: Maybe<Scalars['String']['output']>;
-  /** User's email address. */
-  email?: Maybe<Scalars['String']['output']>;
-  /** Last login timestamp. */
-  lastLogin?: Maybe<Scalars['DateTime']['output']>;
-  /** User's assigned roles: "USER" (product access), "OPERATOR" (read-only operational), "ADMIN" (full control). */
-  roles: Array<Scalars['String']['output']>;
-  /** Unique username. */
-  username: Scalars['String']['output'];
-};
-
-/** A user-facing error from a mutation. */
-export type UserError = {
-  __typename?: 'UserError';
-  /** Machine-readable error code. */
-  code?: Maybe<ErrorCode>;
-  /** Field path that caused the error (e.g., "input.email"). */
-  field?: Maybe<Scalars['String']['output']>;
-  /** Error message. */
-  message: Scalars['String']['output'];
-};
-
-/** User preferences including favorites and display settings. */
-export type UserPreference = {
-  __typename?: 'UserPreference';
-  /** Display settings as key-value pairs. */
-  displaySettings?: Maybe<Scalars['JSON']['output']>;
-  /** List of favorite comic IDs. */
-  favoriteComics: Array<Scalars['Int']['output']>;
-  /** Last read dates for each comic (comicId -> date). */
-  lastReadDates: Array<LastReadEntry>;
-  /** Username this preference belongs to. */
-  username: Scalars['String']['output'];
-};
-
-/** Storage metrics for a specific year. */
-export type YearlyStorageMetric = {
-  __typename?: 'YearlyStorageMetric';
-  /** Storage used in bytes for this year. */
-  bytes: Scalars['Float']['output'];
-  /** Number of images for this year. */
-  imageCount: Scalars['Int']['output'];
-  /** Year. */
-  year: Scalars['Int']['output'];
-};
-
+export type RetrievalStatusEnum = typeof RetrievalStatusEnum[keyof typeof RetrievalStatusEnum];
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', token: string, refreshToken: string, username: string, displayName?: string | null } };
+export type LoginMutation = { login: { token: string, refreshToken: string, username: string, displayName: string | null } };
 
 export type RegisterMutationVariables = Exact<{
   input: RegisterInput;
 }>;
 
 
-export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'AuthPayload', token: string, refreshToken: string, username: string, displayName?: string | null } };
+export type RegisterMutation = { register: { token: string, refreshToken: string, username: string, displayName: string | null } };
 
 export type RefreshTokenMutationVariables = Exact<{
-  refreshToken: Scalars['String']['input'];
+  refreshToken: string;
 }>;
 
 
-export type RefreshTokenMutation = { __typename?: 'Mutation', refreshToken: { __typename?: 'AuthPayload', token: string, refreshToken: string, username: string, displayName?: string | null } };
+export type RefreshTokenMutation = { refreshToken: { token: string, refreshToken: string, username: string, displayName: string | null } };
 
 export type ForgotPasswordMutationVariables = Exact<{
-  email: Scalars['String']['input'];
+  email: string;
 }>;
 
 
-export type ForgotPasswordMutation = { __typename?: 'Mutation', forgotPassword: boolean };
+export type ForgotPasswordMutation = { forgotPassword: boolean };
 
 export type ResetPasswordMutationVariables = Exact<{
-  token: Scalars['String']['input'];
-  newPassword: Scalars['String']['input'];
+  token: string;
+  newPassword: string;
 }>;
 
 
-export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: { __typename?: 'AuthPayload', token: string, refreshToken: string, username: string, displayName?: string | null } };
+export type ResetPasswordMutation = { resetPassword: { token: string, refreshToken: string, username: string, displayName: string | null } };
 
 export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LogoutMutation = { __typename?: 'Mutation', logout: boolean };
+export type LogoutMutation = { logout: boolean };
 
 export type GetMeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMeQuery = { __typename?: 'Query', me?: { __typename?: 'User', username: string, email?: string | null, displayName?: string | null, created?: any | null, lastLogin?: any | null, roles: Array<string> } | null };
+export type GetMeQuery = { me: { username: string, email: string | null, displayName: string | null, created: string | null, lastLogin: string | null, roles: Array<string> } | null };
 
 export type GetBatchSchedulersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetBatchSchedulersQuery = { __typename?: 'Query', batchSchedulers: Array<{ __typename?: 'BatchSchedulerInfo', jobName: string, cronExpression: string, description?: string | null, timezone: string, nextRunTime?: any | null, enabled: boolean, paused: boolean, lastToggled?: any | null, toggledBy?: string | null, availableParameters: Array<{ __typename?: 'BatchJobParameter', name: string, label: string, type: BatchJobParameterType, required: boolean, defaultValue?: string | null, options?: Array<{ __typename?: 'BatchJobParameterOption', value: string, label: string }> | null }> }> };
+export type GetBatchSchedulersQuery = { batchSchedulers: Array<{ jobName: string, cronExpression: string, description: string | null, timezone: string, nextRunTime: string | null, enabled: boolean, paused: boolean, lastToggled: string | null, toggledBy: string | null, availableParameters: Array<{ name: string, label: string, type: BatchJobParameterType, required: boolean, defaultValue: string | null, options: Array<{ value: string, label: string }> | null }> }> };
 
 export type GetRecentBatchJobsQueryVariables = Exact<{
-  count?: InputMaybe<Scalars['Int']['input']>;
+  count?: number | null | undefined;
 }>;
 
 
-export type GetRecentBatchJobsQuery = { __typename?: 'Query', recentBatchJobs: Array<{ __typename?: 'BatchJob', executionId: number, jobName: string, status: BatchStatusEnum, startTime: any, endTime?: any | null, durationMs?: number | null, exitCode?: string | null, exitDescription?: string | null, steps?: Array<{ __typename?: 'BatchStep', stepName: string, status: BatchStatusEnum, readCount: number, writeCount: number, filterCount: number, skipCount: number, commitCount: number, rollbackCount: number, startTime?: any | null, endTime?: any | null }> | null }> };
+export type GetRecentBatchJobsQuery = { recentBatchJobs: Array<{ executionId: number, jobName: string, status: BatchStatusEnum, startTime: string, endTime: string | null, durationMs: number | null, exitCode: string | null, exitDescription: string | null, steps: Array<{ stepName: string, status: BatchStatusEnum, readCount: number, writeCount: number, filterCount: number, skipCount: number, commitCount: number, rollbackCount: number, startTime: string | null, endTime: string | null }> | null }> };
 
 export type GetBatchJobLogQueryVariables = Exact<{
-  executionId: Scalars['Int']['input'];
-  jobName: Scalars['String']['input'];
+  executionId: number;
+  jobName: string;
 }>;
 
 
-export type GetBatchJobLogQuery = { __typename?: 'Query', batchJobLog?: string | null };
+export type GetBatchJobLogQuery = { batchJobLog: string | null };
 
 export type TriggerJobMutationVariables = Exact<{
-  jobName: Scalars['String']['input'];
-  parameters?: InputMaybe<Scalars['JSON']['input']>;
+  jobName: string;
+  parameters?: any;
 }>;
 
 
-export type TriggerJobMutation = { __typename?: 'Mutation', triggerJob: { __typename?: 'TriggerBatchJobPayload', batchJob?: { __typename?: 'BatchJob', executionId: number, jobName: string, status: BatchStatusEnum, startTime: any } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+export type TriggerJobMutation = { triggerJob: { batchJob: { executionId: number, jobName: string, status: BatchStatusEnum, startTime: string } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
 
 export type ToggleJobSchedulerMutationVariables = Exact<{
-  jobName: Scalars['String']['input'];
-  paused: Scalars['Boolean']['input'];
+  jobName: string;
+  paused: boolean;
 }>;
 
 
-export type ToggleJobSchedulerMutation = { __typename?: 'Mutation', toggleJobScheduler: { __typename?: 'ToggleJobSchedulerPayload', scheduler?: { __typename?: 'BatchSchedulerInfo', jobName: string, paused: boolean, lastToggled?: any | null, toggledBy?: string | null } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+export type ToggleJobSchedulerMutation = { toggleJobScheduler: { scheduler: { jobName: string, paused: boolean, lastToggled: string | null, toggledBy: string | null } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
 
 export type GetUserPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUserPreferencesQuery = { __typename?: 'Query', preferences?: { __typename?: 'UserPreference', username: string, favoriteComics: Array<number>, displaySettings?: any | null, lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } | null };
+export type GetUserPreferencesQuery = { preferences: { username: string, favoriteComics: Array<number>, displaySettings: any, lastReadDates: Array<{ comicId: number, date: string }> } | null };
 
 export type GetComicsQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type GetComicsQuery = { __typename?: 'Query', comics: { __typename?: 'ComicConnection', totalCount: number, edges: Array<{ __typename?: 'ComicEdge', cursor: string, node: { __typename?: 'Comic', id: number, name: string, description?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetComicsQuery = { comics: { totalCount: number, edges: Array<{ cursor: string, node: { id: number, name: string, description: string | null, oldest: string | null, newest: string | null, avatarUrl: string | null, lastStrip: { imageUrl: string | null, date: string } | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor: string | null, endCursor: string | null } } };
 
 export type GetComicQueryVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id: number;
 }>;
 
 
-export type GetComicQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, description?: string | null, author?: string | null, source?: string | null, sourceIdentifier?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null, firstStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null } | null };
+export type GetComicQuery = { comic: { id: number, name: string, description: string | null, author: string | null, source: string | null, sourceIdentifier: string | null, oldest: string | null, newest: string | null, avatarUrl: string | null, lastStrip: { imageUrl: string | null, date: string, width: number | null, height: number | null } | null, firstStrip: { imageUrl: string | null, date: string } | null } | null };
 
 export type SearchComicsQueryVariables = Exact<{
-  query: Scalars['String']['input'];
+  query: string;
 }>;
 
 
-export type SearchComicsQuery = { __typename?: 'Query', search: { __typename?: 'SearchResults', comics: Array<{ __typename?: 'Comic', id: number, name: string, description?: string | null, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, lastStrip?: { __typename?: 'ComicStrip', imageUrl?: string | null, date: any } | null }> } };
+export type SearchComicsQuery = { search: { comics: Array<{ id: number, name: string, description: string | null, oldest: string | null, newest: string | null, avatarUrl: string | null, lastStrip: { imageUrl: string | null, date: string } | null }> } };
 
 export type AddFavoriteMutationVariables = Exact<{
-  comicId: Scalars['Int']['input'];
+  comicId: number;
 }>;
 
 
-export type AddFavoriteMutation = { __typename?: 'Mutation', addFavorite: { __typename?: 'FavoritePayload', preference?: { __typename?: 'UserPreference', favoriteComics: Array<number> } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+export type AddFavoriteMutation = { addFavorite: { preference: { favoriteComics: Array<number> } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
 
 export type RemoveFavoriteMutationVariables = Exact<{
-  comicId: Scalars['Int']['input'];
+  comicId: number;
 }>;
 
 
-export type RemoveFavoriteMutation = { __typename?: 'Mutation', removeFavorite: { __typename?: 'FavoritePayload', preference?: { __typename?: 'UserPreference', favoriteComics: Array<number> } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+export type RemoveFavoriteMutation = { removeFavorite: { preference: { favoriteComics: Array<number> } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
 
 export type UpdateLastReadMutationVariables = Exact<{
-  comicId: Scalars['Int']['input'];
-  date: Scalars['Date']['input'];
+  comicId: number;
+  date: string;
 }>;
 
 
-export type UpdateLastReadMutation = { __typename?: 'Mutation', updateLastRead: { __typename?: 'UpdateLastReadPayload', preference?: { __typename?: 'UserPreference', lastReadDates: Array<{ __typename?: 'LastReadEntry', comicId: number, date: any }> } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+export type UpdateLastReadMutation = { updateLastRead: { preference: { lastReadDates: Array<{ comicId: number, date: string }> } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
 
 export type UpdateDisplaySettingsMutationVariables = Exact<{
-  settings: Scalars['JSON']['input'];
+  settings: any;
 }>;
 
 
-export type UpdateDisplaySettingsMutation = { __typename?: 'Mutation', updateDisplaySettings: { __typename?: 'UpdateDisplaySettingsPayload', preference?: { __typename?: 'UserPreference', displaySettings?: any | null } | null, errors: Array<{ __typename?: 'UserError', message: string, field?: string | null, code?: ErrorCode | null }> } };
+export type UpdateDisplaySettingsMutation = { updateDisplaySettings: { preference: { displaySettings: any } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
 
 export type GetStripWindowQueryVariables = Exact<{
-  comicId: Scalars['Int']['input'];
-  center: Scalars['Date']['input'];
-  before: Scalars['Int']['input'];
-  after: Scalars['Int']['input'];
+  comicId: number;
+  center: string;
+  before: number;
+  after: number;
 }>;
 
 
-export type GetStripWindowQuery = { __typename?: 'Query', comic?: { __typename?: 'Comic', id: number, name: string, oldest?: any | null, newest?: any | null, avatarUrl?: string | null, stripWindow: Array<{ __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null }> } | null };
+export type GetStripWindowQuery = { comic: { id: number, name: string, oldest: string | null, newest: string | null, avatarUrl: string | null, stripWindow: Array<{ date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null }> } | null };
 
 export type GetRandomStripQueryVariables = Exact<{
-  comicId?: InputMaybe<Scalars['Int']['input']>;
+  comicId?: number | null | undefined;
 }>;
 
 
-export type GetRandomStripQuery = { __typename?: 'Query', randomStrip?: { __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null } | null };
+export type GetRandomStripQuery = { randomStrip: { date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null } | null };
 
 export type GetComicsForDateQueryVariables = Exact<{
-  first?: InputMaybe<Scalars['Int']['input']>;
-  date: Scalars['Date']['input'];
+  first?: number | null | undefined;
+  date: string;
 }>;
 
 
-export type GetComicsForDateQuery = { __typename?: 'Query', comics: { __typename?: 'ComicConnection', totalCount: number, edges: Array<{ __typename?: 'ComicEdge', node: { __typename?: 'Comic', id: number, name: string, avatarUrl?: string | null, oldest?: any | null, newest?: any | null, strip?: { __typename?: 'ComicStrip', date: any, available: boolean, imageUrl?: string | null, width?: number | null, height?: number | null, transcript?: string | null } | null } }> } };
+export type GetComicsForDateQuery = { comics: { totalCount: number, edges: Array<{ node: { id: number, name: string, avatarUrl: string | null, oldest: string | null, newest: string | null, strip: { date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null, transcript: string | null } | null } }> } };
 
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCombinedMetricsQuery = { __typename?: 'Query', combinedMetrics?: { __typename?: 'CombinedMetrics', lastUpdated?: any | null, storage?: { __typename?: 'StorageMetrics', totalBytes?: number | null, comicCount?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicStorageMetric', comicId?: number | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown?: Array<{ __typename?: 'YearlyStorageMetric', year: number, bytes: number, imageCount: number }> | null }> | null } | null, access?: { __typename?: 'AccessMetrics', totalAccesses?: number | null, lastUpdated?: any | null, comics?: Array<{ __typename?: 'ComicAccessMetric', comicName: string, accessCount: number, averageAccessTimeMs?: number | null, lastAccessed?: any | null }> | null } | null } | null };
+export type GetCombinedMetricsQuery = { combinedMetrics: { lastUpdated: string | null, storage: { totalBytes: number | null, comicCount: number | null, lastUpdated: string | null, comics: Array<{ comicId: number | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown: Array<{ year: number, bytes: number, imageCount: number }> | null }> | null } | null, access: { totalAccesses: number | null, lastUpdated: string | null, comics: Array<{ comicName: string, accessCount: number, averageAccessTimeMs: number | null, lastAccessed: string | null }> | null } | null } | null };
 
 export type GetRetrievalSummaryQueryVariables = Exact<{
-  fromDate?: InputMaybe<Scalars['Date']['input']>;
-  toDate?: InputMaybe<Scalars['Date']['input']>;
+  fromDate?: string | null | undefined;
+  toDate?: string | null | undefined;
 }>;
 
 
-export type GetRetrievalSummaryQuery = { __typename?: 'Query', retrievalSummary: { __typename?: 'RetrievalSummary', totalAttempts: number, successCount: number, failureCount: number, skippedCount: number, successRate: number, averageDurationMs?: number | null, byStatus?: Array<{ __typename?: 'StatusCount', status: RetrievalStatusEnum, count: number }> | null, byComic?: Array<{ __typename?: 'ComicRetrievalSummary', comicName: string, totalAttempts: number, successCount: number, failureCount: number }> | null } };
+export type GetRetrievalSummaryQuery = { retrievalSummary: { totalAttempts: number, successCount: number, failureCount: number, skippedCount: number, successRate: number, averageDurationMs: number | null, byStatus: Array<{ status: RetrievalStatusEnum, count: number }> | null, byComic: Array<{ comicName: string, totalAttempts: number, successCount: number, failureCount: number }> | null } };
 
 export type GetRetrievalRecordsQueryVariables = Exact<{
-  comicName?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<RetrievalStatusEnum>;
-  fromDate?: InputMaybe<Scalars['Date']['input']>;
-  toDate?: InputMaybe<Scalars['Date']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  comicName?: string | null | undefined;
+  status?: RetrievalStatusEnum | null | undefined;
+  fromDate?: string | null | undefined;
+  toDate?: string | null | undefined;
+  limit?: number | null | undefined;
 }>;
 
 
-export type GetRetrievalRecordsQuery = { __typename?: 'Query', retrievalRecords: Array<{ __typename?: 'RetrievalRecord', id: string, comicName: string, comicDate: any, source?: string | null, status: RetrievalStatusEnum, retrievalDurationMs?: number | null, imageSize?: number | null, httpStatusCode?: number | null, errorMessage?: string | null }> };
+export type GetRetrievalRecordsQuery = { retrievalRecords: Array<{ id: string, comicName: string, comicDate: string, source: string | null, status: RetrievalStatusEnum, retrievalDurationMs: number | null, imageSize: number | null, httpStatusCode: number | null, errorMessage: string | null }> };
 
 
 export class TypedDocumentString<TResult, TVariables>
@@ -2050,6 +909,8 @@ export const GetComicDocument = new TypedDocumentString(`
     lastStrip {
       imageUrl
       date
+      width
+      height
     }
     firstStrip {
       imageUrl

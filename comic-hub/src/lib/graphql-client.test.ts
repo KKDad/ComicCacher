@@ -10,7 +10,7 @@ describe('fetcher', () => {
     // Mock window.location for 401 redirect test
     Object.defineProperty(window, 'location', {
       writable: true,
-      value: { ...originalLocation, href: '' },
+      value: { origin: 'http://localhost', pathname: '/comics/5/read', search: '?date=2026-09-01', assign: vi.fn() },
     });
   });
 
@@ -43,10 +43,12 @@ describe('fetcher', () => {
     }));
   });
 
-  it('redirects to /login on 401', async () => {
+  it('redirects to /login on 401, returning to the current page after sign-in', async () => {
     vi.mocked(global.fetch).mockResolvedValue(new Response('Unauthorized', { status: 401 }));
     await expect(fetcher('query { me }')()).rejects.toThrow('Request failed: 401');
-    expect(window.location.href).toBe('/login');
+    expect(window.location.assign).toHaveBeenCalledWith(
+      new URL('/login?from=%2Fcomics%2F5%2Fread%3Fdate%3D2026-09-01', 'http://localhost'),
+    );
   });
 
   it('throws on non-ok response', async () => {

@@ -26,6 +26,8 @@ vi.mock('@/hooks/use-swipe', () => ({
 }));
 
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
+import { imageSrc } from '@/test/test-utils';
+type SwipeOptions = Parameters<typeof useSwipe>[0];
 
 vi.mock('@/hooks/use-pinch-zoom', () => ({
   usePinchZoom: vi.fn().mockReturnValue({
@@ -99,7 +101,7 @@ describe('MobileReader', () => {
     render(<MobileReader comicId={1} reader={createMockReader()} />);
 
     const img = screen.getByRole('img');
-    expect(img).toHaveAttribute('src', 'https://example.com/15.png');
+    expect(imageSrc(img)).toBe('https://example.com/15.png');
   });
 
   it('renders formatted date for current strip', () => {
@@ -238,24 +240,24 @@ describe('MobileReader', () => {
   });
 
   it('passes swipe callbacks to useSwipe when not zoomed', () => {
-    let capturedOptions: any;
-    vi.mocked(useSwipe).mockImplementation((opts: any) => {
+    let capturedOptions: SwipeOptions | undefined;
+    vi.mocked(useSwipe).mockImplementation((opts) => {
       capturedOptions = opts;
       return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
     });
 
     render(<MobileReader comicId={1} reader={createMockReader()} />);
 
-    expect(capturedOptions.onSwipeUp).toBeInstanceOf(Function);
-    expect(capturedOptions.onSwipeDown).toBeInstanceOf(Function);
-    expect(capturedOptions.threshold).toBe(50);
+    expect(capturedOptions?.onSwipeUp).toBeInstanceOf(Function);
+    expect(capturedOptions?.onSwipeDown).toBeInstanceOf(Function);
+    expect(capturedOptions?.threshold).toBe(50);
   });
 
   it('calls goOlder via swipe down callback', () => {
     const goOlder = vi.fn();
     let capturedOnSwipeDown: (() => void) | undefined;
 
-    vi.mocked(useSwipe).mockImplementation((opts: any) => {
+    vi.mocked(useSwipe).mockImplementation((opts) => {
       capturedOnSwipeDown = opts.onSwipeDown;
       return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
     });
@@ -296,8 +298,8 @@ describe('MobileReader', () => {
       resetZoom: vi.fn(),
     });
 
-    let capturedOptions: any;
-    vi.mocked(useSwipe).mockImplementation((opts: any) => {
+    let capturedOptions: SwipeOptions | undefined;
+    vi.mocked(useSwipe).mockImplementation((opts) => {
       capturedOptions = opts;
       return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
     });
@@ -305,8 +307,8 @@ describe('MobileReader', () => {
     render(<MobileReader comicId={1} reader={createMockReader()} />);
 
     // When zoomed, swipe handlers should be undefined
-    expect(capturedOptions.onSwipeUp).toBeUndefined();
-    expect(capturedOptions.onSwipeDown).toBeUndefined();
+    expect(capturedOptions?.onSwipeUp).toBeUndefined();
+    expect(capturedOptions?.onSwipeDown).toBeUndefined();
   });
 
   it('renders older button click calls goOlder', async () => {
@@ -510,7 +512,7 @@ describe('MobileReader', () => {
     const goNewer = vi.fn();
     let capturedOnSwipeUp: (() => void) | undefined;
 
-    vi.mocked(useSwipe).mockImplementation((opts: any) => {
+    vi.mocked(useSwipe).mockImplementation((opts) => {
       capturedOnSwipeUp = opts.onSwipeUp;
       return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
     });
@@ -541,7 +543,7 @@ describe('MobileReader', () => {
     const goNewer = vi.fn();
     let capturedOnSwipeUp: (() => void) | undefined;
 
-    vi.mocked(useSwipe).mockImplementation((opts: any) => {
+    vi.mocked(useSwipe).mockImplementation((opts) => {
       capturedOnSwipeUp = opts.onSwipeUp;
       return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
     });
@@ -561,7 +563,7 @@ describe('MobileReader', () => {
     const goOlder = vi.fn();
     let capturedOnSwipeDown: (() => void) | undefined;
 
-    vi.mocked(useSwipe).mockImplementation((opts: any) => {
+    vi.mocked(useSwipe).mockImplementation((opts) => {
       capturedOnSwipeDown = opts.onSwipeDown;
       return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
     });
@@ -585,7 +587,7 @@ describe('MobileReader', () => {
     const goOlder = vi.fn();
     let capturedOnSwipeDown: (() => void) | undefined;
 
-    vi.mocked(useSwipe).mockImplementation((opts: any) => {
+    vi.mocked(useSwipe).mockImplementation((opts) => {
       capturedOnSwipeDown = opts.onSwipeDown;
       return { onTouchStart: vi.fn(), onTouchMove: vi.fn(), onTouchEnd: vi.fn() };
     });

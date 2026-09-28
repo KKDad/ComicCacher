@@ -1,17 +1,24 @@
 'use client';
 
 import { useCallback } from 'react';
+import Image from 'next/image';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
 import { formatFullDate } from '@/lib/date-utils';
 
+// Strips without recorded dimensions reserve a typical 3:1 box until the image loads
+const FALLBACK_WIDTH = 900;
+const FALLBACK_HEIGHT = 300;
+
 /** One strip the lightbox can show: the comic's name, the strip date and its image. */
 export interface LightboxItem {
   title: string;
   date: string;
   imageUrl: string | null;
+  width: number | null;
+  height: number | null;
 }
 
 interface LightboxProps {
@@ -65,10 +72,13 @@ export function Lightbox({ items, currentIndex, onClose, onNext, onPrevious }: L
               transition: isZoomed ? 'none' : 'transform 200ms ease-out',
             }}
           >
-            <img
+            <Image
               src={item.imageUrl}
               alt={`${item.title}, ${formatFullDate(item.date)}`}
-              className="max-w-full max-h-[85vh] object-contain select-none"
+              width={item.width ?? FALLBACK_WIDTH}
+              height={item.height ?? FALLBACK_HEIGHT}
+              sizes="90vw"
+              className="w-auto h-auto max-w-full max-h-[85vh] object-contain select-none"
               draggable={false}
             />
           </div>
