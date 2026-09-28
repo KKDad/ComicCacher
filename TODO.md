@@ -43,6 +43,20 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 - Also: add `npm run codegen` (with a check that `src/generated` is unchanged) and `npm run lint` to the comic-hub CI job, so the next bump like these fails in CI
 - Priority: High
 
+## Review and consolidate the utils scripts
+
+- `utils/` has grown to eleven scripts plus `prod/` and `readme-demo/`, added one task at a time: separate dev and prod build/run pairs, a log fetcher that only covers prod, a tunnel that only covers prod
+- Review them all: find duplicated logic (hosts, ports, ssh staging, health polling, version checks), move it into a shared helper, and merge scripts that differ only by environment (e.g. `--env dev|prod`)
+- Keep the safety checks (master branch, clean tree, confirm prompt, rollback) and update the Utility Scripts list in `CLAUDE.md` and anything that calls the scripts (the `comiccacher-logs` skill uses them)
+- Priority: High
+
+## Teach the comiccacher-logs skill about frontend health and unexpected log lines
+
+- The skill (in `~/git/runbooks/skills/comiccacher-logs`) focuses on the API. It treats the `comics-ui` log as relevant only to web-UI questions, so a health report doesn't check the frontend
+- Add a frontend health check to every report: container status and restarts, `/api/health`, and errors in the `comics-ui` log (failed server renders, GraphQL errors, refresh failures)
+- Flag anything unexpected: log lines that match none of the known signatures, new WARN/ERROR messages, and error rates that jump compared with earlier runs, rather than reporting only the failures it already knows how to look for
+- Priority: High
+
 ## Add timing metrics to diagnose slow page loads
 
 - Slow page loads are hard to diagnose because the logs don't show where the time goes
