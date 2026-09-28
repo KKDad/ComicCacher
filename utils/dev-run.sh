@@ -9,7 +9,8 @@
 #   - Pull the image first, so a tag missing from the registry fails before anything is removed
 #   - Create the comicdata-dev NFS volume if it doesn't exist
 #   - Create dev-token.env beside this script if it doesn't exist: turns on the dev-only
-#     devToken mutation with a random secret. Kept on the Docker host, never in git
+#     devToken mutation with a random secret. Kept on the Docker host, never in git.
+#     Adds the default devToken username (a USER-role test account) if the file lacks one
 #   - Replace comics-api-dev with a container running the new image
 #   - Poll Docker health status. There is no rollback: this is dev, and a failed
 #     container is left running so its logs can be read
@@ -31,6 +32,9 @@ HEALTH_POLL_INTERVAL=5
 SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEV_TOKEN_ENV="${SCRIPT_DIR}/dev-token.env"
+# devToken issues tokens for this user when no username is given. A USER-role test account on the dev data,
+# so a default token isn't an admin login
+DEV_TOKEN_DEFAULT_USERNAME="uireview0927"
 
 usage() {
     cat <<EOF
@@ -104,6 +108,7 @@ if [[ $DRY_RUN -eq 1 ]]; then
     echo "  docker pull $FULL_IMAGE"
     echo "  docker volume create ... $VOLUME_NAME   (only if missing)"
     echo "  create ${DEV_TOKEN_ENV} with a random secret   (only if missing)"
+    echo "  set COMICS_DEVTOKEN_DEFAULTUSERNAME=${DEV_TOKEN_DEFAULT_USERNAME} in it   (only if missing)"
     [[ -n "$CURRENT_IMAGE" ]] && echo "  docker stop $DEV_CONTAINER_NAME && docker rm $DEV_CONTAINER_NAME"
     echo "  docker run ${RUN_ARGS[*]}"
     echo ""
@@ -134,6 +139,10 @@ if [[ ! -f "$DEV_TOKEN_ENV" ]]; then
         umask 077
         printf 'COMICS_DEVTOKEN_ENABLED=true\nCOMICS_DEVTOKEN_SECRET=%s\n' "$(openssl rand -hex 32)" > "$DEV_TOKEN_ENV"
     )
+fi
+if ! grep -q '^COMICS_DEVTOKEN_DEFAULTUSERNAME=' "$DEV_TOKEN_ENV"; then
+    echo "Setting the default devToken username to ${DEV_TOKEN_DEFAULT_USERNAME} in ${DEV_TOKEN_ENV}..."
+    echo "COMICS_DEVTOKEN_DEFAULTUSERNAME=${DEV_TOKEN_DEFAULT_USERNAME}" >> "$DEV_TOKEN_ENV"
 fi
 
 # --- Replace the container ---
