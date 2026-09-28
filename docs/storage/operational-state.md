@@ -138,7 +138,7 @@ Records individual comic retrieval attempts with outcomes. Used for troubleshoot
 | `comicName` | `String` | Comic name |
 | `comicDate` | `LocalDate` | Target retrieval date |
 | `source` | `String` | Source provider (e.g., `gocomics`, `comicskingdom`) |
-| `status` | `ComicRetrievalStatus` | `SUCCESS`, `NETWORK_ERROR`, `PARSING_ERROR`, `COMIC_UNAVAILABLE`, `AUTHENTICATION_ERROR`, `STORAGE_ERROR`, `UNKNOWN_ERROR` |
+| `status` | `ComicRetrievalStatus` | `SUCCESS`, `NETWORK_ERROR`, `RATE_LIMITED`, `PARSING_ERROR`, `COMIC_UNAVAILABLE`, `AUTHENTICATION_ERROR`, `STORAGE_ERROR`, `UNKNOWN_ERROR` |
 | `errorMessage` | `String` (nullable) | Error details if failed |
 | `retrievalDurationMs` | `long` | Operation duration in milliseconds |
 | `imageSize` | `Long` (nullable) | Downloaded image size in bytes |

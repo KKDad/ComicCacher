@@ -191,6 +191,7 @@ class RetrievalResolverTest {
         return Stream.of(
                 new StatusMappingCase("SUCCESS maps to SUCCESS", ComicRetrievalStatus.SUCCESS, ComicRetrievalStatus.SUCCESS),
                 new StatusMappingCase("NETWORK_ERROR maps to NETWORK_ERROR", ComicRetrievalStatus.NETWORK_ERROR, ComicRetrievalStatus.NETWORK_ERROR),
+                new StatusMappingCase("RATE_LIMITED maps to RATE_LIMITED", ComicRetrievalStatus.RATE_LIMITED, ComicRetrievalStatus.RATE_LIMITED),
                 new StatusMappingCase("PARSING_ERROR maps to PARSING_ERROR", ComicRetrievalStatus.PARSING_ERROR, ComicRetrievalStatus.PARSING_ERROR),
                 new StatusMappingCase("COMIC_UNAVAILABLE maps to COMIC_UNAVAILABLE", ComicRetrievalStatus.COMIC_UNAVAILABLE, ComicRetrievalStatus.COMIC_UNAVAILABLE),
                 new StatusMappingCase("AUTHENTICATION_ERROR maps to AUTHENTICATION_ERROR", ComicRetrievalStatus.AUTHENTICATION_ERROR, ComicRetrievalStatus.AUTHENTICATION_ERROR),

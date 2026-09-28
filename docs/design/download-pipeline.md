@@ -107,13 +107,23 @@ Steps 4 and 6 are non-critical: failures are logged but do not fail the save. St
 
 ## Error Recording
 
-`ComicDownloaderFacade` classifies exceptions into `ComicRetrievalStatus` categories:
+`ComicDownloaderFacade` records each failed download under a `ComicRetrievalStatus`, keeping the source's HTTP status on the record when there was one.
+
+A failed result from a strategy is filed by its `FailureKind`:
+
+| Failure kind | Status |
+|---------------|--------|
+| `RATE_LIMITED` (HTTP 429 after the retries ran out) | `RATE_LIMITED` |
+| `UNAVAILABLE` (no image for the date, empty or invalid image data, HTTP 404 or 410) | `COMIC_UNAVAILABLE` |
+| `ERROR` with an HTTP status (e.g. 503) | `NETWORK_ERROR` |
+| `ERROR` without one | `UNKNOWN_ERROR` |
+
+An exception thrown by the strategy is filed by its type:
 
 | Exception Type | Status |
 |---------------|--------|
-| `ConnectException`, `SocketTimeoutException`, `IOException` | `NETWORK_ERROR` |
-| `HttpStatusException` | `PARSING_ERROR` |
 | `AccessDeniedException` | `STORAGE_ERROR` |
+| Other `IOException` | `NETWORK_ERROR` |
 | All others | `UNKNOWN_ERROR` |
 
 Failed downloads are recorded via `RetrievalStatusService.recordRetrievalResult()` and tracked in `ErrorTrackingService` for per-comic error history. Successful downloads clear the error history for that comic.

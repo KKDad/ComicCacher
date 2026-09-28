@@ -25,6 +25,7 @@ const statusColors: Record<RetrievalStatusEnum, string> = {
   [RetrievalStatusEnum.AuthenticationError]: 'bg-error-subtle text-error',
   [RetrievalStatusEnum.NetworkError]: 'bg-error-subtle text-error',
   [RetrievalStatusEnum.ParsingError]: 'bg-error-subtle text-error',
+  [RetrievalStatusEnum.RateLimited]: 'bg-warning-subtle text-warning',
   [RetrievalStatusEnum.StorageError]: 'bg-error-subtle text-error',
   [RetrievalStatusEnum.ComicUnavailable]: 'bg-warning-subtle text-warning',
   [RetrievalStatusEnum.UnknownError]: 'bg-muted text-muted-foreground',

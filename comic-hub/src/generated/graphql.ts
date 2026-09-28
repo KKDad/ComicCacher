@@ -1016,6 +1016,7 @@ export enum RetrievalStatusEnum {
   ComicUnavailable = 'COMIC_UNAVAILABLE',
   NetworkError = 'NETWORK_ERROR',
   ParsingError = 'PARSING_ERROR',
+  RateLimited = 'RATE_LIMITED',
   StorageError = 'STORAGE_ERROR',
   Success = 'SUCCESS',
   UnknownError = 'UNKNOWN_ERROR'

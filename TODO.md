@@ -1,14 +1,5 @@
 # ComicCacher TODO
 
-## Verify the gocomics 429 fix in prod
-
-- Since 2026-09-22 about six gocomics comics have failed every day with HTTP 429. It's rate limiting across the whole source, not per-comic blocking
-- 2.4.7 added 429 retries with backoff (`downloader.sources.gocomics.retry.*`) and moved the User-Agent to Chrome 154
-- Check the next 07:30 `ComicDownloadJob` run for `Rate limited (HTTP 429)` warnings and whether the retries succeed. If they don't, lower `downloader.sources.gocomics.throttle.*` or spread the run out
-- 429s are recorded as `COMIC_UNAVAILABLE`, which hides them among real "no strip today" days. Give them their own status (e.g. `RATE_LIMITED`)
-- Optional: advertise and decode `zstd` like real Chrome (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
-- Priority: High
-
 ## Backfill Mother Goose & Grimm and Sherman's Lagoon
 
 - The save bug is fixed (2.4.8), and the 139 strips per comic that dev had were copied to prod
@@ -142,6 +133,13 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 
 - `current_ref()` in `utils/prod-run.sh` takes the tag from after the last `:` of the image name. For a digest-pinned image that's the digest, so the plan output and audit log show the wrong version. Rollback still works. Fix: strip `@digest` first
 - In `prod-build-and-run.sh` the staging `ssh`/`scp` calls eat stdin, so `echo y | …` never reaches the `Continue?` prompt and the script exits without saying why. Use `ssh -n` there, and print a message when `read` gets no input
+- Priority: Low
+
+## Advertise zstd to gocomics like real Chrome
+
+- The gocomics 429s that started 2026-09-22 look resolved: the 2026-09-28 07:30 run on 2.5.0 (Chrome 154 User-Agent, 429 retries) got no 429s at all, so the retries weren't needed, and every gocomics comic but Shoe (no Open Graph image) downloaded
+- 429s now have their own `RATE_LIMITED` retrieval status, so a return shows up on the retrieval-status page
+- Optional hardening: send and decode `zstd` in `Accept-Encoding` as Chrome does (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
 - Priority: Low
 
 ## Configure SMTP for Password Reset
