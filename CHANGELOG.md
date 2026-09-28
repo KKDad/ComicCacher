@@ -6,21 +6,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Sandboxed tests for the deploy scripts (`utils/test/run-tests.sh`): each script runs against stub docker, ssh, registry and git, and its commands, output and audit log must match a recorded baseline. A new Utils CI job runs them with ShellCheck
-- Image provenance: `build.sh` labels every image with its commit, branch and whether the tree was dirty. `deploy.sh prod` only deploys a clean build of a commit on origin/master, pinned to the digest it checked, so a dev build pushed under a release tag can't reach prod. `build.sh prod` won't reuse a version that holds a build of another master commit or an unlabelled image, and prod builds and deploys need a checkout of exactly origin/master. `--allow-unverified-image` covers images built before the labels, recorded in the audit log as `provenance=override`
-- `utils/dev/docker-compose.yml`: the dev API is deployed with compose like prod, as project `comics-dev` in `/root/comics-deploy-dev`. A test checks it shares no project, container, volume or port with prod
+- Comics Hub refreshes an expired session on page load: `proxy.ts` uses the refresh cookie to get a new access token before the page renders, so a full page load more than 15 minutes after the last one no longer sends you to `/login`. A failed refresh clears the auth cookies (#397)
+- `RATE_LIMITED` retrieval status for HTTP 429s, which were recorded as `NETWORK_ERROR`; the retrieval-status page shows it with a warning badge (#401)
+- `batch.startup-catch-up.enabled` (default true) turns off the startup catch-up runs; the integration test profiles turn it off (#400)
+- Sandboxed tests for the deploy scripts (`utils/test/run-tests.sh`): each script runs against stub docker, ssh, registry and git, and its commands, output and audit log must match a recorded baseline. A new Utils CI job runs them with ShellCheck (#403)
+- Image provenance: `build.sh` labels every image with its commit, branch and whether the tree was dirty. `deploy.sh prod` only deploys a clean build of a commit on origin/master, pinned to the digest it checked, so a dev build pushed under a release tag can't reach prod. `build.sh prod` won't reuse a version that holds a build of another master commit or an unlabelled image, and prod builds and deploys need a checkout of exactly origin/master. `--allow-unverified-image` covers images built before the labels, recorded in the audit log as `provenance=override` (#403)
+- `utils/dev/docker-compose.yml`: the dev API is deployed with compose like prod, as project `comics-dev` in `/root/comics-deploy-dev`. A test checks it shares no project, container, volume or port with prod (#403)
 
 ### Changed
-- The utils scripts take the environment as a required first argument: `deploy.sh <dev|prod>` replaces `prod-build-and-run.sh` and `dev-build-and-run.sh`, `build.sh <dev|prod>` replaces `prod-build.sh` and both `build-docker.sh`, `remote/run.sh <dev|prod>` replaces `prod-run.sh` and `dev-run.sh`, `logs.sh <dev|prod>` replaces `fetch-prod-logs.sh`, and `tunnel.sh prod` replaces `tunnel-to-prod-api.sh`. Shared settings live in `utils/lib/common.sh`
-- `run.sh` refuses to run next to the other environment's compose file (each file names its project)
-- A prod rollback uses the compose file of the last successful deploy (`docker-compose.last-good.yml`), not the one just staged
-- The first `deploy.sh dev` replaces the `docker run` container with a compose one and copies `dev-token.env` into `/root/comics-deploy-dev`, keeping its secret
+- Startup catch-up jobs run one after another on a background virtual thread, so the API reports healthy as soon as it starts instead of after they finish (#400)
+- A 401 in the browser and the signed-in layouts send you to `/login?from=<page>`, so signing in returns you to the page you were on (#404)
+- Every image in Comics Hub goes through `next/image`, including comic strips (fetched through the `/api/v1` rewrite) (#404)
+- Comics Hub lint passes with no warnings (`--max-warnings=0`): typed test mocks replace 175 `as any` casts, and components follow the React Compiler rules. CI runs lint, a codegen drift check and `tsc`, and also runs on API schema changes (#404)
+- Comics Hub dev dependencies: TypeScript 6.0, @graphql-codegen/typescript-operations 6 (operations only, const enums, Date/DateTime as string), @graphql-codegen/cli 7.4, jsdom 30, @vitejs/plugin-react 6. Dependabot holds TypeScript below 6.1 until typescript-eslint supports it, and `@types/node` majors until the next Node LTS (#404, #406, #407, #409)
+- The utils scripts take the environment as a required first argument: `deploy.sh <dev|prod>` replaces `prod-build-and-run.sh` and `dev-build-and-run.sh`, `build.sh <dev|prod>` replaces `prod-build.sh` and both `build-docker.sh`, `remote/run.sh <dev|prod>` replaces `prod-run.sh` and `dev-run.sh`, `logs.sh <dev|prod>` replaces `fetch-prod-logs.sh`, and `tunnel.sh prod` replaces `tunnel-to-prod-api.sh`. Shared settings live in `utils/lib/common.sh` (#403)
+- `run.sh` refuses to run next to the other environment's compose file (each file names its project) (#403)
+- A prod rollback uses the compose file of the last successful deploy (`docker-compose.last-good.yml`), not the one just staged (#403)
+- The first `deploy.sh dev` replaces the `docker run` container with a compose one and copies `dev-token.env` into `/root/comics-deploy-dev`, keeping its secret (#403)
 
 ### Fixed
-- A prod deploy whose `compose up` failed exited without rolling back; it now rolls back like a failed health check
-- The prod deploy plan and audit log showed the digest as the version for digest-pinned images
-- `deploy.sh prod` staging no longer swallows input meant for the confirm prompt, and the prompt says why it stops when it gets no answer
-- `tunnel.sh` stops only its own ssh, instead of every process matching a `pkill -f` pattern
+- A prod deploy could roll back because the API stayed OUT_OF_SERVICE while startup catch-up jobs ran inline, past the 180 s health timeout (#400)
+- The startup check for whether a job already ran today used the JVM's timezone instead of `batch.timezone` (#400)
+- `devToken` with no username failed on dev because no default user was set; the dev deploy now defaults it to the USER-role test account `uireview0927` (#398)
+- `ImageWithFallback` showed a broken image instead of its fallback when an image failed to load (#404)
+- A comic with no strips passed a null date to its dashboard tile (#404)
+- A prod deploy whose `compose up` failed exited without rolling back; it now rolls back like a failed health check (#403)
+- The prod deploy plan and audit log showed the digest as the version for digest-pinned images (#403)
+- `deploy.sh prod` staging no longer swallows input meant for the confirm prompt, and the prompt says why it stops when it gets no answer (#403)
+- `tunnel.sh` stops only its own ssh, instead of every process matching a `pkill -f` pattern (#403)
+- `utils/readme-screenshots.sh` rendered every strip as "This strip didn't load": the demo API served SVG, which the Next image optimizer won't serve. It now serves PNG, and the script installs Comics Hub's dependencies first; the README screenshots are regenerated (#412)
+
+### Security
+- Updated jsoup from 1.22.1 to 1.23.2 (Cleaner advisory) and overrode Tomcat to 11.0.26 for the authentication and authorization CVEs fixed in 11.0.25; Spring Boot 4.1.1 still ships 11.0.24 (#411)
 
 ## [2.5.0] - 2026-09-27
 ### Added
