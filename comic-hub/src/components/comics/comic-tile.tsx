@@ -11,7 +11,8 @@ interface ComicTileProps {
   comic: {
     id: number;
     name: string;
-    date: string;
+    // Latest strip date; null for a comic with no strips yet
+    date: string | null;
     thumbnail?: string;
   };
   isNew?: boolean;
@@ -25,7 +26,7 @@ interface ComicTileProps {
  * the link instead of an illegal button-inside-anchor.
  */
 export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicTileProps) {
-  const formattedDate = formatShortDate(comic.date);
+  const formattedDate = comic.date ? formatShortDate(comic.date) : null;
 
   return (
     <Card className="relative overflow-hidden py-0 gap-0 hover:shadow-md transition-shadow group focus-within:ring-[3px] focus-within:ring-ring/50">
@@ -34,20 +35,21 @@ export function ComicTile({ comic, isNew, isFavorite, onToggleFavorite }: ComicT
           src={comic.thumbnail}
           alt=""
           fallbackText={comic.name[0]}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           className="strip-image motion-safe:group-hover:scale-105 transition-transform"
         />
       </div>
       <CardContent className="p-3">
         <h3 className="font-sans font-medium text-ink truncate group-hover:text-primary transition-colors">
           <Link
-            href={`/comics/${comic.id}/read?date=${comic.date}`}
+            href={comic.date ? `/comics/${comic.id}/read?date=${comic.date}` : `/comics/${comic.id}/read`}
             className="outline-none after:absolute after:inset-0"
           >
             {comic.name}
           </Link>
         </h3>
         <div className="flex items-center justify-between mt-1">
-          <p className="text-sm text-ink-subtle">{formattedDate}</p>
+          {formattedDate && <p className="text-sm text-ink-subtle">{formattedDate}</p>}
           {isNew && (
             <Badge className="text-xs bg-highlight text-on-highlight border-transparent">
               New

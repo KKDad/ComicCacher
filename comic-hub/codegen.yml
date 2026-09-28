@@ -4,10 +4,14 @@ documents: 'src/graphql/operations/**/*.graphql'
 generates:
   src/generated/graphql.ts:
     plugins:
-      - typescript
       - typescript-operations
       - typescript-react-query
     config:
+      scalars:
+        Date: string
+        DateTime: string
+        JSON: any
+      enumType: const
       reactQueryVersion: 5
       addInfiniteQuery: true
       exposeQueryKeys: true

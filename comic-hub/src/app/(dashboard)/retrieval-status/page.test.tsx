@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import RetrievalStatusPage from './page';
 import { useGetRetrievalSummaryQuery, useGetRetrievalRecordsQuery, RetrievalStatusEnum } from '@/generated/graphql';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { mockQueryResult } from '@/test/mock-query';
 
 vi.mock('@/generated/graphql', () => ({
   useGetRetrievalSummaryQuery: vi.fn(),
@@ -84,62 +85,62 @@ function renderWithQuery(ui: React.ReactElement) {
 
 describe('RetrievalStatusPage', () => {
   beforeEach(() => {
-    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue({
+    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue(mockQueryResult({
       data: mockSummary,
       isLoading: false,
       error: null,
-    } as any);
-    vi.mocked(useGetRetrievalRecordsQuery).mockReturnValue({
+    }));
+    vi.mocked(useGetRetrievalRecordsQuery).mockReturnValue(mockQueryResult({
       data: mockRecords,
       isLoading: false,
       error: null,
-    } as any);
+    }));
   });
 
   it('renders loading skeletons when loading', () => {
-    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue({
+    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: true,
       error: null,
-    } as any);
-    vi.mocked(useGetRetrievalRecordsQuery).mockReturnValue({
+    }));
+    vi.mocked(useGetRetrievalRecordsQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: true,
       error: null,
-    } as any);
+    }));
     const { container } = renderWithQuery(<RetrievalStatusPage />);
     const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('renders error state', () => {
-    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue({
+    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: false,
       error: new Error('Network error'),
-    } as any);
+    }));
     renderWithQuery(<RetrievalStatusPage />);
     expect(screen.getByText('Failed to load retrieval status')).toBeInTheDocument();
     expect(screen.getByText('Network error')).toBeInTheDocument();
   });
 
   it('renders error state with non-Error object', () => {
-    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue({
+    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: false,
       error: 'some string error',
-    } as any);
+    }));
     renderWithQuery(<RetrievalStatusPage />);
     expect(screen.getByText('Failed to load retrieval status')).toBeInTheDocument();
     expect(screen.getByText('An unexpected error occurred.')).toBeInTheDocument();
   });
 
   it('renders empty state when no summary data', () => {
-    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue({
+    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue(mockQueryResult({
       data: { retrievalSummary: null },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<RetrievalStatusPage />);
     expect(screen.getByText('Retrieval Status')).toBeInTheDocument();
     expect(screen.getByText('No retrieval data available')).toBeInTheDocument();
@@ -275,7 +276,7 @@ describe('RetrievalStatusPage', () => {
   });
 
   it('shows dash for null averageDurationMs in summary', () => {
-    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue({
+    vi.mocked(useGetRetrievalSummaryQuery).mockReturnValue(mockQueryResult({
       data: {
         retrievalSummary: {
           ...mockSummary.retrievalSummary,
@@ -284,7 +285,7 @@ describe('RetrievalStatusPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<RetrievalStatusPage />);
     const cards = screen.getByText('Avg Duration').closest<HTMLElement>('[class*="card"]')!;
     expect(within(cards).getByText('—')).toBeInTheDocument();

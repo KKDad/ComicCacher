@@ -64,20 +64,17 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [searchValue, setSearchValue] = useState(
-    pathname === '/comics' ? (searchParams.get('q') ?? '') : '',
-  );
+  const urlQuery = pathname === '/comics' ? (searchParams.get('q') ?? '') : '';
+  const [searchValue, setSearchValue] = useState(urlQuery);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
 
-  // Sync search input when URL changes (e.g. clearing via back button)
-  useEffect(() => {
-    if (pathname === '/comics') {
-      setSearchValue(searchParams.get('q') ?? '');
-    } else {
-      setSearchValue('');
-    }
-  }, [pathname, searchParams]);
+  // Sync the search input when the URL changes (e.g. clearing via the back button)
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
+  if (urlQuery !== prevUrlQuery) {
+    setPrevUrlQuery(urlQuery);
+    setSearchValue(urlQuery);
+  }
 
   // Refining a search replaces the history entry; arriving from elsewhere pushes one.
   const navigateSearch = useCallback((value: string) => {
@@ -93,11 +90,10 @@ export function Header() {
 
   // Debounced live search — updates the URL 300ms after the user stops typing
   useEffect(() => {
-    const currentQuery = (pathname === '/comics' ? searchParams.get('q') : null) ?? '';
-    if (searchValue.trim() === currentQuery) return;
+    if (searchValue.trim() === urlQuery) return;
     const timer = setTimeout(() => navigateSearch(searchValue), 300);
     return () => clearTimeout(timer);
-  }, [searchValue, navigateSearch, pathname, searchParams]);
+  }, [searchValue, navigateSearch, urlQuery]);
 
   useEffect(() => {
     if (!user?.email) return;

@@ -1,19 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE } from '@/lib/auth/constants';
+import { JWT_COOKIE, PATHNAME_HEADER, REFRESH_COOKIE, REMEMBER_COOKIE } from '@/lib/auth/constants';
 import { isAccessTokenUsable, refreshTokens, setAuthCookies } from '@/lib/auth/tokens';
 
 // Refreshes an expired access token before a page renders. Server components can't set cookies, so without this
 // getSession() in the layouts rejects the stale token and redirects to /login even with a valid refresh token.
 // Proxy never redirects: the layouts stay the auth gate, and /api/* handlers refresh on their own.
+// It also passes the requested path to the render, so a layout's redirect to /login can come back to it.
 export async function proxy(request: NextRequest) {
+  request.headers.set(PATHNAME_HEADER, requestedPath(request));
+  const forward = () => NextResponse.next({ request: { headers: request.headers } });
+
   const refresh = request.cookies.get(REFRESH_COOKIE)?.value;
   const jwt = request.cookies.get(JWT_COOKIE)?.value;
-  if (!refresh || (jwt && isAccessTokenUsable(jwt))) return NextResponse.next();
+  if (!refresh || (jwt && isAccessTokenUsable(jwt))) return forward();
 
   const tokens = await refreshTokens(refresh);
   if (!tokens) {
     // Refresh token expired or revoked: clear the cookies so the layout's redirect to /login sticks
-    const response = NextResponse.next();
+    const response = forward();
     response.cookies.delete(JWT_COOKIE);
     response.cookies.delete(REFRESH_COOKIE);
     response.cookies.delete(REMEMBER_COOKIE);
@@ -23,10 +27,17 @@ export async function proxy(request: NextRequest) {
   // Forward the new tokens so cookies() in this render sees them, then send them to the browser
   request.cookies.set(JWT_COOKIE, tokens.token);
   request.cookies.set(REFRESH_COOKIE, tokens.refreshToken);
-  const response = NextResponse.next({ request: { headers: request.headers } });
+  const response = forward();
   const rememberMe = request.cookies.get(REMEMBER_COOKIE)?.value === '1';
   setAuthCookies(response.cookies, tokens.token, tokens.refreshToken, rememberMe);
   return response;
+}
+
+// The page path and query, without the RSC request marker
+function requestedPath(request: NextRequest): string {
+  const url = request.nextUrl.clone();
+  url.searchParams.delete('_rsc');
+  return url.pathname + url.search;
 }
 
 export const config = {

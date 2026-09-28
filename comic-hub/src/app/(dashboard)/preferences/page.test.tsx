@@ -8,6 +8,7 @@ import {
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { DEFAULT_DISPLAY_SETTINGS } from '@/lib/preferences-defaults';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { mockMutationResult, mockQueryResult, captureMutation } from '@/test/mock-query';
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -32,14 +33,14 @@ describe('PreferencesPage', () => {
       isHydrated: true,
     });
 
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: { preferences: { displaySettings: DEFAULT_DISPLAY_SETTINGS } },
       isLoading: false,
-    } as any);
+    }));
 
-    vi.mocked(useUpdateDisplaySettingsMutation).mockReturnValue({
+    vi.mocked(useUpdateDisplaySettingsMutation).mockReturnValue(mockMutationResult({
       mutate: mockMutate,
-    } as any);
+    }));
 
     mockMutate.mockClear();
   });
@@ -101,10 +102,10 @@ describe('PreferencesPage', () => {
   it('shows loading state when not hydrated', () => {
     usePreferencesStore.setState({ isHydrated: false });
 
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: true,
-    } as any);
+    }));
 
     renderWithQuery(<PreferencesPage />);
 
@@ -113,43 +114,31 @@ describe('PreferencesPage', () => {
 
   it('shows success toast on mutation success without errors', async () => {
     const { toast } = await import('sonner');
-    let capturedOpts: any;
-    vi.mocked(useUpdateDisplaySettingsMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: mockMutate } as any;
-    });
+    const mutation = captureMutation(useUpdateDisplaySettingsMutation, { mutate: mockMutate });
 
     renderWithQuery(<PreferencesPage />);
 
-    capturedOpts.onSuccess({ updateDisplaySettings: { errors: [] } });
+    mutation.succeed({ updateDisplaySettings: { preference: null, errors: [] } }, { settings: {} });
     expect(toast.success).toHaveBeenCalledWith('Preferences saved');
   });
 
   it('shows error toast on mutation success with errors', async () => {
     const { toast } = await import('sonner');
-    let capturedOpts: any;
-    vi.mocked(useUpdateDisplaySettingsMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: mockMutate } as any;
-    });
+    const mutation = captureMutation(useUpdateDisplaySettingsMutation, { mutate: mockMutate });
 
     renderWithQuery(<PreferencesPage />);
 
-    capturedOpts.onSuccess({ updateDisplaySettings: { errors: [{ message: 'bad' }] } });
+    mutation.succeed({ updateDisplaySettings: { preference: null, errors: [{ message: 'bad', field: null, code: null }] } }, { settings: {} });
     expect(toast.error).toHaveBeenCalledWith('Failed to save preferences');
   });
 
   it('shows error toast on mutation error', async () => {
     const { toast } = await import('sonner');
-    let capturedOpts: any;
-    vi.mocked(useUpdateDisplaySettingsMutation).mockImplementation((opts: any) => {
-      capturedOpts = opts;
-      return { mutate: mockMutate } as any;
-    });
+    const mutation = captureMutation(useUpdateDisplaySettingsMutation, { mutate: mockMutate });
 
     renderWithQuery(<PreferencesPage />);
 
-    capturedOpts.onError(new Error('network'));
+    mutation.fail(new Error('network'), { settings: {} });
     expect(toast.error).toHaveBeenCalledWith('Failed to save preferences');
   });
 

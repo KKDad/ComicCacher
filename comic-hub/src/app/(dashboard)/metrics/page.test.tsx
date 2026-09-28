@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import MetricsPage from './page';
 import { useGetCombinedMetricsQuery } from '@/generated/graphql';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { mockQueryResult } from '@/test/mock-query';
 
 vi.mock('@/generated/graphql', () => ({
   useGetCombinedMetricsQuery: vi.fn(),
@@ -42,63 +43,63 @@ function renderWithQuery(ui: React.ReactElement) {
 
 describe('MetricsPage', () => {
   beforeEach(() => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: mockMetricsData,
       isLoading: false,
       error: null,
-    } as any);
+    }));
   });
 
   it('renders loading skeletons when loading', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: true,
       error: null,
-    } as any);
+    }));
     const { container } = renderWithQuery(<MetricsPage />);
     const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('renders error state', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: false,
       error: new Error('Network error'),
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Failed to load metrics')).toBeInTheDocument();
     expect(screen.getByText('Network error')).toBeInTheDocument();
   });
 
   it('renders error state with non-Error object', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: false,
       error: 'some string error',
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Failed to load metrics')).toBeInTheDocument();
     expect(screen.getByText('An unexpected error occurred.')).toBeInTheDocument();
   });
 
   it('renders empty state when no metrics data', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: { combinedMetrics: null },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Metrics')).toBeInTheDocument();
     expect(screen.getByText('No metrics available')).toBeInTheDocument();
   });
 
   it('renders empty state when storage and access are both null', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: { combinedMetrics: { lastUpdated: null, storage: null, access: null } },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('No metrics available')).toBeInTheDocument();
   });
@@ -229,7 +230,7 @@ describe('MetricsPage', () => {
   });
 
   it('shows avg size dash when imageCount is 0', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: null,
@@ -243,7 +244,7 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const row = within(table).getByText('Empty').closest('tr')!;
@@ -252,7 +253,7 @@ describe('MetricsPage', () => {
   });
 
   it('does not render lastUpdated when null', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: null,
@@ -262,13 +263,13 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.queryByText(/Last updated/)).not.toBeInTheDocument();
   });
 
   it('handles timeAgo for hours', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: new Date(Date.now() - 3600000).toISOString(),
@@ -278,13 +279,13 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Last updated 1h ago')).toBeInTheDocument();
   });
 
   it('handles timeAgo for days', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: new Date(Date.now() - 86400000 * 3).toISOString(),
@@ -294,13 +295,13 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Last updated 3d ago')).toBeInTheDocument();
   });
 
   it('handles timeAgo for just now', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: new Date().toISOString(),
@@ -310,13 +311,13 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('Last updated just now')).toBeInTheDocument();
   });
 
   it('merges storage and access rows with different name formats', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: null,
@@ -339,7 +340,7 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     const rows = within(table).getAllByRole('row').slice(1);
@@ -351,7 +352,7 @@ describe('MetricsPage', () => {
   });
 
   it('creates new row for access-only comic with no matching storage entry', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: null,
@@ -366,7 +367,7 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
     expect(within(table).getByText('Dilbert')).toBeInTheDocument();
@@ -378,7 +379,7 @@ describe('MetricsPage', () => {
   });
 
   it('formats 0 bytes correctly', () => {
-    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue({
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
       data: {
         combinedMetrics: {
           lastUpdated: null,
@@ -388,7 +389,7 @@ describe('MetricsPage', () => {
       },
       isLoading: false,
       error: null,
-    } as any);
+    }));
     renderWithQuery(<MetricsPage />);
     expect(screen.getByText('0 B')).toBeInTheDocument();
   });

@@ -44,6 +44,7 @@ function ReadCard({ read }: { read: RecentRead }) {
           alt=""
           fit="contain"
           fallbackText={read.comic.name[0]}
+          sizes="144px"
           className="strip-image object-left"
         />
       </div>

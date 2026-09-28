@@ -7,11 +7,17 @@ import { useReadingList } from '@/hooks/use-reading-list';
 // jsdom doesn't implement scrollIntoView or IntersectionObserver
 HTMLElement.prototype.scrollIntoView = vi.fn();
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
+  readonly root = null;
+  readonly rootMargin = '';
+  readonly scrollMargin = '';
+  readonly thresholds = [];
   observe() {}
   unobserve() {}
   disconnect() {}
-} as any;
+  takeRecords() {
+    return [];
+  }
+};
 
 vi.mock('@/components/reader/favorite-button', () => ({
   FavoriteButton: () => null,

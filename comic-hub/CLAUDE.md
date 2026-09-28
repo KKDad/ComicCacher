@@ -6,7 +6,7 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 
 - Next.js 16.x (App Router, Turbopack dev server)
 - React 19.x
-- TypeScript 5
+- TypeScript 6 (7 waits for typescript-eslint support)
 - Tailwind CSS 4 (zero-config, `@import "tailwindcss"` in `globals.css`)
 - TanStack Query v5 + `graphql-request` for server-side GraphQL fetches
 - Radix UI primitives + shadcn/ui generated components
@@ -50,9 +50,11 @@ When you add a new route segment that fetches on the server, add a sibling `load
 
 ## Images
 
-- Prefer `next/image` for any new image surface — automatic optimization, lazy loading, responsive sizing.
-- `image-with-fallback.tsx` intentionally uses a vanilla `<img>` to support its fallback chain (cover → placeholder → broken-image SVG). **Don't "fix" this** — it's deliberate.
-- Add `priority` to LCP images (typically the first comic strip on the reader page).
+- **`next/image` for every image.** No `<img>` and no `no-img-element` disables; lint fails on either.
+- Comic images are `/api/v1/comics/**` paths, allowed by `images.localPatterns` in `next.config.ts`. The optimizer fetches them through the `/api/v1` rewrite without the user's cookies, which works because the backend serves them to anyone.
+- Give every image `sizes`. In a box that sets the aspect ratio, use `fill` (the strips: `STRIP_SIZES` in `components/reader/strip-sizes.ts`); otherwise pass the strip's `width` / `height`, falling back to 900×300.
+- For the LCP strip, set `loading="eager"` and `fetchPriority="high"`, not `preload`: the reader has several candidate LCP images, where the Next 16 docs recommend against `preload`.
+- `ImageWithFallback` shows its fallback text when there is no image or it fails to load.
 
 ## Z-Index Rules
 
@@ -85,11 +87,14 @@ Radix UI portals render at `document.body`. They must float above the header/sid
 - Coverage thresholds enforced: 90% statements/lines/functions, 87% branches.
 - Excluded from coverage: `src/components/ui/**` (generated shadcn), `src/generated/**` (GraphQL codegen), `src/types/**`.
 - Mock backend calls by stubbing `fetch` (route handlers) or `vi.mock('@/generated/graphql')` (components).
+- No `as any` in tests (lint fails on it). Mock generated hooks with `mockQueryResult` / `mockInfiniteQueryResult` / `mockMutationResult`, and fire a component's mutation callbacks with `captureMutation`, all from `src/test/mock-query.ts`. For cookies, the router, search params and fixtures use `mockCookieStore` (`src/test/mock-cookies.ts`), `mockRouter` / `mockSearchParams` (`src/test/mock-next.ts`) and `mockComic` (`src/test/test-utils.tsx`).
+- `next/image` points `src` at the optimizer: read the original URL with `imageSrc(img)` from `src/test/test-utils.tsx`.
 
 ## GraphQL Codegen
 
 - Schema lives in the backend. Run `npm run codegen` after backend schema changes; the watch mode is `npm run codegen:watch`.
-- Generated TypeScript lands in `src/generated/` — never edit by hand, never commit changes that bypass codegen.
+- Generated TypeScript lands in `src/generated/` — never edit by hand, never commit changes that bypass codegen. CI fails if `src/generated` differs from a fresh `npm run codegen`.
+- Only `typescript-operations` runs, not the `typescript` plugin, so there are no schema object types: derive them from operation results (see `src/types/batch-jobs.ts`). Enums are `const` objects with a matching union type, and the `Date` / `DateTime` scalars are `string`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

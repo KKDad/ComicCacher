@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
@@ -33,9 +33,9 @@ function LoginForm() {
     },
   });
 
-  const { register, handleSubmit, formState: { errors }, watch } = form;
+  const { register, handleSubmit, control, formState: { errors } } = form;
 
-  const rememberMe = watch('rememberMe');
+  const rememberMe = useWatch({ control, name: 'rememberMe' });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);

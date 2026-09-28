@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useGetBatchSchedulersQuery, useGetRecentBatchJobsQuery } from '@/generated/graphql';
-import type { BatchJob } from '@/generated/graphql';
+import type { BatchJob } from '@/types/batch-jobs';
 import { JobCard } from '@/components/batch-jobs/job-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
@@ -73,7 +73,7 @@ export default function BatchJobsPage() {
   for (const job of recentJobs) {
     const list = executionsByJob.get(job.jobName) ?? [];
     if (list.length < 5) {
-      list.push(job as BatchJob);
+      list.push(job);
     }
     executionsByJob.set(job.jobName, list);
   }
@@ -81,7 +81,7 @@ export default function BatchJobsPage() {
   const pausedCount = schedulers.filter((s) => s.paused).length;
   const completedCount = recentJobs.filter((j) => j.status === 'COMPLETED').length;
   const failedJobs = recentJobs.filter((j) => j.status === 'FAILED');
-  const lastFailure = failedJobs[0] as BatchJob | undefined;
+  const lastFailure: BatchJob | undefined = failedJobs[0];
 
   return (
     <div className="space-y-6">

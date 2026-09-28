@@ -1,14 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useGetRandomStripQuery } from '@/generated/graphql';
 import { GridHeader } from './grid-header';
 import { GridStripCard } from './grid-strip-card';
 import { Lightbox } from './lightbox';
 import { TodayEmptyState } from './today-empty-state';
 import { StripSkeleton } from '@/components/reader/strip-skeleton';
 import { useLightbox } from '@/hooks/use-lightbox';
+import { useRandomStrip } from '@/hooks/use-random-strip';
 import { useSwipe } from '@/hooks/use-swipe';
 import { toLightboxItems, type useGridReader } from '@/hooks/use-grid-reader';
 
@@ -20,31 +18,7 @@ export function MobileGridReader({ reader }: MobileGridReaderProps) {
   const { date, comics, isLoading, goToDate, goToNextDate, goToPreviousDate, goToToday } = reader;
   const lightbox = useLightbox(comics.length);
 
-  // Random strip handling
-  const [randomComicId, setRandomComicId] = useState<number | null>(null);
-  const [fetchRandom, setFetchRandom] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: randomData } = useGetRandomStripQuery(
-    { comicId: randomComicId ?? 0 },
-    { enabled: fetchRandom && randomComicId !== null, staleTime: 0 },
-  );
-
-  useEffect(() => {
-    if (randomData?.randomStrip && fetchRandom) {
-      setFetchRandom(false);
-      goToDate(randomData.randomStrip.date);
-    }
-  }, [randomData, fetchRandom, goToDate]);
-
-  const handleRandom = useCallback(
-    (comicId: number) => {
-      setRandomComicId(comicId);
-      setFetchRandom(true);
-      queryClient.invalidateQueries({ queryKey: ['GetRandomStrip'] });
-    },
-    [queryClient],
-  );
+  const { goToRandom: handleRandom } = useRandomStrip(goToDate);
 
   // Horizontal swipe for date navigation
   const swipeHandlers = useSwipe({

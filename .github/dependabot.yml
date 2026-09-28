@@ -14,6 +14,13 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # typescript-eslint supports <6.1 (typescript-eslint#10940); lift once it supports 7
+      - dependency-name: "typescript"
+        versions: [">=6.1"]
+      # Track the Node LTS in .nvmrc; bump the major with the runtime (Node 26 LTS, late October 2026)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
       
   - package-ecosystem: "gradle"
     directory: "/"

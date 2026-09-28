@@ -4,6 +4,9 @@ import { useGetUserPreferencesQuery } from '@/generated/graphql';
 import { useAllComics } from '@/hooks/use-all-comics';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { useRouter } from 'next/navigation';
+import { mockQueryResult } from '@/test/mock-query';
+import { DEFAULT_DISPLAY_SETTINGS } from '@/lib/preferences-defaults';
+import { mockComic } from '@/test/test-utils';
 
 vi.mock('@/generated/graphql', () => ({
   useGetUserPreferencesQuery: vi.fn(),
@@ -27,7 +30,7 @@ describe('useReadingList', () => {
       bfcacheId: 'test-bfcache-id',
     });
     usePreferencesStore.setState({
-      settings: { readerNavMode: 'all' } as any,
+      settings: { ...DEFAULT_DISPLAY_SETTINGS, readerNavMode: 'all' },
       isHydrated: true,
     });
     mockPush.mockClear();
@@ -38,18 +41,14 @@ describe('useReadingList', () => {
     lastReadDates: Array<{ comicId: number; date: string }> = [],
     favoriteComics: number[] = [],
   ) {
-    vi.mocked(useAllComics).mockReturnValue({
-      comics: comics.map((c) => ({ ...c, avatarUrl: c.avatarUrl ?? null, newest: c.newest ?? null })),
-      isLoading: false,
-      error: null,
-    } as any);
+    vi.mocked(useAllComics).mockReturnValue({ comics: comics.map(mockComic), isLoading: false, error: null });
 
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: { lastReadDates, favoriteComics },
       },
       isLoading: false,
-    } as any);
+    }));
   }
 
   it('returns sorted list of comics', () => {
@@ -148,8 +147,8 @@ describe('useReadingList', () => {
   });
 
   it('returns loading true when queries are loading', () => {
-    vi.mocked(useAllComics).mockReturnValue({ comics: [], isLoading: true, error: null } as any);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({ data: null, isLoading: true } as any);
+    vi.mocked(useAllComics).mockReturnValue({ comics: [], isLoading: true, error: null });
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({ data: undefined, isLoading: true }));
 
     const { result } = renderHook(() => useReadingList(1));
 
@@ -157,8 +156,8 @@ describe('useReadingList', () => {
   });
 
   it('returns empty list when no data', () => {
-    vi.mocked(useAllComics).mockReturnValue({ comics: [], isLoading: false, error: null } as any);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({ data: null, isLoading: false } as any);
+    vi.mocked(useAllComics).mockReturnValue({ comics: [], isLoading: false, error: null });
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({ data: undefined, isLoading: false }));
 
     const { result } = renderHook(() => useReadingList(1));
 
@@ -167,7 +166,7 @@ describe('useReadingList', () => {
 
   it('filters to favorites when navMode is favorites', () => {
     usePreferencesStore.setState({
-      settings: { readerNavMode: 'favorites' } as any,
+      settings: { ...DEFAULT_DISPLAY_SETTINGS, readerNavMode: 'favorites' },
       isHydrated: true,
     });
 

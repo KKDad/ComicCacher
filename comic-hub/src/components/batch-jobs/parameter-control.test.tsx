@@ -3,11 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { ParameterControl } from './parameter-control';
 import { renderWithProviders } from '@/test/test-utils';
 import { BatchJobParameterType } from '@/generated/graphql';
-import type { BatchJobParameter } from '@/generated/graphql';
+import type { BatchJobParameter } from '@/types/batch-jobs';
 
 function createParam(overrides: Partial<BatchJobParameter> & Pick<BatchJobParameter, 'type'>): BatchJobParameter {
   return {
-    __typename: 'BatchJobParameter',
     name: 'testParam',
     label: 'Test Parameter',
     required: false,
@@ -25,9 +24,9 @@ describe('ParameterControl', () => {
       label: 'Source Filter',
       defaultValue: 'ALL',
       options: [
-        { __typename: 'BatchJobParameterOption', value: 'ALL', label: 'All Sources' },
-        { __typename: 'BatchJobParameterOption', value: 'gocomics', label: 'GoComics' },
-        { __typename: 'BatchJobParameterOption', value: 'freefall', label: 'Freefall' },
+        { value: 'ALL', label: 'All Sources' },
+        { value: 'gocomics', label: 'GoComics' },
+        { value: 'freefall', label: 'Freefall' },
       ],
     });
 

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComicTile } from './comic-tile';
+import { imageSrc } from '@/test/test-utils';
 
 describe('ComicTile', () => {
   const mockComic = {
@@ -29,7 +30,7 @@ describe('ComicTile', () => {
 
     const image = screen.getByRole('presentation');
     expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute('src', 'https://example.com/thumbnail.jpg');
+    expect(imageSrc(image)).toBe('https://example.com/thumbnail.jpg');
   });
 
   it('renders fallback initial when no thumbnail provided', () => {

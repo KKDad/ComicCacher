@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useGetUserPreferencesQuery } from '@/generated/graphql';
+import { mockQueryResult } from '@/test/mock-query';
+import { mockSearchParams } from '@/test/mock-next';
 
 vi.mock('next/navigation', () => ({
   useParams: vi.fn(),
@@ -35,14 +37,14 @@ describe('ReaderPage', () => {
     vi.clearAllMocks();
     vi.resetModules();
     vi.mocked(useParams).mockReturnValue({ id: '42' });
-    vi.mocked(useSearchParams).mockReturnValue({ get: vi.fn().mockReturnValue(null) } as any);
+    mockSearchParams();
   });
 
   it('renders ComicReader with parsed comicId when prefs loaded', async () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: { preferences: { lastReadDates: [] } },
       isLoading: false,
-    } as any);
+    }));
 
     const { default: ReaderPage } = await import('./page');
     render(<ReaderPage />);
@@ -53,10 +55,10 @@ describe('ReaderPage', () => {
   });
 
   it('shows loading skeleton when prefs are loading and no date param', async () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: true,
-    } as any);
+    }));
 
     const { default: ReaderPage } = await import('./page');
     const { container } = render(<ReaderPage />);
@@ -65,15 +67,15 @@ describe('ReaderPage', () => {
   });
 
   it('uses date param over lastReadDate', async () => {
-    vi.mocked(useSearchParams).mockReturnValue({ get: vi.fn().mockReturnValue('2026-03-10') } as any);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    mockSearchParams({ date: '2026-03-10' });
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           lastReadDates: [{ comicId: 42, date: '2026-01-01' }],
         },
       },
       isLoading: false,
-    } as any);
+    }));
 
     const { default: ReaderPage } = await import('./page');
     render(<ReaderPage />);
@@ -83,14 +85,14 @@ describe('ReaderPage', () => {
   });
 
   it('uses lastReadDate when no date param', async () => {
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: {
         preferences: {
           lastReadDates: [{ comicId: 42, date: '2026-02-15' }],
         },
       },
       isLoading: false,
-    } as any);
+    }));
 
     const { default: ReaderPage } = await import('./page');
     render(<ReaderPage />);
@@ -100,11 +102,11 @@ describe('ReaderPage', () => {
   });
 
   it('renders ComicReader even when prefs loading if date param exists', async () => {
-    vi.mocked(useSearchParams).mockReturnValue({ get: vi.fn().mockReturnValue('2026-03-10') } as any);
-    vi.mocked(useGetUserPreferencesQuery).mockReturnValue({
+    mockSearchParams({ date: '2026-03-10' });
+    vi.mocked(useGetUserPreferencesQuery).mockReturnValue(mockQueryResult({
       data: undefined,
       isLoading: true,
-    } as any);
+    }));
 
     const { default: ReaderPage } = await import('./page');
     render(<ReaderPage />);

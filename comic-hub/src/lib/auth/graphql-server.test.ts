@@ -1,30 +1,20 @@
 import { getAuthenticatedClient } from './graphql-server';
-import { cookies } from 'next/headers';
+import { mockCookieStore } from '@/test/mock-cookies';
 
 vi.mock('next/headers', () => ({
   cookies: vi.fn(),
 }));
 
+// The options each GraphQLClient was constructed with
+const clientOptions = vi.hoisted(() => [] as RequestInit[]);
+
 vi.mock('graphql-request', () => ({
   GraphQLClient: class MockGraphQLClient {
-    url: string;
-    options: Record<string, unknown>;
-    constructor(url: string, options: Record<string, unknown>) {
-      this.url = url;
-      this.options = options;
+    constructor(_url: string, options: RequestInit) {
+      clientOptions.push(options);
     }
   },
 }));
-
-function mockCookieStore(values: Record<string, string> = {}) {
-  const store = {
-    get: vi.fn((name: string) => {
-      const value = values[name];
-      return value ? { name, value } : undefined;
-    }),
-  };
-  vi.mocked(cookies).mockResolvedValue(store as any);
-}
 
 describe('getAuthenticatedClient', () => {
   afterEach(() => {
@@ -33,13 +23,13 @@ describe('getAuthenticatedClient', () => {
 
   it('creates client with Bearer header when JWT exists', async () => {
     mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
-    const client = await getAuthenticatedClient() as any;
-    expect(client.options.headers).toEqual({ Authorization: 'Bearer test-jwt' });
+    await getAuthenticatedClient();
+    expect(clientOptions.at(-1)?.headers).toEqual({ Authorization: 'Bearer test-jwt' });
   });
 
   it('creates client with empty headers when no JWT', async () => {
     mockCookieStore({});
-    const client = await getAuthenticatedClient() as any;
-    expect(client.options.headers).toEqual({});
+    await getAuthenticatedClient();
+    expect(clientOptions.at(-1)?.headers).toEqual({});
   });
 });

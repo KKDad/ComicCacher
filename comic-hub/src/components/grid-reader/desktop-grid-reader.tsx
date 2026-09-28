@@ -1,18 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useQueryClient } from '@tanstack/react-query';
-import { useGetRandomStripQuery } from '@/generated/graphql';
 import { GridHeader } from './grid-header';
 import { GridStripCard } from './grid-strip-card';
 import { Lightbox } from './lightbox';
 import { TodayEmptyState } from './today-empty-state';
 import { StripSkeleton } from '@/components/reader/strip-skeleton';
 import { useLightbox } from '@/hooks/use-lightbox';
+import { useRandomStrip } from '@/hooks/use-random-strip';
 import { toLightboxItems, type useGridReader } from '@/hooks/use-grid-reader';
-import { useState } from 'react';
 
 const HEADER_HEIGHT = 56;
 const CARD_PADDING = 80; // avatar row + transcript toggle + card margins
@@ -28,34 +26,12 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
   const router = useRouter();
   const lightbox = useLightbox(comics.length);
 
-  // Random strip handling
-  const [randomComicId, setRandomComicId] = useState<number | null>(null);
-  const [fetchRandom, setFetchRandom] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: randomData } = useGetRandomStripQuery(
-    { comicId: randomComicId ?? 0 },
-    { enabled: fetchRandom && randomComicId !== null, staleTime: 0 },
-  );
-
-  useEffect(() => {
-    if (randomData?.randomStrip && fetchRandom) {
-      setFetchRandom(false);
-      goToDate(randomData.randomStrip.date);
-    }
-  }, [randomData, fetchRandom, goToDate]);
-
-  const handleRandom = useCallback(
-    (comicId: number) => {
-      setRandomComicId(comicId);
-      setFetchRandom(true);
-      queryClient.invalidateQueries({ queryKey: ['GetRandomStrip'] });
-    },
-    [queryClient],
-  );
+  const { goToRandom: handleRandom } = useRandomStrip(goToDate);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // TanStack Virtual returns functions the React Compiler can't memoize safely, so it skips this component
+  // eslint-disable-next-line react-hooks/incompatible-library -- no compiler-compatible virtualizer API yet
   const virtualizer = useVirtualizer({
     count: comics.length,
     getScrollElement: () => scrollContainerRef.current,

@@ -1,23 +1,5 @@
 # ComicCacher TODO
 
-## Dependency upgrades held back from 2.5.0
-
-Dependabot opened these on 2026-09-27; each passed CI (or failed it) without showing the real problem, because CI neither regenerates GraphQL code nor runs ESLint.
-- **`@graphql-codegen/typescript-operations` 6 (#387):** the regenerated `src/generated/graphql.ts` no longer compiles. v6 also emits the input and enum types the `typescript` plugin generates (duplicate identifiers), and no longer types custom scalars as `any` (`Date` fields became `{}`). Migrate `codegen.yml`: drop or reconfigure the `typescript` plugin, and map `scalars` (`Date`/`DateTime` to `string`, `JSON` to `any`), then fix the call sites that relied on `any`
-- **TypeScript 7 (#391):** typescript-eslint doesn't support TS 7 yet, so `npm run lint` crashes. Wait for typescript-eslint support (tracked in typescript-eslint#10940) or run TS 6 side by side for linting
-- **`@types/node` 26 (#389):** fails the build and would describe Node 26 while we run Node 24 LTS. Take it with the move to Node 26 once it becomes LTS (late October 2026), and ignore `@types/node` majors in `dependabot.yml` until then
-- Also: add `npm run codegen` (with a check that `src/generated` is unchanged) and `npm run lint` to the comic-hub CI job, so the next bump like these fails in CI
-- Priority: High
-
-## Get `npm run lint` passing
-
-- `npx eslint src` reports 183 errors and 18 warnings today. Fix these before adding lint to CI (see "Dependency upgrades held back from 2.5.0")
-- 177 are `no-explicit-any`, almost all in tests. Type the mocks, or turn the rule off for `*.test.ts(x)` if that's the preferred trade-off
-- React Compiler rules from `eslint-config-next`: `set-state-in-effect` in `log-viewer.tsx`, `mobile-grid-reader.tsx` and `header.tsx`; `preserve-manual-memoization` in `log-viewer.tsx`; `incompatible-library` in `login/page.tsx`, `desktop-reader.tsx` and `desktop-grid-reader.tsx` (react-hook-form `watch`, TanStack Virtual). Fix them or add a disable comment that gives the reason
-- `lib/graphql-client.ts` sends a 401 to `/login` with `window.location.href` (`no-location-assign-relative-destination`) and drops where the user was. The login page already honours `?from=`; pass the current path. Do the same for the `redirect('/login')` calls in the `(dashboard)` and `(reader)` layouts
-- `no-img-element`: 9 `<img>` tags. `comic-hub/CLAUDE.md` says to prefer `next/image` and allows only `image-with-fallback.tsx`. Move the comic detail page (avatar and latest strip) to `next/image`, first checking that the optimizer can fetch `/api/v1/**` images without the user's cookies (`images.localPatterns`, or `unoptimized`). For the reader strips, lightbox and grid cards, which set their own `loading`/`fetchPriority` and aspect ratio, either convert them or add them to the CLAUDE.md exemptions with a disable comment
-- Priority: High
-
 ## Review and consolidate the utils scripts
 
 - `utils/` has grown to eleven scripts plus `prod/` and `readme-demo/`, added one task at a time: separate dev and prod build/run pairs, a log fetcher that only covers prod, a tunnel that only covers prod
@@ -72,7 +54,7 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
   - **New caching system:** we opt out of caching today (`cache: 'no-store'` in `getSession()`, `force-static` on `/api/health`). Check that both behave the same under the new model, and that authenticated pages and GraphQL responses are never cached across users
   - **Server Actions changes:** we don't use Server Actions (mutations go through `/api/graphql`), so nothing to migrate. Leave any move to Server Actions as a separate decision
   - **Partial hydration:** new and optional. Worth a look later for the reader page, not part of the upgrade
-- Before upgrading: read the official upgrade guide and run the codemod (`npx @next/codemod upgrade`), bump `eslint-config-next` with `next`, and wait for the dependency upgrades held back from 2.5.0 to be sorted out first
+- Before upgrading: read the official upgrade guide and run the codemod (`npx @next/codemod upgrade`), bump `eslint-config-next` with `next`. CI now runs lint, codegen and `tsc`, so a broken bump fails there
 - Verify with `npm run build`, `npm test`, `npm run lint` and a dev deploy before prod
 - Priority: Medium
 

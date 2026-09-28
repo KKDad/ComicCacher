@@ -1,10 +1,12 @@
 'use client';
 
 import { forwardRef, useState } from 'react';
+import Image from 'next/image';
 import type { Strip } from '@/hooks/use-reader';
 import { StripSkeleton } from './strip-skeleton';
 import { formatFullDate } from '@/lib/date-utils';
 import { BrokenIllustration } from '@/components/illustrations';
+import { STRIP_SIZES } from './strip-sizes';
 
 interface StripCardProps {
   strip: Strip;
@@ -51,12 +53,14 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
                 <p className="text-sm text-ink-subtle">This strip didn&rsquo;t load</p>
               </div>
           ) : (
-            <img
+            <Image
               src={strip.imageUrl}
               alt={`${comicName} - ${formattedDate}`}
+              fill
+              sizes={STRIP_SIZES}
               loading={priority ? 'eager' : 'lazy'}
               fetchPriority={priority ? 'high' : 'auto'}
-              className={`strip-image absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`strip-image object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setLoaded(true)}
               onError={() => setError(true)}
             />

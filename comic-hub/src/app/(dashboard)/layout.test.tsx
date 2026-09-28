@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { getSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createMockUser } from '@/test/test-utils';
 
 vi.mock('@/lib/auth/session', () => ({
@@ -9,6 +10,10 @@ vi.mock('@/lib/auth/session', () => ({
 
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+}));
+
+vi.mock('next/headers', () => ({
+  headers: vi.fn(),
 }));
 
 vi.mock('@/components/layout/dashboard-shell', () => ({
@@ -28,6 +33,10 @@ vi.mock('@/contexts/user-context', () => ({
     </div>
   ),
 }));
+
+function requestHeaders(init: Record<string, string> = {}) {
+  vi.mocked(headers).mockResolvedValue(new Headers(init) as Awaited<ReturnType<typeof headers>>);
+}
 
 describe('DashboardLayout', () => {
   afterEach(() => {
@@ -49,8 +58,19 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('dashboard content')).toBeInTheDocument();
   });
 
-  it('redirects to /login when session returns null', async () => {
+  it('redirects to /login with the requested page when session returns null', async () => {
     vi.mocked(getSession).mockResolvedValue(null);
+    requestHeaders({ 'x-pathname': '/comics?q=dog' });
+
+    const { default: DashboardLayout } = await import('./layout');
+    await DashboardLayout({ children: <div>content</div> });
+
+    expect(redirect).toHaveBeenCalledWith('/login?from=%2Fcomics%3Fq%3Ddog');
+  });
+
+  it('redirects to plain /login without a requested path', async () => {
+    vi.mocked(getSession).mockResolvedValue(null);
+    requestHeaders();
 
     const { default: DashboardLayout } = await import('./layout');
     await DashboardLayout({ children: <div>content</div> });

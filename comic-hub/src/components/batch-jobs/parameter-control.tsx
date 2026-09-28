@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { BatchJobParameter } from '@/generated/graphql';
+import type { BatchJobParameter } from '@/types/batch-jobs';
 import { BatchJobParameterType } from '@/generated/graphql';
 
 interface ParameterControlProps {

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { GridStripCard } from './grid-strip-card';
 import { useUser } from '@/contexts/user-context';
 import type { GridComic } from '@/hooks/use-grid-reader';
+import { imageSrc } from '@/test/test-utils';
 
 vi.mock('@/contexts/user-context', () => ({
   useUser: vi.fn(),
@@ -49,14 +50,14 @@ describe('GridStripCard', () => {
   it('renders avatar image', () => {
     const { container } = render(<GridStripCard comic={mockComic} date="2026-03-29" onImageClick={vi.fn()} />);
     // Avatar img has alt="" (presentational), so use querySelector
-    const avatarImg = container.querySelector('img[src="/avatar/1"]');
+    const avatarImg = [...container.querySelectorAll('img')].find((img) => imageSrc(img) === '/avatar/1');
     expect(avatarImg).toBeInTheDocument();
   });
 
   it('renders strip image when available', () => {
     render(<GridStripCard comic={mockComic} date="2026-03-29" onImageClick={vi.fn()} />);
     const imgs = screen.getAllByRole('img');
-    expect(imgs.some((img) => img.getAttribute('src') === '/strip/1/2026-03-29')).toBe(true);
+    expect(imgs.some((img) => imageSrc(img) === '/strip/1/2026-03-29')).toBe(true);
   });
 
   it('shows unavailable message when strip not available', () => {

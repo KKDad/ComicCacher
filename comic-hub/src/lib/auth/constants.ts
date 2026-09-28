@@ -3,3 +3,5 @@ export const REFRESH_COOKIE = 'comic-hub-refresh';
 export const REMEMBER_COOKIE = 'comic-hub-remember';
 export const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 export const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT!;
+// Set by proxy.ts so server layouts know the requested path (they get no pathname prop)
+export const PATHNAME_HEADER = 'x-pathname';

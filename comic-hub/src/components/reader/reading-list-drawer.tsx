@@ -47,6 +47,7 @@ export function ReadingListDrawer({ comicId }: ReadingListDrawerProps) {
                         src={comic.avatarUrl}
                         alt=""
                         fallbackText={comic.name[0]}
+                        sizes="32px"
                         className="text-xs font-medium text-ink-subtle"
                       />
                     </div>

@@ -68,10 +68,14 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(data, { status: backendRes.status });
 }
 
-function hasAuthError(data: any): boolean {
+interface GraphQLErrorBody {
+  errors?: { extensions?: { classification?: string; errorCode?: string } }[];
+}
+
+function hasAuthError(data: GraphQLErrorBody | null): boolean {
   if (!data?.errors?.length) return false;
   return data.errors.some(
-    (e: any) =>
+    (e) =>
       e.extensions?.classification === 'UNAUTHORIZED' ||
       e.extensions?.errorCode === 'UNAUTHENTICATED',
   );

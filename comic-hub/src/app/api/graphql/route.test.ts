@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
+import { mockCookieStore } from '@/test/mock-cookies';
 
 vi.mock('next/headers', () => ({
   cookies: vi.fn(),
@@ -16,17 +16,6 @@ function createRequest(body = { query: '{ comics { id } }' }) {
     body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
   });
-}
-
-function mockCookieStore(values: Record<string, string> = {}) {
-  const store = {
-    get: vi.fn((name: string) => {
-      const value = values[name];
-      return value ? { name, value } : undefined;
-    }),
-  };
-  vi.mocked(cookies).mockResolvedValue(store as any);
-  return store;
 }
 
 describe('POST /api/graphql', () => {
