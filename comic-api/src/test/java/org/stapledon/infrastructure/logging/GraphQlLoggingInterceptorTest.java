@@ -44,4 +44,21 @@ class GraphQlLoggingInterceptorTest {
         assertThat(MDC.get("gqlOp")).isEqualTo("GetComics");
         assertThat(servletRequest.getAttribute(RequestLoggingFilter.GRAPHQL_OPERATION_ATTRIBUTE)).isEqualTo("GetComics");
     }
+
+    @Test
+    void recordsTheGraphqlExecutionTimeInTheRequestTimings() {
+        MockHttpServletRequest servletRequest = new MockHttpServletRequest("POST", "/graphql");
+        RequestTimings timings = new RequestTimings();
+        servletRequest.setAttribute(RequestTimings.ATTRIBUTE, timings);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(servletRequest));
+        WebGraphQlRequest request = mock(WebGraphQlRequest.class);
+        when(request.getOperationName()).thenReturn("GetComic");
+        when(request.getVariables()).thenReturn(Map.of());
+        WebGraphQlInterceptor.Chain chain = mock(WebGraphQlInterceptor.Chain.class);
+        when(chain.next(any())).thenReturn(Mono.just(mock(WebGraphQlResponse.class)));
+
+        new GraphQlLoggingInterceptor().intercept(request, chain).block();
+
+        assertThat(timings.summary()).matches(" \\(gql=\\d+ms\\)");
+    }
 }

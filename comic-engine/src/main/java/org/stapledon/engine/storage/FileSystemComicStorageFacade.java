@@ -28,6 +28,7 @@ import org.stapledon.common.service.DuplicateValidationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.common.util.ImageUtils;
 import org.stapledon.common.util.NfsFileOperations;
+import org.stapledon.common.util.StorageTimings;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 /**
@@ -207,6 +208,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         File file = new File(String.format("%s/%s/%s/%s.png", getCacheRoot().toAbsolutePath(),
                 comic.getDirectoryName(), yearPath, filename));
 
+        long start = System.nanoTime();
         try {
             ImageDto dto = ImageUtils.getImageDto(file);
             imageMetadataRepository.loadMetadata(file.getAbsolutePath())
@@ -216,6 +218,8 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         } catch (IOException e) {
             log.error("Failed to read comic strip {} for {} on {}", file.getAbsolutePath(), comic.getName(), date, e);
             return Optional.empty();
+        } finally {
+            StorageTimings.record(file.getAbsolutePath(), start);
         }
     }
 
@@ -230,11 +234,14 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
             return Optional.empty();
         }
 
+        long start = System.nanoTime();
         try {
             return Optional.of(ImageUtils.getImageDto(file));
         } catch (IOException e) {
             log.error("Failed to read avatar {} for {}", file.getAbsolutePath(), comic.getName(), e);
             return Optional.empty();
+        } finally {
+            StorageTimings.record(file.getAbsolutePath(), start);
         }
     }
 

@@ -1,19 +1,23 @@
 import type { NextResponse } from 'next/server';
 import { JWT_COOKIE, REFRESH_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from './constants';
 import { RefreshTokenDocument } from '@/generated/graphql';
+import { newRequestId, timedGraphqlFetch } from '@/lib/server-log';
 
 // Shared by the /api route handlers and proxy.ts, so not 'server-only'
 
-export async function refreshTokens(refreshToken: string): Promise<{ token: string; refreshToken: string } | null> {
+export async function refreshTokens(
+  refreshToken: string,
+  requestId: string = newRequestId(),
+): Promise<{ token: string; refreshToken: string } | null> {
   try {
-    const res = await fetch(GRAPHQL_ENDPOINT, {
+    const res = await timedGraphqlFetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: RefreshTokenDocument.toString(),
         variables: { refreshToken },
       }),
-    });
+    }, requestId);
 
     if (!res.ok) return null;
 

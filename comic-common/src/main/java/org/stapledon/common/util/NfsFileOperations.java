@@ -86,7 +86,12 @@ public final class NfsFileOperations {
      * Read file contents as a string.
      */
     public static String readAsString(Path file, Charset charset) throws IOException {
-        return Files.readString(file, charset);
+        long start = System.nanoTime();
+        try {
+            return Files.readString(file, charset);
+        } finally {
+            StorageTimings.record(file.toString(), start);
+        }
     }
 
     /**

@@ -53,6 +53,11 @@ describe('proxy', () => {
     expect(forwardedHeader(response, 'x-pathname')).toBe('/comics/1/read?date=2026-09-01');
   });
 
+  it('gives the render a request id for its API calls', async () => {
+    const response = await proxy(createRequest());
+    expect(forwardedHeader(response, 'x-request-id')).toMatch(/^[0-9a-f]{8}$/);
+  });
+
   it('leaves the RSC request marker out of the forwarded path', async () => {
     const response = await proxy(createRequest({}, 'http://localhost/comics?q=dog&_rsc=abc123'));
     expect(forwardedHeader(response, 'x-pathname')).toBe('/comics?q=dog');
