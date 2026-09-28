@@ -1,12 +1,5 @@
 # ComicCacher TODO
 
-## Backfill Mother Goose & Grimm and Sherman's Lagoon
-
-- The save bug is fixed (2.4.8), and the 139 strips per comic that dev had were copied to prod
-- Still missing: 2026-01-10 to about 2026-02-10, plus any other days dev didn't have
-- Run a backfill from 2026-01-10 for both comics once 2.4.8 is on prod. Delete any `comic_*` folders the old version recreated in the cache root first
-- Priority: High
-
 ## Dependency upgrades held back from 2.5.0
 
 Dependabot opened these on 2026-09-27; each passed CI (or failed it) without showing the real problem, because CI neither regenerates GraphQL code nor runs ESLint.
