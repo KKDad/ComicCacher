@@ -72,9 +72,12 @@ Each module has its own coding standards. **Module-level standards override this
 
 | Context | Rule |
 |---------|------|
-| **Storage** | UTC always. Use `OffsetDateTime` or `Instant`, never bare `LocalDateTime` |
+| **Application zone** | `batch.timezone` (America/Toronto) is the only zone: cron schedules, what "today" is, batch times and log timestamps. The JVM runs in UTC in the containers, and nothing may depend on its zone |
+| **"Today"** | `LocalDate.now(clock)` with the injected `Clock` bean (`ClockConfiguration`, in `batch.timezone`). Tests pass `Clock.fixed(...)` |
+| **Storage** | UTC always. Use `OffsetDateTime` or `Instant`, never bare `LocalDateTime`. New timestamps: `OffsetDateTime.now(ZoneOffset.UTC)` |
 | **Date-only values** | `LocalDate` is fine (comic dates, filter ranges) |
-| **Spring Batch boundary** | Convert `LocalDateTime` at resolver boundary using `batch.timezone` property |
+| **Spring Batch boundary** | Spring Batch stamps job/step times with `LocalDateTime.now()` in the JVM's zone. Convert them with `DateTimeUtils.toOffset(ldt, zone)`, which reads them in the JVM zone and returns `batch.timezone` |
+| **Guard** | `checkTimeZoneIndependence` (part of `check` and `testAll`) fails on zone-less `now()`, `ZoneId.systemDefault()` and `Clock.systemDefaultZone()` in main code. Tests run with `user.timezone=UTC` |
 | **GraphQL wire format** | `DateTime` scalar = ISO-8601 with offset (e.g., `2026-03-18T10:00:00-04:00`) |
 | **Frontend** | `new Date(isoString)` for parsing, `toLocaleString()` for display. Never assume a timezone |
 | **Gson** | `OffsetDateTimeAdapter` for new code. `LocalDateTimeAdapter` for backward compat only |

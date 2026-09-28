@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.slf4j.MDC;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.job.JobExecution;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,8 @@ class JsonBatchExecutionTrackerTest {
     private CacheProperties cacheProperties;
     private Gson gson;
 
+    private static final ZoneId TORONTO = ZoneId.of("America/Toronto");
+
     @BeforeEach
     void setUp() {
         cacheProperties = mock(CacheProperties.class);
@@ -49,7 +53,7 @@ class JsonBatchExecutionTrackerTest {
 
         gson = GsonUtils.createGson();
 
-        tracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto");
+        tracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, Clock.system(ZoneId.of("America/Toronto")));
     }
 
     @Test
@@ -206,6 +210,43 @@ class JsonBatchExecutionTrackerTest {
     }
 
     @Test
+    void afterJobStoresTheInstantSpringBatchRecordedInTheJvmZone() {
+        // Spring Batch stamps LocalDateTime.now() in the JVM's zone (UTC in the containers, and in these tests)
+        LocalDateTime recordedStart = LocalDateTime.of(2026, 9, 29, 1, 0);
+        tracker.afterJob(createJobExecutionWithTimes("TestJob", 1L, recordedStart, recordedStart.plusMinutes(30)));
+
+        OffsetDateTime stored = tracker.getLastExecution("TestJob").orElseThrow().getStartTime();
+        assertThat(stored.toInstant()).isEqualTo(recordedStart.atZone(ZoneId.systemDefault()).toInstant());
+        assertThat(stored.getOffset()).isEqualTo(TORONTO.getRules().getOffset(stored.toInstant()));
+    }
+
+    @Test
+    void getExecutionHistoryForDateRangeUsesTheBatchTimezoneDay() throws Exception {
+        // 01:00 UTC on the 29th is 21:00 on the 28th in Toronto
+        Files.writeString(tempDir.resolve("batch-executions.json"), """
+                {"TestJob": [{"executionId": 1, "jobName": "TestJob", "status": "COMPLETED",
+                  "startTime": "2026-09-29T01:00:00Z", "endTime": "2026-09-29T01:30:00Z"}]}
+                """);
+
+        assertThat(tracker.getExecutionHistoryForDateRange("TestJob", LocalDate.of(2026, 9, 28), LocalDate.of(2026, 9, 28))).hasSize(1);
+        assertThat(tracker.getExecutionHistoryForDateRange("TestJob", LocalDate.of(2026, 9, 29), LocalDate.of(2026, 9, 29))).isEmpty();
+    }
+
+    @Test
+    void beforeJobNamesTheLogFileWithTheBatchTimezoneDate() {
+        // 22:00 in Toronto on the 28th, 02:00 UTC on the 29th
+        Clock clock = Clock.fixed(Instant.parse("2026-09-29T02:00:00Z"), TORONTO);
+        JsonBatchExecutionTracker torontoTracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, clock);
+        try {
+            torontoTracker.beforeJob(createJobExecution("TestJob", 1L, BatchStatus.STARTED));
+
+            assertThat(MDC.get("batchLogPath")).startsWith("TestJob/TestJob-20260928-");
+        } finally {
+            MDC.clear();
+        }
+    }
+
+    @Test
     void hasJobRunTodayUsesBatchTimezoneForToday() {
         // 21:00 in Toronto on 2026-09-27 is already 2026-09-28 in UTC
         Clock clock = Clock.fixed(Instant.parse("2026-09-28T01:00:00Z"), ZoneOffset.UTC);
@@ -356,7 +397,7 @@ class JsonBatchExecutionTrackerTest {
         assertThat(tracker.getLastExecution("TestJob").orElseThrow().getExecutionId()).isEqualTo(1L);
 
         // Simulate restart: new tracker instance, same JSON file
-        var tracker2 = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto");
+        var tracker2 = new JsonBatchExecutionTracker(cacheProperties, gson, 5, Clock.system(ZoneId.of("America/Toronto")));
         // H2 would restart from 1, but stable ID should continue from 2
         tracker2.afterJob(createJobExecution("TestJob", 1L, BatchStatus.COMPLETED));
 

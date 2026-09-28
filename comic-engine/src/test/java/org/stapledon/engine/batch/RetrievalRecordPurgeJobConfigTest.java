@@ -21,6 +21,8 @@ import org.stapledon.engine.batch.config.RetrievalRecordPurgeJobConfig;
 import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.management.ManagementFacade;
 
+import java.time.Clock;
+
 @ExtendWith(MockitoExtension.class)
 class RetrievalRecordPurgeJobConfigTest {
 
@@ -40,7 +42,7 @@ class RetrievalRecordPurgeJobConfigTest {
 
     @BeforeEach
     void setUp() {
-        config = new RetrievalRecordPurgeJobConfig(batchJobLogService, managementFacade);
+        config = new RetrievalRecordPurgeJobConfig(batchJobLogService, managementFacade, Clock.systemDefaultZone());
         setField(config, "daysToKeep", 30);
     }
 

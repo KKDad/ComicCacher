@@ -92,9 +92,7 @@ Centralized `@Component` that holds `@Scheduled` methods for all 6 jobs. Each me
 
 Constants class containing:
 
-- `BATCH_TIMEZONE` = `"America/Toronto"`
 - `KNOWN_JOBS` set (used by health checks to detect missing/unexpected schedulers)
-- `CronSchedules` inner class with default cron expressions
 - `PropertyKeys` inner class with property key constants
 
 ## Job Configurations
@@ -214,7 +212,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 | MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | Combined metrics built on demand | `MetricsArchiveService` |
 | RetrievalRecordPurgeJob | Tasklet (2 steps) | `0 45 6 * * ?` | `true` | JSON retrieval records, batch log files | `ManagementFacade`, `BatchJobLogService` |
 
-All jobs run in `America/Toronto` timezone. Cron expressions are configurable via `batch.<job-key>.cron` properties.
+All jobs run in `batch.timezone` (`America/Toronto`), whatever the JVM's zone (UTC in the containers). Cron expressions are configurable via `batch.<job-key>.cron` properties. Code that needs today's date injects the application `Clock` (see Time Handling Rules in `CLAUDE.md`).
 
 ## Execution Flow
 

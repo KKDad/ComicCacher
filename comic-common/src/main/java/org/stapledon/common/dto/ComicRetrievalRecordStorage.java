@@ -1,6 +1,7 @@
 package org.stapledon.common.dto;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class ComicRetrievalRecordStorage {
     private List<ComicRetrievalRecord> records;
 
     public ComicRetrievalRecordStorage() {
-        this.lastUpdated = OffsetDateTime.now();
+        this.lastUpdated = OffsetDateTime.now(ZoneOffset.UTC);
         this.records = new ArrayList<>();
     }
 }

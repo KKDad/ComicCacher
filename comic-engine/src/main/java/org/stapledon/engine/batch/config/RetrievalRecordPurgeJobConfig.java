@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -38,6 +39,7 @@ public class RetrievalRecordPurgeJobConfig {
 
     private final BatchJobLogService batchJobLogService;
     private final ManagementFacade comicManagementFacade;
+    private final Clock clock;
 
     @Value("${batch.record-purge.days-to-keep:30}")
     private int daysToKeep;
@@ -45,7 +47,7 @@ public class RetrievalRecordPurgeJobConfig {
     @Value("${batch.record-purge.cron}")
     private String cronExpression;
 
-    @Value("${batch.timezone:America/Toronto}")
+    @Value("${batch.timezone}")
     private String timezone;
 
     private static final List<JobParameterDefinition> PURGE_PARAMETERS = List.of(
@@ -94,7 +96,7 @@ public class RetrievalRecordPurgeJobConfig {
     public Tasklet recordPurgeTasklet(@Value("#{jobParameters['daysToKeep']}") String daysToKeepParam) {
         return (contribution, chunkContext) -> {
             int effectiveDays = daysToKeepParam != null ? Integer.parseInt(daysToKeepParam) : daysToKeep;
-            LocalDate cutoffDate = LocalDate.now().minusDays(effectiveDays);
+            LocalDate cutoffDate = LocalDate.now(clock).minusDays(effectiveDays);
             log.info("Starting retrieval record purge (keeping last {} days, cutoff date: {})", effectiveDays, cutoffDate);
 
             long startTime = System.currentTimeMillis();

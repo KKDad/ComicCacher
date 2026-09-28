@@ -5,6 +5,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +40,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
     private final Map<String, ComicDownloaderStrategy> downloaderStrategies = new ConcurrentHashMap<>();
     private final RetrievalStatusService retrievalStatusService;
     private final ErrorTrackingService errorTrackingService;
+    private final Clock clock;
 
     /**
      * {@inheritDoc}
@@ -258,7 +260,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 .comicName(comic.getName())
                 .source(comic.getSource())
                 .sourceIdentifier(comic.getSourceIdentifier())
-                .date(LocalDate.now())
+                .date(LocalDate.now(clock))
                 .build();
     }
 

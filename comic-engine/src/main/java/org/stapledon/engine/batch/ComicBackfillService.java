@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ public class ComicBackfillService {
     private final DownloaderFacade downloaderFacade;
     private final ComicIndexService comicIndexService;
     private final BackfillStateService backfillState;
+    private final Clock clock;
 
     // Strips already seen on disk today (batch.comic-backfill.remember-cached-strips), so the repeated scans (each scheduled run's precondition, then the
     // run's own scan) don't ask NFS about them again. This only decides which dates get scanned; it never serves images. Only hits are kept, the recent window
@@ -197,12 +199,12 @@ public class ComicBackfillService {
      * Recent pass across every comic, then a round-robin history pass (see {@link #findMissingStrips(String)}).
      */
     private List<BackfillTask> selectDateTasks(List<ComicItem> comics, String source, int budget, ScanStats stats) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDate oldestRecent = today.minusDays(config.getRecentDaysForSource(source) - 1L);
 
         List<ComicScan> scans = new ArrayList<>();
         for (ComicItem comic : comics) {
-            DateRange range = calculateScanRange(comic);
+            DateRange range = calculateScanRange(comic, today);
             if (range == null) {
                 log.debug("No valid scan range for comic '{}'", comic.getName());
                 continue;
@@ -354,7 +356,7 @@ public class ComicBackfillService {
     }
 
     private synchronized void resetKnownCachedIfNewDay() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (today.equals(knownCachedOn)) {
             return;
         }
@@ -443,13 +445,14 @@ public class ComicBackfillService {
      * </ul>
      *
      * @param comic the comic to calculate range for
+     * @param today today's date in {@code batch.timezone}
      * @return DateRange to scan (start is most recent, end is oldest), or null if
      *         no valid range
      */
-    private DateRange calculateScanRange(ComicItem comic) {
+    private DateRange calculateScanRange(ComicItem comic, LocalDate today) {
 
         // Start from today (scan backwards from most recent)
-        LocalDate scanStart = LocalDate.now();
+        LocalDate scanStart = today;
 
         // If comic is discontinued and has a newest date, don't scan after it
         if (!comic.isActive() && comic.getNewest() != null
@@ -460,7 +463,7 @@ public class ComicBackfillService {
         // Calculate the earliest allowed date based on source limits
 
         // End at the earliest of: comic's oldest date OR source limit
-        LocalDate scanEnd = config.getEarliestAllowedDate(comic.getSource());
+        LocalDate scanEnd = config.getEarliestAllowedDate(comic.getSource(), today);
 
         if (comic.getOldest() != null && comic.getOldest().isAfter(scanEnd)) {
             scanEnd = comic.getOldest();

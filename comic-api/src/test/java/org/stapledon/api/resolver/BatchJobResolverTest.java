@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.job.JobExecution;
@@ -29,14 +28,19 @@ import org.stapledon.engine.batch.logging.BatchJobLogService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.SchedulerStateService;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BatchJobResolver")
 class BatchJobResolverTest {
+
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-09-29T02:00:00Z"), ZoneId.of("America/Toronto"));
 
     @Mock
     private BatchJobMonitoringService monitoringService;
@@ -53,9 +57,7 @@ class BatchJobResolverTest {
     }
 
     private BatchJobResolver createResolver(List<DailyJobScheduler> schedulerList) {
-        var resolver = new BatchJobResolver(monitoringService, schedulerList, schedulerStateService, batchJobLogService);
-        ReflectionTestUtils.setField(resolver, "batchTimezone", "America/Toronto");
-        return resolver;
+        return new BatchJobResolver(monitoringService, schedulerList, schedulerStateService, batchJobLogService, CLOCK);
     }
 
     private JobExecution createJobExecution(Long id, String jobName, BatchStatus status) {

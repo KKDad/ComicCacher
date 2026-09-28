@@ -7,8 +7,7 @@ import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -86,7 +85,7 @@ public abstract class AbstractJobScheduler {
     protected JobParameters buildJobParameters(String trigger, Map<String, String> extraParams) {
         JobParametersBuilder builder = new JobParametersBuilder()
                 .addString("trigger", trigger)
-                .addString("runId", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS")));
+                .addString("runId", Instant.now().toString());
         extraParams.forEach(builder::addString);
         return builder.toJobParameters();
     }

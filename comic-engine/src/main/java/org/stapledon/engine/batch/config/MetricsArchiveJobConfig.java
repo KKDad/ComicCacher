@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
@@ -33,11 +34,12 @@ import org.stapledon.metrics.service.MetricsArchiveService;
 public class MetricsArchiveJobConfig {
 
     private final MetricsArchiveService metricsArchiveService;
+    private final Clock clock;
 
     @Value("${batch.metrics-archive.cron}")
     private String cronExpression;
 
-    @Value("${batch.timezone:America/Toronto}")
+    @Value("${batch.timezone}")
     private String timezone;
 
     /**
@@ -72,7 +74,7 @@ public class MetricsArchiveJobConfig {
     @Bean
     public Tasklet metricsArchiveTasklet() {
         return (contribution, chunkContext) -> {
-            LocalDate yesterday = LocalDate.now().minusDays(1);
+            LocalDate yesterday = LocalDate.now(clock).minusDays(1);
             log.info("Starting metrics archiving for date: {}", yesterday);
 
             long startTime = System.currentTimeMillis();

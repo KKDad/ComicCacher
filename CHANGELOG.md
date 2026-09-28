@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `utils/dev/docker-compose.yml`: the dev API is deployed with compose like prod, as project `comics-dev` in `/root/comics-deploy-dev`. A test checks it shares no project, container, volume or port with prod (#403)
 
 ### Changed
+- `batch.timezone` is the only place the zone is set: log timestamps read it (instead of a hardcoded `America/Toronto` in `logback-spring.xml`), the job configs no longer carry their own default, and the unused `BATCH_TIMEZONE` and `CronSchedules` constants are gone. New timestamps are stored in UTC
+- The build fails on main-code calls that depend on the JVM's default zone (`checkTimeZoneIndependence`, part of `check` and `testAll`), and tests run with `user.timezone=UTC` to match the containers
 - Startup catch-up jobs run one after another on a background virtual thread, so the API reports healthy as soon as it starts instead of after they finish (#400)
 - A 401 in the browser and the signed-in layouts send you to `/login?from=<page>`, so signing in returns you to the page you were on (#404)
 - Every image in Comics Hub goes through `next/image`, including comic strips (fetched through the `/api/v1` rewrite) (#404)
@@ -25,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The first `deploy.sh dev` replaces the `docker run` container with a compose one and copies `dev-token.env` into `/root/comics-deploy-dev`, keeping its secret (#403)
 
 ### Fixed
+- Batch job and step times were about 4 hours off on prod: Spring Batch records them in the JVM's zone, which is UTC in the containers, and they were labelled with the `batch.timezone` offset. They're now converted from the JVM's zone. Records written before this fix keep the wrong time until they roll off the capped history
+- "Today" came from the JVM's zone (UTC) instead of `batch.timezone`, so from 20:00 Toronto time (19:00 in winter) it was already tomorrow: the evening backfill scanned strips that didn't exist yet, and the download target date, retention cutoffs, batch log file dates and index `lastUpdated` could be a day ahead. An application `Clock` in `batch.timezone` now supplies the date
+- The batch history date filter used each record's stored offset rather than the `batch.timezone` day
 - A prod deploy could roll back because the API stayed OUT_OF_SERVICE while startup catch-up jobs ran inline, past the 180 s health timeout (#400)
 - The startup check for whether a job already ran today used the JVM's timezone instead of `batch.timezone` (#400)
 - `devToken` with no username failed on dev because no default user was set; the dev deploy now defaults it to the USER-role test account `uireview0927` (#398)

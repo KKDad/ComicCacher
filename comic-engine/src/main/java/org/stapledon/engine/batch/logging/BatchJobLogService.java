@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -28,6 +29,7 @@ import org.stapledon.common.config.CacheProperties;
 public class BatchJobLogService {
 
     private final CacheProperties cacheProperties;
+    private final Clock clock;
 
     private static final String BATCH_LOGS_DIR = "batch-logs";
     private static final Pattern LOG_DATE_PATTERN = Pattern.compile("^.+-(\\d{8})-[0-9a-f]{8}\\.log$");
@@ -35,8 +37,9 @@ public class BatchJobLogService {
     /**
      * Constructs a BatchJobLogService.
      */
-    public BatchJobLogService(CacheProperties cacheProperties) {
+    public BatchJobLogService(CacheProperties cacheProperties, Clock clock) {
         this.cacheProperties = cacheProperties;
+        this.clock = clock;
     }
 
     /**
@@ -88,7 +91,7 @@ public class BatchJobLogService {
             return 0;
         }
 
-        LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
+        LocalDate cutoffDate = LocalDate.now(clock).minusDays(daysToKeep);
         int deletedCount = 0;
 
         try (Stream<Path> jobDirs = Files.list(batchLogsRoot)) {

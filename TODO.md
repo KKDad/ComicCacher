@@ -39,13 +39,6 @@
 - Show `error.digest` on the error pages ("Error reference: …") so a user report can be matched to the log line. Pairs with "Add timing metrics to diagnose slow page loads" and the comiccacher-logs frontend check
 - Priority: Medium-High. Raised from Medium: small change, and the comiccacher-logs frontend check (High) has nothing to find without it
 
-## Stop batch times depending on the JVM's timezone
-
-- Spring Batch records job and step times as `LocalDateTime` in the JVM's default zone. `DateTimeUtils.toOffset` (used by `JsonBatchExecutionTracker` and `BatchJobResolver`) labels them with the `batch.timezone` offset, which is right only when the JVM also runs in `batch.timezone`
-- Prod logs show `-04:00`, so the prod JVM runs on Toronto time today, but neither `comic-api/Dockerfile` nor `utils/prod/docker-compose.yml` sets `TZ`. On a UTC JVM, batch history times (UI and `batch-executions.json`) would be off by 4–5 hours
-- Fix: read the `LocalDateTime` in `ZoneId.systemDefault()` and convert it to `batch.timezone`, or set `TZ` in the image and compose file. `hasJobRunToday` already compares in `batch.timezone`
-- Priority: Medium-High. Raised from Medium: a latent bug that a base-image or host change would trigger without warning, and setting `TZ` is a one-line fix
-
 ## Get ready for Next.js 17
 
 - Next.js 17 was released 2026-06-15; comic-hub is on `next` 16.3.6 with React 19.3.0

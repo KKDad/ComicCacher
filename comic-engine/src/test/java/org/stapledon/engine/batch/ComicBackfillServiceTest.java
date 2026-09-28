@@ -19,8 +19,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,7 +68,7 @@ class ComicBackfillServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ComicBackfillService(managementFacade, storageFacade, configService, downloaderFacade, comicIndexService, backfillState);
+        service = new ComicBackfillService(managementFacade, storageFacade, configService, downloaderFacade, comicIndexService, backfillState, Clock.systemDefaultZone());
 
         // Setup default configuration service behavior using lenient to avoid
         // UnnecessaryStubbingException for tests that don't use all stubs
@@ -73,7 +76,7 @@ class ComicBackfillServiceTest {
         lenient().when(configService.getMaxPerRunForSource(anyString())).thenReturn(DEFAULT_MAX_PER_RUN);
         lenient().when(configService.getRecentDaysForSource(anyString())).thenReturn(RECENT_DAYS);
         lenient().when(configService.getMaxDaysBackForSource(anyString())).thenReturn(DEFAULT_MAX_DAYS_BACK);
-        lenient().when(configService.getEarliestAllowedDate(anyString())).thenReturn(LocalDate.now().minusDays(DEFAULT_MAX_DAYS_BACK));
+        lenient().when(configService.getEarliestAllowedDate(anyString(), any(LocalDate.class))).thenReturn(LocalDate.now().minusDays(DEFAULT_MAX_DAYS_BACK));
         lenient().when(configService.isSourceEnabled(anyString())).thenReturn(true);
     }
 
@@ -331,7 +334,7 @@ class ComicBackfillServiceTest {
 
         // Set max days back to 30
         LocalDate earliestAllowed = LocalDate.now().minusDays(30);
-        when(configService.getEarliestAllowedDate("test-source")).thenReturn(earliestAllowed);
+        when(configService.getEarliestAllowedDate(eq("test-source"), any(LocalDate.class))).thenReturn(earliestAllowed);
 
         // Mock all strips as missing
         when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
@@ -406,6 +409,21 @@ class ComicBackfillServiceTest {
         assertThat(result).hasSize(3);
         assertThat(result.get(0)).isEqualTo(new DateBackfillTask(late, yesterday));
         assertThat(result.subList(1, 3)).allMatch(t -> t.comic().equals(early));
+    }
+
+    @Test
+    void findMissingStrips_startsFromTodayInTheBatchTimezone() {
+        // 22:00 in Toronto on the 28th is already the 29th in UTC; the 29th's strip doesn't exist yet
+        Clock clock = Clock.fixed(Instant.parse("2026-09-29T02:00:00Z"), ZoneId.of("America/Toronto"));
+        ComicBackfillService torontoService = new ComicBackfillService(managementFacade, storageFacade, configService, downloaderFacade,
+                comicIndexService, backfillState, clock);
+        ComicItem comic = createComic(1, "One", true);
+        when(managementFacade.getAllComics()).thenReturn(List.of(comic));
+        when(configService.getMaxPerRunForSource("test-source")).thenReturn(1);
+        when(configService.getEarliestAllowedDate("test-source", LocalDate.of(2026, 9, 28))).thenReturn(LocalDate.of(2026, 9, 1));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
+
+        assertThat(torontoService.findMissingStrips()).containsExactly(new DateBackfillTask(comic, LocalDate.of(2026, 9, 28)));
     }
 
     @Test

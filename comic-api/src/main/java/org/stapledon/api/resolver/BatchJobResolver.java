@@ -29,6 +29,7 @@ import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.batch.scheduler.SchedulerStateService;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -43,7 +44,6 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  * GraphQL resolver for batch job queries and mutations.
@@ -57,9 +57,7 @@ public class BatchJobResolver {
     private final List<DailyJobScheduler> schedulers;
     private final SchedulerStateService schedulerStateService;
     private final BatchJobLogService batchJobLogService;
-
-    @Value("${batch.timezone:America/Toronto}")
-    private String batchTimezone;
+    private final Clock clock;
 
     private static final String STATUS_COMPLETED = "COMPLETED";
     private static final String STATUS_FAILED = "FAILED";
@@ -130,7 +128,7 @@ public class BatchJobResolver {
     @PreAuthorize("hasRole('OPERATOR')")
     public BatchJobSummaryDto batchJobSummary(@Argument int days) {
         log.debug("GraphQL: Getting batch job summary for {} days", days);
-        LocalDate endDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now(clock);
         LocalDate startDate = endDate.minusDays(days - 1);
 
         List<BatchExecutionSummary> allExecutions = BatchJobBaseConfig.KNOWN_JOBS.stream()
@@ -366,7 +364,7 @@ public class BatchJobResolver {
     }
 
     private OffsetDateTime toOffset(java.time.LocalDateTime ldt) {
-        return DateTimeUtils.toOffset(ldt, ZoneId.of(batchTimezone));
+        return DateTimeUtils.toOffset(ldt, clock.getZone());
     }
 
     private BatchSchedulerInfoDto mapSchedulerInfo(DailyJobScheduler scheduler) {

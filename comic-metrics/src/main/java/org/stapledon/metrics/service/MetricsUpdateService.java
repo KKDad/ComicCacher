@@ -121,14 +121,14 @@ public class MetricsUpdateService {
 
             // Build combined metrics (no longer saved to disk)
             CombinedMetricsData combinedData = CombinedMetricsData.builder().globalMetrics(globalMetrics)
-                    .perComicMetrics(perComicMetrics).lastUpdated(java.time.OffsetDateTime.now()).build();
+                    .perComicMetrics(perComicMetrics).lastUpdated(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC)).build();
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("Built combined metrics for {} comics in {}ms", perComicMetrics.size(), duration);
             return combinedData;
         } catch (Exception e) {
             log.error("Failed to build combined metrics", e);
-            return CombinedMetricsData.builder().lastUpdated(java.time.OffsetDateTime.now()).build();
+            return CombinedMetricsData.builder().lastUpdated(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC)).build();
         }
     }
 

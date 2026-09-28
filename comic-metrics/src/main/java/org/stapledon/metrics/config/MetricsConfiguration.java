@@ -13,6 +13,7 @@ import org.stapledon.metrics.service.MetricsService;
 import org.stapledon.metrics.service.NoOpMetricsService;
 
 import com.google.gson.Gson;
+import java.time.Clock;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -99,8 +100,8 @@ public class MetricsConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "comics.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
     public MetricsArchiver metricsArchiver(@Qualifier("gsonWithLocalDate") Gson gson,
-            @Qualifier("cacheLocation") String cacheLocation) {
+            @Qualifier("cacheLocation") String cacheLocation, Clock clock) {
         log.debug("Creating MetricsArchiver");
-        return new MetricsArchiver(gson, cacheLocation);
+        return new MetricsArchiver(gson, cacheLocation, clock);
     }
 }

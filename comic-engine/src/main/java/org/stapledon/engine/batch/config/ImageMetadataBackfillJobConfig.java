@@ -66,7 +66,7 @@ public class ImageMetadataBackfillJobConfig {
     @Value("${batch.image-backfill.cron}")
     private String cronExpression;
 
-    @Value("${batch.timezone:America/Toronto}")
+    @Value("${batch.timezone}")
     private String timezone;
 
     private volatile boolean initialized;

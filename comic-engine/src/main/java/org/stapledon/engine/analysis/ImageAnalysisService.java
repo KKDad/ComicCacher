@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Random;
 import javax.imageio.ImageIO;
 
@@ -61,7 +62,7 @@ public class ImageAnalysisService implements AnalysisService {
                     .sizeInBytes(validation.getSizeInBytes())
                     .colorMode(colorMode)
                     .samplePercentage(samplePercentage)
-                    .captureTimestamp(OffsetDateTime.now())
+                    .captureTimestamp(OffsetDateTime.now(ZoneOffset.UTC))
                     .sourceUrl(sourceUrl)
                     .build();
         } catch (IOException e) {
@@ -97,7 +98,7 @@ public class ImageAnalysisService implements AnalysisService {
                     .sizeInBytes(validation.getSizeInBytes())
                     .colorMode(colorMode)
                     .samplePercentage(samplePercentage)
-                    .captureTimestamp(OffsetDateTime.now())
+                    .captureTimestamp(OffsetDateTime.now(ZoneOffset.UTC))
                     .sourceUrl(sourceUrl);
 
             if (transcript != null && !transcript.isBlank()) {
@@ -184,7 +185,7 @@ public class ImageAnalysisService implements AnalysisService {
                 .sizeInBytes(validation.getSizeInBytes())
                 .colorMode(ImageMetadata.ColorMode.UNKNOWN)
                 .samplePercentage(samplePercentage)
-                .captureTimestamp(OffsetDateTime.now())
+                .captureTimestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .sourceUrl(sourceUrl)
                 .build();
     }
