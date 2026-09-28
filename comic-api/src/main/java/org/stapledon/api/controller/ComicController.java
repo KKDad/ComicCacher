@@ -1,6 +1,5 @@
 package org.stapledon.api.controller;
 
-import com.google.common.base.Stopwatch;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -44,12 +43,11 @@ public class ComicController {
      */
     @GetMapping("/comics/{comic}/avatar")
     public @ResponseBody ResponseEntity<byte[]> retrieveAvatar(@PathVariable(name = "comic") Integer comicId) {
-        var timer = Stopwatch.createStarted();
+        long start = System.nanoTime();
         return comicManagementFacade.getAvatar(comicId)
                 .map(imageDto -> {
                     byte[] imageBytes = Base64.getDecoder().decode(imageDto.getImageData());
-                    timer.stop();
-                    trackAccess(comicId, true, timer.elapsed(TimeUnit.MILLISECONDS));
+                    trackAccess(comicId, true, (System.nanoTime() - start) / 1_000_000);
                     return ResponseEntity.ok()
                             .contentType(MediaType.parseMediaType(imageDto.getMimeType()))
                             .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS))
@@ -66,12 +64,11 @@ public class ComicController {
     public @ResponseBody ResponseEntity<byte[]> retrieveStrip(
             @PathVariable(name = "comic") Integer comicId,
             @PathVariable(name = "date") LocalDate date) {
-        var timer = Stopwatch.createStarted();
+        long start = System.nanoTime();
         return comicManagementFacade.getComicStripOnDate(comicId, date)
                 .map(imageDto -> {
                     byte[] imageBytes = Base64.getDecoder().decode(imageDto.getImageData());
-                    timer.stop();
-                    trackAccess(comicId, true, timer.elapsed(TimeUnit.MILLISECONDS));
+                    trackAccess(comicId, true, (System.nanoTime() - start) / 1_000_000);
                     return ResponseEntity.ok()
                             .contentType(MediaType.parseMediaType(imageDto.getMimeType()))
                             .cacheControl(CacheControl.maxAge(7, TimeUnit.DAYS))

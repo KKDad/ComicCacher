@@ -49,6 +49,5 @@ public interface RetrievalStatusRepository {
     /**
      * Reset all records (for testing purposes)
      */
-    @com.google.common.annotations.VisibleForTesting
     void resetRecords();
 }

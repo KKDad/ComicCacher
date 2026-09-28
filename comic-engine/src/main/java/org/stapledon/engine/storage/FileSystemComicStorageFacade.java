@@ -1,6 +1,5 @@
 package org.stapledon.engine.storage;
 
-import com.google.common.io.Files;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -358,7 +357,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
 
             for (File comicFile : comicFiles) {
                 try {
-                    String filename = Files.getNameWithoutExtension(comicFile.getName());
+                    String filename = ImageUtils.stripExtension(comicFile.getName());
                     LocalDate comicDate = LocalDate.parse(filename, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
                     if (comicDate.isBefore(cutoffDate)) {

@@ -92,7 +92,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         Document doc = fetchDocument(url);
 
         // Try to find badge image in HTML using different potential CSS classes
-        Element badgeImage = doc.select("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]").first();
+        Element badgeImage = doc.selectFirst("img.Badge_badge__image__Y3HaD, img[src*=badge], img[src*=avatar]");
         if (badgeImage == null) {
             log.warn("No avatar image found for comic {} at {}", comicName, url);
             return null;

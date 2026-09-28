@@ -13,9 +13,6 @@ dependencies {
 	// Gson for JSON serialization (used in DTOs)
 	api "com.google.code.gson:gson"
 
-	// Guava for utilities
-	api "com.google.guava:guava:${rootProject.ext.guavaVersion}"
-
 	// Jsoup for HTML parsing (WebInspector)
 	api "org.jsoup:jsoup:${rootProject.ext.jsoupVersion}"
 

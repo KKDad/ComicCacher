@@ -108,7 +108,7 @@
 - The gocomics 429s that started 2026-09-22 look resolved: the 2026-09-28 07:30 run on 2.5.0 (Chrome 154 User-Agent, 429 retries) got no 429s at all, so the retries weren't needed, and every gocomics comic but Shoe (no Open Graph image) downloaded
 - 429s now have their own `RATE_LIMITED` retrieval status, so a return shows up on the retrieval-status page
 - Optional hardening: send and decode `zstd` in `Accept-Encoding` as Chrome does (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
-- Priority: Low
+- Priority: Very-Low
 
 ## Configure SMTP for Password Reset
 
@@ -140,13 +140,6 @@
 - Reference: https://docs.gradle.org/current/userguide/configuration_cache_enabling.html
 - Priority: Low
 
-### Clean Up Deprecated Java APIs
-
-- **Jsoup `.first()`/`.last()` → `.selectFirst()` / stream-based** — in `GoComicsDownloaderStrategy` and `ComicsKingdomDownloaderStrategy` in comic-engine
-- **Guava `@VisibleForTesting` → remove or replace** — 3 instances (`RetrievalStatusRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`)
-- **Guava `Files.getNameWithoutExtension()` → plain Java** — 2 instances (`ImageUtils`, `FileSystemComicStorageFacade`)
-- Priority: Medium
-
 ### Move the Cache-Root JSON Files into a Data Folder
 
 - The cache root (`/comics`) has about nine loose JSON files: `comics.json`, `users.json`, `retrieval-status.json` and so on (see `docs/storage/overview.md`)
@@ -157,7 +150,7 @@
 
 - The legacy Selenium `GoComics` and Jsoup `ComicsKingdom` classes and their live-site ITs are gone; nothing now checks the production strategies against the real sites
 - Add ITs that run `GoComicsDownloaderStrategy` and `ComicsKingdomDownloaderStrategy` against the live sites, paced through `SourceThrottleService` with a handful of fetches, and keep them out of the default CI run so a site change doesn't block merges
-- Priority: Medium
+- Priority: Very-Low
 
 ## Feature Ideas
 
@@ -169,7 +162,7 @@
 - For Example:
   - GoComics
     - Fetch list from https://www.gocomics.com/comics/a-to-z
-    - Max days back to fetch: 14 (days)
+    - Max days back to fetch: 14 (days) (With optional auto-detect)
     - I've got 8 of 400 comics configured
       - Add a button to force re-fetching the list of available comics from the source
       - Add a button to Run Comics-Backfill on an individual comic or source
@@ -192,7 +185,7 @@
 - Alert when a comic hasn't had a new strip on disk for N days
 - Base it on the files, not the retrieval status: the Mother Goose & Grimm bug went unnoticed for eight months because the status said `SUCCESS`
 - Could be webhook, email, or in-app notification
-- Priority: Medium
+- Priority: Low
 
 ### Promote Comics from Dev to Prod
 
@@ -233,4 +226,4 @@
 - **Questionable Content** — https://www.questionablecontent.net/QCR/archive.php
 - **Penny Arcade** — https://www.penny-arcade.com/comic
 - **Sinfest** — https://www.sinfest.net
-- Priority: Low
+- Priority: High

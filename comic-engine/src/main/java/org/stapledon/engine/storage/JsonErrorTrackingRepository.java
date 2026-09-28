@@ -158,7 +158,6 @@ public class JsonErrorTrackingRepository implements ErrorTrackingService {
     /**
      * Reset the error cache (for testing purposes)
      */
-    @com.google.common.annotations.VisibleForTesting
     public synchronized void resetErrors() {
         errorCache = new HashMap<>();
         saveErrors();
