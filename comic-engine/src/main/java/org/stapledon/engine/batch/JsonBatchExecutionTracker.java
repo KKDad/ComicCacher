@@ -53,9 +53,9 @@ import org.stapledon.engine.batch.dto.BatchStepSummary;
  * the legacy single-entry format automatically on read.
  *
  * <p>Spring Batch returns {@link LocalDateTime} from {@code JobExecution} and
- * {@code StepExecution}. Per CLAUDE.md, those values are converted to
- * {@link OffsetDateTime} at this boundary using the configured
- * {@code batch.timezone} so persisted data carries an explicit offset.
+ * {@code StepExecution}, recorded in the JVM's default zone. Per CLAUDE.md, those
+ * values are converted to {@link OffsetDateTime} in {@code batch.timezone} at this
+ * boundary (see {@link DateTimeUtils#toOffset}) so persisted data carries an explicit offset.
  */
 @Slf4j
 @Component
@@ -81,8 +81,8 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
             CacheProperties cacheProperties,
             @Qualifier("gsonWithLocalDate") Gson gson,
             @Value("${batch.tracking.max-history-per-job:30}") int maxHistoryPerJob,
-            @Value("${batch.timezone:America/Toronto}") String batchTimezone) {
-        this(cacheProperties, gson, maxHistoryPerJob, batchTimezone, Clock.systemUTC());
+            Clock clock) {
+        this(cacheProperties, gson, maxHistoryPerJob, clock.getZone().getId(), clock);
     }
 
     JsonBatchExecutionTracker(CacheProperties cacheProperties, Gson gson, int maxHistoryPerJob, String batchTimezone, Clock clock) {
@@ -103,7 +103,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         MDC.put(MDC_EXECUTION_ID, String.valueOf(jobExecution.getId()));
         MDC.put(MDC_JOB_NAME, jobExecution.getJobInstance().getJobName());
         String jobName = jobExecution.getJobInstance().getJobName();
-        String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String date = LocalDate.now(clock.withZone(batchZone)).format(DateTimeFormatter.BASIC_ISO_DATE);
         String shortHash = UUID.randomUUID().toString().substring(0, 8);
         String logFileName = jobName + "-" + date + "-" + shortHash;
         MDC.put(MDC_LOG_PATH, jobName + "/" + logFileName);
@@ -382,7 +382,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         return history.stream()
                 .filter(s -> s.getStartTime() != null)
                 .filter(s -> {
-                    LocalDate executionDate = s.getStartTime().toLocalDate();
+                    LocalDate executionDate = s.getStartTime().atZoneSameInstant(batchZone).toLocalDate();
                     return !executionDate.isBefore(start) && !executionDate.isAfter(end);
                 })
                 .toList();

@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.stream.Stream;
 
@@ -45,7 +46,7 @@ class FreefallDownloaderStrategyTest {
 
     @BeforeEach
     void setUp() {
-        strategy = new FreefallDownloaderStrategy(webInspector, imageValidationService, userAgentService, throttleService, backfillConfig);
+        strategy = new FreefallDownloaderStrategy(webInspector, imageValidationService, userAgentService, throttleService, backfillConfig, Clock.systemDefaultZone());
     }
 
     @Test
@@ -62,7 +63,7 @@ class FreefallDownloaderStrategyTest {
         BackfillConfigurationService mockConfig = mock(BackfillConfigurationService.class);
 
         FreefallDownloaderStrategy newStrategy = new FreefallDownloaderStrategy(
-                mockInspector, mockValidation, mockUserAgent, mockThrottle, mockConfig);
+                mockInspector, mockValidation, mockUserAgent, mockThrottle, mockConfig, Clock.systemDefaultZone());
 
         assertThat(newStrategy).isNotNull();
         assertThat(newStrategy.getSource()).isEqualTo("freefall");

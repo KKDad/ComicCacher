@@ -30,12 +30,12 @@ Tracks Spring Batch job execution history. Written after each job completion via
     {
       "executionId": 147,
       "jobName": "dailyDownloadJob",
-      "executionTime": "2025-03-18T06:30:45",
+      "executionTime": "2025-03-18T06:30:45-04:00",
       "status": "COMPLETED",
       "exitCode": "COMPLETED",
       "exitMessage": "",
-      "startTime": "2025-03-18T06:30:00",
-      "endTime": "2025-03-18T06:30:45",
+      "startTime": "2025-03-18T06:30:00-04:00",
+      "endTime": "2025-03-18T06:30:45-04:00",
       "errorMessage": null,
       "parameters": {
         "date": "2025-03-18"
@@ -50,8 +50,8 @@ Tracks Spring Batch job execution history. Written after each job completion via
           "skipCount": 0,
           "commitCount": 12,
           "rollbackCount": 0,
-          "startTime": "2025-03-18T06:30:01",
-          "endTime": "2025-03-18T06:30:44"
+          "startTime": "2025-03-18T06:30:01-04:00",
+          "endTime": "2025-03-18T06:30:44-04:00"
         }
       ]
     }
@@ -65,12 +65,12 @@ Tracks Spring Batch job execution history. Written after each job completion via
 |:---|:---|:---|
 | `executionId` | `Long` | Spring Batch execution ID |
 | `jobName` | `String` | Job name (also the map key) |
-| `executionTime` | `LocalDateTime` | Same as endTime |
+| `executionTime` | `OffsetDateTime` | Same as endTime |
 | `status` | `String` | `COMPLETED`, `FAILED`, `STARTED`, etc. |
 | `exitCode` | `String` | Exit status code |
 | `exitMessage` | `String` | Exit status description |
-| `startTime` | `LocalDateTime` | Job start timestamp |
-| `endTime` | `LocalDateTime` | Job end timestamp |
+| `startTime` | `OffsetDateTime` | Job start, in `batch.timezone` |
+| `endTime` | `OffsetDateTime` | Job end, in `batch.timezone` |
 | `errorMessage` | `String` (nullable) | First failure exception message |
 | `parameters` | `Map<String, Object>` | Job parameters |
 | `steps` | `List<BatchStepSummary>` | Per-step execution details |
@@ -87,8 +87,8 @@ Tracks Spring Batch job execution history. Written after each job completion via
 | `skipCount` | `int` | Items skipped |
 | `commitCount` | `int` | Chunk commits |
 | `rollbackCount` | `int` | Chunk rollbacks |
-| `startTime` | `LocalDateTime` | Step start |
-| `endTime` | `LocalDateTime` | Step end |
+| `startTime` | `OffsetDateTime` | Step start, in `batch.timezone` |
+| `endTime` | `OffsetDateTime` | Step end, in `batch.timezone` |
 
 ---
 
@@ -158,12 +158,12 @@ Written with `NfsFileOperations.atomicWrite()`, like the other state files.
 {
   "dailyDownloadJob": {
     "paused": true,
-    "lastToggled": "2025-03-18T14:30:00",
+    "lastToggled": "2025-03-18T14:30:00Z",
     "toggledBy": "admin"
   },
   "metricsCollectionJob": {
     "paused": false,
-    "lastToggled": "2025-03-17T09:00:00",
+    "lastToggled": "2025-03-17T09:00:00Z",
     "toggledBy": "admin"
   }
 }
@@ -174,7 +174,7 @@ Written with `NfsFileOperations.atomicWrite()`, like the other state files.
 | Field | Type | Description |
 |:---|:---|:---|
 | `paused` | `boolean` | Whether the job scheduler is paused |
-| `lastToggled` | `LocalDateTime` | When the state was last changed |
+| `lastToggled` | `OffsetDateTime` | When the state was last changed (UTC) |
 | `toggledBy` | `String` | Username who made the change |
 
 ---

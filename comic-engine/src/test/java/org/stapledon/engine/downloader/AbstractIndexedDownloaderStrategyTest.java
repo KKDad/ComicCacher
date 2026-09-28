@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -104,7 +105,7 @@ class AbstractIndexedDownloaderStrategyTest {
 
         TestIndexedStrategy(InspectorService webInspector, ValidationService imageValidationService, UserAgentService userAgentService,
                 SourceThrottleService throttleService) {
-            super("indexed-source", webInspector, imageValidationService, userAgentService, throttleService);
+            super("indexed-source", webInspector, imageValidationService, userAgentService, throttleService, Clock.systemDefaultZone());
         }
 
         void failWith(Exception failure) {

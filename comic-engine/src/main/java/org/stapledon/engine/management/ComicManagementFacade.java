@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ public class ComicManagementFacade implements ManagementFacade {
     private final DownloaderFacade downloaderFacade;
     private final RetrievalStatusService retrievalStatusService;
     private final Executor sourceDownloadExecutor;
+    private final Clock clock;
 
     /**
      * In-memory cache of comics for O(1) lookups.
@@ -84,12 +86,13 @@ public class ComicManagementFacade implements ManagementFacade {
 
     public ComicManagementFacade(ComicStorageFacade storageFacade, ComicConfigurationService configFacade,
             DownloaderFacade downloaderFacade, RetrievalStatusService retrievalStatusService,
-            @Qualifier("sourceDownloadExecutor") Executor sourceDownloadExecutor) {
+            @Qualifier("sourceDownloadExecutor") Executor sourceDownloadExecutor, Clock clock) {
         this.storageFacade = storageFacade;
         this.configFacade = configFacade;
         this.downloaderFacade = downloaderFacade;
         this.retrievalStatusService = retrievalStatusService;
         this.sourceDownloadExecutor = sourceDownloadExecutor;
+        this.clock = clock;
 
         // Load comics from configuration
         refreshComicList();
@@ -173,7 +176,7 @@ public class ComicManagementFacade implements ManagementFacade {
             // Create download request
             ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(comic.getId())
                     .comicName(comic.getName()).source(comic.getSource())
-                    .sourceIdentifier(comic.getSourceIdentifier()).date(LocalDate.now()).build();
+                    .sourceIdentifier(comic.getSourceIdentifier()).date(LocalDate.now(clock)).build();
 
             // Download the comic
             ComicDownloadResult result = downloaderFacade.downloadComic(request);
@@ -411,7 +414,7 @@ public class ComicManagementFacade implements ManagementFacade {
     @Override
     public boolean updateAllComics() {
         try {
-            updateComicsForDate(LocalDate.now());
+            updateComicsForDate(LocalDate.now(clock));
             return true;
         } catch (Exception e) {
             log.error("Error occurred while updating all comics", e);
@@ -430,11 +433,12 @@ public class ComicManagementFacade implements ManagementFacade {
 
         try {
             // Log if attempting to download future dates
-            if (date.isAfter(LocalDate.now())) {
+            LocalDate today = LocalDate.now(clock);
+            if (date.isAfter(today)) {
                 log.warn("Future date: attempting to download comics for {} which is AFTER today ({})",
-                        date, LocalDate.now());
+                        date, today);
             } else {
-                log.info("Downloading comics for date: {} (today: {}, sourceFilter: {})", date, LocalDate.now(), sourceFilter);
+                log.info("Downloading comics for date: {} (today: {}, sourceFilter: {})", date, today, sourceFilter);
             }
 
             // Get the current comic configuration
@@ -600,7 +604,7 @@ public class ComicManagementFacade implements ManagementFacade {
         ComicDownloadResult result = downloaderFacade.downloadLatestStrip(comic);
 
         if (result.isSuccessful()) {
-            LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : LocalDate.now();
+            LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : LocalDate.now(clock);
 
             // Check if this date already exists
             if (storageFacade.comicStripExists(ComicIdentifier.from(comic), saveDate)) {
@@ -632,7 +636,7 @@ public class ComicManagementFacade implements ManagementFacade {
         ComicDownloadResult result = downloaderFacade.downloadStrip(comic, stripNumber);
 
         if (result.isSuccessful()) {
-            LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : LocalDate.now();
+            LocalDate saveDate = result.getActualDate() != null ? result.getActualDate() : LocalDate.now(clock);
 
             // Check if this date already exists
             if (storageFacade.comicStripExists(ComicIdentifier.from(comic), saveDate)) {

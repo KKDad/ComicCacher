@@ -116,9 +116,9 @@ class BackfillConfigurationServiceTest {
     void getEarliestAllowedDate_calculatesCorrectly() {
         BackfillConfigurationService service = defaultBuilder().defaultMaxDaysBack(30).build();
 
-        LocalDate result = service.getEarliestAllowedDate("test-source");
+        LocalDate result = service.getEarliestAllowedDate("test-source", LocalDate.of(2026, 9, 28));
 
-        assertThat(result).isEqualTo(LocalDate.now().minusDays(30));
+        assertThat(result).isEqualTo(LocalDate.of(2026, 8, 29));
     }
 
     @Test
@@ -126,9 +126,9 @@ class BackfillConfigurationServiceTest {
         BackfillConfigurationService service = serviceWithSources(Map.of(
                 "short-history", BackfillSourceConfig.builder().source("short-history").maxDaysBack(7).build()));
 
-        LocalDate result = service.getEarliestAllowedDate("short-history");
+        LocalDate result = service.getEarliestAllowedDate("short-history", LocalDate.of(2026, 9, 28));
 
-        assertThat(result).isEqualTo(LocalDate.now().minusDays(7));
+        assertThat(result).isEqualTo(LocalDate.of(2026, 9, 21));
     }
 
     @Test

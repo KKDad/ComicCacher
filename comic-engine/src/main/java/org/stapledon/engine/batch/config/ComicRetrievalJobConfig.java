@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -43,11 +44,12 @@ import org.stapledon.engine.management.ManagementFacade;
 public class ComicRetrievalJobConfig {
 
     private final ManagementFacade managementFacade;
+    private final Clock clock;
 
     @Value("${batch.comic-download.cron}")
     private String cronExpression;
 
-    @Value("${batch.timezone:America/Toronto}")
+    @Value("${batch.timezone}")
     private String timezone;
 
     private static final List<JobParameterDefinition> DOWNLOAD_PARAMETERS = List.of(
@@ -96,7 +98,7 @@ public class ComicRetrievalJobConfig {
     @Bean
     @StepScope
     public ItemReader<LocalDate> dateReader() {
-        LocalDate targetDate = LocalDate.now();
+        LocalDate targetDate = LocalDate.now(clock);
         log.info("Comic download target date: {} ({})", targetDate, targetDate.getDayOfWeek());
         return new ListItemReader<>(List.of(targetDate));
     }

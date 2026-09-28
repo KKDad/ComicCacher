@@ -20,7 +20,10 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 
 import java.lang.reflect.Method;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.stapledon.common.dto.ComicDownloadResult;
@@ -43,7 +46,7 @@ class ComicRetrievalJobConfigTest {
 
     @BeforeEach
     void setUp() {
-        config = new ComicRetrievalJobConfig(managementFacade);
+        config = new ComicRetrievalJobConfig(managementFacade, Clock.systemDefaultZone());
     }
 
     @Test
@@ -81,6 +84,15 @@ class ComicRetrievalJobConfigTest {
 
         assertThat(results).isEmpty();
         verify(managementFacade).updateComicsForDate(date, sourceFilter);
+    }
+
+    @Test
+    void dateReader_readsTodayInTheBatchTimezone() throws Exception {
+        // 22:00 in Toronto on the 28th is already the 29th in UTC
+        Clock clock = Clock.fixed(Instant.parse("2026-09-29T02:00:00Z"), ZoneId.of("America/Toronto"));
+        ComicRetrievalJobConfig torontoConfig = new ComicRetrievalJobConfig(managementFacade, clock);
+
+        assertThat(torontoConfig.dateReader().read()).isEqualTo(LocalDate.of(2026, 9, 28));
     }
 
     @Test

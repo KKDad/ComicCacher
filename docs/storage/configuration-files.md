@@ -93,8 +93,8 @@ Stores user accounts with hashed passwords. Keyed by username string.
 | `passwordHash` | `String` | -- | BCrypt-hashed password |
 | `email` | `String` | `null` | Email address |
 | `displayName` | `String` | `null` | Display name |
-| `created` | `LocalDateTime` | `now()` | Account creation timestamp |
-| `lastLogin` | `LocalDateTime` | `null` | Last successful login |
+| `created` | `OffsetDateTime` | `now()` (UTC) | Account creation timestamp |
+| `lastLogin` | `OffsetDateTime` | `null` | Last successful login (UTC) |
 | `roles` | `List<String>` | `[]` | Role assignments (ADMIN, OPERATOR, USER) |
 | `userToken` | `UUID` | random | Stable user token |
 

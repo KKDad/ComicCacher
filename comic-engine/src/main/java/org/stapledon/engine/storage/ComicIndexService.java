@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class ComicIndexService {
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
+    private final Clock clock;
 
     // In-memory cache of the indexes to avoid repeated disk reads.
     private final Map<Integer, ComicDateIndex> indexCache = new ConcurrentHashMap<>();
@@ -185,7 +187,7 @@ public class ComicIndexService {
                 log.debug("Index is null, creating new index for comic {} (id={})", comicName, comicId);
                 // Create new index
                 index = ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>())
-                        .lastUpdated(LocalDate.now()).build();
+                        .lastUpdated(LocalDate.now(clock)).build();
             }
 
             List<LocalDate> dates = index.getAvailableDates();
@@ -203,7 +205,7 @@ public class ComicIndexService {
                 List<LocalDate> newDates = new ArrayList<>(dates);
                 newDates.add(insertionPoint, date);
                 index.setAvailableDates(newDates);
-                index.setLastUpdated(LocalDate.now());
+                index.setLastUpdated(LocalDate.now(clock));
 
                 log.debug("Index after update: {} dates", newDates.size());
 
@@ -246,7 +248,7 @@ public class ComicIndexService {
             List<LocalDate> dates = new ArrayList<>(index.getAvailableDates());
             if (dates.remove(date)) {
                 index.setAvailableDates(dates);
-                index.setLastUpdated(LocalDate.now());
+                index.setLastUpdated(LocalDate.now(clock));
                 try {
                     saveIndex(index, comicName);
                 } catch (IOException e) {
@@ -385,7 +387,7 @@ public class ComicIndexService {
                 .comicId(comicId)
                 .comicName(comicName)
                 .availableDates(sortedDates)
-                .lastUpdated(LocalDate.now())
+                .lastUpdated(LocalDate.now(clock))
                 .build();
     }
 
@@ -476,7 +478,7 @@ public class ComicIndexService {
         }
 
         return ComicDateIndex.builder().comicId(comicId).comicName(comicName).availableDates(new ArrayList<>())
-                .lastUpdated(LocalDate.now()).build();
+                .lastUpdated(LocalDate.now(clock)).build();
     }
 
     /**

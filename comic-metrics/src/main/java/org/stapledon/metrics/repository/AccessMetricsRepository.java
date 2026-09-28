@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -110,7 +111,7 @@ public class AccessMetricsRepository {
         lock.writeLock().lock();
         try {
             // Update timestamp
-            metrics.setLastUpdated(OffsetDateTime.now());
+            metrics.setLastUpdated(OffsetDateTime.now(ZoneOffset.UTC));
 
             Path directory = NfsFileOperations.resolvePath(cacheLocation);
             if (!Files.exists(directory)) {
@@ -140,7 +141,7 @@ public class AccessMetricsRepository {
      */
     private AccessMetricsData createEmpty() {
         return AccessMetricsData.builder()
-                .lastUpdated(OffsetDateTime.now())
+                .lastUpdated(OffsetDateTime.now(ZoneOffset.UTC))
                 .build();
     }
 }

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
@@ -34,7 +35,7 @@ public class RateLimitedException extends IOException {
      * Builds the exception from a raw {@code Retry-After} header value.
      */
     public static RateLimitedException of(String url, String retryAfterHeader) {
-        return new RateLimitedException(url, parseRetryAfter(retryAfterHeader, OffsetDateTime.now()));
+        return new RateLimitedException(url, parseRetryAfter(retryAfterHeader, OffsetDateTime.now(ZoneOffset.UTC)));
     }
 
     /**

@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
     @Qualifier("gsonWithLocalDate")
     private final Gson gson;
     private final CacheProperties cacheProperties;
+    private final Clock clock;
 
     private ComicRetrievalRecordStorage recordStorage;
 
@@ -85,7 +87,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
             return;
         }
 
-        recordStorage.setLastUpdated(java.time.OffsetDateTime.now());
+        recordStorage.setLastUpdated(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC));
 
         Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
@@ -160,7 +162,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
         ComicRetrievalRecordStorage storage = loadRecords();
 
         int initialSize = storage.getRecords().size();
-        LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
+        LocalDate cutoffDate = LocalDate.now(clock).minusDays(daysToKeep);
 
         storage.getRecords().removeIf(record -> record.getComicDate().isBefore(cutoffDate));
 

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -53,6 +54,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     private final AnalysisService imageAnalysisService;
     private final ImageMetadataRepository imageMetadataRepository;
     private final ComicIndexService comicIndexService;
+    private final Clock clock;
 
     @Override
     public SaveResult saveComicStripWithResult(@lombok.NonNull ComicIdentifier comic,
@@ -328,7 +330,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     @Override
     public boolean purgeOldImages(@lombok.NonNull ComicIdentifier comic, int daysToKeep) {
 
-        LocalDate cutoffDate = LocalDate.now().minusDays(daysToKeep);
+        LocalDate cutoffDate = LocalDate.now(clock).minusDays(daysToKeep);
         File comicRoot = new File(String.format(COMBINE_PATH, getCacheRoot().toAbsolutePath(),
                 comic.getDirectoryName()));
 

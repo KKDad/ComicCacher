@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,7 +28,7 @@ class BatchJobLogServiceTest {
         CacheProperties cacheProperties = CacheProperties.builder()
                 .location(tempDir.toString())
                 .build();
-        service = new BatchJobLogService(cacheProperties);
+        service = new BatchJobLogService(cacheProperties, Clock.systemDefaultZone());
     }
 
     @Test

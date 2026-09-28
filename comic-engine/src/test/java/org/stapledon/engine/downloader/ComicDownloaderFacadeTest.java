@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ class ComicDownloaderFacadeTest {
     void setUp() {
         facade = new ComicDownloaderFacade(
                 Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class),
-                Mockito.mock(org.stapledon.common.service.ErrorTrackingService.class));
+                Mockito.mock(org.stapledon.common.service.ErrorTrackingService.class), Clock.systemDefaultZone());
         facade.registerDownloaderStrategy("gocomics", goComicsStrategy);
         facade.registerDownloaderStrategy("comicskingdom", comicsKingdomStrategy);
     }
@@ -140,7 +141,7 @@ class ComicDownloaderFacadeTest {
     @MethodSource("failureRecording")
     void recordsFailureKindAndHttpStatusInRetrievalRecord(ComicDownloadResult.FailureKind kind, Integer httpStatus, ComicRetrievalStatus expected) {
         RetrievalStatusService retrievalStatusService = Mockito.mock(RetrievalStatusService.class);
-        ComicDownloaderFacade recordingFacade = new ComicDownloaderFacade(retrievalStatusService, Mockito.mock(ErrorTrackingService.class));
+        ComicDownloaderFacade recordingFacade = new ComicDownloaderFacade(retrievalStatusService, Mockito.mock(ErrorTrackingService.class), Clock.systemDefaultZone());
         recordingFacade.registerDownloaderStrategy("gocomics", goComicsStrategy);
         ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(1).comicName("calvin").source("gocomics").date(testDate).build();
         when(goComicsStrategy.downloadComic(request)).thenReturn(ComicDownloadResult.failure(request, "failed", kind, httpStatus));
@@ -156,7 +157,7 @@ class ComicDownloaderFacadeTest {
     @Test
     void recordsAccessDeniedAsStorageError() {
         RetrievalStatusService retrievalStatusService = Mockito.mock(RetrievalStatusService.class);
-        ComicDownloaderFacade recordingFacade = new ComicDownloaderFacade(retrievalStatusService, Mockito.mock(ErrorTrackingService.class));
+        ComicDownloaderFacade recordingFacade = new ComicDownloaderFacade(retrievalStatusService, Mockito.mock(ErrorTrackingService.class), Clock.systemDefaultZone());
         recordingFacade.registerDownloaderStrategy("gocomics", goComicsStrategy);
         ComicDownloadRequest request = ComicDownloadRequest.builder().comicId(1).comicName("calvin").source("gocomics").date(testDate).build();
         when(goComicsStrategy.downloadComic(request)).thenAnswer(_ -> {

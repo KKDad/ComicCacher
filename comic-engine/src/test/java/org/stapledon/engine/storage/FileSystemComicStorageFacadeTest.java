@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -86,7 +87,7 @@ class FileSystemComicStorageFacadeTest {
 
         storageFacade = new FileSystemComicStorageFacade(cacheProperties, imageValidationService,
                 duplicateValidationService, duplicateHashCacheService, imageAnalysisService, imageMetadataRepository,
-                comicIndexService);
+                comicIndexService, Clock.systemDefaultZone());
 
         // Create test directory structure
         createTestDirectoryStructure();

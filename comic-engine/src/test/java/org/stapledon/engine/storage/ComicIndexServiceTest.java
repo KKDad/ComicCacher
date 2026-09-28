@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +42,7 @@ class ComicIndexServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         when(cacheProperties.getLocation()).thenReturn(tempDir.toString());
-        indexService = new ComicIndexService(gson, cacheProperties);
+        indexService = new ComicIndexService(gson, cacheProperties, Clock.systemDefaultZone());
     }
 
     @Test

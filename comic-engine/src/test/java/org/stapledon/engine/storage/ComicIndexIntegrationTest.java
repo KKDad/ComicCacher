@@ -19,6 +19,7 @@ import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -65,7 +66,7 @@ class ComicIndexIntegrationTest {
         lenient().when(metadataRepository.saveMetadata(any())).thenReturn(true);
 
         // Real ComicIndexService - this is what we're testing
-        indexService = new ComicIndexService(gson, cacheProperties);
+        indexService = new ComicIndexService(gson, cacheProperties, Clock.systemDefaultZone());
 
         // Mock validation services (not critical for this test)
         ValidationService validationService = mock(ValidationService.class);
@@ -89,7 +90,7 @@ class ComicIndexIntegrationTest {
                 analysisService,
                 metadataRepository,
                 indexService
-        );
+        , Clock.systemDefaultZone());
     }
 
     @Test
@@ -160,7 +161,7 @@ class ComicIndexIntegrationTest {
         CacheProperties cacheProperties = CacheProperties.builder()
                 .location(tempDir.toAbsolutePath().toString())
                 .build();
-        ComicIndexService newIndexService = new ComicIndexService(gson, cacheProperties);
+        ComicIndexService newIndexService = new ComicIndexService(gson, cacheProperties, Clock.systemDefaultZone());
 
         ValidationService validationService = mock(ValidationService.class);
         when(validationService.validateWithMinDimensions(any(byte[].class), anyInt(), anyInt()))
@@ -179,7 +180,7 @@ class ComicIndexIntegrationTest {
                 analysisService,
                 metadataRepository,
                 newIndexService
-        );
+        , Clock.systemDefaultZone());
 
         // Act - Save second strip after "restart"
         assertThat(newStorageFacade.saveComicStrip(COMIC, date2, imageData)).isTrue();

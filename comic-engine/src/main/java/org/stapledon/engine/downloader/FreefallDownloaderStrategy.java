@@ -9,6 +9,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -49,8 +50,9 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
             ValidationService imageValidationService,
             UserAgentService userAgentService,
             SourceThrottleService throttleService,
-            BackfillConfigurationService backfillConfig) {
-        super(SOURCE_IDENTIFIER, webInspector, imageValidationService, userAgentService, throttleService);
+            BackfillConfigurationService backfillConfig,
+            Clock clock) {
+        super(SOURCE_IDENTIFIER, webInspector, imageValidationService, userAgentService, throttleService, clock);
         this.backfillConfig = backfillConfig;
     }
 

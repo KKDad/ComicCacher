@@ -18,11 +18,21 @@ public final class DateTimeUtils {
     }
 
     /**
-     * Gives a local date-time (as Spring Batch records them) the offset it had in {@code zone},
-     * normally {@code batch.timezone}. Returns null for null.
+     * Converts a Spring Batch time to {@code zone}, normally {@code batch.timezone}. Returns null for null.
+     *
+     * <p>Spring Batch records job and step times with {@code LocalDateTime.now()}: the wall-clock time in the
+     * JVM's default zone (UTC in the containers), so that is the zone the value is read in.
      */
-    public static OffsetDateTime toOffset(LocalDateTime localDateTime, ZoneId zone) {
-        return localDateTime == null ? null : localDateTime.atZone(zone).toOffsetDateTime();
+    public static OffsetDateTime toOffset(LocalDateTime batchTime, ZoneId zone) {
+        return toOffset(batchTime, ZoneId.systemDefault(), zone);
+    }
+
+    /**
+     * Reads {@code localDateTime} as a wall-clock time in {@code recordedIn} and returns the same instant
+     * in {@code zone}. Returns null for null.
+     */
+    public static OffsetDateTime toOffset(LocalDateTime localDateTime, ZoneId recordedIn, ZoneId zone) {
+        return localDateTime == null ? null : localDateTime.atZone(recordedIn).withZoneSameInstant(zone).toOffsetDateTime();
     }
 
     /**

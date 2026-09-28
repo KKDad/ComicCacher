@@ -120,6 +120,8 @@ subprojects {
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+        // Same default zone as the containers, so a test that leans on the JVM's zone fails here and in CI alike
+        systemProperty 'user.timezone', 'UTC'
         def mockitoAgentFiles = configurations.mockitoAgent
         jvmArgumentProviders.add({ ["-javaagent:${mockitoAgentFiles.singleFile}"] } as CommandLineArgumentProvider)
     }
@@ -127,6 +129,31 @@ subprojects {
     test {
         finalizedBy jacocoTestReport
     }
+
+    // The JVM's default zone is UTC in the containers and must not matter: "today" comes from the injected
+    // Clock (batch.timezone), stored timestamps are UTC. DateTimeUtils is the one place that reads the JVM's
+    // zone, to convert Spring Batch's LocalDateTime values.
+    def checkTimeZoneIndependence = tasks.register('checkTimeZoneIndependence') {
+        description = 'Fails on main-code calls that depend on the JVM default time zone'
+        group = 'verification'
+        def sources = fileTree('src/main/java') { include '**/*.java'; exclude '**/common/util/DateTimeUtils.java' }
+        inputs.files(sources)
+        def forbidden = ~/\b(LocalDate|LocalDateTime|LocalTime|OffsetDateTime|ZonedDateTime|YearMonth|Year)\.now\(\)|ZoneId\.systemDefault\(\)|Clock\.systemDefaultZone\(\)|TimeZone\.getDefault\(\)/
+        doLast {
+            def offenders = []
+            sources.each { file ->
+                file.readLines().eachWithIndex { line, i ->
+                    if (line =~ forbidden) {
+                        offenders << "${file}:${i + 1}: ${line.trim()}"
+                    }
+                }
+            }
+            if (offenders) {
+                throw new GradleException("Zone-dependent time calls (use the injected Clock, or ZoneOffset.UTC for stored timestamps):\n" + offenders.join('\n'))
+            }
+        }
+    }
+    tasks.named('check') { dependsOn checkTimeZoneIndependence }
 
     jacocoTestReport {
         dependsOn test
@@ -181,6 +208,7 @@ subprojects {
 tasks.register('testAll') {
     dependsOn subprojects.collect { it.path + ':test' }
     dependsOn subprojects.collect { it.path + ':jacocoTestCoverageVerification' }
+    dependsOn subprojects.collect { it.path + ':checkTimeZoneIndependence' }
     description = 'Runs all tests and enforces coverage in all subprojects'
     group = 'verification'
 }

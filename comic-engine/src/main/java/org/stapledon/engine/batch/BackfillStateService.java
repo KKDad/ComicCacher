@@ -58,11 +58,7 @@ public class BackfillStateService {
     private boolean dirty;
 
     @Autowired
-    public BackfillStateService(CacheProperties cacheProperties, @Qualifier("gsonWithLocalDate") Gson gson, BackfillConfigurationService config) {
-        this(cacheProperties, gson, config, Clock.systemDefaultZone());
-    }
-
-    BackfillStateService(CacheProperties cacheProperties, Gson gson, BackfillConfigurationService config, Clock clock) {
+    public BackfillStateService(CacheProperties cacheProperties, @Qualifier("gsonWithLocalDate") Gson gson, BackfillConfigurationService config, Clock clock) {
         this.cacheProperties = cacheProperties;
         this.gson = gson;
         this.config = config;

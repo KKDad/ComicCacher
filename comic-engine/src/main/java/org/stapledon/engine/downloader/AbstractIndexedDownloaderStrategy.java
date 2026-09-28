@@ -3,6 +3,7 @@ package org.stapledon.engine.downloader;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import org.stapledon.common.service.ValidationService;
 public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDownloaderStrategy
         implements IndexedComicDownloaderStrategy {
 
+    private final Clock clock;
+
     /**
      * Creates a new indexed downloader strategy for the specified source.
      */
@@ -33,8 +36,10 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
             InspectorService webInspector,
             ValidationService imageValidationService,
             UserAgentService userAgentService,
-            SourceThrottleService throttleService) {
+            SourceThrottleService throttleService,
+            Clock clock) {
         super(source, webInspector, imageValidationService, userAgentService, throttleService);
+        this.clock = clock;
     }
 
     /**
@@ -78,7 +83,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
      * exist, any other HTTP status is logged without a stack trace, and anything else is logged with one.
      */
     private ComicDownloadResult failureFor(ComicItem comic, String what, Exception e) {
-        ComicDownloadRequest request = buildRequest(comic, LocalDate.now());
+        ComicDownloadRequest request = buildRequest(comic, LocalDate.now(clock));
         int status = httpStatus(e);
         if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
             Optional<Duration> retryAfter = e instanceof RateLimitedException rateLimited ? rateLimited.getRetryAfter() : Optional.empty();
@@ -134,7 +139,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
                 .comicName(comic.getName())
                 .source(getSource())
                 .sourceIdentifier(comic.getSourceIdentifier())
-                .date(date != null ? date : LocalDate.now())
+                .date(date != null ? date : LocalDate.now(clock))
                 .build();
     }
 

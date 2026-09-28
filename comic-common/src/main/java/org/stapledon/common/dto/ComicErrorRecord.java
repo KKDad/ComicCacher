@@ -2,6 +2,7 @@ package org.stapledon.common.dto;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import lombok.Builder;
 import lombok.Data;
@@ -64,7 +65,7 @@ public class ComicErrorRecord {
                 .status(record.getStatus())
                 .errorMessage(record.getErrorMessage())
                 .httpStatusCode(record.getHttpStatusCode())
-                .timestamp(OffsetDateTime.now())
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .retrievalDurationMs(record.getRetrievalDurationMs())
                 .build();
     }

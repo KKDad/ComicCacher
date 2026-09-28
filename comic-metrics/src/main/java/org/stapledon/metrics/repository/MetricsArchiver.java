@@ -10,6 +10,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import lombok.ToString;
@@ -27,12 +28,15 @@ public class MetricsArchiver {
 
     private final Gson gson;
     private final String cacheLocation;
+    private final Clock clock;
 
     public MetricsArchiver(
             @Qualifier("gsonWithLocalDate") Gson gson,
-            @Qualifier("cacheLocation") String cacheLocation) {
+            @Qualifier("cacheLocation") String cacheLocation,
+            Clock clock) {
         this.gson = gson;
         this.cacheLocation = cacheLocation;
+        this.clock = clock;
     }
 
     /** Archive directory under the cache root; not a comic, so storage scans skip it. */
@@ -80,7 +84,7 @@ public class MetricsArchiver {
                 return 0;
             }
 
-            LocalDate cutoffDate = LocalDate.now().minusDays(retentionDays);
+            LocalDate cutoffDate = LocalDate.now(clock).minusDays(retentionDays);
             int deletedCount = 0;
 
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDir, "*.json")) {

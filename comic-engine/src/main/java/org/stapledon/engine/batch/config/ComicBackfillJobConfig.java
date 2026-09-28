@@ -70,7 +70,7 @@ public class ComicBackfillJobConfig {
     @Value("${batch.comic-backfill.cron}")
     private String cronExpression;
 
-    @Value("${batch.timezone:America/Toronto}")
+    @Value("${batch.timezone}")
     private String timezone;
 
     private static final List<JobParameterDefinition> BACKFILL_PARAMETERS = List.of(

@@ -39,7 +39,7 @@ public class AvatarBackfillJobConfig {
     @Value("${batch.avatar-backfill.cron}")
     private String cronExpression;
 
-    @Value("${batch.timezone:America/Toronto}")
+    @Value("${batch.timezone}")
     private String timezone;
 
     @Value("${batch.avatar-backfill.delay-between-downloads-ms:2000}")

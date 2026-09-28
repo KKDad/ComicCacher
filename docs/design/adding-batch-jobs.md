@@ -30,7 +30,7 @@ public class MyNewJobConfig {
     @Value("${batch.my-job.cron}")
     private String cronExpression;
 
-    @Value("${batch.timezone:America/Toronto}")
+    @Value("${batch.timezone}")
     private String timezone;
 
     /**
@@ -126,17 +126,11 @@ public static final Set<String> KNOWN_JOBS = Set.of(
 
 This set is used by the scheduler health check to detect missing or unexpected schedulers at startup.
 
-### 4. Add Cron Constants (Optional)
+### 4. Add Property Key Constants (Optional)
 
-Add default cron and property key constants in `BatchJobBaseConfig`:
+Add property key constants in `BatchJobBaseConfig`. The default cron goes in `application.properties`. If the job needs today's date, inject the application `Clock` and use `LocalDate.now(clock)`; `checkTimeZoneIndependence` fails the build on a zone-less `LocalDate.now()`:
 
 ```java
-public static final class CronSchedules {
-    // ... existing entries
-    /** Daily at 8:00 AM EST - My new job */
-    public static final String MY_NEW_JOB = "0 0 8 * * ? " + BATCH_TIMEZONE;
-}
-
 public static final class PropertyKeys {
     // ... existing entries
     public static final String MY_NEW_JOB_ENABLED = "batch.my-job.enabled";

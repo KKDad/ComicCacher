@@ -187,10 +187,10 @@ public class BackfillConfigurationService {
     }
 
     /**
-     * Gets the earliest date allowed for backfill for a source.
+     * Gets the earliest date allowed for backfill for a source, counting back from {@code today}.
      */
-    public LocalDate getEarliestAllowedDate(String source) {
-        return LocalDate.now().minusDays(getMaxDaysBackForSource(source));
+    public LocalDate getEarliestAllowedDate(String source, LocalDate today) {
+        return today.minusDays(getMaxDaysBackForSource(source));
     }
 
     /**
