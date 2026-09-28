@@ -277,6 +277,7 @@ mutation {
 | `COMIC_UNAVAILABLE` | Comic not available at the source |
 | `NETWORK_ERROR` | Network error during retrieval |
 | `PARSING_ERROR` | Failed to parse the source response |
+| `RATE_LIMITED` | The source answered HTTP 429 (Too Many Requests); the source backs off and the retries ran out |
 | `STORAGE_ERROR` | Failed to store the retrieved image |
 | `SUCCESS` | Successfully retrieved |
 | `UNKNOWN_ERROR` | Unknown error occurred |

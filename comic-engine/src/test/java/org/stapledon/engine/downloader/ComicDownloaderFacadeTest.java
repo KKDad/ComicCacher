@@ -130,7 +130,7 @@ class ComicDownloaderFacadeTest {
 
     static Stream<Arguments> failureRecording() {
         return Stream.of(
-                arguments(ComicDownloadResult.FailureKind.RATE_LIMITED, 429, ComicRetrievalStatus.NETWORK_ERROR),
+                arguments(ComicDownloadResult.FailureKind.RATE_LIMITED, 429, ComicRetrievalStatus.RATE_LIMITED),
                 arguments(ComicDownloadResult.FailureKind.UNAVAILABLE, 404, ComicRetrievalStatus.COMIC_UNAVAILABLE),
                 arguments(ComicDownloadResult.FailureKind.ERROR, 503, ComicRetrievalStatus.NETWORK_ERROR),
                 arguments(ComicDownloadResult.FailureKind.ERROR, null, ComicRetrievalStatus.UNKNOWN_ERROR));
