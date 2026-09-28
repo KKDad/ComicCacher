@@ -43,6 +43,9 @@ class DailyJobSchedulerTest {
     @Mock
     private JobExecution execution;
 
+    @Mock
+    private SchedulerStateService schedulerStateService;
+
     private DailyJobScheduler scheduler;
 
     @BeforeEach
@@ -154,5 +157,28 @@ class DailyJobSchedulerTest {
         scheduler.runMissedExecutionIfNeeded();
 
         verify(jobOperator, never()).start(any(Job.class), any(JobParameters.class));
+    }
+
+    @Test
+    @DisplayName("no startup makeup run when the job is paused")
+    void noMakeupRunWhenPaused() throws Exception {
+        when(schedulerStateService.isPaused("TestJob")).thenReturn(true);
+        scheduler.setSchedulerStateService(schedulerStateService);
+
+        scheduler.runMissedExecutionIfNeeded();
+
+        verify(jobOperator, never()).start(any(Job.class), any(JobParameters.class));
+    }
+
+    @Test
+    @DisplayName("makes up a missed run at startup when the job is not paused")
+    void runsMissedExecutionWhenNotPaused() throws Exception {
+        when(schedulerStateService.isPaused("TestJob")).thenReturn(false);
+        when(tracker.hasJobRunToday("TestJob")).thenReturn(false);
+        scheduler.setSchedulerStateService(schedulerStateService);
+
+        scheduler.runMissedExecutionIfNeeded();
+
+        verify(jobOperator).start(eq(job), any(JobParameters.class));
     }
 }

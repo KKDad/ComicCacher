@@ -117,7 +117,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
      * Scheduled execution method - to be called by @Scheduled in config beans. Checks pause state and duplicate execution before running.
      */
     public void executeScheduled() {
-        if (schedulerStateService != null && schedulerStateService.isPaused(getJobName())) {
+        if (isPaused()) {
             log.info("{} is paused, skipping scheduled execution", getJobName());
             return;
         }
@@ -155,6 +155,11 @@ public class DailyJobScheduler extends AbstractJobScheduler {
      * Checks if the job missed its scheduled execution time and runs if needed. Called by StartupJobRunner after ApplicationReadyEvent ensures all beans are ready.
      */
     public void runMissedExecutionIfNeeded() {
+        if (isPaused()) {
+            log.info("{} is paused, no makeup run", getJobName());
+            return;
+        }
+
         if (multipleRunsPerDay) {
             log.info("{} runs several times a day, no makeup run needed", getJobName());
             return;
@@ -173,6 +178,10 @@ public class DailyJobScheduler extends AbstractJobScheduler {
             log.warn("{} missed scheduled time ({}), running now", getJobName(), todayScheduledTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
             runJob("STARTUP_MAKEUP");
         }
+    }
+
+    private boolean isPaused() {
+        return schedulerStateService != null && schedulerStateService.isPaused(getJobName());
     }
 
     private boolean preconditionMet() {
