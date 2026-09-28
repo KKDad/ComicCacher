@@ -20,6 +20,7 @@
 #                                 the scenario pushed (default: digest aaa…, HEAD's revision, false)
 #   FX_REGISTRY_STATUS            HTTP status the registry answers for a missing tag (default 404)
 #   FX_ON_MASTER                  space separated revisions on origin/master
+#   FX_ORIGIN_MASTER              origin/master's revision (default: the same as HEAD)
 #   FX_BRANCH, FX_DIRTY           git branch and `git status --porcelain` output
 #   FX_SSH_EXIT                   exit status of ssh (default 0)
 #
@@ -251,6 +252,7 @@ case "$name" in
             *"rev-parse --abbrev-ref HEAD"*) echo "${FX_BRANCH:-master}" ;;
             *"rev-parse --short HEAD"*) echo "abc1234" ;;
             *"rev-parse HEAD"*) echo "abc1234abc1234abc1234abc1234abc1234abc12" ;;
+            *"rev-parse origin/master"*) echo "${FX_ORIGIN_MASTER:-abc1234abc1234abc1234abc1234abc1234abc12}" ;;
             *"status --porcelain"*) [[ -n "${FX_DIRTY:-}" ]] && echo "$FX_DIRTY" ;;
             *"fetch"*) fails fetch && exit 1 ;;
             *"merge-base --is-ancestor"*)

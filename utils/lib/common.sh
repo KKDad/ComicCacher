@@ -108,6 +108,18 @@ fetch_master() {
     git -C "$PROJECT_ROOT" fetch -q origin master || die "git fetch origin master failed."
 }
 
+# Prod builds and deploys run from exactly origin/master: not behind it (a stale compose file or
+# image), and not ahead of it (unpushed commits)
+require_current_master() {
+    fetch_master
+    local head origin
+    head=$(git -C "$PROJECT_ROOT" rev-parse HEAD)
+    origin=$(git -C "$PROJECT_ROOT" rev-parse origin/master)
+    if [[ "$head" != "$origin" ]]; then
+        die "HEAD ($head) is not origin/master ($origin). Pull, or push, first."
+    fi
+}
+
 # Prints the HTTP status of image:tag's manifest in the registry (200 exists, 404 doesn't)
 registry_status() {
     local image="$1"

@@ -21,7 +21,7 @@
 #   - prod: if up or the health check fails, roll back to the baseline digests with the
 #     compose file of the last successful deploy (docker-compose.last-good.yml)
 #   - dev: no rollback; a failed container is left running so its logs can be read.
-#     Creates the comicdata-dev volume and dev-token.env if missing (see dev_prepare)
+#     Creates the comicdata-dev volume and dev-token.env if missing (see dev_prepare_files)
 #
 # Usage:
 #   ./run.sh prod --api 2.4.6

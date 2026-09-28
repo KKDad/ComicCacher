@@ -6,14 +6,15 @@
 # deploy.sh runs it and then deploys. Kept compatible with macOS bash 3.2 and BSD tools,
 # and never uses a Docker context.
 #
-#   prod: must be on master with a clean working tree
+#   prod: must be a clean checkout of exactly origin/master
 #   dev:  any branch, including uncommitted changes
 #
 # Both: semver tags; images are pushed with Skopeo straight to the registry's port 5000
 # (bypassing Cloudflare's 100MB upload limit), then must be found in the registry.
 # Every image is labelled with its commit, branch and whether the tree was dirty; deploy.sh
 # prod only deploys a clean build of a commit on origin/master. prod also refuses to replace
-# a tag that already holds such a build, or an unlabelled one (versions are never reused).
+# a tag that holds such a build of another commit, or an unlabelled one (versions are never
+# reused); rebuilding the same commit, e.g. to retry, is allowed.
 #
 # Usage:
 #   ./utils/build.sh prod --api 2.4.6
@@ -99,6 +100,11 @@ guard_existing_tag() {
             ;;
         200)
             check_provenance "$image" "$tag"
+            if [[ -z "$IMAGE_PROBLEM" && "$IMAGE_REVISION" == "$GIT_REVISION" ]]; then
+                # e.g. a retry after the other image's build failed
+                echo "Rebuilding ${image}:${tag}, a build of this same commit."
+                return 0
+            fi
             if [[ -z "$IMAGE_PROBLEM" ]]; then
                 die "${image}:${tag} already holds a build of master (${IMAGE_REVISION}). Pick a new version."
             fi
@@ -114,7 +120,7 @@ guard_existing_tag() {
 }
 
 if ! is_dev; then
-    fetch_master
+    require_current_master
     if [[ -n "$ARG_API_TAG" ]]; then
         guard_existing_tag "$API_IMAGE" "$ARG_API_TAG"
     fi

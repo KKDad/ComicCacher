@@ -15,6 +15,8 @@ git -C <SB>/repo rev-parse HEAD
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-ui/manifests/9.9.9-test
 gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
@@ -62,6 +64,8 @@ git -C <SB>/repo rev-parse HEAD
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
 gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
 docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
@@ -86,6 +90,21 @@ Error: Image kkdad/comic-api:9.9.9-test not found in registry (https://registry.
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 == output
 Error: Must be on 'master' branch (currently 'feature/x').
+### build-prod-not-origin-master
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+== output
+Building from master @ abc1234
+Error: HEAD (abc1234abc1234abc1234abc1234abc1234abc12) is not origin/master (ddd0000ddd0000ddd0000ddd0000ddd0000ddd00). Pull, or push, first.
 ### build-prod-registry-error
 == exit: 1
 == trace
@@ -96,10 +115,45 @@ git -C <SB>/repo rev-parse HEAD
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
 == output
 Building from master @ abc1234
 Error: Registry answered HTTP 500 for kkdad/comic-api:9.9.9-test; can't tell whether the tag is taken.
+### build-prod-retry-same-commit
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+== output
+Building from master @ abc1234
+Rebuilding kkdad/comic-api:9.9.9-test, a build of this same commit.
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
 ### build-prod-tag-taken-dev
 == exit: 0
 == trace
@@ -110,6 +164,8 @@ git -C <SB>/repo rev-parse HEAD
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
@@ -140,12 +196,14 @@ git -C <SB>/repo rev-parse HEAD
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
-git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+git -C <SB>/repo merge-base --is-ancestor eee0000eee0000eee0000eee0000eee0000eee00 origin/master
 == output
 Building from master @ abc1234
-Error: kkdad/comic-api:9.9.9-test already holds a build of master (abc1234abc1234abc1234abc1234abc1234abc12). Pick a new version.
+Error: kkdad/comic-api:9.9.9-test already holds a build of master (eee0000eee0000eee0000eee0000eee0000eee00). Pick a new version.
 ### build-prod-tag-taken-unlabelled
 == exit: 1
 == trace
@@ -156,6 +214,8 @@ git -C <SB>/repo rev-parse HEAD
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 == output
@@ -229,6 +289,16 @@ Error: dev has no UI container; only --api can be deployed.
 == trace
 == output
 Error: The first argument must be the environment, dev or prod (got '--api').
+### deploy-prod-bad-project-name
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+== output
+Error: COMPOSE_PROJECT_NAME must be lower-case letters, digits, - or _ (got 'comics'; reboot; '').
 ### deploy-prod-bad-tag
 == exit: 1
 == trace
@@ -240,6 +310,8 @@ Error: '9.9.9;reboot' is not a valid semver tag (expected e.g. 2.4.6 or 2.4.6-rc
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
@@ -257,6 +329,8 @@ Error: Deploy a clean build of master, or pass --allow-unverified-image if you'r
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
@@ -286,6 +360,8 @@ Error: Working tree is dirty. Commit or stash before deploying.
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
 ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
@@ -306,14 +382,15 @@ git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
 == output
-
---- Checking image provenance ---
 Error: git fetch origin master failed.
 ### deploy-prod-full
 == exit: 0
 == trace
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo rev-parse --short HEAD
@@ -321,13 +398,14 @@ git -C <SB>/repo rev-parse HEAD
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
 gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
 docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
 docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
 skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
 curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
-git -C <SB>/repo fetch -q origin master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
 ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
@@ -359,18 +437,32 @@ Building from master @ abc1234
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 == output
 
 --- Checking image provenance ---
 stub: manifest unknown: kkdad/comic-api:9.9.9-test
 Error: Could not read kkdad/comic-api:9.9.9-test from the registry.
+### deploy-prod-not-origin-master
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+== output
+Error: HEAD (abc1234abc1234abc1234abc1234abc1234abc12) is not origin/master (ddd0000ddd0000ddd0000ddd0000ddd0000ddd00). Pull, or push, first.
 ### deploy-prod-project-override
 == exit: 0
 == trace
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
 ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
@@ -390,6 +482,8 @@ ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'c
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
 git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
 ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
@@ -415,6 +509,8 @@ Error: Must be on 'master' branch (currently 'feature/x').
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
 == output
 
@@ -428,6 +524,8 @@ Error: Deploy a clean build of master, or pass --allow-unverified-image if you'r
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
 ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
 scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
@@ -450,6 +548,8 @@ ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'\
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 git -C <SB>/repo merge-base --is-ancestor fff0000fff0000fff0000fff0000fff0000fff00 origin/master
 == output
@@ -464,6 +564,8 @@ Error: Deploy a clean build of master, or pass --allow-unverified-image if you'r
 git -C <SB>/repo rev-parse --abbrev-ref HEAD
 git -C <SB>/repo status --porcelain
 git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
 skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
 == output
 

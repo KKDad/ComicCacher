@@ -11,8 +11,8 @@
 #   3. Runs run.sh there. For prod it confirms, writes the audit log, deploys, checks health
 #      and rolls back; for dev it deploys and checks health. All docker commands run there.
 #
-# prod needs master with a clean tree, also for --skip-build, so prod always runs the
-# compose file that is on master. Each image must also be a clean build of a commit on
+# prod needs a clean checkout of exactly origin/master, also for --skip-build, so prod always
+# runs the compose file that is on master. Each image must also be a clean build of a commit on
 # origin/master (its build.sh labels, read from the registry), and is deployed pinned to the
 # digest that was checked, so the tag can't move in between. dev deploys from any branch,
 # skips the image check and has no UI container.
@@ -116,6 +116,10 @@ VERSION_ARGS=""
 
 if ! is_dev; then
     require_clean_master "deploying"
+    require_current_master
+    # Goes into the remote command line
+    [[ "${COMPOSE_PROJECT_NAME:-}" =~ ^[a-z0-9_-]*$ ]] \
+        || die "COMPOSE_PROJECT_NAME must be lower-case letters, digits, - or _ (got '${COMPOSE_PROJECT_NAME}')."
 fi
 
 # --- Step 1: Build + push ---
@@ -148,7 +152,6 @@ if is_dev; then
 else
     echo ""
     echo "--- Checking image provenance ---"
-    fetch_master
     RUN_ARGS=""
     if [[ -n "$ARG_API_TAG" ]]; then
         pin_ref "$API_IMAGE" "$ARG_API_TAG"

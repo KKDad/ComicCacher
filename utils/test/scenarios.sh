@@ -75,8 +75,8 @@ sc_build_prod_tag_taken_dev() {
 sc_build_prod_tag_taken_release() {
     TARGET=repo:utils/build.sh
     ARGS=(prod --api 9.9.9-test)
-    FX_ON_MASTER=abc1234abc1234abc1234abc1234abc1234abc12
-    FX_REGISTRY_INFO="kkdad/comic-api:9.9.9-test=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|abc1234abc1234abc1234abc1234abc1234abc12|false"
+    FX_ON_MASTER="abc1234abc1234abc1234abc1234abc1234abc12 eee0000eee0000eee0000eee0000eee0000eee00"
+    FX_REGISTRY_INFO="kkdad/comic-api:9.9.9-test=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|eee0000eee0000eee0000eee0000eee0000eee00|false"
 }
 
 # Refuses to replace an unlabelled tag, which may be an old release
@@ -192,7 +192,7 @@ sc_deploy_prod_missing_image() {
     FX_ON_MASTER=abc1234abc1234abc1234abc1234abc1234abc12
 }
 
-# COMPOSE_PROJECT_NAME is passed through to prod-run.sh
+# COMPOSE_PROJECT_NAME is passed through to run.sh
 sc_deploy_prod_project_override() {
     TARGET=repo:utils/deploy.sh
     ARGS=(prod --api 9.9.9-test --skip-build)
@@ -563,4 +563,33 @@ sc_tunnel_dev_refused() {
 sc_tunnel_prod() {
     TARGET=repo:utils/tunnel.sh
     ARGS=(prod)
+}
+
+# Local master is behind (or ahead of) origin/master: refuses before building or staging anything
+sc_deploy_prod_not_origin_master() {
+    TARGET=repo:utils/deploy.sh
+    ARGS=(prod --api 9.9.9-test)
+    FX_ORIGIN_MASTER=ddd0000ddd0000ddd0000ddd0000ddd0000ddd00
+}
+
+# build.sh prod also needs exactly origin/master
+sc_build_prod_not_origin_master() {
+    TARGET=repo:utils/build.sh
+    ARGS=(prod --api 9.9.9-test)
+    FX_ORIGIN_MASTER=ddd0000ddd0000ddd0000ddd0000ddd0000ddd00
+}
+
+# Retry after a failed build: the tag already holds a build of this same commit, so it is rebuilt
+sc_build_prod_retry_same_commit() {
+    TARGET=repo:utils/build.sh
+    ARGS=(prod --api 9.9.9-test)
+    FX_ON_MASTER=abc1234abc1234abc1234abc1234abc1234abc12
+    FX_REGISTRY_INFO="kkdad/comic-api:9.9.9-test=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|abc1234abc1234abc1234abc1234abc1234abc12|false"
+}
+
+# COMPOSE_PROJECT_NAME can't carry a command into the remote command line
+sc_deploy_prod_bad_project_name() {
+    TARGET=repo:utils/deploy.sh
+    ARGS=(prod --api 9.9.9-test --skip-build)
+    COMPOSE_PROJECT_NAME="comics'; reboot; '"
 }
