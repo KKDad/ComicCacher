@@ -1,5 +1,20 @@
 # ComicCacher TODO
 
+## Don't run paused jobs in the startup catch-up
+
+- `DailyJobScheduler.runMissedExecutionIfNeeded()` never checks `schedulerStateService.isPaused()`, though the scheduled path (`executeScheduled`) does. So every restart after a job's scheduled time runs paused jobs anyway
+- Seen on dev on 2026-09-28 at 09:38: AvatarBackfill, ImageMetadataBackfill, MetricsArchive and RetrievalRecordPurge ran with `trigger=STARTUP_MAKEUP` while paused in `scheduler-state.json`
+- Fix: skip the makeup run for a paused job and log it at INFO, as the scheduled path does. Add a `DailyJobSchedulerTest` case for it
+- Priority: High
+
+## Teach the comiccacher-logs skill which jobs are paused or disabled
+
+- Many dev jobs are paused on purpose because they're no longer being tested. The skill reports them as idle or overdue, which leads to wrong findings (on 2026-09-28 it flagged ComicBackfillJob as not having run since 09-25, but the job is paused on dev)
+- The data is already fetched: `state/scheduler-state.json` has `paused`, `lastToggled` and `toggledBy` per job. Jobs switched off with `batch.<name>.enabled=false` log no `INITIALIZING SCHEDULER` line
+- Record paused and disabled jobs in `summary.json`, skip the idle and overdue checks for them, list them in one observation, and badge them in the report's jobs table. With `both`, a job paused in one environment only is a difference to note, not drift to fix
+- Raise an issue when a batch log shows `trigger=STARTUP_MAKEUP` for a paused job (the bug above)
+- Priority: High
+
 ## Teach the comiccacher-logs skill about frontend health and unexpected log lines
 
 - The skill (in `~/git/runbooks/skills/comiccacher-logs`) focuses on the API. It treats the `comics-ui` log as relevant only to web-UI questions, so a health report doesn't check the frontend
