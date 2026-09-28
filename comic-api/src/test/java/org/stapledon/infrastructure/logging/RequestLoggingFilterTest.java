@@ -3,6 +3,7 @@ package org.stapledon.infrastructure.logging;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import ch.qos.logback.classic.Level;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 class RequestLoggingFilterTest {
 
-    private final RequestLoggingFilter filter = new RequestLoggingFilter();
+    private final RequestLoggingFilter filter = new RequestLoggingFilter(TimingProperties.defaults());
 
     @Test
     void echoesAWellFormedIncomingRequestIdAndExposesItInTheMdc() throws Exception {
@@ -53,5 +54,37 @@ class RequestLoggingFilterTest {
         assertThat(RequestLoggingFilter.resolveRequestId("abc\ninjected")).matches("[0-9a-f]{8}");
         assertThat(RequestLoggingFilter.resolveRequestId("x".repeat(65))).matches("[0-9a-f]{8}");
         assertThat(RequestLoggingFilter.resolveRequestId("abc-DEF-123")).isEqualTo("abc-DEF-123");
+    }
+
+    @Test
+    void appendsWhereTheTimeWentToTheCompletionLine() throws Exception {
+        try (LogCapture logs = new LogCapture(RequestLoggingFilter.class)) {
+            filter.doFilter(new MockHttpServletRequest("GET", "/api/v1/comics/1/avatar"), new MockHttpServletResponse(),
+                    new MockFilterChain(new HttpServlet() {
+                        @Override
+                        protected void service(HttpServletRequest req, HttpServletResponse res) {
+                            ((RequestTimings) req.getAttribute(RequestTimings.ATTRIBUTE)).recordStorage(3_000_000);
+                        }
+                    }));
+
+            assertThat(logs.at(Level.INFO)).singleElement()
+                    .extracting(e -> e.getFormattedMessage())
+                    .asString()
+                    .matches("GET /api/v1/comics/1/avatar -> 200 in \\d+ms \\(storage=1/3ms\\) from .*");
+        }
+    }
+
+    @Test
+    void logsASlowRequestAtWarn() throws Exception {
+        RequestLoggingFilter strict = new RequestLoggingFilter(new TimingProperties(0, 250, 200));
+        try (LogCapture logs = new LogCapture(RequestLoggingFilter.class)) {
+            strict.doFilter(new MockHttpServletRequest("POST", "/graphql"), new MockHttpServletResponse(), new MockFilterChain());
+
+            assertThat(logs.at(Level.WARN)).singleElement()
+                    .extracting(e -> e.getFormattedMessage())
+                    .asString()
+                    .startsWith("Slow request: POST /graphql -> 200 in ");
+            assertThat(logs.at(Level.INFO)).isEmpty();
+        }
     }
 }

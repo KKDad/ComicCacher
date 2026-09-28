@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.HexFormat;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -24,11 +25,14 @@ import lombok.extern.slf4j.Slf4j;
  * MDC and echoed back in the response header, so a user-reported error can be matched to its log lines.</li>
  * <li>GraphQL requests complete asynchronously. The filter also runs on the async dispatch and logs the completion line there, with the final
  * status.</li>
+ * <li>The completion line ends with where the time went ({@link RequestTimings}), and is logged at WARN when the request took at least
+ * {@code comics.timing.slow-request-ms}.</li>
  * </ul>
  */
 @Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@RequiredArgsConstructor
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
     public static final String REQUEST_ID_HEADER = "X-Request-Id";
@@ -39,6 +43,8 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
     private static final String REQUEST_ID_ATTRIBUTE = RequestLoggingFilter.class.getName() + ".requestId";
     private static final String START_ATTRIBUTE = RequestLoggingFilter.class.getName() + ".start";
     private static final Pattern VALID_REQUEST_ID = Pattern.compile("[A-Za-z0-9-]{1,64}");
+
+    private final TimingProperties timingProperties;
 
     @Override
     protected boolean shouldNotFilterAsyncDispatch() {
@@ -54,6 +60,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             requestId = resolveRequestId(request.getHeader(REQUEST_ID_HEADER));
             request.setAttribute(REQUEST_ID_ATTRIBUTE, requestId);
             request.setAttribute(START_ATTRIBUTE, System.nanoTime());
+            request.setAttribute(RequestTimings.ATTRIBUTE, new RequestTimings());
             response.setHeader(REQUEST_ID_HEADER, requestId);
         }
         MDC.put(LogContext.REQUEST_ID, requestId);
@@ -76,7 +83,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         return HexFormat.of().toHexDigits(ThreadLocalRandom.current().nextInt());
     }
 
-    private static void logCompletion(HttpServletRequest request, HttpServletResponse response) {
+    private void logCompletion(HttpServletRequest request, HttpServletResponse response) {
         String path = request.getRequestURI();
         boolean interesting = path.startsWith("/graphql") || path.startsWith("/api/");
         if (!interesting && !log.isDebugEnabled()) {
@@ -85,10 +92,15 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         long elapsedMs = (System.nanoTime() - (Long) request.getAttribute(START_ATTRIBUTE)) / 1_000_000;
         Object operation = request.getAttribute(GRAPHQL_OPERATION_ATTRIBUTE);
         String user = request.getRemoteUser();
-        String message = "{} {}{} -> {} in {}ms from {}{}";
-        Object[] args = {request.getMethod(), path, operation != null ? " (" + operation + ")" : "", response.getStatus(), elapsedMs,
-                request.getRemoteAddr(), user != null ? " user=" + user : ""};
-        if (interesting) {
+        RequestTimings timings = (RequestTimings) request.getAttribute(RequestTimings.ATTRIBUTE);
+        String message = "{} {}{} -> {} in {}ms{} from {}{}";
+        String operationPart = operation != null ? " (" + operation + ")" : "";
+        String breakdown = timings != null ? timings.summary() : "";
+        String userPart = user != null ? " user=" + user : "";
+        Object[] args = {request.getMethod(), path, operationPart, response.getStatus(), elapsedMs, breakdown, request.getRemoteAddr(), userPart};
+        if (interesting && elapsedMs >= timingProperties.slowRequestMs()) {
+            log.warn("Slow request: " + message, args);
+        } else if (interesting) {
             log.info(message, args);
         } else {
             log.debug(message, args);

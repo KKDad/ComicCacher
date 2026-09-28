@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import type { User } from '@/types/auth';
 import { GetMeDocument } from '@/generated/graphql';
 import { JWT_COOKIE, GRAPHQL_ENDPOINT } from './constants';
+import { getRequestId } from '@/lib/request-id';
+import { timedGraphqlFetch } from '@/lib/server-log';
 
 export async function getSession(): Promise<User | null> {
   const cookieStore = await cookies();
@@ -11,7 +13,7 @@ export async function getSession(): Promise<User | null> {
   if (!jwt) return null;
 
   try {
-    const res = await fetch(GRAPHQL_ENDPOINT, {
+    const res = await timedGraphqlFetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,7 +24,7 @@ export async function getSession(): Promise<User | null> {
       }),
       // Don't cache — session should be fresh on each server render
       cache: 'no-store',
-    });
+    }, await getRequestId());
 
     if (!res.ok) return null;
 

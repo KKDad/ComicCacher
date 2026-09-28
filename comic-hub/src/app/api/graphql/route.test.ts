@@ -48,6 +48,24 @@ describe('POST /api/graphql', () => {
     expect((fetchOptions!.headers as Record<string, string>).Authorization).toBe('Bearer test-jwt');
   });
 
+  it('forwards a well-formed request id and echoes it', async () => {
+    mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
+    const { POST } = await importRoute();
+    const request = createRequest();
+    request.headers.set('x-request-id', 'frontend-1');
+    const response = await POST(request);
+    const [, fetchOptions] = vi.mocked(global.fetch).mock.calls[0];
+    expect((fetchOptions!.headers as Record<string, string>)['x-request-id']).toBe('frontend-1');
+    expect(response.headers.get('x-request-id')).toBe('frontend-1');
+  });
+
+  it('generates a request id when none is sent, even for a 401', async () => {
+    mockCookieStore({});
+    const { POST } = await importRoute();
+    const response = await POST(createRequest());
+    expect(response.headers.get('x-request-id')).toMatch(/^[0-9a-f]{8}$/);
+  });
+
   it('returns backend response on success', async () => {
     mockCookieStore({ 'comic-hub-jwt': 'test-jwt' });
     const { POST } = await importRoute();

@@ -19,18 +19,9 @@
 
 - The skill (in `~/git/runbooks/skills/comiccacher-logs`) focuses on the API. It treats the `comics-ui` log as relevant only to web-UI questions, so a health report doesn't check the frontend
 - Add a frontend health check to every report: container status and restarts, `/api/health`, and errors in the `comics-ui` log (failed server renders, GraphQL errors, refresh failures)
+- Use the request timing lines: count `Slow request:` / `Slow GraphQL field` / `Slow storage read` WARNs in both logs, and join comics-ui and comics-api lines on `req=`
 - Flag anything unexpected: log lines that match none of the known signatures, new WARN/ERROR messages, and error rates that jump compared with earlier runs, rather than reporting only the failures it already knows how to look for
 - Priority: High
-
-## Add timing metrics to diagnose slow page loads
-
-- Slow page loads are hard to diagnose because the logs don't show where the time goes
-- The API already logs the total time for each request (`RequestLoggingFilter`, `-> 200 in 123ms`), but nothing breaks that time down, and comic-hub logs no timings at all
-- Add timings throughout the application:
-  - **comic-hub:** server render time per page, and the time for each GraphQL call made during the render (tagged with `X-Request-Id` so it can be matched to the API line)
-  - **comic-api:** time per GraphQL resolver / data fetcher, and slow storage reads (NFS JSON files, strip images)
-  - Log a WARN line when a request or render crosses a threshold, so slow loads stand out without turning on DEBUG
-- Priority: Medium-High
 
 ## Review the admin pages after the UI revamp
 
