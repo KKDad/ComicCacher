@@ -1,0 +1,8 @@
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+== output
+Error: comics-api-dev belongs to compose project 'comics', not 'comics-dev'. Manual investigation required.

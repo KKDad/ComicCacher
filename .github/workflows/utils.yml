@@ -5,15 +5,11 @@ on:
     branches: [ "master" ]
     paths:
       - 'utils/**'
-      - 'comic-api/build-docker.sh'
-      - 'comic-hub/build-docker.sh'
       - '.github/workflows/utils.yml'
   pull_request:
     branches: [ "master" ]
     paths:
       - 'utils/**'
-      - 'comic-api/build-docker.sh'
-      - 'comic-hub/build-docker.sh'
       - '.github/workflows/utils.yml'
 
 permissions:
@@ -31,7 +27,7 @@ jobs:
     - name: ShellCheck
       run: |
         shellcheck --version
-        shellcheck --severity=warning utils/*.sh utils/test/*.sh comic-api/build-docker.sh comic-hub/build-docker.sh
+        shellcheck --severity=warning utils/*.sh utils/test/*.sh utils/lib/*.sh utils/remote/*.sh
 
     - name: Deploy script tests
       run: utils/test/run-tests.sh

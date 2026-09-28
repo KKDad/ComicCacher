@@ -1,4 +1,0 @@
-== exit: 1
-== trace
-== output
-Error: '2.5.0 && reboot' is not a valid semver tag (expected e.g. 2.4.8 or 2.4.8-rc1).

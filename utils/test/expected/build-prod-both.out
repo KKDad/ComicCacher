@@ -1,0 +1,33 @@
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test --platform linux/amd64 
+docker save portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test -o <WORK>/comic-ui.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-ui.tar docker://portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-ui/manifests/9.9.9-test
+== output
+Building from master @ abc1234
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Building + pushing comic-ui 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
+  ok: kkdad/comic-ui:9.9.9-test

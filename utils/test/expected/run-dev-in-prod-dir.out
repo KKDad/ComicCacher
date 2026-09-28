@@ -1,0 +1,4 @@
+== exit: 1
+== trace
+== output
+Error: <SB>/host/comics-deploy/docker-compose.yml is for compose project 'comics', not dev ('comics-dev'). Wrong directory?

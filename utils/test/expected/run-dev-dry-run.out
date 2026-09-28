@@ -1,0 +1,33 @@
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0                          -> 2.6.0
+==================================================
+
+--- Rendered compose config (backend) ---
+  (skipped: <SB>/host/comics-deploy-dev/dev-token.env doesn't exist yet)
+
+--- Would run ---
+  docker volume create ... comicdata-dev   (only if missing)
+  create <SB>/host/comics-deploy-dev/dev-token.env   (only if missing: copied from <SB>/host/comics-deploy-dev/../comics-deploy/dev-token.env, or a new random secret)
+  set COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927 in it   (only if missing)
+  docker stop comics-api-dev && docker rm comics-api-dev   (not created by compose)
+  API_TAG='2.6.0' UI_TAG='' docker compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend
+  API_TAG='2.6.0' UI_TAG='' docker compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml up -d --no-deps backend
+  no rollback (dev)
+
+Dry run: nothing changed.

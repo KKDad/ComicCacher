@@ -1,0 +1,33 @@
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+
+--- Deploying backend via compose ---
+stub: pull failed
+
+Pull failed: no container was changed.
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222

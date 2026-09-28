@@ -1,0 +1,10 @@
+== exit: 0
+== trace
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy-dev\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/dev/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy-dev/
+ssh -o ConnectTimeout=10 root@portainer.stapledon.ca /root/comics-deploy-dev/run.sh\ dev\ --api\ 9.9.9-test
+== output
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy-dev ---
+
+--- Running run.sh dev on root@portainer.stapledon.ca ---

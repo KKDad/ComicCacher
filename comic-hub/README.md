@@ -22,7 +22,7 @@ To run against the dev API, use the script from the repo root. It picks the Node
 
 ```bash
 ./utils/dev-ui.sh                                        # dev API on portainer
-./utils/dev-ui.sh --api http://localhost:8888/graphql    # another endpoint, e.g. via tunnel-to-prod-api.sh
+./utils/dev-ui.sh --api http://localhost:8888/graphql    # another endpoint, e.g. prod via utils/tunnel.sh prod
 ```
 
 To run by hand:
@@ -126,6 +126,6 @@ Tokens are stored in **httpOnly cookies** (never accessible to JavaScript):
 
 ## Docker
 
-Build and push the image with `utils/prod-build.sh --ui <version>` from the repo root (it calls `./build-docker.sh <tag>`, which builds, tags and pushes to the registry).
+Build and push the image with `utils/build.sh <dev|prod> --ui <version>` from the repo root, or build and deploy it with `utils/deploy.sh prod --ui <version>`. Podman builds need `BUILDAH_FORMAT=docker` to keep the `HEALTHCHECK`; `build.sh` sets it.
 
 Exposes port 8080. Uses multi-stage Node 24 Alpine build with standalone output.

@@ -1,0 +1,5 @@
+== exit: 0
+== trace
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca docker\ logs\ --tail\ all\ comics-api-dev\ 2\>\&1
+== output
+--- Last all lines of comics-api-dev on root@portainer.stapledon.ca ---

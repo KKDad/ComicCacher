@@ -4,7 +4,8 @@
 #
 # Each scenario in utils/test/scenarios/ runs one script in a throwaway sandbox and records
 # every external command it calls, what it prints, its exit status and the files it writes
-# (the prod audit log, dev-token.env). The result must match utils/test/expected/<scenario>.out.
+# (the prod audit log, dev-token.env, the last-good compose file). The result must match
+# utils/test/expected/<scenario>.out.
 #
 # Safety: scripts run under `env -i` with a PATH that holds only stub.sh (for docker, ssh,
 # scp, skopeo, curl, git and the rest) and an allowlist of plain local tools. A command with
@@ -17,8 +18,8 @@
 #
 # Scenario files are bash, sourced with every variable exported:
 #   TARGET=repo:utils/prod-build.sh   # a script in the repo copy, or
-#   TARGET=host:prod-run.sh           # a script staged on the fake Docker host
-#   ARGS=(--api 2.6.0)                # arguments
+#   TARGET=host:comics-deploy/run.sh  # a script staged on the fake Docker host
+#   ARGS=(prod --api 2.6.0)           # arguments
 #   STDIN=$'y\n'                      # what the script reads; /dev/null when unset
 #   FX_...                            # fixtures for stub.sh (see its header)
 #   setup() { ... }                   # optional, runs in the sandbox first ($SB is its root)
@@ -40,7 +41,7 @@ FILTER=()
 for arg in "$@"; do
     case "$arg" in
         --update) UPDATE=1 ;;
-        -h|--help) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) FILTER+=("$arg") ;;
     esac
 done
@@ -49,14 +50,12 @@ done
 make_sandbox() {
     local sb="$1"
     mkdir -p "$sb/bin" "$sb/repo/comic-api" "$sb/repo/comic-hub" "$sb/host/comics-deploy" \
-        "$sb/home" "$sb/state"
+        "$sb/host/comics-deploy-dev" "$sb/home" "$sb/state" "$sb/tmp"
     cp -R "$ROOT/utils" "$sb/repo/utils"
     rm -rf "$sb/repo/utils/test"
-    cp "$ROOT/comic-api/build-docker.sh" "$sb/repo/comic-api/"
-    cp "$ROOT/comic-hub/build-docker.sh" "$sb/repo/comic-hub/"
-    # Staged on the Docker host the way prod-build-and-run.sh / dev-build-and-run.sh do it
-    cp "$ROOT/utils/prod-run.sh" "$ROOT/utils/prod/docker-compose.yml" "$ROOT/utils/dev-run.sh" \
-        "$sb/host/comics-deploy/"
+    # Staged on the Docker host the way deploy.sh does it
+    cp "$ROOT/utils/remote/run.sh" "$ROOT/utils/prod/docker-compose.yml" "$sb/host/comics-deploy/"
+    cp "$ROOT/utils/remote/run.sh" "$ROOT/utils/dev/docker-compose.yml" "$sb/host/comics-deploy-dev/"
 
     local tool real
     for tool in "${STUBBED[@]}"; do
@@ -83,7 +82,7 @@ run_scenario() {
     : > "$sb/trace"
     : > "$sb/output"
     # shellcheck disable=SC2016  # the inner script expands its own variables
-    env -i PATH="$sb/bin" HOME="$sb/home" USER=tester LANG=C LC_ALL=C \
+    env -i PATH="$sb/bin" HOME="$sb/home" USER=tester LANG=C LC_ALL=C TMPDIR="$sb/tmp" \
         TRACE="$sb/trace" STUB_STATE="$sb/state" SB="$sb" \
         /bin/bash -c '
             set -a
@@ -92,7 +91,7 @@ run_scenario() {
             if declare -F setup >/dev/null; then setup; fi
             case "$TARGET" in
                 repo:*) target="$SB/repo/${TARGET#repo:}" ;;
-                host:*) target="$SB/host/comics-deploy/${TARGET#host:}" ;;
+                host:*) target="$SB/host/${TARGET#host:}" ;;
                 *) echo "Bad TARGET: $TARGET" >&2; exit 99 ;;
             esac
             [[ -n "${STDIN+x}" ]] && printf "%s" "$STDIN" > "$SB/stdin" || : > "$SB/stdin"
@@ -107,13 +106,23 @@ run_scenario() {
         echo "== output"
         cat "$sb/output"
         local file
-        for file in "$sb/home/.comiccacher-prod-deploy.log" "$sb/host/comics-deploy/dev-token.env"; do
+        for file in "$sb/home/.comiccacher-prod-deploy.log" "$sb"/host/*/dev-token.env; do
             if [[ -f "$file" ]]; then
                 echo "== file: ${file#"$sb"/}"
                 cat "$file"
             fi
         done
-    } | sed -e "s#${sb}#<SB>#g" > "$out"
+        for file in "$sb"/host/*/docker-compose.last-good.yml; do
+            if [[ -f "$file" ]]; then
+                echo "== file: ${file#"$sb"/} (copy of $(basename "$(dirname "$file")")/docker-compose.yml)"
+                cmp -s "$file" "$(dirname "$file")/docker-compose.yml" || echo "   differs from docker-compose.yml!"
+            fi
+        done
+        if [[ -n "$(ls -A "$sb/tmp")" ]]; then
+            echo "== left in TMPDIR"
+            ls -A "$sb/tmp"
+        fi
+    } | sed -e "s#${sb}/tmp/comic-build\.[A-Za-z0-9]*#<WORK>#g" -e "s#${sb}#<SB>#g" > "$out"
 }
 
 TMP=$(mktemp -d)
@@ -122,6 +131,45 @@ trap 'rm -rf "$TMP"' EXIT
 pass=0
 fail=0
 failed=()
+
+# Dev and prod share one Docker host: their compose files must not share a project, container,
+# volume or host port, or a dev deploy could replace a prod container
+compose_names() {
+    local file="$1"
+    sed -n 's/^name:[[:space:]]*/project /p' "$file"
+    sed -n 's/^[[:space:]]*container_name:[[:space:]]*/container /p' "$file"
+    # Volume keys and their name: overrides, under the top-level volumes: block
+    sed -n '/^volumes:/,/^[a-z]/{
+        s/^  \([A-Za-z0-9_.-]*\):[[:space:]]*$/volume \1/p
+        s/^    name:[[:space:]]*/volume /p
+    }' "$file"
+    sed -n 's/^[[:space:]]*-[[:space:]]*"\{0,1\}\([0-9]*\):[0-9]*"\{0,1\}[[:space:]]*$/port \1/p' "$file"
+}
+
+check_compose_isolation() {
+    local dev="$ROOT/utils/dev/docker-compose.yml"
+    local prod="$ROOT/utils/prod/docker-compose.yml"
+    local shared
+    compose_names "$dev" | sort -u > "$TMP/dev-names"
+    compose_names "$prod" | sort -u > "$TMP/prod-names"
+    shared=$(comm -12 "$TMP/dev-names" "$TMP/prod-names")
+    if [[ -n "$shared" ]] || ! grep -qx 'project comics-dev' "$TMP/dev-names" \
+            || ! grep -qx 'project comics' "$TMP/prod-names" || ! grep -q '^port ' "$TMP/dev-names"; then
+        fail=$((fail + 1))
+        failed+=("compose-isolation")
+        echo "FAIL     compose-isolation"
+        echo "  dev:  $(tr '\n' ',' < "$TMP/dev-names")"
+        echo "  prod: $(tr '\n' ',' < "$TMP/prod-names")"
+        [[ -z "$shared" ]] || echo "  shared: $shared"
+    else
+        pass=$((pass + 1))
+        echo "ok       compose-isolation"
+    fi
+}
+
+if [[ $UPDATE -eq 0 && ${#FILTER[@]} -eq 0 ]]; then
+    check_compose_isolation
+fi
 for scenario in "$SCENARIOS"/*.sh; do
     name=$(basename "$scenario" .sh)
     if [[ ${#FILTER[@]} -gt 0 ]]; then

@@ -1,0 +1,162 @@
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+docker volume ls -q
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend 
+docker stop comics-api-dev
+docker rm comics-api-dev
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0                          -> 2.6.0
+==================================================
+
+--- Deploying backend via compose ---
+Copying <SB>/host/comics-deploy-dev/../comics-deploy/dev-token.env to <SB>/host/comics-deploy-dev/dev-token.env...
+Removing comics-api-dev, which compose didn't create...
+
+--- Polling health (timeout 300s) ---
+  [t=  0s] comics-api-dev  unhealthy
+  [t=  5s] comics-api-dev  unhealthy
+  [t= 10s] comics-api-dev  unhealthy
+  [t= 15s] comics-api-dev  unhealthy
+  [t= 20s] comics-api-dev  unhealthy
+  [t= 25s] comics-api-dev  unhealthy
+  [t= 30s] comics-api-dev  unhealthy
+  [t= 35s] comics-api-dev  unhealthy
+  [t= 40s] comics-api-dev  unhealthy
+  [t= 45s] comics-api-dev  unhealthy
+  [t= 50s] comics-api-dev  unhealthy
+  [t= 55s] comics-api-dev  unhealthy
+  [t= 60s] comics-api-dev  unhealthy
+  [t= 65s] comics-api-dev  unhealthy
+  [t= 70s] comics-api-dev  unhealthy
+  [t= 75s] comics-api-dev  unhealthy
+  [t= 80s] comics-api-dev  unhealthy
+  [t= 85s] comics-api-dev  unhealthy
+  [t= 90s] comics-api-dev  unhealthy
+  [t= 95s] comics-api-dev  unhealthy
+  [t=100s] comics-api-dev  unhealthy
+  [t=105s] comics-api-dev  unhealthy
+  [t=110s] comics-api-dev  unhealthy
+  [t=115s] comics-api-dev  unhealthy
+  [t=120s] comics-api-dev  unhealthy
+  [t=125s] comics-api-dev  unhealthy
+  [t=130s] comics-api-dev  unhealthy
+  [t=135s] comics-api-dev  unhealthy
+  [t=140s] comics-api-dev  unhealthy
+  [t=145s] comics-api-dev  unhealthy
+  [t=150s] comics-api-dev  unhealthy
+  [t=155s] comics-api-dev  unhealthy
+  [t=160s] comics-api-dev  unhealthy
+  [t=165s] comics-api-dev  unhealthy
+  [t=170s] comics-api-dev  unhealthy
+  [t=175s] comics-api-dev  unhealthy
+  [t=180s] comics-api-dev  unhealthy
+  [t=185s] comics-api-dev  unhealthy
+  [t=190s] comics-api-dev  unhealthy
+  [t=195s] comics-api-dev  unhealthy
+  [t=200s] comics-api-dev  unhealthy
+  [t=205s] comics-api-dev  unhealthy
+  [t=210s] comics-api-dev  unhealthy
+  [t=215s] comics-api-dev  unhealthy
+  [t=220s] comics-api-dev  unhealthy
+  [t=225s] comics-api-dev  unhealthy
+  [t=230s] comics-api-dev  unhealthy
+  [t=235s] comics-api-dev  unhealthy
+  [t=240s] comics-api-dev  unhealthy
+  [t=245s] comics-api-dev  unhealthy
+  [t=250s] comics-api-dev  unhealthy
+  [t=255s] comics-api-dev  unhealthy
+  [t=260s] comics-api-dev  unhealthy
+  [t=265s] comics-api-dev  unhealthy
+  [t=270s] comics-api-dev  unhealthy
+  [t=275s] comics-api-dev  unhealthy
+  [t=280s] comics-api-dev  unhealthy
+  [t=285s] comics-api-dev  unhealthy
+  [t=290s] comics-api-dev  unhealthy
+  [t=295s] comics-api-dev  unhealthy
+
+comics-api-dev is not healthy; it is left running (no rollback on dev).
+Startup catch-up jobs can hold readiness down for a while.
+  Logs: docker logs --tail 100 comics-api-dev
+== file: host/comics-deploy-dev/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=s
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927
+== file: host/comics-deploy/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=s
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927

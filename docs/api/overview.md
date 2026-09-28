@@ -54,7 +54,7 @@ For testing against the dev instance, the `devToken` mutation issues tokens for 
 mutation { devToken(secret: "<secret>", username: "admin") { token refreshToken } }
 ```
 
-`username` is optional and defaults to `comics.dev-token.default-username`. The mutation and its schema file (`graphql-dev/dev-token.graphql`, outside the scanned schema locations) are only loaded when `comics.dev-token.enabled=true`, so it doesn't exist in production or in comic-hub codegen. Startup fails if `comics.dev-token.secret` is under 32 characters. Each issued token logs an `AUDIT` line. On the dev instance, `utils/dev-run.sh` sets these variables from `dev-token.env` next to it on the Docker host. It creates that file with a random secret on first run, and adds `COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927` (a USER-role test account) if it's missing; pass `username` for another account, such as an admin.
+`username` is optional and defaults to `comics.dev-token.default-username`. The mutation and its schema file (`graphql-dev/dev-token.graphql`, outside the scanned schema locations) are only loaded when `comics.dev-token.enabled=true`, so it doesn't exist in production or in comic-hub codegen. Startup fails if `comics.dev-token.secret` is under 32 characters. Each issued token logs an `AUDIT` line. On the dev instance, `utils/dev/docker-compose.yml` sets these variables from `dev-token.env` in `/root/comics-deploy-dev` on the Docker host. `utils/remote/run.sh dev` (run by `utils/deploy.sh dev`) creates that file with a random secret on first run, and adds `COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927` (a USER-role test account) if it's missing; pass `username` for another account, such as an admin.
 
 | Property | Environment variable |
 |---|---|
