@@ -1,0 +1,1562 @@
+# Baselines for utils/test/run-tests.sh: one ### section per scenario in scenarios.sh.
+# Written by run-tests.sh --update; review every diff to this file.
+### build-no-env
+== exit: 1
+== trace
+== output
+Error: The first argument must be the environment, dev or prod (got '--api').
+### build-prod-both
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-ui/manifests/9.9.9-test
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
+docker save portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test -o <WORK>/comic-ui.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-ui.tar docker://portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-ui/manifests/9.9.9-test
+== output
+Building from master @ abc1234
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Building + pushing comic-ui 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-ui:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
+  ok: kkdad/comic-ui:9.9.9-test
+### build-prod-dirty
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+== output
+Error: Working tree is dirty. Commit or stash before building.
+### build-prod-not-in-registry
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+== output
+Building from master @ abc1234
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+Error: Image kkdad/comic-api:9.9.9-test not found in registry (https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test)
+### build-prod-not-master
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+== output
+Error: Must be on 'master' branch (currently 'feature/x').
+### build-prod-not-origin-master
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+== output
+Building from master @ abc1234
+Error: HEAD (abc1234abc1234abc1234abc1234abc1234abc12) is not origin/master (ddd0000ddd0000ddd0000ddd0000ddd0000ddd00). Pull, or push, first.
+### build-prod-registry-error
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+== output
+Building from master @ abc1234
+Error: Registry answered HTTP 500 for kkdad/comic-api:9.9.9-test; can't tell whether the tag is taken.
+### build-prod-retry-same-commit
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+== output
+Building from master @ abc1234
+Rebuilding kkdad/comic-api:9.9.9-test, a build of this same commit.
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
+### build-prod-tag-taken-dev
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+== output
+Building from master @ abc1234
+Replacing kkdad/comic-api:9.9.9-test, a dev build: it was built from a working tree with uncommitted changes (ca.stapledon.dirty=true)
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
+### build-prod-tag-taken-release
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor eee0000eee0000eee0000eee0000eee0000eee00 origin/master
+== output
+Building from master @ abc1234
+Error: kkdad/comic-api:9.9.9-test already holds a build of master (eee0000eee0000eee0000eee0000eee0000eee00). Pick a new version.
+### build-prod-tag-taken-unlabelled
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+== output
+Building from master @ abc1234
+Error: kkdad/comic-api:9.9.9-test already exists without provenance labels, so it may be a release. Pick a new version.
+### deploy-bad-env
+== exit: 1
+== trace
+== output
+Error: The first argument must be the environment, dev or prod (got 'prd').
+### deploy-dev-allow-unverified-refused
+== exit: 1
+== trace
+== output
+Error: --allow-unverified-image is for prod; dev doesn't check images.
+### deploy-dev-bad-tag
+== exit: 1
+== trace
+== output
+Error: '2.5.0 && reboot' is not a valid semver tag (expected e.g. 2.4.6 or 2.4.6-rc1).
+### deploy-dev-full
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=true --label ca.stapledon.branch=feature/x 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy-dev\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/dev/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy-dev/
+ssh -o ConnectTimeout=10 root@portainer.stapledon.ca /root/comics-deploy-dev/run.sh\ dev\ --api\ 9.9.9-test
+== output
+Building for dev from feature/x @ abc1234
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy-dev ---
+
+--- Running run.sh dev on root@portainer.stapledon.ca ---
+### deploy-dev-skip-build
+== exit: 0
+== trace
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy-dev\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/dev/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy-dev/
+ssh -o ConnectTimeout=10 root@portainer.stapledon.ca /root/comics-deploy-dev/run.sh\ dev\ --api\ 9.9.9-test
+== output
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy-dev ---
+
+--- Running run.sh dev on root@portainer.stapledon.ca ---
+### deploy-dev-ui-refused
+== exit: 1
+== trace
+== output
+Error: dev has no UI container; only --api can be deployed.
+### deploy-no-env
+== exit: 1
+== trace
+== output
+Error: The first argument must be the environment, dev or prod (got '--api').
+### deploy-prod-bad-project-name
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+== output
+Error: COMPOSE_PROJECT_NAME must be lower-case letters, digits, - or _ (got 'comics'; reboot; '').
+### deploy-prod-bad-tag
+== exit: 1
+== trace
+== output
+Error: '9.9.9;reboot' is not a valid semver tag (expected e.g. 2.4.6 or 2.4.6-rc1).
+### deploy-prod-both-pinned
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor fff0000fff0000fff0000fff0000fff0000fff00 origin/master
+== output
+
+--- Checking image provenance ---
+  ok: kkdad/comic-api:9.9.9-test is abc1234abc1234abc1234abc1234abc1234abc12 on origin/master
+Refusing to deploy to prod:
+  kkdad/comic-ui:9.9.9-test: its commit fff0000fff0000fff0000fff0000fff0000fff00 is not on origin/master (built from a branch, or not pushed yet)
+Error: Deploy a clean build of master, or pass --allow-unverified-image if you're sure.
+### deploy-prod-both-verified
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
+ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'\'\ /root/comics-deploy/run.sh\ prod\ --api\ 9.9.9-test@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ --ui\ 9.9.9-test@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\ --provenance\ verified
+== output
+
+--- Checking image provenance ---
+  ok: kkdad/comic-api:9.9.9-test is abc1234abc1234abc1234abc1234abc1234abc12 on origin/master
+  ok: kkdad/comic-ui:9.9.9-test is abc1234abc1234abc1234abc1234abc1234abc12 on origin/master
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy ---
+
+--- Running run.sh prod on root@portainer.stapledon.ca ---
+### deploy-prod-dirty
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+== output
+Error: Working tree is dirty. Commit or stash before deploying.
+### deploy-prod-dry-run
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
+ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'\'\ /root/comics-deploy/run.sh\ prod\ --api\ 9.9.9-test@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ --provenance\ verified\ --dry-run
+== output
+
+--- Checking image provenance ---
+  ok: kkdad/comic-api:9.9.9-test is abc1234abc1234abc1234abc1234abc1234abc12 on origin/master
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy ---
+
+--- Running run.sh prod on root@portainer.stapledon.ca ---
+### deploy-prod-fetch-fails
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+== output
+Error: git fetch origin master failed.
+### deploy-prod-full
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+curl -s -o /dev/null -w %\{http_code\} -I -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 --label org.opencontainers.image.revision=abc1234abc1234abc1234abc1234abc1234abc12 --label org.opencontainers.image.source=https://github.com/KKDad/ComicCacher --label ca.stapledon.dirty=false --label ca.stapledon.branch=master 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o <WORK>/comic-api.tar
+skopeo copy --dest-tls-verify=false docker-archive:<WORK>/comic-api.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
+ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'\'\ /root/comics-deploy/run.sh\ prod\ --api\ 9.9.9-test@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\ --provenance\ verified
+  (ssh read stdin: y)
+== output
+Building from master @ abc1234
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
+
+--- Checking image provenance ---
+  ok: kkdad/comic-api:9.9.9-test is abc1234abc1234abc1234abc1234abc1234abc12 on origin/master
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy ---
+
+--- Running run.sh prod on root@portainer.stapledon.ca ---
+### deploy-prod-missing-image
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+== output
+
+--- Checking image provenance ---
+stub: manifest unknown: kkdad/comic-api:9.9.9-test
+Error: Could not read kkdad/comic-api:9.9.9-test from the registry.
+### deploy-prod-not-origin-master
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+== output
+Error: HEAD (abc1234abc1234abc1234abc1234abc1234abc12) is not origin/master (ddd0000ddd0000ddd0000ddd0000ddd0000ddd00). Pull, or push, first.
+### deploy-prod-project-override
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
+ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'comics2\'\ /root/comics-deploy/run.sh\ prod\ --api\ 9.9.9-test@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ --provenance\ verified
+== output
+
+--- Checking image provenance ---
+  ok: kkdad/comic-api:9.9.9-test is abc1234abc1234abc1234abc1234abc1234abc12 on origin/master
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy ---
+
+--- Running run.sh prod on root@portainer.stapledon.ca ---
+### deploy-prod-skip-build
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor abc1234abc1234abc1234abc1234abc1234abc12 origin/master
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
+ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'\'\ /root/comics-deploy/run.sh\ prod\ --ui\ 9.9.9-test@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ --provenance\ verified
+== output
+
+--- Checking image provenance ---
+  ok: kkdad/comic-ui:9.9.9-test is abc1234abc1234abc1234abc1234abc1234abc12 on origin/master
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy ---
+
+--- Running run.sh prod on root@portainer.stapledon.ca ---
+### deploy-prod-skip-build-not-master
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+== output
+Error: Must be on 'master' branch (currently 'feature/x').
+### deploy-prod-unlabelled
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
+== output
+
+--- Checking image provenance ---
+Refusing to deploy to prod:
+  kkdad/comic-ui:9.9.9-test: it has no org.opencontainers.image.revision label (built before provenance labels, or not by build.sh)
+Error: Deploy a clean build of master, or pass --allow-unverified-image if you're sure.
+### deploy-prod-unlabelled-override
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-ui:9.9.9-test
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
+scp -o ConnectTimeout=10 <SB>/repo/utils/remote/run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
+ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'\'\ /root/comics-deploy/run.sh\ prod\ --ui\ 9.9.9-test@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ --provenance\ override
+== output
+
+--- Checking image provenance ---
+
+==================================================
+ WARNING: deploying unverified images to prod
+  kkdad/comic-ui:9.9.9-test: it has no org.opencontainers.image.revision label (built before provenance labels, or not by build.sh)
+==================================================
+
+--- Staging run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy ---
+
+--- Running run.sh prod on root@portainer.stapledon.ca ---
+### deploy-prod-unverified-branch
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+git -C <SB>/repo merge-base --is-ancestor fff0000fff0000fff0000fff0000fff0000fff00 origin/master
+== output
+
+--- Checking image provenance ---
+Refusing to deploy to prod:
+  kkdad/comic-api:9.9.9-test: its commit fff0000fff0000fff0000fff0000fff0000fff00 is not on origin/master (built from a branch, or not pushed yet)
+Error: Deploy a clean build of master, or pass --allow-unverified-image if you're sure.
+### deploy-prod-unverified-dirty
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo fetch -q origin master
+git -C <SB>/repo rev-parse HEAD
+git -C <SB>/repo rev-parse origin/master
+skopeo inspect --format \{\{.Digest\}\}\|\{\{index\ .Labels\ \"org.opencontainers.image.revision\"\}\}\|\{\{index\ .Labels\ \"ca.stapledon.dirty\"\}\}\| docker://registry.stapledon.ca/kkdad/comic-api:9.9.9-test
+== output
+
+--- Checking image provenance ---
+Refusing to deploy to prod:
+  kkdad/comic-api:9.9.9-test: it was built from a working tree with uncommitted changes (ca.stapledon.dirty=true)
+Error: Deploy a clean build of master, or pass --allow-unverified-image if you're sure.
+### logs-bad-lines
+== exit: 1
+== trace
+== output
+Error: lines must be a number or "all" (got '10; docker rm -f comics-api').
+### logs-dev-api-all
+== exit: 0
+== trace
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca docker\ logs\ --tail\ all\ comics-api-dev\ 2\>\&1
+== output
+--- Last all lines of comics-api-dev on root@portainer.stapledon.ca ---
+### logs-dev-ui-refused
+== exit: 1
+== trace
+== output
+Error: dev has no UI container.
+### logs-no-env
+== exit: 1
+== trace
+== output
+Error: The first argument must be the environment, dev or prod (got '').
+### logs-prod-api
+== exit: 0
+== trace
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca docker\ logs\ --tail\ 500\ comics-api\ 2\>\&1
+== output
+--- Last 500 lines of comics-api on root@portainer.stapledon.ca ---
+### logs-prod-ui
+== exit: 0
+== trace
+ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca docker\ logs\ --tail\ 100\ comics-ui\ 2\>\&1
+== output
+--- Last 100 lines of comics-ui on root@portainer.stapledon.ca ---
+### run-dev-compose-managed
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+docker volume ls -q
+docker API_TAG=2.6.1 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend 
+docker API_TAG=2.6.1 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.6.0                          -> 2.6.1
+==================================================
+
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 300s) ---
+  [t=  0s] comics-api-dev  healthy
+
+Dev deploy successful.
+   api: comics-api-dev @ 2.6.1 (port 8087)
+
+   Tail logs: docker logs -f comics-api-dev
+== file: host/comics-deploy-dev/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=s
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927
+== file: host/comics-deploy-dev/docker-compose.last-good.yml (copy of comics-deploy-dev/docker-compose.yml)
+### run-dev-dry-run
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0                          -> 2.6.0
+==================================================
+
+--- Rendered compose config (backend) ---
+  (skipped: <SB>/host/comics-deploy-dev/dev-token.env doesn't exist yet)
+
+--- Would run ---
+  docker volume create ... comicdata-dev   (only if missing)
+  create <SB>/host/comics-deploy-dev/dev-token.env   (only if missing: copied from <SB>/host/comics-deploy-dev/../comics-deploy/dev-token.env, or a new random secret)
+  set COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927 in it   (only if missing)
+  docker stop comics-api-dev && docker rm comics-api-dev   (not created by compose)
+  API_TAG='2.6.0' UI_TAG='' docker compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend
+  API_TAG='2.6.0' UI_TAG='' docker compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml up -d --no-deps backend
+  no rollback (dev)
+
+Dry run: nothing changed.
+### run-dev-first-install
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+docker volume ls -q
+docker volume create --driver local --opt type=nfs4 --opt o=addr=10.0.0.48\,rsize=1048576\,wsize=1048576\,timeo=600\,retrans=2\,noresvport\,rw\,noatime\,nconnect=16\,vers=4.1 --opt device=:/volume1/PodGeneral/comics-dev comicdata-dev
+openssl rand -hex 32
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend 
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+  (+1 more)
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        <none>                         -> 2.6.0
+==================================================
+
+--- Deploying backend via compose ---
+Creating NFS volume comicdata-dev...
+Creating <SB>/host/comics-deploy-dev/dev-token.env with a new devToken secret...
+Setting the default devToken username to uireview0927 in <SB>/host/comics-deploy-dev/dev-token.env...
+
+--- Polling health (timeout 300s) ---
+  [t=  0s] comics-api-dev  starting
+  [t=  5s] comics-api-dev  healthy
+
+Dev deploy successful.
+   api: comics-api-dev @ 2.6.0 (port 8087)
+
+   Tail logs: docker logs -f comics-api-dev
+== file: host/comics-deploy-dev/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927
+== file: host/comics-deploy-dev/docker-compose.last-good.yml (copy of comics-deploy-dev/docker-compose.yml)
+### run-dev-foreign-project
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+== output
+Error: comics-api-dev belongs to compose project 'comics', not 'comics-dev'. Manual investigation required.
+### run-dev-in-prod-dir
+== exit: 1
+== trace
+== output
+Error: <SB>/host/comics-deploy/docker-compose.yml is for compose project 'comics', not dev ('comics-dev'). Wrong directory?
+### run-dev-pull-fails
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+docker volume ls -q
+docker volume create --driver local --opt type=nfs4 --opt o=addr=10.0.0.48\,rsize=1048576\,wsize=1048576\,timeo=600\,retrans=2\,noresvport\,rw\,noatime\,nconnect=16\,vers=4.1 --opt device=:/volume1/PodGeneral/comics-dev comicdata-dev
+openssl rand -hex 32
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend 
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0                          -> 2.6.0
+==================================================
+
+--- Deploying backend via compose ---
+Creating NFS volume comicdata-dev...
+Creating <SB>/host/comics-deploy-dev/dev-token.env with a new devToken secret...
+Setting the default devToken username to uireview0927 in <SB>/host/comics-deploy-dev/dev-token.env...
+stub: pull failed
+
+Pull failed: no container was changed.
+== file: host/comics-deploy-dev/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927
+### run-dev-replace
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+docker volume ls -q
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend 
+docker stop comics-api-dev
+docker rm comics-api-dev
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0                          -> 2.6.0
+==================================================
+
+--- Deploying backend via compose ---
+Copying <SB>/host/comics-deploy-dev/../comics-deploy/dev-token.env to <SB>/host/comics-deploy-dev/dev-token.env...
+Setting the default devToken username to uireview0927 in <SB>/host/comics-deploy-dev/dev-token.env...
+Removing comics-api-dev, which compose didn't create...
+
+--- Polling health (timeout 300s) ---
+  [t=  0s] comics-api-dev  healthy
+
+Dev deploy successful.
+   api: comics-api-dev @ 2.6.0 (port 8087)
+
+   Tail logs: docker logs -f comics-api-dev
+== file: host/comics-deploy-dev/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=existing-secret-kept-as-is
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927
+== file: host/comics-deploy/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=existing-secret-kept-as-is
+== file: host/comics-deploy-dev/docker-compose.last-good.yml (copy of comics-deploy-dev/docker-compose.yml)
+### run-dev-ui-refused
+== exit: 1
+== trace
+== output
+Error: dev has no UI container; only --api can be deployed.
+### run-dev-unhealthy
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker inspect --format \{\{\ .Image\ \}\} comics-api-dev
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api-dev
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api-dev
+docker volume ls -q
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml pull backend 
+docker stop comics-api-dev
+docker rm comics-api-dev
+docker API_TAG=2.6.0 UI_TAG= compose -p comics-dev -f <SB>/host/comics-deploy-dev/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api-dev
+  (+59 more)
+== output
+
+==================================================
+ Dev Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics-dev
+ Compose file    : <SB>/host/comics-deploy-dev/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0                          -> 2.6.0
+==================================================
+
+--- Deploying backend via compose ---
+Copying <SB>/host/comics-deploy-dev/../comics-deploy/dev-token.env to <SB>/host/comics-deploy-dev/dev-token.env...
+Removing comics-api-dev, which compose didn't create...
+
+--- Polling health (timeout 300s) ---
+  [t=  0s] comics-api-dev  unhealthy
+  (+59 more)
+
+comics-api-dev is not healthy; it is left running (no rollback on dev).
+Startup catch-up jobs can hold readiness down for a while.
+  Logs: docker logs --tail 100 comics-api-dev
+== file: host/comics-deploy-dev/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=s
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927
+== file: host/comics-deploy/dev-token.env
+COMICS_DEVTOKEN_ENABLED=true
+COMICS_DEVTOKEN_SECRET=s
+COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927
+### run-prod-aborted
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+Aborted.
+### run-prod-bad-env
+== exit: 1
+== trace
+== output
+Usage: <SB>/host/comics-deploy/run.sh <dev|prod> [--api <ref>] [--ui <ref>] [--dry-run] [--provenance <verified|override>]
+
+Run on the Docker host. At least one of --api / --ui is required (dev: --api only).
+<ref> is a semver tag (2.4.6) or a tag pinned by digest (2.4.6@sha256:...).
+
+  --api <ref>   Deploy comic-api at <ref>
+  --ui <ref>    Deploy comic-ui at <ref>
+  --dry-run     Print the plan, the rendered compose config and the docker
+                commands, then exit without changing anything
+  --provenance  Set by deploy.sh: the result of its image check, for the audit log
+  -h, --help    Show this help
+
+Compose file: <SB>/host/comics-deploy/docker-compose.yml
+
+Environment overrides:
+  COMPOSE_PROJECT_NAME   prod only: override the compose project name (default: comics)
+Error: The first argument must be the environment, dev or prod (got 'PROD').
+### run-prod-bad-ref
+== exit: 1
+== trace
+== output
+Error: 'latest' is not a valid ref (expected e.g. 2.4.6, 2.4.6-rc1 or 2.4.6@sha256:<64 hex>).
+### run-prod-both-success
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.6.0 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend frontend 
+docker API_TAG=2.6.0 UI_TAG=2.6.0 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend frontend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-ui
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-ui
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 -> 2.6.0
+==================================================
+
+  (+1 more)
+--- Deploying backend frontend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      starting
+  [t=  0s] comics-ui       healthy
+  [t=  3s] comics-api      healthy
+  [t=  3s] comics-ui       healthy
+
+Deploy successful.
+   api: comics-api @ 2.6.0 (port 8888)
+   ui:  comics-ui @ 2.6.0  (port 8899)
+
+   Tail logs: docker logs -f comics-api
+              docker logs -f comics-ui
+   Audit log: <SB>/home/.comiccacher-prod-deploy.log
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:2.6.0 from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.6.0 provenance=unchecked
+== file: host/comics-deploy/docker-compose.last-good.yml (copy of comics-deploy/docker-compose.yml)
+### run-prod-digest-pinned
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      healthy
+
+Deploy successful.
+   api: comics-api @ 2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999 (port 8888)
+   ui:  comics-ui @ 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222  (port 8899)
+
+   Tail logs: docker logs -f comics-api
+              docker logs -f comics-ui
+   Audit log: <SB>/home/.comiccacher-prod-deploy.log
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0@sha256:9999999999999999999999999999999999999999999999999999999999999999,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+== file: host/comics-deploy/docker-compose.last-good.yml (copy of comics-deploy/docker-compose.yml)
+### run-prod-dry-run
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.6.0 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml config backend frontend 
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 -> 2.6.0
+==================================================
+
+--- Rendered compose config (backend frontend) ---
+(rendered compose config)
+
+--- Would run ---
+  API_TAG='2.6.0' UI_TAG='2.6.0' docker compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend frontend
+  API_TAG='2.6.0' UI_TAG='2.6.0' docker compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend frontend
+  rollback baseline: api=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 ui=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+
+Dry run: nothing changed.
+### run-prod-in-dev-dir
+== exit: 1
+== trace
+== output
+Error: <SB>/host/comics-deploy-dev/docker-compose.yml is for compose project 'comics-dev', not prod ('comics'). Wrong directory?
+### run-prod-no-args
+== exit: 1
+== trace
+== output
+Usage: <SB>/host/comics-deploy/run.sh <dev|prod> [--api <ref>] [--ui <ref>] [--dry-run] [--provenance <verified|override>]
+
+Run on the Docker host. At least one of --api / --ui is required (dev: --api only).
+<ref> is a semver tag (2.4.6) or a tag pinned by digest (2.4.6@sha256:...).
+
+  --api <ref>   Deploy comic-api at <ref>
+  --ui <ref>    Deploy comic-ui at <ref>
+  --dry-run     Print the plan, the rendered compose config and the docker
+                commands, then exit without changing anything
+  --provenance  Set by deploy.sh: the result of its image check, for the audit log
+  -h, --help    Show this help
+
+Compose file: <SB>/host/comics-deploy/docker-compose.yml
+
+Environment overrides:
+  COMPOSE_PROJECT_NAME   prod only: override the compose project name (default: comics)
+Error: At least one of --api or --ui is required.
+### run-prod-no-baseline
+== exit: 2
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+  (+59 more)
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        <none>                         -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      unhealthy
+  (+59 more)
+
+Deploy failed. Rolling back...
+   api: 2.6.0 -> 
+   ui:  2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 -> 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+   compose file: <SB>/host/comics-deploy/docker-compose.yml
+
+MANUAL INTERVENTION REQUIRED: could not capture rollback baseline.
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:none,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+2026-01-01T00:00:00Z ROLLBACK_FAILED reason=no-baseline
+### run-prod-no-env
+== exit: 1
+== trace
+== output
+Usage: <SB>/host/comics-deploy/run.sh <dev|prod> [--api <ref>] [--ui <ref>] [--dry-run] [--provenance <verified|override>]
+
+Run on the Docker host. At least one of --api / --ui is required (dev: --api only).
+<ref> is a semver tag (2.4.6) or a tag pinned by digest (2.4.6@sha256:...).
+
+  --api <ref>   Deploy comic-api at <ref>
+  --ui <ref>    Deploy comic-ui at <ref>
+  --dry-run     Print the plan, the rendered compose config and the docker
+                commands, then exit without changing anything
+  --provenance  Set by deploy.sh: the result of its image check, for the audit log
+  -h, --help    Show this help
+
+Compose file: <SB>/host/comics-deploy/docker-compose.yml
+
+Environment overrides:
+  COMPOSE_PROJECT_NAME   prod only: override the compose project name (default: comics)
+Error: The first argument must be the environment, dev or prod (got '--api').
+### run-prod-no-input
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+Aborted: no answer (stdin closed). Run it from a terminal, or through utils/deploy.sh, which uses ssh -t.
+### run-prod-project-disagree
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+== output
+Error: comics-api compose project 'comics' != comics-ui 'other'. Manual investigation required.
+### run-prod-project-mismatch
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+== output
+Error: Detected compose project 'other' does not match script default 'comics'.
+       Re-run with: COMPOSE_PROJECT_NAME='other' <SB>/host/comics-deploy/run.sh prod ...
+### run-prod-provenance-bad
+== exit: 1
+== trace
+== output
+Error: --provenance must be verified or override (got 'trusted')
+### run-prod-provenance-override
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      healthy
+
+Deploy successful.
+   api: comics-api @ 2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb (port 8888)
+   ui:  comics-ui @ 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222  (port 8899)
+
+   Tail logs: docker logs -f comics-api
+              docker logs -f comics-ui
+   Audit log: <SB>/home/.comiccacher-prod-deploy.log
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=override
+== file: host/comics-deploy/docker-compose.last-good.yml (copy of comics-deploy/docker-compose.yml)
+### run-prod-pull-fails
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+stub: pull failed
+
+Pull failed: no container was changed.
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+### run-prod-rollback-fail
+== exit: 2
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+  (+59 more)
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+  (+59 more)
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      unhealthy
+  (+59 more)
+
+Deploy failed. Rolling back...
+   api: 2.6.0 -> 2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111
+   ui:  2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 -> 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+   compose file: <SB>/host/comics-deploy/docker-compose.yml
+  [t=  0s] comics-api      unhealthy
+  (+59 more)
+
+MANUAL INTERVENTION REQUIRED: rollback also failed health check.
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+2026-01-01T00:00:00Z ROLLBACK_FAILED reason=unhealthy-after-rollback
+### run-prod-rollback-last-good
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+  (+59 more)
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.last-good.yml pull backend 
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.last-good.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      unhealthy
+  (+59 more)
+
+Deploy failed. Rolling back...
+   api: 2.6.0 -> 2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111
+   ui:  2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 -> 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+   compose file: <SB>/host/comics-deploy/docker-compose.last-good.yml
+  [t=  0s] comics-api      healthy
+
+Rollback successful. Previous images restored.
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+2026-01-01T00:00:00Z ROLLBACK_OK from=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+== file: host/comics-deploy/docker-compose.last-good.yml (copy of comics-deploy/docker-compose.yml)
+   differs from docker-compose.yml!
+### run-prod-rollback-ok
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+  (+59 more)
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      unhealthy
+  (+59 more)
+
+Deploy failed. Rolling back...
+   api: 2.6.0 -> 2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111
+   ui:  2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 -> 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+   compose file: <SB>/host/comics-deploy/docker-compose.yml
+  [t=  0s] comics-api      healthy
+
+Rollback successful. Previous images restored.
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+2026-01-01T00:00:00Z ROLLBACK_OK from=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+### run-prod-success
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+  (+1 more)
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+
+--- Polling health (timeout 180s) ---
+  [t=  0s] comics-api      starting
+  [t=  3s] comics-api      healthy
+
+Deploy successful.
+   api: comics-api @ 2.6.0 (port 8888)
+   ui:  comics-ui @ 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222  (port 8899)
+
+   Tail logs: docker logs -f comics-api
+              docker logs -f comics-ui
+   Audit log: <SB>/home/.comiccacher-prod-deploy.log
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+== file: host/comics-deploy/docker-compose.last-good.yml (copy of comics-deploy/docker-compose.yml)
+### run-prod-ui-missing
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+== output
+Error: No ref for ui: container not running and --ui not supplied.
+### run-prod-up-fails
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api
+docker inspect --format \{\{\ .Image\ \}\} comics-api
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-api
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-ui
+docker inspect --format \{\{\ .Image\ \}\} comics-ui
+docker image inspect --format \{\{\ range\ .RepoDigests\ \}\}\{\{\ println\ .\ \}\}\{\{\ end\ \}\} id-comics-ui
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-api
+docker inspect --format \{\{\ index\ .Config.Labels\ \"com.docker.compose.project\"\ \}\} comics-ui
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.6.0 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml pull backend 
+docker API_TAG=2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 UI_TAG=2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 compose -p comics -f <SB>/host/comics-deploy/docker-compose.yml up -d --no-deps backend 
+docker inspect --format \{\{\ if\ .State.Health\ \}\}\{\{\ .State.Health.Status\ \}\}\{\{\ else\ \}\}no-healthcheck\{\{\ end\ \}\} comics-api
+== output
+
+==================================================
+ Production Deploy Plan
+==================================================
+ Host            : dockerhost
+ Compose project : comics
+ Compose file    : <SB>/host/comics-deploy/docker-compose.yml
+
+ Service    Current                        Target
+ -------    -------                        ------
+ api        2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111 -> 2.6.0
+ ui         2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 (unchanged)
+==================================================
+
+  (+1 more)
+--- Deploying backend via compose ---
+stub: up failed
+
+compose up failed.
+
+Deploy failed. Rolling back...
+   api: 2.6.0 -> 2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111
+   ui:  2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 -> 2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+   compose file: <SB>/host/comics-deploy/docker-compose.yml
+  [t=  0s] comics-api      healthy
+
+Rollback successful. Previous images restored.
+== file: home/.comiccacher-prod-deploy.log
+2026-01-01T00:00:00Z user=tester args=api:2.6.0,ui:skip from=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 provenance=unchecked
+2026-01-01T00:00:00Z ROLLBACK_OK from=api:2.6.0,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222 to=api:2.5.0@sha256:1111111111111111111111111111111111111111111111111111111111111111,ui:2.5.0@sha256:2222222222222222222222222222222222222222222222222222222222222222
+### tunnel-dev-refused
+== exit: 1
+== trace
+== output
+Error: No tunnel needed for dev: its API is at http://portainer.stapledon.ca:8087/graphql.
+### tunnel-prod
+== exit: 0
+== trace
+ssh -N -o ExitOnForwardFailure=yes -o ConnectTimeout=10 -L 8888:localhost:8888 root@portainer.stapledon.ca
+== output
+Opening tunnel: localhost:8888 -> root@portainer.stapledon.ca localhost:8888 (prod API)
+Press Control-C to close it.
+
+Tunnel closed.

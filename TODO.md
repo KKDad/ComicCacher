@@ -1,12 +1,5 @@
 # ComicCacher TODO
 
-## Review and consolidate the utils scripts
-
-- `utils/` has grown to eleven scripts plus `prod/` and `readme-demo/`, added one task at a time: separate dev and prod build/run pairs, a log fetcher that only covers prod, a tunnel that only covers prod
-- Review them all: find duplicated logic (hosts, ports, ssh staging, health polling, version checks), move it into a shared helper, and merge scripts that differ only by environment (e.g. `--env dev|prod`)
-- Keep the safety checks (master branch, clean tree, confirm prompt, rollback) and update the Utility Scripts list in `CLAUDE.md` and anything that calls the scripts (the `comiccacher-logs` skill uses them)
-- Priority: High
-
 ## Teach the comiccacher-logs skill about frontend health and unexpected log lines
 
 - The skill (in `~/git/runbooks/skills/comiccacher-logs`) focuses on the API. It treats the `comics-ui` log as relevant only to web-UI questions, so a health report doesn't check the frontend
@@ -102,12 +95,6 @@
 - `next.config.ts` sends `X-XSS-Protection: 1; mode=block`, which browsers no longer support and which current guidance says to drop (or set to `0`). There's no `Content-Security-Policy`
 - Add a CSP following Next's Content Security Policy guide. The inline theme script needs a nonce (set in the existing `proxy.ts`, whose matcher already covers every page) or a hash
 - Nothing tells crawlers to skip this private app: add `robots: { index: false, follow: false }` to the root `metadata`, or an `app/robots.ts` that disallows everything
-- Priority: Low
-
-## Fix prod deploy script quirks
-
-- `current_ref()` in `utils/prod-run.sh` takes the tag from after the last `:` of the image name. For a digest-pinned image that's the digest, so the plan output and audit log show the wrong version. Rollback still works. Fix: strip `@digest` first
-- In `prod-build-and-run.sh` the staging `ssh`/`scp` calls eat stdin, so `echo y | …` never reaches the `Continue?` prompt and the script exits without saying why. Use `ssh -n` there, and print a message when `read` gets no input
 - Priority: Low
 
 ## Advertise zstd to gocomics like real Chrome

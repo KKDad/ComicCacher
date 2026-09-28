@@ -12,7 +12,7 @@
 #
 # Usage:
 #   ./utils/dev-ui.sh
-#   ./utils/dev-ui.sh --api http://localhost:8888/graphql   # e.g. via tunnel-to-prod-api.sh
+#   ./utils/dev-ui.sh --api http://localhost:8888/graphql   # e.g. prod via tunnel.sh prod
 #   DEV_API_URL=http://localhost:8888/graphql ./utils/dev-ui.sh
 #
 

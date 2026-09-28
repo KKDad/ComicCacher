@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Sandboxed tests for the deploy scripts (`utils/test/run-tests.sh`): each script runs against stub docker, ssh, registry and git, and its commands, output and audit log must match a recorded baseline. A new Utils CI job runs them with ShellCheck
+- Image provenance: `build.sh` labels every image with its commit, branch and whether the tree was dirty. `deploy.sh prod` only deploys a clean build of a commit on origin/master, pinned to the digest it checked, so a dev build pushed under a release tag can't reach prod. `build.sh prod` won't reuse a version that holds a build of another master commit or an unlabelled image, and prod builds and deploys need a checkout of exactly origin/master. `--allow-unverified-image` covers images built before the labels, recorded in the audit log as `provenance=override`
+- `utils/dev/docker-compose.yml`: the dev API is deployed with compose like prod, as project `comics-dev` in `/root/comics-deploy-dev`. A test checks it shares no project, container, volume or port with prod
+
+### Changed
+- The utils scripts take the environment as a required first argument: `deploy.sh <dev|prod>` replaces `prod-build-and-run.sh` and `dev-build-and-run.sh`, `build.sh <dev|prod>` replaces `prod-build.sh` and both `build-docker.sh`, `remote/run.sh <dev|prod>` replaces `prod-run.sh` and `dev-run.sh`, `logs.sh <dev|prod>` replaces `fetch-prod-logs.sh`, and `tunnel.sh prod` replaces `tunnel-to-prod-api.sh`. Shared settings live in `utils/lib/common.sh`
+- `run.sh` refuses to run next to the other environment's compose file (each file names its project)
+- A prod rollback uses the compose file of the last successful deploy (`docker-compose.last-good.yml`), not the one just staged
+- The first `deploy.sh dev` replaces the `docker run` container with a compose one and copies `dev-token.env` into `/root/comics-deploy-dev`, keeping its secret
+
+### Fixed
+- A prod deploy whose `compose up` failed exited without rolling back; it now rolls back like a failed health check
+- The prod deploy plan and audit log showed the digest as the version for digest-pinned images
+- `deploy.sh prod` staging no longer swallows input meant for the confirm prompt, and the prompt says why it stops when it gets no answer
+- `tunnel.sh` stops only its own ssh, instead of every process matching a `pkill -f` pattern
 
 ## [2.5.0] - 2026-09-27
 ### Added

@@ -1,3 +1,7 @@
+# Production comic-api and comic-ui. utils/deploy.sh prod stages this file with
+# utils/remote/run.sh in /root/comics-deploy on the Docker host.
+name: comics
+
 volumes:
   comicdata:
     driver: local

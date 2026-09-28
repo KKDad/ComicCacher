@@ -154,7 +154,7 @@ Logging out ends the user's sessions on every device, not just the current one.
 
 ### devToken (dev instance only)
 
-Issue tokens for an existing user without their password. It only exists when `comics.dev-token.enabled=true`; otherwise it isn't in the schema. `utils/dev-run.sh` turns it on for the dev instance. See "Dev Tokens" in [overview.md](overview.md).
+Issue tokens for an existing user without their password. It only exists when `comics.dev-token.enabled=true`; otherwise it isn't in the schema. `utils/deploy.sh dev` turns it on for the dev instance. See "Dev Tokens" in [overview.md](overview.md).
 
 ```graphql
 mutation {

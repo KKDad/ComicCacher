@@ -82,8 +82,9 @@ The backend is a set of Spring Boot modules. The download engine and batch jobs 
 The backend and frontend each build into an image:
 
 ```bash
-./gradlew :comic-api:build && ./comic-api/build-docker.sh <tag>   # API, port 8888
-cd comic-hub && ./build-docker.sh <tag>                            # web app, port 8080
+./gradlew :comic-api:bootJar -PbuildVersion=<tag> \
+  && docker build --build-arg VERSION=<tag> -t comic-api:<tag> comic-api   # API, port 8888
+docker build -t comic-ui:<tag> comic-hub                                     # web app, port 8080
 ```
 
 Mount a folder (local or NFS) at `/comics` in the API container; that folder is the whole data store. [`utils/prod/docker-compose.yml`](utils/prod/docker-compose.yml) is a working example, including the batch schedules.
