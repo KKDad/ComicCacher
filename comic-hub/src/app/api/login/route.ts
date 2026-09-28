@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
+import { REMEMBER_COOKIE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
+import { authCookieOptions, setAuthCookies } from '@/lib/auth/tokens';
 import { loginSchema } from '@/lib/validations/auth';
 import { LoginDocument } from '@/generated/graphql';
 
@@ -39,30 +40,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Login failed' }, { status: 401 });
   }
 
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    path: '/',
-    ...(rememberMe ? { maxAge: COOKIE_MAX_AGE } : {}),
-  };
-
   const response = NextResponse.json({
     user: { username: data.username, displayName: data.displayName },
   });
 
-  response.cookies.set(JWT_COOKIE, data.token, cookieOptions);
-  response.cookies.set(REFRESH_COOKIE, data.refreshToken, cookieOptions);
+  setAuthCookies(response.cookies, data.token, data.refreshToken, rememberMe ?? false);
 
   // Persist the rememberMe preference so token refresh can respect it
   if (rememberMe) {
-    response.cookies.set(REMEMBER_COOKIE, '1', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: COOKIE_MAX_AGE,
-    });
+    response.cookies.set(REMEMBER_COOKIE, '1', authCookieOptions(true));
   } else {
     // Drop one left from an earlier "remember me" login, or token refresh would keep persisting the session
     response.cookies.delete(REMEMBER_COOKIE);

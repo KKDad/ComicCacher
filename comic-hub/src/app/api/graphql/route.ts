@@ -1,26 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
-import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE, COOKIE_MAX_AGE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
-import { RefreshTokenDocument } from '@/generated/graphql';
-
-async function refreshTokens(refreshToken: string): Promise<{ token: string; refreshToken: string } | null> {
-  const res = await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: RefreshTokenDocument.toString(),
-      variables: { refreshToken },
-    }),
-  });
-
-  if (!res.ok) return null;
-
-  const json = await res.json();
-  const data = json.data?.refreshToken;
-  if (!data?.token) return null;
-
-  return { token: data.token, refreshToken: data.refreshToken };
-}
+import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE, GRAPHQL_ENDPOINT } from '@/lib/auth/constants';
+import { refreshTokens, setAuthCookies } from '@/lib/auth/tokens';
 
 async function forwardToBackend(body: string, jwt: string): Promise<Response> {
   return fetch(GRAPHQL_ENDPOINT, {
@@ -31,18 +12,6 @@ async function forwardToBackend(body: string, jwt: string): Promise<Response> {
     },
     body,
   });
-}
-
-function setCookies(response: NextResponse, token: string, refresh: string, rememberMe: boolean) {
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    path: '/',
-    ...(rememberMe ? { maxAge: COOKIE_MAX_AGE } : {}),
-  };
-  response.cookies.set(JWT_COOKIE, token, cookieOptions);
-  response.cookies.set(REFRESH_COOKIE, refresh, cookieOptions);
 }
 
 function clearAuthCookies(): NextResponse {
@@ -67,7 +36,7 @@ async function attemptRefresh(
   const retryData = await retryRes.json();
   const rememberMe = cookieStore.get(REMEMBER_COOKIE)?.value === '1';
   const response = NextResponse.json(retryData, { status: retryRes.status });
-  setCookies(response, newTokens.token, newTokens.refreshToken, rememberMe);
+  setAuthCookies(response.cookies, newTokens.token, newTokens.refreshToken, rememberMe);
   return response;
 }
 
