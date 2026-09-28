@@ -109,7 +109,7 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 - This goes against "server components by default" in `comic-hub/CLAUDE.md`
 - Fix without losing the client cache: make each `page.tsx` a server component that prefetches its queries with `getAuthenticatedClient()` into a `QueryClient` and wraps the existing client component in `<HydrationBoundary state={dehydrate(queryClient)}>` (TanStack's Next.js App Router pattern). Start with the reader (`comics/[id]/read`: strip image is the LCP) and the dashboard home
 - Read `params` and `searchParams` from the page props (they're Promises in Next 16) instead of `useParams()` / `useSearchParams()` in the page. Where a client component still needs `useSearchParams()`, wrap it in `<Suspense>` as the `use-search-params` docs recommend (`comics/page.tsx` and `read/page.tsx` don't today)
-- Depends on "Refresh expired sessions on page load": server fetches with an expired access token would fail
+- `proxy.ts` (#397) already refreshes an expired access token before the render, so server fetches get a usable token
 - Priority: Medium
 
 ## Share server lookups within a request
@@ -137,7 +137,7 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 ## Tighten security headers and keep the app out of search engines
 
 - `next.config.ts` sends `X-XSS-Protection: 1; mode=block`, which browsers no longer support and which current guidance says to drop (or set to `0`). There's no `Content-Security-Policy`
-- Add a CSP following Next's Content Security Policy guide. The inline theme script needs a nonce (set in `proxy.ts`, which "Refresh expired sessions on page load" may add anyway) or a hash
+- Add a CSP following Next's Content Security Policy guide. The inline theme script needs a nonce (set in the existing `proxy.ts`, whose matcher already covers every page) or a hash
 - Nothing tells crawlers to skip this private app: add `robots: { index: false, follow: false }` to the root `metadata`, or an `app/robots.ts` that disallows everything
 - Priority: Low
 
