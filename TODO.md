@@ -1,15 +1,5 @@
 # ComicCacher TODO
 
-## Fix startup catch-up jobs blocking readiness
-
-- `StartupJobRunner` runs any daily job that missed its time today on the main thread, inside the `ApplicationReadyEvent` listener
-- Readiness isn't reported until those jobs finish, so `/actuator/health` returns 503 `OUT_OF_SERVICE` the whole time. On dev (2.4.7 deploy) a gocomics backfill kept it unhealthy for many minutes
-- This matters for prod: `prod-run.sh` rolls back if the container isn't healthy within 180s, so a restart on a day a job hasn't run yet will roll the deploy back
-- ComicBackfillJob no longer has a catch-up run (it runs every 2 h), so the slow gocomics case is gone; the other daily jobs still run inline
-- Run the catch-up jobs in the background (e.g. on the batch `TaskExecutor`), keeping their order, and add a test that the listener returns straight away
-- Also check whether `hasJobRunToday` uses UTC or `batch.timezone` for "today"
-- Priority: High
-
 ## Verify the gocomics 429 fix in prod
 
 - Since 2026-09-22 about six gocomics comics have failed every day with HTTP 429. It's rate limiting across the whole source, not per-comic blocking
@@ -80,6 +70,13 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 - Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
 - For now, prod config changes mean stopping the API and editing `comics.json` by hand
 - Add resolver tests that each input field reaches the saved `ComicItem`
+- Priority: Medium
+
+## Stop batch times depending on the JVM's timezone
+
+- Spring Batch records job and step times as `LocalDateTime` in the JVM's default zone. `DateTimeUtils.toOffset` (used by `JsonBatchExecutionTracker` and `BatchJobResolver`) labels them with the `batch.timezone` offset, which is right only when the JVM also runs in `batch.timezone`
+- Prod logs show `-04:00`, so the prod JVM runs on Toronto time today, but neither `comic-api/Dockerfile` nor `utils/prod/docker-compose.yml` sets `TZ`. On a UTC JVM, batch history times (UI and `batch-executions.json`) would be off by 4–5 hours
+- Fix: read the `LocalDateTime` in `ZoneId.systemDefault()` and convert it to `batch.timezone`, or set `TZ` in the image and compose file. `hasJobRunToday` already compares in `batch.timezone`
 - Priority: Medium
 
 ## Get ready for Next.js 17

@@ -23,9 +23,12 @@ import org.stapledon.engine.batch.dto.BatchExecutionSummary;
 import com.google.gson.Gson;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -200,6 +203,28 @@ class JsonBatchExecutionTrackerTest {
         tracker.afterJob(execution);
 
         assertThat(tracker.hasJobRunToday("TestJob")).isFalse();
+    }
+
+    @Test
+    void hasJobRunTodayUsesBatchTimezoneForToday() {
+        // 21:00 in Toronto on 2026-09-27 is already 2026-09-28 in UTC
+        Clock clock = Clock.fixed(Instant.parse("2026-09-28T01:00:00Z"), ZoneOffset.UTC);
+        JsonBatchExecutionTracker torontoTracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto", clock);
+        torontoTracker.afterJob(createJobExecutionWithTimes("TestJob", 1L,
+                LocalDateTime.of(2026, 9, 27, 7, 30), LocalDateTime.of(2026, 9, 27, 7, 45)));
+
+        assertThat(torontoTracker.hasJobRunToday("TestJob")).isTrue();
+    }
+
+    @Test
+    void hasJobRunTodayReturnsFalseAfterMidnightInBatchTimezone() {
+        // 01:00 in Toronto on 2026-09-28; the job ended late on the 27th
+        Clock clock = Clock.fixed(Instant.parse("2026-09-28T05:00:00Z"), ZoneOffset.UTC);
+        JsonBatchExecutionTracker torontoTracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto", clock);
+        torontoTracker.afterJob(createJobExecutionWithTimes("TestJob", 1L,
+                LocalDateTime.of(2026, 9, 27, 22, 0), LocalDateTime.of(2026, 9, 27, 22, 30)));
+
+        assertThat(torontoTracker.hasJobRunToday("TestJob")).isFalse();
     }
 
     @ParameterizedTest

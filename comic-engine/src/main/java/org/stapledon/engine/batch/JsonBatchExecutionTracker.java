@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,6 +65,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     private final Gson gson;
     private final int maxHistoryPerJob;
     private final ZoneId batchZone;
+    private final Clock clock;
     private final ConcurrentHashMap<Long, Long> h2ToStableId = new ConcurrentHashMap<>();
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
@@ -73,15 +76,21 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     /**
      * Constructor with configurable max history per job.
      */
+    @Autowired
     public JsonBatchExecutionTracker(
             CacheProperties cacheProperties,
             @Qualifier("gsonWithLocalDate") Gson gson,
             @Value("${batch.tracking.max-history-per-job:30}") int maxHistoryPerJob,
             @Value("${batch.timezone:America/Toronto}") String batchTimezone) {
+        this(cacheProperties, gson, maxHistoryPerJob, batchTimezone, Clock.systemUTC());
+    }
+
+    JsonBatchExecutionTracker(CacheProperties cacheProperties, Gson gson, int maxHistoryPerJob, String batchTimezone, Clock clock) {
         this.cacheProperties = cacheProperties;
         this.gson = gson;
         this.maxHistoryPerJob = maxHistoryPerJob;
         this.batchZone = ZoneId.of(batchTimezone);
+        this.clock = clock;
     }
 
     private OffsetDateTime toOffset(LocalDateTime localDateTime) {
@@ -391,12 +400,14 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
     }
 
     /**
-     * Checks if a job has already run today (based on recorded end time).
+     * Checks if a job has already run today (based on recorded end time). "Today" is the date in {@code batch.timezone}, the zone the cron
+     * schedules run in, whatever the JVM's default zone is.
      */
     public boolean hasJobRunToday(String jobName) {
+        LocalDate today = LocalDate.now(clock.withZone(batchZone));
         return getLastExecution(jobName)
                 .filter(summary -> summary.getEndTime() != null)
-                .filter(summary -> summary.getEndTime().toLocalDate().equals(LocalDate.now()))
+                .filter(summary -> summary.getEndTime().atZoneSameInstant(batchZone).toLocalDate().equals(today))
                 .isPresent();
     }
 

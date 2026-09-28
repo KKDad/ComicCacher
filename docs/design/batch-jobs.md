@@ -45,7 +45,7 @@ Key methods:
 
 - `executeScheduled()` -- Called by `SchedulerTriggers`. Checks pause state and whether the job already ran today before executing.
 - `triggerManually()` -- For API-driven manual runs. Bypasses the "already ran today" check.
-- `runMissedExecutionIfNeeded()` -- Called by `StartupJobRunner` on application startup. Compares current time against the cron schedule; if past the scheduled time and job hasn't run today, triggers a `STARTUP_MAKEUP` run.
+- `runMissedExecutionIfNeeded()` -- Called by `StartupJobRunner` on application startup. Compares current time against the cron schedule; if past the scheduled time and job hasn't run today, triggers a `STARTUP_MAKEUP` run. "Today" is the date in `batch.timezone`, not the JVM's zone.
 
 ### PeriodicJobScheduler
 
@@ -82,7 +82,7 @@ A `@PostConstruct` component that injects `SchedulerStateService` into all `Dail
 
 ### StartupJobRunner
 
-Listens for `ApplicationReadyEvent` (ordered at 100) to check for missed job executions. Iterates all `DailyJobScheduler` beans and calls `runMissedExecutionIfNeeded()`. This runs after all beans are fully initialized, avoiding race conditions with strategy registration.
+Listens for `ApplicationReadyEvent` (ordered at 100) to check for missed job executions. It hands the check to a background thread (`startup-catch-up`) and returns straight away, so readiness and `/actuator/health` don't wait for makeup runs. That thread calls `runMissedExecutionIfNeeded()` on each `DailyJobScheduler` bean in turn. This runs after all beans are fully initialized, avoiding race conditions with strategy registration.
 
 ### SchedulerTriggers
 
@@ -256,7 +256,8 @@ sequenceDiagram
     participant JBET as JsonBatchExecutionTracker
 
     App->>SJR: ApplicationReadyEvent
-    loop For each DailyJobScheduler
+    SJR-->>App: returns at once (checks run on the startup-catch-up thread)
+    loop For each DailyJobScheduler, in order
         SJR->>DJS: runMissedExecutionIfNeeded()
         DJS->>JBET: hasJobRunToday(jobName)?
         alt Already ran today
