@@ -1,0 +1,32 @@
+== exit: 0
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+git -C <SB>/repo status --porcelain
+git -C <SB>/repo rev-parse --short HEAD
+gradlew :comic-api:clean :comic-api:bootJar -PbuildVersion=9.9.9-test
+docker BUILDAH_FORMAT=docker build -f Dockerfile . --tag portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test --build-arg VERSION=9.9.9-test --platform linux/amd64 
+docker save portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test -o /tmp/comic-api-9.9.9-test.tar
+skopeo copy --dest-tls-verify=false docker-archive:/tmp/comic-api-9.9.9-test.tar docker://portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test
+curl -fsSI -H Accept:\ application/vnd.oci.image.manifest.v1+json\,application/vnd.docker.distribution.manifest.v2+json\,application/vnd.oci.image.index.v1+json\,application/vnd.docker.distribution.manifest.list.v2+json https://registry.stapledon.ca/v2/kkdad/comic-api/manifests/9.9.9-test
+ssh -o ConnectTimeout=10 root@portainer.stapledon.ca install\ -d\ -m\ 700\ \'/root/comics-deploy\'
+  (ssh read stdin: y)
+scp -o ConnectTimeout=10 <SB>/repo/utils/prod-run.sh <SB>/repo/utils/prod/docker-compose.yml root@portainer.stapledon.ca:/root/comics-deploy/
+ssh -t -o ConnectTimeout=10 root@portainer.stapledon.ca COMPOSE_PROJECT_NAME=\'\'\ /root/comics-deploy/prod-run.sh\ \ --api\ 9.9.9-test
+== output
+Building from master @ abc1234
+
+--- Building + pushing comic-api 9.9.9-test ---
+--- Building bootJar with version 9.9.9-test ---
+--- Building portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test ---
+--- Saving image to tarball ---
+--- Pushing portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test via Skopeo ---
+--- Success! Image portainer.stapledon.ca:5000/kkdad/comic-api:9.9.9-test is now in the registry ---
+
+--- Verifying images in registry ---
+  ok: kkdad/comic-api:9.9.9-test
+
+--- Staging prod-run.sh and docker-compose.yml on root@portainer.stapledon.ca:/root/comics-deploy ---
+
+--- Running prod-run.sh on root@portainer.stapledon.ca ---

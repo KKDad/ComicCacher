@@ -1,0 +1,19 @@
+== exit: 1
+== trace
+== output
+Usage: <SB>/host/comics-deploy/prod-run.sh [--api <ref>] [--ui <ref>] [--dry-run]
+
+Run on the production Docker host. At least one of --api / --ui is required.
+<ref> is a semver tag (2.4.6) or a tag pinned by digest (2.4.6@sha256:...).
+
+  --api <ref>   Deploy comic-api at <ref>
+  --ui <ref>    Deploy comic-ui at <ref>
+  --dry-run     Print the plan, the rendered compose config and the docker
+                commands, then exit without changing anything
+  -h, --help    Show this help
+
+Compose file: <SB>/host/comics-deploy/docker-compose.yml
+
+Environment overrides:
+  COMPOSE_PROJECT_NAME   Override compose project name (default: comics)
+Error: At least one of --api or --ui is required.

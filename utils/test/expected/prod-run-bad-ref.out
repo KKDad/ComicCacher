@@ -1,0 +1,4 @@
+== exit: 1
+== trace
+== output
+Error: 'latest' is not a valid ref (expected e.g. 2.4.6, 2.4.6-rc1 or 2.4.6@sha256:<64 hex>).

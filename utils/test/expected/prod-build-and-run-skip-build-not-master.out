@@ -1,0 +1,5 @@
+== exit: 1
+== trace
+git -C <SB>/repo rev-parse --abbrev-ref HEAD
+== output
+Error: Must be on 'master' branch (currently 'feature/x').

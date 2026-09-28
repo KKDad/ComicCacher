@@ -1,0 +1,12 @@
+== exit: 1
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+docker pull registry.stapledon.ca/kkdad/comic-api:2.6.0
+== output
+
+--- Dev deploy: comics-api-dev on dockerhost ---
+  Current: registry.stapledon.ca/kkdad/comic-api:2.5.0
+  Target:  registry.stapledon.ca/kkdad/comic-api:2.6.0
+
+--- Pulling registry.stapledon.ca/kkdad/comic-api:2.6.0 ---
+stub: pull failed

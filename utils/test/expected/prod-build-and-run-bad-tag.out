@@ -1,0 +1,4 @@
+== exit: 1
+== trace
+== output
+Error: '9.9.9;reboot' is not a valid semver tag (expected e.g. 2.4.6 or 2.4.6-rc1).

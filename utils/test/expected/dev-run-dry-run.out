@@ -1,0 +1,18 @@
+== exit: 0
+== trace
+docker inspect --format \{\{\ .Config.Image\ \}\} comics-api-dev
+== output
+
+--- Dev deploy: comics-api-dev on dockerhost ---
+  Current: registry.stapledon.ca/kkdad/comic-api:2.5.0
+  Target:  registry.stapledon.ca/kkdad/comic-api:2.6.0
+
+--- Would run ---
+  docker pull registry.stapledon.ca/kkdad/comic-api:2.6.0
+  docker volume create ... comicdata-dev   (only if missing)
+  create <SB>/host/comics-deploy/dev-token.env with a random secret   (only if missing)
+  set COMICS_DEVTOKEN_DEFAULTUSERNAME=uireview0927 in it   (only if missing)
+  docker stop comics-api-dev && docker rm comics-api-dev
+  docker run -d --name comics-api-dev --hostname comics-api-dev --restart unless-stopped --network stapledon-network -p 8087:8888 -v comicdata-dev:/comics -e COMICS_CACHE_LOCATION=/comics --env-file <SB>/host/comics-deploy/dev-token.env registry.stapledon.ca/kkdad/comic-api:2.6.0
+
+Dry run: nothing changed.
