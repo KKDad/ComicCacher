@@ -1,6 +1,0 @@
-FX_IMAGE_comics_api=registry.stapledon.ca/kkdad/comic-api:2.5.0
-FX_DIGEST_comics_api=registry.stapledon.ca/kkdad/comic-api@sha256:1111111111111111111111111111111111111111111111111111111111111111
-FX_PROJECT_comics_api=comics
-FX_IMAGE_comics_ui=registry.stapledon.ca/kkdad/comic-ui:2.5.0
-FX_DIGEST_comics_ui=registry.stapledon.ca/kkdad/comic-ui@sha256:2222222222222222222222222222222222222222222222222222222222222222
-FX_PROJECT_comics_ui=comics

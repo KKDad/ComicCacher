@@ -2,35 +2,29 @@
 #
 # Characterization tests for the utils deploy scripts.
 #
-# Each scenario in utils/test/scenarios/ runs one script in a throwaway sandbox and records
-# every external command it calls, what it prints, its exit status and the files it writes
-# (the prod audit log, dev-token.env, the last-good compose file). The result must match
-# utils/test/expected/<scenario>.out.
+# Each scenario in scenarios.sh runs one script in a throwaway sandbox and records every
+# external command it calls, what it prints, its exit status and the files it writes (the prod
+# audit log, dev-token.env, the last-good compose file). The result must match the scenario's
+# section of expected.txt. Runs of repeated lines (health polls) are collapsed to one line.
 #
 # Safety: scripts run under `env -i` with a PATH that holds only stub.sh (for docker, ssh,
 # scp, skopeo, curl, git and the rest) and an allowlist of plain local tools. A command with
 # no stub is "not found", so nothing can reach the Docker host, the registry or this repo.
 #
+# Also checks that the dev and prod compose files share no project, container, volume or port.
+#
 # Usage:
 #   ./utils/test/run-tests.sh                  # run all scenarios
-#   ./utils/test/run-tests.sh prod-run-success # run the scenarios whose names match
-#   ./utils/test/run-tests.sh --update         # rewrite the expected files (review the diff!)
-#
-# Scenario files are bash, sourced with every variable exported:
-#   TARGET=repo:utils/prod-build.sh   # a script in the repo copy, or
-#   TARGET=host:comics-deploy/run.sh  # a script staged on the fake Docker host
-#   ARGS=(prod --api 2.6.0)           # arguments
-#   STDIN=$'y\n'                      # what the script reads; /dev/null when unset
-#   FX_...                            # fixtures for stub.sh (see its header)
-#   setup() { ... }                   # optional, runs in the sandbox first ($SB is its root)
+#   ./utils/test/run-tests.sh run-prod         # run the scenarios whose names contain run-prod
+#   ./utils/test/run-tests.sh --update         # rewrite expected.txt (review the diff!)
 #
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "${HERE}/../.." && pwd)"
-SCENARIOS="${HERE}/scenarios"
-EXPECTED="${HERE}/expected"
+SCENARIOS="${HERE}/scenarios.sh"
+EXPECTED="${HERE}/expected.txt"
 
 STUBBED=(docker ssh scp skopeo curl git gradlew hostname date sleep openssl)
 LOCAL_TOOLS=(bash sh cat sed grep head tail printf mkdir rm touch chmod dirname basename env tr
@@ -41,10 +35,14 @@ FILTER=()
 for arg in "$@"; do
     case "$arg" in
         --update) UPDATE=1 ;;
-        -h|--help) sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) FILTER+=("$arg") ;;
     esac
 done
+if [[ $UPDATE -eq 1 && ${#FILTER[@]} -gt 0 ]]; then
+    echo "--update rewrites every scenario; run it without a name filter." >&2
+    exit 1
+fi
 
 # Sandbox: a copy of the scripts under test, a fake Docker host dir, a HOME and the PATH
 make_sandbox() {
@@ -73,8 +71,18 @@ make_sandbox() {
     done
 }
 
+# Collapses runs of lines that differ only in their [t=...s] poll time
+collapse_repeats() {
+    awk '
+        { key = $0; gsub(/\[t= *[0-9]+s\]/, "[t=]", key) }
+        key == prev { n++; next }
+        { if (n > 0) print "  (+" n " more)"; print; prev = key; n = 0 }
+        END { if (n > 0) print "  (+" n " more)" }
+    '
+}
+
 run_scenario() {
-    local scenario="$1"
+    local fn="$1"
     local sb="$2"
     local out="$3"
     local status=0
@@ -85,10 +93,10 @@ run_scenario() {
     env -i PATH="$sb/bin" HOME="$sb/home" USER=tester LANG=C LC_ALL=C TMPDIR="$sb/tmp" \
         TRACE="$sb/trace" STUB_STATE="$sb/state" SB="$sb" \
         /bin/bash -c '
-            set -a
             source "$1"
+            set -a
+            "$2"
             set +a
-            if declare -F setup >/dev/null; then setup; fi
             case "$TARGET" in
                 repo:*) target="$SB/repo/${TARGET#repo:}" ;;
                 host:*) target="$SB/host/${TARGET#host:}" ;;
@@ -97,7 +105,7 @@ run_scenario() {
             [[ -n "${STDIN+x}" ]] && printf "%s" "$STDIN" > "$SB/stdin" || : > "$SB/stdin"
             cd "$SB/repo"
             exec "$target" "${ARGS[@]}" < "$SB/stdin"
-        ' _ "$scenario" > "$sb/output" 2>&1 || status=$?
+        ' _ "$SCENARIOS" "$fn" > "$sb/output" 2>&1 || status=$?
 
     {
         echo "== exit: $status"
@@ -122,7 +130,17 @@ run_scenario() {
             echo "== left in TMPDIR"
             ls -A "$sb/tmp"
         fi
-    } | sed -e "s#${sb}/tmp/comic-build\.[A-Za-z0-9]*#<WORK>#g" -e "s#${sb}#<SB>#g" > "$out"
+    } | sed -e "s#${sb}/tmp/comic-build\\.[A-Za-z0-9]*#<WORK>#g" -e "s#${sb}#<SB>#g" \
+      | collapse_repeats > "$out"
+}
+
+# Prints one scenario's section of expected.txt
+expected_section() {
+    awk -v want="### $1" '
+        $0 == want { on = 1; next }
+        /^### / { on = 0 }
+        on
+    ' "$EXPECTED"
 }
 
 TMP=$(mktemp -d)
@@ -170,8 +188,14 @@ check_compose_isolation() {
 if [[ $UPDATE -eq 0 && ${#FILTER[@]} -eq 0 ]]; then
     check_compose_isolation
 fi
-for scenario in "$SCENARIOS"/*.sh; do
-    name=$(basename "$scenario" .sh)
+
+# shellcheck source=utils/test/scenarios.sh
+SCENARIO_FNS=$(bash -c 'source "$1"; declare -F | sed -n "s/^declare -f sc_//p"' _ "$SCENARIOS" | sort)
+[[ -n "$SCENARIO_FNS" ]] || { echo "No scenarios found in $SCENARIOS" >&2; exit 1; }
+
+: > "$TMP/all.out"
+for fn in $SCENARIO_FNS; do
+    name="${fn//_/-}"
     if [[ ${#FILTER[@]} -gt 0 ]]; then
         match=0
         for f in "${FILTER[@]}"; do [[ "$name" == *"$f"* ]] && match=1; done
@@ -181,13 +205,13 @@ for scenario in "$SCENARIOS"/*.sh; do
     sb="$TMP/$name"
     make_sandbox "$sb"
     actual="$TMP/$name.out"
-    run_scenario "$scenario" "$sb" "$actual"
+    run_scenario "sc_$fn" "$sb" "$actual"
+    rm -rf "$sb"
 
     if [[ $UPDATE -eq 1 ]]; then
-        mkdir -p "$EXPECTED"
-        cp "$actual" "$EXPECTED/$name.out"
-        echo "updated  $name"
-    elif diff -u "$EXPECTED/$name.out" "$actual" > "$TMP/$name.diff" 2>&1; then
+        { echo "### $name"; cat "$actual"; } >> "$TMP/all.out"
+    elif diff -u --label "expected $name" --label "actual $name" \
+            <(expected_section "$name") "$actual" > "$TMP/$name.diff" 2>&1; then
         pass=$((pass + 1))
         echo "ok       $name"
     else
@@ -198,7 +222,14 @@ for scenario in "$SCENARIOS"/*.sh; do
     fi
 done
 
-if [[ $UPDATE -eq 0 ]]; then
+if [[ $UPDATE -eq 1 ]]; then
+    {
+        echo "# Baselines for utils/test/run-tests.sh: one ### section per scenario in scenarios.sh."
+        echo "# Written by run-tests.sh --update; review every diff to this file."
+        cat "$TMP/all.out"
+    } > "$EXPECTED"
+    echo "updated  $EXPECTED"
+else
     echo ""
     echo "$pass passed, $fail failed"
     [[ $fail -eq 0 ]] || { printf '  %s\n' "${failed[@]}"; exit 1; }

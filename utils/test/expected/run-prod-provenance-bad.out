@@ -1,4 +1,0 @@
-== exit: 1
-== trace
-== output
-Error: --provenance must be verified or override (got 'trusted')

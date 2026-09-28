@@ -1,5 +1,0 @@
-== exit: 0
-== trace
-ssh -n -o ConnectTimeout=10 root@portainer.stapledon.ca docker\ logs\ --tail\ 500\ comics-api\ 2\>\&1
-== output
---- Last 500 lines of comics-api on root@portainer.stapledon.ca ---

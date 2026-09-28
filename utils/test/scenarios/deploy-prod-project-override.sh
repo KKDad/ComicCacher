@@ -1,6 +1,0 @@
-# COMPOSE_PROJECT_NAME is passed through to prod-run.sh
-TARGET=repo:utils/deploy.sh
-ARGS=(prod --api 9.9.9-test --skip-build)
-COMPOSE_PROJECT_NAME=comics2
-FX_ON_MASTER=abc1234abc1234abc1234abc1234abc1234abc12
-FX_REGISTRY_INFO="kkdad/comic-api:9.9.9-test=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|abc1234abc1234abc1234abc1234abc1234abc12|false"

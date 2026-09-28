@@ -23,7 +23,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v7
 
-    # Scenario files under utils/test/scenarios are data sourced by run-tests.sh, not scripts
     - name: ShellCheck
       run: |
         shellcheck --version

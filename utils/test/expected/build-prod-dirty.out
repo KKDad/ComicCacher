@@ -1,6 +1,0 @@
-== exit: 1
-== trace
-git -C <SB>/repo rev-parse --abbrev-ref HEAD
-git -C <SB>/repo status --porcelain
-== output
-Error: Working tree is dirty. Commit or stash before building.

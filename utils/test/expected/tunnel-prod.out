@@ -1,8 +1,0 @@
-== exit: 0
-== trace
-ssh -N -o ExitOnForwardFailure=yes -o ConnectTimeout=10 -L 8888:localhost:8888 root@portainer.stapledon.ca
-== output
-Opening tunnel: localhost:8888 -> root@portainer.stapledon.ca localhost:8888 (prod API)
-Press Control-C to close it.
-
-Tunnel closed.

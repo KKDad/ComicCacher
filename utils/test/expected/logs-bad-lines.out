@@ -1,4 +1,0 @@
-== exit: 1
-== trace
-== output
-Error: lines must be a number or "all" (got '10; docker rm -f comics-api').

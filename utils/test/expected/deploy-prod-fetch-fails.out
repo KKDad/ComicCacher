@@ -1,9 +1,0 @@
-== exit: 1
-== trace
-git -C <SB>/repo rev-parse --abbrev-ref HEAD
-git -C <SB>/repo status --porcelain
-git -C <SB>/repo fetch -q origin master
-== output
-
---- Checking image provenance ---
-Error: git fetch origin master failed.
