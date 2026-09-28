@@ -13,7 +13,6 @@ ext {
     bcryptVersion = '0.4'
     brotliDecVersion = '0.1.2'
     caffeineVersion = '3.2.3'
-    guavaVersion = '33.5.0-jre'
     jjwtVersion = '0.13.0'
     jsoupVersion = '1.23.2'
     lombokVersion = '1.18.44'

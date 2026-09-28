@@ -41,7 +41,6 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
     /**
      * Reset the records (for testing purposes)
      */
-    @com.google.common.annotations.VisibleForTesting
     public synchronized void resetRecords() {
         recordStorage = new ComicRetrievalRecordStorage();
     }

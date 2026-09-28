@@ -40,12 +40,24 @@ public final class ImageUtils {
                     .height(bi.getHeight())
                     .width(bi.getWidth())
                     .build();
-            imageDto.setImageDate(LocalDate.parse(com.google.common.io.Files.getNameWithoutExtension(image.getName()),
+            imageDto.setImageDate(LocalDate.parse(stripExtension(image.getName()),
                     DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         } catch (DateTimeParseException _) {
             // Filename is not a date (e.g. avatar.png), so imageDate stays null
         }
         return imageDto;
+    }
+
+    /**
+     * Return a file name without its last extension ({@code 2026-09-28.png} becomes {@code 2026-09-28}).
+     * A name with no dot is returned unchanged.
+     *
+     * @param fileName file name, without a directory
+     * @return the name up to its last dot
+     */
+    public static String stripExtension(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        return dot < 0 ? fileName : fileName.substring(0, dot);
     }
 }
