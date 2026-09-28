@@ -16,26 +16,35 @@
 - Flag anything unexpected: log lines that match none of the known signatures, new WARN/ERROR messages, and error rates that jump compared with earlier runs, rather than reporting only the failures it already knows how to look for
 - Priority: High
 
-## Review the admin pages after the UI revamp
-
-- The 2.5.0 UI revamp focused on the public pages (reader, auth, comics list). The admin pages (batch jobs, metrics, retrieval status, comic management) weren't reviewed
-- Check them against the revamped design: layout, spacing, typography, dark mode, mobile width, empty and loading states
-- Priority: Medium
-
 ## Fix comic mutations dropping fields
 
 - `updateComic` and `createComic` in `ComicResolver` ignore `publicationDays` and `active` from their inputs, so changes to them are silently lost
 - Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
 - For now, prod config changes mean stopping the API and editing `comics.json` by hand
 - Add resolver tests that each input field reaches the saved `ComicItem`
-- Priority: Medium
+- Priority: High. Raised from Medium: it silently loses admin edits, and the workaround is a prod outage to hand-edit `comics.json`. It also blocks every comic-management feature below
+
+## Check the operator role on the server for the operations pages
+
+- `/metrics`, `/retrieval-status` and `/batch-jobs` are hidden from USER accounts only by the nav (`isOperator` in `sidebar.tsx`, `nav-rail.tsx`, `header.tsx`). A USER who types the URL gets the page, and only the API's rejection of its queries stops them
+- Next's authentication and data-security guides put authorization checks in server code, next to the data, not in what the UI shows
+- Move the three pages into a route group (e.g. `(dashboard)/(operations)/layout.tsx`) whose server layout calls `getSession()` and `isOperator()`, and calls `notFound()` otherwise (or `forbidden()`, which needs the experimental `authInterrupts` flag)
+- Confirm the API rejects each operations query and mutation for USER accounts too, and add a layout test for the USER case
+- Priority: Medium-High. Unchanged: authorization belongs on the server, and confirming the API side is cheap
+
+## Log server errors and show the error digest
+
+- `error.tsx` and `global-error.tsx` only `console.error` in the browser. When a server render fails, the user sees a generic page and the `comics-ui` log has nothing to match it to
+- Add `instrumentation.ts` with `onRequestError` to log server render and route handler errors with the path and route (Next's instrumentation guide), in the same one-line style as the API logs
+- Show `error.digest` on the error pages ("Error reference: …") so a user report can be matched to the log line. Pairs with "Add timing metrics to diagnose slow page loads" and the comiccacher-logs frontend check
+- Priority: Medium-High. Raised from Medium: small change, and the comiccacher-logs frontend check (High) has nothing to find without it
 
 ## Stop batch times depending on the JVM's timezone
 
 - Spring Batch records job and step times as `LocalDateTime` in the JVM's default zone. `DateTimeUtils.toOffset` (used by `JsonBatchExecutionTracker` and `BatchJobResolver`) labels them with the `batch.timezone` offset, which is right only when the JVM also runs in `batch.timezone`
 - Prod logs show `-04:00`, so the prod JVM runs on Toronto time today, but neither `comic-api/Dockerfile` nor `utils/prod/docker-compose.yml` sets `TZ`. On a UTC JVM, batch history times (UI and `batch-executions.json`) would be off by 4–5 hours
 - Fix: read the `LocalDateTime` in `ZoneId.systemDefault()` and convert it to `batch.timezone`, or set `TZ` in the image and compose file. `hasJobRunToday` already compares in `batch.timezone`
-- Priority: Medium
+- Priority: Medium-High. Raised from Medium: a latent bug that a base-image or host change would trigger without warning, and setting `TZ` is a one-line fix
 
 ## Get ready for Next.js 17
 
@@ -48,15 +57,7 @@
   - **Partial hydration:** new and optional. Worth a look later for the reader page, not part of the upgrade
 - Before upgrading: read the official upgrade guide and run the codemod (`npx @next/codemod upgrade`), bump `eslint-config-next` with `next`. CI now runs lint, codegen and `tsc`, so a broken bump fails there
 - Verify with `npm run build`, `npm test`, `npm run lint` and a dev deploy before prod
-- Priority: Medium
-
-## Check the operator role on the server for the operations pages
-
-- `/metrics`, `/retrieval-status` and `/batch-jobs` are hidden from USER accounts only by the nav (`isOperator` in `sidebar.tsx`, `nav-rail.tsx`, `header.tsx`). A USER who types the URL gets the page, and only the API's rejection of its queries stops them
-- Next's authentication and data-security guides put authorization checks in server code, next to the data, not in what the UI shows
-- Move the three pages into a route group (e.g. `(dashboard)/(operations)/layout.tsx`) whose server layout calls `getSession()` and `isOperator()`, and calls `notFound()` otherwise (or `forbidden()`, which needs the experimental `authInterrupts` flag)
-- Confirm the API rejects each operations query and mutation for USER accounts too, and add a layout test for the USER case
-- Priority: Medium-High
+- Priority: Medium. Unchanged: do it before the server-fetch work below, so that work targets the new caching model once
 
 ## Fetch page data on the server instead of after hydration
 
@@ -65,7 +66,21 @@
 - Fix without losing the client cache: make each `page.tsx` a server component that prefetches its queries with `getAuthenticatedClient()` into a `QueryClient` and wraps the existing client component in `<HydrationBoundary state={dehydrate(queryClient)}>` (TanStack's Next.js App Router pattern). Start with the reader (`comics/[id]/read`: strip image is the LCP) and the dashboard home
 - Read `params` and `searchParams` from the page props (they're Promises in Next 16) instead of `useParams()` / `useSearchParams()` in the page. Where a client component still needs `useSearchParams()`, wrap it in `<Suspense>` as the `use-search-params` docs recommend (`comics/page.tsx` and `read/page.tsx` don't today)
 - `proxy.ts` (#397) already refreshes an expired access token before the render, so server fetches get a usable token
-- Priority: Medium
+- Priority: Medium. Unchanged, but after the Next.js 17 upgrade. Scope the first pass to the reader and the dashboard home
+
+## Read the backend URL at runtime, not from a `NEXT_PUBLIC_` variable
+
+- `GRAPHQL_ENDPOINT` in `lib/auth/constants.ts` is `process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT!`, but only server code uses it (route handlers, `getSession()`, the `/api/v1` rewrite in `next.config.ts`)
+- `NEXT_PUBLIC_` values are fixed when `next build` runs and can be inlined into browser bundles, so the Dockerfile has to bake the backend host in as a build arg, and changing it means a rebuild. The `rewrites()` destination is fixed at build time as well
+- Rename it to a server-only variable (e.g. `API_URL`) that's read at runtime, check that it's set when the server starts rather than using `!`, and replace the `/api/v1/*` rewrite with a route handler that streams the backend response, or document that it's fixed per image
+- Update `.env.example`, the Dockerfile, `utils/dev-ui.sh` and the deploy scripts
+- Priority: Low. Lowered from Medium: `build.sh` already builds per environment, so the baked-in URL costs nothing today
+
+## Review the admin pages after the UI revamp
+
+- The 2.5.0 UI revamp focused on the public pages (reader, auth, comics list). The admin pages (batch jobs, metrics, retrieval status, comic management) weren't reviewed
+- Check them against the revamped design: layout, spacing, typography, dark mode, mobile width, empty and loading states
+- Priority: Low. Lowered from Medium: only operators see these pages and they work. Fold it into the next change that touches them
 
 ## Share server lookups within a request
 
@@ -74,34 +89,12 @@
 - Once pages prefetch on the server (above), `comicTitle()` and the page both fetch `GetComic`; put them behind one `cache()`d `getComic(id)`
 - Priority: Low
 
-## Read the backend URL at runtime, not from a `NEXT_PUBLIC_` variable
-
-- `GRAPHQL_ENDPOINT` in `lib/auth/constants.ts` is `process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT!`, but only server code uses it (route handlers, `getSession()`, the `/api/v1` rewrite in `next.config.ts`)
-- `NEXT_PUBLIC_` values are fixed when `next build` runs and can be inlined into browser bundles, so the Dockerfile has to bake the backend host in as a build arg, and changing it means a rebuild. The `rewrites()` destination is fixed at build time as well
-- Rename it to a server-only variable (e.g. `API_URL`) that's read at runtime, check that it's set when the server starts rather than using `!`, and replace the `/api/v1/*` rewrite with a route handler that streams the backend response, or document that it's fixed per image
-- Update `.env.example`, the Dockerfile, `utils/dev-ui.sh` and the deploy scripts
-- Priority: Medium
-
-## Log server errors and show the error digest
-
-- `error.tsx` and `global-error.tsx` only `console.error` in the browser. When a server render fails, the user sees a generic page and the `comics-ui` log has nothing to match it to
-- Add `instrumentation.ts` with `onRequestError` to log server render and route handler errors with the path and route (Next's instrumentation guide), in the same one-line style as the API logs
-- Show `error.digest` on the error pages ("Error reference: …") so a user report can be matched to the log line. Pairs with "Add timing metrics to diagnose slow page loads" and the comiccacher-logs frontend check
-- Priority: Medium
-
 ## Tighten security headers and keep the app out of search engines
 
 - `next.config.ts` sends `X-XSS-Protection: 1; mode=block`, which browsers no longer support and which current guidance says to drop (or set to `0`). There's no `Content-Security-Policy`
 - Add a CSP following Next's Content Security Policy guide. The inline theme script needs a nonce (set in the existing `proxy.ts`, whose matcher already covers every page) or a hash
 - Nothing tells crawlers to skip this private app: add `robots: { index: false, follow: false }` to the root `metadata`, or an `app/robots.ts` that disallows everything
 - Priority: Low
-
-## Advertise zstd to gocomics like real Chrome
-
-- The gocomics 429s that started 2026-09-22 look resolved: the 2026-09-28 07:30 run on 2.5.0 (Chrome 154 User-Agent, 429 retries) got no 429s at all, so the retries weren't needed, and every gocomics comic but Shoe (no Open Graph image) downloaded
-- 429s now have their own `RATE_LIMITED` retrieval status, so a return shows up on the retrieval-status page
-- Optional hardening: send and decode `zstd` in `Accept-Encoding` as Chrome does (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
-- Priority: Very-Low
 
 ## Configure SMTP for Password Reset
 
@@ -117,6 +110,13 @@
 - Config file: `comic-api/src/main/resources/application.properties`
 - The forgot-password and reset-password pages are wired up; without SMTP the reset email is never sent
 - Priority: Low
+
+## Advertise zstd to gocomics like real Chrome
+
+- The gocomics 429s that started 2026-09-22 look resolved: the 2026-09-28 07:30 run on 2.5.0 (Chrome 154 User-Agent, 429 retries) got no 429s at all, so the retries weren't needed, and every gocomics comic but Shoe (no Open Graph image) downloaded
+- 429s now have their own `RATE_LIMITED` retrieval status, so a return shows up on the retrieval-status page
+- Optional hardening: send and decode `zstd` in `Accept-Encoding` as Chrome does (needs a pure-Java decoder such as `io.airlift:aircompressor` 2.x)
+- Priority: Very-Low
 
 ## Performance Improvements
 
@@ -147,6 +147,21 @@
 
 ## Feature Ideas
 
+### Respect robots.txt
+
+- Check and honor `robots.txt` rules from GoComics and ComicsKingdom before scraping
+- Good-citizen behavior that aligns with the copyright notice in the README
+- dosage implements this — set a `User-Agent` and respect disallow rules
+- Priority: Medium. Unchanged: decide first what to do if a source disallows a path we need
+
+### Fetch All Comics from a Source and Toggle Them On/Off
+
+- Today the comic configuration (`comics.json`) is hand-coded: adding a comic means knowing its source URL and editing the file
+- Fetch the full list of comics each source offers (e.g. GoComics A–Z, ComicsKingdom guide), store it, and let an admin turn any comic on or off with a single toggle
+- Turning a comic on should create its configuration with sensible defaults; turning it off should stop downloads without deleting its stored strips
+- Overlaps with the Sources Configuration Screen below; this is the smaller first step
+- Priority: Low
+
 ### Sources Configuration Screen
 
 - Admin UI to add/remove comics and configure source-specific settings (e.g., scraping frequency, date range)
@@ -163,22 +178,7 @@
     - Fetch list from https://www.comicskingdom.com/guide
     - Max days back to fetch: 30 (days)
     - I've got 5 of 200 comics configured
-- Priority: Medium
-
-### Fetch All Comics from a Source and Toggle Them On/Off
-
-- Today the comic configuration (`comics.json`) is hand-coded: adding a comic means knowing its source URL and editing the file
-- Fetch the full list of comics each source offers (e.g. GoComics A–Z, ComicsKingdom guide), store it, and let an admin turn any comic on or off with a single toggle
-- Turning a comic on should create its configuration with sensible defaults; turning it off should stop downloads without deleting its stored strips
-- Overlaps with the Sources Configuration Screen above; this is the smaller first step
-- Priority: Low
-
-### Download Failure Notifications
-
-- Alert when a comic hasn't had a new strip on disk for N days
-- Base it on the files, not the retrieval status: the Mother Goose & Grimm bug went unnoticed for eight months because the status said `SUCCESS`
-- Could be webhook, email, or in-app notification
-- Priority: Low
+- Priority: Low. Lowered from Medium: a large feature that needs the mutation fix first and should follow the smaller toggle step below
 
 ### Promote Comics from Dev to Prod
 
@@ -189,14 +189,14 @@
 - Only copy strips prod is missing. Never overwrite existing prod files
 - Bring the related metadata along (sidecar JSON, image hashes, date indexes) so duplicate detection and indexes stay consistent. Use atomic writes (see `docs/storage/overview.md`)
 - Open questions: how files move (shared NFS mount, API pull, or scp over ssh), which instance runs the job, and whether it can be scoped per comic
-- Priority: Medium
+- Priority: Low. Lowered from Medium: the gocomics 429s are resolved, so saving the second download matters less, and writing into prod storage from dev needs its open questions settled first
 
-### Respect robots.txt
+### Download Failure Notifications
 
-- Check and honor `robots.txt` rules from GoComics and ComicsKingdom before scraping
-- Good-citizen behavior that aligns with the copyright notice in the README
-- dosage implements this — set a `User-Agent` and respect disallow rules
-- Priority: Medium
+- Alert when a comic hasn't had a new strip on disk for N days
+- Base it on the files, not the retrieval status: the Mother Goose & Grimm bug went unnoticed for eight months because the status said `SUCCESS`
+- Could be webhook, email, or in-app notification
+- Priority: Low
 
 ### CBZ/PDF Export
 
