@@ -43,6 +43,22 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
 - Also: add `npm run codegen` (with a check that `src/generated` is unchanged) and `npm run lint` to the comic-hub CI job, so the next bump like these fails in CI
 - Priority: High
 
+## Add timing metrics to diagnose slow page loads
+
+- Slow page loads are hard to diagnose because the logs don't show where the time goes
+- The API already logs the total time for each request (`RequestLoggingFilter`, `-> 200 in 123ms`), but nothing breaks that time down, and comic-hub logs no timings at all
+- Add timings throughout the application:
+  - **comic-hub:** server render time per page, and the time for each GraphQL call made during the render (tagged with `X-Request-Id` so it can be matched to the API line)
+  - **comic-api:** time per GraphQL resolver / data fetcher, and slow storage reads (NFS JSON files, strip images)
+  - Log a WARN line when a request or render crosses a threshold, so slow loads stand out without turning on DEBUG
+- Priority: Medium-High
+
+## Review the admin pages after the UI revamp
+
+- The 2.5.0 UI revamp focused on the public pages (reader, auth, comics list). The admin pages (batch jobs, metrics, retrieval status, comic management) weren't reviewed
+- Check them against the revamped design: layout, spacing, typography, dark mode, mobile width, empty and loading states
+- Priority: Medium
+
 ## Fix comic mutations dropping fields
 
 - `updateComic` and `createComic` in `ComicResolver` ignore `publicationDays` and `active` from their inputs, so changes to them are silently lost
@@ -125,6 +141,14 @@ Dependabot opened these on 2026-09-27; each passed CI (or failed it) without sho
     - Max days back to fetch: 30 (days)
     - I've got 5 of 200 comics configured
 - Priority: Medium
+
+### Fetch All Comics from a Source and Toggle Them On/Off
+
+- Today the comic configuration (`comics.json`) is hand-coded: adding a comic means knowing its source URL and editing the file
+- Fetch the full list of comics each source offers (e.g. GoComics A–Z, ComicsKingdom guide), store it, and let an admin turn any comic on or off with a single toggle
+- Turning a comic on should create its configuration with sensible defaults; turning it off should stop downloads without deleting its stored strips
+- Overlaps with the Sources Configuration Screen above; this is the smaller first step
+- Priority: Low
 
 ### Download Failure Notifications
 
