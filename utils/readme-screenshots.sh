@@ -53,6 +53,13 @@ export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 source "$NVM_DIR/nvm.sh"
 nvm use "$(cat "${ROOT_DIR}/comic-hub/.nvmrc")" >/dev/null || die "Node version from comic-hub/.nvmrc is not installed (run: nvm install)"
 
+# The demo API loads graphql from comic-hub, so install before starting it (a fresh
+# worktree has no node_modules yet)
+if [[ ! -d "${ROOT_DIR}/comic-hub/node_modules" ]]; then
+    echo "--- Installing dependencies ---"
+    (cd "${ROOT_DIR}/comic-hub" && npm ci)
+fi
+
 pids=()
 cleanup() {
     for pid in "${pids[@]}"; do
