@@ -8,8 +8,11 @@
 //
 // Serves:
 //   POST /graphql                         reader-side queries and mutations
-//   GET  /api/v1/comics/:id/avatar        SVG avatar
-//   GET  /api/v1/comics/:id/strip/:date   SVG strip
+//   GET  /api/v1/comics/:id/avatar        PNG avatar
+//   GET  /api/v1/comics/:id/strip/:date   PNG strip
+//
+// Images are PNG, like the real backend's: comic-hub loads them through the Next
+// image optimizer, which won't serve SVG.
 //   GET  /banner                          README banner page (logo lockup)
 
 import { createServer } from 'node:http';
@@ -24,9 +27,16 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const PORT = Number(process.env.DEMO_API_PORT ?? 8099);
 
-// graphql comes from comic-hub's node_modules; this script has no dependencies of its own
+// graphql and sharp come from comic-hub's node_modules; this script has no dependencies of its own
 const require = createRequire(join(ROOT, 'comic-hub', 'package.json'));
 const { buildSchema, graphql } = require('graphql');
+const sharp = require('sharp');
+
+const pngCache = new Map();
+async function png(key, svg) {
+  if (!pngCache.has(key)) pngCache.set(key, await sharp(Buffer.from(svg)).png().toBuffer());
+  return pngCache.get(key);
+}
 
 const SCHEMA_DIR = join(ROOT, 'comic-api', 'src', 'main', 'resources', 'graphql');
 const schema = buildSchema(
@@ -209,11 +219,11 @@ const server = createServer(async (req, res) => {
     let m;
     if (req.method === 'POST' && url.pathname === '/graphql') return await handleGraphql(req, res);
     if ((m = /^\/api\/v1\/comics\/(\d+)\/avatar$/.exec(url.pathname)) && byId(Number(m[1]))) {
-      return send(res, 200, 'image/svg+xml', avatarSvg(byId(Number(m[1]))));
+      return send(res, 200, 'image/png', await png(url.pathname, avatarSvg(byId(Number(m[1])))));
     }
     if ((m = /^\/api\/v1\/comics\/(\d+)\/strip\/(\d{4}-\d{2}-\d{2})$/.exec(url.pathname)) && byId(Number(m[1]))) {
       const c = byId(Number(m[1]));
-      return send(res, 200, 'image/svg+xml', stripSvg(c, dayNumber(m[2]), FOUR_PANEL.has(c.id)));
+      return send(res, 200, 'image/png', await png(url.pathname, stripSvg(c, dayNumber(m[2]), FOUR_PANEL.has(c.id))));
     }
     if (url.pathname === '/banner') return send(res, 200, 'text/html', readFileSync(join(HERE, 'banner.html')));
     if (url.pathname === '/banner/icon.svg') {
