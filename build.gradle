@@ -15,8 +15,9 @@ ext {
     caffeineVersion = '3.2.3'
     guavaVersion = '33.5.0-jre'
     jjwtVersion = '0.13.0'
-    jsoupVersion = '1.22.1'
+    jsoupVersion = '1.23.2'
     lombokVersion = '1.18.44'
+    tomcatVersion = '11.0.26'
     twelvemonkeysVersion = '3.13.1'
 
     // Test dependency versions
@@ -80,6 +81,10 @@ subprojects {
     // Apply Spring Boot BOM to all modules using dependency-management plugin.
     // BOM_COORDINATES comes from the Spring Boot plugin declared above, so Dependabot's
     // plugin bump is the only Spring Boot version to maintain.
+    // Boot 4.1.1 ships Tomcat 11.0.24 (CVEs fixed in 11.0.25). Drop once Boot catches up.
+    // Set as a project property so it also covers the BOM import the Boot plugin adds.
+    ext['tomcat.version'] = rootProject.ext.tomcatVersion
+
     pluginManager.withPlugin('io.spring.dependency-management') {
         dependencyManagement {
             imports {
