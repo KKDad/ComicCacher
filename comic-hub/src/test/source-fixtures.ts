@@ -65,6 +65,8 @@ export function mockEntry(overrides: Partial<CatalogEntry> = {}): CatalogEntry {
     identifier: 'peanuts',
     name: 'Peanuts',
     author: 'Charles Schulz',
+    description: null,
+    tags: [],
     pageUrl: 'https://www.gocomics.com/peanuts',
     thumbnailUrl: null,
     thumbnailPending: false,

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -86,6 +87,11 @@ public class SourceCatalogRepository {
                 existing.setStartDate(fetchedEntry.startDate());
                 existing.setStartCheckedAt(now);
             }
+            if (fetchedEntry.details() != null) {
+                existing.setDescription(fetchedEntry.details().description());
+                existing.setTags(fetchedEntry.details().tags());
+                existing.setDetailsCheckedAt(now);
+            }
             existing.setLastSeen(now);
             existing.setRemovedAt(null);
         }
@@ -127,6 +133,84 @@ public class SourceCatalogRepository {
         entry.setStartStripNumber(start.stripNumber());
         entry.setStartCheckedAt(now);
         save();
+    }
+
+    /**
+     * Records a comic's details read from its own page, and when to read them again. Null {@code details} records a failed read: the stored details
+     * are kept and only the time of the attempt and the retry change. Does nothing for a comic the catalog doesn't list.
+     */
+    public synchronized void recordDetails(String source, String identifier, CatalogDetails details, OffsetDateTime expireAt) {
+        Entry entry = entry(source, identifier);
+        if (entry == null) {
+            return;
+        }
+        if (details != null) {
+            entry.setDescription(details.description());
+            entry.setTags(details.tags());
+        }
+        entry.setDetailsCheckedAt(now());
+        entry.setDetailsExpireAt(expireAt.withOffsetSameInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS));
+        save();
+    }
+
+    /**
+     * What happened to a comic's thumbnail file.
+     */
+    public enum ThumbnailEvent {
+        SAVED,
+        FAILED,
+        DELETED
+    }
+
+    /**
+     * Records a thumbnail download or deletion, so the job knows which thumbnails are due. Does nothing for a comic the catalog doesn't list.
+     */
+    public synchronized void recordThumbnail(String source, String identifier, ThumbnailEvent event) {
+        Entry entry = entry(source, identifier);
+        if (entry == null) {
+            return;
+        }
+        if (event == ThumbnailEvent.SAVED) {
+            entry.setThumbnailSavedAt(now());
+            entry.setThumbnailFailedAt(null);
+        } else if (event == ThumbnailEvent.FAILED) {
+            entry.setThumbnailFailedAt(now());
+        } else if (entry.getThumbnailSavedAt() != null) {
+            entry.setThumbnailSavedAt(null);
+        } else {
+            // Deleting a file the catalog didn't record as saved changes nothing
+            return;
+        }
+        save();
+    }
+
+    /**
+     * True when a listed entry's thumbnail is due: it has an image URL, none was saved, and no download failed in the last {@code failureRetry}.
+     */
+    public static boolean isThumbnailDue(Entry entry, OffsetDateTime now, Duration failureRetry) {
+        return entry.getRemovedAt() == null && entry.getThumbnailUrl() != null && entry.getThumbnailSavedAt() == null
+                && (entry.getThumbnailFailedAt() == null || !entry.getThumbnailFailedAt().plus(failureRetry).isAfter(now));
+    }
+
+    /**
+     * True when a listed entry's details are due: never read, or past their expiry.
+     */
+    public static boolean isDetailsDue(Entry entry, OffsetDateTime now) {
+        return entry.getRemovedAt() == null && (entry.getDetailsExpireAt() == null || !entry.getDetailsExpireAt().isAfter(now));
+    }
+
+    /**
+     * True when some thumbnail is due, or details are due for a source in {@code withDetails}. Reads only the stored catalog, never the disk or a source.
+     */
+    public synchronized boolean hasDueWork(Set<String> withDetails, Duration thumbnailFailureRetry) {
+        OffsetDateTime now = now();
+        return load().getSources().entrySet().stream().anyMatch(source -> source.getValue().getEntries().values().stream()
+                .anyMatch(entry -> isThumbnailDue(entry, now, thumbnailFailureRetry) || withDetails.contains(source.getKey()) && isDetailsDue(entry, now)));
+    }
+
+    private Entry entry(String source, String identifier) {
+        SourceEntries entries = load().getSources().get(source);
+        return entries == null ? null : entries.getEntries().get(identifier);
     }
 
     /**

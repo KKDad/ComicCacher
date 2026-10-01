@@ -78,9 +78,13 @@ class ComicsKingdomSourceTest {
         assertThat(wannabe.author()).isEqualTo("Luca Debus");
         assertThat(wannabe.startDate()).isEqualTo(LocalDate.of(2024, 1, 14));
         assertThat(wannabe.thumbnailUrl()).startsWith("https://wp.comicskingdom.com/");
+        assertThat(wannabe.details().description()).isEqualTo("A young artist’s life in Berlin.");
+        assertThat(wannabe.details().tags()).containsExactly("Slice Of Life", "Humor");
         SourceCatalogEntry hagar = entries.getLast();
         assertThat(hagar.name()).isEqualTo("Hagar – The Horrible");
         assertThat(hagar.thumbnailUrl()).isNull();
+        // The catalog carries details, so they are never fetched separately, even when empty
+        assertThat(hagar.details()).isEqualTo(new CatalogDetails(null, List.of()));
     }
 
     @Test

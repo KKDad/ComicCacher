@@ -27,11 +27,13 @@ import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.engine.downloader.BrowserFetcher;
 import org.stapledon.engine.downloader.ComicDownloaderStrategy;
 import org.stapledon.engine.downloader.GoComicsDownloaderStrategy;
+import org.stapledon.engine.downloader.RateLimitedException;
 import org.stapledon.engine.downloader.SourceThrottleService;
 
 /**
  * GoComics (Andrews McMeel). The catalog is the A–Z page: one anchor per comic, each carrying a JSON-LD {@code ImageObject} with the title, author and
- * badge image. A strip page embeds the comic's first strip date ({@code "firstDate"}) in its Next.js data.
+ * badge image. A strip page embeds the comic's first strip date ({@code "firstDate"}) in its Next.js data, and an about page its description and
+ * categories.
  */
 @Slf4j
 @Component
@@ -45,6 +47,8 @@ public class GoComicsSource implements ComicSource {
     private static final int CATALOG_MAX_BYTES = 64 * 1024 * 1024;
     private static final int CATALOG_TIMEOUT_MS = 60 * 1000;
     private static final Pattern FIRST_DATE = Pattern.compile("firstDate\\\\?\"\\s*:\\s*\\\\?\"(\\d{4}-\\d{2}-\\d{2})");
+    private static final Pattern CATEGORIES = Pattern.compile("comic\\\\?\"\\s*:\\s*\\{\\s*\\\\?\"categories\\\\?\"\\s*:\\s*\\[(.*?)]");
+    private static final Pattern CATEGORY_NAME = Pattern.compile("\\\\?\"name\\\\?\"\\s*:\\s*\\\\?\"([^\"\\\\]+)");
 
     private final GoComicsDownloaderStrategy downloader;
     private final BrowserFetcher fetcher;
@@ -124,6 +128,52 @@ public class GoComicsSource implements ComicSource {
             Document page = throttle.withRetries(ID, () -> fetcher.fetchDocument(ID, url, BrowserFetcher.DEFAULT_TIMEOUT_MS, BrowserFetcher.DEFAULT_MAX_BODY_BYTES));
             return parseFirstDate(page.outerHtml()).map(StartInfo::ofDate);
         });
+    }
+
+    /**
+     * Reads the comic's about page. Fails fast on HTTP 429: backs the whole source off once and rethrows, so a background run stops instead of waiting
+     * through retries.
+     */
+    @Override
+    public Optional<DetailsFetcher> detailsFetcher() {
+        return Optional.of(identifier -> {
+            String url = baseUrl + "/" + identifier + "/about";
+            throttle.await(ID);
+            try {
+                Document page = fetcher.fetchDocument(ID, url, BrowserFetcher.DEFAULT_TIMEOUT_MS, BrowserFetcher.DEFAULT_MAX_BODY_BYTES);
+                return parseDetails(page);
+            } catch (RateLimitedException e) {
+                throttle.backOff(ID, 1, e.getRetryAfter());
+                throw e;
+            }
+        });
+    }
+
+    /**
+     * The about page's description (its {@code ComicSeries} JSON-LD) and categories (the {@code "comic":{"categories":[…]}} in its Next.js data).
+     */
+    static Optional<CatalogDetails> parseDetails(Document page) {
+        String description = null;
+        for (Element ld : page.select("script[type=application/ld+json]")) {
+            try {
+                JsonElement json = JsonParser.parseString(ld.data());
+                if (json.isJsonObject() && text(json.getAsJsonObject().get("@type")).filter("ComicSeries"::equals).isPresent()) {
+                    description = text(json.getAsJsonObject().get("description")).map(String::trim).filter(d -> !d.isEmpty()).orElse(null);
+                    break;
+                }
+            } catch (JsonParseException | IllegalStateException e) {
+                log.debug("Skipping unreadable JSON-LD on a GoComics about page: {}", e.toString());
+            }
+        }
+        List<String> tags = new ArrayList<>();
+        Matcher categories = CATEGORIES.matcher(page.outerHtml());
+        if (categories.find()) {
+            Matcher name = CATEGORY_NAME.matcher(categories.group(1));
+            while (name.find()) {
+                tags.add(name.group(1).trim());
+            }
+        }
+        return description == null && tags.isEmpty() ? Optional.empty() : Optional.of(new CatalogDetails(description, tags));
     }
 
     /**

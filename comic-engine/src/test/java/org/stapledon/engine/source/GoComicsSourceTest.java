@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.stapledon.common.config.properties.DownloaderProperties;
@@ -137,6 +138,33 @@ class GoComicsSourceTest {
         serve("/comics/a-to-z", 200, "<html><body>Something new</body></html>");
 
         assertThatThrownBy(() -> source.catalog().orElseThrow().fetch()).isInstanceOf(IOException.class).hasMessageContaining("No comics found");
+    }
+
+    @Test
+    void parseDetailsReadsTheSeriesDescriptionAndCategories() throws IOException {
+        Optional<CatalogDetails> details = GoComicsSource.parseDetails(Jsoup.parse(fixture("gocomics-about-page.html")));
+
+        assertThat(details).hasValueSatisfying(d -> {
+            assertThat(d.description()).startsWith("Follow Johnny Hart's classic B.C.");
+            assertThat(d.tags()).containsExactly("Newspaper Comic Strips", "Classics");
+        });
+        assertThat(GoComicsSource.parseDetails(Jsoup.parse("<html><body>nothing</body></html>"))).isEmpty();
+    }
+
+    @Test
+    void detailsFetcherReadsTheAboutPage() throws IOException {
+        serve("/back-to-bc/about", 200, fixture("gocomics-about-page.html"));
+
+        assertThat(source.detailsFetcher().orElseThrow().fetch("back-to-bc")).hasValueSatisfying(d -> assertThat(d.tags()).contains("Classics"));
+    }
+
+    @Test
+    void detailsFetcherDoesNotRetryARateLimit() {
+        serve("/back-to-bc/about", 429, "");
+
+        assertThatThrownBy(() -> source.detailsFetcher().orElseThrow().fetch("back-to-bc")).isInstanceOf(RateLimitedException.class);
+        // The catalog fetch retries (two attempts here); background details fail fast
+        assertThat(catalogRequests.get()).isEqualTo(1);
     }
 
     @Test

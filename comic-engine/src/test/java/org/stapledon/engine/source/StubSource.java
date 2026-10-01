@@ -24,6 +24,10 @@ class StubSource implements ComicSource {
     private final ComicDownloaderStrategy downloader;
     final List<SourceCatalogEntry> catalogEntries = new ArrayList<>();
     final Map<String, StartInfo> starts = new HashMap<>();
+    final Map<String, CatalogDetails> details = new HashMap<>();
+    final Map<String, IOException> detailsFailures = new HashMap<>();
+    final List<String> detailsRequests = new ArrayList<>();
+    boolean fetchesDetails;
     IOException catalogFailure;
     int catalogFetches;
 
@@ -88,5 +92,20 @@ class StubSource implements ComicSource {
     @Override
     public Optional<StartDetector> startDetector() {
         return Optional.of(comic -> Optional.ofNullable(starts.get(identifierFor(comic))));
+    }
+
+    @Override
+    public Optional<DetailsFetcher> detailsFetcher() {
+        if (!fetchesDetails) {
+            return Optional.empty();
+        }
+        return Optional.of(identifier -> {
+            detailsRequests.add(identifier);
+            IOException failure = detailsFailures.get(identifier);
+            if (failure != null) {
+                throw failure;
+            }
+            return Optional.ofNullable(details.get(identifier));
+        });
     }
 }

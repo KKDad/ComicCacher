@@ -17,6 +17,7 @@ import org.stapledon.common.dto.ComicItem;
 import org.stapledon.engine.downloader.ComicDownloaderStrategy;
 import org.stapledon.engine.downloader.DailyComicDownloaderStrategy;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.source.CatalogDetails;
 import org.stapledon.engine.source.ComicSource;
 import org.stapledon.engine.source.SourceCatalogEntry;
 import org.stapledon.engine.source.SourceCatalogRepository;
@@ -166,6 +167,33 @@ class SourceResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .path("sources[*].id").entityList(String.class).get();
 
         assertThat(ids).contains("gocomics", "comicskingdom", "freefall", "stub");
+    }
+
+    @Test
+    void catalogEntriesCarryDescriptionsAndTagsAndFilterByTag() {
+        catalogRepository.merge("stub", List.of(
+                new SourceCatalogEntry("funny", "Funny", null, null, null, new CatalogDetails("A funny one", List.of("Humor"))),
+                new SourceCatalogEntry("sad", "Sad", null, null, null, new CatalogDetails(null, List.of("Drama", "Humor"))),
+                new SourceCatalogEntry("plain", "Plain", null, null, null)));
+        authenticateAsOperator();
+        String query = """
+                query Tagged($tag: String) {
+                    source(id: "stub") {
+                        tags
+                        catalog(tag: $tag) { totalCount edges { node { identifier description tags } } }
+                    }
+                }
+                """;
+
+        // Other tests list their own stub comics, so only tagged entries are checked by position
+        getGraphQlTester().document(query).variable("tag", "Humor").execute().errors().verify()
+                .path("source.tags").entityList(String.class).containsExactly("Drama", "Humor")
+                .path("source.catalog.edges[*].node.identifier").entityList(String.class).containsExactly("funny", "sad")
+                .path("source.catalog.edges[0].node.description").entity(String.class).isEqualTo("A funny one")
+                .path("source.catalog.edges[1].node.tags").entityList(String.class).containsExactly("Drama", "Humor");
+
+        getGraphQlTester().document(query).variable("tag", "Drama").execute().errors().verify()
+                .path("source.catalog.edges[*].node.identifier").entityList(String.class).containsExactly("sad");
     }
 
     @Test

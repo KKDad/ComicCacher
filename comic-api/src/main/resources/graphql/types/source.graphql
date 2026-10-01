@@ -79,11 +79,16 @@ type Source {
     """Throttle, retry and backfill settings, read-only (set in application.properties)."""
     settings: SourceSettings!
 
+    """Every tag (genre or category) in the source's catalog, by name."""
+    tags: [String!]!
+
     """The source's catalog, by name, each entry with its configured comic."""
     catalog(
-        """Matches name, author or identifier."""
+        """Matches name, author, identifier or description."""
         search: String
         filter: CatalogEntryFilter = ALL
+        """Only entries with this tag."""
+        tag: String
         """Entries to return (max 500)."""
         first: Int = 200
         after: String
@@ -120,6 +125,12 @@ type SourceCatalogEntry {
 
     name: String!
     author: String
+
+    """The source's short description of the comic, or null until it has been read."""
+    description: String
+
+    """The comic's genres or categories at the source."""
+    tags: [String!]!
 
     """The comic's page at the source."""
     pageUrl: String!

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -52,8 +53,20 @@ public class SourceCatalogState {
     public static class Entry {
         private String name;
         private String author;
-        /** The source's image for the comic; downloaded on demand into the temporary thumbnail folder, never served from here. */
+        /** The source's image for the comic; downloaded into the temporary thumbnail folder, never served from here. */
         private String thumbnailUrl;
+        /** When the thumbnail was saved; null when there is none on disk (never downloaded, failed, or purged). */
+        private OffsetDateTime thumbnailSavedAt;
+        /** When the last thumbnail download failed; it is retried a week later. */
+        private OffsetDateTime thumbnailFailedAt;
+        /** The source's short description of the comic, or null. */
+        private String description;
+        /** The comic's genres or categories at the source; null or empty when it has none. Replaced whole, never changed in place. */
+        private List<String> tags;
+        /** When the description and tags were last read from the comic's own page. */
+        private OffsetDateTime detailsCheckedAt;
+        /** When they should be read again; null when due (or never needed, for a catalog that carries them). */
+        private OffsetDateTime detailsExpireAt;
         /** The first strip date the source reports (its catalog or a strip page), or null. */
         private LocalDate startDate;
         /** The first strip number the source reports, for indexed comics, or null. */

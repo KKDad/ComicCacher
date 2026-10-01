@@ -15,10 +15,11 @@ query {
     settings { throttleMinDelayMs throttleMaxDelayMs retryMaxAttempts backfillMaxDaysBack }
   }
   source(id: "gocomics") {      # OPERATOR; null for an unknown id
-    catalog(search: "peanuts", filter: NOT_CONFIGURED, first: 200) {
+    tags
+    catalog(search: "peanuts", filter: NOT_CONFIGURED, tag: "Humor", first: 200) {
       totalCount
       pageInfo { hasNextPage endCursor }
-      edges { node { identifier name author pageUrl thumbnailUrl thumbnailPending startDate startStripNumber removedAt comic { id active enabled } } }
+      edges { node { identifier name author description tags pageUrl thumbnailUrl thumbnailPending startDate startStripNumber removedAt comic { id active enabled } } }
     }
     orphans { id name sourceIdentifier }
   }
@@ -32,10 +33,11 @@ query {
 | `configuredCount` / `activeCount` | `Int!` | Configured comics from the source / of those, downloading |
 | `refreshing` | `Boolean!` | A catalog refresh is running now |
 | `settings` | `SourceSettings!` | Effective throttle, 429 retry and backfill settings, read-only (`application.properties`) |
-| `catalog` | `SourceCatalogConnection!` | Entries by name. `filter`: `ALL`, `CONFIGURED`, `NOT_CONFIGURED`, `REMOVED`. `first` max 500 |
+| `tags` | `[String!]!` | Every tag (genre or category) in the catalog, by name |
+| `catalog` | `SourceCatalogConnection!` | Entries by name. `search` matches name, author, identifier or description. `filter`: `ALL`, `CONFIGURED`, `NOT_CONFIGURED`, `REMOVED`. `tag`: only entries with that tag. `first` max 500 |
 | `orphans` | `[Comic!]!` | Configured comics from the source that its catalog doesn't list |
 
-`SourceCatalogEntry.thumbnailUrl` is null until the thumbnail has been downloaded (see `requestCatalogThumbnails`). `comic` is the configured comic, or null.
+`SourceCatalogEntry.thumbnailUrl` is null until the thumbnail has been downloaded (by `SourceCatalogJob`, or `requestCatalogThumbnails`). `description` is null and `tags` empty until the source has been read for them (Comics Kingdom's come with its catalog; GoComics' are read by `SourceCatalogJob`). `comic` is the configured comic, or null.
 
 The `Comic` type also has fields for the page:
 

@@ -160,14 +160,15 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 ### SourceCatalogJob
 
-**Purpose:** Reads each source's list of comics for the Sources page, detects where a few configured comics start, and deletes stale catalog thumbnails. See [Comic Sources and Their Catalogs](source-catalog.md).
+**Purpose:** Reads each source's list of comics for the Sources page, detects where a few configured comics start, reads comics' descriptions and tags, and downloads and tidies catalog thumbnails. See [Comic Sources and Their Catalogs](source-catalog.md).
 
 **Config class:** `SourceCatalogJobConfig`
 
 **Pattern:** Tasklet (single step).
 
-- Refreshes each catalog older than `batch.source-catalog.max-age-days` (7); a scheduled run is skipped, without any request, when none is due. Parameters: `source` (one source, or `ALL`) and `force=true` (ignore the age). The Sources page's Refresh button runs it for one source with `force=true`.
-- Then detects starts for up to `batch.source-catalog.start-detect-per-run` (5) comics per source, and purges catalog thumbnails older than `comics.catalog.thumbnail-max-age-days` (30)
+- Refreshes each catalog older than `batch.source-catalog.max-age-days` (7); a scheduled run is skipped, without any request, when no catalog, details or thumbnails are due. Parameters: `source` (one source, or `ALL`) and `force=true` (ignore the age). The Sources page's Refresh button runs it for one source with `force=true`.
+- Then detects starts for up to `batch.source-catalog.start-detect-per-run` (5) comics per source, reads due details for up to `batch.source-catalog.details-per-run` (100), purges thumbnails older than `comics.catalog.thumbnail-max-age-days` (365, plus 0–90 days per comic) and downloads up to `batch.source-catalog.thumbnails-per-run` (100) due ones
+- Each of those stops a source at its first HTTP 429 (the source is backed off; the rest wait for the next run)
 - A failed refresh fails the step after the other sources have run
 
 **Data source:** `SourceCatalogService` → each `ComicSource`'s catalog (GoComics A–Z page, Comics Kingdom WordPress API)
@@ -226,7 +227,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 | ImageMetadataBackfillJob | Tasklet | `0 30 6 * * ?` | `true` | Filesystem walk | `ValidationService`, `AnalysisService`, `ImageMetadataRepository` |
 | MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | Combined metrics built on demand | `MetricsArchiveService` |
 | RetrievalRecordPurgeJob | Tasklet (2 steps) | `0 45 6 * * ?` | `true` | JSON retrieval records, batch log files | `ManagementFacade`, `BatchJobLogService` |
-| SourceCatalogJob | Tasklet | `0 0 5 * * ?` (runs only when a catalog is due) | `true` | Source catalogs (A–Z page, WordPress API) | `SourceCatalogService`, `CatalogThumbnailService` |
+| SourceCatalogJob | Tasklet | `0 0 5 * * ?` (runs only when a catalog, details or thumbnails are due) | `true` | Source catalogs (A–Z page, WordPress API) | `SourceCatalogService`, `CatalogThumbnailService` |
 
 All jobs run in `batch.timezone` (`America/Toronto`), whatever the JVM's zone (UTC in the containers). Cron expressions are configurable via `batch.<job-key>.cron` properties. Code that needs today's date injects the application `Clock` (see Time Handling Rules in `CLAUDE.md`).
 

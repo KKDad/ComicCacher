@@ -20,48 +20,64 @@ Every source is one Spring bean implementing `ComicSource` (`comic-engine`, `org
 | `imageHosts()` | The only hosts thumbnails may be downloaded from |
 | `catalog()` | Optional. Reads every comic the source offers |
 | `startDetector()` | Optional. Reads where a comic starts at the source |
+| `detailsFetcher()` | Optional. Reads a comic's description and tags from its own page, for a catalog that doesn't carry them |
 
 `SourceRegistry` collects every `ComicSource`, registers each downloader with `ComicDownloaderFacade`, and is the one list of sources. The batch jobs' `source` parameter options, comic validation and the Sources page all ask it. Adding a source means writing its downloader and one `ComicSource`; see [Adding a New Source](downloader-strategies.md#adding-a-new-source).
 
-| Source | Catalog | Start |
-|--------|---------|-------|
-| GoComics | The A–Z page (`/comics/a-to-z`), one page of about 400 comics. Each anchor carries a JSON-LD `ImageObject` with the title, author and badge image | `"firstDate"` in the Next.js data of the comic's page |
-| Comics Kingdom | The public WordPress API behind the site (`wp.comicskingdom.com/wp-json/wp/v2/ck_feature`), 100 per page, with each feature's byline, featured image and oldest strip | `ck_oldest_comic.date`, which comes with the catalog |
-| Freefall | One fixed entry, no request | Strip 1 |
+| Source | Catalog | Start | Details |
+|--------|---------|-------|---------|
+| GoComics | The A–Z page (`/comics/a-to-z`), one page of about 400 comics. Each anchor carries a JSON-LD `ImageObject` with the title, author and badge image | `"firstDate"` in the Next.js data of the comic's page | The comic's about page (`/{slug}/about`): the `ComicSeries` JSON-LD description, and `"comic":{"categories":[…]}` from the Next.js data (broad, e.g. "Newspaper Comic Strips") |
+| Comics Kingdom | The public WordPress API behind the site (`wp.comicskingdom.com/wp-json/wp/v2/ck_feature`), 100 per page, with each feature's byline, featured image and oldest strip | `ck_oldest_comic.date`, which comes with the catalog | `excerpt` and the `ck_genre-*` entries of `class_list`, which come with the catalog |
+| Freefall | One fixed entry, no request | Strip 1 | None |
 
-Every catalog and start request goes through `SourceThrottleService.withRetries`, under the source's own throttle and 429 back-off. GoComics pages are fetched with `BrowserFetcher`, which sends the desktop Chrome headers Cloudflare expects. A catalog page that parses to nothing is treated as a failure (the layout probably changed), and the stored catalog is kept.
+Every catalog and start request goes through `SourceThrottleService.withRetries`, under the source's own throttle and 429 back-off. Details and thumbnails, which the job reads many of, fail fast instead: the first 429 backs the source off once and stops that source's work for the run (see [SourceCatalogJob](#sourcecatalogjob)). GoComics pages are fetched with `BrowserFetcher`, which sends the desktop Chrome headers Cloudflare expects. A catalog page that parses to nothing is treated as a failure (the layout probably changed), and the stored catalog is kept.
 
 ## Catalog storage
 
 `SourceCatalogRepository` keeps every catalog in `source-catalog.json` in the cache root (see [Operational State](../storage/operational-state.md)). A refresh merges the new list into the stored one:
 
 - An entry seen for the first time gets `firstSeen`.
-- An entry seen again gets `lastSeen`, its name, author and image updated, and `removedAt` cleared.
+- An entry seen again gets `lastSeen`, its name, author and image updated (and its description and tags, when the catalog carries them), and `removedAt` cleared.
 - An entry the source no longer lists gets `removedAt`. Entries are never deleted, so the page can show **No longer listed**, and a configured comic that disappears from its source shows up under **Not in the catalog**.
 
 A configured comic is matched to its catalog entry by `ComicSource.identifierFor`, so older comics with no `sourceIdentifier` still match through the name fallback.
 
 ## SourceCatalogJob
 
-`SourceCatalogJobConfig` defines the job. It fires daily (`batch.source-catalog.cron`, 05:00), but a scheduled run is skipped unless some catalog is older than `batch.source-catalog.max-age-days` (7). The skip check reads only `source-catalog.json`. A run:
+`SourceCatalogJobConfig` defines the job. It fires daily (`batch.source-catalog.cron`, 05:00), but a scheduled run is skipped unless some catalog is older than `batch.source-catalog.max-age-days` (7), or some details or thumbnails are due. The skip check reads only `source-catalog.json`, never the disk or a source. A run:
 
 1. Refreshes each due catalog (or only the `source` parameter's; `force=true` ignores the age).
 2. Detects the start of up to `batch.source-catalog.start-detect-per-run` (5) configured comics per source that have none.
-3. Deletes catalog thumbnails older than `comics.catalog.thumbnail-max-age-days` (30), and those of comics their source no longer lists.
+3. Reads due [details](#details) for up to `batch.source-catalog.details-per-run` (100) comics per source.
+4. Deletes stale [thumbnails](#thumbnails), then downloads up to `batch.source-catalog.thumbnails-per-run` (100) due ones per source.
+
+Steps 2–4 stop a source at its first HTTP 429: the source has been backed off (honouring `Retry-After`), and the rest wait for the next day's run. Every request is paced by the source's throttle, the same one the daily download uses: at GoComics' 8–20 s, 100 about pages take about 25 minutes, so a full run ends before the 06:00 download. After the first week or so, most days have little to do.
 
 A failed refresh fails the step after the other sources have run, so the batch history shows it. The page's **Refresh catalog** button runs this job for one source with `force=true`, so manual refreshes appear in the batch history and logs too. One refresh per source runs at a time.
 
+## Details
+
+The Sources page shows each comic's tags (genres or categories) as chips, which filter the list, and its description behind an info icon. Search matches descriptions too.
+
+- **Comics Kingdom** carries them in its catalog, so each refresh updates them at no cost.
+- **GoComics** needs one request per comic, to its about page. `SourceCatalogService.fetchDueDetails` reads them in `SourceCatalogJob`, configured comics first. Each answer is kept for a random 30–90 days (`detailsExpireAt`), so refetches spread out instead of coming due together. A failed read is retried the next day; a 429 leaves the comic due.
+
+A comic added from its catalog gets the catalog's description.
+
 ## Thumbnails
 
-Comics that aren't configured have no avatar. Their catalog thumbnails are downloaded **on demand**:
+Comics that aren't configured have no avatar. Their catalog thumbnails are downloaded in the background by `SourceCatalogJob`, and on demand for rows on screen that have none yet:
 
-1. The page asks for the rows on screen (50 at a time) with the `requestCatalogThumbnails` mutation. That needs a signed-in operator, and asks for at most 100 per call.
-2. `CatalogThumbnailService` queues each download on the single-threaded `catalogTaskExecutor`. A request that is already queued or cached is skipped. A failure isn't retried for `comics.catalog.thumbnail-failure-memo-hours` (24).
-3. The download is paced under `downloader.sources.<source>-assets` when that is configured (the image CDNs need less care than the pages), otherwise under the source. It accepts only https URLs on the source's `imageHosts()`, redirects included, and at most 2 MB. The image must pass `ImageValidationService`.
+1. **Background:** `CatalogThumbnailService.prefetchDue` downloads thumbnails that were never saved, or whose last download failed more than a week ago (`thumbnailSavedAt`, `thumbnailFailedAt` in `source-catalog.json`), so the job never scans the disk to find work.
+2. **On demand:** the page asks for the rows on screen (50 at a time) with the `requestCatalogThumbnails` mutation. That needs a signed-in operator, and asks for at most 100 per call. Each download is queued on the single-threaded `catalogTaskExecutor`. A request that is already queued or cached is skipped. A failure isn't retried for `comics.catalog.thumbnail-failure-memo-hours` (24).
+3. The download is paced under `downloader.sources.<source>-assets` when that is configured (the image CDNs need less care than the pages), otherwise under the source. It accepts only https URLs on the source's `imageHosts()`, redirects included, and at most 8 MB. The image must pass `ImageValidationService`, and one wider than 400 px is shrunk to 400 px and saved as PNG.
 4. The file is written to `{cache}/tmp/catalog-thumbnails/{source}/{identifier}.{ext}`. `tmp/` is excluded from storage metrics (`CacheLayout`) and is always safe to delete. `comics.catalog.thumbnail-dir` moves it.
-5. `GET /api/v1/sources/{source}/thumbnails/{identifier}` serves cached files to anyone, the way comic images are served. It never starts a download, so anonymous requests can't make the server fetch anything.
+5. A thumbnail is kept for `comics.catalog.thumbnail-max-age-days` (365) plus 0–90 days, fixed per comic so expiries spread out. The purge also deletes thumbnails of comics their source no longer lists. A deleted thumbnail becomes due again.
+6. `GET /api/v1/sources/{source}/thumbnails/{identifier}` serves cached files to anyone, the way comic images are served. It never starts a download, so anonymous requests can't make the server fetch anything.
 
-Until a thumbnail is cached, the row shows the comic's initials. When a catalog comic is added, its avatar is queued on the same executor: the cached thumbnail is copied when there is one, otherwise the strategy's avatar download runs.
+Until a thumbnail is cached, the row shows the comic's initials.
+
+A configured comic's **avatar** is separate: `{cache}/{ComicDir}/avatar.png`, kept until replaced. When a catalog comic is added, its avatar is queued on the same executor: the cached thumbnail is copied when there is one, otherwise the strategy's avatar download runs. **Fetch avatar** on a row does the same, and `AvatarBackfillJob` (07:15) downloads any that are missing.
 
 ## Start dates
 
@@ -96,9 +112,9 @@ Strip images are fetched without credentials, so the REST endpoint can't tell an
 | `comic-engine/.../engine/source/ComicSource.java` | The source contract |
 | `comic-engine/.../engine/source/SourceRegistry.java` | Collects sources, registers downloaders |
 | `comic-engine/.../engine/source/GoComicsSource.java`, `ComicsKingdomSource.java`, `FreefallSource.java` | The three sources |
-| `comic-engine/.../engine/source/SourceCatalogService.java` | Refresh, join, add from catalog, start detection |
+| `comic-engine/.../engine/source/SourceCatalogService.java` | Refresh, join, add from catalog, start detection, details |
+| `comic-engine/.../engine/source/CatalogThumbnailService.java` | Catalog thumbnails: download, prefetch, purge |
 | `comic-engine/.../engine/source/SourceCatalogRepository.java` | `source-catalog.json` |
-| `comic-engine/.../engine/source/CatalogThumbnailService.java` | On-demand thumbnails |
 | `comic-engine/.../engine/source/ComicValidator.java` | Rules shared by `createComic`, `updateComic` and the catalog |
 | `comic-engine/.../engine/batch/config/SourceCatalogJobConfig.java` | The job |
 | `comic-api/.../api/resolver/SourceResolver.java` | GraphQL; see [Sources API](../api/sources.md) |

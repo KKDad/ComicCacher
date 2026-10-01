@@ -32,6 +32,7 @@ import org.stapledon.common.dto.StartSource;
 import org.stapledon.common.util.GsonUtils;
 import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.downloader.IndexedComicDownloaderStrategy;
+import org.stapledon.engine.downloader.RateLimitedException;
 import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.engine.source.SourceCatalogService.AddResult;
 import org.stapledon.engine.source.SourceCatalogService.CatalogRow;
@@ -232,5 +233,112 @@ class SourceCatalogServiceTest {
 
         assertThat(service.detectMissingStarts(2)).isEqualTo(2);
         assertThat(stored.values().stream().filter(c -> c.getSourceStartDate() != null)).hasSize(2);
+    }
+
+    @Test
+    void detectMissingStartsStopsTheSourceAtARateLimit() throws IOException {
+        StartDetector limited = mock(StartDetector.class);
+        when(limited.detect(any())).thenThrow(new RateLimitedException("https://daily.example/one", Optional.empty()));
+        StubSource rateLimited = new StubSource("daily") {
+            @Override
+            public Optional<StartDetector> startDetector() {
+                return Optional.of(limited);
+            }
+        };
+        SourceRegistry registry = new SourceRegistry(List.of(rateLimited), mock(DownloaderFacade.class));
+        SourceCatalogService limitedService = new SourceCatalogService(registry, repository, comics, new ComicValidator(registry, comics, Clock.fixed(NOW,
+                ZoneOffset.UTC)), thumbnails, Runnable::run, Clock.fixed(NOW, ZoneOffset.UTC));
+        stored.put(1, ComicItem.builder().id(1).name("One").source("daily").sourceIdentifier("one").build());
+        stored.put(2, ComicItem.builder().id(2).name("Two").source("daily").sourceIdentifier("two").build());
+
+        assertThat(limitedService.detectMissingStarts(5)).isZero();
+
+        verify(limited).detect(any());
+    }
+
+    private void listWithoutDetails(String... identifiers) {
+        daily.fetchesDetails = true;
+        for (String identifier : identifiers) {
+            listInCatalog(identifier, identifier, null);
+        }
+        service.refresh("daily");
+    }
+
+    @Test
+    void fetchDueDetailsReadsAndKeepsThemForThirtyToNinetyDays() {
+        listWithoutDetails("one");
+        daily.details.put("one", new CatalogDetails("A comic", List.of("Humor")));
+
+        assertThat(service.fetchDueDetails(10)).isEqualTo(1);
+
+        SourceCatalogState.Entry entry = repository.find("daily").orElseThrow().getEntries().get("one");
+        assertThat(entry.getDescription()).isEqualTo("A comic");
+        assertThat(entry.getTags()).containsExactly("Humor");
+        assertThat(entry.getDetailsExpireAt()).isBetween(NOW.atOffset(ZoneOffset.UTC).plusDays(SourceCatalogService.DETAILS_MIN_DAYS),
+                NOW.atOffset(ZoneOffset.UTC).plusDays(SourceCatalogService.DETAILS_MAX_DAYS));
+        // Not due again until it expires
+        assertThat(service.fetchDueDetails(10)).isZero();
+        assertThat(daily.detailsRequests).containsExactly("one");
+    }
+
+    @Test
+    void fetchDueDetailsIsLimitedPerSourceAndConfiguredComicsGoFirst() {
+        listWithoutDetails("aaa", "bbb", "zzz");
+        stored.put(1, ComicItem.builder().id(1).name("Zzz").source("daily").sourceIdentifier("zzz").build());
+
+        service.fetchDueDetails(2);
+
+        assertThat(daily.detailsRequests).containsExactly("zzz", "aaa");
+    }
+
+    @Test
+    void fetchDueDetailsStopsTheSourceAtARateLimit() {
+        listWithoutDetails("one", "two");
+        daily.detailsFailures.put("one", new RateLimitedException("https://daily.example/one/about", Optional.empty()));
+
+        assertThat(service.fetchDueDetails(10)).isZero();
+
+        assertThat(daily.detailsRequests).containsExactly("one");
+        // Still due: a 429 says nothing about the comic
+        assertThat(repository.find("daily").orElseThrow().getEntries().get("one").getDetailsExpireAt()).isNull();
+    }
+
+    @Test
+    void aFailedDetailsReadIsRetriedTheNextDayAndTheRestContinue() {
+        listWithoutDetails("one", "two");
+        daily.detailsFailures.put("one", new IOException("HTTP 500"));
+        daily.details.put("two", new CatalogDetails("Two", List.of()));
+
+        assertThat(service.fetchDueDetails(10)).isEqualTo(1);
+
+        assertThat(repository.find("daily").orElseThrow().getEntries().get("one").getDetailsExpireAt()).isEqualTo(NOW.atOffset(ZoneOffset.UTC).plusDays(1));
+        assertThat(daily.detailsRequests).containsExactly("one", "two");
+    }
+
+    @Test
+    void sourcesWithoutADetailsFetcherAreSkippedAndNotDue() {
+        listInCatalog("one", "One", null);
+        service.refresh("daily");
+
+        assertThat(service.fetchDueDetails(10)).isZero();
+        assertThat(daily.detailsRequests).isEmpty();
+        assertThat(service.hasDueBackgroundWork()).isFalse();
+    }
+
+    @Test
+    void dueDetailsAreBackgroundWork() {
+        listWithoutDetails("one");
+
+        assertThat(service.hasDueBackgroundWork()).isTrue();
+    }
+
+    @Test
+    void addFromCatalogCopiesTheDescription() {
+        daily.catalogEntries.add(new SourceCatalogEntry("one", "One", null, null, null, new CatalogDetails("About one", List.of("Humor"))));
+        service.refresh("daily");
+
+        AddResult result = service.addFromCatalog("daily", "one", true, true);
+
+        assertThat(result.comic().getDescription()).isEqualTo("About one");
     }
 }

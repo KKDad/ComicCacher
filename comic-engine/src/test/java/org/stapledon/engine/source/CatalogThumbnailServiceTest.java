@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.sun.net.httpserver.HttpServer;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.imageio.ImageIO;
 
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.config.properties.DownloaderProperties;
@@ -210,7 +213,8 @@ class CatalogThumbnailServiceTest {
         Files.write(dir.resolve("kept.png"), PNG);
         Files.write(dir.resolve("gone.png"), PNG);
         Files.write(dir.resolve("old.png"), PNG);
-        Files.setLastModifiedTime(dir.resolve("old.png"), FileTime.from(NOW.minus(Duration.ofDays(40))));
+        // Older than the age plus the largest jitter
+        Files.setLastModifiedTime(dir.resolve("old.png"), FileTime.from(NOW.minus(Duration.ofDays(30 + CatalogThumbnailService.PURGE_JITTER_DAYS + 1))));
         Files.setLastModifiedTime(dir.resolve("kept.png"), FileTime.from(NOW));
         Files.setLastModifiedTime(dir.resolve("gone.png"), FileTime.from(NOW));
 
@@ -218,5 +222,101 @@ class CatalogThumbnailServiceTest {
 
         assertThat(deleted).isEqualTo(2);
         assertThat(Files.exists(dir.resolve("kept.png"))).isTrue();
+    }
+
+    @Test
+    void purgeJitterIsFixedPerComicAndWithinRange() {
+        Duration jitter = CatalogThumbnailService.jitter("daily", "one");
+
+        assertThat(CatalogThumbnailService.jitter("daily", "one")).isEqualTo(jitter);
+        assertThat(jitter.toDays()).isBetween(0L, (long) CatalogThumbnailService.PURGE_JITTER_DAYS);
+    }
+
+    @Test
+    void aPurgedThumbnailBecomesDueAgain() throws IOException {
+        serveImage("/old.png", 200, PNG);
+        listInCatalog("old", base + "/old.png");
+        CatalogThumbnailService service = service(Duration.ZERO, true);
+        service.prefetchDue(10);
+        Path file = root.resolve("daily").resolve("old.png");
+        Files.setLastModifiedTime(file, FileTime.from(NOW.minus(Duration.ofDays(30 + CatalogThumbnailService.PURGE_JITTER_DAYS + 1))));
+
+        service.purge(Duration.ofDays(30));
+
+        assertThat(catalog.find("daily").orElseThrow().getEntries().get("old").getThumbnailSavedAt()).isNull();
+        assertThat(service.prefetchDue(10)).isEqualTo(1);
+        assertThat(hits.get()).isEqualTo(2);
+    }
+
+    @Test
+    void prefetchDownloadsDueThumbnailsUpToTheLimit() {
+        serveImage("/a.png", 200, PNG);
+        serveImage("/b.png", 200, PNG);
+        catalog.merge("daily", List.of(new SourceCatalogEntry("a", "A", null, base + "/a.png", null), new SourceCatalogEntry("b", "B", null, base + "/b.png", null)));
+        CatalogThumbnailService service = service(Duration.ZERO, true);
+
+        assertThat(service.prefetchDue(1)).isEqualTo(1);
+        assertThat(service.prefetchDue(1)).isEqualTo(1);
+        assertThat(service.prefetchDue(1)).isZero();
+
+        assertThat(hits.get()).isEqualTo(2);
+        assertThat(catalog.find("daily").orElseThrow().getEntries().get("a").getThumbnailSavedAt()).isNotNull();
+    }
+
+    @Test
+    void prefetchRecordsAThumbnailAlreadyOnDiskWithoutFetching() throws IOException {
+        listInCatalog("one", base + "/one.png");
+        Files.write(Files.createDirectories(root.resolve("daily")).resolve("one.png"), PNG);
+
+        assertThat(service(Duration.ZERO, true).prefetchDue(10)).isZero();
+
+        assertThat(hits.get()).isZero();
+        assertThat(catalog.find("daily").orElseThrow().getEntries().get("one").getThumbnailSavedAt()).isNotNull();
+    }
+
+    @Test
+    void prefetchStopsTheSourceAtTheFirstRateLimit() {
+        serveImage("/a.png", 429, new byte[0]);
+        serveImage("/b.png", 200, PNG);
+        catalog.merge("daily", List.of(new SourceCatalogEntry("a", "A", null, base + "/a.png", null), new SourceCatalogEntry("b", "B", null, base + "/b.png", null)));
+
+        assertThat(service(Duration.ZERO, true).prefetchDue(10)).isZero();
+
+        verify(throttle).backOff(eq("daily"), eq(1), any(Optional.class));
+        assertThat(hits.get()).isEqualTo(1);
+        // A 429 isn't the image's fault: it stays due for the next run
+        assertThat(catalog.find("daily").orElseThrow().getEntries().get("a").getThumbnailFailedAt()).isNull();
+    }
+
+    @Test
+    void aFailedThumbnailWaitsAWeek() {
+        serveImage("/one.png", 404, new byte[0]);
+        listInCatalog("one", base + "/one.png");
+        CatalogThumbnailService service = service(Duration.ZERO, true);
+
+        service.prefetchDue(10);
+
+        var entry = catalog.find("daily").orElseThrow().getEntries().get("one");
+        assertThat(entry.getThumbnailFailedAt()).isNotNull();
+        assertThat(SourceCatalogRepository.isThumbnailDue(entry, NOW.atOffset(ZoneOffset.UTC).plusDays(6), CatalogThumbnailService.FAILURE_RETRY)).isFalse();
+        assertThat(SourceCatalogRepository.isThumbnailDue(entry, NOW.atOffset(ZoneOffset.UTC).plusDays(7), CatalogThumbnailService.FAILURE_RETRY)).isTrue();
+    }
+
+    @Test
+    void wideImagesAreShrunkToPng() throws IOException {
+        BufferedImage wide = new BufferedImage(1200, 600, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream jpeg = new ByteArrayOutputStream();
+        ImageIO.write(wide, "jpg", jpeg);
+        serveImage("/wide.jpg", 200, jpeg.toByteArray());
+        listInCatalog("wide", base + "/wide.jpg");
+        when(validation.validate(any())).thenReturn(ImageValidationResult.success(ImageFormat.JPEG, 1200, 600, jpeg.size()));
+
+        service(Duration.ZERO, true).request("daily", "wide");
+
+        Path saved = root.resolve("daily").resolve("wide.png");
+        BufferedImage stored = ImageIO.read(saved.toFile());
+        assertThat(stored.getWidth()).isEqualTo(CatalogThumbnailService.MAX_WIDTH);
+        assertThat(stored.getHeight()).isEqualTo(200);
+        assertThat(Files.exists(root.resolve("daily").resolve("wide.jpg"))).isFalse();
     }
 }

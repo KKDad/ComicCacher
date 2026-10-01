@@ -94,6 +94,38 @@ describe('SourceCatalogView', () => {
     expect(screen.getByText('No comics match.')).toBeInTheDocument();
   });
 
+  it('shows genre chips that filter the list, and the description on hover', async () => {
+    const funny = mockEntry({ identifier: 'funny', name: 'Funny', description: 'A family of jokers', tags: ['Humor', 'Family'] });
+    const drama = mockEntry({ identifier: 'drama', name: 'Drama', tags: ['Soap'] });
+    loaded([funny, drama, notConfigured]);
+    renderView();
+
+    expect(screen.getByRole('combobox', { name: 'Genre' })).toHaveTextContent('Every genre');
+    expect(within(row('Drama')).queryByRole('button', { name: /About/ })).not.toBeInTheDocument();
+
+    await userEvent.hover(within(row('Funny')).getByRole('button', { name: 'About Funny' }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A family of jokers');
+
+    await userEvent.click(within(row('Funny')).getByRole('button', { name: 'Humor' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getByRole('combobox', { name: 'Genre' })).toHaveTextContent('Humor');
+    expect(screen.getByRole('button', { name: 'Humor' })).toHaveAttribute('aria-pressed', 'true');
+
+    // Clicking the chosen chip again shows every genre
+    await userEvent.click(screen.getByRole('button', { name: 'Humor' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('searches descriptions and hides the genre filter when nothing has tags', async () => {
+    loaded([mockEntry({ identifier: 'funny', name: 'Funny', description: 'A family of jokers' }), notConfigured]);
+    renderView();
+
+    expect(screen.queryByRole('combobox', { name: 'Genre' })).not.toBeInTheDocument();
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search the catalog' }), 'jokers');
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getByText('Funny')).toBeInTheDocument();
+  });
+
   it('pages through a long catalog and asks for thumbnails of the page shown', async () => {
     const many = Array.from({ length: PAGE_SIZE + 5 }, (_, i) => mockEntry({ identifier: `c${i}`, name: `Comic ${String(i).padStart(3, '0')}` }));
     loaded(many);

@@ -47,6 +47,8 @@ class SourceCatalogJobConfigTest {
         setField(config, "maxAgeDays", 7);
         setField(config, "startDetectPerRun", 5);
         setField(config, "thumbnailMaxAgeDays", 30);
+        setField(config, "detailsPerRun", 100);
+        setField(config, "thumbnailsPerRun", 50);
     }
 
     private static ComicSource source(String id) {
@@ -75,7 +77,21 @@ class SourceCatalogJobConfigTest {
         verify(catalogService).refresh("alpha");
         verify(catalogService, never()).refresh("beta");
         verify(catalogService).detectMissingStarts(5);
+        verify(catalogService).fetchDueDetails(100);
         verify(thumbnails).purge(Duration.ofDays(30));
+        verify(thumbnails).prefetchDue(50);
+    }
+
+    @Test
+    void aScheduledRunIsDueForACatalogOrForBackgroundWork() {
+        assertThat(config.anyWorkDue()).isFalse();
+
+        when(catalogService.hasDueBackgroundWork()).thenReturn(true);
+        assertThat(config.anyWorkDue()).isTrue();
+
+        when(catalogService.hasDueBackgroundWork()).thenReturn(false);
+        when(catalogService.isStale("beta", Duration.ofDays(7))).thenReturn(true);
+        assertThat(config.anyWorkDue()).isTrue();
     }
 
     @Test

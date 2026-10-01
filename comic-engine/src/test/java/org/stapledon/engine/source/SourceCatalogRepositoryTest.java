@@ -10,15 +10,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.util.GsonUtils;
 import org.stapledon.engine.source.SourceCatalogRepository.MergeResult;
+import org.stapledon.engine.source.SourceCatalogRepository.ThumbnailEvent;
 import org.stapledon.engine.source.SourceCatalogState.Entry;
 import org.stapledon.engine.source.SourceCatalogState.SourceEntries;
 
@@ -134,5 +137,65 @@ class SourceCatalogRepositoryTest {
         repository.find("gocomics").orElseThrow().getEntries().get("a").setName("changed");
 
         assertThat(repository.find("gocomics").orElseThrow().getEntries().get("a").getName()).isEqualTo("A");
+    }
+
+    @Test
+    void mergeKeepsDetailsTheCatalogCarriesAndRefreshesThem() {
+        SourceCatalogRepository repository = repository(NOW);
+        repository.merge("ck", List.of(new SourceCatalogEntry("a", "A", null, null, null, new CatalogDetails("Old", List.of("Humor")))));
+
+        repository.merge("ck", List.of(new SourceCatalogEntry("a", "A", null, null, null, new CatalogDetails("New", List.of("Drama")))));
+
+        var stored = repository.find("ck").orElseThrow().getEntries().get("a");
+        assertThat(stored.getDescription()).isEqualTo("New");
+        assertThat(stored.getTags()).containsExactly("Drama");
+    }
+
+    @Test
+    void mergeLeavesFetchedDetailsAlone() {
+        SourceCatalogRepository repository = repository(NOW);
+        repository.merge("gocomics", List.of(entry("a", "A")));
+        repository.recordDetails("gocomics", "a", new CatalogDetails("Read from its page", List.of("Classics")), OffsetDateTime.ofInstant(NOW, ZoneOffset.UTC).plusDays(40));
+
+        repository.merge("gocomics", List.of(entry("a", "A")));
+
+        var stored = repository.find("gocomics").orElseThrow().getEntries().get("a");
+        assertThat(stored.getDescription()).isEqualTo("Read from its page");
+        assertThat(stored.getDetailsExpireAt()).isEqualTo(OffsetDateTime.ofInstant(NOW, ZoneOffset.UTC).plusDays(40));
+    }
+
+    @Test
+    void hasDueWorkReadsOnlyTheStoredCatalog() {
+        SourceCatalogRepository repository = repository(NOW);
+        repository.merge("gocomics", List.of(entry("a", "A")));
+
+        // The thumbnail was never downloaded
+        assertThat(repository.hasDueWork(Set.of(), Duration.ofDays(7))).isTrue();
+
+        repository.recordThumbnail("gocomics", "a", ThumbnailEvent.SAVED);
+        assertThat(repository.hasDueWork(Set.of(), Duration.ofDays(7))).isFalse();
+        // Details are only due for sources that fetch them
+        assertThat(repository.hasDueWork(Set.of("gocomics"), Duration.ofDays(7))).isTrue();
+
+        repository.recordDetails("gocomics", "a", null, OffsetDateTime.ofInstant(NOW, ZoneOffset.UTC).plusDays(1));
+        assertThat(repository.hasDueWork(Set.of("gocomics"), Duration.ofDays(7))).isFalse();
+        assertThat(repository(NOW.plus(Duration.ofDays(1))).hasDueWork(Set.of("gocomics"), Duration.ofDays(7))).isTrue();
+
+        repository.recordThumbnail("gocomics", "a", ThumbnailEvent.DELETED);
+        assertThat(repository.hasDueWork(Set.of(), Duration.ofDays(7))).isTrue();
+    }
+
+    @Test
+    void detailsAndThumbnailsSurviveARestart() {
+        SourceCatalogRepository repository = repository(NOW);
+        repository.merge("gocomics", List.of(entry("a", "A")));
+        repository.recordDetails("gocomics", "a", new CatalogDetails("About A", List.of("Classics")), OffsetDateTime.ofInstant(NOW, ZoneOffset.UTC).plusDays(40));
+        repository.recordThumbnail("gocomics", "a", ThumbnailEvent.SAVED);
+
+        var reloaded = repository(NOW).find("gocomics").orElseThrow().getEntries().get("a");
+
+        assertThat(reloaded.getDescription()).isEqualTo("About A");
+        assertThat(reloaded.getTags()).containsExactly("Classics");
+        assertThat(reloaded.getThumbnailSavedAt()).isEqualTo(OffsetDateTime.ofInstant(NOW, ZoneOffset.UTC));
     }
 }

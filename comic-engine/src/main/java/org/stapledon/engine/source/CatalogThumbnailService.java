@@ -20,6 +20,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -40,23 +41,32 @@ import org.stapledon.common.util.LogContext;
 import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.engine.downloader.RateLimitedException;
 import org.stapledon.engine.downloader.SourceThrottleService;
+import org.stapledon.engine.source.SourceCatalogRepository.ThumbnailEvent;
 import org.stapledon.engine.source.SourceCatalogState.Entry;
+import org.stapledon.engine.source.SourceCatalogState.SourceEntries;
 
 /**
- * Catalog thumbnails for comics that aren't configured yet. Nothing is fetched until someone looks: {@link #request} queues a download on the
- * {@code catalogTaskExecutor}, and the Sources page shows initials until the file exists. Files live in a temporary folder
- * ({@code {cache}/tmp/catalog-thumbnails/{source}/{identifier}.{ext}}), which storage metrics skip and which is always safe to delete.
+ * Catalog thumbnails for comics that aren't configured yet. {@code SourceCatalogJob} downloads due ones in the background ({@link #prefetchDue}), and
+ * {@link #request} queues one on the {@code catalogTaskExecutor} when the Sources page shows a row that has none yet. Files live in a temporary folder
+ * ({@code {cache}/tmp/catalog-thumbnails/{source}/{identifier}.{ext}}), which storage metrics skip and which is always safe to delete. They are kept
+ * for about a year ({@link #purge}); the catalog records which are saved, so the job never scans the disk to find work.
  * <p>
- * Images come only over https from the source's {@link ComicSource#imageHosts() image hosts}, redirects included, are capped at 2 MB, and must pass
- * image validation. Requests are paced by {@link SourceThrottleService} under {@code <source>-assets} when that is configured (the image hosts are
- * CDNs that need less care than the pages), otherwise under the source itself. A 429 backs the source off and drops the download; the page asks again.
+ * Images come only over https from the source's {@link ComicSource#imageHosts() image hosts}, redirects included, are capped at 8 MB, must pass
+ * image validation, and are shrunk to {@value #MAX_WIDTH} px wide. Requests are paced by {@link SourceThrottleService} under {@code <source>-assets}
+ * when that is configured (the image hosts are CDNs that need less care than the pages), otherwise under the source itself. A 429 backs that key off
+ * once and drops the download, and a background run stops asking that source.
  */
 @Slf4j
 @Service
 public class CatalogThumbnailService {
 
     static final String THUMBNAIL_DIRECTORY = "catalog-thumbnails";
-    static final int MAX_BYTES = 2 * 1024 * 1024;
+    /** Some Comics Kingdom feature images are 3–5 MB; they are shrunk to {@link #MAX_WIDTH} before saving. */
+    static final int MAX_BYTES = 8 * 1024 * 1024;
+    static final int MAX_WIDTH = 400;
+    static final int PURGE_JITTER_DAYS = 90;
+    /** How long the job waits before trying a failed thumbnail again. */
+    static final Duration FAILURE_RETRY = Duration.ofDays(7);
     private static final int MAX_REDIRECTS = 3;
     private static final Duration TIMEOUT = Duration.ofSeconds(15);
     private static final int SUMMARY_EVERY = 50;
@@ -203,56 +213,130 @@ public class CatalogThumbnailService {
     }
 
     /**
-     * Downloads one thumbnail now, on the calling thread. Returns true when the file was written.
+     * How a single thumbnail download went.
      */
-    boolean download(String source, String identifier) {
+    public enum DownloadOutcome {
+        SAVED,
+        FAILED,
+        /** HTTP 429: the source (or its image host) was backed off; stop asking it for now. */
+        RATE_LIMITED
+    }
+
+    /**
+     * Downloads one thumbnail now, on the calling thread.
+     */
+    DownloadOutcome download(String source, String identifier) {
         String key = key(source, identifier);
         try (var _ = MDC.putCloseable(LogContext.COMIC, key)) {
             Optional<ComicSource> comicSource = sources.find(source);
             Optional<Entry> entry = catalog.find(source).map(e -> e.getEntries().get(identifier));
             if (comicSource.isEmpty() || entry.isEmpty()) {
-                return false;
+                return DownloadOutcome.FAILED;
             }
-            Optional<byte[]> image = entry.get().getThumbnailUrl() != null
-                    ? fetchThumbnail(comicSource.get(), entry.get().getThumbnailUrl())
-                    : comicSource.get().downloader().downloadAvatar(0, entry.get().getName(), identifier);
-            if (image.isEmpty()) {
+            Optional<byte[]> image;
+            try {
+                image = entry.get().getThumbnailUrl() != null
+                        ? fetchThumbnail(comicSource.get(), entry.get().getThumbnailUrl())
+                        : comicSource.get().downloader().downloadAvatar(0, entry.get().getName(), identifier);
+            } catch (RateLimitedException e) {
                 recordFailure(key);
-                return false;
+                return DownloadOutcome.RATE_LIMITED;
+            }
+            if (image.isEmpty()) {
+                return failed(source, identifier);
             }
             Optional<String> extension = extension(image.get());
             if (extension.isEmpty()) {
                 log.warn("Catalog thumbnail for {} failed image validation", key);
-                recordFailure(key);
-                return false;
+                return failed(source, identifier);
             }
-            Path file = root.resolve(source).resolve(identifier + "." + extension.get());
+            byte[] data = image.get();
+            String ext = extension.get();
+            Optional<byte[]> smaller = ImageScaler.shrinkToWidth(data, MAX_WIDTH);
+            if (smaller.isPresent()) {
+                data = smaller.get();
+                ext = "png";
+            }
+            deleteCached(source, identifier);
+            Path file = root.resolve(source).resolve(identifier + "." + ext);
             Files.createDirectories(file.getParent());
-            NfsFileOperations.atomicWrite(file, image.get());
+            NfsFileOperations.atomicWrite(file, data);
             failedAt.remove(key);
-            log.debug("Saved catalog thumbnail {} ({} bytes)", file, image.get().length);
+            catalog.recordThumbnail(source, identifier, ThumbnailEvent.SAVED);
+            log.debug("Saved catalog thumbnail {} ({} bytes)", file, data.length);
             countAndSummarise(true);
-            return true;
+            return DownloadOutcome.SAVED;
         } catch (IOException e) {
             log.warn("Could not save catalog thumbnail {}: {}", key, e.toString());
-            recordFailure(key);
-            return false;
+            return failed(source, identifier);
+        }
+    }
+
+    private DownloadOutcome failed(String source, String identifier) {
+        recordFailure(key(source, identifier));
+        catalog.recordThumbnail(source, identifier, ThumbnailEvent.FAILED);
+        return DownloadOutcome.FAILED;
+    }
+
+    private void deleteCached(String source, String identifier) throws IOException {
+        Optional<Path> existing = cached(source, identifier);
+        if (existing.isPresent()) {
+            Files.deleteIfExists(existing.get());
         }
     }
 
     /**
-     * Deletes thumbnails older than {@code maxAge}, and those of comics their source no longer lists. Returns how many were deleted.
+     * Downloads due thumbnails (see {@link SourceCatalogRepository#isThumbnailDue}) on the calling thread, at most {@code limit} per source. A thumbnail
+     * already on disk is only recorded. An HTTP 429 stops that source's downloads for this run; the source has already been backed off.
+     */
+    public int prefetchDue(int limit) {
+        int saved = 0;
+        OffsetDateTime now = OffsetDateTime.now(clock);
+        for (ComicSource source : sources.all()) {
+            Map<String, Entry> entries = catalog.find(source.id()).map(SourceEntries::getEntries).orElse(Map.of());
+            int tried = 0;
+            for (Map.Entry<String, Entry> e : entries.entrySet()) {
+                if (tried >= limit) {
+                    break;
+                }
+                if (!SourceCatalogRepository.isThumbnailDue(e.getValue(), now, FAILURE_RETRY) || queued.contains(key(source.id(), e.getKey()))) {
+                    continue;
+                }
+                if (cached(source.id(), e.getKey()).isPresent()) {
+                    catalog.recordThumbnail(source.id(), e.getKey(), ThumbnailEvent.SAVED);
+                    continue;
+                }
+                tried++;
+                DownloadOutcome outcome = download(source.id(), e.getKey());
+                if (outcome == DownloadOutcome.SAVED) {
+                    saved++;
+                } else if (outcome == DownloadOutcome.RATE_LIMITED) {
+                    log.warn("Thumbnail prefetch for {} stopped after HTTP 429; the rest wait for the next run", source.id());
+                    break;
+                }
+            }
+        }
+        return saved;
+    }
+
+    /**
+     * Deletes thumbnails older than {@code maxAge} plus up to {@value #PURGE_JITTER_DAYS} days (fixed per comic, so expiries spread out), and those of
+     * comics their source no longer lists. A deleted thumbnail becomes due again. Returns how many were deleted.
      */
     public int purge(Duration maxAge) {
         if (!Files.isDirectory(root)) {
             return 0;
         }
-        Instant cutoff = clock.instant().minus(maxAge);
+        Instant now = clock.instant();
         int deleted = 0;
         try (Stream<Path> files = Files.walk(root, 2)) {
             for (Path file : files.filter(Files::isRegularFile).toList()) {
-                if (isStale(file, cutoff)) {
+                String source = file.getParent().getFileName().toString();
+                String name = file.getFileName().toString();
+                String identifier = name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name;
+                if (isStale(file, source, identifier, now.minus(maxAge).minus(jitter(source, identifier)))) {
                     Files.deleteIfExists(file);
+                    catalog.recordThumbnail(source, identifier, ThumbnailEvent.DELETED);
                     deleted++;
                 }
             }
@@ -265,21 +349,26 @@ public class CatalogThumbnailService {
         return deleted;
     }
 
-    private boolean isStale(Path file, Instant cutoff) throws IOException {
+    /** Between 0 and {@value #PURGE_JITTER_DAYS} days, always the same for one comic. */
+    static Duration jitter(String source, String identifier) {
+        return Duration.ofDays(Math.floorMod(key(source, identifier).hashCode(), PURGE_JITTER_DAYS + 1));
+    }
+
+    private boolean isStale(Path file, String source, String identifier, Instant cutoff) throws IOException {
         FileTime modified = Files.getLastModifiedTime(file);
         if (modified.toInstant().isBefore(cutoff)) {
             return true;
         }
-        String source = file.getParent().getFileName().toString();
-        String name = file.getFileName().toString();
-        String identifier = name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name;
         return catalog.find(source)
                 .map(entries -> entries.getEntries().get(identifier))
                 .map(entry -> entry.getRemovedAt() != null)
                 .orElse(true);
     }
 
-    private Optional<byte[]> fetchThumbnail(ComicSource source, String url) {
+    /**
+     * Fetches a thumbnail. An HTTP 429 backs the throttle key off once and is rethrown, so no caller keeps asking.
+     */
+    private Optional<byte[]> fetchThumbnail(ComicSource source, String url) throws RateLimitedException {
         String throttleKey = downloaderProperties.isConfigured(source.id() + "-assets") ? source.id() + "-assets" : source.id();
         throttle.await(throttleKey);
         try {
@@ -287,7 +376,7 @@ public class CatalogThumbnailService {
         } catch (RateLimitedException e) {
             Duration backoff = throttle.backOff(throttleKey, 1, e.getRetryAfter());
             log.warn("Rate limited (HTTP 429) fetching catalog thumbnail {}; backing off {}s", url, backoff.toSeconds());
-            return Optional.empty();
+            throw e;
         } catch (IOException e) {
             log.warn("Could not download catalog thumbnail {}: {}", url, e.toString());
             return Optional.empty();

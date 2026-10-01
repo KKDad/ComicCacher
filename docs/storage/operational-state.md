@@ -359,6 +359,11 @@ Every source's catalog as `SourceCatalogJob` last read it. Created by the first 
           "name": "Calvin and Hobbes",
           "author": "Bill Watterson",
           "thumbnailUrl": "https://gocomicscmsassets.gocomics.com/.../Badge.png",
+          "thumbnailSavedAt": "2026-09-28T11:20:00Z",
+          "description": "Follow the adventures of Calvin and his stuffed tiger.",
+          "tags": ["Newspaper Comic Strips"],
+          "detailsCheckedAt": "2026-09-28T11:10:00Z",
+          "detailsExpireAt": "2026-11-29T11:10:00Z",
           "startDate": "1985-11-18",
           "startCheckedAt": "2026-09-28T11:05:00Z",
           "firstSeen": "2026-09-28T11:00:00Z",
@@ -376,7 +381,10 @@ Every source's catalog as `SourceCatalogJob` last read it. Created by the first 
 | `lastRefreshed` | `OffsetDateTime` | When the catalog was last read successfully |
 | `lastAttempt` / `lastError` | `OffsetDateTime` / `String` | The last refresh attempt, and why it failed (null when it worked) |
 | `entries` | `Map<String, Entry>` | By the comic's identifier at the source |
-| `thumbnailUrl` | `String` | The source's image, downloaded on demand into `tmp/catalog-thumbnails/` |
+| `thumbnailUrl` | `String` | The source's image, downloaded into `tmp/catalog-thumbnails/` |
+| `thumbnailSavedAt` / `thumbnailFailedAt` | `OffsetDateTime` | When the thumbnail was saved (null when none is on disk), and when its last download failed (retried a week later) |
+| `description` / `tags` | `String` / `List<String>` | The source's short description and genres or categories |
+| `detailsCheckedAt` / `detailsExpireAt` | `OffsetDateTime` | When they were last read from the comic's page, and when to read them again (30–90 days, random). Null `detailsExpireAt` means due, for a source whose catalog doesn't carry them |
 | `startDate` / `startStripNumber` | `LocalDate` / `Integer` | Where the source says the comic starts |
 | `removedAt` | `OffsetDateTime` | When the source stopped listing the comic. Entries are never deleted |
 

@@ -20,11 +20,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.StartSource;
 import org.stapledon.common.util.LogContext;
+import org.stapledon.engine.downloader.RateLimitedException;
 import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.engine.source.ComicValidator.Problem;
 import org.stapledon.engine.source.SourceCatalogRepository.MergeResult;
@@ -47,6 +50,9 @@ public class SourceCatalogService {
     private final CatalogThumbnailService thumbnails;
     private final Executor executor;
     private final Clock clock;
+
+    static final int DETAILS_MIN_DAYS = 30;
+    static final int DETAILS_MAX_DAYS = 90;
 
     private final Map<String, ReentrantLock> refreshLocks = new ConcurrentHashMap<>();
     private final Set<Integer> pendingAvatars = ConcurrentHashMap.newKeySet();
@@ -283,6 +289,7 @@ public class SourceCatalogService {
         ComicItem.ComicItemBuilder builder = ComicItem.builder()
                 .name(entry.get().getName())
                 .author(entry.get().getAuthor())
+                .description(entry.get().getDescription())
                 .source(sourceId)
                 .sourceIdentifier(identifier)
                 .active(active)
@@ -382,6 +389,8 @@ public class SourceCatalogService {
         FAILED,
         /** The source didn't say. */
         NOT_FOUND,
+        /** HTTP 429 after the throttle's retries; the source is backed off. */
+        RATE_LIMITED,
         /** Recorded only: the comic has a value an admin set. */
         RECORDED
     }
@@ -410,6 +419,9 @@ public class SourceCatalogService {
             applyStart(current, start.get());
             log.info("Start of {} detected at {}: {}", comic.getName(), source.get().displayName(), describe(start.get()));
             return DetectionOutcome.APPLIED;
+        } catch (RateLimitedException e) {
+            log.warn("Start detection for {} rate limited: {}", comic.getName(), e.getMessage());
+            return DetectionOutcome.RATE_LIMITED;
         } catch (IOException | RuntimeException e) {
             log.warn("Start detection for {} failed: {}", comic.getName(), e.toString());
             return DetectionOutcome.FAILED;
@@ -430,12 +442,77 @@ public class SourceCatalogService {
                     .limit(limit)
                     .toList();
             for (ComicItem comic : missing) {
-                if (detectStart(comic) == DetectionOutcome.APPLIED) {
+                DetectionOutcome outcome = detectStart(comic);
+                if (outcome == DetectionOutcome.APPLIED) {
                     applied++;
+                } else if (outcome == DetectionOutcome.RATE_LIMITED) {
+                    log.warn("Start detection for {} stopped after HTTP 429; the rest wait for the next run", source.id());
+                    break;
                 }
             }
         }
         return applied;
+    }
+
+    // =========================================================================
+    // Details
+    // =========================================================================
+
+    /**
+     * Reads due details (see {@link SourceCatalogRepository#isDetailsDue}) for up to {@code limit} listed comics of each source that has a
+     * {@link DetailsFetcher}, on the calling thread, configured comics first. Each answer is kept for a random {@value #DETAILS_MIN_DAYS}–
+     * {@value #DETAILS_MAX_DAYS} days so later reads spread out; a failure is retried the next day. An HTTP 429 stops that source for this run (the
+     * fetcher has already backed the source off). Returns how many were read.
+     */
+    public int fetchDueDetails(int limit) {
+        int read = 0;
+        for (ComicSource source : sources.all()) {
+            Optional<DetailsFetcher> fetcher = source.detailsFetcher();
+            if (fetcher.isEmpty()) {
+                continue;
+            }
+            OffsetDateTime now = OffsetDateTime.now(clock);
+            Set<String> configured = configuredByIdentifier(source).keySet();
+            List<String> due = repository.find(source.id()).map(SourceEntries::getEntries).orElse(Map.of()).entrySet().stream()
+                    .filter(e -> SourceCatalogRepository.isDetailsDue(e.getValue(), now))
+                    .map(Map.Entry::getKey)
+                    .sorted(Comparator.comparing((String id) -> !configured.contains(id)))
+                    .limit(limit)
+                    .toList();
+            int readHere = 0;
+            int failed = 0;
+            for (String identifier : due) {
+                try (var _ = MDC.putCloseable(LogContext.COMIC, source.id() + "/" + identifier)) {
+                    Optional<CatalogDetails> details = fetcher.get().fetch(identifier);
+                    repository.recordDetails(source.id(), identifier, details.orElse(new CatalogDetails(null, List.of())), detailsExpiry());
+                    readHere++;
+                } catch (RateLimitedException e) {
+                    log.warn("Details for {} stopped after HTTP 429 ({}); the rest wait for the next run", source.id(), e.getMessage());
+                    break;
+                } catch (IOException | RuntimeException e) {
+                    log.warn("Could not read details of {}/{}: {}", source.id(), identifier, e.toString());
+                    repository.recordDetails(source.id(), identifier, null, OffsetDateTime.now(clock).plusDays(1));
+                    failed++;
+                }
+            }
+            if (!due.isEmpty()) {
+                log.info("Details for {}: {} due, {} read, {} failed", source.id(), due.size(), readHere, failed);
+            }
+            read += readHere;
+        }
+        return read;
+    }
+
+    /**
+     * True when details or thumbnails are due for the job. Reads only {@code source-catalog.json}.
+     */
+    public boolean hasDueBackgroundWork() {
+        Set<String> withDetails = sources.all().stream().filter(s -> s.detailsFetcher().isPresent()).map(ComicSource::id).collect(Collectors.toSet());
+        return repository.hasDueWork(withDetails, CatalogThumbnailService.FAILURE_RETRY);
+    }
+
+    private OffsetDateTime detailsExpiry() {
+        return OffsetDateTime.now(clock).plusDays(ThreadLocalRandom.current().nextLong(DETAILS_MIN_DAYS, DETAILS_MAX_DAYS + 1));
     }
 
     private void applyStart(ComicItem comic, StartInfo start) {

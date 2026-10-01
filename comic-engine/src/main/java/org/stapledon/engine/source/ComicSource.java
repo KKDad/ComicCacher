@@ -12,7 +12,7 @@ import org.stapledon.engine.downloader.IndexedComicDownloaderStrategy;
  * Everything ComicCacher knows about one place comics come from. Each source is one bean implementing this interface; {@link SourceRegistry}
  * collects them, registers their downloaders, and is the one list of sources the rest of the app uses (job parameters, validation, the Sources page).
  * <p>
- * Adding a source means writing its downloader strategy and one {@code ComicSource}. The catalog and start-date detection are optional.
+ * Adding a source means writing its downloader strategy and one {@code ComicSource}. The catalog, start-date detection and details are optional.
  */
 public interface ComicSource {
 
@@ -52,6 +52,11 @@ public interface ComicSource {
 
     /** Reads a comic's first strip (date or number) from the source, when it can. */
     default Optional<StartDetector> startDetector() {
+        return Optional.empty();
+    }
+
+    /** Reads a comic's description and tags from its own page, for sources whose catalog doesn't carry them. */
+    default Optional<DetailsFetcher> detailsFetcher() {
         return Optional.empty();
     }
 

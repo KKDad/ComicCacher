@@ -6,7 +6,9 @@ import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { CatalogRow, type CatalogRowItem } from './catalog-row';
 import { StartDateDialog } from './start-date-dialog';
 import { useCatalogThumbnails } from '@/hooks/use-catalog-thumbnails';
@@ -29,6 +31,9 @@ const FILTERS = [
 ] as const;
 type FilterId = (typeof FILTERS)[number]['id'];
 
+/** The tag filter's value for "every genre"; Radix Select has no empty value. */
+const ALL_TAGS = '__all__';
+
 function matchesFilter(entry: CatalogEntry, filter: FilterId): boolean {
   switch (filter) {
     case 'configured':
@@ -45,7 +50,11 @@ function matchesFilter(entry: CatalogEntry, filter: FilterId): boolean {
 function matchesSearch(entry: CatalogEntry, query: string): boolean {
   if (!query) return true;
   const q = query.toLowerCase();
-  return [entry.name, entry.author, entry.identifier, entry.comic?.name].some((v) => v?.toLowerCase().includes(q));
+  return [entry.name, entry.author, entry.identifier, entry.description, entry.comic?.name].some((v) => v?.toLowerCase().includes(q));
+}
+
+function matchesTag(entry: CatalogEntry, tag: string | null): boolean {
+  return !tag || entry.tags.includes(tag);
 }
 
 function orphanItem(comic: SourceComic): CatalogRowItem {
@@ -60,13 +69,22 @@ export function SourceCatalogView({ sourceId }: { sourceId: string }) {
   const actions = useSourceActions();
   const [filter, setFilter] = useState<FilterId>('all');
   const [query, setQuery] = useState('');
+  const [tag, setTag] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [startComic, setStartComic] = useState<SourceComic | null>(null);
 
   const filtered = useMemo(
-    () => entries.filter((e) => matchesFilter(e, filter) && matchesSearch(e, query.trim())),
-    [entries, filter, query],
+    () => entries.filter((e) => matchesFilter(e, filter) && matchesTag(e, tag) && matchesSearch(e, query.trim())),
+    [entries, filter, tag, query],
   );
+  const tags = useMemo(
+    () => [...new Set(entries.flatMap((e) => e.tags))].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
+    [entries],
+  );
+  const chooseTag = (value: string | null) => {
+    setTag(value);
+    setPage(0);
+  };
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
   const visible = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
@@ -204,27 +222,55 @@ export function SourceCatalogView({ sourceId }: { sourceId: string }) {
                 </button>
               ))}
             </div>
-            <Input
-              type="search"
-              placeholder="Search name, author or slug"
-              aria-label="Search the catalog"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(0);
-              }}
-              className="sm:max-w-64"
-            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              {tags.length > 0 && (
+                <Select value={tag ?? ALL_TAGS} onValueChange={(value) => chooseTag(value === ALL_TAGS ? null : value)}>
+                  <SelectTrigger aria-label="Genre" className="sm:w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_TAGS}>Every genre</SelectItem>
+                    {tags.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Input
+                type="search"
+                placeholder="Search name, author, slug or description"
+                aria-label="Search the catalog"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(0);
+                }}
+                className="sm:max-w-64"
+              />
+            </div>
           </div>
 
           {visible.length === 0 ? (
             <p className="p-8 text-center text-muted-foreground">No comics match.</p>
           ) : (
-            <ul aria-label={`${source.displayName} comics`}>
-              {visible.map((entry) => (
-                <CatalogRow key={entry.identifier} item={entry} numbered={numbered} canChange={canChange} busy={actions.isSaving} {...rowActions} />
-              ))}
-            </ul>
+            <TooltipProvider delayDuration={200}>
+              <ul aria-label={`${source.displayName} comics`}>
+                {visible.map((entry) => (
+                  <CatalogRow
+                    key={entry.identifier}
+                    item={entry}
+                    numbered={numbered}
+                    canChange={canChange}
+                    busy={actions.isSaving}
+                    activeTag={tag}
+                    onTagClick={(t) => chooseTag(tag === t ? null : t)}
+                    {...rowActions}
+                  />
+                ))}
+              </ul>
+            </TooltipProvider>
           )}
 
           {pageCount > 1 && (

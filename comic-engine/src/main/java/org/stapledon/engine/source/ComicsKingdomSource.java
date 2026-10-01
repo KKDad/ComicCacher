@@ -1,6 +1,7 @@
 package org.stapledon.engine.source;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
 import org.jsoup.parser.Parser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,7 @@ import org.stapledon.engine.downloader.SourceThrottleService;
 
 /**
  * Comics Kingdom (King Features). The site is a Next.js front end over a public WordPress API, which lists every feature ({@code ck_feature}) with its
- * byline, badge image and oldest strip, so the catalog carries start dates for free.
+ * byline, badge image, oldest strip, excerpt and genres, so the catalog carries start dates and details for free.
  */
 @Slf4j
 @Component
@@ -43,7 +44,8 @@ public class ComicsKingdomSource implements ComicSource {
     private static final int MAX_PAGES = 20;
     private static final int PAGE_MAX_BYTES = 8 * 1024 * 1024;
     private static final int TIMEOUT_MS = 30 * 1000;
-    private static final String FIELDS = "slug,title,meta.ck_byline_on_app,ck_oldest_comic,_links,_embedded";
+    private static final String FIELDS = "slug,title,excerpt,class_list,meta.ck_byline_on_app,ck_oldest_comic,_links,_embedded";
+    private static final String GENRE_CLASS = "ck_genre-";
 
     private final ComicsKingdomDownloaderStrategy downloader;
     private final BrowserFetcher fetcher;
@@ -175,9 +177,41 @@ public class ComicsKingdomSource implements ComicSource {
                     .flatMap(a -> text(a.get(0).getAsJsonObject(), "source_url"))
                     .orElse(null);
             LocalDate start = object(feature, "ck_oldest_comic").flatMap(o -> text(o, "date")).flatMap(ComicsKingdomSource::date).orElse(null);
-            entries.add(new SourceCatalogEntry(identifier, name, author, image, start));
+            entries.add(new SourceCatalogEntry(identifier, name, author, image, start, details(feature)));
         }
         return entries;
+    }
+
+    /**
+     * The feature's excerpt as plain text, and its genres from the {@code ck_genre-<slug>} classes in {@code class_list}.
+     */
+    private static CatalogDetails details(JsonObject feature) {
+        String description = object(feature, "excerpt")
+                .flatMap(e -> text(e, "rendered"))
+                .map(html -> Jsoup.parse(html).text().trim())
+                .filter(d -> !d.isEmpty())
+                .orElse(null);
+        List<String> tags = new ArrayList<>();
+        JsonElement classes = feature.get("class_list");
+        if (classes != null && classes.isJsonArray()) {
+            for (JsonElement c : classes.getAsJsonArray()) {
+                if (c.isJsonPrimitive() && c.getAsString().startsWith(GENRE_CLASS) && c.getAsString().length() > GENRE_CLASS.length()) {
+                    tags.add(titleCase(c.getAsString().substring(GENRE_CLASS.length())));
+                }
+            }
+        }
+        return new CatalogDetails(description, tags);
+    }
+
+    /** "slice-of-life" becomes "Slice Of Life". */
+    static String titleCase(String slug) {
+        StringBuilder out = new StringBuilder();
+        for (String word : slug.split("-")) {
+            if (!word.isEmpty()) {
+                out.append(out.isEmpty() ? "" : " ").append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+            }
+        }
+        return out.toString();
     }
 
     private static String stripBy(String byline) {

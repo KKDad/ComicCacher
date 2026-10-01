@@ -34,10 +34,12 @@ import org.stapledon.engine.source.SourceRegistry;
 
 /**
  * Spring Batch configuration for the source catalog job. Reads each source's list of comics (the Sources page's catalog) when it is older than
- * {@code batch.source-catalog.max-age-days}, then detects start dates for a few configured comics that have none, and deletes stale catalog thumbnails.
+ * {@code batch.source-catalog.max-age-days}, then detects start dates for a few configured comics that have none, reads comics' details where the
+ * catalog doesn't carry them, downloads catalog thumbnails, and deletes stale ones.
  * <p>
- * The cron fires daily, but a scheduled run is skipped without any web request unless a catalog is due, so in practice each source is read about once a
- * week. The Sources page's Refresh button runs this job for one source with {@code force=true}.
+ * The cron fires daily, but a scheduled run is skipped without any web request unless a catalog, details or thumbnails are due (read from
+ * {@code source-catalog.json} only). Details expire after 30–90 days and thumbnails after about a year, so after the first week or so most days do
+ * little. The Sources page's Refresh button runs this job for one source with {@code force=true}.
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
@@ -63,7 +65,13 @@ public class SourceCatalogJobConfig {
     @Value("${batch.source-catalog.start-detect-per-run:5}")
     private int startDetectPerRun;
 
-    @Value("${comics.catalog.thumbnail-max-age-days:30}")
+    @Value("${batch.source-catalog.details-per-run:100}")
+    private int detailsPerRun;
+
+    @Value("${batch.source-catalog.thumbnails-per-run:100}")
+    private int thumbnailsPerRun;
+
+    @Value("${comics.catalog.thumbnail-max-age-days:365}")
     private int thumbnailMaxAgeDays;
 
     /**
@@ -76,13 +84,17 @@ public class SourceCatalogJobConfig {
                 new JobParameterDefinition("force", "Refresh even if recently read", "ENUM", false, "false",
                         List.of(new Option("false", "No"), new Option("true", "Yes"))));
         DailyJobScheduler scheduler = new DailyJobScheduler(sourceCatalogJob, cronExpression, timezone, jobOperator, tracker,
-                "Reads each source's list of comics for the Sources page, and detects where comics start", parameters);
-        scheduler.setPrecondition(() -> anyCatalogDue(), "no source catalog is due");
+                "Reads each source's list of comics for the Sources page, with their details and thumbnails, and detects where comics start", parameters);
+        scheduler.setPrecondition(this::anyWorkDue, "no source catalog, details or thumbnails are due");
         return scheduler;
     }
 
-    private boolean anyCatalogDue() {
-        return sourceRegistry.all().stream().anyMatch(source -> catalogService.isStale(source.id(), Duration.ofDays(maxAgeDays)));
+    /**
+     * True when a scheduled run has something to do: a catalog is due, or details or thumbnails are. Reads only {@code source-catalog.json}.
+     */
+    public boolean anyWorkDue() {
+        return sourceRegistry.all().stream().anyMatch(source -> catalogService.isStale(source.id(), Duration.ofDays(maxAgeDays)))
+                || catalogService.hasDueBackgroundWork();
     }
 
     /**
@@ -97,7 +109,7 @@ public class SourceCatalogJobConfig {
     }
 
     /**
-     * The single step: refresh, detect starts, tidy thumbnails.
+     * The single step: refresh, detect starts, read details, download thumbnails, tidy thumbnails.
      */
     @Bean
     public Step sourceCatalogStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
@@ -108,8 +120,9 @@ public class SourceCatalogJobConfig {
     }
 
     /**
-     * Refreshes each due source (or the one named by the "source" parameter; "force=true" ignores the age), then detects missing starts and purges
-     * stale thumbnails. The step fails when any refresh it tried failed, so the batch history shows it.
+     * Refreshes each due source (or the one named by the "source" parameter; "force=true" ignores the age), then detects missing starts, reads due
+     * details, downloads due thumbnails and purges stale ones. Each of those reads a limited number per source and stops a source at its first HTTP 429
+     * (the source is backed off; the rest wait for the next run). The step fails when any refresh it tried failed, so the batch history shows it.
      */
     @Bean
     @StepScope
@@ -138,8 +151,11 @@ public class SourceCatalogJobConfig {
             }
 
             int starts = catalogService.detectMissingStarts(startDetectPerRun);
+            int details = catalogService.fetchDueDetails(detailsPerRun);
             int purged = thumbnails.purge(Duration.ofDays(thumbnailMaxAgeDays));
-            log.info("Source catalog job finished: {} catalogs refreshed, {} failed, {} start dates detected, {} thumbnails purged", refreshed, failed, starts, purged);
+            int downloaded = thumbnails.prefetchDue(thumbnailsPerRun);
+            log.info("Source catalog job finished: {} catalogs refreshed, {} failed, {} start dates detected, {} details read, {} thumbnails downloaded, {} purged",
+                    refreshed, failed, starts, details, downloaded, purged);
             if (failed > 0) {
                 throw new IllegalStateException(failed + " source catalog refresh(es) failed; see the WARN lines above");
             }

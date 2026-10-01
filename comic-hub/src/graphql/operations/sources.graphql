@@ -77,6 +77,8 @@ query GetSourceCatalog($id: String!, $first: Int, $after: String) {
           identifier
           name
           author
+          description
+          tags
           pageUrl
           thumbnailUrl
           thumbnailPending

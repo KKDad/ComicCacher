@@ -120,8 +120,8 @@ public class SourceResolver {
      * A page of a source's catalog.
      */
     @SchemaMapping(typeName = "Source", field = "catalog")
-    public SourceCatalogConnection catalog(SourceView source, @Argument String search, @Argument CatalogEntryFilter filter, @Argument Integer first,
-            @Argument String after) {
+    public SourceCatalogConnection catalog(SourceView source, @Argument String search, @Argument CatalogEntryFilter filter, @Argument String tag,
+            @Argument Integer first, @Argument String after) {
         Optional<ComicSource> comicSource = sources.find(source.id());
         if (comicSource.isEmpty()) {
             return new SourceCatalogConnection(List.of(), new PageInfo(false, false, null, null), 0);
@@ -131,6 +131,7 @@ public class SourceResolver {
         List<CatalogRow> rows = catalogService.catalog(source.id()).stream()
                 .filter(row -> effectiveFilter.matches(row))
                 .filter(row -> query == null || matches(row, query))
+                .filter(row -> tag == null || tag.isBlank() || tagsOf(row.entry()).contains(tag))
                 .toList();
 
         int limit = first != null ? Math.clamp(first, 1, MAX_CATALOG_PAGE) : 200;
@@ -151,6 +152,18 @@ public class SourceResolver {
         boolean hasNext = start + limit < rows.size();
         PageInfo pageInfo = new PageInfo(hasNext, start > 0, edges.isEmpty() ? null : edges.getFirst().cursor(), edges.isEmpty() ? null : edges.getLast().cursor());
         return new SourceCatalogConnection(edges, pageInfo, rows.size());
+    }
+
+    /**
+     * Every tag in a source's catalog, by name.
+     */
+    @SchemaMapping(typeName = "Source", field = "tags")
+    public List<String> tags(SourceView source) {
+        return catalogService.catalog(source.id()).stream()
+                .flatMap(row -> tagsOf(row.entry()).stream())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
     }
 
     /**
@@ -295,14 +308,20 @@ public class SourceResolver {
         String thumbnailUrl = thumbnails.cached(source.id(), row.identifier()).isPresent()
                 ? externalBaseUrl + "/api/v1/sources/" + source.id() + "/thumbnails/" + row.identifier()
                 : null;
-        return new SourceCatalogEntryView(row.identifier(), entry.getName(), entry.getAuthor(), source.comicPageUrl(row.identifier()), thumbnailUrl,
+        return new SourceCatalogEntryView(row.identifier(), entry.getName(), entry.getAuthor(), entry.getDescription(), tagsOf(entry),
+                source.comicPageUrl(row.identifier()), thumbnailUrl,
                 thumbnails.isPending(source.id(), row.identifier()), entry.getStartDate(), entry.getStartStripNumber(), entry.getFirstSeen(), entry.getLastSeen(),
                 entry.getRemovedAt(), row.comic());
     }
 
     private static boolean matches(CatalogRow row, String query) {
         return contains(row.entry().getName(), query) || contains(row.entry().getAuthor(), query) || row.identifier().contains(query)
+                || contains(row.entry().getDescription(), query)
                 || row.comic() != null && contains(row.comic().getName(), query);
+    }
+
+    private static List<String> tagsOf(Entry entry) {
+        return entry.getTags() != null ? entry.getTags() : List.of();
     }
 
     private static boolean contains(String value, String query) {
@@ -357,8 +376,9 @@ public class SourceResolver {
             boolean backfillPreferColor) {
     }
 
-    public record SourceCatalogEntryView(String identifier, String name, String author, String pageUrl, String thumbnailUrl, boolean thumbnailPending,
-            LocalDate startDate, Integer startStripNumber, OffsetDateTime firstSeen, OffsetDateTime lastSeen, OffsetDateTime removedAt, ComicItem comic) {
+    public record SourceCatalogEntryView(String identifier, String name, String author, String description, List<String> tags, String pageUrl,
+            String thumbnailUrl, boolean thumbnailPending, LocalDate startDate, Integer startStripNumber, OffsetDateTime firstSeen, OffsetDateTime lastSeen,
+            OffsetDateTime removedAt, ComicItem comic) {
     }
 
     public record SourceCatalogConnection(List<SourceCatalogEdge> edges, PageInfo pageInfo, int totalCount) {

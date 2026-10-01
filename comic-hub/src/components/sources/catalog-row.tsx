@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarClock, ExternalLink, History, ImageDown, LibraryBig, MoreHorizontal } from 'lucide-react';
+import { CalendarClock, ExternalLink, History, ImageDown, Info, LibraryBig, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ComicThumb } from './comic-thumb';
 import { describeStart } from './start-date-dialog';
 import { formatMediumDate } from '@/lib/date-utils';
@@ -21,6 +22,8 @@ export interface CatalogRowItem {
   identifier: string;
   name: string;
   author?: string | null;
+  description?: string | null;
+  tags?: string[];
   pageUrl?: string | null;
   thumbnailUrl?: string | null;
   thumbnailPending?: boolean;
@@ -45,6 +48,10 @@ interface CatalogRowProps extends CatalogRowActions {
   numbered: boolean;
   canChange: boolean;
   busy: boolean;
+  /** The tag the list is filtered by, shown pressed. */
+  activeTag?: string | null;
+  /** Filters the list by a tag; chips are plain labels without it. */
+  onTagClick?: (tag: string) => void;
 }
 
 function startText(item: CatalogRowItem, numbered: boolean): string | null {
@@ -58,7 +65,7 @@ function startText(item: CatalogRowItem, numbered: boolean): string | null {
 }
 
 /** One comic in a source's catalog, with its Downloading and Visible switches. */
-export function CatalogRow({ item, numbered, canChange, busy, ...actions }: CatalogRowProps) {
+export function CatalogRow({ item, numbered, canChange, busy, activeTag, onTagClick, ...actions }: CatalogRowProps) {
   const comic = item.comic ?? null;
   const picture = comic?.avatarAvailable ? comic.avatarUrl : item.thumbnailUrl;
   const start = startText(item, numbered);
@@ -77,6 +84,18 @@ export function CatalogRow({ item, numbered, canChange, busy, ...actions }: Cata
           ) : (
             <span className="font-medium">{item.name}</span>
           )}
+          {item.description && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label={`About ${item.name}`} className="text-muted-foreground hover:text-foreground">
+                  <Info className="size-4" aria-hidden />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-left">
+                {item.description}
+              </TooltipContent>
+            </Tooltip>
+          )}
           {item.removedAt && <Badge variant="destructive">No longer listed</Badge>}
           {comic && !comic.enabled && <Badge variant="secondary">Hidden</Badge>}
         </div>
@@ -94,6 +113,23 @@ export function CatalogRow({ item, numbered, canChange, busy, ...actions }: Cata
             <span title="Where the comic starts at its source" className="text-xs">
               Starts {start}
             </span>
+          )}
+          {item.tags?.map((tag) =>
+            onTagClick ? (
+              <button
+                key={tag}
+                type="button"
+                aria-pressed={activeTag === tag}
+                title={activeTag === tag ? 'Show every genre' : `Show only ${tag}`}
+                onClick={() => onTagClick(tag)}
+              >
+                <Badge variant={activeTag === tag ? 'default' : 'outline'}>{tag}</Badge>
+              </button>
+            ) : (
+              <Badge key={tag} variant="outline">
+                {tag}
+              </Badge>
+            ),
           )}
         </div>
       </div>
