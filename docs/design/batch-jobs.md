@@ -44,7 +44,7 @@ public DailyJobScheduler(
 Key methods:
 
 - `executeScheduled()` -- Called by `SchedulerTriggers`. Checks pause state and whether the job already ran today before executing.
-- `triggerManually()` -- For API-driven manual runs. Bypasses the "already ran today" check.
+- `triggerManually()` -- For API-driven manual runs. Bypasses the "already ran today" check. Runs in the background through `ManualJobLauncher` (a `TaskExecutorJobOperator` on `manualJobTaskExecutor`, `manual-job-*` threads with `MdcTaskDecorator`, so the job's log lines keep the request's `req=` and `user=`) and returns the execution id at once. Scheduled and `STARTUP_MAKEUP` runs stay on the calling thread. Each scheduler's lock allows one run of its job at a time and is released when the run ends, on whichever thread.
 - `runMissedExecutionIfNeeded()` -- Called by `StartupJobRunner` on application startup. Compares current time against the cron schedule; if past the scheduled time and job hasn't run today, triggers a `STARTUP_MAKEUP` run. "Today" is the date in `batch.timezone`, not the JVM's zone.
 
 ### PeriodicJobScheduler
