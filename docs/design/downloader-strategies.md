@@ -164,11 +164,11 @@ A 429 that surfaces as a Jsoup `HttpStatusException` (sources that fetch pages w
 
 Only daily sources retry; indexed sources (Freefall) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
 
-**Browser identity:** GoComics sits behind Cloudflare, so requests present as desktop Chrome. `downloader.user-agent.default-value` carries the Chrome UA, and `GoComicsDownloaderStrategy` derives matching `Sec-Ch-Ua` client hints from the Chrome major version in that UA (omitted for non-Chrome UAs). Keep the Chrome major version current ([Chromium Dash](https://chromiumdash.appspot.com/releases)); a stale browser version is a bot signal. Bump `UserAgentService.FALLBACK_USER_AGENT` at the same time. `Accept-Encoding` omits `zstd`, since only gzip and Brotli are decoded.
+**Browser identity:** GoComics sits behind Cloudflare, so requests present as desktop Chrome. `downloader.user-agent.default-value` carries the Chrome UA, and `BrowserFetcher` (used by `GoComicsDownloaderStrategy` and the GoComics catalog) derives matching `Sec-Ch-Ua` client hints from the Chrome major version in that UA (omitted for non-Chrome UAs). Keep the Chrome major version current ([Chromium Dash](https://chromiumdash.appspot.com/releases)); a stale browser version is a bot signal. Bump `UserAgentService.FALLBACK_USER_AGENT` at the same time. `Accept-Encoding` omits `zstd`, since only gzip and Brotli are decoded.
 
 ## Strategy Dispatch
 
-`ComicDownloaderFacade` maintains a `ConcurrentHashMap<String, ComicDownloaderStrategy>` of registered strategies. Each strategy self-registers at startup via `@PostConstruct` calling `registerDownloaderStrategy(source, strategy)`.
+`ComicDownloaderFacade` maintains a `ConcurrentHashMap<String, ComicDownloaderStrategy>` of registered strategies. `SourceRegistry` fills it at startup: it collects every `ComicSource` bean and registers each one's `downloader()` under its `id()` (see [Comic Sources and Their Catalogs](source-catalog.md)).
 
 The facade routes requests based on strategy type:
 
@@ -208,14 +208,16 @@ Freefall is the first indexed comic source. Notable implementation details:
 
 ## Adding a New Source
 
+A source is a downloader strategy plus one `ComicSource` bean. `SourceRegistry` picks the bean up, registers its downloader, and adds the source to the batch jobs' `source` parameter, comic validation and the Sources page. No other wiring is needed.
+
 ### Daily Comic Source
 
 1. Create a class extending `AbstractDailyDownloaderStrategy`.
 2. Implement `downloadComicImage(ComicDownloadRequest request)` — fetch the page and return raw image bytes.
 3. Implement `downloadAvatarImage(int comicId, String comicName, String sourceIdentifier)` — fetch the avatar image.
 4. Annotate with `@Component` and inject dependencies.
-5. Register via `@PostConstruct` calling `facade.registerDownloaderStrategy(SOURCE, this)`.
-6. Add the source identifier to `ComicDownloaderConfig`.
+5. Add a `@Component` implementing `ComicSource` (`engine.source`). It returns the strategy from `downloader()`, the downloader's name fallback from `identifierFor()`, and its image hosts. Implement `catalog()` and `startDetector()` if the source lists its comics or says where they start, pacing every request through `SourceThrottleService.withRetries`.
+6. Add `downloader.sources.<id>.*` throttle and retry settings, and `downloader.sources.<id>-assets.*` if catalog thumbnails come from a separate image host.
 
 ### Indexed Comic Source
 
@@ -224,9 +226,8 @@ Freefall is the first indexed comic source. Notable implementation details:
 3. Implement `fetchStrip(ComicItem comic, int stripNumber)` — fetch a specific strip by number, return `IndexedStripData`.
 4. Implement `downloadAvatarImage(int comicId, String comicName, String sourceIdentifier)` — fetch the avatar image.
 5. Annotate with `@Component` and inject dependencies.
-6. Register via `@PostConstruct` calling `facade.registerDownloaderStrategy(SOURCE, this)`.
-7. Add the source identifier to `ComicDownloaderConfig`.
-8. Configure backfill parameters in `BackfillSourceConfig` (start strip number, end strip number).
+6. Add a `ComicSource` as for a daily source. A single-comic source (like Freefall) can return a fixed one-entry catalog and a start of strip 1.
+7. Configure backfill parameters in `BackfillSourceConfig`. The first strip number comes from the comic's `firstStripNumber`.
 
 ### Backfill Support
 

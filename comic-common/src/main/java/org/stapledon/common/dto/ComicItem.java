@@ -51,6 +51,9 @@ public class ComicItem implements Comparable<ComicItem> {
     Integer firstStripNumber; // Lowest known strip number (for indexed comics, usually 1)
     Integer lastStripNumber; // Highest downloaded strip number (for indexed comics)
 
+    LocalDate sourceStartDate; // First strip date the source has (daily comics); backfill never scans before it
+    StartSource startSource; // Where sourceStartDate / firstStripNumber came from (null = unknown)
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

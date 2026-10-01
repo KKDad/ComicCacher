@@ -1,0 +1,259 @@
+# =============================================================================
+# Source Types
+# =============================================================================
+# The places comics come from (GoComics, Comics Kingdom, Freefall), each
+# source's catalog of every comic it offers, and the Sources page's actions.
+# =============================================================================
+
+"""
+How a source identifies strips.
+"""
+enum SourceKind {
+    """Strips by date."""
+    DAILY
+
+    """Numbered strips."""
+    INDEXED
+}
+
+"""
+Which catalog entries to list.
+"""
+enum CatalogEntryFilter {
+    """Every entry."""
+    ALL
+
+    """Entries with a configured comic."""
+    CONFIGURED
+
+    """Entries the source lists that aren't configured."""
+    NOT_CONFIGURED
+
+    """Entries the source no longer lists."""
+    REMOVED
+}
+
+"""
+A place comics come from.
+"""
+type Source {
+    """The id comics use in their source field, e.g. "gocomics"."""
+    id: String!
+
+    """The name shown to people, e.g. "GoComics"."""
+    displayName: String!
+
+    """Whether strips are dated or numbered."""
+    kind: SourceKind!
+
+    """Whether the source publishes a list of its comics."""
+    hasCatalog: Boolean!
+
+    """Where the catalog is read from."""
+    catalogUrl: String
+
+    """Whether the source can say where a comic starts."""
+    canDetectStart: Boolean!
+
+    """Comics the source currently lists."""
+    catalogCount: Int!
+
+    """Configured comics from this source."""
+    configuredCount: Int!
+
+    """Configured comics from this source that are downloading."""
+    activeCount: Int!
+
+    """When the catalog was last read successfully."""
+    lastRefreshed: DateTime
+
+    """When a catalog refresh was last tried."""
+    lastRefreshAttempt: DateTime
+
+    """Why the last refresh failed, or null when it worked."""
+    lastRefreshError: String
+
+    """Whether a catalog refresh is running now."""
+    refreshing: Boolean!
+
+    """Throttle, retry and backfill settings, read-only (set in application.properties)."""
+    settings: SourceSettings!
+
+    """Every tag (genre or category) in the source's catalog, by name."""
+    tags: [String!]!
+
+    """The source's catalog, by name, each entry with its configured comic."""
+    catalog(
+        """Matches name, author, identifier or description."""
+        search: String
+        filter: CatalogEntryFilter = ALL
+        """Only entries with this tag."""
+        tag: String
+        """Entries to return (max 500)."""
+        first: Int = 200
+        after: String
+    ): SourceCatalogConnection!
+
+    """Configured comics from this source that its catalog doesn't list."""
+    orphans: [Comic!]!
+}
+
+"""
+A source's effective request and backfill settings.
+"""
+type SourceSettings {
+    userAgent: String
+    throttleMinDelayMs: Int!
+    throttleMaxDelayMs: Int!
+    retryMaxAttempts: Int!
+    retryInitialBackoffMs: Int!
+    retryMaxBackoffMs: Int!
+    backfillEnabled: Boolean!
+    backfillMaxDaysBack: Int!
+    backfillMaxPerRun: Int!
+    backfillMaxPerDay: Int!
+    backfillRecentDays: Int!
+    backfillPreferColor: Boolean!
+}
+
+"""
+One comic in a source's catalog.
+"""
+type SourceCatalogEntry {
+    """The comic's slug at the source; a configured comic's sourceIdentifier."""
+    identifier: String!
+
+    name: String!
+    author: String
+
+    """The source's short description of the comic, or null until it has been read."""
+    description: String
+
+    """The comic's genres or categories at the source."""
+    tags: [String!]!
+
+    """The comic's page at the source."""
+    pageUrl: String!
+
+    """The cached thumbnail, or null until it has been downloaded (see requestCatalogThumbnails)."""
+    thumbnailUrl: String
+
+    """Whether a thumbnail download is queued or running."""
+    thumbnailPending: Boolean!
+
+    """The first strip date the source reports, or null."""
+    startDate: Date
+
+    """The first strip number the source reports, for numbered comics, or null."""
+    startStripNumber: Int
+
+    firstSeen: DateTime
+    lastSeen: DateTime
+
+    """When the source stopped listing the comic, or null while it is listed."""
+    removedAt: DateTime
+
+    """The configured comic, or null."""
+    comic: Comic
+}
+
+"""
+Paginated catalog entries.
+"""
+type SourceCatalogConnection {
+    edges: [SourceCatalogEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""
+Edge containing a catalog entry and its cursor.
+"""
+type SourceCatalogEdge {
+    node: SourceCatalogEntry!
+    cursor: String!
+}
+
+extend type Comic {
+    """Whether an avatar download is queued or running."""
+    avatarPending: Boolean!
+
+    """Whether start detection is queued or running."""
+    startPending: Boolean!
+
+    """The first strip date the source reports, which may differ from sourceStartDate when an admin set it."""
+    reportedStartDate: Date
+
+    """The first strip number the source reports, for numbered comics."""
+    reportedStartStripNumber: Int
+}
+
+"""
+Input for adding a comic from its source's catalog.
+"""
+input AddComicFromCatalogInput {
+    source: String!
+    identifier: String!
+    """Download new strips."""
+    active: Boolean = true
+    """Show the comic to readers."""
+    enabled: Boolean = true
+}
+
+"""
+Payload for work queued on a comic (avatar download, start detection).
+"""
+type QueueComicTaskPayload {
+    """Whether the work was queued (false when the queue is full or the source can't do it)."""
+    queued: Boolean!
+    comic: Comic
+    errors: [UserError!]!
+}
+
+"""
+Payload for requestCatalogThumbnails.
+"""
+type RequestCatalogThumbnailsPayload {
+    """How many downloads were queued."""
+    queued: Int!
+    errors: [UserError!]!
+}
+
+extend type Query {
+    """
+    Every comic source, with its catalog summary and settings.
+    """
+    sources: [Source!]! @hasRole(role: "OPERATOR")
+
+    """
+    One comic source.
+    """
+    source(id: String!): Source @hasRole(role: "OPERATOR")
+}
+
+extend type Mutation {
+    """
+    Read a source's catalog now (runs SourceCatalogJob for that source, forced).
+    """
+    refreshSourceCatalog(source: String!): TriggerBatchJobPayload! @hasRole(role: "ADMIN")
+
+    """
+    Configure a comic from its source's catalog, with defaults. Queues its avatar and start detection.
+    """
+    addComicFromCatalog(input: AddComicFromCatalogInput!): CreateComicPayload! @hasRole(role: "ADMIN")
+
+    """
+    Queue a download of a comic's avatar.
+    """
+    fetchComicAvatar(id: Int!): QueueComicTaskPayload! @hasRole(role: "ADMIN")
+
+    """
+    Queue reading where a comic starts from its source.
+    """
+    detectComicStart(id: Int!): QueueComicTaskPayload! @hasRole(role: "ADMIN")
+
+    """
+    Queue downloads of catalog thumbnails (at most 100 per call). Only what someone is looking at should be asked for.
+    """
+    requestCatalogThumbnails(source: String!, identifiers: [String!]!): RequestCatalogThumbnailsPayload! @hasRole(role: "OPERATOR")
+}

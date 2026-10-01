@@ -1,0 +1,95 @@
+[
+  {
+    "slug": "wannabe",
+    "title": {
+      "rendered": "Wannabe"
+    },
+    "excerpt": {
+      "rendered": "<p>A young artist&#8217;s life in <em>Berlin</em>.</p>\n",
+      "protected": false
+    },
+    "class_list": [
+      "post-1",
+      "ck_feature",
+      "ck_feature_type-comic",
+      "ck_genre-slice-of-life",
+      "ck_genre-humor",
+      "ck_feature_syndicate-king-features"
+    ],
+    "meta": {
+      "ck_byline_on_app": "By Luca Debus"
+    },
+    "ck_oldest_comic": {
+      "slug": "wannabe-2024-01-14",
+      "date": "2024-01-14"
+    },
+    "_embedded": {
+      "wp:featuredmedia": [
+        {
+          "source_url": "https://wp.comicskingdom.com/comicskingdom-redesign-uploads-production/2025/10/Cover-Image.png"
+        }
+      ]
+    }
+  },
+  {
+    "slug": "mostly-gravy",
+    "title": {
+      "rendered": "Mostly Gravy"
+    },
+    "meta": {
+      "ck_byline_on_app": "By Ellen Liebenthal"
+    },
+    "ck_oldest_comic": {
+      "slug": "mostly-gravy-2025-10-20",
+      "date": "2025-10-20"
+    },
+    "_embedded": {
+      "wp:featuredmedia": [
+        {
+          "source_url": "https://wp.comicskingdom.com/comicskingdom-redesign-uploads-production/2025/10/Feature-Image-copy.jpg"
+        }
+      ]
+    }
+  },
+  {
+    "slug": "phantom-2040-a-new-shadow",
+    "title": {
+      "rendered": "Phantom 2040: A New Shadow"
+    },
+    "meta": {
+      "ck_byline_on_app": "By Alex Segura, Michael Moreci, John Amor"
+    },
+    "ck_oldest_comic": {
+      "slug": "phantom-2040-a-new-shadow-2025-09-24",
+      "date": "2025-09-24"
+    },
+    "_embedded": {
+      "wp:featuredmedia": [
+        {
+          "source_url": "https://wp.comicskingdom.com/comicskingdom-redesign-uploads-production/2025/09/Phantom-2040_Ck-Feature-Header.jpg"
+        }
+      ]
+    }
+  },
+  {
+    "slug": "Bad Slug!",
+    "title": {
+      "rendered": "Skipped"
+    },
+    "meta": {},
+    "ck_oldest_comic": null
+  },
+  {
+    "slug": "hagar-the-horrible",
+    "title": {
+      "rendered": "Hagar &#8211; The Horrible"
+    },
+    "meta": {
+      "ck_byline_on_app": "By Chris Browne"
+    },
+    "ck_oldest_comic": {
+      "slug": "hagar-the-horrible-2019-01-01",
+      "date": "2019-01-01"
+    }
+  }
+]

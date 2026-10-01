@@ -1,0 +1,161 @@
+# Sources page: each comic source, its catalog, and the actions on it
+
+fragment SourceComicFields on Comic {
+  id
+  name
+  source
+  sourceIdentifier
+  enabled
+  active
+  avatarUrl
+  avatarAvailable
+  avatarPending
+  oldest
+  newest
+  firstStripNumber
+  lastStripNumber
+  sourceStartDate
+  startSource
+  startPending
+  reportedStartDate
+  reportedStartStripNumber
+}
+
+query GetSources {
+  sources {
+    id
+    displayName
+    kind
+    hasCatalog
+    catalogUrl
+    canDetectStart
+    catalogCount
+    configuredCount
+    activeCount
+    lastRefreshed
+    lastRefreshAttempt
+    lastRefreshError
+    refreshing
+    settings {
+      userAgent
+      throttleMinDelayMs
+      throttleMaxDelayMs
+      retryMaxAttempts
+      retryInitialBackoffMs
+      retryMaxBackoffMs
+      backfillEnabled
+      backfillMaxDaysBack
+      backfillMaxPerRun
+      backfillMaxPerDay
+      backfillRecentDays
+      backfillPreferColor
+    }
+  }
+}
+
+query GetSourceCatalog($id: String!, $first: Int, $after: String) {
+  source(id: $id) {
+    id
+    displayName
+    kind
+    hasCatalog
+    canDetectStart
+    catalogCount
+    configuredCount
+    activeCount
+    lastRefreshed
+    lastRefreshError
+    refreshing
+    catalog(first: $first, after: $after) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          identifier
+          name
+          author
+          description
+          tags
+          pageUrl
+          thumbnailUrl
+          thumbnailPending
+          startDate
+          startStripNumber
+          removedAt
+          comic {
+            ...SourceComicFields
+          }
+        }
+      }
+    }
+    orphans {
+      ...SourceComicFields
+    }
+  }
+}
+
+mutation RefreshSourceCatalog($source: String!) {
+  refreshSourceCatalog(source: $source) {
+    batchJob {
+      executionId
+      status
+    }
+    errors {
+      message
+      field
+    }
+  }
+}
+
+mutation AddComicFromCatalog($input: AddComicFromCatalogInput!) {
+  addComicFromCatalog(input: $input) {
+    comic {
+      ...SourceComicFields
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+
+mutation UpdateSourceComic($id: Int!, $input: UpdateComicInput!) {
+  updateComic(id: $id, input: $input) {
+    comic {
+      ...SourceComicFields
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+
+mutation FetchComicAvatar($id: Int!) {
+  fetchComicAvatar(id: $id) {
+    queued
+    errors {
+      message
+    }
+  }
+}
+
+mutation DetectComicStart($id: Int!) {
+  detectComicStart(id: $id) {
+    queued
+    errors {
+      message
+    }
+  }
+}
+
+mutation RequestCatalogThumbnails($source: String!, $identifiers: [String!]!) {
+  requestCatalogThumbnails(source: $source, identifiers: $identifiers) {
+    queued
+  }
+}

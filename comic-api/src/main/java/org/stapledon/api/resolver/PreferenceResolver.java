@@ -13,6 +13,7 @@ import org.stapledon.api.dto.payload.MutationPayloads.UpdateDisplaySettingsPaylo
 import org.stapledon.api.dto.payload.MutationPayloads.UpdateLastReadPayload;
 import org.stapledon.api.dto.preference.UserPreference;
 import org.stapledon.core.preference.service.PreferenceService;
+import org.stapledon.engine.management.ManagementFacade;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -32,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 public class PreferenceResolver {
 
     private final PreferenceService preferenceService;
+    private final ManagementFacade comicManagementFacade;
+    private final ComicVisibility visibility;
 
     // =========================================================================
     // Queries
@@ -54,7 +57,20 @@ public class PreferenceResolver {
     // =========================================================================
 
     /**
-     * Convert Map<Integer, LocalDate> to List<LastReadEntry> for GraphQL.
+     * The user's favorite comic ids, leaving out comics hidden from them. The preference itself keeps them, so they come back if the comic is shown again.
+     */
+    @SchemaMapping(typeName = "UserPreference", field = "favoriteComics")
+    public List<Integer> favoriteComics(UserPreference preference) {
+        if (preference.getFavoriteComics() == null) {
+            return List.of();
+        }
+        return preference.getFavoriteComics().stream()
+                .filter(this::isVisible)
+                .toList();
+    }
+
+    /**
+     * Convert Map<Integer, LocalDate> to List<LastReadEntry> for GraphQL, leaving out comics hidden from the user.
      */
     @SchemaMapping(typeName = "UserPreference", field = "lastReadDates")
     public List<LastReadEntry> lastReadDates(UserPreference preference) {
@@ -62,8 +78,14 @@ public class PreferenceResolver {
             return List.of();
         }
         return preference.getLastReadDates().entrySet().stream()
+                .filter(e -> isVisible(e.getKey()))
                 .map(e -> new LastReadEntry(e.getKey(), e.getValue()))
                 .toList();
+    }
+
+    /** A comic id the caller may see; ids of comics that no longer exist pass, as before. */
+    private boolean isVisible(int comicId) {
+        return comicManagementFacade.getComic(comicId).map(visibility::canSee).orElse(true);
     }
 
     // =========================================================================

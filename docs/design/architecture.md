@@ -140,7 +140,7 @@ The single active cache stores `ComicItem` configuration data:
 
 **Cached operations** (in `ComicManagementFacade`):
 - `getAllComics()` -- cached under key `allComics`
-- Evicted on: `createComic()`, `updateComic()`, `deleteComic()`, `downloadMissingAvatars()`
+- Dropped on every comic write: every write goes through `ComicManagementFacade.persist()` (and `deleteComic()`, `refreshComicList()`), which clears the cache directly. Annotations wouldn't work here: most writes are calls from inside the class, which skip Spring's proxy
 
 ## Build System
 

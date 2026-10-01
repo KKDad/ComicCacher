@@ -137,6 +137,20 @@ class StorageMetricsCollectorTest {
     }
 
     @Test
+    void updateStats_leavesOutTheTemporaryFolder() throws IOException {
+        cacheStatsUpdater.updateStats();
+        long before = cacheStatsUpdater.cacheStats().getTotalStorageBytes();
+        File thumbnails = new File(cacheRoot, "tmp/catalog-thumbnails/gocomics/2026");
+        thumbnails.mkdirs();
+        createDummyImage(thumbnails, "calvinandhobbes.png", 5000);
+
+        cacheStatsUpdater.updateStats();
+
+        assertThat(cacheStatsUpdater.cacheStats().getPerComicMetrics()).containsOnlyKeys("CalvinAndHobbes", "Garfield");
+        assertThat(cacheStatsUpdater.cacheStats().getTotalStorageBytes()).isEqualTo(before);
+    }
+
+    @Test
     void updateStats_createsStorageByYearMetrics() {
         // Act
         boolean result = cacheStatsUpdater.updateStats();

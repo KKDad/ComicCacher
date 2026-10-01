@@ -16,19 +16,11 @@
 - Flag anything unexpected: log lines that match none of the known signatures, new WARN/ERROR messages, and error rates that jump compared with earlier runs, rather than reporting only the failures it already knows how to look for
 - Priority: High
 
-## Fix comic mutations dropping fields
-
-- `updateComic` and `createComic` in `ComicResolver` ignore `publicationDays` and `active` from their inputs, so changes to them are silently lost
-- Neither input can set `firstStripNumber` / `lastStripNumber`, so indexed comics (Freefall) can't be created through the API
-- For now, prod config changes mean stopping the API and editing `comics.json` by hand
-- Add resolver tests that each input field reaches the saved `ComicItem`
-- Priority: High. Raised from Medium: it silently loses admin edits, and the workaround is a prod outage to hand-edit `comics.json`. It also blocks every comic-management feature below
-
 ## Check the operator role on the server for the operations pages
 
 - `/metrics`, `/retrieval-status` and `/batch-jobs` are hidden from USER accounts only by the nav (`isOperator` in `sidebar.tsx`, `nav-rail.tsx`, `header.tsx`). A USER who types the URL gets the page, and only the API's rejection of its queries stops them
 - Next's authentication and data-security guides put authorization checks in server code, next to the data, not in what the UI shows
-- Move the three pages into a route group (e.g. `(dashboard)/(operations)/layout.tsx`) whose server layout calls `getSession()` and `isOperator()`, and calls `notFound()` otherwise (or `forbidden()`, which needs the experimental `authInterrupts` flag)
+- Move the three pages into a route group (e.g. `(dashboard)/(operations)/layout.tsx`) whose server layout calls `getSession()` and `isOperator()`, and calls `notFound()` otherwise (or `forbidden()`, which needs the experimental `authInterrupts` flag). `/sources` already does this in `sources/layout.tsx`; follow that pattern
 - Confirm the API rejects each operations query and mutation for USER accounts too, and add a layout test for the USER case
 - Priority: Medium-High. Unchanged: authorization belongs on the server, and confirming the API side is cheap
 
@@ -147,31 +139,12 @@
 - dosage implements this — set a `User-Agent` and respect disallow rules
 - Priority: Medium. Unchanged: decide first what to do if a source disallows a path we need
 
-### Fetch All Comics from a Source and Toggle Them On/Off
+### Edit Source Settings on the Sources Page
 
-- Today the comic configuration (`comics.json`) is hand-coded: adding a comic means knowing its source URL and editing the file
-- Fetch the full list of comics each source offers (e.g. GoComics A–Z, ComicsKingdom guide), store it, and let an admin turn any comic on or off with a single toggle
-- Turning a comic on should create its configuration with sensible defaults; turning it off should stop downloads without deleting its stored strips
-- Overlaps with the Sources Configuration Screen below; this is the smaller first step
+- The Sources page shows each source's throttle, 429 retry and backfill settings read-only; they live in `application.properties` and need a redeploy to change
+- Keep overrides in a `sources.json` in the cache root on top of the properties, and have `SourceThrottleService` and `BackfillConfigurationService` read the effective values on every call, so a change applies at once. Show which values are overridden
+- Also a per-source on/off switch (backfill already has `batch.comic-backfill.sources.<id>.enabled`)
 - Priority: Low
-
-### Sources Configuration Screen
-
-- Admin UI to add/remove comics and configure source-specific settings (e.g., scraping frequency, date range)
-- Name of Source, Enabled/Disabled toggle, # of configured comics from source (if Applicable)
-- Should also cover the per-source throttle and retry settings, which today live in `application.properties` and need a redeploy to change
-- For Example:
-  - GoComics
-    - Fetch list from https://www.gocomics.com/comics/a-to-z
-    - Max days back to fetch: 14 (days) (With optional auto-detect)
-    - I've got 8 of 400 comics configured
-      - Add a button to force re-fetching the list of available comics from the source
-      - Add a button to Run Comics-Backfill on an individual comic or source
-  - ComicsKingdom
-    - Fetch list from https://www.comicskingdom.com/guide
-    - Max days back to fetch: 30 (days)
-    - I've got 5 of 200 comics configured
-- Priority: Low. Lowered from Medium: a large feature that needs the mutation fix first and should follow the smaller toggle step below
 
 ### Promote Comics from Dev to Prod
 

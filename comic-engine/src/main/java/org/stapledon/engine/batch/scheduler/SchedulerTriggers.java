@@ -29,19 +29,22 @@ public class SchedulerTriggers {
     private final DailyJobScheduler imageMetadataBackfillJobScheduler;
     private final DailyJobScheduler metricsArchiveJobScheduler;
     private final DailyJobScheduler retrievalRecordPurgeJobScheduler;
+    private final DailyJobScheduler sourceCatalogJobScheduler;
 
     public SchedulerTriggers(@Qualifier("avatarBackfillJobScheduler") DailyJobScheduler avatarBackfillJobScheduler,
                              @Qualifier("comicBackfillJobScheduler") DailyJobScheduler comicBackfillJobScheduler,
                              @Qualifier("comicDownloadJobScheduler") DailyJobScheduler comicDownloadJobScheduler,
                              @Qualifier("imageMetadataBackfillJobScheduler") DailyJobScheduler imageMetadataBackfillJobScheduler,
                              @Qualifier("metricsArchiveJobScheduler") DailyJobScheduler metricsArchiveJobScheduler,
-                             @Qualifier("retrievalRecordPurgeJobScheduler") DailyJobScheduler retrievalRecordPurgeJobScheduler) {
+                             @Qualifier("retrievalRecordPurgeJobScheduler") DailyJobScheduler retrievalRecordPurgeJobScheduler,
+                             @Qualifier("sourceCatalogJobScheduler") DailyJobScheduler sourceCatalogJobScheduler) {
         this.avatarBackfillJobScheduler = avatarBackfillJobScheduler;
         this.comicBackfillJobScheduler = comicBackfillJobScheduler;
         this.comicDownloadJobScheduler = comicDownloadJobScheduler;
         this.imageMetadataBackfillJobScheduler = imageMetadataBackfillJobScheduler;
         this.metricsArchiveJobScheduler = metricsArchiveJobScheduler;
         this.retrievalRecordPurgeJobScheduler = retrievalRecordPurgeJobScheduler;
+        this.sourceCatalogJobScheduler = sourceCatalogJobScheduler;
     }
 
     // ==================== Daily Job Triggers ====================
@@ -90,6 +93,14 @@ public class SchedulerTriggers {
     public void triggerRetrievalRecordPurge() {
         if (retrievalRecordPurgeJobScheduler != null) {
             retrievalRecordPurgeJobScheduler.executeScheduled();
+        }
+    }
+
+    @Scheduled(cron = "${batch.source-catalog.cron}", zone = "${batch.timezone}")
+    @ConditionalOnProperty(name = "batch.source-catalog.enabled", havingValue = "true", matchIfMissing = true)
+    public void triggerSourceCatalog() {
+        if (sourceCatalogJobScheduler != null) {
+            sourceCatalogJobScheduler.executeScheduled();
         }
     }
 

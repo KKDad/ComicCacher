@@ -35,7 +35,7 @@ type Comic {
     newest: Date
 
     """
-    Whether this comic is enabled for display.
+    Whether this comic is visible to readers. Hidden comics are seen only by admins.
     """
     enabled: Boolean
 
@@ -71,9 +71,29 @@ type Comic {
     publicationDays: [DayOfWeek!]
 
     """
-    Whether this comic is actively publishing new strips.
+    Whether new strips are downloaded (daily download and backfill).
     """
     active: Boolean
+
+    """
+    Lowest strip number, for numbered (indexed) comics such as Freefall.
+    """
+    firstStripNumber: Int
+
+    """
+    Highest downloaded strip number, for numbered (indexed) comics.
+    """
+    lastStripNumber: Int
+
+    """
+    First strip date the source has, for daily comics. Backfill never scans before it.
+    """
+    sourceStartDate: Date
+
+    """
+    Where the start value (sourceStartDate or firstStripNumber) came from, or null when unknown.
+    """
+    startSource: StartSource
 
     # -------------------------------------------------------------------------
     # Strip Navigation
@@ -247,6 +267,17 @@ type SearchResults {
 # =============================================================================
 
 """
+Where a comic's start value came from.
+"""
+enum StartSource {
+    """Read from the source, or proven by a stored strip."""
+    DETECTED
+
+    """Set by an admin. Detection never overwrites it."""
+    MANUAL
+}
+
+"""
 Days of the week.
 """
 enum DayOfWeek {
@@ -303,9 +334,24 @@ input CreateComicInput {
     publicationDays: [DayOfWeek!]
 
     """
-    Whether this comic is actively publishing.
+    Whether new strips are downloaded.
     """
     active: Boolean = true
+
+    """
+    Lowest strip number, for numbered (indexed) comics such as Freefall.
+    """
+    firstStripNumber: Int
+
+    """
+    Highest downloaded strip number, for numbered (indexed) comics.
+    """
+    lastStripNumber: Int
+
+    """
+    First strip date the source has, for daily comics. Backfill never scans before it.
+    """
+    sourceStartDate: Date
 }
 
 """
@@ -349,7 +395,22 @@ input UpdateComicInput {
     publicationDays: [DayOfWeek!]
 
     """
-    Whether this comic is actively publishing.
+    Whether new strips are downloaded.
     """
     active: Boolean
+
+    """
+    Lowest strip number, for numbered (indexed) comics such as Freefall.
+    """
+    firstStripNumber: Int
+
+    """
+    Highest downloaded strip number, for numbered (indexed) comics.
+    """
+    lastStripNumber: Int
+
+    """
+    First strip date the source has, for daily comics. Backfill never scans before it.
+    """
+    sourceStartDate: Date
 }

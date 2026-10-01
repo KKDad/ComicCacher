@@ -1,9 +1,9 @@
 package org.stapledon.metrics.collector;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.stapledon.common.config.CacheLayout;
 import org.stapledon.common.dto.ComicStorageMetrics;
 import org.stapledon.common.dto.ImageCacheStats;
-import org.stapledon.metrics.repository.MetricsArchiver;
 
 import java.io.File;
 import java.util.Arrays;
@@ -55,10 +55,7 @@ public class StorageMetricsCollector {
         cacheStats = new ImageCacheStats();
 
         // Get all comic directories (one level down from root)
-        File[] comicDirs = root.listFiles(file -> file.isDirectory()
-                && !"@eaDir".equals(file.getName())
-                && !"batch-logs".equals(file.getName())
-                && !MetricsArchiver.HISTORY_DIRECTORY.equals(file.getName()));
+        File[] comicDirs = root.listFiles(file -> file.isDirectory() && CacheLayout.isComicDirectory(file.getName()));
         if (comicDirs == null || comicDirs.length == 0) {
             log.warn("No comic directories found in {}", cacheDirectory);
             return true;

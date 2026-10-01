@@ -12,6 +12,7 @@ query {
     search: String
     active: Boolean
     enabled: Boolean
+    includeHidden: Boolean = false
     first: Int = 20
     after: String
   ): ComicConnection!
@@ -23,8 +24,9 @@ query {
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `search` | `String` | -- | Filter comics by name or author |
-| `active` | `Boolean` | -- | Filter by actively publishing status |
-| `enabled` | `Boolean` | -- | Filter by enabled status |
+| `active` | `Boolean` | -- | Filter by whether new strips are downloaded |
+| `enabled` | `Boolean` | -- | Filter by enabled (visible) status |
+| `includeHidden` | `Boolean` | `false` | Include hidden (`enabled: false`) comics. Honoured for admins only; everyone else never sees hidden comics, here or in `comic`, `search` and `randomStrip` |
 | `first` | `Int` | `20` | Number of comics to return (max 50) |
 | `after` | `String` | -- | Cursor for pagination |
 
@@ -211,13 +213,24 @@ mutation {
 | `name` | `String!` | -- | Display name |
 | `author` | `String` | -- | Author/creator |
 | `description` | `String` | -- | Description |
-| `enabled` | `Boolean` | `true` | Whether enabled for display |
+| `enabled` | `Boolean` | `true` | Whether readers see it |
 | `source` | `String` | -- | Source provider (e.g., "gocomics") |
 | `sourceIdentifier` | `String` | -- | Source's identifier for this comic |
 | `publicationDays` | `[DayOfWeek!]` | -- | Days it publishes (null = daily) |
-| `active` | `Boolean` | `true` | Whether actively publishing |
+| `active` | `Boolean` | `true` | Whether new strips are downloaded |
+| `firstStripNumber` | `Int` | -- | First strip number; required for numbered sources (Freefall) |
+| `lastStripNumber` | `Int` | -- | Highest strip number downloaded |
+| `sourceStartDate` | `Date` | -- | First strip date the source has |
 
 **Returns:** `CreateComicPayload!` -- `{ comic: Comic, errors: [UserError!]! }`
+
+The comic gets the next free id. A start given here (`sourceStartDate` or `firstStripNumber`) is recorded as `startSource: MANUAL`.
+
+**Validation** (errors come back in `errors` with code `VALIDATION_ERROR` and `field` like `input.sourceIdentifier`; nothing is saved):
+- `name` is required, unique (ignoring case), doesn't share another comic's storage folder, and isn't reserved for the cache's own folders (`tmp`, `batch-logs`, ...).
+- `source` must be a registered source.
+- `sourceIdentifier` must be lower-case letters, digits, `-` or `_`, and no other comic may already be that source comic.
+- `firstStripNumber` is at least 1 and not after `lastStripNumber`; `sourceStartDate` isn't in the future.
 
 ```graphql
 mutation {
@@ -261,13 +274,18 @@ mutation {
 | `name` | `String` | Display name |
 | `author` | `String` | Author/creator |
 | `description` | `String` | Description |
-| `enabled` | `Boolean` | Whether enabled for display |
+| `enabled` | `Boolean` | Whether readers see it |
 | `source` | `String` | Source provider |
 | `sourceIdentifier` | `String` | Source identifier |
 | `publicationDays` | `[DayOfWeek!]` | Publication days |
-| `active` | `Boolean` | Whether actively publishing |
+| `active` | `Boolean` | Whether new strips are downloaded |
+| `firstStripNumber` | `Int` | First strip number |
+| `lastStripNumber` | `Int` | Highest strip number downloaded |
+| `sourceStartDate` | `Date` | First strip date the source has |
 
 **Returns:** `UpdateComicPayload!` -- `{ comic: Comic, errors: [UserError!]! }`
+
+The same validation as `createComic`, applied only to the fields that change, so a value saved before the rules existed never blocks an unrelated change. A new start is recorded as `startSource: MANUAL`. A stored strip older than the start corrects it on save (see [start dates](../design/source-catalog.md#start-dates)).
 
 ```graphql
 mutation {
@@ -374,14 +392,18 @@ GET /api/v1/comics/42/strip/2026-03-19
 | `author` | `String` | Author/creator |
 | `oldest` | `Date` | Date of oldest cached strip |
 | `newest` | `Date` | Date of newest cached strip |
-| `enabled` | `Boolean` | Whether enabled for display |
+| `enabled` | `Boolean` | Whether readers see it. Hidden comics are left out of every query except for admins, and their strip images return 404 |
 | `description` | `String` | Description |
 | `avatarAvailable` | `Boolean` | Whether an avatar image exists |
 | `avatarUrl` | `String` | URL path to avatar (e.g., `/api/v1/comics/123/avatar`) |
 | `source` | `String` | Source provider (e.g., "gocomics", "comicskingdom") |
 | `sourceIdentifier` | `String` | Identifier used by the source |
 | `publicationDays` | `[DayOfWeek!]` | Days the comic publishes (null = daily) |
-| `active` | `Boolean` | Whether actively publishing |
+| `active` | `Boolean` | Whether new strips are downloaded |
+| `firstStripNumber` / `lastStripNumber` | `Int` | Strip number range, for numbered comics |
+| `sourceStartDate` | `Date` | First strip date the source has |
+| `startSource` | `StartSource` | `DETECTED` or `MANUAL` |
+| `avatarPending`, `startPending`, `reportedStartDate`, `reportedStartStripNumber` | | For the Sources page; see [Sources API](sources.md) |
 | `strip(date: Date)` | `ComicStrip` | Strip for a specific date (null = latest) |
 | `strips(dates: [Date!]!)` | `[ComicStrip!]!` | Strips for multiple dates (first 30 only) |
 | `firstStrip` | `ComicStrip` | First (oldest) available strip |

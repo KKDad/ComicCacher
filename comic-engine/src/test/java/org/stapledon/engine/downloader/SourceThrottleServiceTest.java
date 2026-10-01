@@ -1,9 +1,11 @@
 package org.stapledon.engine.downloader;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -153,6 +155,47 @@ class SourceThrottleServiceTest {
 
         assertThat(elapsed).isGreaterThanOrEqualTo(180);
         assertThat(elapsed).isLessThan(500);
+    }
+
+    @Test
+    void withRetries_retriesARateLimitAndReturnsTheResult() throws Exception {
+        SourceThrottleService service = new SourceThrottleService(retryPropertiesFor("retry", 3, 0, 0));
+        int[] calls = {0};
+
+        String result = service.withRetries("retry", () -> {
+            calls[0]++;
+            if (calls[0] < 3) {
+                throw new RateLimitedException("http://x", Optional.empty());
+            }
+            return "ok";
+        });
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(calls[0]).isEqualTo(3);
+    }
+
+    @Test
+    void withRetries_rethrowsTheLastRateLimit() {
+        SourceThrottleService service = new SourceThrottleService(retryPropertiesFor("retry", 2, 0, 0));
+        int[] calls = {0};
+
+        assertThatThrownBy(() -> service.withRetries("retry", () -> {
+            calls[0]++;
+            throw new RateLimitedException("http://x", Optional.empty());
+        })).isInstanceOf(RateLimitedException.class);
+        assertThat(calls[0]).isEqualTo(2);
+    }
+
+    @Test
+    void withRetries_doesNotRetryOtherFailures() {
+        SourceThrottleService service = new SourceThrottleService(retryPropertiesFor("retry", 3, 0, 0));
+        int[] calls = {0};
+
+        assertThatThrownBy(() -> service.withRetries("retry", () -> {
+            calls[0]++;
+            throw new IOException("boom");
+        })).isInstanceOf(IOException.class);
+        assertThat(calls[0]).isEqualTo(1);
     }
 
     private static DownloaderProperties retryPropertiesFor(String source, int maxAttempts, long initialMs, long maxMs) {

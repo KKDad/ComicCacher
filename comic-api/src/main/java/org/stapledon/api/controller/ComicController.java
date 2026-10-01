@@ -58,13 +58,18 @@ public class ComicController {
     }
 
     /**
-     * Retrieve the comic strip image for a specific date.
+     * Retrieve the comic strip image for a specific date. A hidden comic's strips are not served: images are fetched without credentials, so this
+     * endpoint can't tell an admin from a reader.
      */
     @GetMapping("/comics/{comic}/strip/{date}")
     public @ResponseBody ResponseEntity<byte[]> retrieveStrip(
             @PathVariable(name = "comic") Integer comicId,
             @PathVariable(name = "date") LocalDate date) {
         long start = System.nanoTime();
+        boolean hidden = comicManagementFacade.getComic(comicId).map(comic -> !comic.isEnabled()).orElse(false);
+        if (hidden) {
+            throw new ComicImageNotFoundException(comicId, date);
+        }
         return comicManagementFacade.getComicStripOnDate(comicId, date)
                 .map(imageDto -> {
                     byte[] imageBytes = Base64.getDecoder().decode(imageDto.getImageData());

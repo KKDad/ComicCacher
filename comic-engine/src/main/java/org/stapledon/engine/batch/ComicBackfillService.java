@@ -103,7 +103,14 @@ public class ComicBackfillService {
      * {@code max-consecutive-failures} missing strips in a row (it likely didn't exist that far back). Returns the tasks in the order they should run.
      */
     public List<BackfillTask> findMissingStrips(String sourceFilter) {
-        return selectTasks(sourceFilter, true, Integer.MAX_VALUE);
+        return findMissingStrips(sourceFilter, null);
+    }
+
+    /**
+     * Like {@link #findMissingStrips(String)}, limited to one comic when {@code comicId} is not null.
+     */
+    public List<BackfillTask> findMissingStrips(String sourceFilter, Integer comicId) {
+        return selectTasks(sourceFilter, comicId, true, Integer.MAX_VALUE);
     }
 
     /**
@@ -111,18 +118,20 @@ public class ComicBackfillService {
      * Indexed comics whose latest strip number isn't known yet are not counted, because finding it needs a web request.
      */
     public boolean hasMissingStrips(String sourceFilter) {
-        return !selectTasks(sourceFilter, false, 1).isEmpty();
+        return !selectTasks(sourceFilter, null, false, 1).isEmpty();
     }
 
-    private List<BackfillTask> selectTasks(String sourceFilter, boolean allowNetwork, int stopAfter) {
+    private List<BackfillTask> selectTasks(String sourceFilter, Integer comicId, boolean allowNetwork, int stopAfter) {
         if (allowNetwork) {
-            log.info("Scanning for missing comic strips (sourceFilter={})", sourceFilter);
+            log.info("Scanning for missing comic strips (sourceFilter={}, comic={})", sourceFilter, comicId);
         }
 
         List<ComicItem> allComics = managementFacade.getAllComics();
 
         // Pre-filter comics - only active comics with valid, enabled sources
-        List<ComicItem> eligibleComics = filterEligibleComics(allComics, sourceFilter);
+        List<ComicItem> eligibleComics = filterEligibleComics(allComics, sourceFilter).stream()
+                .filter(comic -> comicId == null || comic.getId() == comicId)
+                .toList();
 
         if (allowNetwork) {
             log.info("Found {} eligible comics out of {} total (filtered {} inactive/invalid)",
@@ -438,7 +447,7 @@ public class ComicBackfillService {
      * Takes into account:
      * <ul>
      * <li>Today's date (don't scan future dates)</li>
-     * <li>Comic's known oldest date (don't scan before comic existed)</li>
+     * <li>Comic's first strip at its source ({@code sourceStartDate}) when known, otherwise its oldest stored strip</li>
      * <li>Source-specific max-days-back limit</li>
      * <li>Comic's newest date (for discontinued comics)</li>
      * <li>The comic's or source's learned history horizon</li>
@@ -462,14 +471,16 @@ public class ComicBackfillService {
 
         // Calculate the earliest allowed date based on source limits
 
-        // End at the earliest of: comic's oldest date OR source limit
+        // End at the source limit, or later where the comic starts. A known start date lets backfill reach past the oldest stored strip;
+        // without one, the oldest stored strip is the floor, as before.
         LocalDate scanEnd = config.getEarliestAllowedDate(comic.getSource(), today);
 
-        if (comic.getOldest() != null && comic.getOldest().isAfter(scanEnd)) {
-            scanEnd = comic.getOldest();
+        LocalDate comicStart = comic.getSourceStartDate() != null ? comic.getSourceStartDate() : comic.getOldest();
+        if (comicStart != null && comicStart.isAfter(scanEnd)) {
+            scanEnd = comicStart;
         }
 
-        // Don't go back past what the source has been learned to serve
+        // Don't go back past what the source has been learned to serve. A horizon before a known start date changes nothing.
         Optional<LocalDate> horizon = backfillState.horizonFloor(comic);
         if (horizon.isPresent() && !horizon.get().isBefore(scanEnd)) {
             scanEnd = horizon.get().plusDays(1);

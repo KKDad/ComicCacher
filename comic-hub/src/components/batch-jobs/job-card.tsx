@@ -60,6 +60,7 @@ const JOB_LABELS: Record<string, string> = {
   MetricsArchiveJob: 'Metrics Archive',
   RetrievalRecordPurgeJob: 'Record Purge',
   AvatarBackfillJob: 'Avatar Backfill',
+  SourceCatalogJob: 'Source Catalog',
 };
 
 function cronToHumanReadable(cron: string, timezone: string): string {

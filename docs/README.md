@@ -8,6 +8,7 @@ GraphQL-first API with JWT authentication, three roles (USER, OPERATOR, ADMIN), 
 |----------|-------------|
 | [@~/docs/api/overview.md](api/overview.md) | Architecture, auth model, scalars, pagination, error handling |
 | [@~/docs/api/comics.md](api/comics.md) | Comic queries, mutations, and REST image endpoints |
+| [@~/docs/api/sources.md](api/sources.md) | Comic sources, their catalogs, and the Sources page's actions |
 | [@~/docs/api/auth.md](api/auth.md) | Registration, login, JWT lifecycle |
 | [@~/docs/api/users.md](api/users.md) | Profile management and display preferences |
 | [@~/docs/api/batch-jobs.md](api/batch-jobs.md) | Job execution, scheduling, and log queries |
@@ -24,6 +25,7 @@ Architecture decisions, data flows, and internal patterns.
 | [@~/docs/design/architecture.md](design/architecture.md) | Module graph, key classes, facade pattern |
 | [@~/docs/design/download-pipeline.md](design/download-pipeline.md) | End-to-end download, validate, dedup, store flow |
 | [@~/docs/design/downloader-strategies.md](design/downloader-strategies.md) | Strategy hierarchy, daily vs. indexed comics, adding new sources |
+| [@~/docs/design/source-catalog.md](design/source-catalog.md) | `ComicSource`, source catalogs, thumbnails, start dates, visibility |
 | [@~/docs/design/batch-jobs.md](design/batch-jobs.md) | Scheduler framework, job configs, execution tracking |
 | [@~/docs/design/image-validation.md](design/image-validation.md) | 3-layer validation, dedup, and analysis pipeline |
 | [@~/docs/design/adding-batch-jobs.md](design/adding-batch-jobs.md) | Developer guide for new job creation |

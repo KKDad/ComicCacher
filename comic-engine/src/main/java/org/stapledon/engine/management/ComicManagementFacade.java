@@ -3,8 +3,10 @@ package org.stapledon.engine.management;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +37,7 @@ import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.SaveResult;
+import org.stapledon.common.dto.StartSource;
 import org.stapledon.common.dto.StripLoaderKey;
 import org.stapledon.common.dto.StripLoaderKey.DateStripKey;
 import org.stapledon.common.dto.StripLoaderKey.BoundaryStripKey;
@@ -60,6 +63,10 @@ public class ComicManagementFacade implements ManagementFacade {
     private final RetrievalStatusService retrievalStatusService;
     private final Executor sourceDownloadExecutor;
     private final Clock clock;
+    private final ObjectProvider<CacheManager> cacheManager;
+
+    /** Serialises every write to comics.json (load, change, save), and id assignment. */
+    private final Object configLock = new Object();
 
     /**
      * In-memory cache of comics for O(1) lookups.
@@ -78,21 +85,25 @@ public class ComicManagementFacade implements ManagementFacade {
      * </p>
      * <p>
      * Thread safety: ConcurrentHashMap provides thread-safe read/write operations.
-     * However, the write-through to config file is not atomic - see individual
-     * mutation methods for transaction handling.
+     * Every write-through to the config file goes through {@link #persist(ComicItem)}, which holds {@link #configLock}.
      * </p>
      */
     private final Map<Integer, ComicItem> comics = new ConcurrentHashMap<>();
 
+    /** The Caffeine cache holding {@link #getAllComics()}; comic-api's CaffeineCacheConfiguration creates it. */
+    static final String COMIC_METADATA_CACHE = "comicMetadata";
+
     public ComicManagementFacade(ComicStorageFacade storageFacade, ComicConfigurationService configFacade,
             DownloaderFacade downloaderFacade, RetrievalStatusService retrievalStatusService,
-            @Qualifier("sourceDownloadExecutor") Executor sourceDownloadExecutor, Clock clock) {
+            @Qualifier("sourceDownloadExecutor") Executor sourceDownloadExecutor, Clock clock,
+            ObjectProvider<CacheManager> cacheManager) {
         this.storageFacade = storageFacade;
         this.configFacade = configFacade;
         this.downloaderFacade = downloaderFacade;
         this.retrievalStatusService = retrievalStatusService;
         this.sourceDownloadExecutor = sourceDownloadExecutor;
         this.clock = clock;
+        this.cacheManager = cacheManager;
 
         // Load comics from configuration
         refreshComicList();
@@ -101,7 +112,7 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
-    @Cacheable(value = "comicMetadata", key = "'allComics'")
+    @Cacheable(value = COMIC_METADATA_CACHE, key = "'allComics'")
     public List<ComicItem> getAllComics() {
         List<ComicItem> result = new ArrayList<>(comics.values());
         Collections.sort(result);
@@ -126,40 +137,30 @@ public class ComicManagementFacade implements ManagementFacade {
                 .findFirst();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * An id of 0 means "assign one": the new comic gets the highest existing id plus one. An explicit id that is already taken fails.
+     */
     @Override
-    @CacheEvict(value = "comicMetadata", key = "'allComics'")
     public Optional<ComicItem> createComic(ComicItem comicItem) {
-        // Don't create if already exists
-        if (comics.containsKey(comicItem.getId())) {
-            return Optional.empty();
+        synchronized (configLock) {
+            ComicItem toCreate = comicItem;
+            if (toCreate.getId() == 0) {
+                int nextId = comics.keySet().stream().mapToInt(Integer::intValue).max().orElse(0) + 1;
+                toCreate = toCreate.toBuilder().id(nextId).build();
+            }
+            if (comics.containsKey(toCreate.getId())) {
+                return Optional.empty();
+            }
+            return Optional.of(persist(toCreate));
         }
-
-        comics.put(comicItem.getId(), comicItem);
-
-        // Save to configuration
-        ComicConfig config = configFacade.loadComicConfig();
-        config.getItems().put(comicItem.getId(), comicItem);
-        configFacade.saveComicConfig(config);
-
-        return Optional.of(comicItem);
     }
 
     @Override
-    @CacheEvict(value = "comicMetadata", key = "'comic:' + #comicId")
     public Optional<ComicItem> updateComic(int comicId, ComicItem comicItem) {
-        // Ensure ID in comics matches the request ID
-        if (comicItem.getId() != comicId) {
-            comicItem = comicItem.toBuilder().id(comicId).build();
-        }
-
-        comics.put(comicId, comicItem);
-
-        // Save to configuration
-        ComicConfig config = configFacade.loadComicConfig();
-        config.getItems().put(comicId, comicItem);
-        configFacade.saveComicConfig(config);
-
-        return Optional.of(comicItem);
+        ComicItem toSave = comicItem.getId() == comicId ? comicItem : comicItem.toBuilder().id(comicId).build();
+        return Optional.of(persist(toSave));
     }
 
     @Override
@@ -203,23 +204,85 @@ public class ComicManagementFacade implements ManagementFacade {
         return getComicByName(comicName).map(comic -> updateComic(comic.getId())).orElse(false);
     }
 
+    /**
+     * Saves a comic to memory and to comics.json under {@link #configLock}, then drops the cached comic list. Every comic write goes through here, so
+     * the list never goes stale (the {@code @CacheEvict} annotations this replaces never fired for calls from inside this class). A start date that a
+     * stored strip proves wrong is corrected on the way (see {@link #correctStart(ComicItem)}).
+     */
+    private ComicItem persist(ComicItem comic) {
+        ComicItem toSave = correctStart(comic);
+        synchronized (configLock) {
+            comics.put(toSave.getId(), toSave);
+            ComicConfig config = configFacade.loadComicConfig();
+            config.getItems().put(toSave.getId(), toSave);
+            configFacade.saveComicConfig(config);
+        }
+        evictComicList();
+        return toSave;
+    }
+
+    /**
+     * A stored strip older than the comic's start date proves the start date wrong, even one an admin set: moves {@code sourceStartDate} back to the
+     * oldest stored strip. Keeps a manual origin, since the admin's value was only off by what is now on disk.
+     */
+    ComicItem correctStart(ComicItem comic) {
+        LocalDate start = comic.getSourceStartDate();
+        LocalDate oldest = comic.getOldest();
+        if (start == null || oldest == null || !oldest.isBefore(start)) {
+            return comic;
+        }
+        log.warn("Start date for {} corrected from {} to {} (strip on disk)", comic.getName(), start, oldest);
+        log.info("AUDIT comic start date corrected: id={}, name={}, from={}, to={}, reason=strip on disk", comic.getId(), comic.getName(), start, oldest);
+        return comic.toBuilder()
+                .sourceStartDate(oldest)
+                .startSource(comic.getStartSource() != null ? comic.getStartSource() : StartSource.DETECTED)
+                .build();
+    }
+
+    /**
+     * Lowers {@code firstStripNumber} when a strip with a lower number has been stored, which proves the recorded first strip wrong.
+     */
+    ComicItem correctFirstStripNumber(ComicItem comic, Integer storedStripNumber) {
+        Integer first = comic.getFirstStripNumber();
+        if (storedStripNumber == null || first == null || storedStripNumber >= first) {
+            return comic;
+        }
+        log.warn("First strip number for {} corrected from #{} to #{} (strip on disk)", comic.getName(), first, storedStripNumber);
+        log.info("AUDIT comic first strip corrected: id={}, name={}, from={}, to={}, reason=strip on disk", comic.getId(), comic.getName(), first, storedStripNumber);
+        return comic.toBuilder()
+                .firstStripNumber(storedStripNumber)
+                .startSource(comic.getStartSource() != null ? comic.getStartSource() : StartSource.DETECTED)
+                .build();
+    }
+
+    private void evictComicList() {
+        CacheManager manager = cacheManager.getIfAvailable();
+        if (manager == null) {
+            return;
+        }
+        Cache cache = manager.getCache(COMIC_METADATA_CACHE);
+        if (cache != null) {
+            cache.clear();
+        }
+    }
+
     @Override
-    @CacheEvict(value = "comicMetadata", allEntries = true)
     public boolean deleteComic(int comicId) {
-        ComicItem removed = comics.remove(comicId);
-
-        if (removed != null) {
-            // Also remove from storage and configuration
-            storageFacade.deleteComic(ComicIdentifier.from(removed));
-
+        ComicItem removed;
+        synchronized (configLock) {
+            removed = comics.remove(comicId);
+            if (removed == null) {
+                return false;
+            }
             ComicConfig config = configFacade.loadComicConfig();
             config.getItems().remove(comicId);
             configFacade.saveComicConfig(config);
-
-            return true;
         }
+        evictComicList();
 
-        return false;
+        // Also remove from storage
+        storageFacade.deleteComic(ComicIdentifier.from(removed));
+        return true;
     }
 
     @Override
@@ -620,7 +683,7 @@ public class ComicManagementFacade implements ManagementFacade {
             // Update newest date
             ComicItem.ComicItemBuilder builder = comic.toBuilder().newest(saveDate);
             updateStripNumberOnBuilder(builder, result);
-            updateComic(comic.getId(), builder.build());
+            updateComic(comic.getId(), correctFirstStripNumber(builder.build(), result.getStripNumber()));
         }
 
         return Optional.of(result);
@@ -649,10 +712,14 @@ public class ComicManagementFacade implements ManagementFacade {
                 return Optional.empty();
             }
 
-            // Update oldest date if this is earlier than known (backfill goes backwards)
+            // Update oldest date if this is earlier than known (backfill goes backwards), and the first strip number if this strip is lower
             LocalDate currentOldest = comic.getOldest();
+            ComicItem updated = correctFirstStripNumber(comic, result.getStripNumber());
             if (currentOldest == null || saveDate.isBefore(currentOldest)) {
-                updateComic(comic.getId(), comic.toBuilder().oldest(saveDate).build());
+                updated = updated.toBuilder().oldest(saveDate).build();
+            }
+            if (updated != comic) {
+                updateComic(comic.getId(), updated);
             }
         }
 
@@ -738,20 +805,23 @@ public class ComicManagementFacade implements ManagementFacade {
                 boolean avatarStale = avatarExists != comic.isAvatarAvailable();
 
                 if (datesStale || avatarStale) {
-                    ComicItem updated = comic.toBuilder()
+                    ComicItem updated = correctStart(comic.toBuilder()
                             .oldest(actualOldest.orElse(comic.getOldest()))
                             .newest(actualNewest.orElse(comic.getNewest()))
                             .avatarAvailable(avatarExists)
-                            .build();
+                            .build());
                     entry.setValue(updated);
                     comicConfig.getItems().put(updated.getId(), updated);
                     configDirty = true;
                 }
             }
             if (configDirty) {
-                configFacade.saveComicConfig(comicConfig);
+                synchronized (configLock) {
+                    configFacade.saveComicConfig(comicConfig);
+                }
                 log.info("Synced comic metadata from index for {} comics", comics.size());
             }
+            evictComicList();
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("Refreshed comic list: loaded {} comics in {}ms", comics.size(), duration);
@@ -854,17 +924,14 @@ public class ComicManagementFacade implements ManagementFacade {
     }
 
     @Override
-    @CacheEvict(value = "comicMetadata", allEntries = true)
     public int downloadMissingAvatars() {
         int downloaded = 0;
         int skipped = 0;
         int failed = 0;
 
-        for (ComicItem comic : comics.values()) {
-            ComicIdentifier identifier = ComicIdentifier.from(comic);
-
+        for (ComicItem comic : List.copyOf(comics.values())) {
             // Skip if avatar already exists on disk
-            if (storageFacade.getAvatar(identifier).isPresent()) {
+            if (storageFacade.getAvatar(ComicIdentifier.from(comic)).isPresent()) {
                 skipped++;
                 continue;
             }
@@ -875,36 +942,62 @@ public class ComicManagementFacade implements ManagementFacade {
                 continue;
             }
 
-            log.info("Downloading missing avatar for '{}'", comic.getName());
-            Optional<byte[]> avatarData = downloaderFacade.downloadAvatar(
-                    comic.getId(), comic.getName(), comic.getSource(), comic.getSourceIdentifier());
-
-            if (avatarData.isPresent()) {
-                boolean saved = storageFacade.saveAvatar(identifier, avatarData.get());
-                if (saved) {
-                    if (!comic.isAvatarAvailable()) {
-                        ComicItem updated = comic.toBuilder().avatarAvailable(true).build();
-                        updateComic(comic.getId(), updated);
-                    }
-                    downloaded++;
-                    log.info("Successfully downloaded avatar for '{}'", comic.getName());
-                } else {
-                    failed++;
-                    log.error("Failed to save avatar for '{}'", comic.getName());
-                }
+            if (fetchAvatar(comic.getId())) {
+                downloaded++;
             } else {
-                // Download failed — ensure flag reflects reality
-                if (comic.isAvatarAvailable()) {
-                    ComicItem updated = comic.toBuilder().avatarAvailable(false).build();
-                    updateComic(comic.getId(), updated);
-                }
                 failed++;
-                log.warn("Could not download avatar for '{}'", comic.getName());
             }
         }
 
         log.info("Avatar backfill complete: {} downloaded, {} skipped (already exist), {} failed",
                 downloaded, skipped, failed);
         return downloaded;
+    }
+
+    @Override
+    public boolean fetchAvatar(int comicId) {
+        Optional<ComicItem> found = getComic(comicId);
+        if (found.isEmpty()) {
+            log.warn("Comic with ID {} not found, cannot fetch its avatar", comicId);
+            return false;
+        }
+        ComicItem comic = found.get();
+        if (comic.getSource() == null || comic.getSource().isEmpty()) {
+            log.debug("Skipping avatar download for '{}' - no source configured", comic.getName());
+            return false;
+        }
+
+        log.info("Downloading avatar for '{}'", comic.getName());
+        Optional<byte[]> avatarData = downloaderFacade.downloadAvatar(comic.getId(), comic.getName(), comic.getSource(), comic.getSourceIdentifier());
+        if (avatarData.isPresent()) {
+            return saveAvatar(comicId, avatarData.get());
+        }
+
+        // Download failed: make sure the flag reflects reality
+        if (comic.isAvatarAvailable() && storageFacade.getAvatar(ComicIdentifier.from(comic)).isEmpty()) {
+            persist(comic.toBuilder().avatarAvailable(false).build());
+        }
+        log.warn("Could not download avatar for '{}'", comic.getName());
+        return false;
+    }
+
+    @Override
+    public boolean saveAvatar(int comicId, byte[] imageData) {
+        Optional<ComicItem> found = getComic(comicId);
+        if (found.isEmpty()) {
+            return false;
+        }
+        ComicItem comic = found.get();
+        if (!storageFacade.saveAvatar(ComicIdentifier.from(comic), imageData)) {
+            log.error("Failed to save avatar for '{}'", comic.getName());
+            return false;
+        }
+        // Re-read: the comic may have changed while the avatar downloaded
+        ComicItem current = getComic(comicId).orElse(comic);
+        if (!current.isAvatarAvailable()) {
+            persist(current.toBuilder().avatarAvailable(true).build());
+        }
+        log.info("Saved avatar for '{}'", comic.getName());
+        return true;
     }
 }
