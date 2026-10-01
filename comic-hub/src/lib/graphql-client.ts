@@ -1,4 +1,5 @@
 import type { TypedDocumentString } from '@/generated/graphql';
+import { documentOperationName } from '@/lib/graphql-operation';
 import { loginPath } from '@/lib/safe-redirect';
 
 export function fetcher<TData, TVariables>(
@@ -7,10 +8,13 @@ export function fetcher<TData, TVariables>(
   headers?: RequestInit['headers'],
 ) {
   return async (): Promise<TData> => {
+    const text = query.toString();
+    // The API logs requests by operation name, and the generated documents don't carry it separately
+    const operationName = documentOperationName(text);
     const res = await fetch('/api/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({ query: query.toString(), variables }),
+      body: JSON.stringify({ query: text, variables, ...(operationName && { operationName }) }),
     });
 
     if (!res.ok) {

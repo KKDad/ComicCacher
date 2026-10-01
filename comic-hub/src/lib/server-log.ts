@@ -2,6 +2,8 @@
 // (RequestLoggingFilter), so a slow page load in the comics-ui log can be matched to its comics-api lines.
 // Shared by route handlers, proxy.ts and server components, so not 'server-only'.
 
+import { documentOperationName } from './graphql-operation';
+
 export const REQUEST_ID_HEADER = 'x-request-id';
 
 const VALID_REQUEST_ID = /^[A-Za-z0-9-]{1,64}$/;
@@ -29,8 +31,7 @@ export function operationName(body: BodyInit | null | undefined): string {
   try {
     const parsed = JSON.parse(body);
     if (typeof parsed.operationName === 'string' && parsed.operationName) return parsed.operationName;
-    const match = typeof parsed.query === 'string' && /\b(?:query|mutation)\s+(\w+)/.exec(parsed.query);
-    return match ? match[1] : 'anonymous';
+    return (typeof parsed.query === 'string' && documentOperationName(parsed.query)) || 'anonymous';
   } catch {
     return 'unknown';
   }

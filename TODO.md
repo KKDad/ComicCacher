@@ -8,13 +8,6 @@
 - Keep the per-job lock that stops two runs overlapping, and check that scheduled runs behave the same
 - Priority: Very High
 
-## Log the GraphQL operation name
-
-- Every API request line says `op=anonymous` and `POST /graphql (anonymous)`. `GraphQlLoggingInterceptor` reads only `request.getOperationName()`, and comic-hub's `graphql-client.ts` sends `{query, variables}` without `operationName`. The operation names added in #415 never appear, so a slow or failing request can't be tied to a query without its request id
-- Send `operationName` from `graphql-client.ts` (codegen's `TypedDocumentString` knows it), and have the interceptor fall back to the name of the document's single operation, so other clients get it too
-- Add a test that a named query logs its name
-- Priority: Very High
-
 ## Log slow GraphQL fields once per request
 
 - `TimingInstrumentation` logs a `Slow GraphQL field` WARN for every field over the threshold. On dev on 2026-10-01 at 14:10:36, one 828 ms page load (`req=593f31dc`) logged 46 of them, one per `Comic.lastStrip`: 46 of the day's 54 warnings
