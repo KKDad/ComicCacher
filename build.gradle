@@ -7,7 +7,7 @@ plugins {
 
 ext {
     // Project version (can be overridden via -PbuildVersion=X.Y.Z)
-    projectVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : '2.5.0'
+    projectVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : '2.6.0'
 
     // Library versions
     bcryptVersion = '0.4'
