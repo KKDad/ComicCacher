@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.launch.JobOperator;
 
+import java.util.Map;
+
 /**
  * Scheduler for periodic batch jobs that run at fixed intervals.
  *
@@ -74,11 +76,11 @@ public class PeriodicJobScheduler extends AbstractJobScheduler {
     }
 
     /**
-     * Manually triggers the job (e.g., via API).
+     * Manually triggers the job (e.g., via API) in the background.
      *
-     * @return the execution ID, or null if failed
+     * @return the execution ID of the started run, or null if it didn't start
      */
     public Long triggerManually() {
-        return runJob("MANUAL");
+        return runJobInBackground("MANUAL", Map.of());
     }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,9 +21,11 @@ import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.launch.JobOperator;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.ManualJobLauncher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("DailyJobScheduler")
@@ -180,5 +183,59 @@ class DailyJobSchedulerTest {
         scheduler.runMissedExecutionIfNeeded();
 
         verify(jobOperator).start(eq(job), any(JobParameters.class));
+    }
+
+    @Test
+    @DisplayName("runs a manual trigger in the background and holds the lock until the run ends")
+    void runsManualTriggersInTheBackground() throws Exception {
+        ManualJobLauncher launcher = mock(ManualJobLauncher.class);
+        scheduler.setManualJobLauncher(launcher);
+        AtomicReference<Runnable> onEnd = new AtomicReference<>();
+        when(execution.getId()).thenReturn(466L);
+        when(launcher.start(eq(job), any(JobParameters.class), any(Runnable.class))).thenAnswer(inv -> {
+            onEnd.set(inv.getArgument(2));
+            return execution;
+        });
+
+        assertThat(scheduler.triggerManually(Map.of("source", "ALL"))).isEqualTo(466L);
+        verify(jobOperator, never()).start(any(Job.class), any(JobParameters.class));
+
+        // Still running: neither another manual run nor a scheduled one starts
+        assertThat(scheduler.triggerManually()).isNull();
+        scheduler.setMultipleRunsPerDay(true);
+        scheduler.executeScheduled();
+        verify(jobOperator, never()).start(any(Job.class), any(JobParameters.class));
+
+        onEnd.get().run();
+        assertThat(scheduler.triggerManually()).isEqualTo(466L);
+        verify(launcher, times(2)).start(eq(job), any(JobParameters.class), any(Runnable.class));
+    }
+
+    @Test
+    @DisplayName("keeps scheduled runs on the scheduler thread")
+    void runsScheduledTriggersSynchronously() throws Exception {
+        ManualJobLauncher launcher = mock(ManualJobLauncher.class);
+        scheduler.setManualJobLauncher(launcher);
+        scheduler.setMultipleRunsPerDay(true);
+
+        scheduler.executeScheduled();
+
+        verify(jobOperator).start(eq(job), any(JobParameters.class));
+        verify(launcher, never()).start(any(Job.class), any(JobParameters.class), any(Runnable.class));
+    }
+
+    @Test
+    @DisplayName("releases the lock when a background launch fails")
+    void releasesTheLockWhenABackgroundLaunchFails() throws Exception {
+        ManualJobLauncher launcher = mock(ManualJobLauncher.class);
+        scheduler.setManualJobLauncher(launcher);
+        when(launcher.start(eq(job), any(JobParameters.class), any(Runnable.class)))
+                .thenThrow(new IllegalStateException("boom"))
+                .thenReturn(execution);
+
+        assertThat(scheduler.triggerManually()).isNull();
+        scheduler.triggerManually();
+
+        verify(launcher, times(2)).start(eq(job), any(JobParameters.class), any(Runnable.class));
     }
 }

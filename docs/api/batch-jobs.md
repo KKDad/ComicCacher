@@ -224,6 +224,8 @@ query {
 
 ## Mutations
 
+The trigger mutations start the job in the background and return at once: `batchJob` is the new execution, usually `STARTING` or `STARTED`. Follow it with `recentBatchJobs` (the Batch Jobs page polls it every 3 s). A job allows one run at a time, so a trigger while it runs returns an error and starts nothing.
+
 ### triggerBatchJob
 
 Trigger a batch job for comic retrieval.
