@@ -36,6 +36,12 @@ describe('fetcher', () => {
     });
   });
 
+  it('sends the operation name of a named document', async () => {
+    await fetcher('query GetComics($first: Int) { comics(first: $first) { id } }', { first: 10 })();
+    const body = JSON.parse(vi.mocked(global.fetch).mock.calls[0][1]!.body as string);
+    expect(body.operationName).toBe('GetComics');
+  });
+
   it('merges custom headers', async () => {
     await fetcher('query { comics }', undefined, { 'X-Custom': 'value' })();
     expect(global.fetch).toHaveBeenCalledWith('/api/graphql', expect.objectContaining({
