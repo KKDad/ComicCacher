@@ -16,6 +16,14 @@
 - Flag anything unexpected: log lines that match none of the known signatures, new WARN/ERROR messages, and error rates that jump compared with earlier runs, rather than reporting only the failures it already knows how to look for
 - Priority: High
 
+## Teach the comiccacher-logs skill about jobs that are still running
+
+- The skill treats a job with no exit code as failed. On 2026-10-01 it raised a critical "SourceCatalogJob failed 1 time" for a manual run (execution 466) that was `STARTED` and still running when the logs were fetched
+- It also can't find that run's log. `batch-executions.json` has `log_file: null` until the job ends, so the issue pointed at `batch-logs/SourceCatalogJob/None`, although `SourceCatalogJob-20261001-d555ad9a.log` was already on disk and growing
+- Record running jobs in `summary.json` (status `STARTED` with no end time) and leave them out of the failure count. Find their log by job name, date and start time when `log_file` is empty. Show them in the report's jobs table as running, with elapsed time and the last log line
+- Raise an issue only when a run has gone on much longer than its usual duration, or when a `STARTED` run survives a container restart. Those runs are stuck or orphaned, not running
+- Priority: High
+
 ## Check the operator role on the server for the operations pages
 
 - `/metrics`, `/retrieval-status` and `/batch-jobs` are hidden from USER accounts only by the nav (`isOperator` in `sidebar.tsx`, `nav-rail.tsx`, `header.tsx`). A USER who types the URL gets the page, and only the API's rejection of its queries stops them
