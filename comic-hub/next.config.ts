@@ -14,9 +14,13 @@ const nextConfig: NextConfig = {
   // The default bottom-left badge covers the sidebar's Sign out button (dev only)
   devIndicators: { position: 'bottom-right' },
   images: {
-    // Comic avatars and strips, served by the backend through the /api/v1 rewrite below. The
-    // optimizer caches them for the upstream Cache-Control (1 day avatars, 7 days strips).
-    localPatterns: [{ pathname: '/api/v1/comics/**', search: '' }],
+    // Comic avatars and strips, and the Sources page's catalog thumbnails, served by the backend
+    // through the /api/v1 rewrite below. The optimizer caches them for the upstream Cache-Control
+    // (1 day avatars, 7 days strips and thumbnails).
+    localPatterns: [
+      { pathname: '/api/v1/comics/**', search: '' },
+      { pathname: '/api/v1/sources/*/thumbnails/*', search: '' },
+    ],
   },
   async headers() {
     return [

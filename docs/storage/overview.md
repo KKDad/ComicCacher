@@ -13,9 +13,12 @@ ComicCacher uses a flat-file JSON storage model on an NFS-mounted filesystem. Th
   retrieval-status.json                     # Comic retrieval attempt records
   scheduler-state.json                      # Scheduler pause/resume state
   backfill-state.json                       # Comic backfill: given-up dates, learned history horizons, daily attempt counts
+  source-catalog.json                       # Every source's list of comics, for the Sources page (SourceCatalogJob)
   last_errors.json                          # Recent errors per comic
   access-metrics.json                       # Per-comic access counts
   metrics-history/{yyyy-MM-dd}.json         # Daily combined-metrics snapshots (MetricsArchiveJob)
+  tmp/                                      # Disposable files: excluded from storage metrics, safe to delete
+    catalog-thumbnails/{source}/{slug}.png  # Source catalog thumbnails, downloaded on demand
   {ComicDirName}/                           # One directory per comic
     avatar.png                              # Comic avatar image
     available-dates.json                    # Date index for fast navigation
@@ -58,7 +61,13 @@ NfsFileOperations.atomicWrite(target, content)
 
 This pattern is used by: `ComicIndexService`, `JsonBatchExecutionTracker`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, and `AccessMetricsRepository`.
 
-`ApplicationConfigurationFacade` (`comics.json`, `users.json`, `preferences.json`), `SchedulerStateService`, `BackfillStateService` and `MetricsArchiver` write the same way. Nothing writes JSON to the cache without it.
+`ApplicationConfigurationFacade` (`comics.json`, `users.json`, `preferences.json`), `SchedulerStateService`, `BackfillStateService`, `SourceCatalogRepository`, `CatalogThumbnailService` and `MetricsArchiver` write the same way. Nothing writes JSON to the cache without it.
+
+## Non-Comic Directories
+
+`CacheLayout` (`comic-common`) lists the cache-root directories that aren't comics: `@eaDir`, `batch-logs`, `metrics-history` and `tmp`. `StorageMetricsCollector` skips them, and comic validation refuses a comic name whose directory would be one of them.
+
+`tmp/` holds files that can be rebuilt, such as the Sources page's catalog thumbnails. Delete it at any time.
 
 ## `@eaDir` Exclusion
 

@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers("/graphiql/**").permitAll()
                         .requestMatchers("/graphql").permitAll()
                         .requestMatchers("/api/v1/comics/**").permitAll()
+                        .requestMatchers("/api/v1/sources/*/thumbnails/*").permitAll()
                         .anyRequest().authenticated());
 
         // Add JWT filter for all environments

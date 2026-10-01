@@ -39,7 +39,7 @@ public final class BatchJobBaseConfig {
      * Canonical set of known batch job names. Used by SchedulerHealthCheck to detect missing or unexpected schedulers. When adding a new batch job, add its name here.
      */
     public static final java.util.Set<String> KNOWN_JOBS = java.util.Set.of("AvatarBackfillJob", "ComicBackfillJob", "ComicDownloadJob", "ImageMetadataBackfillJob", "MetricsArchiveJob",
-            "RetrievalRecordPurgeJob");
+            "RetrievalRecordPurgeJob", "SourceCatalogJob");
 
     /**
      * Configuration property keys for batch jobs

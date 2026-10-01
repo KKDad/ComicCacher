@@ -245,4 +245,18 @@ public interface ManagementFacade {
      * @return The number of avatars successfully downloaded
      */
     int downloadMissingAvatars();
+
+    /**
+     * Downloads one comic's avatar from its source (throttled like any source request) and saves it.
+     *
+     * @return true when an avatar was downloaded and saved
+     */
+    boolean fetchAvatar(int comicId);
+
+    /**
+     * Saves already-downloaded, validated image bytes as a comic's avatar and marks it available.
+     *
+     * @return true when the avatar was saved
+     */
+    boolean saveAvatar(int comicId, byte[] imageData);
 }

@@ -103,9 +103,9 @@ class ComicBackfillJobConfigTest {
         ComicItem comic = createComic(1, "Test Comic");
         BackfillTask task = new DateBackfillTask(comic, LocalDate.of(2025, 1, 1));
 
-        when(backfillService.findMissingStrips(null)).thenReturn(List.of(task));
+        when(backfillService.findMissingStrips(null, null)).thenReturn(List.of(task));
 
-        ItemReader<BackfillTask> reader = config.backfillTaskReader(null, null);
+        ItemReader<BackfillTask> reader = config.backfillTaskReader(null, null, null);
 
         BackfillTask result = reader.read();
         assertThat(result).isNotNull();
@@ -237,10 +237,27 @@ class ComicBackfillJobConfigTest {
     }
 
     @Test
-    void backfillTaskReader_resetStateClearsLearnedState() throws Exception {
-        when(backfillService.findMissingStrips(null)).thenReturn(List.of());
+    void backfillTaskReader_passesTheComicFilter() throws Exception {
+        when(backfillService.findMissingStrips("gocomics", 7)).thenReturn(List.of());
 
-        config.backfillTaskReader(null, "true");
+        config.backfillTaskReader("gocomics", " 7 ", null);
+
+        verify(backfillService).findMissingStrips("gocomics", 7);
+    }
+
+    @Test
+    void parseComicId_ignoresBlankAndNonNumbers() {
+        assertThat(ComicBackfillJobConfig.parseComicId(null)).isNull();
+        assertThat(ComicBackfillJobConfig.parseComicId(" ")).isNull();
+        assertThat(ComicBackfillJobConfig.parseComicId("seven")).isNull();
+        assertThat(ComicBackfillJobConfig.parseComicId("12")).isEqualTo(12);
+    }
+
+    @Test
+    void backfillTaskReader_resetStateClearsLearnedState() throws Exception {
+        when(backfillService.findMissingStrips(null, null)).thenReturn(List.of());
+
+        config.backfillTaskReader(null, null, "true");
 
         verify(backfillState).reset();
     }

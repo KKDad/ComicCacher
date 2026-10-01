@@ -5,6 +5,16 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 import { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 import { useMutation, useQuery, useInfiniteQuery, UseMutationOptions, UseQueryOptions, UseInfiniteQueryOptions, InfiniteData } from '@tanstack/react-query';
 import { fetcher } from '../lib/graphql-client';
+/** Input for adding a comic from its source's catalog. */
+export type AddComicFromCatalogInput = {
+  /** Download new strips. */
+  active?: boolean | null | undefined;
+  /** Show the comic to readers. */
+  enabled?: boolean | null | undefined;
+  identifier: string;
+  source: string;
+};
+
 /** Data types for batch job parameters. */
 export const BatchJobParameterType = {
   Boolean: 'BOOLEAN',
@@ -27,6 +37,18 @@ export const BatchStatusEnum = {
 } as const;
 
 export type BatchStatusEnum = typeof BatchStatusEnum[keyof typeof BatchStatusEnum];
+/** Days of the week. */
+export const DayOfWeek = {
+  Friday: 'FRIDAY',
+  Monday: 'MONDAY',
+  Saturday: 'SATURDAY',
+  Sunday: 'SUNDAY',
+  Thursday: 'THURSDAY',
+  Tuesday: 'TUESDAY',
+  Wednesday: 'WEDNESDAY'
+} as const;
+
+export type DayOfWeek = typeof DayOfWeek[keyof typeof DayOfWeek];
 /**
  * Standard error codes returned by the API.
  * These codes appear in error responses to help clients handle errors programmatically.
@@ -99,6 +121,53 @@ export const RetrievalStatusEnum = {
 } as const;
 
 export type RetrievalStatusEnum = typeof RetrievalStatusEnum[keyof typeof RetrievalStatusEnum];
+/** How a source identifies strips. */
+export const SourceKind = {
+  /** Strips by date. */
+  Daily: 'DAILY',
+  /** Numbered strips. */
+  Indexed: 'INDEXED'
+} as const;
+
+export type SourceKind = typeof SourceKind[keyof typeof SourceKind];
+/** Where a comic's start value came from. */
+export const StartSource = {
+  /** Read from the source, or proven by a stored strip. */
+  Detected: 'DETECTED',
+  /** Set by an admin. Detection never overwrites it. */
+  Manual: 'MANUAL'
+} as const;
+
+export type StartSource = typeof StartSource[keyof typeof StartSource];
+/**
+ * Input for updating an existing comic.
+ * All fields are optional - only provided fields will be updated.
+ */
+export type UpdateComicInput = {
+  /** Whether new strips are downloaded. */
+  active?: boolean | null | undefined;
+  /** Author/creator of the comic. */
+  author?: string | null | undefined;
+  /** Description of the comic. */
+  description?: string | null | undefined;
+  /** Whether this comic is enabled for display. */
+  enabled?: boolean | null | undefined;
+  /** Lowest strip number, for numbered (indexed) comics such as Freefall. */
+  firstStripNumber?: number | null | undefined;
+  /** Highest downloaded strip number, for numbered (indexed) comics. */
+  lastStripNumber?: number | null | undefined;
+  /** Display name of the comic. */
+  name?: string | null | undefined;
+  /** Days of the week when this comic publishes. */
+  publicationDays?: Array<DayOfWeek> | null | undefined;
+  /** Source provider for this comic. */
+  source?: string | null | undefined;
+  /** Identifier used by the source. */
+  sourceIdentifier?: string | null | undefined;
+  /** First strip date the source has, for daily comics. Backfill never scans before it. */
+  sourceStartDate?: string | null | undefined;
+};
+
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
 }>;
@@ -286,6 +355,66 @@ export type GetRetrievalRecordsQueryVariables = Exact<{
 
 export type GetRetrievalRecordsQuery = { retrievalRecords: Array<{ id: string, comicName: string, comicDate: string, source: string | null, status: RetrievalStatusEnum, retrievalDurationMs: number | null, imageSize: number | null, httpStatusCode: number | null, errorMessage: string | null }> };
 
+export type SourceComicFieldsFragment = { id: number, name: string, source: string | null, sourceIdentifier: string | null, enabled: boolean | null, active: boolean | null, avatarUrl: string | null, avatarAvailable: boolean | null, avatarPending: boolean, oldest: string | null, newest: string | null, firstStripNumber: number | null, lastStripNumber: number | null, sourceStartDate: string | null, startSource: StartSource | null, startPending: boolean, reportedStartDate: string | null, reportedStartStripNumber: number | null };
+
+export type GetSourcesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSourcesQuery = { sources: Array<{ id: string, displayName: string, kind: SourceKind, hasCatalog: boolean, catalogUrl: string | null, canDetectStart: boolean, catalogCount: number, configuredCount: number, activeCount: number, lastRefreshed: string | null, lastRefreshAttempt: string | null, lastRefreshError: string | null, refreshing: boolean, settings: { userAgent: string | null, throttleMinDelayMs: number, throttleMaxDelayMs: number, retryMaxAttempts: number, retryInitialBackoffMs: number, retryMaxBackoffMs: number, backfillEnabled: boolean, backfillMaxDaysBack: number, backfillMaxPerRun: number, backfillMaxPerDay: number, backfillRecentDays: number, backfillPreferColor: boolean } }> };
+
+export type GetSourceCatalogQueryVariables = Exact<{
+  id: string;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+}>;
+
+
+export type GetSourceCatalogQuery = { source: { id: string, displayName: string, kind: SourceKind, hasCatalog: boolean, canDetectStart: boolean, catalogCount: number, configuredCount: number, activeCount: number, lastRefreshed: string | null, lastRefreshError: string | null, refreshing: boolean, catalog: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ node: { identifier: string, name: string, author: string | null, pageUrl: string, thumbnailUrl: string | null, thumbnailPending: boolean, startDate: string | null, startStripNumber: number | null, removedAt: string | null, comic: { id: number, name: string, source: string | null, sourceIdentifier: string | null, enabled: boolean | null, active: boolean | null, avatarUrl: string | null, avatarAvailable: boolean | null, avatarPending: boolean, oldest: string | null, newest: string | null, firstStripNumber: number | null, lastStripNumber: number | null, sourceStartDate: string | null, startSource: StartSource | null, startPending: boolean, reportedStartDate: string | null, reportedStartStripNumber: number | null } | null } }> }, orphans: Array<{ id: number, name: string, source: string | null, sourceIdentifier: string | null, enabled: boolean | null, active: boolean | null, avatarUrl: string | null, avatarAvailable: boolean | null, avatarPending: boolean, oldest: string | null, newest: string | null, firstStripNumber: number | null, lastStripNumber: number | null, sourceStartDate: string | null, startSource: StartSource | null, startPending: boolean, reportedStartDate: string | null, reportedStartStripNumber: number | null }> } | null };
+
+export type RefreshSourceCatalogMutationVariables = Exact<{
+  source: string;
+}>;
+
+
+export type RefreshSourceCatalogMutation = { refreshSourceCatalog: { batchJob: { executionId: number, status: BatchStatusEnum } | null, errors: Array<{ message: string, field: string | null }> } };
+
+export type AddComicFromCatalogMutationVariables = Exact<{
+  input: AddComicFromCatalogInput;
+}>;
+
+
+export type AddComicFromCatalogMutation = { addComicFromCatalog: { comic: { id: number, name: string, source: string | null, sourceIdentifier: string | null, enabled: boolean | null, active: boolean | null, avatarUrl: string | null, avatarAvailable: boolean | null, avatarPending: boolean, oldest: string | null, newest: string | null, firstStripNumber: number | null, lastStripNumber: number | null, sourceStartDate: string | null, startSource: StartSource | null, startPending: boolean, reportedStartDate: string | null, reportedStartStripNumber: number | null } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
+
+export type UpdateSourceComicMutationVariables = Exact<{
+  id: number;
+  input: UpdateComicInput;
+}>;
+
+
+export type UpdateSourceComicMutation = { updateComic: { comic: { id: number, name: string, source: string | null, sourceIdentifier: string | null, enabled: boolean | null, active: boolean | null, avatarUrl: string | null, avatarAvailable: boolean | null, avatarPending: boolean, oldest: string | null, newest: string | null, firstStripNumber: number | null, lastStripNumber: number | null, sourceStartDate: string | null, startSource: StartSource | null, startPending: boolean, reportedStartDate: string | null, reportedStartStripNumber: number | null } | null, errors: Array<{ message: string, field: string | null, code: ErrorCode | null }> } };
+
+export type FetchComicAvatarMutationVariables = Exact<{
+  id: number;
+}>;
+
+
+export type FetchComicAvatarMutation = { fetchComicAvatar: { queued: boolean, errors: Array<{ message: string }> } };
+
+export type DetectComicStartMutationVariables = Exact<{
+  id: number;
+}>;
+
+
+export type DetectComicStartMutation = { detectComicStart: { queued: boolean, errors: Array<{ message: string }> } };
+
+export type RequestCatalogThumbnailsMutationVariables = Exact<{
+  source: string;
+  identifiers: Array<string> | string;
+}>;
+
+
+export type RequestCatalogThumbnailsMutation = { requestCatalogThumbnails: { queued: number } };
+
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -305,7 +434,28 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-
+export const SourceComicFieldsFragmentDoc = new TypedDocumentString(`
+    fragment SourceComicFields on Comic {
+  id
+  name
+  source
+  sourceIdentifier
+  enabled
+  active
+  avatarUrl
+  avatarAvailable
+  avatarPending
+  oldest
+  newest
+  firstStripNumber
+  lastStripNumber
+  sourceStartDate
+  startSource
+  startPending
+  reportedStartDate
+  reportedStartStripNumber
+}
+    `, {"fragmentName":"SourceComicFields"});
 export const LoginDocument = new TypedDocumentString(`
     mutation Login($input: LoginInput!) {
   login(input: $input) {
@@ -1536,3 +1686,393 @@ useInfiniteGetRetrievalRecordsQuery.getKey = (variables?: GetRetrievalRecordsQue
 
 
 useGetRetrievalRecordsQuery.fetcher = (variables?: GetRetrievalRecordsQueryVariables, options?: RequestInit['headers']) => fetcher<GetRetrievalRecordsQuery, GetRetrievalRecordsQueryVariables>(GetRetrievalRecordsDocument, variables, options);
+
+export const GetSourcesDocument = new TypedDocumentString(`
+    query GetSources {
+  sources {
+    id
+    displayName
+    kind
+    hasCatalog
+    catalogUrl
+    canDetectStart
+    catalogCount
+    configuredCount
+    activeCount
+    lastRefreshed
+    lastRefreshAttempt
+    lastRefreshError
+    refreshing
+    settings {
+      userAgent
+      throttleMinDelayMs
+      throttleMaxDelayMs
+      retryMaxAttempts
+      retryInitialBackoffMs
+      retryMaxBackoffMs
+      backfillEnabled
+      backfillMaxDaysBack
+      backfillMaxPerRun
+      backfillMaxPerDay
+      backfillRecentDays
+      backfillPreferColor
+    }
+  }
+}
+    `);
+
+export const useGetSourcesQuery = <
+      TData = GetSourcesQuery,
+      TError = unknown
+    >(
+      variables?: GetSourcesQueryVariables,
+      options?: Omit<UseQueryOptions<GetSourcesQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetSourcesQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetSourcesQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetSources'] : ['GetSources', variables],
+    queryFn: fetcher<GetSourcesQuery, GetSourcesQueryVariables>(GetSourcesDocument, variables),
+    ...options
+  }
+    )};
+
+useGetSourcesQuery.getKey = (variables?: GetSourcesQueryVariables) => variables === undefined ? ['GetSources'] : ['GetSources', variables];
+
+export const useInfiniteGetSourcesQuery = <
+      TData = InfiniteData<GetSourcesQuery>,
+      TError = unknown
+    >(
+      variables: GetSourcesQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetSourcesQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetSourcesQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetSourcesQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? variables === undefined ? ['GetSources.infinite'] : ['GetSources.infinite', variables],
+      queryFn: (metaData) => fetcher<GetSourcesQuery, GetSourcesQueryVariables>(GetSourcesDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetSourcesQuery.getKey = (variables?: GetSourcesQueryVariables) => variables === undefined ? ['GetSources.infinite'] : ['GetSources.infinite', variables];
+
+
+useGetSourcesQuery.fetcher = (variables?: GetSourcesQueryVariables, options?: RequestInit['headers']) => fetcher<GetSourcesQuery, GetSourcesQueryVariables>(GetSourcesDocument, variables, options);
+
+export const GetSourceCatalogDocument = new TypedDocumentString(`
+    query GetSourceCatalog($id: String!, $first: Int, $after: String) {
+  source(id: $id) {
+    id
+    displayName
+    kind
+    hasCatalog
+    canDetectStart
+    catalogCount
+    configuredCount
+    activeCount
+    lastRefreshed
+    lastRefreshError
+    refreshing
+    catalog(first: $first, after: $after) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          identifier
+          name
+          author
+          pageUrl
+          thumbnailUrl
+          thumbnailPending
+          startDate
+          startStripNumber
+          removedAt
+          comic {
+            ...SourceComicFields
+          }
+        }
+      }
+    }
+    orphans {
+      ...SourceComicFields
+    }
+  }
+}
+    fragment SourceComicFields on Comic {
+  id
+  name
+  source
+  sourceIdentifier
+  enabled
+  active
+  avatarUrl
+  avatarAvailable
+  avatarPending
+  oldest
+  newest
+  firstStripNumber
+  lastStripNumber
+  sourceStartDate
+  startSource
+  startPending
+  reportedStartDate
+  reportedStartStripNumber
+}`);
+
+export const useGetSourceCatalogQuery = <
+      TData = GetSourceCatalogQuery,
+      TError = unknown
+    >(
+      variables: GetSourceCatalogQueryVariables,
+      options?: Omit<UseQueryOptions<GetSourceCatalogQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetSourceCatalogQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetSourceCatalogQuery, TError, TData>(
+      {
+    queryKey: ['GetSourceCatalog', variables],
+    queryFn: fetcher<GetSourceCatalogQuery, GetSourceCatalogQueryVariables>(GetSourceCatalogDocument, variables),
+    ...options
+  }
+    )};
+
+useGetSourceCatalogQuery.getKey = (variables: GetSourceCatalogQueryVariables) => ['GetSourceCatalog', variables];
+
+export const useInfiniteGetSourceCatalogQuery = <
+      TData = InfiniteData<GetSourceCatalogQuery>,
+      TError = unknown
+    >(
+      variables: GetSourceCatalogQueryVariables,
+      options: Omit<UseInfiniteQueryOptions<GetSourceCatalogQuery, TError, TData>, 'queryKey'> & { queryKey?: UseInfiniteQueryOptions<GetSourceCatalogQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useInfiniteQuery<GetSourceCatalogQuery, TError, TData>(
+      (() => {
+    const { queryKey: optionsQueryKey, ...restOptions } = options;
+    return {
+      queryKey: optionsQueryKey ?? ['GetSourceCatalog.infinite', variables],
+      queryFn: (metaData) => fetcher<GetSourceCatalogQuery, GetSourceCatalogQueryVariables>(GetSourceCatalogDocument, {...variables, ...(metaData.pageParam ?? {})})(),
+      ...restOptions
+    }
+  })()
+    )};
+
+useInfiniteGetSourceCatalogQuery.getKey = (variables: GetSourceCatalogQueryVariables) => ['GetSourceCatalog.infinite', variables];
+
+
+useGetSourceCatalogQuery.fetcher = (variables: GetSourceCatalogQueryVariables, options?: RequestInit['headers']) => fetcher<GetSourceCatalogQuery, GetSourceCatalogQueryVariables>(GetSourceCatalogDocument, variables, options);
+
+export const RefreshSourceCatalogDocument = new TypedDocumentString(`
+    mutation RefreshSourceCatalog($source: String!) {
+  refreshSourceCatalog(source: $source) {
+    batchJob {
+      executionId
+      status
+    }
+    errors {
+      message
+      field
+    }
+  }
+}
+    `);
+
+export const useRefreshSourceCatalogMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<RefreshSourceCatalogMutation, TError, RefreshSourceCatalogMutationVariables, TContext>) => {
+    
+    return useMutation<RefreshSourceCatalogMutation, TError, RefreshSourceCatalogMutationVariables, TContext>(
+      {
+    mutationKey: ['RefreshSourceCatalog'],
+    mutationFn: (variables?: RefreshSourceCatalogMutationVariables) => fetcher<RefreshSourceCatalogMutation, RefreshSourceCatalogMutationVariables>(RefreshSourceCatalogDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useRefreshSourceCatalogMutation.fetcher = (variables: RefreshSourceCatalogMutationVariables, options?: RequestInit['headers']) => fetcher<RefreshSourceCatalogMutation, RefreshSourceCatalogMutationVariables>(RefreshSourceCatalogDocument, variables, options);
+
+export const AddComicFromCatalogDocument = new TypedDocumentString(`
+    mutation AddComicFromCatalog($input: AddComicFromCatalogInput!) {
+  addComicFromCatalog(input: $input) {
+    comic {
+      ...SourceComicFields
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+    fragment SourceComicFields on Comic {
+  id
+  name
+  source
+  sourceIdentifier
+  enabled
+  active
+  avatarUrl
+  avatarAvailable
+  avatarPending
+  oldest
+  newest
+  firstStripNumber
+  lastStripNumber
+  sourceStartDate
+  startSource
+  startPending
+  reportedStartDate
+  reportedStartStripNumber
+}`);
+
+export const useAddComicFromCatalogMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<AddComicFromCatalogMutation, TError, AddComicFromCatalogMutationVariables, TContext>) => {
+    
+    return useMutation<AddComicFromCatalogMutation, TError, AddComicFromCatalogMutationVariables, TContext>(
+      {
+    mutationKey: ['AddComicFromCatalog'],
+    mutationFn: (variables?: AddComicFromCatalogMutationVariables) => fetcher<AddComicFromCatalogMutation, AddComicFromCatalogMutationVariables>(AddComicFromCatalogDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useAddComicFromCatalogMutation.fetcher = (variables: AddComicFromCatalogMutationVariables, options?: RequestInit['headers']) => fetcher<AddComicFromCatalogMutation, AddComicFromCatalogMutationVariables>(AddComicFromCatalogDocument, variables, options);
+
+export const UpdateSourceComicDocument = new TypedDocumentString(`
+    mutation UpdateSourceComic($id: Int!, $input: UpdateComicInput!) {
+  updateComic(id: $id, input: $input) {
+    comic {
+      ...SourceComicFields
+    }
+    errors {
+      message
+      field
+      code
+    }
+  }
+}
+    fragment SourceComicFields on Comic {
+  id
+  name
+  source
+  sourceIdentifier
+  enabled
+  active
+  avatarUrl
+  avatarAvailable
+  avatarPending
+  oldest
+  newest
+  firstStripNumber
+  lastStripNumber
+  sourceStartDate
+  startSource
+  startPending
+  reportedStartDate
+  reportedStartStripNumber
+}`);
+
+export const useUpdateSourceComicMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<UpdateSourceComicMutation, TError, UpdateSourceComicMutationVariables, TContext>) => {
+    
+    return useMutation<UpdateSourceComicMutation, TError, UpdateSourceComicMutationVariables, TContext>(
+      {
+    mutationKey: ['UpdateSourceComic'],
+    mutationFn: (variables?: UpdateSourceComicMutationVariables) => fetcher<UpdateSourceComicMutation, UpdateSourceComicMutationVariables>(UpdateSourceComicDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useUpdateSourceComicMutation.fetcher = (variables: UpdateSourceComicMutationVariables, options?: RequestInit['headers']) => fetcher<UpdateSourceComicMutation, UpdateSourceComicMutationVariables>(UpdateSourceComicDocument, variables, options);
+
+export const FetchComicAvatarDocument = new TypedDocumentString(`
+    mutation FetchComicAvatar($id: Int!) {
+  fetchComicAvatar(id: $id) {
+    queued
+    errors {
+      message
+    }
+  }
+}
+    `);
+
+export const useFetchComicAvatarMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<FetchComicAvatarMutation, TError, FetchComicAvatarMutationVariables, TContext>) => {
+    
+    return useMutation<FetchComicAvatarMutation, TError, FetchComicAvatarMutationVariables, TContext>(
+      {
+    mutationKey: ['FetchComicAvatar'],
+    mutationFn: (variables?: FetchComicAvatarMutationVariables) => fetcher<FetchComicAvatarMutation, FetchComicAvatarMutationVariables>(FetchComicAvatarDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useFetchComicAvatarMutation.fetcher = (variables: FetchComicAvatarMutationVariables, options?: RequestInit['headers']) => fetcher<FetchComicAvatarMutation, FetchComicAvatarMutationVariables>(FetchComicAvatarDocument, variables, options);
+
+export const DetectComicStartDocument = new TypedDocumentString(`
+    mutation DetectComicStart($id: Int!) {
+  detectComicStart(id: $id) {
+    queued
+    errors {
+      message
+    }
+  }
+}
+    `);
+
+export const useDetectComicStartMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<DetectComicStartMutation, TError, DetectComicStartMutationVariables, TContext>) => {
+    
+    return useMutation<DetectComicStartMutation, TError, DetectComicStartMutationVariables, TContext>(
+      {
+    mutationKey: ['DetectComicStart'],
+    mutationFn: (variables?: DetectComicStartMutationVariables) => fetcher<DetectComicStartMutation, DetectComicStartMutationVariables>(DetectComicStartDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useDetectComicStartMutation.fetcher = (variables: DetectComicStartMutationVariables, options?: RequestInit['headers']) => fetcher<DetectComicStartMutation, DetectComicStartMutationVariables>(DetectComicStartDocument, variables, options);
+
+export const RequestCatalogThumbnailsDocument = new TypedDocumentString(`
+    mutation RequestCatalogThumbnails($source: String!, $identifiers: [String!]!) {
+  requestCatalogThumbnails(source: $source, identifiers: $identifiers) {
+    queued
+  }
+}
+    `);
+
+export const useRequestCatalogThumbnailsMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<RequestCatalogThumbnailsMutation, TError, RequestCatalogThumbnailsMutationVariables, TContext>) => {
+    
+    return useMutation<RequestCatalogThumbnailsMutation, TError, RequestCatalogThumbnailsMutationVariables, TContext>(
+      {
+    mutationKey: ['RequestCatalogThumbnails'],
+    mutationFn: (variables?: RequestCatalogThumbnailsMutationVariables) => fetcher<RequestCatalogThumbnailsMutation, RequestCatalogThumbnailsMutationVariables>(RequestCatalogThumbnailsDocument, variables)(),
+    ...options
+  }
+    )};
+
+
+useRequestCatalogThumbnailsMutation.fetcher = (variables: RequestCatalogThumbnailsMutationVariables, options?: RequestInit['headers']) => fetcher<RequestCatalogThumbnailsMutation, RequestCatalogThumbnailsMutationVariables>(RequestCatalogThumbnailsDocument, variables, options);

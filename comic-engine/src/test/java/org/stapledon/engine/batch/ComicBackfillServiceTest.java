@@ -540,6 +540,46 @@ class ComicBackfillServiceTest {
         verify(managementFacade, never()).downloadLatestIndexedComic(any());
     }
 
+    @Test
+    void findMissingStrips_withComicFilter_scansOnlyThatComic() {
+        ComicItem first = createComic(1, "First", true);
+        ComicItem second = createComic(2, "Second", true);
+        second.setSourceIdentifier("second");
+        when(managementFacade.getAllComics()).thenReturn(List.of(first, second));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
+
+        List<BackfillTask> tasks = service.findMissingStrips(null, 2);
+
+        assertThat(tasks).isNotEmpty().allMatch(task -> task.comic().getId() == 2);
+    }
+
+    @Test
+    void findMissingStrips_knownStartDateLetsBackfillReachPastTheOldestStoredStrip() {
+        LocalDate today = LocalDate.now();
+        ComicItem comic = createComic(1, "Started", true);
+        comic.setOldest(today.minusDays(10));
+        comic.setSourceStartDate(today.minusDays(20));
+        when(managementFacade.getAllComics()).thenReturn(List.of(comic));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
+
+        List<LocalDate> dates = service.findMissingStrips().stream().map(task -> ((DateBackfillTask) task).date()).toList();
+
+        assertThat(dates).contains(today.minusDays(20)).noneMatch(date -> date.isBefore(today.minusDays(20)));
+    }
+
+    @Test
+    void findMissingStrips_withoutAStartDateStopsAtTheOldestStoredStrip() {
+        LocalDate today = LocalDate.now();
+        ComicItem comic = createComic(1, "Unstarted", true);
+        comic.setOldest(today.minusDays(10));
+        when(managementFacade.getAllComics()).thenReturn(List.of(comic));
+        when(storageFacade.comicStripExists(any(ComicIdentifier.class), any(LocalDate.class))).thenReturn(false);
+
+        List<LocalDate> dates = service.findMissingStrips().stream().map(task -> ((DateBackfillTask) task).date()).toList();
+
+        assertThat(dates).contains(today.minusDays(10)).noneMatch(date -> date.isBefore(today.minusDays(10)));
+    }
+
     private ComicItem createComic(int id, String name, boolean active) {
         ComicItem comic = new ComicItem();
         comic.setId(id);

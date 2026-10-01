@@ -17,12 +17,17 @@ import org.mockito.Mock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.support.StaticListableBeanFactory;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.stapledon.common.dto.ComicConfig;
@@ -36,6 +41,7 @@ import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.SaveResult;
+import org.stapledon.common.dto.StartSource;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
@@ -44,6 +50,9 @@ import org.stapledon.engine.downloader.DownloaderFacade;
 
 @ExtendWith(MockitoExtension.class)
 class ComicManagementFacadeTest {
+
+    /** No Spring cache in unit tests: the facade skips eviction. */
+    private static final ObjectProvider<CacheManager> NO_CACHE = new StaticListableBeanFactory().getBeanProvider(CacheManager.class);
 
     @Mock
     private ComicStorageFacade storageFacade;
@@ -82,7 +91,7 @@ class ComicManagementFacadeTest {
 
         // Initialize facade with a synchronous executor so per-source threading runs inline in tests
         facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
-                retrievalStatusService, Runnable::run, Clock.systemDefaultZone());
+                retrievalStatusService, Runnable::run, Clock.systemDefaultZone(), NO_CACHE);
     }
 
     @Test
@@ -125,7 +134,7 @@ class ComicManagementFacadeTest {
 
         // Create new facade instance with our test data
         ComicManagementFacade testFacade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class), Runnable::run, Clock.systemDefaultZone());
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class), Runnable::run, Clock.systemDefaultZone(), NO_CACHE);
 
         // Act
         List<ComicItem> comics = testFacade.getAllComics();
@@ -192,7 +201,7 @@ class ComicManagementFacadeTest {
 
         // Create new facade with our null-name comic
         ComicManagementFacade nullNameFacade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
-                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class), Runnable::run, Clock.systemDefaultZone());
+                Mockito.mock(org.stapledon.common.service.RetrievalStatusService.class), Runnable::run, Clock.systemDefaultZone(), NO_CACHE);
 
         // Act and Assert - this shouldn't throw an NPE
         assertThat(nullNameFacade.getAllComics().size()).isEqualTo(1);
@@ -682,5 +691,117 @@ class ComicManagementFacadeTest {
         ComicNavigationResult res2 = facade.getComicStrip(1, Direction.BACKWARD, yesterday);
         assertThat(res2.isFound()).isTrue();
         assertThat(res2.getCurrentDate()).isEqualTo(dayBeforeYesterday);
+    }
+
+    // =========================================================================
+    // Writes: ids, locking, cache, start correction
+    // =========================================================================
+
+    @Test
+    void createComicAssignsTheNextId() {
+        ComicItem first = facade.createComic(ComicItem.builder().name("New One").build()).orElseThrow();
+        ComicItem second = facade.createComic(ComicItem.builder().name("New Two").build()).orElseThrow();
+
+        assertThat(first.getId()).isEqualTo(2);
+        assertThat(second.getId()).isEqualTo(3);
+        assertThat(facade.getComic(3)).contains(second);
+    }
+
+    @Test
+    void createComicRefusesATakenExplicitId() {
+        assertThat(facade.createComic(ComicItem.builder().id(1).name("Clash").build())).isEmpty();
+    }
+
+    @Test
+    void concurrentCreatesGetDistinctIds() throws InterruptedException {
+        int perThread = 25;
+        Set<Integer> ids = ConcurrentHashMap.newKeySet();
+        Runnable creator = () -> {
+            for (int i = 0; i < perThread; i++) {
+                facade.createComic(ComicItem.builder().name(Thread.currentThread().getName() + i).build()).ifPresent(c -> ids.add(c.getId()));
+            }
+        };
+        Thread a = new Thread(creator, "a");
+        Thread b = new Thread(creator, "b");
+        a.start();
+        b.start();
+        a.join();
+        b.join();
+
+        assertThat(ids).hasSize(2 * perThread);
+        assertThat(facade.getAllComics()).hasSize(1 + 2 * perThread);
+    }
+
+    @Test
+    void everyWriteDropsTheCachedComicList() {
+        ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager("comicMetadata");
+        StaticListableBeanFactory beans = new StaticListableBeanFactory();
+        beans.addBean("cacheManager", cacheManager);
+        ComicManagementFacade cached = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade, retrievalStatusService, Runnable::run, Clock.systemDefaultZone(),
+                beans.getBeanProvider(CacheManager.class));
+
+        cacheManager.getCache("comicMetadata").put("allComics", List.of());
+        cached.updateComic(1, testComic.toBuilder().active(false).build());
+        assertThat(cacheManager.getCache("comicMetadata").get("allComics")).isNull();
+
+        cacheManager.getCache("comicMetadata").put("allComics", List.of());
+        cached.createComic(ComicItem.builder().name("Another").build());
+        assertThat(cacheManager.getCache("comicMetadata").get("allComics")).isNull();
+
+        cacheManager.getCache("comicMetadata").put("allComics", List.of());
+        cached.deleteComic(1);
+        assertThat(cacheManager.getCache("comicMetadata").get("allComics")).isNull();
+    }
+
+    @Test
+    void aStoredStripOlderThanTheStartDateCorrectsIt() {
+        ComicItem wrong = testComic.toBuilder()
+                .oldest(LocalDate.of(2020, 1, 1))
+                .sourceStartDate(LocalDate.of(2021, 6, 1))
+                .startSource(StartSource.MANUAL)
+                .build();
+
+        ComicItem saved = facade.updateComic(1, wrong).orElseThrow();
+
+        assertThat(saved.getSourceStartDate()).isEqualTo(LocalDate.of(2020, 1, 1));
+        assertThat(saved.getStartSource()).isEqualTo(StartSource.MANUAL);
+    }
+
+    @Test
+    void aStartDateBeforeEveryStoredStripIsKept() {
+        ComicItem fine = testComic.toBuilder().sourceStartDate(LocalDate.of(1990, 1, 1)).build();
+
+        assertThat(facade.updateComic(1, fine).orElseThrow().getSourceStartDate()).isEqualTo(LocalDate.of(1990, 1, 1));
+    }
+
+    @Test
+    void aLowerStoredStripNumberCorrectsTheFirstStrip() {
+        ComicItem comic = testComic.toBuilder().firstStripNumber(10).build();
+
+        ComicItem corrected = facade.correctFirstStripNumber(comic, 3);
+
+        assertThat(corrected.getFirstStripNumber()).isEqualTo(3);
+        assertThat(corrected.getStartSource()).isEqualTo(StartSource.DETECTED);
+        assertThat(facade.correctFirstStripNumber(comic, 12)).isSameAs(comic);
+        assertThat(facade.correctFirstStripNumber(comic, null)).isSameAs(comic);
+    }
+
+    @Test
+    void fetchAvatarSavesItAndMarksItAvailable() {
+        ComicItem noAvatar = testComic.toBuilder().avatarAvailable(false).build();
+        facade.updateComic(1, noAvatar);
+        byte[] avatar = {1, 2, 3};
+        when(downloaderFacade.downloadAvatar(1, "Test Comic", "gocomics", "testcomic")).thenReturn(Optional.of(avatar));
+        when(storageFacade.saveAvatar(ComicIdentifier.from(noAvatar), avatar)).thenReturn(true);
+
+        assertThat(facade.fetchAvatar(1)).isTrue();
+
+        assertThat(facade.getComic(1).orElseThrow().isAvatarAvailable()).isTrue();
+    }
+
+    @Test
+    void fetchAvatarForAnUnknownComicDoesNothing() {
+        assertThat(facade.fetchAvatar(42)).isFalse();
+        verify(downloaderFacade, never()).downloadAvatar(anyInt(), any(), any(), any());
     }
 }

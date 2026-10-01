@@ -3,6 +3,7 @@ import {
   LibraryBig,
   Newspaper,
   BarChart3,
+  Radio,
   RefreshCw,
   SlidersHorizontal,
   Cog,
@@ -28,6 +29,7 @@ export const operationsNavItems: NavItem[] = [
   { href: '/metrics', label: 'Metrics', icon: BarChart3 },
   { href: '/retrieval-status', label: 'Retrieval Status', icon: RefreshCw },
   { href: '/batch-jobs', label: 'Batch Jobs', icon: Cog },
+  { href: '/sources', label: 'Sources', icon: Radio },
 ];
 
 /** Nav icon stroke: heavier for the current page, lighter otherwise. */

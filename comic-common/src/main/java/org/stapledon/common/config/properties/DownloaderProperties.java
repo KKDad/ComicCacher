@@ -36,6 +36,13 @@ public class DownloaderProperties {
     private final Map<String, Source> sources;
 
     /**
+     * True when {@code downloader.sources.<source>} has any settings.
+     */
+    public boolean isConfigured(String source) {
+        return source != null && sources != null && sources.containsKey(source);
+    }
+
+    /**
      * Returns the throttle config for the given source, or empty defaults (no delay) if the source is not configured.
      */
     public Throttle throttleFor(String source) {

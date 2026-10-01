@@ -10,6 +10,7 @@ Seven JSON files track runtime state, job history, errors, and metrics. All are 
 | `retrieval-status.json` | Comic retrieval attempt records | `comic-engine` | `JsonRetrievalStatusRepository` | Yes |
 | `scheduler-state.json` | Scheduler pause/resume state | `comic-engine` | `SchedulerStateService` | Yes |
 | `backfill-state.json` | What the comic backfill learned: given-up dates, history horizons, daily attempt counts | `comic-engine` | `BackfillStateService` | Yes |
+| `source-catalog.json` | Every source's list of comics, for the Sources page | `comic-engine` | `SourceCatalogRepository` | Yes |
 | `last_errors.json` | Recent errors per comic | `comic-engine` | `JsonErrorTrackingRepository` | Yes |
 | `access-metrics.json` | Per-comic access statistics | `comic-metrics` | `AccessMetricsRepository` | Yes |
 | `metrics-history/{yyyy-MM-dd}.json` | Daily snapshot of combined metrics | `comic-metrics` | `MetricsArchiver` | Yes |
@@ -342,6 +343,45 @@ Daily snapshots of combined metrics. `MetricsArchiveJob` builds combined metrics
 
 ---
 
+## 7. source-catalog.json
+
+Every source's catalog as `SourceCatalogJob` last read it. Created by the first catalog refresh. See [Comic Sources and Their Catalogs](../design/source-catalog.md).
+
+```json
+{
+  "sources": {
+    "gocomics": {
+      "lastRefreshed": "2026-09-28T11:00:00Z",
+      "lastAttempt": "2026-09-28T11:00:00Z",
+      "lastError": null,
+      "entries": {
+        "calvinandhobbes": {
+          "name": "Calvin and Hobbes",
+          "author": "Bill Watterson",
+          "thumbnailUrl": "https://gocomicscmsassets.gocomics.com/.../Badge.png",
+          "startDate": "1985-11-18",
+          "startCheckedAt": "2026-09-28T11:05:00Z",
+          "firstSeen": "2026-09-28T11:00:00Z",
+          "lastSeen": "2026-09-28T11:00:00Z",
+          "removedAt": null
+        }
+      }
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|:---|:---|:---|
+| `lastRefreshed` | `OffsetDateTime` | When the catalog was last read successfully |
+| `lastAttempt` / `lastError` | `OffsetDateTime` / `String` | The last refresh attempt, and why it failed (null when it worked) |
+| `entries` | `Map<String, Entry>` | By the comic's identifier at the source |
+| `thumbnailUrl` | `String` | The source's image, downloaded on demand into `tmp/catalog-thumbnails/` |
+| `startDate` / `startStripNumber` | `LocalDate` / `Integer` | Where the source says the comic starts |
+| `removedAt` | `OffsetDateTime` | When the source stopped listing the comic. Entries are never deleted |
+
+---
+
 ## Key Source Files
 
 | File | Module |
@@ -352,6 +392,7 @@ Daily snapshots of combined metrics. `MetricsArchiveJob` builds combined metrics
 | `ComicRetrievalRecord.java` / `ComicRetrievalRecordStorage.java` | `comic-common` |
 | `SchedulerStateService.java` | `comic-engine` |
 | `BackfillStateService.java` | `comic-engine` |
+| `SourceCatalogRepository.java` / `SourceCatalogState.java` | `comic-engine` |
 | `JsonErrorTrackingRepository.java` | `comic-engine` |
 | `ComicErrorRecord.java` | `comic-common` |
 | `AccessMetricsRepository.java` | `comic-metrics` |

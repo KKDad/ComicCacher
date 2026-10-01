@@ -50,13 +50,19 @@ The authoritative registry of all known comics and their metadata. Keyed by comi
 | `author` | `String` | `null` | Author/artist name |
 | `oldest` | `LocalDate` | `null` | Oldest cached strip date |
 | `newest` | `LocalDate` | `null` | Newest cached strip date |
-| `enabled` | `boolean` | `true` | Whether downloading is enabled |
+| `enabled` | `boolean` | `true` | Whether readers see the comic (the Sources page's Visible switch); hidden comics are admin-only |
 | `description` | `String` | `null` | Comic description |
 | `avatarAvailable` | `boolean` | `false` | Whether avatar.png exists |
 | `source` | `String` | `null` | Source provider identifier |
 | `sourceIdentifier` | `String` | `null` | Provider-specific comic slug |
 | `publicationDays` | `List<DayOfWeek>` | `null` | Days comic publishes (null = daily) |
-| `active` | `boolean` | `true` | Whether comic is actively publishing |
+| `active` | `boolean` | `true` | Whether new strips are downloaded (daily download and backfill; the Sources page's Downloading switch) |
+| `firstStripNumber` | `Integer` | `null` | First strip number, for numbered comics |
+| `lastStripNumber` | `Integer` | `null` | Highest downloaded strip number, for numbered comics |
+| `sourceStartDate` | `LocalDate` | `null` | First strip date the source has; backfill never scans before it |
+| `startSource` | `StartSource` | `null` | Where the start came from: `DETECTED` or `MANUAL` |
+
+New comics get the next free id (the highest id plus one) when they are created through the API.
 
 > **Note:** The `comics` list field on `ComicConfig` is `transient`, so Gson never serializes it. Only the `items` map is persisted.
 

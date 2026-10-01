@@ -1,6 +1,7 @@
 package org.stapledon.metrics.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.stapledon.common.config.CacheLayout;
 import org.stapledon.common.util.NfsFileOperations;
 import org.stapledon.metrics.dto.CombinedMetricsData;
 
@@ -40,7 +41,7 @@ public class MetricsArchiver {
     }
 
     /** Archive directory under the cache root; not a comic, so storage scans skip it. */
-    public static final String HISTORY_DIRECTORY = "metrics-history";
+    public static final String HISTORY_DIRECTORY = CacheLayout.METRICS_HISTORY_DIRECTORY;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final int DEFAULT_RETENTION_DAYS = 90;
 

@@ -13,15 +13,22 @@ import org.stapledon.common.dto.StripLoaderKey;
 import org.stapledon.common.dto.StripLoaderKey.DateStripKey;
 import org.stapledon.common.dto.StripLoaderKey.BoundaryStripKey;
 import org.stapledon.common.dto.ComicNavigationResult;
+import org.stapledon.common.dto.StartSource;
 import org.stapledon.common.model.ComicNotFoundException;
 import org.stapledon.common.model.ComicOperationException;
+import org.stapledon.api.dto.ErrorCode;
 import org.stapledon.api.dto.payload.MutationPayloads.CreateComicPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.DeleteComicPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.UpdateComicPayload;
+import org.stapledon.api.dto.payload.UserError;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.source.ComicValidator;
+import org.stapledon.engine.source.ComicValidator.Problem;
 import org.stapledon.metrics.collector.AccessMetricsCollector;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +48,8 @@ public class ComicResolver {
 
     private final ManagementFacade comicManagementFacade;
     private final AccessMetricsCollector accessMetricsCollector;
+    private final ComicVisibility visibility;
+    private final ComicValidator validator;
     private final String externalBaseUrl;
 
     /**
@@ -48,9 +57,13 @@ public class ComicResolver {
      */
     public ComicResolver(ManagementFacade comicManagementFacade,
                          AccessMetricsCollector accessMetricsCollector,
+                         ComicVisibility visibility,
+                         ComicValidator validator,
                          @Value("${app.external-base-url:}") String externalBaseUrl) {
         this.comicManagementFacade = comicManagementFacade;
         this.accessMetricsCollector = accessMetricsCollector;
+        this.visibility = visibility;
+        this.validator = validator;
         this.externalBaseUrl = externalBaseUrl;
     }
 
@@ -59,7 +72,7 @@ public class ComicResolver {
     // =========================================================================
 
     /**
-     * Get paginated list of comics with optional filtering.
+     * Get paginated list of comics with optional filtering. Hidden comics are left out unless an admin asks for them with {@code includeHidden}.
      */
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
@@ -67,16 +80,20 @@ public class ComicResolver {
             @Argument String search,
             @Argument Boolean active,
             @Argument Boolean enabled,
+            @Argument Boolean includeHidden,
             @Argument Integer first,
             @Argument String after) {
 
         int limit = first != null ? Math.min(first, 50) : 20;
 
-        List<ComicItem> allComics = comicManagementFacade.getAllComics();
+        List<ComicItem> allComics = Boolean.TRUE.equals(includeHidden) && visibility.callerIsAdmin()
+                ? comicManagementFacade.getAllComics()
+                : comicManagementFacade.getAllComics().stream().filter(ComicItem::isEnabled).toList();
 
         // Apply filters
         List<ComicItem> filtered = allComics.stream()
                 .filter(c -> enabled == null || c.isEnabled() == enabled)
+                .filter(c -> active == null || c.isActive() == active)
                 .filter(c -> search == null || matchesSearch(c, search))
                 .toList();
 
@@ -121,7 +138,7 @@ public class ComicResolver {
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
     public ComicItem comic(@Argument int id) {
-        return comicManagementFacade.getComic(id)
+        return visibility.visible(comicManagementFacade.getComic(id))
                 .orElse(null);
     }
 
@@ -138,7 +155,7 @@ public class ComicResolver {
             DataLoader<StripLoaderKey, ComicNavigationResult> stripLoader) {
 
         long start = System.currentTimeMillis();
-        return comicManagementFacade.getComic(comicId)
+        return visibility.visible(comicManagementFacade.getComic(comicId))
                 .map(comic -> {
                     StripLoaderKey key = new DateStripKey(comicId, comic.getName(), date);
                     return stripLoader.load(key)
@@ -182,6 +199,9 @@ public class ComicResolver {
     @PreAuthorize("isAuthenticated()")
     public ComicStrip randomStrip(@Argument Integer comicId) {
         if (comicId != null) {
+            if (visibility.visible(comicManagementFacade.getComic(comicId)).isEmpty()) {
+                return null;
+            }
             return comicManagementFacade.getRandomDate(comicId)
                     .map(date -> {
                         ComicNavigationResult result = comicManagementFacade.getComicStripWithNavigation(comicId, date);
@@ -191,7 +211,7 @@ public class ComicResolver {
         }
 
         // No comicId — pick a random comic, then a random date
-        List<ComicItem> allComics = comicManagementFacade.getAllComics();
+        List<ComicItem> allComics = visibility.visible(comicManagementFacade.getAllComics());
         if (allComics.isEmpty()) {
             return null;
         }
@@ -213,7 +233,7 @@ public class ComicResolver {
     public SearchResults search(@Argument String query, @Argument Integer limit) {
         int maxResults = limit != null ? Math.min(limit, 50) : 20;
 
-        List<ComicItem> matched = comicManagementFacade.getAllComics().stream()
+        List<ComicItem> matched = visibility.visible(comicManagementFacade.getAllComics()).stream()
                 .filter(c -> matchesSearch(c, query))
                 .limit(maxResults)
                 .toList();
@@ -322,19 +342,31 @@ public class ComicResolver {
     // =========================================================================
 
     /**
-     * Create a new comic.
+     * Create a new comic. Its id is assigned. A start value given here is recorded as set by an admin.
      */
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
     public CreateComicPayload createComic(@Argument CreateComicInput input) {
+        boolean manualStart = input.sourceStartDate() != null || input.firstStripNumber() != null;
         ComicItem newComic = ComicItem.builder()
                 .name(input.name())
                 .author(input.author())
                 .description(input.description())
                 .enabled(Optional.ofNullable(input.enabled()).orElse(true))
+                .active(Optional.ofNullable(input.active()).orElse(true))
                 .source(input.source())
                 .sourceIdentifier(input.sourceIdentifier())
+                .publicationDays(input.publicationDays())
+                .firstStripNumber(input.firstStripNumber())
+                .lastStripNumber(input.lastStripNumber())
+                .sourceStartDate(input.sourceStartDate())
+                .startSource(manualStart ? StartSource.MANUAL : null)
                 .build();
+
+        List<UserError> errors = toUserErrors(validator.validateNew(newComic));
+        if (!errors.isEmpty()) {
+            return new CreateComicPayload(null, errors);
+        }
 
         ComicItem created = comicManagementFacade.createComic(newComic)
                 .orElseThrow(ComicOperationException::createFailed);
@@ -343,7 +375,7 @@ public class ComicResolver {
     }
 
     /**
-     * Update an existing comic.
+     * Update an existing comic. Only the fields given change. A new start value is recorded as set by an admin.
      */
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -356,13 +388,26 @@ public class ComicResolver {
         Optional.ofNullable(input.author()).ifPresent(builder::author);
         Optional.ofNullable(input.description()).ifPresent(builder::description);
         Optional.ofNullable(input.enabled()).ifPresent(builder::enabled);
+        Optional.ofNullable(input.active()).ifPresent(builder::active);
         Optional.ofNullable(input.source()).ifPresent(builder::source);
         Optional.ofNullable(input.sourceIdentifier()).ifPresent(builder::sourceIdentifier);
+        Optional.ofNullable(input.publicationDays()).ifPresent(builder::publicationDays);
+        Optional.ofNullable(input.firstStripNumber()).ifPresent(builder::firstStripNumber);
+        Optional.ofNullable(input.lastStripNumber()).ifPresent(builder::lastStripNumber);
+        Optional.ofNullable(input.sourceStartDate()).ifPresent(builder::sourceStartDate);
+        if (input.sourceStartDate() != null || input.firstStripNumber() != null) {
+            builder.startSource(StartSource.MANUAL);
+        }
         ComicItem updated = builder.build();
+
+        List<UserError> errors = toUserErrors(validator.validateUpdate(existing, updated));
+        if (!errors.isEmpty()) {
+            return new UpdateComicPayload(null, errors);
+        }
 
         ComicItem result = comicManagementFacade.updateComic(id, updated)
                 .orElseThrow(() -> ComicOperationException.updateFailed(id));
-        log.info("AUDIT comic updated: id={}, name={}, changed fields: {}", id, result.getName(), input);
+        log.info("AUDIT comic updated: id={}, name={}, changed fields: {}", id, result.getName(), input.changedFields());
         return new UpdateComicPayload(result, List.of());
     }
 
@@ -380,6 +425,12 @@ public class ComicResolver {
     // =========================================================================
     // Helper Methods
     // =========================================================================
+
+    private static List<UserError> toUserErrors(List<Problem> problems) {
+        return problems.stream()
+                .map(problem -> new UserError(problem.message(), "input." + problem.field(), ErrorCode.VALIDATION_ERROR))
+                .toList();
+    }
 
     private boolean matchesSearch(ComicItem comic, String query) {
         String lowerQuery = query.toLowerCase();
@@ -464,11 +515,34 @@ public class ComicResolver {
     public record SearchResults(List<ComicItem> comics, int totalCount, String query) {
     }
 
-    public record CreateComicInput(String name, String author, String description, Boolean enabled, String source,
-            String sourceIdentifier) {
+    public record CreateComicInput(String name, String author, String description, Boolean enabled, Boolean active, String source,
+            String sourceIdentifier, List<DayOfWeek> publicationDays, Integer firstStripNumber, Integer lastStripNumber, LocalDate sourceStartDate) {
     }
 
-    public record UpdateComicInput(String name, String author, String description, Boolean enabled, String source,
-            String sourceIdentifier) {
+    public record UpdateComicInput(String name, String author, String description, Boolean enabled, Boolean active, String source,
+            String sourceIdentifier, List<DayOfWeek> publicationDays, Integer firstStripNumber, Integer lastStripNumber, LocalDate sourceStartDate) {
+
+        /** The fields this update sets, with their new values, for the audit log. */
+        String changedFields() {
+            List<String> changed = new ArrayList<>();
+            addIfSet(changed, "name", name);
+            addIfSet(changed, "author", author);
+            addIfSet(changed, "description", description);
+            addIfSet(changed, "enabled", enabled);
+            addIfSet(changed, "active", active);
+            addIfSet(changed, "source", source);
+            addIfSet(changed, "sourceIdentifier", sourceIdentifier);
+            addIfSet(changed, "publicationDays", publicationDays);
+            addIfSet(changed, "firstStripNumber", firstStripNumber);
+            addIfSet(changed, "lastStripNumber", lastStripNumber);
+            addIfSet(changed, "sourceStartDate", sourceStartDate);
+            return String.join(", ", changed);
+        }
+
+        private static void addIfSet(List<String> changed, String field, Object value) {
+            if (value != null) {
+                changed.add(field + "=" + value);
+            }
+        }
     }
 }

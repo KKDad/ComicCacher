@@ -43,6 +43,7 @@ import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition.Option;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.source.SourceRegistry;
 
 /**
  * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips: recent days first, then older history.
@@ -73,24 +74,20 @@ public class ComicBackfillJobConfig {
     @Value("${batch.timezone}")
     private String timezone;
 
-    private static final List<JobParameterDefinition> BACKFILL_PARAMETERS = List.of(
-            new JobParameterDefinition("source", "Source Filter", "ENUM", false, "ALL",
-                    List.of(new Option("ALL", "All Sources"),
-                            new Option("gocomics", "GoComics"),
-                            new Option("comicskingdom", "Comics Kingdom"),
-                            new Option("freefall", "Freefall"))),
-            new JobParameterDefinition("resetState", "Forget given-up dates and learned horizons", "ENUM", false, "false",
-                    List.of(new Option("false", "No"),
-                            new Option("true", "Yes")))
-    );
-
     /**
      * Scheduler for ComicBackfillJob - runs at every configured cron time, skipping runs with nothing to backfill. Triggered by SchedulerTriggers component.
      */
     @Bean
-    public DailyJobScheduler comicBackfillJobScheduler(@Qualifier("comicBackfillJob") Job comicBackfillJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
+    public DailyJobScheduler comicBackfillJobScheduler(@Qualifier("comicBackfillJob") Job comicBackfillJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker,
+            SourceRegistry sourceRegistry) {
+        List<JobParameterDefinition> parameters = List.of(
+                new JobParameterDefinition("source", "Source Filter", "ENUM", false, "ALL", sourceRegistry.jobSourceOptions()),
+                new JobParameterDefinition("comic", "Comic ID (blank for all)", "INTEGER", false, null, null),
+                new JobParameterDefinition("resetState", "Forget given-up dates and learned horizons", "ENUM", false, "false",
+                        List.of(new Option("false", "No"),
+                                new Option("true", "Yes"))));
         DailyJobScheduler scheduler = new DailyJobScheduler(comicBackfillJob, cronExpression, timezone, jobOperator, tracker,
-                "Backfills missing comic strips: recent days first, then older gaps", BACKFILL_PARAMETERS);
+                "Backfills missing comic strips: recent days first, then older gaps", parameters);
         scheduler.setMultipleRunsPerDay(true);
         scheduler.setPrecondition(() -> backfillService.hasMissingStrips(null), "nothing to backfill");
         return scheduler;
@@ -132,18 +129,21 @@ public class ComicBackfillJobConfig {
 
     /**
      * Reader that provides the list of backfill tasks (comic + date pairs). Uses @StepScope so findMissingStrips() is called when the job runs, not at application startup. Accepts an
-     * optional "source" job parameter to filter by comic source, and "resetState=true" to forget what earlier runs learned first.
+     * optional "source" job parameter to filter by comic source, an optional "comic" id to backfill just that comic, and "resetState=true" to forget
+     * what earlier runs learned first.
      */
     @Bean
     @StepScope
     @Qualifier("backfillTaskReader")
     public ItemReader<BackfillTask> backfillTaskReader(@Value("#{jobParameters['source']}") String sourceFilter,
+            @Value("#{jobParameters['comic']}") String comicFilter,
             @Value("#{jobParameters['resetState']}") String resetState) {
         if (Boolean.parseBoolean(resetState)) {
             backfillState.reset();
         }
-        log.debug("Building backfill task list for job execution (sourceFilter={})", sourceFilter);
-        List<BackfillTask> tasks = backfillService.findMissingStrips(sourceFilter);
+        Integer comicId = parseComicId(comicFilter);
+        log.debug("Building backfill task list for job execution (sourceFilter={}, comic={})", sourceFilter, comicId);
+        List<BackfillTask> tasks = backfillService.findMissingStrips(sourceFilter, comicId);
         if (tasks.isEmpty()) {
             log.info("No missing strips found - backfill has nothing to process");
         } else {
@@ -206,6 +206,21 @@ public class ComicBackfillJobConfig {
                 return failedResult(task, "Error backfilling: " + e.getMessage());
             }
         };
+    }
+
+    /**
+     * The "comic" job parameter as a comic id, or null when it is blank. A value that isn't a number is ignored with a warning.
+     */
+    public static Integer parseComicId(String comicFilter) {
+        if (comicFilter == null || comicFilter.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(comicFilter.trim());
+        } catch (NumberFormatException _) {
+            log.warn("Ignoring backfill comic parameter '{}': not a comic id", comicFilter);
+            return null;
+        }
     }
 
     private static String taskTarget(BackfillTask task) {

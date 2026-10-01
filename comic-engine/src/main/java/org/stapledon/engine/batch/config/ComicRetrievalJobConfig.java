@@ -30,8 +30,8 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
-import org.stapledon.engine.batch.scheduler.JobParameterDefinition.Option;
 import org.stapledon.engine.management.ManagementFacade;
+import org.stapledon.engine.source.SourceRegistry;
 
 /**
  * Spring Batch configuration for comic retrieval jobs. Provides comprehensive execution tracking, retry logic, and monitoring.
@@ -52,21 +52,16 @@ public class ComicRetrievalJobConfig {
     @Value("${batch.timezone}")
     private String timezone;
 
-    private static final List<JobParameterDefinition> DOWNLOAD_PARAMETERS = List.of(
-            new JobParameterDefinition("source", "Source Filter", "ENUM", false, "ALL",
-                    List.of(new Option("ALL", "All Sources"),
-                            new Option("gocomics", "GoComics"),
-                            new Option("comicskingdom", "Comics Kingdom"),
-                            new Option("freefall", "Freefall")))
-    );
-
     /**
      * Scheduler for ComicDownloadJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
      */
     @Bean
-    public DailyJobScheduler comicDownloadJobScheduler(@Qualifier("comicDownloadJob") Job comicDownloadJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker) {
+    public DailyJobScheduler comicDownloadJobScheduler(@Qualifier("comicDownloadJob") Job comicDownloadJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker,
+            SourceRegistry sourceRegistry) {
+        List<JobParameterDefinition> parameters = List.of(
+                new JobParameterDefinition("source", "Source Filter", "ENUM", false, "ALL", sourceRegistry.jobSourceOptions()));
         return new DailyJobScheduler(comicDownloadJob, cronExpression, timezone, jobOperator, tracker,
-                "Downloads today's comic strips from all enabled sources", DOWNLOAD_PARAMETERS);
+                "Downloads today's comic strips from all enabled sources", parameters);
     }
 
     /**

@@ -68,4 +68,11 @@ public final class MutationPayloads {
 
     public record ToggleJobSchedulerPayload(BatchSchedulerInfoDto scheduler, List<UserError> errors) {
     }
+
+    // Source payloads
+    public record QueueComicTaskPayload(boolean queued, ComicItem comic, List<UserError> errors) {
+    }
+
+    public record RequestCatalogThumbnailsPayload(int queued, List<UserError> errors) {
+    }
 }

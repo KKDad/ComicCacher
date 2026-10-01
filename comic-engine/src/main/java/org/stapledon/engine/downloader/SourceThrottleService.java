@@ -4,6 +4,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -98,6 +99,35 @@ public class SourceThrottleService {
             nextAllowedAt.merge(source, resumeAt, Math::max);
         }
         return Duration.ofMillis(backoffMs);
+    }
+
+    /**
+     * Runs one request against {@code source}, paced by {@link #await(String)}. An HTTP 429 backs the source off and retries, up to
+     * {@link #maxAttempts(String)} attempts; the last 429 is rethrown.
+     */
+    public <T> T withRetries(String source, IoCall<T> call) throws IOException {
+        int maxAttempts = maxAttempts(source);
+        for (int attempt = 1; ; attempt++) {
+            await(source);
+            try {
+                return call.call();
+            } catch (RateLimitedException e) {
+                Duration backoff = backOff(source, attempt, e.getRetryAfter());
+                if (attempt >= maxAttempts) {
+                    throw e;
+                }
+                log.warn("Rate limited (HTTP 429) on {}, attempt {}/{}; Retry-After={}; backing off {}s", e.getUrl(), attempt, maxAttempts,
+                        e.getRetryAfter().map(d -> d.toSeconds() + "s").orElse("none"), backoff.toSeconds());
+            }
+        }
+    }
+
+    /**
+     * A request that can fail with an {@link IOException}.
+     */
+    @FunctionalInterface
+    public interface IoCall<T> {
+        T call() throws IOException;
     }
 
     private static long exponentialBackoffMs(DownloaderProperties.Retry retry, int attempt) {

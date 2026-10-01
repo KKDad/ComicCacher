@@ -133,7 +133,7 @@ class GoComicsDownloaderStrategyTest {
     void chromeClientHints_matchChromeMajorFromUserAgent() {
         String ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";
 
-        assertThat(GoComicsDownloaderStrategy.chromeClientHints(ua))
+        assertThat(BrowserFetcher.chromeClientHints(ua))
                 .contains("\"Chromium\";v=\"154\", \"Google Chrome\";v=\"154\", \"Not?A_Brand\";v=\"99\"");
     }
 
@@ -141,7 +141,7 @@ class GoComicsDownloaderStrategyTest {
     void chromeClientHints_emptyForNonChromeUserAgent() {
         String firefox = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0";
 
-        assertThat(GoComicsDownloaderStrategy.chromeClientHints(firefox)).isEmpty();
-        assertThat(GoComicsDownloaderStrategy.chromeClientHints(null)).isEmpty();
+        assertThat(BrowserFetcher.chromeClientHints(firefox)).isEmpty();
+        assertThat(BrowserFetcher.chromeClientHints(null)).isEmpty();
     }
 }

@@ -43,14 +43,15 @@ describe('NavRail', () => {
   it('renders operations items for OPERATOR role', () => {
     vi.mocked(useUser).mockReturnValue(createMockUser({ roles: ['OPERATOR'] }));
     render(<NavRail />);
-    expect(screen.getAllByRole('link')).toHaveLength(7);
+    expect(screen.getAllByRole('link')).toHaveLength(8);
     expect(screen.getByRole('link', { name: 'Batch Jobs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sources' })).toHaveAttribute('href', '/sources');
   });
 
   it('renders operations items for ADMIN role (hierarchy)', () => {
     vi.mocked(useUser).mockReturnValue(createMockUser({ roles: ['ADMIN'] }));
     render(<NavRail />);
-    expect(screen.getAllByRole('link')).toHaveLength(7);
+    expect(screen.getAllByRole('link')).toHaveLength(8);
   });
 
   it('does not render operations items for USER role', () => {

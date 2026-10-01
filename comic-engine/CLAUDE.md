@@ -13,14 +13,16 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 | `engine.storage` | `FileSystemComicStorageFacade` and supporting classes |
 | `engine.caching` | `CacheException` only (no cache implementations live here) |
 | `engine.management` | Comic management facade |
+| `engine.source` | `ComicSource` per source, `SourceRegistry`, source catalogs (`source-catalog.json`), catalog thumbnails, comic validation |
 | `engine.health` | Custom health indicators |
 
 ## Downloader Strategy Pattern
 
+- A source is a downloader strategy plus one `ComicSource` bean (`engine.source`); `SourceRegistry` registers it everywhere. See [@~/docs/design/source-catalog.md](../docs/design/source-catalog.md).
 - Daily-strip sources extend `AbstractDailyDownloaderStrategy`. Indexed/archive-walk sources extend `AbstractIndexedDownloaderStrategy`. New sources should extend one of these — never `AbstractComicDownloaderStrategy` directly unless implementing a fundamentally different access pattern.
-- All production strategies (GoComics, ComicsKingdom, Freefall) use Jsoup. GoComics sits behind Cloudflare, so `GoComicsDownloaderStrategy` sends desktop-Chrome headers with `Sec-Ch-Ua` client hints derived from the configured UA.
+- All production strategies (GoComics, ComicsKingdom, Freefall) use Jsoup. GoComics sits behind Cloudflare, so its pages are fetched with `BrowserFetcher`, which sends desktop-Chrome headers with `Sec-Ch-Ua` client hints derived from the configured UA.
 - Throttling is mandatory. Pace each request via `SourceThrottleService` using the `downloader.sources.<source>.throttle.min-delay-ms`/`max-delay-ms` properties. GoComics in particular needs aggressive jitter (8–20 s) to stay under Cloudflare's bot threshold.
-- HTTP 429 handling: throw `RateLimitedException` (see `downloadImageData()` and `GoComicsDownloaderStrategy.fetchDocument()`). `AbstractDailyDownloaderStrategy` retries it via `SourceThrottleService.backOff()`, which honours `Retry-After` and pauses the whole source. Configure with `downloader.sources.<source>.retry.max-attempts` / `initial-backoff-ms` / `max-backoff-ms`; unset means no retries.
+- HTTP 429 handling: throw `RateLimitedException` (see `downloadImageData()` and `BrowserFetcher`); outside a strategy, wrap the request in `SourceThrottleService.withRetries()`. `AbstractDailyDownloaderStrategy` retries it via `SourceThrottleService.backOff()`, which honours `Retry-After` and pauses the whole source. Configure with `downloader.sources.<source>.retry.max-attempts` / `initial-backoff-ms` / `max-backoff-ms`; unset means no retries.
 - The global `downloader.user-agent.default-value` applies unless `downloader.sources.<source>.user-agent` overrides it. Keep its Chrome major version current, and bump `UserAgentService.FALLBACK_USER_AGENT` at the same time.
 - Details: [@~/docs/design/downloader-strategies.md](../docs/design/downloader-strategies.md#throttling-and-rate-limits).
 
@@ -52,7 +54,7 @@ See [@~/docs/design/image-validation.md](../docs/design/image-validation.md).
 ## Caching
 
 - **Do not cache images, strips or navigation results in memory.** Caching has served the wrong images before, which is why no such caches exist.
-- The only Caffeine cache is `comicMetadata`, which holds the comic configuration list (`@Cacheable` on `ComicManagementFacade.getAllComics()`; `@CacheEvict` on create, update and delete). It is wired in comic-api's `CaffeineCacheConfiguration` and configured with `comics.cache.caffeine.*` (`CaffeineCacheProperties`). Don't add caches to it without a clear need.
+- The only Caffeine cache is `comicMetadata`, which holds the comic configuration list (`@Cacheable` on `ComicManagementFacade.getAllComics()`). Every comic write goes through `ComicManagementFacade.persist()`, which clears it directly: `@CacheEvict` never fires for the facade's calls to itself. It is wired in comic-api's `CaffeineCacheConfiguration` and configured with `comics.cache.caffeine.*` (`CaffeineCacheProperties`). Don't add caches to it without a clear need.
 - Where a small in-memory memo is justified, keep it away from anything that serves images. It needs:
   - a property that switches it off (off when unset);
   - a recheck against disk where correctness matters;

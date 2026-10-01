@@ -132,7 +132,8 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
   2. **History pass:** older gaps, round-robin one per comic per round, so comics early in the alphabet can't take the whole budget.
 - **Processor:** Calls `managementFacade.downloadComicForDate(comic, date, true)` per task, with a delay between downloads (`batch.comic-backfill.delay-between-comics-ms`, 10000 ms in `application.properties`). The `true` makes an HTTP 429 fail at once. The source still backs off through `SourceThrottleService`, and the processor skips that source's remaining tasks for the rest of the run. Strip-number tasks (Freefall) stop the same way on a 429.
 - **Writer:** Logs per-chunk success, duplicate and failure counts, then flushes `BackfillStateService` (also flushed when the step ends)
-- **Job parameters:** `source` (filter), `resetState=true` (forget learned state before the run)
+- **Job parameters:** `source` (filter; options come from `SourceRegistry`), `comic` (a comic id, to backfill just that comic; the Sources page uses it), `resetState=true` (forget learned state before the run)
+- **Scan floor:** a comic's dates are scanned back to the latest of the source's `max-days-back`, the comic's start, and any learned horizon. The start is the comic's `sourceStartDate` when known, otherwise the oldest stored strip, so a known start lets backfill reach further back than what is stored (see [start dates](source-catalog.md#start-dates)).
 
 **Learned state (`backfill-state.json`, `BackfillStateService`):**
 - A date that comes back unavailable, or as a duplicate of another date's image, `give-up-after` times (default 2) is skipped.
@@ -156,6 +157,20 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 - Configurable delay between downloads (`batch.avatar-backfill.delay-between-downloads-ms`, default 2000ms)
 
 **Data source:** `ManagementFacade` -> `DownloaderFacade` avatar download
+
+### SourceCatalogJob
+
+**Purpose:** Reads each source's list of comics for the Sources page, detects where a few configured comics start, and deletes stale catalog thumbnails. See [Comic Sources and Their Catalogs](source-catalog.md).
+
+**Config class:** `SourceCatalogJobConfig`
+
+**Pattern:** Tasklet (single step).
+
+- Refreshes each catalog older than `batch.source-catalog.max-age-days` (7); a scheduled run is skipped, without any request, when none is due. Parameters: `source` (one source, or `ALL`) and `force=true` (ignore the age). The Sources page's Refresh button runs it for one source with `force=true`.
+- Then detects starts for up to `batch.source-catalog.start-detect-per-run` (5) comics per source, and purges catalog thumbnails older than `comics.catalog.thumbnail-max-age-days` (30)
+- A failed refresh fails the step after the other sources have run
+
+**Data source:** `SourceCatalogService` → each `ComicSource`'s catalog (GoComics A–Z page, Comics Kingdom WordPress API)
 
 ### ImageMetadataBackfillJob
 
@@ -211,6 +226,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 | ImageMetadataBackfillJob | Tasklet | `0 30 6 * * ?` | `true` | Filesystem walk | `ValidationService`, `AnalysisService`, `ImageMetadataRepository` |
 | MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | Combined metrics built on demand | `MetricsArchiveService` |
 | RetrievalRecordPurgeJob | Tasklet (2 steps) | `0 45 6 * * ?` | `true` | JSON retrieval records, batch log files | `ManagementFacade`, `BatchJobLogService` |
+| SourceCatalogJob | Tasklet | `0 0 5 * * ?` (runs only when a catalog is due) | `true` | Source catalogs (A–Z page, WordPress API) | `SourceCatalogService`, `CatalogThumbnailService` |
 
 All jobs run in `batch.timezone` (`America/Toronto`), whatever the JVM's zone (UTC in the containers). Cron expressions are configurable via `batch.<job-key>.cron` properties. Code that needs today's date injects the application `Clock` (see Time Handling Rules in `CLAUDE.md`).
 

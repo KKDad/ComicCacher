@@ -48,8 +48,10 @@ type Query {
         search: String
         """Filter by active status (actively publishing)."""
         active: Boolean
-        """Filter by enabled status."""
+        """Filter by enabled (visible) status."""
         enabled: Boolean
+        """Include hidden comics. Honoured for admins only; everyone else never sees hidden comics."""
+        includeHidden: Boolean = false
         """Number of comics to return (max 50)."""
         first: Int = 20
         """Cursor for pagination - return comics after this cursor."""
