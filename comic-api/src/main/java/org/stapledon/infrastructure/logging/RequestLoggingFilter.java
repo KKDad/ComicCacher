@@ -97,6 +97,10 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         String operationPart = operation != null ? " (" + operation + ")" : "";
         String breakdown = timings != null ? timings.summary() : "";
         String userPart = user != null ? " user=" + user : "";
+        if (timings != null && timings.slowFieldCount() > 0) {
+            log.warn("Slow GraphQL fields{}: {} over {}ms, slowest {}", operationPart, timings.slowFieldCount(), timingProperties.slowFetcherMs(),
+                    timings.slowestField());
+        }
         Object[] args = {request.getMethod(), path, operationPart, response.getStatus(), elapsedMs, breakdown, request.getRemoteAddr(), userPart};
         if (interesting && elapsedMs >= timingProperties.slowRequestMs()) {
             log.warn("Slow request: " + message, args);

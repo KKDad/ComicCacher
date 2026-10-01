@@ -8,13 +8,6 @@
 - Keep the per-job lock that stops two runs overlapping, and check that scheduled runs behave the same
 - Priority: Very High
 
-## Log slow GraphQL fields once per request
-
-- `TimingInstrumentation` logs a `Slow GraphQL field` WARN for every field over the threshold. On dev on 2026-10-01 at 14:10:36, one 828 ms page load (`req=593f31dc`) logged 46 of them, one per `Comic.lastStrip`: 46 of the day's 54 warnings
-- The fields run in parallel, so they all cross the threshold together and the lines repeat the same fact. The request line already names the slowest field (`slowest=Comic.lastStrip:806ms`)
-- Log one WARN per request with the slowest field, how many fields went over and the threshold, and keep per-field detail at DEBUG
-- Priority: Very High
-
 ## Teach the comiccacher-logs skill which jobs are paused or disabled
 
 - Many dev jobs are paused on purpose because they're no longer being tested. The skill reports them as idle or overdue, which leads to wrong findings (on 2026-09-28 it flagged ComicBackfillJob as not having run since 09-25, but the job is paused on dev)
@@ -27,7 +20,7 @@
 
 - The skill (in `~/git/runbooks/skills/comiccacher-logs`) focuses on the API. It treats the `comics-ui` log as relevant only to web-UI questions, so a health report doesn't check the frontend
 - Add a frontend health check to every report: container status and restarts, `/api/health`, and errors in the `comics-ui` log (failed server renders, GraphQL errors, refresh failures)
-- Use the request timing lines: count `Slow request:` / `Slow GraphQL field` / `Slow storage read` WARNs in both logs, and join comics-ui and comics-api lines on `req=`
+- Use the request timing lines: count `Slow request:` / `Slow GraphQL fields` / `Slow storage read` WARNs in both logs, and join comics-ui and comics-api lines on `req=`
 - Flag anything unexpected: log lines that match none of the known signatures, new WARN/ERROR messages, and error rates that jump compared with earlier runs, rather than reporting only the failures it already knows how to look for
 - Priority: High
 
