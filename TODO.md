@@ -1,5 +1,27 @@
 # ComicCacher TODO
 
+## Run manually triggered batch jobs in the background
+
+- A manual "Run now" holds the GraphQL request open for the whole job. `AbstractJobScheduler` calls `JobOperator.start`, which runs the job on the calling thread, so the job runs on the Tomcat thread serving the mutation. On dev on 2026-10-01, SourceCatalogJob run 466 (`source=ALL`) ran on `tomcat-handler-230` and its request `c417bc13` had no completion line minutes later. The 12:21 run did the same for 52 s
+- Start-date detection takes 10 to 20 s per GoComics comic, so a full catalog run takes minutes. Long enough for the browser or a proxy to time out while the job keeps going, and each run ties up a Tomcat thread
+- Launch manual triggers on an async executor (with `MdcTaskDecorator`, so the job's log lines keep `req=` and `user=`) and return the execution id at once. The UI already polls `recentBatchJobs` every 3 s, so it shows progress without waiting on the mutation
+- Keep the per-job lock that stops two runs overlapping, and check that scheduled runs behave the same
+- Priority: Very High
+
+## Log the GraphQL operation name
+
+- Every API request line says `op=anonymous` and `POST /graphql (anonymous)`. `GraphQlLoggingInterceptor` reads only `request.getOperationName()`, and comic-hub's `graphql-client.ts` sends `{query, variables}` without `operationName`. The operation names added in #415 never appear, so a slow or failing request can't be tied to a query without its request id
+- Send `operationName` from `graphql-client.ts` (codegen's `TypedDocumentString` knows it), and have the interceptor fall back to the name of the document's single operation, so other clients get it too
+- Add a test that a named query logs its name
+- Priority: Very High
+
+## Log slow GraphQL fields once per request
+
+- `TimingInstrumentation` logs a `Slow GraphQL field` WARN for every field over the threshold. On dev on 2026-10-01 at 14:10:36, one 828 ms page load (`req=593f31dc`) logged 46 of them, one per `Comic.lastStrip`: 46 of the day's 54 warnings
+- The fields run in parallel, so they all cross the threshold together and the lines repeat the same fact. The request line already names the slowest field (`slowest=Comic.lastStrip:806ms`)
+- Log one WARN per request with the slowest field, how many fields went over and the threshold, and keep per-field detail at DEBUG
+- Priority: Very High
+
 ## Teach the comiccacher-logs skill which jobs are paused or disabled
 
 - Many dev jobs are paused on purpose because they're no longer being tested. The skill reports them as idle or overdue, which leads to wrong findings (on 2026-09-28 it flagged ComicBackfillJob as not having run since 09-25, but the job is paused on dev)
@@ -14,6 +36,14 @@
 - Add a frontend health check to every report: container status and restarts, `/api/health`, and errors in the `comics-ui` log (failed server renders, GraphQL errors, refresh failures)
 - Use the request timing lines: count `Slow request:` / `Slow GraphQL field` / `Slow storage read` WARNs in both logs, and join comics-ui and comics-api lines on `req=`
 - Flag anything unexpected: log lines that match none of the known signatures, new WARN/ERROR messages, and error rates that jump compared with earlier runs, rather than reporting only the failures it already knows how to look for
+- Priority: High
+
+## Teach the comiccacher-logs skill about jobs that are still running
+
+- The skill treats a job with no exit code as failed. On 2026-10-01 it raised a critical "SourceCatalogJob failed 1 time" for a manual run (execution 466) that was `STARTED` and still running when the logs were fetched
+- It also can't find that run's log. `batch-executions.json` has `log_file: null` until the job ends, so the issue pointed at `batch-logs/SourceCatalogJob/None`, although `SourceCatalogJob-20261001-d555ad9a.log` was already on disk and growing
+- Record running jobs in `summary.json` (status `STARTED` with no end time) and leave them out of the failure count. Find their log by job name, date and start time when `log_file` is empty. Show them in the report's jobs table as running, with elapsed time and the last log line
+- Raise an issue only when a run has gone on much longer than its usual duration, or when a `STARTED` run survives a container restart. Those runs are stuck or orphaned, not running
 - Priority: High
 
 ## Check the operator role on the server for the operations pages
