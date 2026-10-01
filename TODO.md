@@ -1,5 +1,27 @@
 # ComicCacher TODO
 
+## Run manually triggered batch jobs in the background
+
+- A manual "Run now" holds the GraphQL request open for the whole job. `AbstractJobScheduler` calls `JobOperator.start`, which runs the job on the calling thread, so the job runs on the Tomcat thread serving the mutation. On dev on 2026-10-01, SourceCatalogJob run 466 (`source=ALL`) ran on `tomcat-handler-230` and its request `c417bc13` had no completion line minutes later. The 12:21 run did the same for 52 s
+- Start-date detection takes 10 to 20 s per GoComics comic, so a full catalog run takes minutes. Long enough for the browser or a proxy to time out while the job keeps going, and each run ties up a Tomcat thread
+- Launch manual triggers on an async executor (with `MdcTaskDecorator`, so the job's log lines keep `req=` and `user=`) and return the execution id at once. The UI already polls `recentBatchJobs` every 3 s, so it shows progress without waiting on the mutation
+- Keep the per-job lock that stops two runs overlapping, and check that scheduled runs behave the same
+- Priority: Very High
+
+## Log the GraphQL operation name
+
+- Every API request line says `op=anonymous` and `POST /graphql (anonymous)`. `GraphQlLoggingInterceptor` reads only `request.getOperationName()`, and comic-hub's `graphql-client.ts` sends `{query, variables}` without `operationName`. The operation names added in #415 never appear, so a slow or failing request can't be tied to a query without its request id
+- Send `operationName` from `graphql-client.ts` (codegen's `TypedDocumentString` knows it), and have the interceptor fall back to the name of the document's single operation, so other clients get it too
+- Add a test that a named query logs its name
+- Priority: Very High
+
+## Log slow GraphQL fields once per request
+
+- `TimingInstrumentation` logs a `Slow GraphQL field` WARN for every field over the threshold. On dev on 2026-10-01 at 14:10:36, one 828 ms page load (`req=593f31dc`) logged 46 of them, one per `Comic.lastStrip`: 46 of the day's 54 warnings
+- The fields run in parallel, so they all cross the threshold together and the lines repeat the same fact. The request line already names the slowest field (`slowest=Comic.lastStrip:806ms`)
+- Log one WARN per request with the slowest field, how many fields went over and the threshold, and keep per-field detail at DEBUG
+- Priority: Very High
+
 ## Teach the comiccacher-logs skill which jobs are paused or disabled
 
 - Many dev jobs are paused on purpose because they're no longer being tested. The skill reports them as idle or overdue, which leads to wrong findings (on 2026-09-28 it flagged ComicBackfillJob as not having run since 09-25, but the job is paused on dev)
