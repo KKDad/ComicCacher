@@ -24,19 +24,39 @@ class TimingInstrumentationTest {
     private final RequestTimings timings = new RequestTimings();
 
     @Test
-    void recordsTheSlowestFieldAndWarnsPastTheThreshold() throws Exception {
+    void countsSlowFieldsForTheRequestInsteadOfWarningPerField() throws Exception {
         TimingInstrumentation instrumentation = new TimingInstrumentation(new TimingProperties(1000, 0, 200));
         DataFetcher<?> fetcher = instrumentation.instrumentDataFetcher(env -> "strip", parameters(false), null);
 
         try (LogCapture logs = new LogCapture(TimingInstrumentation.class)) {
             assertThat(fetcher.get(environment())).isEqualTo("strip");
+            assertThat(fetcher.get(environment())).isEqualTo("strip");
+
+            assertThat(logs.at(Level.WARN)).isEmpty();
+        }
+        assertThat(timings.slowFieldCount()).isEqualTo(2);
+        assertThat(timings.summary()).matches(" \\(slowest=Comic\\.strip:\\d+ms\\)");
+    }
+
+    @Test
+    void warnsPerFieldOutsideARequest() throws Exception {
+        TimingInstrumentation instrumentation = new TimingInstrumentation(new TimingProperties(1000, 0, 200));
+        DataFetcher<?> fetcher = instrumentation.instrumentDataFetcher(env -> "strip", parameters(false), null);
+        GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition().name("strip").type(Scalars.GraphQLString).build();
+        DataFetchingEnvironment noRequest = DataFetchingEnvironmentImpl.newDataFetchingEnvironment()
+                .parentType(GraphQLObjectType.newObject().name("Comic").field(field).build())
+                .fieldDefinition(field)
+                .graphQLContext(GraphQLContext.newContext().build())
+                .build();
+
+        try (LogCapture logs = new LogCapture(TimingInstrumentation.class)) {
+            fetcher.get(noRequest);
 
             assertThat(logs.at(Level.WARN)).singleElement()
                     .extracting(e -> e.getFormattedMessage())
                     .asString()
                     .matches("Slow GraphQL field Comic\\.strip took \\d+ms");
         }
-        assertThat(timings.summary()).matches(" \\(slowest=Comic\\.strip:\\d+ms\\)");
     }
 
     @Test

@@ -87,4 +87,40 @@ class RequestLoggingFilterTest {
             assertThat(logs.at(Level.INFO)).isEmpty();
         }
     }
+
+    @Test
+    void reportsSlowGraphqlFieldsInOneWarn() throws Exception {
+        try (LogCapture logs = new LogCapture(RequestLoggingFilter.class)) {
+            MockHttpServletRequest request = new MockHttpServletRequest("POST", "/graphql");
+            filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain(new HttpServlet() {
+                @Override
+                protected void service(HttpServletRequest req, HttpServletResponse res) {
+                    req.setAttribute(RequestLoggingFilter.GRAPHQL_OPERATION_ATTRIBUTE, "GetComics");
+                    RequestTimings timings = (RequestTimings) req.getAttribute(RequestTimings.ATTRIBUTE);
+                    for (long ms : new long[] {300, 806, 400}) {
+                        timings.recordField("Comic.lastStrip", ms * 1_000_000);
+                        timings.recordSlowField();
+                    }
+                }
+            }));
+
+            assertThat(logs.at(Level.WARN)).singleElement()
+                    .extracting(e -> e.getFormattedMessage())
+                    .isEqualTo("Slow GraphQL fields (GetComics): 3 over 250ms, slowest Comic.lastStrip:806ms");
+        }
+    }
+
+    @Test
+    void logsNoSlowFieldWarnWhenNoFieldWasSlow() throws Exception {
+        try (LogCapture logs = new LogCapture(RequestLoggingFilter.class)) {
+            filter.doFilter(new MockHttpServletRequest("POST", "/graphql"), new MockHttpServletResponse(), new MockFilterChain(new HttpServlet() {
+                @Override
+                protected void service(HttpServletRequest req, HttpServletResponse res) {
+                    ((RequestTimings) req.getAttribute(RequestTimings.ATTRIBUTE)).recordField("Comic.lastStrip", 5_000_000);
+                }
+            }));
+
+            assertThat(logs.at(Level.WARN)).isEmpty();
+        }
+    }
 }

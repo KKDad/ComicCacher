@@ -20,6 +20,7 @@ public final class RequestTimings {
     private final AtomicLong graphqlNanos = new AtomicLong(-1);
     private final AtomicLong storageNanos = new AtomicLong();
     private final AtomicLong storageReads = new AtomicLong();
+    private final AtomicLong slowFields = new AtomicLong();
     private String slowestField;
     private long slowestFieldNanos = -1;
 
@@ -42,6 +43,20 @@ public final class RequestTimings {
         }
     }
 
+    /** Counts a field at or over {@code comics.timing.slow-fetcher-ms}; {@link RequestLoggingFilter} reports them in one line. */
+    public void recordSlowField() {
+        slowFields.incrementAndGet();
+    }
+
+    public long slowFieldCount() {
+        return slowFields.get();
+    }
+
+    /** The slowest field and its time, e.g. {@code "Comic.lastStrip:806ms"}, or {@code null} when no field was recorded. */
+    public synchronized String slowestField() {
+        return slowestField != null ? slowestField + ':' + millis(slowestFieldNanos) + "ms" : null;
+    }
+
     public void recordStorage(long nanos) {
         storageNanos.addAndGet(nanos);
         storageReads.incrementAndGet();
@@ -57,7 +72,7 @@ public final class RequestTimings {
             parts.append(" gql=").append(millis(graphqlNanos.get())).append("ms");
         }
         if (slowestField != null) {
-            parts.append(" slowest=").append(slowestField).append(':').append(millis(slowestFieldNanos)).append("ms");
+            parts.append(" slowest=").append(slowestField());
         }
         if (storageReads.get() > 0) {
             parts.append(" storage=").append(storageReads.get()).append('/').append(millis(storageNanos.get())).append("ms");
