@@ -5,7 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.6.0] - 2026-10-01
 ### Added
+- **Sources** page in Comics Hub (operators can look, admins change): each source's configured and downloading counts, its throttle, retry and backfill settings, and its catalog of every comic it offers. Each catalog row has **Downloading** (`active`) and **Visible** (`enabled`) switches, either of which adds a comic that isn't configured yet, plus backfill, fetch avatar and start date actions. Configured comics the source no longer lists show under "Not in the catalog" (#421)
+- One `ComicSource` bean per source, collected by `SourceRegistry`, replaces `ComicDownloaderConfig` and the hard-coded source lists; adding a source means writing its downloader and one class (#421)
+- `SourceCatalogJob` reads each source's catalog (GoComics A–Z page, Comics Kingdom WordPress API) into `source-catalog.json` when it is over 7 days old; the page's Refresh button runs it for one source (#421)
+- Catalog rows show each comic's genres as chips that filter the list, and its description behind an info icon; search matches descriptions. Comics Kingdom's come with its catalog; GoComics' are read from each comic's about page by `SourceCatalogJob`, 100 per run, and kept a random 30–90 days (#421)
+- Catalog thumbnails, downloaded by `SourceCatalogJob` (100 per source per run) and on demand for rows on screen into `{cache}/tmp/catalog-thumbnails`, which storage metrics skip. They're kept about a year, shrunk to 400 px wide, and only fetched over https from the source's image hosts (#421)
+- Start dates: `sourceStartDate` / `firstStripNumber` with `startSource` (`DETECTED` or `MANUAL`), detected from Comics Kingdom's catalog and GoComics' `firstDate`, or set by an admin. A stored strip older than the start corrects it, with WARN and AUDIT lines (#421)
+- `ComicBackfillJob` takes a `comic` id parameter, to backfill one comic (#421)
+- Request timing in the logs: the API's request line ends with where the time went (`gql=… slowest=… storage=…`), with `Slow request:`, `Slow GraphQL field` and `Slow storage read` WARN lines at `comics.timing.slow-*-ms`. comic-hub logs `graphql <op> -> <status> in <n>ms req=<id>` for every server-side API call and sends the same `X-Request-Id`, so both logs match (#415)
 - Comics Hub refreshes an expired session on page load: `proxy.ts` uses the refresh cookie to get a new access token before the page renders, so a full page load more than 15 minutes after the last one no longer sends you to `/login`. A failed refresh clears the auth cookies (#397)
 - `RATE_LIMITED` retrieval status for HTTP 429s, which were recorded as `NETWORK_ERROR`; the retrieval-status page shows it with a warning badge (#401)
 - `batch.startup-catch-up.enabled` (default true) turns off the startup catch-up runs; the integration test profiles turn it off (#400)
@@ -14,8 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `utils/dev/docker-compose.yml`: the dev API is deployed with compose like prod, as project `comics-dev` in `/root/comics-deploy-dev`. A test checks it shares no project, container, volume or port with prod (#403)
 
 ### Changed
-- `batch.timezone` is the only place the zone is set: log timestamps read it (instead of a hardcoded `America/Toronto` in `logback-spring.xml`), the job configs no longer carry their own default, and the unused `BATCH_TIMEZONE` and `CronSchedules` constants are gone. New timestamps are stored in UTC
-- The build fails on main-code calls that depend on the JVM's default zone (`checkTimeZoneIndependence`, part of `check` and `testAll`), and tests run with `user.timezone=UTC` to match the containers
+- Backfill scans back to a comic's known start date; before, it never went past the oldest stored strip (#421)
+- `SourceCatalogJob` stops a source for the rest of the run at its first HTTP 429 when reading details, thumbnails or start dates; details and thumbnails don't retry, and the source is backed off once, honouring `Retry-After` (#421)
+- `batch.timezone` is the only place the zone is set: log timestamps read it (instead of a hardcoded `America/Toronto` in `logback-spring.xml`), the job configs no longer carry their own default, and the unused `BATCH_TIMEZONE` and `CronSchedules` constants are gone. New timestamps are stored in UTC (#419)
+- The build fails on main-code calls that depend on the JVM's default zone (`checkTimeZoneIndependence`, part of `check` and `testAll`), and tests run with `user.timezone=UTC` to match the containers (#419)
+- Guava is no longer a dependency; GoComics uses jsoup's `selectFirst` (#416)
 - Startup catch-up jobs run one after another on a background virtual thread, so the API reports healthy as soon as it starts instead of after they finish (#400)
 - A 401 in the browser and the signed-in layouts send you to `/login?from=<page>`, so signing in returns you to the page you were on (#404)
 - Every image in Comics Hub goes through `next/image`, including comic strips (fetched through the `/api/v1` rewrite) (#404)
@@ -27,9 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The first `deploy.sh dev` replaces the `docker run` container with a compose one and copies `dev-token.env` into `/root/comics-deploy-dev`, keeping its secret (#403)
 
 ### Fixed
-- Batch job and step times were about 4 hours off on prod: Spring Batch records them in the JVM's zone, which is UTC in the containers, and they were labelled with the `batch.timezone` offset. They're now converted from the JVM's zone. Records written before this fix keep the wrong time until they roll off the capped history
-- "Today" came from the JVM's zone (UTC) instead of `batch.timezone`, so from 20:00 Toronto time (19:00 in winter) it was already tomorrow: the evening backfill scanned strips that didn't exist yet, and the download target date, retention cutoffs, batch log file dates and index `lastUpdated` could be a day ahead. An application `Clock` in `batch.timezone` now supplies the date
-- The batch history date filter used each record's stored offset rather than the `batch.timezone` day
+- `createComic` and `updateComic` dropped `publicationDays` and `active` and couldn't set strip numbers, and `createComic` gave every new comic id 0, so a second create failed (#421)
+- The comic list stayed cached for up to 60 minutes after an update, because `@CacheEvict` never fired for the facade's calls to itself; every write now clears it (#421)
+- `comics(active:)` was ignored (#421)
+- Hidden comics (`enabled=false`) were still shown to readers; queries, favorites and last-read entries now skip them, and their strip images return 404 (#421)
+- Startup catch-up ran jobs that were paused (#417)
+- Batch job and step times were about 4 hours off on prod: Spring Batch records them in the JVM's zone, which is UTC in the containers, and they were labelled with the `batch.timezone` offset. They're now converted from the JVM's zone. Records written before this fix keep the wrong time until they roll off the capped history (#419)
+- "Today" came from the JVM's zone (UTC) instead of `batch.timezone`, so from 20:00 Toronto time (19:00 in winter) it was already tomorrow: the evening backfill scanned strips that didn't exist yet, and the download target date, retention cutoffs, batch log file dates and index `lastUpdated` could be a day ahead. An application `Clock` in `batch.timezone` now supplies the date (#419)
+- The batch history date filter used each record's stored offset rather than the `batch.timezone` day (#419)
 - A prod deploy could roll back because the API stayed OUT_OF_SERVICE while startup catch-up jobs ran inline, past the 180 s health timeout (#400)
 - The startup check for whether a job already ran today used the JVM's timezone instead of `batch.timezone` (#400)
 - `devToken` with no username failed on dev because no default user was set; the dev deploy now defaults it to the USER-role test account `uireview0927` (#398)
@@ -42,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `utils/readme-screenshots.sh` rendered every strip as "This strip didn't load": the demo API served SVG, which the Next image optimizer won't serve. It now serves PNG, and the script installs Comics Hub's dependencies first; the README screenshots are regenerated (#412)
 
 ### Security
+- `sourceIdentifier` went into URLs unchecked; comic input is now validated (slug format, known source, no duplicates, reserved folder names) (#421)
 - Updated jsoup from 1.22.1 to 1.23.2 (Cleaner advisory) and overrode Tomcat to 11.0.26 for the authentication and authorization CVEs fixed in 11.0.25; Spring Boot 4.1.1 still ships 11.0.24 (#411)
 
 ## [2.5.0] - 2026-09-27
