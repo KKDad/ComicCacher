@@ -17,6 +17,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -418,5 +420,46 @@ class FileSystemComicStorageFacadeTest {
                 any(LocalDate.class),
                 any(byte[].class),
                 anyString());
+    }
+
+    @Test
+    void getComicStripInfo_readsTheSidecarWithoutTheImage() {
+        File strip = new File(cacheRoot, COMIC_NAME_PARSED + "/2023/2023-01-15.png");
+        when(imageMetadataRepository.loadMetadata(strip.getAbsolutePath()))
+                .thenReturn(Optional.of(ImageMetadata.builder().width(900).height(300).transcript("Hello").build()));
+
+        var info = storageFacade.getComicStripInfo(COMIC_IDENTIFIER, TEST_DATE).orElseThrow();
+
+        assertThat(info.getWidth()).isEqualTo(900);
+        assertThat(info.getHeight()).isEqualTo(300);
+        assertThat(info.getTranscript()).isEqualTo("Hello");
+        assertThat(info.getImageDate()).isEqualTo(TEST_DATE);
+        assertThat(info.getImageData()).isNull();
+    }
+
+    @Test
+    void getComicStripInfo_readsTheImageHeaderWhenThereIsNoSidecar() throws IOException {
+        File strip = new File(cacheRoot, COMIC_NAME_PARSED + "/2023/2023-01-15.png");
+        ImageIO.write(new BufferedImage(120, 40, BufferedImage.TYPE_INT_RGB), "png", strip);
+        when(imageMetadataRepository.loadMetadata(strip.getAbsolutePath())).thenReturn(Optional.empty());
+
+        var info = storageFacade.getComicStripInfo(COMIC_IDENTIFIER, TEST_DATE).orElseThrow();
+
+        assertThat(info.getWidth()).isEqualTo(120);
+        assertThat(info.getHeight()).isEqualTo(40);
+        assertThat(info.getImageData()).isNull();
+    }
+
+    @Test
+    void getComicStripInfo_isEmptyForAMissingStrip() {
+        when(imageMetadataRepository.loadMetadata(anyString())).thenReturn(Optional.empty());
+
+        assertThat(storageFacade.getComicStripInfo(COMIC_IDENTIFIER, LocalDate.of(2023, 1, 16))).isEmpty();
+    }
+
+    @Test
+    void avatarExists_checksTheFileWithoutReadingIt() {
+        assertThat(storageFacade.avatarExists(COMIC_IDENTIFIER)).isTrue();
+        assertThat(storageFacade.avatarExists(new ComicIdentifier(7, "NoSuchComic"))).isFalse();
     }
 }

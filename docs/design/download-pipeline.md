@@ -126,4 +126,4 @@ An exception thrown by the strategy is filed by its type:
 | Other `IOException` | `NETWORK_ERROR` |
 | All others | `UNKNOWN_ERROR` |
 
-Failed downloads are recorded via `RetrievalStatusService.recordRetrievalResult()` and tracked in `ErrorTrackingService` for per-comic error history. Successful downloads clear the error history for that comic.
+Every attempt, failed or not, is recorded via `RetrievalStatusService.recordRetrievalResult()` in `retrieval-status.json`, with the time it was made (`attemptedAt`).

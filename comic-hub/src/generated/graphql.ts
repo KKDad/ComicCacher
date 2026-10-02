@@ -353,7 +353,7 @@ export type GetRetrievalRecordsQueryVariables = Exact<{
 }>;
 
 
-export type GetRetrievalRecordsQuery = { retrievalRecords: Array<{ id: string, comicName: string, comicDate: string, source: string | null, status: RetrievalStatusEnum, retrievalDurationMs: number | null, imageSize: number | null, httpStatusCode: number | null, errorMessage: string | null }> };
+export type GetRetrievalRecordsQuery = { retrievalRecords: Array<{ id: string, comicName: string, comicDate: string, source: string | null, status: RetrievalStatusEnum, retrievalDurationMs: number | null, imageSize: number | null, httpStatusCode: number | null, attemptedAt: string | null, errorMessage: string | null }> };
 
 export type SourceComicFieldsFragment = { id: number, name: string, source: string | null, sourceIdentifier: string | null, enabled: boolean | null, active: boolean | null, avatarUrl: string | null, avatarAvailable: boolean | null, avatarPending: boolean, oldest: string | null, newest: string | null, firstStripNumber: number | null, lastStripNumber: number | null, sourceStartDate: string | null, startSource: StartSource | null, startPending: boolean, reportedStartDate: string | null, reportedStartStripNumber: number | null };
 
@@ -1640,6 +1640,7 @@ export const GetRetrievalRecordsDocument = new TypedDocumentString(`
     retrievalDurationMs
     imageSize
     httpStatusCode
+    attemptedAt
     errorMessage
   }
 }

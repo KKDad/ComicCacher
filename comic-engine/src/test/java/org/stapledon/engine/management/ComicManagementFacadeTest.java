@@ -85,9 +85,8 @@ class ComicManagementFacadeTest {
 
         // Configure the minimal mocks needed for basic setup
         when(configFacade.loadComicConfig()).thenReturn(comicConfig);
-        // Return a present avatar for the test comic so refreshComicList() doesn't flag avatarAvailable as stale
-        when(storageFacade.getAvatar(ComicIdentifier.from(testComic)))
-                .thenReturn(Optional.of(ImageDto.builder().mimeType("image/png").imageData("").build()));
+        // Report an avatar for the test comic so refreshComicList() doesn't flag avatarAvailable as stale
+        when(storageFacade.avatarExists(ComicIdentifier.from(testComic))).thenReturn(true);
 
         // Initialize facade with a synchronous executor so per-source threading runs inline in tests
         facade = new ComicManagementFacade(storageFacade, configFacade, downloaderFacade,
@@ -276,7 +275,7 @@ class ComicManagementFacadeTest {
         ImageDto imageDto = new ImageDto();
 
         when(storageFacade.getOldestDateWithComic(any(ComicIdentifier.class))).thenReturn(Optional.of(oldestDate));
-        when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(oldestDate))).thenReturn(Optional.of(imageDto));
+        when(storageFacade.getComicStripInfo(any(ComicIdentifier.class), eq(oldestDate))).thenReturn(Optional.of(imageDto));
 
         // Act
         ComicNavigationResult result = facade.getComicStrip(1, Direction.FORWARD);
@@ -294,7 +293,7 @@ class ComicManagementFacadeTest {
         ImageDto imageDto = new ImageDto();
 
         when(storageFacade.getNewestDateWithComic(any(ComicIdentifier.class))).thenReturn(Optional.of(newestDate));
-        when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(newestDate))).thenReturn(Optional.of(imageDto));
+        when(storageFacade.getComicStripInfo(any(ComicIdentifier.class), eq(newestDate))).thenReturn(Optional.of(imageDto));
 
         // Act
         ComicNavigationResult result = facade.getComicStrip(1, Direction.BACKWARD);
@@ -313,7 +312,7 @@ class ComicManagementFacadeTest {
         ImageDto imageDto = new ImageDto();
 
         when(storageFacade.getNextDateWithComic(any(ComicIdentifier.class), eq(from))).thenReturn(Optional.of(next));
-        when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(next))).thenReturn(Optional.of(imageDto));
+        when(storageFacade.getComicStripInfo(any(ComicIdentifier.class), eq(next))).thenReturn(Optional.of(imageDto));
 
         // Act
         ComicNavigationResult result = facade.getComicStrip(1, Direction.FORWARD, from);
@@ -513,14 +512,14 @@ class ComicManagementFacadeTest {
         when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.of(after));
 
         // Navigation for each date
-        when(storageFacade.getComicStrip(id, before)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, before)).thenReturn(Optional.of(img));
         when(storageFacade.getPreviousDateWithComic(id, before)).thenReturn(Optional.empty());
         when(storageFacade.getNextDateWithComic(id, before)).thenReturn(Optional.of(center));
 
-        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, center)).thenReturn(Optional.of(img));
         when(storageFacade.getNextDateWithComic(id, after)).thenReturn(Optional.empty());
 
-        when(storageFacade.getComicStrip(id, after)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, after)).thenReturn(Optional.of(img));
         when(storageFacade.getPreviousDateWithComic(id, after)).thenReturn(Optional.of(center));
 
         // Act
@@ -544,10 +543,10 @@ class ComicManagementFacadeTest {
         when(storageFacade.getPreviousDateWithComic(id, center)).thenReturn(Optional.empty());
         when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.of(after));
 
-        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, center)).thenReturn(Optional.of(img));
         when(storageFacade.getNextDateWithComic(id, after)).thenReturn(Optional.empty());
 
-        when(storageFacade.getComicStrip(id, after)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, after)).thenReturn(Optional.of(img));
         when(storageFacade.getPreviousDateWithComic(id, after)).thenReturn(Optional.of(center));
 
         // Act — request 3 before but only center + after available
@@ -563,7 +562,7 @@ class ComicManagementFacadeTest {
         ImageDto img = ImageDto.builder().mimeType("image/png").build();
         ComicIdentifier id = ComicIdentifier.from(testComic);
 
-        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, center)).thenReturn(Optional.of(img));
         when(storageFacade.getPreviousDateWithComic(id, center)).thenReturn(Optional.empty());
         when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.empty());
 
@@ -587,14 +586,14 @@ class ComicManagementFacadeTest {
         when(storageFacade.getPreviousDateWithComic(id, before2)).thenReturn(Optional.empty());
         when(storageFacade.getNextDateWithComic(id, center)).thenReturn(Optional.empty());
 
-        when(storageFacade.getComicStrip(id, before2)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, before2)).thenReturn(Optional.of(img));
         when(storageFacade.getNextDateWithComic(id, before2)).thenReturn(Optional.of(before1));
 
-        when(storageFacade.getComicStrip(id, before1)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, before1)).thenReturn(Optional.of(img));
         when(storageFacade.getNextDateWithComic(id, before1)).thenReturn(Optional.of(center));
         when(storageFacade.getPreviousDateWithComic(id, before1)).thenReturn(Optional.of(before2));
 
-        when(storageFacade.getComicStrip(id, center)).thenReturn(Optional.of(img));
+        when(storageFacade.getComicStripInfo(id, center)).thenReturn(Optional.of(img));
 
         List<ComicNavigationResult> results = facade.getStripWindow(1, center, 5, 5);
 
@@ -673,12 +672,12 @@ class ComicManagementFacadeTest {
         // 1. From today, previous is yesterday
         when(storageFacade.getPreviousDateWithComic(any(ComicIdentifier.class), eq(today)))
                 .thenReturn(Optional.of(yesterday));
-        when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(yesterday))).thenReturn(Optional.of(img2));
+        when(storageFacade.getComicStripInfo(any(ComicIdentifier.class), eq(yesterday))).thenReturn(Optional.of(img2));
 
         // 2. From yesterday, previous is dayBeforeYesterday
         when(storageFacade.getPreviousDateWithComic(any(ComicIdentifier.class), eq(yesterday)))
                 .thenReturn(Optional.of(dayBeforeYesterday));
-        when(storageFacade.getComicStrip(any(ComicIdentifier.class), eq(dayBeforeYesterday)))
+        when(storageFacade.getComicStripInfo(any(ComicIdentifier.class), eq(dayBeforeYesterday)))
                 .thenReturn(Optional.of(img3));
 
         // Act & Assert
@@ -803,5 +802,27 @@ class ComicManagementFacadeTest {
     void fetchAvatarForAnUnknownComicDoesNothing() {
         assertThat(facade.fetchAvatar(42)).isFalse();
         verify(downloaderFacade, never()).downloadAvatar(anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void refreshComicListKeepsNewDatesInMemoryWithoutRewritingTheConfig() {
+        LocalDate newest = LocalDate.now().plusDays(1);
+        when(storageFacade.getNewestDateWithComic(ComicIdentifier.from(testComic))).thenReturn(Optional.of(newest));
+
+        facade.refreshComicList();
+
+        assertThat(facade.getComic(1).orElseThrow().getNewest()).isEqualTo(newest);
+        verify(configFacade, never()).saveComicConfig(any());
+    }
+
+    @Test
+    void refreshComicListSavesTheConfigWhenTheAvatarFlagChanges() {
+        when(storageFacade.avatarExists(ComicIdentifier.from(testComic))).thenReturn(false);
+
+        facade.refreshComicList();
+
+        assertThat(facade.getComic(1).orElseThrow().isAvatarAvailable()).isFalse();
+        verify(configFacade).saveComicConfig(any());
+        verify(storageFacade, never()).getAvatar(any(ComicIdentifier.class));
     }
 }

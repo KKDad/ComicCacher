@@ -39,7 +39,7 @@ function StatusBadge({ status }: { status: RetrievalStatusEnum }) {
   );
 }
 
-type SortKey = 'comicName' | 'comicDate' | 'status' | 'retrievalDurationMs';
+type SortKey = 'comicName' | 'comicDate' | 'status' | 'retrievalDurationMs' | 'attemptedAt';
 type SortDir = 'asc' | 'desc';
 
 export default function RetrievalStatusPage() {
@@ -120,6 +120,7 @@ export default function RetrievalStatusPage() {
     const dir = sortDir === 'asc' ? 1 : -1;
     if (sortKey === 'comicName') return dir * compareNames(a.comicName, b.comicName);
     if (sortKey === 'comicDate') return dir * String(a.comicDate).localeCompare(String(b.comicDate));
+    if (sortKey === 'attemptedAt') return dir * String(a.attemptedAt ?? '').localeCompare(String(b.attemptedAt ?? ''));
     if (sortKey === 'status') return dir * a.status.localeCompare(b.status);
     if (sortKey === 'retrievalDurationMs') return dir * ((a.retrievalDurationMs ?? 0) - (b.retrievalDurationMs ?? 0));
     return 0;
@@ -177,6 +178,11 @@ export default function RetrievalStatusPage() {
                       Date <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
+                  <th className="px-6 py-3 font-medium">
+                    <button className="inline-flex items-center gap-1" onClick={() => toggleSort('attemptedAt')}>
+                      Attempted <ArrowUpDown className="h-3 w-3" />
+                    </button>
+                  </th>
                   <th className="px-6 py-3 font-medium">Source</th>
                   <th className="px-6 py-3 font-medium">
                     <button className="inline-flex items-center gap-1" onClick={() => toggleSort('status')}>
@@ -197,6 +203,9 @@ export default function RetrievalStatusPage() {
                   <tr key={record.id} className="border-t border-border hover:bg-surface-hover">
                     <td className="px-6 py-3 text-ink">{record.comicName}</td>
                     <td className="px-6 py-3 text-ink-subtle">{String(record.comicDate)}</td>
+                    <td className="px-6 py-3 text-ink-subtle">
+                      {record.attemptedAt ? new Date(record.attemptedAt).toLocaleString() : '—'}
+                    </td>
                     <td className="px-6 py-3 text-ink-subtle">{record.source ?? '—'}</td>
                     <td className="px-6 py-3"><StatusBadge status={record.status} /></td>
                     <td className="px-6 py-3 text-right text-ink-subtle">

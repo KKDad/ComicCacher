@@ -7,6 +7,7 @@ import org.stapledon.metrics.dto.CombinedMetricsData;
 
 import com.google.gson.Gson;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,8 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Optional;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,6 +71,45 @@ public class MetricsArchiver {
         } catch (IOException e) {
             log.error("Failed to archive metrics for date {}", date, e);
             return false;
+        }
+    }
+
+    /**
+     * The newest archived snapshot, or empty when there is none or it can't be read.
+     */
+    public Optional<CombinedMetricsData> latestArchive() {
+        Path historyDir = Paths.get(cacheLocation, HISTORY_DIRECTORY);
+        if (!Files.isDirectory(historyDir)) {
+            return Optional.empty();
+        }
+
+        Path latest = null;
+        LocalDate latestDate = null;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(historyDir, "*.json")) {
+            for (Path file : stream) {
+                try {
+                    LocalDate fileDate = LocalDate.parse(file.getFileName().toString().replace(".json", ""), DATE_FORMATTER);
+                    if (latestDate == null || fileDate.isAfter(latestDate)) {
+                        latestDate = fileDate;
+                        latest = file;
+                    }
+                } catch (DateTimeParseException _) {
+                    // Not a snapshot
+                }
+            }
+        } catch (IOException e) {
+            log.warn("Couldn't list metrics archives in {}: {}", historyDir, e.toString());
+            return Optional.empty();
+        }
+        if (latest == null) {
+            return Optional.empty();
+        }
+
+        try (Reader reader = Files.newBufferedReader(latest)) {
+            return Optional.ofNullable(gson.fromJson(reader, CombinedMetricsData.class));
+        } catch (IOException | RuntimeException e) {
+            log.warn("Couldn't read metrics archive {}: {}", latest, e.toString());
+            return Optional.empty();
         }
     }
 

@@ -16,14 +16,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 import org.stapledon.common.dto.ComicConfig;
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
-import org.stapledon.common.dto.ComicErrorRecord;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
-import org.stapledon.common.service.ErrorTrackingService;
 import org.stapledon.common.service.RetrievalStatusService;
 
 /**
@@ -39,7 +38,6 @@ public class ComicDownloaderFacade implements DownloaderFacade {
 
     private final Map<String, ComicDownloaderStrategy> downloaderStrategies = new ConcurrentHashMap<>();
     private final RetrievalStatusService retrievalStatusService;
-    private final ErrorTrackingService errorTrackingService;
     private final Clock clock;
 
     /**
@@ -311,6 +309,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         long durationMs = Duration.between(startTime, Instant.now()).toMillis();
 
         ComicRetrievalRecord record = ComicRetrievalRecord.success(
+                request.getComicId(),
                 request.getComicName(),
                 request.getDate(),
                 request.getSource(),
@@ -318,9 +317,6 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 imageSize);
 
         retrievalStatusService.recordRetrievalResult(record);
-
-        // Clear error history on successful download
-        errorTrackingService.clearErrors(request.getComicName());
     }
 
     private void recordFailure(
@@ -333,6 +329,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         long durationMs = Duration.between(startTime, Instant.now()).toMillis();
 
         ComicRetrievalRecord record = ComicRetrievalRecord.failure(
+                request.getComicId(),
                 request.getComicName(),
                 request.getDate(),
                 request.getSource(),
@@ -342,9 +339,5 @@ public class ComicDownloaderFacade implements DownloaderFacade {
                 httpStatusCode);
 
         retrievalStatusService.recordRetrievalResult(record);
-
-        // Record error for tracking last N errors per comic
-        ComicErrorRecord errorRecord = ComicErrorRecord.fromRetrievalRecord(record);
-        errorTrackingService.recordError(errorRecord);
     }
 }

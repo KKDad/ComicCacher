@@ -198,6 +198,43 @@ class StorageMetricsCollectorTest {
         assertThat(stats.getNewestImage()).contains("2020-12-31.png");
     }
 
+    @Test
+    void updateStats_countsImagesPerYearForEachComicAndOverall() {
+        cacheStatsUpdater.updateStats();
+
+        ImageCacheStats stats = cacheStatsUpdater.cacheStats();
+        assertThat(stats.getPerComicMetrics().get("CalvinAndHobbes").getImageCountByYear()).containsOnly(
+                Map.entry("2010", 2), Map.entry("2011", 1));
+        assertThat(stats.getPerComicMetrics().get("Garfield").getImageCountByYear()).containsOnly(Map.entry("2020", 2));
+        assertThat(stats.getImageCountByYear()).containsOnly(Map.entry("2010", 2), Map.entry("2011", 1), Map.entry("2020", 2));
+        assertThat(stats.getStorageBytesByYear()).containsEntry("2010", (long) (10 + 15) * 1024);
+        assertThat(stats.getYears()).containsExactly("2010", "2011", "2020");
+    }
+
+    @Test
+    void updateStats_leavesOutSidecarsIndexesAndAvatars() throws IOException {
+        File year2010 = new File(cacheRoot, "CalvinAndHobbes/2010");
+        Files.writeString(new File(year2010, "2010-01-01.json").toPath(), "{\"width\": 900}");
+        Files.writeString(new File(year2010, "image-hashes.json").toPath(), "{}");
+        Files.writeString(new File(cacheRoot, "CalvinAndHobbes/available-dates.json").toPath(), "[]");
+        createDummyImage(new File(cacheRoot, "CalvinAndHobbes"), "avatar.png", 4096);
+
+        cacheStatsUpdater.updateStats();
+
+        ComicStorageMetrics calvin = cacheStatsUpdater.cacheStats().getPerComicMetrics().get("CalvinAndHobbes");
+        assertThat(calvin.getImageCount()).isEqualTo(3);
+        assertThat(calvin.getStorageBytes()).isEqualTo((10 + 15 + 12) * 1024);
+    }
+
+    @Test
+    void currentStats_isEmptyUntilAScanFinishes() {
+        assertThat(cacheStatsUpdater.currentStats()).isEmpty();
+
+        cacheStatsUpdater.updateStats();
+
+        assertThat(cacheStatsUpdater.currentStats()).isPresent();
+    }
+
     private void deleteDirectory(File dir) {
         if (dir.exists()) {
             File[] files = dir.listFiles();

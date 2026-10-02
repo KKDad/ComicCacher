@@ -19,11 +19,11 @@ fi
 echo "Verifying JSON files in '$ROOT_DIR'..."
 
 # Files the API always writes to the cache root (space separated for POSIX compatibility)
-REQUIRED_FILES="comics.json users.json batch-executions.json retrieval-status.json last_errors.json access-metrics.json"
+REQUIRED_FILES="comics.json users.json batch-executions.json retrieval-status.json access-metrics.json"
 # Files created on first use: no preferences saved yet, no scheduler run yet, nothing backfilled yet, no source catalog read yet
 OPTIONAL_FILES="preferences.json scheduler-state.json backfill-state.json source-catalog.json"
 # Files older versions wrote that nothing reads any more
-OBSOLETE_FILES="combined-metrics.json stats.json"
+OBSOLETE_FILES="combined-metrics.json last_errors.json stats.json"
 
 MISSING_COUNT=0
 

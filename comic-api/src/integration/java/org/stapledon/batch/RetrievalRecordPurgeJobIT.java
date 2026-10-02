@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -46,13 +47,14 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
         // Create recent records (within 30 days) - should NOT be purged
         for (int i = 1; i <= 5; i++) {
-            ComicRetrievalRecord recentRecord = ComicRetrievalRecord.success("RecentComic" + i, LocalDate.now(clock).minusDays(i), "test", 100L, 50000L);
+            ComicRetrievalRecord recentRecord = ComicRetrievalRecord.success(i, "RecentComic" + i, LocalDate.now(clock).minusDays(i), "test", 100L, 50000L);
             retrievalStatusService.recordRetrievalResult(recentRecord);
         }
 
         // Create old records (older than 30 days) - should be purged
         for (int i = 1; i <= 10; i++) {
-            ComicRetrievalRecord oldRecord = ComicRetrievalRecord.success("OldComic" + i, LocalDate.now(clock).minusDays(30 + i), "test", 100L, 50000L);
+            ComicRetrievalRecord oldRecord = ComicRetrievalRecord.success(100 + i, "OldComic" + i, LocalDate.now(clock).minusDays(30 + i), "test", 100L, 50000L)
+                    .toBuilder().attemptedAt(OffsetDateTime.now(clock).minusDays(30 + i)).build();
             retrievalStatusService.recordRetrievalResult(oldRecord);
         }
 

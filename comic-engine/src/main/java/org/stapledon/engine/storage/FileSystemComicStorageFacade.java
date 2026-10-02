@@ -225,6 +225,56 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
     }
 
     @Override
+    public Optional<ImageDto> getComicStripInfo(@lombok.NonNull ComicIdentifier comic, @lombok.NonNull LocalDate date) {
+        File file = stripFile(comic, date);
+
+        long start = System.nanoTime();
+        try {
+            Optional<ImageMetadata> metadata = imageMetadataRepository.loadMetadata(file.getAbsolutePath());
+            if (metadata.isPresent() && metadata.get().getWidth() > 0 && metadata.get().getHeight() > 0) {
+                return Optional.of(ImageDto.builder()
+                        .mimeType("image/png")
+                        .width(metadata.get().getWidth())
+                        .height(metadata.get().getHeight())
+                        .imageDate(date)
+                        .transcript(metadata.get().getTranscript())
+                        .build());
+            }
+
+            // No usable sidecar: read the size from the image's header
+            if (!file.exists()) {
+                return Optional.empty();
+            }
+            ImageUtils.Dimensions size = ImageUtils.readDimensions(file);
+            return Optional.of(ImageDto.builder()
+                    .mimeType("image/png")
+                    .width(size.width())
+                    .height(size.height())
+                    .imageDate(date)
+                    .transcript(metadata.map(ImageMetadata::getTranscript).orElse(null))
+                    .build());
+        } catch (IOException e) {
+            log.error("Failed to read comic strip {} for {} on {}", file.getAbsolutePath(), comic.getName(), date, e);
+            return Optional.empty();
+        } finally {
+            StorageTimings.record(file.getAbsolutePath(), start);
+        }
+    }
+
+    private File stripFile(ComicIdentifier comic, LocalDate date) {
+        String yearPath = date.format(DateTimeFormatter.ofPattern("yyyy"));
+        String filename = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return new File(String.format("%s/%s/%s/%s.png", getCacheRoot().toAbsolutePath(),
+                comic.getDirectoryName(), yearPath, filename));
+    }
+
+    @Override
+    public boolean avatarExists(@lombok.NonNull ComicIdentifier comic) {
+        return new File(String.format("%s/%s/%s", getCacheRoot().toAbsolutePath(),
+                comic.getDirectoryName(), AVATAR_FILE)).exists();
+    }
+
+    @Override
     public Optional<ImageDto> getAvatar(@lombok.NonNull ComicIdentifier comic) {
 
         File file = new File(String.format("%s/%s/%s", getCacheRoot().toAbsolutePath(),

@@ -3,6 +3,7 @@ package org.stapledon.metrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import org.stapledon.metrics.service.MetricsUpdateService;
 
 import java.time.LocalDate;
 import java.util.Map;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -51,7 +53,11 @@ class MetricsArchiveServiceTest {
 
         assertThat(service.archiveMetricsForDate(DATE)).isTrue();
 
-        verify(metricsArchiver).archiveMetrics(metrics, DATE);
+        // Rescans first, so the snapshot isn't the scan from startup
+        InOrder order = inOrder(metricsUpdateService, metricsArchiver);
+        order.verify(metricsUpdateService).forceRefreshAll();
+        order.verify(metricsUpdateService).buildCombinedMetrics();
+        order.verify(metricsArchiver).archiveMetrics(metrics, DATE);
         verify(metricsArchiver).cleanupOldArchives(90);
     }
 

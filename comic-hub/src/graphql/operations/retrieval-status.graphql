@@ -45,6 +45,7 @@ query GetRetrievalRecords(
     retrievalDurationMs
     imageSize
     httpStatusCode
+    attemptedAt
     errorMessage
   }
 }

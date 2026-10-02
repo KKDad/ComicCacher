@@ -57,7 +57,7 @@ class RetrievalResolverTest {
     @Test
     void retrievalRecordsMapsFieldsCorrectly() {
         var record = ComicRetrievalRecord.success(
-                "Garfield", LocalDate.of(2024, 1, 15), "gocomics", 150L, 52428L);
+                1, "Garfield", LocalDate.of(2024, 1, 15), "gocomics", 150L, 52428L);
 
         when(retrievalStatusService.getRetrievalRecords(isNull(), isNull(), isNull(), isNull(), eq(100)))
                 .thenReturn(List.of(record));
@@ -110,7 +110,7 @@ class RetrievalResolverTest {
     @Test
     void retrievalRecordReturnsMappedRecord() {
         var record = ComicRetrievalRecord.success(
-                "Peanuts", LocalDate.of(2024, 3, 10), "gocomics", 200L, 30000L);
+                2, "Peanuts", LocalDate.of(2024, 3, 10), "gocomics", 200L, 30000L);
 
         when(retrievalStatusService.getRetrievalRecord("Peanuts_2024-03-10")).thenReturn(Optional.of(record));
 

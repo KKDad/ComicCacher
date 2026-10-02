@@ -60,7 +60,7 @@ query {
 
 | Parameter | Type | Description |
 |---|---|---|
-| `id` | `String!` | Record ID (format: `"ComicName_YYYY-MM-DD"`) |
+| `id` | `String!` | Record ID; treat as opaque |
 
 **Returns:** `RetrievalRecord` (null if not found)
 
@@ -175,7 +175,7 @@ mutation {
 
 | Parameter | Type | Description |
 |---|---|---|
-| `id` | `String!` | Record ID (format: `"ComicName_YYYY-MM-DD"`) |
+| `id` | `String!` | Record ID; treat as opaque |
 
 **Returns:** `DeleteRetrievalRecordPayload!` -- `{ success: Boolean!, errors: [UserError!]! }`
 
@@ -230,7 +230,8 @@ mutation {
 
 | Field | Type | Description |
 |---|---|---|
-| `id` | `String!` | Unique ID (format: `"ComicName_YYYY-MM-DD"`) |
+| `id` | `String!` | Unique ID; treat as opaque (`"{comicId}_YYYY-MM-DD"`, or `"ComicName_YYYY-MM-DD"` on older records) |
+| `comicId` | `Int` | Comic id (null on older records) |
 | `comicName` | `String!` | Name of the comic |
 | `comicDate` | `Date!` | Date the comic was retrieved for |
 | `source` | `String` | Source provider (e.g., "gocomics", "comicskingdom") |
@@ -239,6 +240,7 @@ mutation {
 | `retrievalDurationMs` | `Float` | Duration in milliseconds |
 | `imageSize` | `Float` | Image size in bytes (if successful) |
 | `httpStatusCode` | `Int` | HTTP status code from the source |
+| `attemptedAt` | `DateTime` | When the attempt was made (null on older records) |
 
 ### RetrievalSummary
 

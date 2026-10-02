@@ -26,8 +26,6 @@ public class BatchExecutionSummary {
     @ToString.Include
     String jobName;
     @ToString.Include
-    OffsetDateTime executionTime;
-    @ToString.Include
     String status;
     @ToString.Include
     String exitCode;

@@ -225,6 +225,23 @@ class SourceCatalogServiceTest {
     }
 
     @Test
+    void refreshFillsInMissingOrPlaceholderAuthorsFromTheCatalog() {
+        stored.put(1, ComicItem.builder().id(1).name("One").source("daily").sourceIdentifier("one").build());
+        stored.put(2, ComicItem.builder().id(2).name("Two").source("daily").sourceIdentifier("two").author("DAILY").build());
+        stored.put(3, ComicItem.builder().id(3).name("Three").source("daily").sourceIdentifier("three").author("Jane Artist").build());
+        listInCatalog("one", "One", null);
+        listInCatalog("two", "Two", null);
+        listInCatalog("three", "Three", null);
+
+        service.refresh("daily");
+
+        assertThat(stored.get(1).getAuthor()).isEqualTo("Someone");
+        // The source's own name is a placeholder
+        assertThat(stored.get(2).getAuthor()).isEqualTo("Someone");
+        assertThat(stored.get(3).getAuthor()).isEqualTo("Jane Artist");
+    }
+
+    @Test
     void detectMissingStartsIsLimitedPerSource() {
         for (int i = 1; i <= 3; i++) {
             stored.put(i, ComicItem.builder().id(i).name("C" + i).source("daily").sourceIdentifier("c" + i).build());

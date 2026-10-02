@@ -75,7 +75,18 @@ public interface ComicStorageFacade {
 
     Optional<ImageDto> getComicStrip(ComicIdentifier comic, LocalDate date);
 
+    /**
+     * A strip's date, size and transcript, without its image data: what a GraphQL strip needs, read from the metadata sidecar
+     * instead of the image.
+     */
+    Optional<ImageDto> getComicStripInfo(ComicIdentifier comic, LocalDate date);
+
     Optional<ImageDto> getAvatar(ComicIdentifier comic);
+
+    /**
+     * Whether the comic has an avatar on disk, without reading it.
+     */
+    boolean avatarExists(ComicIdentifier comic);
 
     // Navigation operations
     Optional<LocalDate> getNextDateWithComic(ComicIdentifier comic, LocalDate fromDate);

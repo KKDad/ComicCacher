@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Set;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -53,7 +54,7 @@ class JsonBatchExecutionTrackerTest {
 
         gson = GsonUtils.createGson();
 
-        tracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, Clock.system(ZoneId.of("America/Toronto")));
+        tracker = trackerWith(Clock.system(TORONTO));
     }
 
     @Test
@@ -92,6 +93,35 @@ class JsonBatchExecutionTrackerTest {
         assertThat(history).hasSize(5);
         assertThat(history.get(0).getExecutionId()).isEqualTo(8L);
         assertThat(history.get(4).getExecutionId()).isEqualTo(4L);
+    }
+
+    @Test
+    void afterJobKeepsHistoryByAgeAndAlwaysTheNewestRun() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-02T16:00:00Z"), TORONTO);
+        JsonBatchExecutionTracker dated = new JsonBatchExecutionTracker(cacheProperties, gson, 30, 500, "America/Toronto", clock, Set::of);
+        dated.afterJob(createJobExecutionWithTimes("DailyJob", 1L, LocalDateTime.of(2026, 8, 1, 10, 0), LocalDateTime.of(2026, 8, 1, 10, 5)));
+        dated.afterJob(createJobExecutionWithTimes("RareJob", 2L, LocalDateTime.of(2026, 8, 2, 10, 0), LocalDateTime.of(2026, 8, 2, 10, 5)));
+        dated.afterJob(createJobExecutionWithTimes("DailyJob", 3L, LocalDateTime.of(2026, 9, 20, 10, 0), LocalDateTime.of(2026, 9, 20, 10, 5)));
+        dated.afterJob(createJobExecutionWithTimes("DailyJob", 4L, LocalDateTime.of(2026, 10, 2, 10, 0), LocalDateTime.of(2026, 10, 2, 10, 5)));
+
+        assertThat(dated.getExecutionHistory("DailyJob", 10)).extracting(BatchExecutionSummary::getExecutionId).containsExactly(4L, 3L);
+        // Older than 30 days, but it's the job's last run
+        assertThat(dated.getExecutionHistory("RareJob", 10)).extracting(BatchExecutionSummary::getExecutionId).containsExactly(2L);
+    }
+
+    @Test
+    void afterJobDropsHistoryOfJobsThatNoLongerExist() throws Exception {
+        Files.writeString(tempDir.resolve("batch-executions.json"), """
+                {"MetricsUpdateJob": [{"jobName": "MetricsUpdateJob", "status": "COMPLETED",
+                  "startTime": "2026-01-09T16:38:16Z", "endTime": "2026-01-09T16:38:17Z"}]}
+                """);
+        JsonBatchExecutionTracker known = new JsonBatchExecutionTracker(cacheProperties, gson, 30, 500, "America/Toronto",
+                Clock.system(TORONTO), () -> Set.of("TestJob"));
+
+        known.afterJob(createJobExecution("TestJob", 1L, BatchStatus.COMPLETED));
+
+        assertThat(known.getExecutionHistory("MetricsUpdateJob", 10)).isEmpty();
+        assertThat(known.getExecutionHistory("TestJob", 10)).hasSize(1);
     }
 
     @Test
@@ -236,7 +266,7 @@ class JsonBatchExecutionTrackerTest {
     void beforeJobNamesTheLogFileWithTheBatchTimezoneDate() {
         // 22:00 in Toronto on the 28th, 02:00 UTC on the 29th
         Clock clock = Clock.fixed(Instant.parse("2026-09-29T02:00:00Z"), TORONTO);
-        JsonBatchExecutionTracker torontoTracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, clock);
+        JsonBatchExecutionTracker torontoTracker = trackerWith(clock);
         try {
             torontoTracker.beforeJob(createJobExecution("TestJob", 1L, BatchStatus.STARTED));
 
@@ -250,7 +280,7 @@ class JsonBatchExecutionTrackerTest {
     void hasJobRunTodayUsesBatchTimezoneForToday() {
         // 21:00 in Toronto on 2026-09-27 is already 2026-09-28 in UTC
         Clock clock = Clock.fixed(Instant.parse("2026-09-28T01:00:00Z"), ZoneOffset.UTC);
-        JsonBatchExecutionTracker torontoTracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto", clock);
+        JsonBatchExecutionTracker torontoTracker = trackerWith(clock);
         torontoTracker.afterJob(createJobExecutionWithTimes("TestJob", 1L,
                 LocalDateTime.of(2026, 9, 27, 7, 30), LocalDateTime.of(2026, 9, 27, 7, 45)));
 
@@ -261,7 +291,7 @@ class JsonBatchExecutionTrackerTest {
     void hasJobRunTodayReturnsFalseAfterMidnightInBatchTimezone() {
         // 01:00 in Toronto on 2026-09-28; the job ended late on the 27th
         Clock clock = Clock.fixed(Instant.parse("2026-09-28T05:00:00Z"), ZoneOffset.UTC);
-        JsonBatchExecutionTracker torontoTracker = new JsonBatchExecutionTracker(cacheProperties, gson, 5, "America/Toronto", clock);
+        JsonBatchExecutionTracker torontoTracker = trackerWith(clock);
         torontoTracker.afterJob(createJobExecutionWithTimes("TestJob", 1L,
                 LocalDateTime.of(2026, 9, 27, 22, 0), LocalDateTime.of(2026, 9, 27, 22, 30)));
 
@@ -397,7 +427,7 @@ class JsonBatchExecutionTrackerTest {
         assertThat(tracker.getLastExecution("TestJob").orElseThrow().getExecutionId()).isEqualTo(1L);
 
         // Simulate restart: new tracker instance, same JSON file
-        var tracker2 = new JsonBatchExecutionTracker(cacheProperties, gson, 5, Clock.system(ZoneId.of("America/Toronto")));
+        var tracker2 = trackerWith(Clock.system(TORONTO));
         // H2 would restart from 1, but stable ID should continue from 2
         tracker2.afterJob(createJobExecution("TestJob", 1L, BatchStatus.COMPLETED));
 
@@ -474,4 +504,9 @@ class JsonBatchExecutionTrackerTest {
         return execution;
     }
 
+
+    /** A Toronto tracker that keeps everything for 100 years, capped at 5 runs per job, and knows no job names (prunes none). */
+    private JsonBatchExecutionTracker trackerWith(Clock clock) {
+        return new JsonBatchExecutionTracker(cacheProperties, gson, 36500, 5, "America/Toronto", clock, Set::of);
+    }
 }

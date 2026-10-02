@@ -121,6 +121,7 @@ public class SourceCatalogService {
             log.info("Catalog refresh {}: {} entries (+{} new, {} removed, {} back) in {}s", sourceId, changes.total(), changes.added(), changes.removed(),
                     changes.returned(), Duration.ofNanos(System.nanoTime() - start).toSeconds());
             applyCatalogStarts(source);
+            applyCatalogAuthors(source);
             return new RefreshResult(RefreshStatus.REFRESHED, changes, null);
         } catch (IOException | RuntimeException e) {
             // Expected when the source is down, rate limits us or changes its layout: one line, no stack trace
@@ -163,6 +164,27 @@ public class SourceCatalogService {
             if (entry != null && entry.getStartDate() != null && comic.getStartSource() == null && comic.getSourceStartDate() == null && !source.indexed()) {
                 applyStart(comic, StartInfo.ofDate(entry.getStartDate()));
             }
+        }
+    }
+
+    /**
+     * Fills in the author of each of the source's comics that has none, or only a source's name ("Comics Kingdom"), from its catalog entry.
+     */
+    private void applyCatalogAuthors(ComicSource source) {
+        Map<String, Entry> entries = repository.find(source.id()).map(SourceEntries::getEntries).orElse(Map.of());
+        Set<String> sourceNames = sources.all().stream().map(ComicSource::displayName).collect(Collectors.toSet());
+        int filled = 0;
+        for (ComicItem comic : comicsOf(source)) {
+            Entry entry = entries.get(source.identifierFor(comic));
+            String author = comic.getAuthor();
+            boolean placeholder = author == null || author.isBlank() || sourceNames.contains(author);
+            if (placeholder && entry != null && entry.getAuthor() != null && !entry.getAuthor().isBlank()) {
+                comics.updateComic(comic.getId(), comic.toBuilder().author(entry.getAuthor()).build());
+                filled++;
+            }
+        }
+        if (filled > 0) {
+            log.info("Catalog refresh {}: filled in the author of {} comics from the catalog", source.id(), filled);
         }
     }
 

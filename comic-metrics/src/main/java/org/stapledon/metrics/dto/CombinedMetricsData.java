@@ -12,8 +12,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- * Container for pre-computed combined metrics.
- * This is persisted to combined-metrics.json and served by the controller.
+ * Storage and access metrics combined, built on demand by MetricsUpdateService. Each day's is saved to
+ * {@code metrics-history/{yyyy-MM-dd}.json}; nothing else persists it ({@code combined-metrics.json} is obsolete).
  */
 @Getter
 @Setter

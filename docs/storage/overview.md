@@ -14,7 +14,6 @@ ComicCacher uses a flat-file JSON storage model on an NFS-mounted filesystem. Th
   scheduler-state.json                      # Scheduler pause/resume state
   backfill-state.json                       # Comic backfill: given-up dates, learned history horizons, daily attempt counts
   source-catalog.json                       # Every source's list of comics, for the Sources page (SourceCatalogJob)
-  last_errors.json                          # Recent errors per comic
   access-metrics.json                       # Per-comic access counts
   metrics-history/{yyyy-MM-dd}.json         # Daily combined-metrics snapshots (MetricsArchiveJob)
   tmp/                                      # Disposable files: excluded from storage metrics, safe to delete
@@ -59,7 +58,7 @@ NfsFileOperations.atomicWrite(target, content)
   -> Files.move(tmp, target, ATOMIC_MOVE, REPLACE_EXISTING)
 ```
 
-This pattern is used by: `ComicIndexService`, `JsonBatchExecutionTracker`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, and `AccessMetricsRepository`.
+This pattern is used by: `ComicIndexService`, `JsonBatchExecutionTracker`, `JsonRetrievalStatusRepository`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, and `AccessMetricsRepository`.
 
 `ApplicationConfigurationFacade` (`comics.json`, `users.json`, `preferences.json`), `SchedulerStateService`, `BackfillStateService`, `SourceCatalogRepository`, `CatalogThumbnailService` and `MetricsArchiver` write the same way. Nothing writes JSON to the cache without it.
 
