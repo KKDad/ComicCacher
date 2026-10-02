@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-10-02
+### Added
+- Prod copies strips from dev instead of downloading them again. Dev serves `/api/v1/promotion/**` to requests carrying the shared `X-Promotion-Token`: a manifest of the strips on disk (at most 7 days) and each strip with its transcript. Prod's `PromoteFromDevJob` runs at 07:00, between dev's download and its own, and saves each strip it's missing through the same validation, duplicate check and indexing as a download, never overwriting one. A manual run takes `days` (up to 7), `source` and `comic`. Freefall is left out. Only prod sets `comics.promotion.source-url`; `run.sh` writes the shared token to `/root/comics-promotion.env` on the first deploy of either environment, which the compose files load as an optional `env_file` (Compose 2.24+) (#427)
+- `@CatchUpWeight` on a scheduler's `@Bean` method orders the startup makeup runs, lightest first: `PromoteFromDevJob`, then `ComicDownloadJob`, then the rest, so after a restart prod copies strips from dev before downloading them (#428)
+
+### Changed
+- Slow GraphQL fields are logged once per request (`Slow GraphQL fields (<op>): <n> over <ms>ms, slowest …`) instead of one WARN per field; each field's time is at DEBUG. One page load on dev had logged 46 lines (#425)
+- Request lines name the GraphQL operation instead of `anonymous`: comic-hub sends `operationName`, and the API falls back to the name of the document's only operation (#424)
+- Startup makeup runs check the scheduler's precondition like scheduled runs, so dev no longer records an empty `PromoteFromDevJob` run after each restart (#428)
+
+### Fixed
+- A manual "Run now" held its GraphQL request and a Tomcat thread for the whole job. Manual runs now start in the background on `manual-job-*` threads (`ManualJobLauncher`) with the request's log context, and the mutation returns at once; a job still runs one at a time. Scheduled and startup makeup runs are unchanged (#426)
+- Integration tests took "today" from the JVM's zone instead of `batch.timezone`, so `MetricsArchiveJobIT` and `RetrievalRecordPurgeJobIT` failed for CI runs between about 20:00 and midnight Toronto time (#430)
+
+### Security
+- Updated gradle/actions/setup-gradle from 6.3.0 to 6.4.0 (#420)
+
 ## [2.6.0] - 2026-10-01
 ### Added
 - **Sources** page in Comics Hub (operators can look, admins change): each source's configured and downloading counts, its throttle, retry and backfill settings, and its catalog of every comic it offers. Each catalog row has **Downloading** (`active`) and **Visible** (`enabled`) switches, either of which adds a comic that isn't configured yet, plus backfill, fetch avatar and start date actions. Configured comics the source no longer lists show under "Not in the catalog" (#421)
