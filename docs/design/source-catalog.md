@@ -44,7 +44,7 @@ A configured comic is matched to its catalog entry by `ComicSource.identifierFor
 
 ## SourceCatalogJob
 
-`SourceCatalogJobConfig` defines the job. It fires daily (`batch.source-catalog.cron`, 05:00), but a scheduled run is skipped unless some catalog is older than `batch.source-catalog.max-age-days` (7), or some details or thumbnails are due. The skip check reads only `source-catalog.json`, never the disk or a source. A run:
+`SourceCatalogJobConfig` defines the job. It fires daily (`batch.source-catalog.cron`, 05:00), but a scheduled or startup makeup run is skipped unless some catalog is older than `batch.source-catalog.max-age-days` (7), or some details or thumbnails are due. The skip check reads only `source-catalog.json`, never the disk or a source. A run:
 
 1. Refreshes each due catalog (or only the `source` parameter's; `force=true` ignores the age).
 2. Detects the start of up to `batch.source-catalog.start-detect-per-run` (5) configured comics per source that have none.

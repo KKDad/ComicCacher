@@ -14,7 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
+import org.stapledon.engine.batch.config.ComicRetrievalJobConfig;
 import org.stapledon.engine.batch.config.PromoteFromDevJobConfig;
+import org.stapledon.engine.batch.scheduler.CatchUpWeight;
 import org.stapledon.engine.promotion.DevPromotionService;
 import org.stapledon.engine.promotion.DevPromotionService.PromotionResult;
 import org.stapledon.engine.source.SourceRegistry;
@@ -29,6 +34,24 @@ class PromoteFromDevJobConfigTest {
         promotionService = mock(DevPromotionService.class);
         config = new PromoteFromDevJobConfig(promotionService, mock(SourceRegistry.class));
         setField(config, "defaultDays", 1);
+    }
+
+    @Test
+    void catchUpWeight_runsBeforeTheDownloadsMakeupRun() {
+        // After a restart that missed both, promotion must copy dev's strips before the download fetches them
+        assertThat(catchUpWeight(PromoteFromDevJobConfig.class, "promoteFromDevJobScheduler"))
+                .isLessThan(catchUpWeight(ComicRetrievalJobConfig.class, "comicDownloadJobScheduler"))
+                .isLessThan(CatchUpWeight.DEFAULT);
+        assertThat(catchUpWeight(ComicRetrievalJobConfig.class, "comicDownloadJobScheduler")).isLessThan(CatchUpWeight.DEFAULT);
+    }
+
+    private static int catchUpWeight(Class<?> config, String beanMethod) {
+        Method method = Arrays.stream(config.getDeclaredMethods())
+                .filter(m -> m.getName().equals(beanMethod))
+                .findFirst()
+                .orElseThrow();
+        CatchUpWeight weight = method.getAnnotation(CatchUpWeight.class);
+        return weight == null ? CatchUpWeight.DEFAULT : weight.value();
     }
 
     @Test

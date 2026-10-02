@@ -92,8 +92,8 @@ public class DailyJobScheduler extends AbstractJobScheduler {
     }
 
     /**
-     * Sets a cheap check made before each scheduled run. When it returns false the run is skipped (nothing launched, nothing recorded) and
-     * {@code skipMessage} is logged. Manual triggers ignore it.
+     * Sets a cheap check made before each scheduled run and startup makeup run. When it returns false the run is skipped (nothing launched,
+     * nothing recorded) and {@code skipMessage} is logged. Manual triggers ignore it.
      */
     public void setPrecondition(BooleanSupplier precondition, String skipMessage) {
         this.precondition = precondition;
@@ -127,7 +127,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
             return;
         }
 
-        if (!preconditionMet()) {
+        if (!preconditionMet("scheduled execution")) {
             return;
         }
 
@@ -174,7 +174,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of(timezone));
         ZonedDateTime todayScheduledTime = getNextScheduledTime(now.minusDays(1));
 
-        if (todayScheduledTime != null && now.isAfter(todayScheduledTime)) {
+        if (todayScheduledTime != null && now.isAfter(todayScheduledTime) && preconditionMet("makeup run")) {
             log.warn("{} missed scheduled time ({}), running now", getJobName(), todayScheduledTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
             runJob("STARTUP_MAKEUP");
         }
@@ -184,7 +184,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
         return schedulerStateService != null && schedulerStateService.isPaused(getJobName());
     }
 
-    private boolean preconditionMet() {
+    private boolean preconditionMet(String skipped) {
         if (precondition == null) {
             return true;
         }
@@ -192,7 +192,7 @@ public class DailyJobScheduler extends AbstractJobScheduler {
             if (precondition.getAsBoolean()) {
                 return true;
             }
-            log.info("{}: {}, skipping scheduled execution", getJobName(), preconditionSkipMessage);
+            log.info("{}: {}, skipping {}", getJobName(), preconditionSkipMessage, skipped);
             return false;
         } catch (Exception e) {
             // A broken check shouldn't stop the job for good; run it and let the job report problems

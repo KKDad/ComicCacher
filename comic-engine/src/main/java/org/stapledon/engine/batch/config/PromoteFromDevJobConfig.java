@@ -21,6 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import java.util.List;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.scheduler.CatchUpWeight;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.promotion.DevPromotionService;
@@ -30,7 +31,7 @@ import org.stapledon.engine.source.SourceRegistry;
 /**
  * Spring Batch configuration for the promote-from-dev job: copies the strips the dev instance downloaded in the last {@code days} days (1 by
  * default) that this instance is missing, so prod doesn't download them a second time. Runs after dev's download and before prod's. Only prod
- * sets {@code comics.promotion.source-url}; everywhere else a scheduled run is skipped and a manual one does nothing. The job stays registered
+ * sets {@code comics.promotion.source-url}; everywhere else scheduled and startup makeup runs are skipped and a manual one does nothing. The job stays registered
  * there rather than being switched off, since {@code SchedulerHealthCheck} reports a known job without a scheduler as down.
  */
 @Slf4j
@@ -55,9 +56,11 @@ public class PromoteFromDevJobConfig {
 
     /**
      * Scheduler for PromoteFromDevJob: runs daily at the configured cron time, skipping runs when promotion isn't configured. Triggered by
-     * SchedulerTriggers component.
+     * SchedulerTriggers component. Its startup makeup run goes before ComicDownloadJob's, so a restart that missed both copies dev's strips
+     * before the download fetches them from the sources.
      */
     @Bean
+    @CatchUpWeight(-10)
     public DailyJobScheduler promoteFromDevJobScheduler(@Qualifier("promoteFromDevJob") Job promoteFromDevJob, JobOperator jobOperator,
             JsonBatchExecutionTracker tracker) {
         List<JobParameterDefinition> parameters = List.of(

@@ -17,7 +17,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -82,7 +86,7 @@ class StartupJobRunnerTest {
         schedulers.put("testJob1Scheduler", scheduler1);
         schedulers.put("testJob2Scheduler", scheduler2);
 
-        startupJobRunner = new StartupJobRunner(schedulers);
+        startupJobRunner = new StartupJobRunner(schedulers, mock(ListableBeanFactory.class));
         // scheduler1 blocks until released, so this only returns in time if the checks run on another thread
         assertTimeoutPreemptively(Duration.ofSeconds(2), () -> startupJobRunner.onApplicationReady(event));
 
@@ -96,6 +100,53 @@ class StartupJobRunnerTest {
         order.verify(scheduler1).runMissedExecutionIfNeeded();
         order.verify(scheduler2).runMissedExecutionIfNeeded();
         assertThat(threads).containsExactly("startup-catch-up");
+    }
+
+    @Test
+    @DisplayName("should run the makeup checks lightest weight first, keeping registration order for equal weights")
+    void shouldRunLightestWeightFirst() {
+        DailyJobScheduler light = mock(DailyJobScheduler.class);
+        DailyJobScheduler heavy = mock(DailyJobScheduler.class);
+
+        Map<String, DailyJobScheduler> schedulers = new LinkedHashMap<>();
+        schedulers.put("heavyScheduler", heavy);
+        schedulers.put("testJob1Scheduler", scheduler1);
+        schedulers.put("testJob2Scheduler", scheduler2);
+        schedulers.put("lightScheduler", light);
+        Map<String, Integer> weights = Map.of("heavyScheduler", 5, "lightScheduler", -10);
+
+        startupJobRunner = new StartupJobRunner(schedulers, name -> weights.getOrDefault(name, CatchUpWeight.DEFAULT), INLINE);
+        startupJobRunner.onApplicationReady(event);
+
+        InOrder order = inOrder(light, scheduler1, scheduler2, heavy);
+        order.verify(light).runMissedExecutionIfNeeded();
+        order.verify(scheduler1).runMissedExecutionIfNeeded();
+        order.verify(scheduler2).runMissedExecutionIfNeeded();
+        order.verify(heavy).runMissedExecutionIfNeeded();
+    }
+
+    @Test
+    @DisplayName("should read the weight from a @Bean method, and the default without one")
+    void shouldReadWeightFromBeanMethod() {
+        try (var context = new AnnotationConfigApplicationContext(WeightedSchedulers.class)) {
+            assertThat(StartupJobRunner.catchUpWeight(context, "weightedScheduler")).isEqualTo(-10);
+            assertThat(StartupJobRunner.catchUpWeight(context, "plainScheduler")).isEqualTo(CatchUpWeight.DEFAULT);
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class WeightedSchedulers {
+
+        @Bean
+        @CatchUpWeight(-10)
+        DailyJobScheduler weightedScheduler() {
+            return mock(DailyJobScheduler.class);
+        }
+
+        @Bean
+        DailyJobScheduler plainScheduler() {
+            return mock(DailyJobScheduler.class);
+        }
     }
 
     @Test

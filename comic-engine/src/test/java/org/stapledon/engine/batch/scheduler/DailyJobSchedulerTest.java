@@ -174,6 +174,28 @@ class DailyJobSchedulerTest {
     }
 
     @Test
+    @DisplayName("no startup makeup run when the precondition is false")
+    void noMakeupRunWhenPreconditionFalse() throws Exception {
+        when(tracker.hasJobRunToday("TestJob")).thenReturn(false);
+        scheduler.setPrecondition(() -> false, "nothing to do");
+
+        scheduler.runMissedExecutionIfNeeded();
+
+        verify(jobOperator, never()).start(any(Job.class), any(JobParameters.class));
+    }
+
+    @Test
+    @DisplayName("makes up a missed run at startup when the precondition is true")
+    void runsMissedExecutionWhenPreconditionTrue() throws Exception {
+        when(tracker.hasJobRunToday("TestJob")).thenReturn(false);
+        scheduler.setPrecondition(() -> true, "nothing to do");
+
+        scheduler.runMissedExecutionIfNeeded();
+
+        verify(jobOperator).start(eq(job), any(JobParameters.class));
+    }
+
+    @Test
     @DisplayName("makes up a missed run at startup when the job is not paused")
     void runsMissedExecutionWhenNotPaused() throws Exception {
         when(schedulerStateService.isPaused("TestJob")).thenReturn(false);

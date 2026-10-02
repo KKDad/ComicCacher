@@ -45,7 +45,7 @@ Key methods:
 
 - `executeScheduled()` -- Called by `SchedulerTriggers`. Checks pause state and whether the job already ran today before executing.
 - `triggerManually()` -- For API-driven manual runs. Bypasses the "already ran today" check. Runs in the background through `ManualJobLauncher` (a `TaskExecutorJobOperator` on `manualJobTaskExecutor`, `manual-job-*` threads with `MdcTaskDecorator`, so the job's log lines keep the request's `req=` and `user=`) and returns the execution id at once. Scheduled and `STARTUP_MAKEUP` runs stay on the calling thread. Each scheduler's lock allows one run of its job at a time and is released when the run ends, on whichever thread.
-- `runMissedExecutionIfNeeded()` -- Called by `StartupJobRunner` on application startup. Compares current time against the cron schedule; if past the scheduled time and job hasn't run today, triggers a `STARTUP_MAKEUP` run. "Today" is the date in `batch.timezone`, not the JVM's zone.
+- `runMissedExecutionIfNeeded()` -- Called by `StartupJobRunner` on application startup. Compares current time against the cron schedule; if past the scheduled time and job hasn't run today, triggers a `STARTUP_MAKEUP` run, unless the scheduler's precondition (`setPrecondition`) says there is nothing to do. "Today" is the date in `batch.timezone`, not the JVM's zone.
 
 ### PeriodicJobScheduler
 
@@ -82,7 +82,7 @@ A `@PostConstruct` component that injects `SchedulerStateService` into all `Dail
 
 ### StartupJobRunner
 
-Listens for `ApplicationReadyEvent` (ordered at 100) to check for missed job executions. It hands the check to a background thread (`startup-catch-up`) and returns straight away, so readiness and `/actuator/health` don't wait for makeup runs. That thread calls `runMissedExecutionIfNeeded()` on each `DailyJobScheduler` bean in turn. `batch.startup-catch-up.enabled=false` turns makeup runs off; the integration test profiles do this. This runs after all beans are fully initialized, avoiding race conditions with strategy registration.
+Listens for `ApplicationReadyEvent` (ordered at 100) to check for missed job executions. It hands the check to a background thread (`startup-catch-up`) and returns straight away, so readiness and `/actuator/health` don't wait for makeup runs. That thread calls `runMissedExecutionIfNeeded()` on each `DailyJobScheduler` bean in turn, lightest `@CatchUpWeight` first (on the scheduler's `@Bean` method; 0 without one, and equal weights keep their registration order). `PromoteFromDevJob` weighs -10 and `ComicDownloadJob` -5: after a restart that missed both, promotion copies dev's strips before the download fetches them, and today's strips aren't held up behind the maintenance jobs. `batch.startup-catch-up.enabled=false` turns makeup runs off; the integration test profiles do this. This runs after all beans are fully initialized, avoiding race conditions with strategy registration.
 
 ### SchedulerTriggers
 
@@ -166,7 +166,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 **Pattern:** Tasklet (single step).
 
-- Refreshes each catalog older than `batch.source-catalog.max-age-days` (7); a scheduled run is skipped, without any request, when no catalog, details or thumbnails are due. Parameters: `source` (one source, or `ALL`) and `force=true` (ignore the age). The Sources page's Refresh button runs it for one source with `force=true`.
+- Refreshes each catalog older than `batch.source-catalog.max-age-days` (7); a scheduled or startup makeup run is skipped, without any request, when no catalog, details or thumbnails are due. Parameters: `source` (one source, or `ALL`) and `force=true` (ignore the age). The Sources page's Refresh button runs it for one source with `force=true`.
 - Then detects starts for up to `batch.source-catalog.start-detect-per-run` (5) comics per source, reads due details for up to `batch.source-catalog.details-per-run` (100), purges thumbnails older than `comics.catalog.thumbnail-max-age-days` (365, plus 0–90 days per comic) and downloads up to `batch.source-catalog.thumbnails-per-run` (100) due ones
 - Each of those stops a source at its first HTTP 429 (the source is backed off; the rest wait for the next run)
 - A failed refresh fails the step after the other sources have run
@@ -186,7 +186,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 - Reads dev's manifest for the window, then for each comic enabled on prod that matches on source and source identifier (the two instances number comics separately), fetches each strip prod has no file for and saves it with `ComicStorageFacade.saveComicStripWithResult`. That validates it, skips duplicates and writes the date index, image hashes and metadata sidecar (with dev's transcript), as a download would. A strip already on disk is never fetched or overwritten
 - Raises the comic's `oldest` / `newest` in `comics.json` to cover what it saved
 - Indexed sources (Freefall) are left out: their strip numbers aren't in the manifest, and prod's own download tracks them
-- Only prod sets `comics.promotion.source-url`; elsewhere a scheduled run is skipped by its precondition and a manual run does nothing. The job stays registered on dev rather than being switched off, since `SchedulerHealthCheck` reports a known job with no scheduler as down
+- Only prod sets `comics.promotion.source-url`; elsewhere scheduled and startup makeup runs are skipped by its precondition and a manual run does nothing. The job stays registered on dev rather than being switched off, since `SchedulerHealthCheck` reports a known job with no scheduler as down
 - Dev unreachable or rejecting the token fails the run. A strip that can't be fetched or saved is logged at WARN and counted; the rest go on, and the step fails at the end so the batch history shows it. One INFO line sums up each run: `Promoted 46 strips from http://comics-api-dev:8888 for 2026-10-01 to 2026-10-01 (comics=46 already-here=0 duplicate=0 failed=0 not-here=3) in 9120ms`
 
 **Data source:** the dev instance's `/api/v1/promotion/**` endpoints
@@ -291,14 +291,14 @@ sequenceDiagram
 
     App->>SJR: ApplicationReadyEvent
     SJR-->>App: returns at once (checks run on the startup-catch-up thread)
-    loop For each DailyJobScheduler, in order
+    loop For each DailyJobScheduler, lightest @CatchUpWeight first
         SJR->>DJS: runMissedExecutionIfNeeded()
         DJS->>JBET: hasJobRunToday(jobName)?
         alt Already ran today
             DJS-->>SJR: no action
         else Hasn't run
             DJS->>DJS: Parse cron, check if past scheduled time
-            alt Past scheduled time
+            alt Past scheduled time and precondition met
                 DJS->>DJS: runJob("STARTUP_MAKEUP")
             end
         end
