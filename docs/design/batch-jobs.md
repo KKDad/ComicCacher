@@ -64,7 +64,7 @@ Available infrastructure for fixed-delay jobs. Currently unused -- all 6 jobs us
 
 Implements `JobExecutionListener`. Automatically captures execution data after each job completion and persists it to `batch-executions.json` in the cache directory.
 
-- Stores a capped list of executions per job (configurable via `batch.tracking.max-history-per-job`, default 30)
+- Keeps each job's executions from the last `batch.tracking.history-days` days (default 30), always including its newest, and drops history for jobs that no longer exist
 - Handles migration from legacy single-entry format to list format
 - Uses atomic write (`NfsFileOperations.atomicWrite`) for NFS safety
 - Sets MDC context (`batchJobName`, `batchJobExecutionId`, `batchLogPath`) for structured logging

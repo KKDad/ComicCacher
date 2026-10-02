@@ -1,6 +1,6 @@
 # Comic Metrics Coding Standards
 
-Cache and storage metrics. Tracks comic access counts, error rates per comic, and color/grayscale analysis sampling. Persists event-driven to JSON in the comics cache directory. Defers to [@~/comic-api/CLAUDE.md](../comic-api/CLAUDE.md) for cross-cutting Java standards.
+Cache and storage metrics. Tracks comic access counts, storage use, and color/grayscale analysis sampling. Persists event-driven to JSON in the comics cache directory. Defers to [@~/comic-api/CLAUDE.md](../comic-api/CLAUDE.md) for cross-cutting Java standards.
 
 ## Module Layout
 
@@ -14,9 +14,9 @@ Cache and storage metrics. Tracks comic access counts, error rates per comic, an
 
 ## Persistence Model
 
-- Metrics live in JSON files under `${comics.cache.location}` (e.g., `last_errors.json`, access metrics).
+- Metrics live in JSON files under `${comics.cache.location}` (`access-metrics.json`, daily snapshots in `metrics-history/`).
 - Persistence is **event-driven**, not scheduled. The `comics.metrics.persist-threshold` property (default 50) controls how many access events buffer before a flush.
-- Per-comic error history is bounded: `comics.metrics.error-tracking.max-errors-per-comic` (default 5).
+- Storage metrics are an in-memory scan of the cache (`StorageMetricsCollector`), one pass that reads each image's size once. `StorageMetricsWarmup` runs the first scan in the background at startup (`comics.metrics.warm-on-startup`, default true; off in the integration tests). Until it finishes, `buildCombinedMetrics()` serves the latest `metrics-history/` snapshot instead of blocking a request on a scan of the NFS cache. `MetricsArchiveJob` rescans before each daily snapshot.
 - Color-detection sampling is configurable: `comics.metrics.color-detection.sample-percentage` (default 5.0) — percentage of pixels sampled to classify B&W vs color.
 
 ## Standards

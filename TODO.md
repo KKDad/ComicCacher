@@ -96,6 +96,12 @@
 - Target: Comic image endpoints (/api/v1/comics/{id}/avatar, /api/v1/comics/{id}/strip/\*)
 - Priority: Low
 
+### Investigate why `rewriteRun` rewrites files on a clean master
+
+- On master at 0e8c3b8, `./gradlew rewriteRun` changed about 55 files nobody had touched, mostly moving imports (e.g. `java.time.Instant` from above the Lombok imports to below them in `JwtTokenDto`). CLAUDE.md lists it as the auto-fix for imports and formatting, so every run drags unrelated files into a change and they have to be reverted by hand
+- Find out whether the OpenRewrite import-order recipe disagrees with checkstyle's import rule, or master was formatted another way. Then either align the recipe with checkstyle and run it once over the whole tree in its own PR, or change CLAUDE.md to stop recommending it
+- Priority: Medium. Cheap to look into, and it bites every change that follows the documented workflow
+
 ### Enable Gradle Configuration Cache
 
 - Consider enabling the Gradle configuration cache to speed up builds

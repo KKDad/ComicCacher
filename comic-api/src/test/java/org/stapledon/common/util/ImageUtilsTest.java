@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.stapledon.common.dto.ImageDto;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,6 +56,24 @@ class ImageUtilsTest {
 
         // ImageIO.read returns null for unknown formats; this used to surface as a NullPointerException
         assertThatThrownBy(() -> ImageUtils.getImageDto(notAnImage.toFile()))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining(notAnImage.toString());
+    }
+
+    @Test
+    void readDimensionsReadsOnlyTheHeader(@TempDir Path tempDir) throws Exception {
+        Path png = tempDir.resolve("2026-09-24.png");
+        ImageIO.write(new BufferedImage(640, 200, BufferedImage.TYPE_INT_RGB), "png", png.toFile());
+
+        assertThat(ImageUtils.readDimensions(png.toFile())).isEqualTo(new ImageUtils.Dimensions(640, 200));
+    }
+
+    @Test
+    void readDimensionsRejectsUndecodableFileWithItsPath(@TempDir Path tempDir) throws Exception {
+        Path notAnImage = tempDir.resolve("2026-09-24.png");
+        Files.writeString(notAnImage, "this is not a png");
+
+        assertThatThrownBy(() -> ImageUtils.readDimensions(notAnImage.toFile()))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining(notAnImage.toString());
     }

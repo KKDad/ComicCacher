@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -309,7 +310,7 @@ public class ComicManagementFacade implements ManagementFacade {
                     : storageFacade.getNewestDateWithComic(identifier);
 
             return dateOpt
-                    .flatMap(date -> storageFacade.getComicStrip(identifier, date)
+                    .flatMap(date -> storageFacade.getComicStripInfo(identifier, date)
                             .map(image -> {
                                 LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(identifier, date)
                                         .orElse(null);
@@ -360,7 +361,7 @@ public class ComicManagementFacade implements ManagementFacade {
             LocalDate targetDate = dateOpt.get();
             log.debug("Found comic at {}, loading image and calculating boundaries...", targetDate);
 
-            return storageFacade.getComicStrip(identifier, targetDate)
+            return storageFacade.getComicStripInfo(identifier, targetDate)
                     .map(image -> {
                         // Get boundary dates for navigation hints
                         LocalDate nearestPrev = storageFacade.getPreviousDateWithComic(identifier, targetDate)
@@ -410,7 +411,7 @@ public class ComicManagementFacade implements ManagementFacade {
             LocalDate nearestNext = storageFacade.getNextDateWithComic(identifier, date).orElse(null);
 
             // Get the image for the exact date requested
-            return storageFacade.getComicStrip(identifier, date)
+            return storageFacade.getComicStripInfo(identifier, date)
                     .map(image -> {
                         log.debug("Found comic strip for {} on {}, prev={}, next={}",
                                 comic.getName(), date, nearestPrev, nearestNext);
@@ -751,7 +752,7 @@ public class ComicManagementFacade implements ManagementFacade {
 
         log.error("Failed to save comic {} for {} to storage: {}", comic.getName(), date, saveResult.getMessage());
         retrievalStatusService.recordRetrievalResult(ComicRetrievalRecord.failure(
-                comic.getName(), date, comic.getSource(), ComicRetrievalStatus.STORAGE_ERROR,
+                comic.getId(), comic.getName(), date, comic.getSource(), ComicRetrievalStatus.STORAGE_ERROR,
                 "Save failed: " + saveResult.getMessage(), 0, null));
         return null;
     }
@@ -791,14 +792,16 @@ public class ComicManagementFacade implements ManagementFacade {
                 comics.putAll(comicConfig.getItems());
             }
 
-            // Sync oldest/newest dates and avatarAvailable flag from the actual index
-            boolean configDirty = false;
+            // Sync oldest/newest dates and avatarAvailable flag from the actual index. The dates are derived from the index and only
+            // refreshed in memory; comics.json is rewritten only when a stored setting changes (the avatar flag or a corrected start)
+            int synced = 0;
+            boolean storedSettingChanged = false;
             for (Map.Entry<Integer, ComicItem> entry : comics.entrySet()) {
                 ComicItem comic = entry.getValue();
                 ComicIdentifier id = ComicIdentifier.from(comic);
                 Optional<LocalDate> actualOldest = storageFacade.getOldestDateWithComic(id);
                 Optional<LocalDate> actualNewest = storageFacade.getNewestDateWithComic(id);
-                boolean avatarExists = storageFacade.getAvatar(id).isPresent();
+                boolean avatarExists = storageFacade.avatarExists(id);
 
                 boolean datesStale = actualOldest.isPresent() && !actualOldest.get().equals(comic.getOldest())
                         || actualNewest.isPresent() && !actualNewest.get().equals(comic.getNewest());
@@ -812,14 +815,19 @@ public class ComicManagementFacade implements ManagementFacade {
                             .build());
                     entry.setValue(updated);
                     comicConfig.getItems().put(updated.getId(), updated);
-                    configDirty = true;
+                    synced++;
+                    if (avatarStale || !Objects.equals(updated.getSourceStartDate(), comic.getSourceStartDate())) {
+                        storedSettingChanged = true;
+                    }
                 }
             }
-            if (configDirty) {
+            if (storedSettingChanged) {
                 synchronized (configLock) {
                     configFacade.saveComicConfig(comicConfig);
                 }
-                log.info("Synced comic metadata from index for {} comics", comics.size());
+                log.info("Synced comic metadata from index for {} comics and saved the configuration", synced);
+            } else if (synced > 0) {
+                log.info("Synced comic dates from index for {} comics", synced);
             }
             evictComicList();
 

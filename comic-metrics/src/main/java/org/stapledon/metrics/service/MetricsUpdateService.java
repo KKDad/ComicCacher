@@ -11,9 +11,11 @@ import org.stapledon.metrics.dto.CombinedMetricsData;
 import org.stapledon.metrics.dto.GlobalMetrics;
 import org.stapledon.metrics.dto.YearlyStorageMetrics;
 import org.stapledon.metrics.repository.AccessMetricsRepository;
+import org.stapledon.metrics.repository.MetricsArchiver;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ public class MetricsUpdateService {
     private final AccessMetricsCollector accessMetricsCollector;
     private final StorageMetricsCollector storageMetricsUpdater;
     private final AccessMetricsRepository accessMetricsRepository;
+    private final MetricsArchiver metricsArchiver;
 
     /**
      * Force a refresh of all metrics immediately. This includes storage metrics and
@@ -60,9 +63,20 @@ public class MetricsUpdateService {
      * is computed on-demand and
      * returned without persisting.
      *
+     * <p>
+     * Until the first storage scan finishes (it runs in the background at startup), this returns the latest daily snapshot from
+     * {@code metrics-history/} instead of waiting for the scan; its {@code lastUpdated} says how old it is. With no snapshot, it scans.
+     *
      * @return Combined metrics data, or empty data if an error occurs
      */
     public CombinedMetricsData buildCombinedMetrics() {
+        if (storageMetricsUpdater.currentStats().isEmpty()) {
+            Optional<CombinedMetricsData> archived = metricsArchiver.latestArchive();
+            if (archived.isPresent()) {
+                log.info("Storage scan not finished yet, serving the metrics snapshot from {}", archived.get().getLastUpdated());
+                return archived.get();
+            }
+        }
         long startTime = System.currentTimeMillis();
         try {
             // Get latest storage metrics
@@ -165,12 +179,10 @@ public class MetricsUpdateService {
         Map<String, YearlyStorageMetrics> yearlyStorage = new HashMap<>();
 
         if (storageMetric.getStorageByYear() != null) {
+            Map<String, Integer> counts = storageMetric.getImageCountByYear() != null ? storageMetric.getImageCountByYear() : Map.of();
             storageMetric.getStorageByYear().forEach((year, bytes) ->
                     yearlyStorage.put(year, YearlyStorageMetrics.builder().storageBytes(bytes)
-                            // Note: Image count per year per comic not currently tracked in
-                            // ComicStorageMetrics
-                            // Would need to enhance scanning to get this
-                            .imageCount(0).build()));
+                            .imageCount(counts.getOrDefault(year, 0)).build()));
         }
 
         return yearlyStorage;

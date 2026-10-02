@@ -1,6 +1,7 @@
 package org.stapledon.common.dto;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import lombok.Builder;
 import lombok.Data;
@@ -9,12 +10,18 @@ import lombok.Data;
  * Records information about a comic retrieval attempt.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class ComicRetrievalRecord {
     /**
-     * Unique identifier for this record in the format "ComicName_YYYY-MM-DD"
+     * Unique identifier for this record: "{comicId}_{yyyy-MM-dd}", or "{comicName}_{yyyy-MM-dd}" for records written before the
+     * comic id was kept. Treat it as opaque.
      */
     private final String id;
+
+    /**
+     * The comic's id (null on records written before it was kept)
+     */
+    private final Integer comicId;
 
     /**
      * The comic name
@@ -57,13 +64,19 @@ public class ComicRetrievalRecord {
     private final Integer httpStatusCode;
 
     /**
+     * When the attempt was made, in UTC (null on records written before it was kept). The repository stamps it on save.
+     */
+    private final OffsetDateTime attemptedAt;
+
+    /**
      * Factory method to create a successful record
      */
     public static ComicRetrievalRecord success(
-            String comicName, LocalDate comicDate,
+            Integer comicId, String comicName, LocalDate comicDate,
             String source, long retrievalDurationMs, Long imageSize) {
         return ComicRetrievalRecord.builder()
-                .id(generateId(comicName, comicDate))
+                .id(generateId(comicId, comicName, comicDate))
+                .comicId(comicId)
                 .comicName(comicName)
                 .comicDate(comicDate)
                 .source(source)
@@ -77,11 +90,12 @@ public class ComicRetrievalRecord {
      * Factory method to create a failed record
      */
     public static ComicRetrievalRecord failure(
-            String comicName, LocalDate comicDate,
+            Integer comicId, String comicName, LocalDate comicDate,
             String source, ComicRetrievalStatus status, String errorMessage,
             long retrievalDurationMs, Integer httpStatusCode) {
         return ComicRetrievalRecord.builder()
-                .id(generateId(comicName, comicDate))
+                .id(generateId(comicId, comicName, comicDate))
+                .comicId(comicId)
                 .comicName(comicName)
                 .comicDate(comicDate)
                 .source(source)
@@ -95,7 +109,7 @@ public class ComicRetrievalRecord {
     /**
      * Generates a unique ID for this record
      */
-    private static String generateId(String comicName, LocalDate comicDate) {
-        return comicName + "_" + comicDate;
+    private static String generateId(Integer comicId, String comicName, LocalDate comicDate) {
+        return (comicId != null ? comicId.toString() : comicName) + "_" + comicDate;
     }
 }

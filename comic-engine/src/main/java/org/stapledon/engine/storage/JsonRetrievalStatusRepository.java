@@ -15,7 +15,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -87,7 +90,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
             return;
         }
 
-        recordStorage.setLastUpdated(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC));
+        recordStorage.setLastUpdated(OffsetDateTime.now(ZoneOffset.UTC));
 
         Path storageFile = NfsFileOperations.resolvePath(cacheProperties.getLocation(), STORAGE_FILE);
 
@@ -99,15 +102,19 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
         }
     }
 
+    /**
+     * Saves the record, stamping {@code attemptedAt} when it has none, and replaces the record for the same comic and date. Matching by
+     * name and date as well as by id replaces records written before ids used the comic id.
+     */
     @Override
-    public void saveRecord(ComicRetrievalRecord record) {
+    public synchronized void saveRecord(ComicRetrievalRecord record) {
         ComicRetrievalRecordStorage storage = loadRecords();
 
-        // Since we're using comic name and date as ID, we need to check for existing
-        // record
-        // and replace it if it exists
-        storage.getRecords().removeIf(r -> r.getId().equals(record.getId()));
-        storage.getRecords().add(record);
+        ComicRetrievalRecord stamped = record.getAttemptedAt() != null ? record
+                : record.toBuilder().attemptedAt(OffsetDateTime.now(clock).withOffsetSameInstant(ZoneOffset.UTC)).build();
+        storage.getRecords().removeIf(r -> r.getId().equals(stamped.getId())
+                || Objects.equals(r.getComicName(), stamped.getComicName()) && Objects.equals(r.getComicDate(), stamped.getComicDate()));
+        storage.getRecords().add(stamped);
         saveRecords();
     }
 
@@ -162,9 +169,13 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
         ComicRetrievalRecordStorage storage = loadRecords();
 
         int initialSize = storage.getRecords().size();
+        OffsetDateTime cutoff = OffsetDateTime.now(clock).minusDays(daysToKeep);
         LocalDate cutoffDate = LocalDate.now(clock).minusDays(daysToKeep);
 
-        storage.getRecords().removeIf(record -> record.getComicDate().isBefore(cutoffDate));
+        // By when the attempt was made, so a backfill of an old strip keeps its record; older records have only the strip's date
+        storage.getRecords().removeIf(record -> record.getAttemptedAt() != null
+                ? record.getAttemptedAt().isBefore(cutoff)
+                : record.getComicDate().isBefore(cutoffDate));
 
         int removedCount = initialSize - storage.getRecords().size();
 

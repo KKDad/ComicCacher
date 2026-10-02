@@ -36,7 +36,7 @@ class JsonRetrievalStatusServiceTest {
     void setUp() {
         // Set up test data
         successRecord = ComicRetrievalRecord.success(
-                "TestComic",
+                1, "TestComic",
                 LocalDate.now(),
                 "gocomics",
                 500,
@@ -44,7 +44,7 @@ class JsonRetrievalStatusServiceTest {
         );
 
         failureRecord = ComicRetrievalRecord.failure(
-                "TestComic",
+                1, "TestComic",
                 LocalDate.now(),
                 "gocomics",
                 ComicRetrievalStatus.NETWORK_ERROR,

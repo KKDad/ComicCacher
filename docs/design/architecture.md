@@ -29,7 +29,7 @@ Shared foundation with zero external module dependencies. All other modules depe
 |------|-------------|
 | DTOs | `ComicItem`, `ComicConfig`, `ComicDownloadRequest`, `ComicDownloadResult`, `ComicRetrievalRecord`, `ImageDto`, `ImageValidationResult`, `DuplicateValidationResult`, `ImageMetadata`, `ImageHashRecord`, `SaveResult`, `ComicIdentifier` |
 | Enums | `ImageFormat` (PNG, JPEG, GIF, BMP, WEBP, TIFF, UNKNOWN), `HashAlgorithm` (MD5, SHA256, AVERAGE_HASH, DIFFERENCE_HASH), `ComicRetrievalStatus`, `Direction` |
-| Service interfaces | `ValidationService`, `DuplicateValidationService`, `AnalysisService`, `ComicStorageFacade`, `ComicConfigurationService`, `RetrievalStatusService`, `ErrorTrackingService`, `ImageHasher` |
+| Service interfaces | `ValidationService`, `DuplicateValidationService`, `AnalysisService`, `ComicStorageFacade`, `ComicConfigurationService`, `RetrievalStatusService`, `ImageHasher` |
 | Infrastructure | `InspectorService`, `CacheProperties`, `ImageUtils`, `NfsFileOperations` |
 
 ### comic-metrics
@@ -51,7 +51,7 @@ Download engine, filesystem storage, image validation, and Spring Batch job infr
 |------|-------------|
 | Download strategies | `ComicDownloaderStrategy` (interface), `DailyComicDownloaderStrategy`, `IndexedComicDownloaderStrategy`, `AbstractComicDownloaderStrategy`, `AbstractDailyDownloaderStrategy`, `AbstractIndexedDownloaderStrategy`, `GoComicsDownloaderStrategy`, `ComicsKingdomDownloaderStrategy`, `FreefallDownloaderStrategy` |
 | Facades | `DownloaderFacade` / `ComicDownloaderFacade`, `ManagementFacade` / `ComicManagementFacade`, `ComicStorageFacade` / `FileSystemComicStorageFacade` |
-| Storage | `FileSystemComicStorageFacade`, `ComicIndexService`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, `JsonRetrievalStatusRepository`, `JsonErrorTrackingRepository` |
+| Storage | `FileSystemComicStorageFacade`, `ComicIndexService`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, `JsonRetrievalStatusRepository` |
 | Validation | `ImageValidationService`, `DuplicateImageValidationService`, `DuplicateHashCacheService`, `ImageHasherFactory` |
 | Hash algorithms | `MD5ImageHasher`, `SHA256ImageHasher`, `AverageImageHasher`, `DifferenceImageHasher` |
 | Analysis | `ImageAnalysisService` (color/grayscale detection via pixel sampling) |
@@ -115,7 +115,7 @@ Coordinates comic downloads using a strategy registry (`Map<String, ComicDownloa
 
 1. Resolves the correct strategy from the request's `source` field
 2. Routes to the appropriate download method based on strategy type (daily vs. indexed)
-3. Records success/failure via `RetrievalStatusService` and `ErrorTrackingService`
+3. Records success/failure via `RetrievalStatusService`
 4. Supports batch downloads via `downloadComicsForDate()` with day-of-week filtering and inactive comic filtering
 5. Provides indexed-comic-specific methods: `downloadLatestStrip()`, `downloadStrip()`, `isIndexedSource()`
 

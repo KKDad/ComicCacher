@@ -12,6 +12,7 @@ import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.service.RetrievalStatusService;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -147,7 +148,9 @@ public class RetrievalResolver {
                 record.getErrorMessage(),
                 (double) record.getRetrievalDurationMs(),
                 record.getImageSize() != null ? record.getImageSize().doubleValue() : null,
-                record.getHttpStatusCode());
+                record.getHttpStatusCode(),
+                record.getComicId(),
+                record.getAttemptedAt());
     }
 
     @SuppressWarnings("unchecked")
@@ -202,7 +205,9 @@ public class RetrievalResolver {
             String errorMessage,
             Double retrievalDurationMs,
             Double imageSize,
-            Integer httpStatusCode) {
+            Integer httpStatusCode,
+            Integer comicId,
+            OffsetDateTime attemptedAt) {
     }
 
     public record RetrievalSummaryDto(

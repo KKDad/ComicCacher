@@ -1,6 +1,6 @@
 # Operational State Files
 
-Seven JSON files track runtime state, job history, errors, and metrics. All are located in the cache root directory (`comics.cache.location`).
+Six JSON files and the daily metrics snapshots track runtime state, job history and metrics. All are located in the cache root directory (`comics.cache.location`).
 
 ## File Inventory
 
@@ -11,7 +11,6 @@ Seven JSON files track runtime state, job history, errors, and metrics. All are 
 | `scheduler-state.json` | Scheduler pause/resume state | `comic-engine` | `SchedulerStateService` | Yes |
 | `backfill-state.json` | What the comic backfill learned: given-up dates, history horizons, daily attempt counts | `comic-engine` | `BackfillStateService` | Yes |
 | `source-catalog.json` | Every source's list of comics, for the Sources page | `comic-engine` | `SourceCatalogRepository` | Yes |
-| `last_errors.json` | Recent errors per comic | `comic-engine` | `JsonErrorTrackingRepository` | Yes |
 | `access-metrics.json` | Per-comic access statistics | `comic-metrics` | `AccessMetricsRepository` | Yes |
 | `metrics-history/{yyyy-MM-dd}.json` | Daily snapshot of combined metrics | `comic-metrics` | `MetricsArchiver` | Yes |
 
@@ -21,7 +20,7 @@ Seven JSON files track runtime state, job history, errors, and metrics. All are 
 
 Tracks Spring Batch job execution history. Written after each job completion via `JobExecutionListener`. Supports migration from a legacy single-entry-per-job format to the current list format.
 
-**Capping:** Configurable via `batch.tracking.max-history-per-job` (default: **30**). New executions are prepended; excess entries are trimmed from the tail.
+**Retention:** each job keeps the executions that started in the last `batch.tracking.history-days` days (default: **30**), and always its newest one, so a job that runs rarely still shows its last run. New executions are prepended. History for a job that no longer exists (e.g. the removed `MetricsUpdateJob`) is dropped on the next write, and no job keeps more than 500 executions.
 
 **DTO:** `Map<String, List<BatchExecutionSummary>>` (`comic-engine`)
 
@@ -31,7 +30,6 @@ Tracks Spring Batch job execution history. Written after each job completion via
     {
       "executionId": 147,
       "jobName": "dailyDownloadJob",
-      "executionTime": "2025-03-18T06:30:45-04:00",
       "status": "COMPLETED",
       "exitCode": "COMPLETED",
       "exitMessage": "",
@@ -66,7 +64,6 @@ Tracks Spring Batch job execution history. Written after each job completion via
 |:---|:---|:---|
 | `executionId` | `Long` | Spring Batch execution ID |
 | `jobName` | `String` | Job name (also the map key) |
-| `executionTime` | `OffsetDateTime` | Same as endTime |
 | `status` | `String` | `COMPLETED`, `FAILED`, `STARTED`, etc. |
 | `exitCode` | `String` | Exit status code |
 | `exitMessage` | `String` | Exit status description |
@@ -97,7 +94,9 @@ Tracks Spring Batch job execution history. Written after each job completion via
 
 Records individual comic retrieval attempts with outcomes. Used for troubleshooting and monitoring download success rates. In-memory cached after first load.
 
-**Purging:** `RetrievalRecordPurgeJob` at 6:45 AM with configurable retention (`batch.record-purge.days-to-keep`, default 30). See [Batch Jobs Design](../design/batch-jobs.md#retrievalrecordpurgejob).
+**Purging:** `RetrievalRecordPurgeJob` at 6:45 AM with configurable retention (`batch.record-purge.days-to-keep`, default 30), by `attemptedAt`, so a backfill of an old strip keeps its record for the full window. Records written before `attemptedAt` was kept are purged by `comicDate`.
+
+**Keys:** one record per comic and date; a new attempt replaces the last. Saving a record also replaces an older one keyed by the comic's name. See [Batch Jobs Design](../design/batch-jobs.md#retrievalrecordpurgejob).
 
 **DTO:** `ComicRetrievalRecordStorage` wrapping `List<ComicRetrievalRecord>` (`comic-common`)
 
@@ -106,7 +105,8 @@ Records individual comic retrieval attempts with outcomes. Used for troubleshoot
   "lastUpdated": "2025-03-18T10:30:00-04:00",
   "records": [
     {
-      "id": "CalvinandHobbes_2025-03-18",
+      "id": "1234_2025-03-18",
+      "comicId": 1234,
       "comicName": "Calvin and Hobbes",
       "comicDate": "2025-03-18",
       "source": "gocomics",
@@ -114,10 +114,12 @@ Records individual comic retrieval attempts with outcomes. Used for troubleshoot
       "errorMessage": null,
       "retrievalDurationMs": 1250,
       "imageSize": 145230,
-      "httpStatusCode": null
+      "httpStatusCode": null,
+      "attemptedAt": "2025-03-18T10:30:00Z"
     },
     {
-      "id": "Garfield_2025-03-18",
+      "id": "5678_2025-03-18",
+      "comicId": 5678,
       "comicName": "Garfield",
       "comicDate": "2025-03-18",
       "source": "gocomics",
@@ -125,7 +127,8 @@ Records individual comic retrieval attempts with outcomes. Used for troubleshoot
       "errorMessage": "Connection timed out",
       "retrievalDurationMs": 30000,
       "imageSize": null,
-      "httpStatusCode": null
+      "httpStatusCode": null,
+      "attemptedAt": "2025-03-18T10:31:12Z"
     }
   ]
 }
@@ -135,7 +138,8 @@ Records individual comic retrieval attempts with outcomes. Used for troubleshoot
 
 | Field | Type | Description |
 |:---|:---|:---|
-| `id` | `String` | Format: `{ComicName}_{yyyy-MM-dd}` |
+| `id` | `String` | `{comicId}_{yyyy-MM-dd}`; `{ComicName}_{yyyy-MM-dd}` on older records. Treat as opaque |
+| `comicId` | `Integer` (nullable) | Comic id; null on older records |
 | `comicName` | `String` | Comic name |
 | `comicDate` | `LocalDate` | Target retrieval date |
 | `source` | `String` | Source provider (e.g., `gocomics`, `comicskingdom`) |
@@ -144,6 +148,7 @@ Records individual comic retrieval attempts with outcomes. Used for troubleshoot
 | `retrievalDurationMs` | `long` | Operation duration in milliseconds |
 | `imageSize` | `Long` (nullable) | Downloaded image size in bytes |
 | `httpStatusCode` | `Integer` (nullable) | HTTP status from source |
+| `attemptedAt` | `OffsetDateTime` (nullable) | When the attempt was made (UTC), stamped on save; null on older records |
 
 ---
 
@@ -180,45 +185,9 @@ Written with `NfsFileOperations.atomicWrite()`, like the other state files.
 
 ---
 
-## 4. last_errors.json
+## 4. last_errors.json (obsolete)
 
-Tracks the most recent errors per comic for troubleshooting. Keyed by comic name.
-
-**Capping:** Configurable via `comics.metrics.error-tracking.max-errors-per-comic` (default: **5**). New errors are prepended; excess entries are trimmed from the tail.
-
-**DTO:** `Map<String, List<ComicErrorRecord>>` (`comic-common`)
-
-```json
-{
-  "Garfield": [
-    {
-      "comicName": "Garfield",
-      "comicDate": "2025-03-18",
-      "source": "gocomics",
-      "status": "NETWORK_ERROR",
-      "errorMessage": "Connection timed out after 30s",
-      "httpStatusCode": null,
-      "timestamp": "2025-03-18T06:30:45-04:00",
-      "retrievalDurationMs": 30000
-    }
-  ]
-}
-```
-
-### Field Reference (ComicErrorRecord)
-
-| Field | Type | Description |
-|:---|:---|:---|
-| `comicName` | `String` | Comic that failed (map key) |
-| `comicDate` | `LocalDate` | Target retrieval date |
-| `source` | `String` | Source provider |
-| `status` | `ComicRetrievalStatus` | Error classification |
-| `errorMessage` | `String` | Detailed error message |
-| `httpStatusCode` | `Integer` (nullable) | HTTP status if applicable |
-| `timestamp` | `OffsetDateTime` | When the error occurred |
-| `retrievalDurationMs` | `long` | Failed operation duration |
-
-The `clearOldErrors(int hoursToKeep)` method removes errors older than the specified hours.
+Removed: it repeated the failures in `retrieval-status.json`, and nothing read it. Find a comic's recent failures with the `retrievalRecords` query (filter by `comicName` and `status`), which carry `attemptedAt`. An old copy left in the cache root is safe to delete; `utils/verify-json-files.sh` flags it.
 
 ---
 
@@ -401,8 +370,6 @@ Every source's catalog as `SourceCatalogJob` last read it. Created by the first 
 | `SchedulerStateService.java` | `comic-engine` |
 | `BackfillStateService.java` | `comic-engine` |
 | `SourceCatalogRepository.java` / `SourceCatalogState.java` | `comic-engine` |
-| `JsonErrorTrackingRepository.java` | `comic-engine` |
-| `ComicErrorRecord.java` | `comic-common` |
 | `AccessMetricsRepository.java` | `comic-metrics` |
 | `AccessMetricsData.java` | `comic-metrics` |
 | `MetricsArchiver.java` / `MetricsArchiveService.java` | `comic-metrics` |

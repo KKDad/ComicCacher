@@ -52,6 +52,7 @@ const mockRecords = {
       imageSize: 52428,
       httpStatusCode: 200,
       errorMessage: null,
+      attemptedAt: '2024-01-15T11:30:00Z',
     },
     {
       id: 'Peanuts_2024-01-15',
@@ -63,6 +64,7 @@ const mockRecords = {
       imageSize: null,
       httpStatusCode: 500,
       errorMessage: 'Connection timeout',
+      attemptedAt: '2024-01-15T11:00:00Z',
     },
     {
       id: 'Calvin_2024-01-14',
@@ -74,6 +76,7 @@ const mockRecords = {
       imageSize: null,
       httpStatusCode: 404,
       errorMessage: null,
+      attemptedAt: null,
     },
   ],
 };
@@ -189,7 +192,7 @@ describe('RetrievalStatusPage', () => {
     const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const calvinRow = within(table).getByText('Calvin and Hobbes').closest('tr')!;
     const cells = calvinRow.querySelectorAll('td');
-    expect(cells[4].textContent).toBe('—');
+    expect(cells[5].textContent).toBe('—');
   });
 
   it('shows dash for null image size', () => {
@@ -197,7 +200,7 @@ describe('RetrievalStatusPage', () => {
     const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
     const peanutsRow = within(table).getByText('Peanuts').closest('tr')!;
     const cells = peanutsRow.querySelectorAll('td');
-    expect(cells[5].textContent).toBe('—');
+    expect(cells[6].textContent).toBe('—');
   });
 
   it('formats image size in bytes', () => {
@@ -273,6 +276,31 @@ describe('RetrievalStatusPage', () => {
     const rows = within(table).getAllByRole('row').slice(1);
     // asc: Calvin (2024-01-14), Garfield (2024-01-15), Peanuts (2024-01-15)
     expect(rows[0]).toHaveTextContent('Calvin and Hobbes');
+  });
+
+  it('shows when each attempt was made, or a dash for older records', () => {
+    renderWithQuery(<RetrievalStatusPage />);
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
+    const garfieldCells = within(table).getByText('Garfield').closest('tr')!.querySelectorAll('td');
+    expect(garfieldCells[2].textContent).toBe(new Date('2024-01-15T11:30:00Z').toLocaleString());
+    const calvinCells = within(table).getByText('Calvin and Hobbes').closest('tr')!.querySelectorAll('td');
+    expect(calvinCells[2].textContent).toBe('—');
+  });
+
+  it('sorts records by attempt time when header clicked', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<RetrievalStatusPage />);
+    const table = screen.getByText('Retrieval Records').closest<HTMLElement>('[class*="card"]')!;
+    const attemptedSortBtn = within(table).getAllByRole('button').find(
+      (btn) => btn.textContent?.includes('Attempted')
+    )!;
+
+    await user.click(attemptedSortBtn);
+    const rows = within(table).getAllByRole('row').slice(1);
+    // A new sort column starts descending: Garfield (11:30), Peanuts (11:00), Calvin (none)
+    expect(rows[0]).toHaveTextContent('Garfield');
+    expect(rows[1]).toHaveTextContent('Peanuts');
+    expect(rows[2]).toHaveTextContent('Calvin and Hobbes');
   });
 
   it('shows dash for null averageDurationMs in summary', () => {

@@ -9,9 +9,14 @@ Record of a comic retrieval attempt.
 """
 type RetrievalRecord {
     """
-    Unique identifier (format: "ComicName_YYYY-MM-DD").
+    Unique identifier; treat it as opaque.
     """
     id: String!
+
+    """
+    The comic's id (null on records written before it was kept).
+    """
+    comicId: Int
     
     """
     Name of the comic.
@@ -52,6 +57,11 @@ type RetrievalRecord {
     HTTP status code from the comic source.
     """
     httpStatusCode: Int
+
+    """
+    When the attempt was made (null on records written before it was kept).
+    """
+    attemptedAt: DateTime
 }
 
 """

@@ -27,5 +27,6 @@ public class ComicStorageMetrics {
     private int accessCount;
     private double hitRatio;
     private Map<String, Long> storageByYear;
+    private Map<String, Integer> imageCountByYear;
     private long downloadTime;
 }

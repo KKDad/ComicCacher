@@ -17,6 +17,8 @@ import org.stapledon.common.repository.RetrievalStatusRepository;
 import java.io.File;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +44,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
 
         // Create test record
         testRecord = ComicRetrievalRecord.success(
-                "TestComic",
+                1, "TestComic",
                 LocalDate.now(clock),
                 "gocomics",
                 500,
@@ -77,7 +79,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
     void getRecordsWithFilteringShouldWork() {
         // Arrange - Create several records
         ComicRetrievalRecord record1 = ComicRetrievalRecord.success(
-                "Comic1",
+                1, "Comic1",
                 LocalDate.now(clock),
                 "gocomics",
                 500,
@@ -85,7 +87,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         );
 
         ComicRetrievalRecord record2 = ComicRetrievalRecord.failure(
-                "Comic1",
+                1, "Comic1",
                 LocalDate.now(clock).minusDays(1),
                 "gocomics",
                 ComicRetrievalStatus.NETWORK_ERROR,
@@ -95,7 +97,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         );
 
         ComicRetrievalRecord record3 = ComicRetrievalRecord.success(
-                "Comic2",
+                2, "Comic2",
                 LocalDate.now(clock),
                 "gocomics",
                 300,
@@ -132,7 +134,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         // Arrange - Create both recent and old records
         // This one should be kept
         ComicRetrievalRecord recentRecord = ComicRetrievalRecord.success(
-                "Comic1",
+                1, "Comic1",
                 LocalDate.now(clock),
                 "gocomics",
                 500,
@@ -148,6 +150,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
                 .status(ComicRetrievalStatus.SUCCESS)
                 .retrievalDurationMs(300)
                 .imageSize(30000L)
+                .attemptedAt(OffsetDateTime.now(clock).minusDays(5))
                 .build();
 
         repository.saveRecord(recentRecord);
@@ -163,5 +166,49 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
                 null, null, null, null, 10);
         assertThat(remainingRecords.size()).isEqualTo(1);
         assertThat(remainingRecords.get(0).getId()).isEqualTo(recentRecord.getId());
+    }
+
+    @Test
+    void saveStampsTheAttemptTimeInUtc() {
+        repository.saveRecord(testRecord);
+
+        ComicRetrievalRecord saved = repository.getRecord(testRecord.getId()).orElseThrow();
+        assertThat(saved.getAttemptedAt()).isNotNull();
+        assertThat(saved.getAttemptedAt().getOffset()).isEqualTo(ZoneOffset.UTC);
+        assertThat(saved.getId()).isEqualTo("1_" + LocalDate.now(clock));
+        assertThat(saved.getComicId()).isEqualTo(1);
+    }
+
+    @Test
+    void purgeKeepsARecentAttemptForAnOldStripAndDropsAnOldAttempt() {
+        // A backfill today of a strip from last year
+        repository.saveRecord(ComicRetrievalRecord.success(1, "Comic1", LocalDate.now(clock).minusDays(400), "gocomics", 500, 20000L));
+        // Today's strip, attempted 40 days ago (an impossible record, but it shows the purge goes by attempt time)
+        repository.saveRecord(ComicRetrievalRecord.success(2, "Comic2", LocalDate.now(clock), "gocomics", 500, 20000L)
+                .toBuilder().attemptedAt(OffsetDateTime.now(clock).minusDays(40)).build());
+
+        int purged = repository.purgeOldRecords(30);
+
+        assertThat(purged).isEqualTo(1);
+        assertThat(repository.getRecords(null, null, null, null, 10)).extracting(ComicRetrievalRecord::getComicName).containsExactly("Comic1");
+    }
+
+    @Test
+    void aNewAttemptReplacesARecordKeyedByName() {
+        LocalDate date = LocalDate.now(clock);
+        repository.saveRecord(ComicRetrievalRecord.builder()
+                .id("TestComic_" + date)
+                .comicName("TestComic")
+                .comicDate(date)
+                .source("gocomics")
+                .status(ComicRetrievalStatus.COMIC_UNAVAILABLE)
+                .build());
+
+        repository.saveRecord(testRecord);
+
+        List<ComicRetrievalRecord> records = repository.getRecords(null, null, null, null, 10);
+        assertThat(records).hasSize(1);
+        assertThat(records.getFirst().getId()).isEqualTo("1_" + date);
+        assertThat(records.getFirst().getStatus()).isEqualTo(ComicRetrievalStatus.SUCCESS);
     }
 }

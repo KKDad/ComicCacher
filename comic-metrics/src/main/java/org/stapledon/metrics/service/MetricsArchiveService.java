@@ -36,6 +36,8 @@ public class MetricsArchiveService {
      */
     public boolean archiveMetricsForDate(LocalDate date) {
         try {
+            // Rescan first: the in-memory scan is from startup or the last refresh, not today
+            metricsUpdateService.forceRefreshAll();
             CombinedMetricsData metrics = metricsUpdateService.buildCombinedMetrics();
 
             if (metrics != null && metrics.getPerComicMetrics() != null && !metrics.getPerComicMetrics().isEmpty()) {

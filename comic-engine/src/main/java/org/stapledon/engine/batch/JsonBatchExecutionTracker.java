@@ -6,8 +6,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,8 +33,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.slf4j.MDC;
 import org.stapledon.common.config.CacheProperties;
@@ -48,8 +53,8 @@ import org.stapledon.engine.batch.dto.BatchStepSummary;
  * completion.
  * Uses gsonWithLocalDate bean for proper OffsetDateTime serialization.
  *
- * <p>Stores a capped list of executions per job (configurable via
- * {@code batch.tracking.max-history-per-job}). Handles migration from
+ * <p>Keeps each job's executions from the last {@code batch.tracking.history-days} days (default 30), and always its newest one,
+ * so a job that runs rarely still shows its last run. History for a job that no longer exists is dropped. Handles migration from
  * the legacy single-entry format automatically on read.
  *
  * <p>Spring Batch returns {@link LocalDateTime} from {@code JobExecution} and
@@ -63,32 +68,42 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
 
     private final CacheProperties cacheProperties;
     private final Gson gson;
+    private final int historyDays;
     private final int maxHistoryPerJob;
+    private final Supplier<Set<String>> knownJobNames;
     private final ZoneId batchZone;
     private final Clock clock;
     private final ConcurrentHashMap<Long, Long> h2ToStableId = new ConcurrentHashMap<>();
 
     private static final String BATCH_EXECUTIONS_FILENAME = "batch-executions.json";
+    /** Size guard: no job keeps more executions than this, however recent. */
+    private static final int MAX_HISTORY_PER_JOB = 500;
     private static final String MDC_EXECUTION_ID = "batchJobExecutionId";
     private static final String MDC_JOB_NAME = "batchJobName";
     private static final String MDC_LOG_PATH = "batchLogPath";
 
     /**
-     * Constructor with configurable max history per job.
+     * Constructor with configurable history retention. The jobs are looked up when history is pruned, not at construction: each job
+     * bean depends on this listener.
      */
     @Autowired
     public JsonBatchExecutionTracker(
             CacheProperties cacheProperties,
             @Qualifier("gsonWithLocalDate") Gson gson,
-            @Value("${batch.tracking.max-history-per-job:30}") int maxHistoryPerJob,
-            Clock clock) {
-        this(cacheProperties, gson, maxHistoryPerJob, clock.getZone().getId(), clock);
+            @Value("${batch.tracking.history-days:30}") int historyDays,
+            Clock clock,
+            ObjectProvider<Job> jobs) {
+        this(cacheProperties, gson, historyDays, MAX_HISTORY_PER_JOB, clock.getZone().getId(), clock,
+                () -> jobs.stream().map(Job::getName).collect(Collectors.toSet()));
     }
 
-    JsonBatchExecutionTracker(CacheProperties cacheProperties, Gson gson, int maxHistoryPerJob, String batchTimezone, Clock clock) {
+    JsonBatchExecutionTracker(CacheProperties cacheProperties, Gson gson, int historyDays, int maxHistoryPerJob, String batchTimezone, Clock clock,
+            Supplier<Set<String>> knownJobNames) {
         this.cacheProperties = cacheProperties;
         this.gson = gson;
+        this.historyDays = historyDays;
         this.maxHistoryPerJob = maxHistoryPerJob;
+        this.knownJobNames = knownJobNames;
         this.batchZone = ZoneId.of(batchTimezone);
         this.clock = clock;
     }
@@ -123,9 +138,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
             Map<String, List<BatchExecutionSummary>> executions = readExecutions();
             List<BatchExecutionSummary> jobHistory = executions.computeIfAbsent(jobName, k -> new ArrayList<>());
             jobHistory.addFirst(summary);
-            if (jobHistory.size() > maxHistoryPerJob) {
-                executions.put(jobName, new ArrayList<>(jobHistory.subList(0, maxHistoryPerJob)));
-            }
+            prune(executions);
 
             writeExecutions(executions);
             log.info("Batch job started: {} - Stable execution ID: {}", jobName, stableId);
@@ -166,9 +179,7 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
                 jobHistory.addFirst(summary);
             }
 
-            if (jobHistory.size() > maxHistoryPerJob) {
-                executions.put(jobName, new ArrayList<>(jobHistory.subList(0, maxHistoryPerJob)));
-            }
+            prune(executions);
 
             writeExecutions(executions);
             logExecutionSummary(jobName, summary);
@@ -180,6 +191,29 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
             MDC.remove(MDC_JOB_NAME);
             MDC.remove(MDC_LOG_PATH);
         }
+    }
+
+    /**
+     * Drops history for jobs that no longer exist, then keeps each job's executions that started within the retention window, and
+     * always its newest one. Each list is newest first.
+     */
+    void prune(Map<String, List<BatchExecutionSummary>> executions) {
+        Set<String> known = knownJobNames.get();
+        if (!known.isEmpty()) {
+            executions.keySet().removeIf(jobName -> !known.contains(jobName));
+        }
+
+        OffsetDateTime cutoff = OffsetDateTime.now(clock).minusDays(historyDays);
+        executions.replaceAll((jobName, history) -> {
+            List<BatchExecutionSummary> kept = new ArrayList<>();
+            for (int i = 0; i < history.size() && kept.size() < maxHistoryPerJob; i++) {
+                BatchExecutionSummary execution = history.get(i);
+                if (i == 0 || execution.getStartTime() != null && !execution.getStartTime().isBefore(cutoff)) {
+                    kept.add(execution);
+                }
+            }
+            return kept;
+        });
     }
 
     /**
@@ -203,7 +237,6 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         target.setStatus(source.getStatus());
         target.setExitCode(source.getExitCode());
         target.setExitMessage(source.getExitMessage());
-        target.setExecutionTime(source.getExecutionTime());
         target.setStartTime(source.getStartTime());
         target.setEndTime(source.getEndTime());
         target.setErrorMessage(source.getErrorMessage());
@@ -240,7 +273,6 @@ public class JsonBatchExecutionTracker extends LoggingJobExecutionListener imple
         BatchExecutionSummary summary = BatchExecutionSummary.builder()
                 .executionId(effectiveId)
                 .jobName(jobName)
-                .executionTime(toOffset(jobExecution.getEndTime()))
                 .status(jobExecution.getStatus().name())
                 .exitCode(jobExecution.getExitStatus().getExitCode())
                 .exitMessage(jobExecution.getExitStatus().getExitDescription())

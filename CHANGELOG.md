@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Storage metrics are scanned in the background at startup (`StorageMetricsWarmup`, `comics.metrics.warm-on-startup`). Until the scan finishes, the metrics page shows the latest daily snapshot from `metrics-history/` instead of waiting: on prod the first metrics request after a restart took 53 s
+- Retrieval records carry `attemptedAt` (UTC, stamped on save) and `comicId`, in `retrieval-status.json` and the `RetrievalRecord` GraphQL type. The Retrieval Status page has an "Attempted" column
+- A catalog refresh fills in a configured comic's author from its catalog entry when it has none, or only the source's name ("Comics Kingdom")
+
+### Changed
+- The storage metrics scan walks the cache once and reads each image's size once, filtering by file name first, so the metadata sidecars and indexes beside the strips are never stat'ed. Before, it walked the tree four times
+- GraphQL strips (`Comic.strip`, `strip`, navigation) read their size and transcript from the metadata sidecar instead of reading, decoding and base64-encoding the whole PNG, falling back to the image's header when there is no sidecar. The REST image endpoints read the PNG header for the size instead of decoding the image
+- Retrieval records are purged by when the attempt was made, so a backfill of an old strip keeps its record for the full retention window. Before, the purge went by the strip's date and deleted backfill records the next morning. Ids are `{comicId}_{date}`; a new attempt replaces an older record keyed by the comic's name
+- `batch-executions.json` keeps each job's runs from the last `batch.tracking.history-days` days (default 30), and always its newest run, instead of 30 runs per job (four days for `ComicBackfillJob`). History for jobs that no longer exist, such as `MetricsUpdateJob`, is dropped. Replaces `batch.tracking.max-history-per-job`
+- Startup no longer rewrites `comics.json` when only the oldest and newest strip dates changed: those are updated in memory from the index. It still saves when the avatar flag or a start date is corrected, and checks avatars by file existence instead of reading each one
+
+### Fixed
+- Daily metrics snapshots (`MetricsArchiveJob`) stored the storage scan from the first metrics request after startup, so every snapshot since a restart had the same storage numbers. The job now rescans first
+- Per-comic, per-year image counts in the metrics were always 0
+
+### Removed
+- `last_errors.json` and `ErrorTrackingService`: the file repeated the failures in `retrieval-status.json`, and nothing in the app read it. `utils/verify-json-files.sh` now lists it as obsolete, with `combined-metrics.json`. The property `comics.metrics.error-tracking.max-errors-per-comic` is gone
+- `executionTime` in `batch-executions.json`, which duplicated `endTime`
 
 ## [2.6.1] - 2026-10-02
 ### Added
