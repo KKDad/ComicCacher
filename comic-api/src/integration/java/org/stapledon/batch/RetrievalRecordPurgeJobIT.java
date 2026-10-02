@@ -46,13 +46,13 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
         // Create recent records (within 30 days) - should NOT be purged
         for (int i = 1; i <= 5; i++) {
-            ComicRetrievalRecord recentRecord = ComicRetrievalRecord.success("RecentComic" + i, LocalDate.now().minusDays(i), "test", 100L, 50000L);
+            ComicRetrievalRecord recentRecord = ComicRetrievalRecord.success("RecentComic" + i, LocalDate.now(clock).minusDays(i), "test", 100L, 50000L);
             retrievalStatusService.recordRetrievalResult(recentRecord);
         }
 
         // Create old records (older than 30 days) - should be purged
         for (int i = 1; i <= 10; i++) {
-            ComicRetrievalRecord oldRecord = ComicRetrievalRecord.success("OldComic" + i, LocalDate.now().minusDays(30 + i), "test", 100L, 50000L);
+            ComicRetrievalRecord oldRecord = ComicRetrievalRecord.success("OldComic" + i, LocalDate.now(clock).minusDays(30 + i), "test", 100L, 50000L);
             retrievalStatusService.recordRetrievalResult(oldRecord);
         }
 
@@ -81,10 +81,10 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
         List<ComicRetrievalRecord> allRecordsBefore = retrievalStatusService.getRetrievalRecords(null, null, null, null, Integer.MAX_VALUE);
         assertThat(allRecordsBefore.size()).as("Should have 15 total records before purge").isEqualTo(15);
 
-        long recentCountBefore = allRecordsBefore.stream().filter(r -> r.getComicDate().isAfter(LocalDate.now().minusDays(30))).count();
+        long recentCountBefore = allRecordsBefore.stream().filter(r -> r.getComicDate().isAfter(LocalDate.now(clock).minusDays(30))).count();
         assertThat(recentCountBefore).as("Should have 5 recent records before purge").isEqualTo(5);
 
-        long oldCountBefore = allRecordsBefore.stream().filter(r -> r.getComicDate().isBefore(LocalDate.now().minusDays(30))).count();
+        long oldCountBefore = allRecordsBefore.stream().filter(r -> r.getComicDate().isBefore(LocalDate.now(clock).minusDays(30))).count();
         assertThat(oldCountBefore).as("Should have 10 old records before purge").isEqualTo(10);
 
         // Execute the job
@@ -104,7 +104,7 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
         // All remaining records should be recent
         for (ComicRetrievalRecord record : allRecordsAfter) {
-            assertThat(record.getComicDate().isAfter(LocalDate.now().minusDays(31))).as("All remaining records should be recent (within 30 days)").isTrue();
+            assertThat(record.getComicDate().isAfter(LocalDate.now(clock).minusDays(31))).as("All remaining records should be recent (within 30 days)").isTrue();
             assertThat(record.getComicName().startsWith("RecentComic")).as("Remaining records should be recent comics").isTrue();
         }
 
@@ -190,14 +190,14 @@ class RetrievalRecordPurgeJobIT extends AbstractBatchJobIntegrationTest {
 
         // Create recent log files (within 30 days) - should NOT be deleted
         List<Path> recentFiles = List.of(
-                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(1)),
-                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(15)));
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now(clock).minusDays(1)),
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now(clock).minusDays(15)));
 
         // Create old log files (older than 30 days) - should be deleted
         List<Path> oldFiles = List.of(
-                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(31)),
-                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(60)),
-                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now().minusDays(90)));
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now(clock).minusDays(31)),
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now(clock).minusDays(60)),
+                createTestLogFile(batchLogsDir, "TestJob", LocalDate.now(clock).minusDays(90)));
 
         // Verify all files exist before purge
         for (Path file : recentFiles) {

@@ -15,6 +15,7 @@ import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.repository.RetrievalStatusRepository;
 
 import java.io.File;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,8 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
     @Autowired private RetrievalStatusRepository repository;
 
     @Autowired private CacheProperties cacheProperties;
+
+    @Autowired private Clock clock;
 
     private File storageFile;
     private ComicRetrievalRecord testRecord;
@@ -40,7 +43,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         // Create test record
         testRecord = ComicRetrievalRecord.success(
                 "TestComic",
-                LocalDate.now(),
+                LocalDate.now(clock),
                 "gocomics",
                 500,
                 20000L
@@ -75,7 +78,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         // Arrange - Create several records
         ComicRetrievalRecord record1 = ComicRetrievalRecord.success(
                 "Comic1",
-                LocalDate.now(),
+                LocalDate.now(clock),
                 "gocomics",
                 500,
                 20000L
@@ -83,7 +86,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
 
         ComicRetrievalRecord record2 = ComicRetrievalRecord.failure(
                 "Comic1",
-                LocalDate.now().minusDays(1),
+                LocalDate.now(clock).minusDays(1),
                 "gocomics",
                 ComicRetrievalStatus.NETWORK_ERROR,
                 "Error",
@@ -93,7 +96,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
 
         ComicRetrievalRecord record3 = ComicRetrievalRecord.success(
                 "Comic2",
-                LocalDate.now(),
+                LocalDate.now(clock),
                 "gocomics",
                 300,
                 30000L
@@ -115,12 +118,12 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
 
         // Filter by date
         List<ComicRetrievalRecord> dateResults = repository.getRecords(
-                null, null, LocalDate.now(), LocalDate.now(), 10);
+                null, null, LocalDate.now(clock), LocalDate.now(clock), 10);
         assertThat(dateResults.size()).isEqualTo(2);
 
         // Combined filters
         List<ComicRetrievalRecord> combinedResults = repository.getRecords(
-                "Comic1", ComicRetrievalStatus.SUCCESS, LocalDate.now(), LocalDate.now(), 10);
+                "Comic1", ComicRetrievalStatus.SUCCESS, LocalDate.now(clock), LocalDate.now(clock), 10);
         assertThat(combinedResults.size()).isEqualTo(1);
     }
 
@@ -130,7 +133,7 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
         // This one should be kept
         ComicRetrievalRecord recentRecord = ComicRetrievalRecord.success(
                 "Comic1",
-                LocalDate.now(),
+                LocalDate.now(clock),
                 "gocomics",
                 500,
                 20000L
@@ -138,9 +141,9 @@ class JsonRetrievalStatusRepositoryIT extends AbstractIntegrationTest {
 
         // This one should be removed by the 1-day purge
         ComicRetrievalRecord oldRecord = ComicRetrievalRecord.builder()
-                .id("Comic2_" + LocalDate.now().minusDays(5))
+                .id("Comic2_" + LocalDate.now(clock).minusDays(5))
                 .comicName("Comic2")
-                .comicDate(LocalDate.now().minusDays(5))
+                .comicDate(LocalDate.now(clock).minusDays(5))
                 .source("gocomics")
                 .status(ComicRetrievalStatus.SUCCESS)
                 .retrievalDurationMs(300)

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,9 @@ public abstract class AbstractBatchJobIntegrationTest {
     protected Gson gson;
 
     @Autowired protected ObjectMapper objectMapper;
+
+    /** The application clock, in {@code batch.timezone}; use {@code LocalDate.now(clock)} for "today" as the jobs do. */
+    @Autowired protected Clock clock;
 
     protected static final String BATCH_CACHE_DIR = "./batch-integration-cache";
 

@@ -91,7 +91,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
     void metricsArchiveJobCreatesArchive() throws Exception {
         log.info("TEST: MetricsArchiveJob creates metrics archive");
 
-        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate yesterday = LocalDate.now(clock).minusDays(1);
         Path expectedFile = getMetricsArchiveFile(yesterday);
 
         // Verify before state - no archive file
@@ -143,7 +143,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
     void metricsArchiveJobIsIdempotent() throws Exception {
         log.info("TEST: MetricsArchiveJob idempotency");
 
-        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate yesterday = LocalDate.now(clock).minusDays(1);
         Path expectedFile = getMetricsArchiveFile(yesterday);
 
         // Run job first time

@@ -3,8 +3,10 @@ package org.stapledon.api.resolver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.stapledon.AbstractHttpGraphQlIntegrationTest;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
+
+    @Autowired private Clock clock;
 
     // --- GraphQL Queries ---
     private static final String QUERY_PREFERENCES = """
@@ -147,7 +151,7 @@ class PreferenceResolverIT extends AbstractHttpGraphQlIntegrationTest {
     @Test
     void updateLastRead_withAuthentication_updatesDate() {
         String jwtToken = authenticateUser();
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         getGraphQlTester()
                 .mutate()

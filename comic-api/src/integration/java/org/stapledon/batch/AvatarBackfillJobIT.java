@@ -79,8 +79,8 @@ class AvatarBackfillJobIT extends AbstractBatchJobIntegrationTest {
                 .avatarAvailable(false)
                 .source("gocomics")
                 .sourceIdentifier("testavatarcomic")
-                .oldest(LocalDate.now().minusDays(30))
-                .newest(LocalDate.now())
+                .oldest(LocalDate.now(clock).minusDays(30))
+                .newest(LocalDate.now(clock))
                 .build();
 
         config.getItems().put(TEST_COMIC_ID, testComic);
