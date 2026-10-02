@@ -1,6 +1,7 @@
 package org.stapledon.engine.batch.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.function.ToIntFunction;
 
 /**
  * Handles startup behavior for batch jobs.
@@ -37,8 +39,8 @@ import java.util.concurrent.Executor;
  * {@code /actuator/health} reported 503 until every missed job had finished.
  *
  * <p>
- * PromoteFromDevJob's makeup run goes first, so a restart after both its time and the download's copies dev's strips before
- * ComicDownloadJob fetches them from the sources.
+ * The makeup checks run lightest {@link CatchUpWeight} first, read from each scheduler's {@code @Bean} method; equal weights keep their
+ * bean registration order.
  *
  * <p>
  * Set {@code batch.startup-catch-up.enabled=false} to skip the makeup runs (the
@@ -49,20 +51,31 @@ import java.util.concurrent.Executor;
 @ConditionalOnProperty(name = "batch.startup-catch-up.enabled", havingValue = "true", matchIfMissing = true)
 public class StartupJobRunner {
 
-    // Copies strips dev already has, so it must run before the download it saves work for
-    private static final String RUN_FIRST = "PromoteFromDevJob";
-
     private final Map<String, DailyJobScheduler> dailySchedulers;
+    private final ToIntFunction<String> weights;
     private final Executor executor;
 
     @Autowired
-    public StartupJobRunner(Map<String, DailyJobScheduler> dailySchedulers) {
-        this(dailySchedulers, task -> Thread.ofVirtual().name("startup-catch-up").start(task));
+    public StartupJobRunner(Map<String, DailyJobScheduler> dailySchedulers, ListableBeanFactory beanFactory) {
+        this(dailySchedulers, beanName -> catchUpWeight(beanFactory, beanName), task -> Thread.ofVirtual().name("startup-catch-up").start(task));
     }
 
     StartupJobRunner(Map<String, DailyJobScheduler> dailySchedulers, Executor executor) {
+        this(dailySchedulers, beanName -> CatchUpWeight.DEFAULT, executor);
+    }
+
+    StartupJobRunner(Map<String, DailyJobScheduler> dailySchedulers, ToIntFunction<String> weights, Executor executor) {
         this.dailySchedulers = dailySchedulers;
+        this.weights = weights;
         this.executor = executor;
+    }
+
+    /**
+     * The {@link CatchUpWeight} on the bean's {@code @Bean} method or class, or {@link CatchUpWeight#DEFAULT} without one.
+     */
+    static int catchUpWeight(ListableBeanFactory beanFactory, String beanName) {
+        CatchUpWeight weight = beanFactory.findAnnotationOnBean(beanName, CatchUpWeight.class);
+        return weight == null ? CatchUpWeight.DEFAULT : weight.value();
     }
 
     /**
@@ -87,9 +100,10 @@ public class StartupJobRunner {
         log.info("======== CHECKING FOR MISSED JOB EXECUTIONS ========");
         log.info("Found {} daily scheduler(s) to check", dailySchedulers.size());
 
-        // Stable sort: the other jobs keep their registration order
-        dailySchedulers.values().stream()
-                .sorted(Comparator.comparing(scheduler -> !RUN_FIRST.equals(scheduler.getJobName())))
+        // Stable sort: equal weights keep their registration order
+        dailySchedulers.entrySet().stream()
+                .sorted(Comparator.comparingInt(entry -> weights.applyAsInt(entry.getKey())))
+                .map(Map.Entry::getValue)
                 .forEach(scheduler -> {
                     try {
                         log.debug("Checking missed execution for: {}", scheduler.getJobName());

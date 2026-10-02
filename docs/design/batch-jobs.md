@@ -82,7 +82,7 @@ A `@PostConstruct` component that injects `SchedulerStateService` into all `Dail
 
 ### StartupJobRunner
 
-Listens for `ApplicationReadyEvent` (ordered at 100) to check for missed job executions. It hands the check to a background thread (`startup-catch-up`) and returns straight away, so readiness and `/actuator/health` don't wait for makeup runs. That thread calls `runMissedExecutionIfNeeded()` on each `DailyJobScheduler` bean in turn. `batch.startup-catch-up.enabled=false` turns makeup runs off; the integration test profiles do this. This runs after all beans are fully initialized, avoiding race conditions with strategy registration.
+Listens for `ApplicationReadyEvent` (ordered at 100) to check for missed job executions. It hands the check to a background thread (`startup-catch-up`) and returns straight away, so readiness and `/actuator/health` don't wait for makeup runs. That thread calls `runMissedExecutionIfNeeded()` on each `DailyJobScheduler` bean in turn, lightest `@CatchUpWeight` first (on the scheduler's `@Bean` method; 0 without one, and equal weights keep their registration order). `PromoteFromDevJob` weighs -10, so after a restart that missed both, it copies dev's strips before `ComicDownloadJob` fetches them. `batch.startup-catch-up.enabled=false` turns makeup runs off; the integration test profiles do this. This runs after all beans are fully initialized, avoiding race conditions with strategy registration.
 
 ### SchedulerTriggers
 

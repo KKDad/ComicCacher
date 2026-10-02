@@ -21,6 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import java.util.List;
 
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.scheduler.CatchUpWeight;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.promotion.DevPromotionService;
@@ -55,9 +56,11 @@ public class PromoteFromDevJobConfig {
 
     /**
      * Scheduler for PromoteFromDevJob: runs daily at the configured cron time, skipping runs when promotion isn't configured. Triggered by
-     * SchedulerTriggers component.
+     * SchedulerTriggers component. Its startup makeup run goes before ComicDownloadJob's, so a restart that missed both copies dev's strips
+     * before the download fetches them from the sources.
      */
     @Bean
+    @CatchUpWeight(-10)
     public DailyJobScheduler promoteFromDevJobScheduler(@Qualifier("promoteFromDevJob") Job promoteFromDevJob, JobOperator jobOperator,
             JsonBatchExecutionTracker tracker) {
         List<JobParameterDefinition> parameters = List.of(
