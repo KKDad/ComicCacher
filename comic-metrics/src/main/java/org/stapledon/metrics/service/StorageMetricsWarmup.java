@@ -1,5 +1,6 @@
 package org.stapledon.metrics.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -25,6 +26,7 @@ public class StorageMetricsWarmup {
     private final StorageMetricsCollector storageMetricsCollector;
     private final Executor executor;
 
+    @Autowired
     public StorageMetricsWarmup(StorageMetricsCollector storageMetricsCollector) {
         this(storageMetricsCollector, task -> Thread.ofVirtual().name("metrics-warmup").start(task));
     }
