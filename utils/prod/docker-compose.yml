@@ -31,6 +31,12 @@ services:
       - "BATCH_RECORDPURGE_CRON=0 15 8 * * ?"
       - "BATCH_COMICBACKFILL_CRON=0 0 9-21/2 * * ?"
       - "BATCH_AVATARBACKFILL_CRON=0 45 8 * * ?"
+      # PromoteFromDevJob copies dev's strips from here (same Docker network) at 07:00
+      - "COMICS_PROMOTION_SOURCEURL=http://comics-api-dev:8888"
+    # COMICS_PROMOTION_TOKEN, shared with dev; written by run.sh beside both deploy directories
+    env_file:
+      - path: ../comics-promotion.env
+        required: false
 
   frontend:
     image: registry.stapledon.ca/kkdad/comic-ui:${UI_TAG}

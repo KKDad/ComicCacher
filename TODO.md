@@ -154,17 +154,6 @@
 - Also a per-source on/off switch (backfill already has `batch.comic-backfill.sources.<id>.enabled`)
 - Priority: Low
 
-### Promote Comics from Dev to Prod
-
-- Add a job that "promotes" strips the dev instance already downloaded into the prod instance's storage, so prod doesn't have to download them a second time
-- Two sweep modes:
-  - **Last 7 days**: the default, suited to a recurring run
-  - **All-time**: a one-off full sweep across every date dev has
-- Only copy strips prod is missing. Never overwrite existing prod files
-- Bring the related metadata along (sidecar JSON, image hashes, date indexes) so duplicate detection and indexes stay consistent. Use atomic writes (see `docs/storage/overview.md`)
-- Open questions: how files move (shared NFS mount, API pull, or scp over ssh), which instance runs the job, and whether it can be scoped per comic
-- Priority: Low. Lowered from Medium: the gocomics 429s are resolved, so saving the second download matters less, and writing into prod storage from dev needs its open questions settled first
-
 ### Download Failure Notifications
 
 - Alert when a comic hasn't had a new strip on disk for N days

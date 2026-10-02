@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final JwtTokenFilter jwtTokenFilter;
+    private final PromotionTokenFilter promotionTokenFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     /**
@@ -56,10 +57,13 @@ public class SecurityConfig {
                         .requestMatchers("/graphql").permitAll()
                         .requestMatchers("/api/v1/comics/**").permitAll()
                         .requestMatchers("/api/v1/sources/*/thumbnails/*").permitAll()
+                        .requestMatchers("/api/v1/promotion/**").hasAuthority(PromotionTokenFilter.AUTHORITY)
                         .anyRequest().authenticated());
 
         // Add JWT filter for all environments
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        // Another instance's promotion requests carry a shared token, not a JWT
+        http.addFilterBefore(promotionTokenFilter, JwtTokenFilter.class);
 
         return http.build();
     }

@@ -15,6 +15,7 @@ GraphQL-first API with JWT authentication, three roles (USER, OPERATOR, ADMIN), 
 | [@~/docs/api/retrieval-status.md](api/retrieval-status.md) | Download tracking and history |
 | [@~/docs/api/metrics.md](api/metrics.md) | Storage and access metrics |
 | [@~/docs/api/health.md](api/health.md) | Health check and error codes |
+| [@~/docs/api/promotion.md](api/promotion.md) | The endpoints dev serves for promoting strips to prod |
 
 ## Design
 

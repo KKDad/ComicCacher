@@ -26,9 +26,14 @@ services:
       - 8087:8888
     environment:
       - "COMICS_CACHE_LOCATION=/comics"
-    # Turns on the dev-only devToken mutation; written by run.sh dev, kept on the Docker host
+      # Serve /api/v1/promotion/** to prod's PromoteFromDevJob
+      - "COMICS_PROMOTION_SERVE=true"
+    # dev-token.env turns on the dev-only devToken mutation; written by run.sh dev, kept on the Docker host.
+    # comics-promotion.env holds COMICS_PROMOTION_TOKEN, shared with prod; written by run.sh beside both deploy directories
     env_file:
       - dev-token.env
+      - path: ../comics-promotion.env
+        required: false
 
 networks:
   default:

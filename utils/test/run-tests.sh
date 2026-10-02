@@ -114,7 +114,7 @@ run_scenario() {
         echo "== output"
         cat "$sb/output"
         local file
-        for file in "$sb/home/.comiccacher-prod-deploy.log" "$sb"/host/*/dev-token.env; do
+        for file in "$sb/home/.comiccacher-prod-deploy.log" "$sb"/host/*/dev-token.env "$sb/host/comics-promotion.env"; do
             if [[ -f "$file" ]]; then
                 echo "== file: ${file#"$sb"/}"
                 cat "$file"
