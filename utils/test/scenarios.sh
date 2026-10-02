@@ -484,6 +484,16 @@ sc_run_prod_provenance_override() {
     FX_HEALTH_comics_api_1="healthy"
 }
 
+# comics-promotion.env already exists (dev deployed first): reused, not regenerated
+sc_run_prod_promotion_token_kept() {
+    prod_host
+    TARGET=host:comics-deploy/run.sh
+    ARGS=(prod --api 2.6.0)
+    STDIN=$'y\n'
+    FX_HEALTH_comics_api_1="healthy"
+    printf 'COMICS_PROMOTION_TOKEN=shared\n' > "$SB/host/comics-promotion.env"
+}
+
 # Pull fails (tag missing from the registry): nothing is recreated
 sc_run_prod_pull_fails() {
     prod_host

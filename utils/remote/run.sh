@@ -22,6 +22,8 @@
 #     compose file of the last successful deploy (docker-compose.last-good.yml)
 #   - dev: no rollback; a failed container is left running so its logs can be read.
 #     Creates the comicdata-dev volume and dev-token.env if missing (see dev_prepare_files)
+#   - Both: creates ../comics-promotion.env if missing, the token dev and prod share for
+#     promotion (see prepare_promotion_token)
 #
 # Usage:
 #   ./run.sh prod --api 2.4.6
@@ -43,6 +45,8 @@ AUDIT_LOG="${HOME}/.comiccacher-prod-deploy.log"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
 LAST_GOOD_COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.last-good.yml"
+# Beside both deploy directories: dev serves promotion with this token and prod presents it
+PROMOTION_ENV="$(dirname "$SCRIPT_DIR")/comics-promotion.env"
 
 usage() {
     cat <<EOF
@@ -308,6 +312,7 @@ if [[ $DRY_RUN -eq 1 ]]; then
         echo "  set COMICS_DEVTOKEN_DEFAULTUSERNAME=${DEV_TOKEN_DEFAULT_USERNAME} in it   (only if missing)"
         [[ $ADOPT_API_CONTAINER -eq 1 ]] && echo "  docker stop $API_CONTAINER && docker rm $API_CONTAINER   (not created by compose)"
     fi
+    echo "  create ${PROMOTION_ENV}   (only if missing: a new random promotion token)"
     echo "  API_TAG='$EFFECTIVE_API_REF' UI_TAG='$EFFECTIVE_UI_REF' docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILE pull ${CHANGED_SERVICES[*]}"
     echo "  API_TAG='$EFFECTIVE_API_REF' UI_TAG='$EFFECTIVE_UI_REF' docker compose -p $COMPOSE_PROJECT -f $COMPOSE_FILE up -d --no-deps ${CHANGED_SERVICES[*]}"
     if is_dev; then
@@ -375,6 +380,18 @@ dev_prepare_files() {
     fi
 }
 
+# Both environments, before the pull: the promotion token dev and prod share. Generated once,
+# then reused by both, so whichever deploys first creates it. Kept on the Docker host, never in git
+prepare_promotion_token() {
+    if [[ ! -f "$PROMOTION_ENV" ]]; then
+        echo "Creating ${PROMOTION_ENV} with a new promotion token..."
+        (
+            umask 077
+            printf 'COMICS_PROMOTION_TOKEN=%s\n' "$(openssl rand -hex 32)" > "$PROMOTION_ENV"
+        )
+    fi
+}
+
 # Dev only, after the pull succeeds: compose can't take over a container it didn't create
 dev_remove_legacy_container() {
     if [[ $ADOPT_API_CONTAINER -eq 1 ]]; then
@@ -437,6 +454,7 @@ echo "--- Deploying ${CHANGED_SERVICES[*]} via compose ---"
 if is_dev; then
     dev_prepare_files
 fi
+prepare_promotion_token
 if ! compose_pull "$COMPOSE_FILE" "$EFFECTIVE_API_REF" "$EFFECTIVE_UI_REF"; then
     echo ""
     echo "Pull failed: no container was changed."

@@ -173,6 +173,24 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 **Data source:** `SourceCatalogService` → each `ComicSource`'s catalog (GoComics A–Z page, Comics Kingdom WordPress API)
 
+### PromoteFromDevJob
+
+**Purpose:** Copies the strips the dev instance already downloaded into prod, for the days prod is missing, so prod doesn't download them a second time. See [Promotion](../api/promotion.md) for the endpoints dev serves.
+
+**Config class:** `PromoteFromDevJobConfig`
+
+**Pattern:** Tasklet (single step), delegating to `DevPromotionService`.
+
+- Runs at 07:00, after dev's 06:00 download and before prod's own (07:30), so on most days prod's download finds every strip already cached
+- Parameters: `days` (default `batch.promote-from-dev.days`, 1 = today only; at most `comics.promotion.max-days`, 7), `source` (one source, or `ALL`) and `comic` (prod's comic id). A larger `days` fails the run at once
+- Reads dev's manifest for the window, then for each comic enabled on prod that matches on source and source identifier (the two instances number comics separately), fetches each strip prod has no file for and saves it with `ComicStorageFacade.saveComicStripWithResult`. That validates it, skips duplicates and writes the date index, image hashes and metadata sidecar (with dev's transcript), as a download would. A strip already on disk is never fetched or overwritten
+- Raises the comic's `oldest` / `newest` in `comics.json` to cover what it saved
+- Indexed sources (Freefall) are left out: their strip numbers aren't in the manifest, and prod's own download tracks them
+- Only prod sets `comics.promotion.source-url`; elsewhere a scheduled run is skipped by its precondition and a manual run does nothing. The job stays registered on dev rather than being switched off, since `SchedulerHealthCheck` reports a known job with no scheduler as down
+- Dev unreachable or rejecting the token fails the run. A strip that can't be fetched or saved is logged at WARN and counted; the rest go on, and the step fails at the end so the batch history shows it. One INFO line sums up each run: `Promoted 46 strips from http://comics-api-dev:8888 for 2026-10-01 to 2026-10-01 (comics=46 already-here=0 duplicate=0 failed=0 not-here=3) in 9120ms`
+
+**Data source:** the dev instance's `/api/v1/promotion/**` endpoints
+
 ### ImageMetadataBackfillJob
 
 **Purpose:** Recalculates image dimensions and format metadata for existing images that lack metadata files.
@@ -226,6 +244,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 | AvatarBackfillJob | Tasklet | `0 15 7 * * ?` | `true` | Web scraping (avatar pages) | `ManagementFacade` |
 | ImageMetadataBackfillJob | Tasklet | `0 30 6 * * ?` | `true` | Filesystem walk | `ValidationService`, `AnalysisService`, `ImageMetadataRepository` |
 | MetricsArchiveJob | Tasklet | `0 30 6 * * ?` | `true` | Combined metrics built on demand | `MetricsArchiveService` |
+| PromoteFromDevJob | Tasklet | `0 0 7 * * ?` (skipped where `comics.promotion.source-url` isn't set) | `true` | Dev instance's promotion endpoints | `DevPromotionService`, `ComicStorageFacade` |
 | RetrievalRecordPurgeJob | Tasklet (2 steps) | `0 45 6 * * ?` | `true` | JSON retrieval records, batch log files | `ManagementFacade`, `BatchJobLogService` |
 | SourceCatalogJob | Tasklet | `0 0 5 * * ?` (runs only when a catalog, details or thumbnails are due) | `true` | Source catalogs (A–Z page, WordPress API) | `SourceCatalogService`, `CatalogThumbnailService` |
 

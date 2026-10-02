@@ -28,6 +28,7 @@ public class SchedulerTriggers {
     private final DailyJobScheduler comicDownloadJobScheduler;
     private final DailyJobScheduler imageMetadataBackfillJobScheduler;
     private final DailyJobScheduler metricsArchiveJobScheduler;
+    private final DailyJobScheduler promoteFromDevJobScheduler;
     private final DailyJobScheduler retrievalRecordPurgeJobScheduler;
     private final DailyJobScheduler sourceCatalogJobScheduler;
 
@@ -36,6 +37,7 @@ public class SchedulerTriggers {
                              @Qualifier("comicDownloadJobScheduler") DailyJobScheduler comicDownloadJobScheduler,
                              @Qualifier("imageMetadataBackfillJobScheduler") DailyJobScheduler imageMetadataBackfillJobScheduler,
                              @Qualifier("metricsArchiveJobScheduler") DailyJobScheduler metricsArchiveJobScheduler,
+                             @Qualifier("promoteFromDevJobScheduler") DailyJobScheduler promoteFromDevJobScheduler,
                              @Qualifier("retrievalRecordPurgeJobScheduler") DailyJobScheduler retrievalRecordPurgeJobScheduler,
                              @Qualifier("sourceCatalogJobScheduler") DailyJobScheduler sourceCatalogJobScheduler) {
         this.avatarBackfillJobScheduler = avatarBackfillJobScheduler;
@@ -43,6 +45,7 @@ public class SchedulerTriggers {
         this.comicDownloadJobScheduler = comicDownloadJobScheduler;
         this.imageMetadataBackfillJobScheduler = imageMetadataBackfillJobScheduler;
         this.metricsArchiveJobScheduler = metricsArchiveJobScheduler;
+        this.promoteFromDevJobScheduler = promoteFromDevJobScheduler;
         this.retrievalRecordPurgeJobScheduler = retrievalRecordPurgeJobScheduler;
         this.sourceCatalogJobScheduler = sourceCatalogJobScheduler;
     }
@@ -85,6 +88,14 @@ public class SchedulerTriggers {
     public void triggerMetricsArchive() {
         if (metricsArchiveJobScheduler != null) {
             metricsArchiveJobScheduler.executeScheduled();
+        }
+    }
+
+    @Scheduled(cron = "${batch.promote-from-dev.cron}", zone = "${batch.timezone}")
+    @ConditionalOnProperty(name = "batch.promote-from-dev.enabled", havingValue = "true", matchIfMissing = true)
+    public void triggerPromoteFromDev() {
+        if (promoteFromDevJobScheduler != null) {
+            promoteFromDevJobScheduler.executeScheduled();
         }
     }
 
