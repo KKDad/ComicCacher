@@ -37,7 +37,7 @@ import org.stapledon.engine.source.SourceRegistry;
  * {@code batch.source-catalog.max-age-days}, then detects start dates for a few configured comics that have none, reads comics' details where the
  * catalog doesn't carry them, downloads catalog thumbnails, and deletes stale ones.
  * <p>
- * The cron fires daily, but a scheduled run is skipped without any web request unless a catalog, details or thumbnails are due (read from
+ * The cron fires daily, but a scheduled or startup makeup run is skipped without any web request unless a catalog, details or thumbnails are due (read from
  * {@code source-catalog.json} only). Details expire after 30–90 days and thumbnails after about a year, so after the first week or so most days do
  * little. The Sources page's Refresh button runs this job for one source with {@code force=true}.
  */

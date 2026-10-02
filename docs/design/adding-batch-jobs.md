@@ -169,6 +169,16 @@ public void triggerMyNewJob() {
 
 No action needed. `SchedulerStateWiring` auto-discovers all `DailyJobScheduler` beans via `@Autowired(required = false) List<DailyJobScheduler>` and injects `SchedulerStateService` into each one. Your new scheduler will be automatically wired.
 
+### 7. Startup Makeup Order (Optional)
+
+After a restart, `StartupJobRunner` makes up missed daily runs one at a time, lightest `@CatchUpWeight` first. A scheduler without one weighs 0, and equal weights keep their bean registration order. Most jobs need nothing here. Add a weight to the scheduler's `@Bean` method only when the job's makeup run must come before or after another's, or must not hold up the jobs users see:
+
+```java
+@Bean
+@CatchUpWeight(-5)  // PromoteFromDevJob is -10, ComicDownloadJob -5; maintenance jobs are 0
+public DailyJobScheduler myNewJobScheduler(...) {
+```
+
 ## Job Patterns
 
 ### Tasklet Pattern (Simple)
@@ -266,5 +276,6 @@ curl http://localhost:8080/actuator/health | jq '.components.schedulerHealthChec
 - [ ] Job name added to `BatchJobBaseConfig.KNOWN_JOBS`
 - [ ] Properties added to `application.properties` (`enabled` + `cron`)
 - [ ] Constructor parameter and `@Scheduled` method added to `SchedulerTriggers`
+- [ ] `@CatchUpWeight` on the scheduler bean, if its startup makeup run must come before or after another job's
 - [ ] Integration test
 - [ ] `./gradlew clean testAll` passes

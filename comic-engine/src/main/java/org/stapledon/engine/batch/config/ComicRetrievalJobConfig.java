@@ -28,6 +28,7 @@ import java.util.List;
 
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.scheduler.CatchUpWeight;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.management.ManagementFacade;
@@ -53,9 +54,12 @@ public class ComicRetrievalJobConfig {
     private String timezone;
 
     /**
-     * Scheduler for ComicDownloadJob - runs daily at configured cron time. Triggered by SchedulerTriggers component.
+     * Scheduler for ComicDownloadJob - runs daily at configured cron time. Triggered by SchedulerTriggers component. Its startup makeup run
+     * goes after PromoteFromDevJob's, which copies strips it would otherwise fetch, and before the maintenance jobs', so today's strips aren't
+     * held up behind them.
      */
     @Bean
+    @CatchUpWeight(-5)
     public DailyJobScheduler comicDownloadJobScheduler(@Qualifier("comicDownloadJob") Job comicDownloadJob, JobOperator jobOperator, JsonBatchExecutionTracker tracker,
             SourceRegistry sourceRegistry) {
         List<JobParameterDefinition> parameters = List.of(

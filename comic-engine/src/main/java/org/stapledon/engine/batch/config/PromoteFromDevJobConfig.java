@@ -31,7 +31,7 @@ import org.stapledon.engine.source.SourceRegistry;
 /**
  * Spring Batch configuration for the promote-from-dev job: copies the strips the dev instance downloaded in the last {@code days} days (1 by
  * default) that this instance is missing, so prod doesn't download them a second time. Runs after dev's download and before prod's. Only prod
- * sets {@code comics.promotion.source-url}; everywhere else a scheduled run is skipped and a manual one does nothing. The job stays registered
+ * sets {@code comics.promotion.source-url}; everywhere else scheduled and startup makeup runs are skipped and a manual one does nothing. The job stays registered
  * there rather than being switched off, since {@code SchedulerHealthCheck} reports a known job without a scheduler as down.
  */
 @Slf4j
