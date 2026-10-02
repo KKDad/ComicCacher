@@ -8,6 +8,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
@@ -36,6 +37,10 @@ import java.util.concurrent.Executor;
  * {@code /actuator/health} reported 503 until every missed job had finished.
  *
  * <p>
+ * PromoteFromDevJob's makeup run goes first, so a restart after both its time and the download's copies dev's strips before
+ * ComicDownloadJob fetches them from the sources.
+ *
+ * <p>
  * Set {@code batch.startup-catch-up.enabled=false} to skip the makeup runs (the
  * integration tests do, so a background run can't race the jobs they start).
  */
@@ -43,6 +48,9 @@ import java.util.concurrent.Executor;
 @Component
 @ConditionalOnProperty(name = "batch.startup-catch-up.enabled", havingValue = "true", matchIfMissing = true)
 public class StartupJobRunner {
+
+    // Copies strips dev already has, so it must run before the download it saves work for
+    private static final String RUN_FIRST = "PromoteFromDevJob";
 
     private final Map<String, DailyJobScheduler> dailySchedulers;
     private final Executor executor;
@@ -79,15 +87,18 @@ public class StartupJobRunner {
         log.info("======== CHECKING FOR MISSED JOB EXECUTIONS ========");
         log.info("Found {} daily scheduler(s) to check", dailySchedulers.size());
 
-        dailySchedulers.values().forEach(scheduler -> {
-            try {
-                log.debug("Checking missed execution for: {}", scheduler.getJobName());
-                scheduler.runMissedExecutionIfNeeded();
-            } catch (Exception e) {
-                log.error("Failed to check missed execution for {}: {}",
-                        scheduler.getJobName(), e.getMessage(), e);
-            }
-        });
+        // Stable sort: the other jobs keep their registration order
+        dailySchedulers.values().stream()
+                .sorted(Comparator.comparing(scheduler -> !RUN_FIRST.equals(scheduler.getJobName())))
+                .forEach(scheduler -> {
+                    try {
+                        log.debug("Checking missed execution for: {}", scheduler.getJobName());
+                        scheduler.runMissedExecutionIfNeeded();
+                    } catch (Exception e) {
+                        log.error("Failed to check missed execution for {}: {}",
+                                scheduler.getJobName(), e.getMessage(), e);
+                    }
+                });
 
         log.info("======== STARTUP JOB CHECK COMPLETE ========");
     }

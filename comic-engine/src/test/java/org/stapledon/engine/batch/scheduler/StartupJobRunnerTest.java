@@ -99,6 +99,28 @@ class StartupJobRunnerTest {
     }
 
     @Test
+    @DisplayName("should run PromoteFromDevJob's makeup run before the others")
+    void shouldRunPromoteFromDevFirst() {
+        DailyJobScheduler promote = mock(DailyJobScheduler.class);
+        lenient().when(scheduler1.getJobName()).thenReturn("ComicDownloadJob");
+        lenient().when(scheduler2.getJobName()).thenReturn("SourceCatalogJob");
+        lenient().when(promote.getJobName()).thenReturn("PromoteFromDevJob");
+
+        Map<String, DailyJobScheduler> schedulers = new LinkedHashMap<>();
+        schedulers.put("comicDownloadJobScheduler", scheduler1);
+        schedulers.put("sourceCatalogJobScheduler", scheduler2);
+        schedulers.put("promoteFromDevJobScheduler", promote);
+
+        startupJobRunner = new StartupJobRunner(schedulers, INLINE);
+        startupJobRunner.onApplicationReady(event);
+
+        InOrder order = inOrder(promote, scheduler1, scheduler2);
+        order.verify(promote).runMissedExecutionIfNeeded();
+        order.verify(scheduler1).runMissedExecutionIfNeeded();
+        order.verify(scheduler2).runMissedExecutionIfNeeded();
+    }
+
+    @Test
     @DisplayName("should handle empty scheduler map gracefully")
     void shouldHandleEmptySchedulerMapGracefully() {
         startupJobRunner = new StartupJobRunner(Collections.emptyMap(), INLINE);
