@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.stapledon.metrics.collector.StorageMetricsCollector;
 
 import java.util.ArrayList;
@@ -13,6 +14,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class StorageMetricsWarmupTest {
+
+    @Test
+    void springCanCreateTheBean() {
+        new ApplicationContextRunner()
+                .withBean(StorageMetricsCollector.class, () -> mock(StorageMetricsCollector.class))
+                .withBean(StorageMetricsWarmup.class)
+                .run(context -> assertThat(context).hasNotFailed().hasSingleBean(StorageMetricsWarmup.class));
+    }
 
     @Test
     void scansInTheBackgroundWhenTheApplicationIsReady() {
