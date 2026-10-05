@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Startup no longer rewrites `comics.json` when only the oldest and newest strip dates changed: those are updated in memory from the index. It still saves when the avatar flag or a start date is corrected, and checks avatars by file existence instead of reading each one
 
 ### Fixed
+- The Home key in the grid reader went to 1900-01-01, expecting the API to clamp the date to the oldest strip, and showed an empty page that stayed in the URL. It now goes to the earliest strip date of the comics shown
 - Daily metrics snapshots (`MetricsArchiveJob`) stored the storage scan from the first metrics request after startup, so every snapshot since a restart had the same storage numbers. The job now rescans first
 - Per-comic, per-year image counts in the metrics were always 0
 

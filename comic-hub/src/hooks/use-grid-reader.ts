@@ -40,6 +40,8 @@ interface UseGridReaderReturn {
   goToNextDate: () => void;
   goToPreviousDate: () => void;
   goToToday: () => void;
+  /** Goes to the earliest strip date of the comics shown; does nothing until they load. */
+  goToOldest: () => void;
 }
 
 /** The comics' strips in the shape the lightbox shows. */
@@ -141,6 +143,14 @@ export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGr
     goToDate(todayIsoDate());
   }, [goToDate]);
 
+  const goToOldest = useCallback(() => {
+    const oldest = comics
+      .map((c) => c.oldest)
+      .filter((d): d is string => d !== null)
+      .sort()[0];
+    if (oldest) goToDate(oldest);
+  }, [comics, goToDate]);
+
   return useMemo(
     () => ({
       date,
@@ -150,7 +160,8 @@ export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGr
       goToNextDate,
       goToPreviousDate,
       goToToday,
+      goToOldest,
     }),
-    [date, comics, comicsLoading, prefsLoading, goToDate, goToNextDate, goToPreviousDate, goToToday],
+    [date, comics, comicsLoading, prefsLoading, goToDate, goToNextDate, goToPreviousDate, goToToday, goToOldest],
   );
 }
