@@ -1,11 +1,5 @@
 # ComicCacher TODO
 
-## Fix the GoComics site links on `/sources/gocomics`
-
-- The link from each catalog row to the comic on gocomics.com (`item.pageUrl` in `components/sources/catalog-row.tsx`) runs into the RSC bug: since 2026-10-05 GoComics' firewall answers full page loads of strip pages from our IP with 403, and the downloader only gets through by fetching the `_rsc` payload (#443)
-- Confirm what the link actually does from a browser on the home network, then pick a fix: point it at a page the firewall still serves (e.g. `/<slug>/about`), or drop it if no GoComics page works from here
-- Priority: Very-High
-
 ## Full-screen mode or app for mobile
 
 - Add a full-screen reading mode on phones, or make Comics Hub work as an installable app

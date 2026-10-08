@@ -90,9 +90,14 @@ public class GoComicsSource implements ComicSource {
         return comic.getName() == null ? "" : comic.getName().replace(" ", "").toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * The comic's page with the {@code _rsc} parameter the site's router sends. GoComics' firewall answers the plain page with 403 from our network
+     * (#443), but serves it with that parameter.
+     */
     @Override
     public String comicPageUrl(String identifier) {
-        return BASE_URL + "/" + identifier;
+        String path = "/" + identifier;
+        return BASE_URL + path + "?_rsc=" + BrowserFetcher.nextJsCacheBuster(path);
     }
 
     @Override

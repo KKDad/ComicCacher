@@ -80,6 +80,11 @@ class GoComicsSourceTest {
     }
 
     @Test
+    void comicPageUrlCarriesTheRscParameter() {
+        assertThat(source.comicPageUrl("peanuts")).isEqualTo("https://www.gocomics.com/peanuts?_rsc=" + BrowserFetcher.nextJsCacheBuster("/peanuts"));
+    }
+
+    @Test
     void parseCatalogReadsEveryComicAndSkipsOtherLinks() throws IOException {
         List<SourceCatalogEntry> entries = GoComicsSource.parseCatalog(Jsoup.parse(fixture("gocomics-a-to-z.html")));
 
