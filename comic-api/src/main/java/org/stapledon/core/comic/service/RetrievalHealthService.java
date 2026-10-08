@@ -129,8 +129,9 @@ public class RetrievalHealthService {
         }
         comicHealth.sort(Comparator.comparing(ComicRetrievalHealth::comicName, String.CASE_INSENSITIVE_ORDER));
 
+        // Failures only: a strip the source didn't have (COMIC_UNAVAILABLE) isn't an error, and the grid shows it as missing anyway
         List<RetrievalError> todaysErrors = records.stream()
-                .filter(r -> r.getStatus() != ComicRetrievalStatus.SUCCESS)
+                .filter(RetrievalHealthService::isFailure)
                 .filter(r -> r.getAttemptedAt() != null && r.getAttemptedAt().atZoneSameInstant(zone).toLocalDate().equals(today))
                 .sorted(Comparator.comparing(ComicRetrievalRecord::getAttemptedAt).reversed())
                 .limit(Math.max(0, errorLimit))

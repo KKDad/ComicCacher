@@ -29,6 +29,8 @@ const comics = [
   }),
   comic(3, 'Zits', { source: 'comicskingdom', stale: true, newest: '2026-09-30' }),
   comic(4, 'Retired', { active: false, missingStreak: 0, stale: false }),
+  // Older comics have negative ids, taken from the name's hash
+  comic(-717937236, 'Drabble'),
 ];
 
 function givenHealth(extra: Parameters<typeof health>[0] = {}) {
@@ -90,12 +92,12 @@ describe('RetrievalStatusPage', () => {
     expect(useGetRetrievalHealthQuery).toHaveBeenCalledWith({ days: 30 });
   });
 
-  it('lists every comic by name', () => {
+  it('lists every comic by name, inactive ones last', () => {
     givenHealth();
 
     render(<RetrievalStatusPage />);
 
-    expect(gridRows()).toEqual(['Garfield', 'Peanuts', 'Retired', 'Zits']);
+    expect(gridRows()).toEqual(['Drabble', 'Garfield', 'Peanuts', 'Zits', 'Retired']);
   });
 
   it('lists only the comics that need attention, worst first, with attention=1', () => {
@@ -165,6 +167,28 @@ describe('RetrievalStatusPage', () => {
     expect(within(panel()).getByRole('heading', { name: 'Zits' })).toBeInTheDocument();
   });
 
+  it('selects a comic with a negative id', async () => {
+    const router = mockRouter();
+    mockSearchParams({ comic: '-717937236' });
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+    expect(within(panel()).getByRole('heading', { name: 'Drabble' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('img', { name: /Garfield, Oct 8/ }));
+    await userEvent.click(screen.getByRole('img', { name: /Drabble, Oct 8/ }));
+    expect(router.replace).toHaveBeenLastCalledWith('/?comic=-717937236', { scroll: false });
+  });
+
+  it('keeps the panel to the comics the filters list', () => {
+    mockSearchParams({ source: 'comicskingdom', comic: '2' });
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+
+    expect(within(panel()).getByRole('heading', { name: 'Zits' })).toBeInTheDocument();
+  });
+
   it('selects a comic in the URL when its row is clicked, without a slide-over', async () => {
     const router = mockRouter();
     givenHealth();
@@ -176,17 +200,28 @@ describe('RetrievalStatusPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('steps to the next and previous comic with the arrow keys', async () => {
+  it('steps to the next and previous comic with the arrow keys in the grid', async () => {
     const router = mockRouter();
     mockSearchParams({ comic: '2' });
     givenHealth();
 
     render(<RetrievalStatusPage />);
+    screen.getByRole('region', { name: /Results by day/ }).focus();
     await userEvent.keyboard('{ArrowDown}');
-    expect(router.replace).toHaveBeenLastCalledWith('/?comic=4', { scroll: false });
+    expect(router.replace).toHaveBeenLastCalledWith('/?comic=3', { scroll: false });
 
     await userEvent.keyboard('{ArrowUp}');
     expect(router.replace).toHaveBeenLastCalledWith('/?comic=1', { scroll: false });
+  });
+
+  it('leaves the arrow keys to the page outside the grid', async () => {
+    const router = mockRouter();
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+    await userEvent.keyboard('{ArrowDown}');
+
+    expect(router.replace).not.toHaveBeenCalled();
   });
 
   it('leaves the arrow keys to the search box', async () => {

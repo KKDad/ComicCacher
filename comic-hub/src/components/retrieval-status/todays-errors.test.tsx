@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RetrievalStatusEnum } from '@/generated/graphql';
 import { record } from '@/test/retrieval-health';
 import { TodaysErrors } from './todays-errors';
@@ -48,5 +49,25 @@ describe('TodaysErrors', () => {
 
     expect(screen.getByText('since recovered')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Old Timer' })).not.toBeInTheDocument();
+  });
+
+  it('shows the latest five until asked for the rest', async () => {
+    const errors = Array.from({ length: 8 }, (_, i) => ({
+      recovered: false,
+      record: { ...record(`2026-10-0${i + 1}`, RetrievalStatusEnum.NetworkError), id: `e${i}`, comicId: i, comicName: `Comic ${i}`, source: null },
+    }));
+    render(<TodaysErrors errors={errors} />);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    await userEvent.click(screen.getByRole('button', { name: 'Show all 8' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(8);
+    await userEvent.click(screen.getByRole('button', { name: 'Show fewer' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+  });
+
+  it('has no toggle for five or fewer', () => {
+    render(<TodaysErrors errors={[]} />);
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

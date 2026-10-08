@@ -72,7 +72,7 @@ A day's `outcome` is judged by the files first:
 | `MISSING` | A dated comic: active, a publication day, not before its first strip on disk. A numbered (indexed) source: only when an attempt failed |
 | `OFF_DAY` | Anything else: no strip was due |
 
-`missingStreak` counts `MISSING` days back from the newest, skipping off days and a pending today. `stale` is true when the newest strip on disk is older than `expectedLatest`, the latest publication day that should have a strip by now; it catches a SUCCESS record with nothing on disk. `todaysErrors` are the non-SUCCESS records whose `attemptedAt` is today in `batch.timezone` (backfills of older strips included), newest first.
+`missingStreak` counts `MISSING` days back from the newest, skipping off days and a pending today. `stale` is true when the newest strip on disk is older than `expectedLatest`, the latest publication day that should have a strip by now; it catches a SUCCESS record with nothing on disk. `todaysErrors` are the failed records (neither SUCCESS nor COMIC_UNAVAILABLE) whose `attemptedAt` is today in `batch.timezone` (backfills of older strips included), newest first.
 
 ```graphql
 query {

@@ -18,6 +18,8 @@ interface ResultsGridProps {
   /** The days to show, oldest first. */
   dates: string[];
   onSelect: (comic: ComicHealth) => void;
+  /** Up and down while the grid has focus: move the selection to the previous or next comic. */
+  onStep: (delta: 1 | -1) => void;
 }
 
 /**
@@ -25,7 +27,7 @@ interface ResultsGridProps {
  * The files decide, so a failure that a later attempt fixed is a ✓ (outlined). The day columns share the card's width; only
  * below the table's minimum width (phones) does it scroll sideways inside its card, opening on the newest day.
  */
-export function ResultsGrid({ comics, selectedId = null, dates, onSelect }: ResultsGridProps) {
+export function ResultsGrid({ comics, selectedId = null, dates, onSelect, onStep }: ResultsGridProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const selectedRow = useRef<HTMLTableRowElement>(null);
 
@@ -39,7 +41,19 @@ export function ResultsGrid({ comics, selectedId = null, dates, onSelect }: Resu
   }, [dates.length]);
 
   return (
-    <div ref={scroller} className="overflow-x-auto overflow-y-hidden">
+    // Focusable so the arrow keys step through the comics while it has focus, and only then; a click on a row focuses it
+    <div
+      ref={scroller}
+      tabIndex={0}
+      role="region"
+      aria-label="Results by day. Up and down choose a comic."
+      className="overflow-x-auto overflow-y-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      onKeyDown={(e) => {
+        if (e.altKey || e.ctrlKey || e.metaKey || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+        e.preventDefault();
+        onStep(e.key === 'ArrowDown' ? 1 : -1);
+      }}
+    >
       <table
         className="w-full table-fixed border-separate border-spacing-0 text-sm"
         style={{ minWidth: `${FIXED_COLUMNS_REM + dates.length * MIN_DAY_REM}rem` }}

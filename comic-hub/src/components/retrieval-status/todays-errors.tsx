@@ -1,17 +1,30 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { formatShortDate } from '@/lib/date-utils';
 import { StatusBadge } from './status-badge';
 import type { TodaysError } from './health';
 
+/** How many of today's errors show before "Show all", so a bad day doesn't push the grid off the screen. */
+export const ERRORS_SHOWN = 5;
+
 /** Every failed attempt today, newest first: the raw view, including failures a later attempt fixed. */
 export function TodaysErrors({ errors }: { errors: TodaysError[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? errors : errors.slice(0, ERRORS_SHOWN);
+
   return (
     <Card>
       <div className="p-6 pb-4">
         <h2 className="text-lg font-semibold text-ink">Today’s errors</h2>
-        <p className="text-sm text-ink-subtle">Failed attempts made today, newest first, including backfills of older strips.</p>
+        <p className="text-sm text-ink-subtle">
+          Failed attempts made today, newest first, including backfills of older strips. A strip the source didn’t have isn’t
+          counted.
+        </p>
       </div>
       {errors.length === 0 ? (
         <p className="flex items-center gap-2 border-t border-border px-6 py-4 text-sm text-ink-subtle">
@@ -20,7 +33,7 @@ export function TodaysErrors({ errors }: { errors: TodaysError[] }) {
         </p>
       ) : (
         <ul className="divide-y divide-border border-t border-border">
-          {errors.map(({ record, recovered }) => (
+          {visible.map(({ record, recovered }) => (
             <li key={`${record.id}-${record.attemptedAt}`} className="flex flex-col gap-1 px-6 py-3 text-sm">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="text-ink-muted tabular-nums">
@@ -45,6 +58,13 @@ export function TodaysErrors({ errors }: { errors: TodaysError[] }) {
             </li>
           ))}
         </ul>
+      )}
+      {errors.length > ERRORS_SHOWN && (
+        <div className="border-t border-border px-6 py-3">
+          <Button variant="ghost" size="sm" onClick={() => setExpanded((e) => !e)}>
+            {expanded ? 'Show fewer' : `Show all ${errors.length}`}
+          </Button>
+        </div>
       )}
     </Card>
   );

@@ -6,7 +6,7 @@ import { ResultsGrid } from './results-grid';
 
 const MISSING_DAY = '2026-10-07';
 
-function grid(onSelect = vi.fn(), selectedId: number | null = null) {
+function grid(onSelect = vi.fn(), selectedId: number | null = null, onStep = vi.fn()) {
   const missing = record(MISSING_DAY, RetrievalStatusEnum.RateLimited, { httpStatusCode: 429 });
   const comics = [
     comic(1, 'Garfield', {
@@ -21,7 +21,9 @@ function grid(onSelect = vi.fn(), selectedId: number | null = null) {
       days: days(3, { '2026-10-06': { recovered: true, record: record('2026-10-06', RetrievalStatusEnum.NetworkError) } }),
     }),
   ];
-  render(<ResultsGrid comics={comics} selectedId={selectedId} dates={comics[0].days.map((d) => d.date)} onSelect={onSelect} />);
+  render(
+    <ResultsGrid comics={comics} selectedId={selectedId} dates={comics[0].days.map((d) => d.date)} onSelect={onSelect} onStep={onStep} />,
+  );
   return onSelect;
 }
 
@@ -75,5 +77,24 @@ describe('ResultsGrid', () => {
 
     expect(screen.getByRole('rowheader', { name: 'Peanuts' }).closest('tr')).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('rowheader', { name: 'Garfield' }).closest('tr')).not.toHaveAttribute('aria-current');
+  });
+
+  it('steps with the arrow keys while it has focus', async () => {
+    const onStep = vi.fn();
+    grid(vi.fn(), 1, onStep);
+
+    screen.getByRole('region', { name: /Results by day/ }).focus();
+    await userEvent.keyboard('{ArrowDown}{ArrowUp}');
+
+    expect(onStep.mock.calls).toEqual([[1], [-1]]);
+  });
+
+  it('leaves the arrow keys alone without focus', async () => {
+    const onStep = vi.fn();
+    grid(vi.fn(), 1, onStep);
+
+    await userEvent.keyboard('{ArrowDown}');
+
+    expect(onStep).not.toHaveBeenCalled();
   });
 });

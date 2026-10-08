@@ -24,6 +24,27 @@
 - Add an `attempts` count and the first failure (status, time) to `ComicRetrievalRecord`, kept when a later attempt replaces the record, and show them in the drawer
 - Priority: Low. Deferred from the retrieval-status rework
 
+## Replace hash-derived comic ids
+
+- Older comics took their id from Java's `name.hashCode()` when they were bootstrapped, so ids are large and about half are negative (Drabble is −717937236, Garfield −1559823038). Comics added since get the highest id + 1 (`ComicManagementFacade.createComic`)
+- What it has cost so far: the retrieval-status page's `comic=` URL parameter rejected negative ids, so those comics couldn't be selected (fixed in #455). Anything else that parses an id as a positive number has the same bug
+- What else to fix:
+  - highest id + 1 overflows past `Integer.MAX_VALUE` when the largest hash is close to it
+  - the hashes are tied to names, which can be renamed
+  - two names can collide (rare)
+- Where ids live:
+  - `comics.json`
+  - users' favourites and last-read in the preferences
+  - `retrieval-status.json` record ids (`{comicId}_{date}`)
+  - the date index cache
+  - metrics, which are joined by directory name since #452
+  - every reader URL (`/comics/{id}/read`), so bookmarks and shared links carry the old ids
+- **UUID or not:** a UUID would make every reader URL long and unreadable. Two better options:
+  - **(a)** renumber every comic to a small sequential int in one migration (a startup migration, or a one-off job) across the stores above, and keep an old→new map so old URLs and old preference entries redirect
+  - **(b)** keep an int internally and add a stable slug (`drabble`) for URLs, routing by slug
+- Either way, decide whether the API keeps accepting old ids, and for how long, before retiring them
+- Priority: Medium. Each new id-handling surface can hit the negative-id case, and the migration grows with every store keyed by id
+
 ## Log server errors and show the error digest
 
 - `error.tsx` and `global-error.tsx` only `console.error` in the browser. When a server render fails, the user sees a generic page and the `comics-ui` log has nothing to match it to

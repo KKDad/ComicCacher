@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -17,10 +17,9 @@ import { RetrievalFilters, type Filters } from '@/components/retrieval-status/re
 import { compareNames } from '@/lib/sort';
 import { MAX_WINDOW, WINDOWS, bySeverity, needsAttention, type ComicHealth } from '@/components/retrieval-status/health';
 
-/** Whether a key press came from a control that uses the arrow keys itself. */
-function isFromControl(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return target.isContentEditable || target.closest('input, textarea, select, [role="combobox"], [role="switch"], [role="listbox"], [role="dialog"]') != null;
+/** Every comic by name, with the inactive ones (rows of blanks) at the end. */
+function byActiveThenName(a: ComicHealth, b: ComicHealth): number {
+  return Number(b.active) - Number(a.active) || compareNames(a.comicName, b.comicName);
 }
 
 /** Reads the filters from the URL, so a filtered view can be linked to. */
@@ -50,8 +49,9 @@ function RetrievalStatus() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const filters = readFilters(new URLSearchParams(searchParams.toString()));
-  const comicParam = Number(searchParams.get('comic'));
-  const selectedId = Number.isInteger(comicParam) && comicParam > 0 ? comicParam : null;
+  // Comic ids can be negative: older comics took theirs from the name's hash
+  const comicParam = searchParams.get('comic');
+  const selectedId = comicParam != null && /^-?\d+$/.test(comicParam) ? Number(comicParam) : null;
   const { layout } = useResponsiveNav();
   const mobile = layout === 'mobile';
 
@@ -66,33 +66,27 @@ function RetrievalStatus() {
       .filter((c) => !filters.attentionOnly || needsAttention(c))
       .filter((c) => !filters.source || c.source === filters.source)
       .filter((c) => !search || c.comicName.toLowerCase().includes(search))
-      .toSorted(filters.attentionOnly ? bySeverity : (a, b) => compareNames(a.comicName, b.comicName));
+      .toSorted(filters.attentionOnly ? bySeverity : byActiveThenName);
   }, [health, filters.query, filters.attentionOnly, filters.source]);
 
   const select = (comicId: number | null, next: Filters = filters) =>
     router.replace(`${pathname}${writeFilters(next, comicId)}`, { scroll: false });
   const setFilters = (next: Filters) => select(selectedId, next);
-  const selected: ComicHealth | null = health?.comics.find((c) => c.comicId === selectedId) ?? null;
-  // The panel is never empty: without a selection it shows the worst comic needing attention, or the first one listed
+  const selected: ComicHealth | null = shown.find((c) => c.comicId === selectedId) ?? null;
+  // The panel follows the filters and is never empty: without a listed selection it shows the worst listed comic needing
+  // attention, or the first one listed
   const panelComic: ComicHealth | null = useMemo(
-    () => selected ?? health?.comics.filter(needsAttention).toSorted(bySeverity)[0] ?? shown[0] ?? null,
-    [selected, health, shown],
+    () => selected ?? shown.filter(needsAttention).toSorted(bySeverity)[0] ?? shown[0] ?? null,
+    [selected, shown],
   );
+  const current = mobile ? selected : panelComic;
 
-  // Up and down step through the listed comics, in the panel or the sheet
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.key !== 'ArrowDown' && e.key !== 'ArrowUp') || e.altKey || e.ctrlKey || e.metaKey || shown.length === 0) return;
-      if (mobile && selected == null) return;
-      if (isFromControl(e.target) && !(mobile && selected)) return;
-      const index = shown.findIndex((c) => c.comicId === panelComic?.comicId);
-      const next = e.key === 'ArrowDown' ? Math.min(index + 1, shown.length - 1) : Math.max(index - 1, 0);
-      e.preventDefault();
-      if (shown[next] && shown[next].comicId !== panelComic?.comicId) select(shown[next].comicId);
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  });
+  /** Moves the selection up or down the listed comics (the grid's arrow keys). */
+  const step = (delta: 1 | -1) => {
+    const index = current ? shown.findIndex((c) => c.comicId === current.comicId) : -1;
+    const next = shown[index < 0 ? 0 : Math.min(Math.max(index + delta, 0), shown.length - 1)];
+    if (next && next.comicId !== current?.comicId) select(next.comicId);
+  };
 
   if (isLoading) return <PageSkeleton />;
 
@@ -137,7 +131,7 @@ function RetrievalStatus() {
               <h2 className="text-lg font-semibold text-ink">Results by day</h2>
               <p className="text-sm text-ink-subtle">
                 ✓ on disk · ✗ expected and missing · blank when no strip was due. An outlined ✓ was fixed by a later attempt.
-                Select a comic for its attempts; ↑ and ↓ step through the list.
+                Select a comic for its attempts; in the grid, ↑ and ↓ step through the list.
               </p>
             </div>
             <RetrievalFilters filters={filters} sources={sources} onChange={setFilters} />
@@ -145,9 +139,10 @@ function RetrievalStatus() {
           {shown.length > 0 ? (
             <ResultsGrid
               comics={shown}
-              selectedId={mobile ? selectedId : (panelComic?.comicId ?? null)}
+              selectedId={current?.comicId ?? null}
               dates={dates}
               onSelect={(comic) => select(comic.comicId)}
+              onStep={step}
             />
           ) : !filters.attentionOnly || attentionCount > 0 ? (
             <p className="border-t border-border p-8 text-center text-ink-subtle">No comics match.</p>

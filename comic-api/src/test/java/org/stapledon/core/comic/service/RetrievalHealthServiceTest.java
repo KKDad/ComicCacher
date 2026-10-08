@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -234,6 +233,8 @@ class RetrievalHealthServiceTest {
         records.add(latest);
         records.add(ComicRetrievalRecord.success(1, "Daily", TODAY.minusDays(3), "gocomics", 10L, 10L).toBuilder()
                 .attemptedAt(OffsetDateTime.parse("2026-10-08T07:00:00Z")).build());
+        records.add(failure(1, "Daily", TODAY.minusDays(4), ComicRetrievalStatus.COMIC_UNAVAILABLE,
+                OffsetDateTime.parse("2026-10-08T08:00:00Z")));
 
         RetrievalHealth health = service.getHealth(7, 20);
 

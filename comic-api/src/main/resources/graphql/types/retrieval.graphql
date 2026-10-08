@@ -185,7 +185,7 @@ type RetrievalHealth {
     sources: [SourceRetrievalHealth!]!
 
     """
-    Today's failed attempts, newest first, up to errorLimit.
+    Today's failed attempts, newest first, up to errorLimit. COMIC_UNAVAILABLE (the source had no strip) isn't counted.
     """
     todaysErrors: [RetrievalError!]!
 
