@@ -97,4 +97,14 @@ describe('ResultsGrid', () => {
 
     expect(onStep).not.toHaveBeenCalled();
   });
+
+  it('names the month on the first column and on each 1st', () => {
+    const comics = [comic(1, 'Garfield', { days: days(10) })];
+    render(<ResultsGrid comics={comics} dates={comics[0].days.map((d) => d.date)} onSelect={vi.fn()} onStep={vi.fn()} />);
+
+    const headers = screen.getAllByRole('columnheader').slice(1, -1);
+    expect(headers[0]).toHaveTextContent(/^Sep/);
+    expect(headers.find((h) => h.title === 'Oct 1')).toHaveTextContent(/^Oct/);
+    expect(headers.find((h) => h.title === 'Oct 2')).not.toHaveTextContent(/Oct/);
+  });
 });

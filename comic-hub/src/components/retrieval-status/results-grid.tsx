@@ -68,10 +68,19 @@ export function ResultsGrid({ comics, selectedId = null, dates, onSelect, onStep
         <thead>
           <tr className="text-left text-ink-subtle">
             <th className="sticky left-0 z-base border-t border-border bg-card px-4 py-2 font-medium">Comic</th>
-            {dates.map((date) => {
+            {dates.map((date, i) => {
               const day = parseDate(date);
+              // The month names the first column and each 1st, so a month change is easy to spot
+              const monthStart = i === 0 || day.getDate() === 1;
               return (
-                <th key={date} className="border-t border-border px-0 py-2 text-center text-xs font-normal" title={formatShortDate(date)}>
+                <th
+                  key={date}
+                  className={`border-t border-border px-0 py-2 text-center text-xs font-normal ${monthStart && i > 0 ? 'border-l' : ''}`}
+                  title={formatShortDate(date)}
+                >
+                  <span className="block h-4 text-[0.625rem] font-semibold whitespace-nowrap text-ink uppercase">
+                    {monthStart ? day.toLocaleDateString('en-US', { month: 'short' }) : ''}
+                  </span>
                   <span className="block text-ink-muted">{day.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
                   <span className="block tabular-nums">{day.getDate()}</span>
                 </th>
@@ -112,8 +121,11 @@ export function ResultsGrid({ comics, selectedId = null, dates, onSelect, onStep
                     {comic.stale && <span className="shrink-0 text-xs text-error">stale</span>}
                   </span>
                 </th>
-                {dates.map((date) => (
-                  <td key={date} className={`border-t border-border p-0 text-center ${rowBg}`}>
+                {dates.map((date, i) => (
+                  <td
+                    key={date}
+                    className={`border-t border-border p-0 text-center ${rowBg} ${i > 0 && date.endsWith('-01') ? 'border-l' : ''}`}
+                  >
                     <DayCell comicName={comic.comicName} day={days.get(date)} />
                   </td>
                 ))}

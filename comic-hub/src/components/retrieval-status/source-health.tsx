@@ -4,7 +4,10 @@ import type { RetrievalHealth } from './health';
 
 type Source = RetrievalHealth['sources'][number];
 
-/** One card per source with today's results, so a source in trouble reads as one signal. */
+/**
+ * One card per source with today's attempts, so a source in trouble reads as one signal. These count retrieval records, not
+ * files: the banner's "On disk today" can differ after a backfill or a promotion.
+ */
 export function SourceHealth({ sources }: { sources: Source[] }) {
   if (sources.length === 0) return null;
 
@@ -14,9 +17,12 @@ export function SourceHealth({ sources }: { sources: Source[] }) {
         const troubled = s.rateLimited + s.failed > 0;
         return (
           <Card key={s.source} className={`p-4 ${troubled ? 'border-error' : ''}`}>
-            <Link href={`/sources/${s.source}`} className="font-semibold text-ink hover:underline">
-              {s.source}
-            </Link>
+            <div className="flex items-baseline justify-between gap-2">
+              <Link href={`/sources/${s.source}`} className="font-semibold text-ink hover:underline">
+                {s.source}
+              </Link>
+              <span className="text-xs text-ink-muted">Today’s attempts</span>
+            </div>
             <dl className="mt-2 grid grid-cols-4 gap-2 text-center text-xs">
               <Count label="Got" value={s.success} tone="text-success" />
               <Count label="Unavailable" value={s.unavailable} tone="text-warning" />

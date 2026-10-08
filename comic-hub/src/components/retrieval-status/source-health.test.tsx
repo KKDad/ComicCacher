@@ -14,7 +14,8 @@ describe('SourceHealth', () => {
 
     const link = screen.getByRole('link', { name: 'gocomics' });
     expect(link).toHaveAttribute('href', '/sources/gocomics');
-    const card = link.parentElement!;
+    const card = link.closest('[data-slot="card"]') as HTMLElement;
+    expect(within(card).getByText('Today’s attempts')).toBeInTheDocument();
     expect(within(card).getByText('Rate limited').nextSibling).toHaveTextContent('2');
     expect(within(card).getByText('Failed').nextSibling).toHaveTextContent('3');
   });

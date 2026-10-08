@@ -10,6 +10,7 @@ import { LastRunBanner } from '@/components/retrieval-status/last-run-banner';
 import { SourceHealth } from '@/components/retrieval-status/source-health';
 import { TodaysErrors } from '@/components/retrieval-status/todays-errors';
 import { ResultsGrid } from '@/components/retrieval-status/results-grid';
+import { ResultsLegend } from '@/components/retrieval-status/results-legend';
 import { ComicRetrievalDrawer } from '@/components/retrieval-status/comic-retrieval-drawer';
 import { ComicRetrievalPanel } from '@/components/retrieval-status/comic-retrieval-panel';
 import { useResponsiveNav } from '@/hooks/use-responsive-nav';
@@ -127,12 +128,9 @@ function RetrievalStatus() {
       <div className="gap-6 md:grid md:grid-cols-[minmax(0,1fr)_18rem] md:items-start 2xl:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="min-w-0">
           <div className="space-y-4 p-6 pb-4">
-            <div>
+            <div className="space-y-2">
               <h2 className="text-lg font-semibold text-ink">Results by day</h2>
-              <p className="text-sm text-ink-subtle">
-                ✓ on disk · ✗ expected and missing · blank when no strip was due. An outlined ✓ was fixed by a later attempt.
-                Select a comic for its attempts; in the grid, ↑ and ↓ step through the list.
-              </p>
+              <ResultsLegend />
             </div>
             <RetrievalFilters filters={filters} sources={sources} onChange={setFilters} />
           </div>

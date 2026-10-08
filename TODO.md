@@ -39,10 +39,11 @@
   - the date index cache
   - metrics, which are joined by directory name since #452
   - every reader URL (`/comics/{id}/read`), so bookmarks and shared links carry the old ids
-- **UUID or not:** a UUID would make every reader URL long and unreadable. Two better options:
-  - **(a)** renumber every comic to a small sequential int in one migration (a startup migration, or a one-off job) across the stores above, and keep an old→new map so old URLs and old preference entries redirect
-  - **(b)** keep an int internally and add a stable slug (`drabble`) for URLs, routing by slug
-- Either way, decide whether the API keeps accepting old ids, and for how long, before retiring them
+- **Decision:** a UUID as the internal id and a readable slug for URLs
+  - **UUID:** the key in every store above. It's stable, can't collide, isn't tied to the name, and is never shown to readers
+  - **Slug:** taken from the name (`drabble`, `calvin-and-hobbes`), unique and kept when the comic is renamed, with the old slug redirecting. Reader URLs become `/comics/drabble/read`
+  - **Migration:** one migration gives every comic a UUID and a slug, and rewrites the stores above from the old int ids, with an old-id → comic map kept so old URLs, bookmarks and preference entries redirect. The GraphQL API takes the UUID (or the slug where a URL is involved) and keeps accepting the old int for a deprecation period
+  - **Still to decide:** whether the strip directories (`{ComicDir}`, name-based today) move to the slug, and how long old ids keep working
 - Priority: Medium. Each new id-handling surface can hit the negative-id case, and the migration grows with every store keyed by id
 
 ## Log server errors and show the error digest
