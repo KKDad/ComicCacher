@@ -152,6 +152,8 @@
   --header-height: 64px;
   --mobile-nav-height: 64px;
   --content-max-width: 1200px;
+  /* Pages marked data-layout="wide" (a grid with a side panel) */
+  --content-wide-max-width: 1440px;
 }
 
 /* =====================================
