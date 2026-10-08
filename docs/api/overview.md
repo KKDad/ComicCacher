@@ -33,18 +33,22 @@ Authorization: Bearer <token>
 | Role | Description |
 |---|---|
 | `USER` | Standard product access. Can browse comics, manage favorites, update own profile. |
-| `OPERATOR` | Read-only operational access. Can view metrics, retrieval status, and batch job info. |
+| `OPERATOR` | Read-only operational access. Can view metrics, retrieval status, batch jobs and the Sources page. |
 | `ADMIN` | Full control. Can manage comics, trigger jobs, purge records, delete accounts. |
+
+The roles are ranked `ADMIN > OPERATOR > USER` (`RoleHierarchy` in `SecurityConfig`; `ROLE_RANK` in comic-hub's `lib/roles.ts`), so each role can do everything the ones below it can. A check for `OPERATOR` lets admins through too.
+
+**OPERATOR is never assigned by the app.** New accounts get `["USER"]`, and no mutation or page changes a user's roles. Every `OPERATOR` check is passed in practice by an `ADMIN`. To make an operator, stop the API, edit the user's `roles` in `users.json` (see [Configuration Files](../storage/configuration-files.md#2-usersjson-user-accounts)), and start it again. The API holds the users in memory and writes them back on every save (each login updates `lastLogin`), so an edit made while it runs is lost. Roles are also copied into the JWT, so the user gets the new role at their next token refresh (within 15 minutes) or sign-in. The role is kept so that read-only access can be given out later without changing the checks.
 
 ### Schema Directives
 
-The schema uses three directives to declare authorization requirements on each field:
+The schema uses three directives to declare authorization requirements on each field. They are declarations only: nothing in the API reads them. The `@PreAuthorize` annotation on each resolver method enforces the rule, so keep the two in step when changing either.
 
 | Directive | Meaning |
 |---|---|
 | `@public` | No authentication required. Accessible to anonymous requests. |
 | `@authenticated` | Requires a valid JWT token (any role). |
-| `@hasRole(role: "ROLE")` | Requires a valid JWT token with the specified role. |
+| `@hasRole(role: "ROLE")` | Requires a valid JWT token with the specified role or a higher one. |
 
 ### Dev Tokens (dev instance only)
 

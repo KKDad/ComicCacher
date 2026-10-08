@@ -59,7 +59,8 @@
 - **Scalars:** Custom scalars `Date`, `DateTime` and `JSON`.
 - **Mutations:** Return a "Payload" object containing the updated object and a list of user-friendly errors.
 - **Binary Data:** GQL handles metadata only. Binary streams (strip and avatar images) stay on REST in `ComicController`, returned as `ResponseEntity<byte[]>`.
-- **Authorization:** Three roles — `USER` (default), `OPERATOR` (batch/metrics read-only), `ADMIN` (full access). Schema directives: `@public`, `@authenticated`, `@hasRole(role: "ROLE")`.
+- **Authorization:** Three roles ranked `ADMIN > OPERATOR > USER` (`RoleHierarchy` in `SecurityConfig`): `USER` (default), `OPERATOR` (read-only operations: metrics, retrieval status, batch jobs, sources), `ADMIN` (full access). Nothing in the app assigns `OPERATOR` (only a hand edit of `users.json`), so in practice admins are the only operators. Gate read-only operational endpoints on `OPERATOR`, not `ADMIN`.
+- **Authorization checks:** `@PreAuthorize` on the resolver method enforces access. The schema directives (`@public`, `@authenticated`, `@hasRole(role: "ROLE")`) are declarations only, with no runtime wiring; keep each one matching its `@PreAuthorize`.
 
 ## 8. JSON Serialization
 - **Gson is the standard for persisted/domain JSON** — anything written to NFS or read back through `GsonUtils`. Do not use Jackson annotations (`@JsonProperty`, `@JsonFormat`, `@JsonIgnore`) on these DTOs.

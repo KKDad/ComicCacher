@@ -2,7 +2,7 @@
 
 ## API Reference
 
-GraphQL-first API with JWT authentication, three roles (USER, OPERATOR, ADMIN), and two supplementary REST endpoints.
+GraphQL-first API with JWT authentication, three roles (USER, OPERATOR, ADMIN; OPERATOR is only assigned by hand, see [Roles](api/overview.md#roles)), and two supplementary REST endpoints.
 
 | Document | Description |
 |----------|-------------|

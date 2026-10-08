@@ -84,7 +84,7 @@ Stores user accounts with hashed passwords. Keyed by username string.
       "displayName": "Admin User",
       "created": "2025-01-15T10:30:00",
       "lastLogin": "2025-03-18T08:45:00",
-      "roles": ["ADMIN", "OPERATOR", "USER"],
+      "roles": ["ADMIN"],
       "userToken": "550e8400-e29b-41d4-a716-446655440000"
     }
   }
@@ -101,7 +101,7 @@ Stores user accounts with hashed passwords. Keyed by username string.
 | `displayName` | `String` | `null` | Display name |
 | `created` | `OffsetDateTime` | `now()` (UTC) | Account creation timestamp |
 | `lastLogin` | `OffsetDateTime` | `null` | Last successful login (UTC) |
-| `roles` | `List<String>` | `[]` | Role assignments (ADMIN, OPERATOR, USER) |
+| `roles` | `List<String>` | `["USER"]` on registration | Role assignments: `USER`, `OPERATOR`, `ADMIN`. Higher roles include the lower ones, so one is enough. Nothing in the app changes them: stop the API, edit this field, and start it again (an edit while it runs is overwritten at the next save). See [Roles](../api/overview.md#roles) |
 | `userToken` | `UUID` | random | Stable user token |
 
 ---
