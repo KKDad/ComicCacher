@@ -20,6 +20,7 @@ const mockReader = {
   goToNextDate: vi.fn(),
   goToPreviousDate: vi.fn(),
   goToToday: vi.fn(),
+  goToOldest: vi.fn(),
 };
 
 describe('GridReader', () => {

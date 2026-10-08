@@ -22,7 +22,7 @@ interface DesktopGridReaderProps {
 }
 
 export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
-  const { date, comics, isLoading, goToDate, goToNextDate, goToPreviousDate, goToToday } = reader;
+  const { date, comics, isLoading, goToDate, goToNextDate, goToPreviousDate, goToToday, goToOldest } = reader;
   const router = useRouter();
   const lightbox = useLightbox(comics.length);
 
@@ -67,7 +67,7 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
           break;
         case 'Home':
           e.preventDefault();
-          goToDate('1900-01-01'); // BE clamps to oldest
+          goToOldest();
           break;
         case 'End':
           e.preventDefault();
@@ -82,7 +82,7 @@ export function DesktopGridReader({ reader }: DesktopGridReaderProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToPreviousDate, goToNextDate, goToDate, goToToday, router]);
+  }, [goToPreviousDate, goToNextDate, goToToday, goToOldest, router]);
 
   // Scroll to top when date changes
   useEffect(() => {

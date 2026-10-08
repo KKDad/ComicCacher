@@ -104,6 +104,19 @@ describe('useGridReader', () => {
     expect(result.current.goToToday).toBeInstanceOf(Function);
   });
 
+  it('goes to the earliest oldest date of the comics shown', () => {
+    const { result } = renderHook(() => useGridReader());
+    result.current.goToOldest();
+    expect(mockReplace).toHaveBeenCalledWith('/read?date=2019-01-01', { scroll: false });
+  });
+
+  it('stays put when no comics are loaded', () => {
+    vi.mocked(useGetComicsForDateQuery).mockReturnValue({ data: undefined, isLoading: true } as ReturnType<typeof useGetComicsForDateQuery>);
+    const { result } = renderHook(() => useGridReader());
+    result.current.goToOldest();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
   it('maps strip data correctly', () => {
     const { result } = renderHook(() => useGridReader());
     const garfield = result.current.comics.find((c) => c.name === 'Garfield');
