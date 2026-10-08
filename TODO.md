@@ -1,5 +1,24 @@
 # ComicCacher TODO
 
+## Capture and show each strip's alt text
+
+- Nothing stores a strip's alt / hover text today. Strips carry only `transcript` (`ImageMetadata`, the metadata sidecar, GraphQL `Strip.transcript`), which only Freefall fills, and Comics Hub shows it only in the dashboard grid reader's "Show transcript". The comic reader shows neither, and its `<Image alt>` is just "{comic} - {date}"
+- For xkcd the alt text is the punchline. Until this lands, `XkcdDownloaderStrategy` keeps it as the transcript
+- Add an `altText` field beside `transcript`:
+  - `IndexedStripData` / `ComicDownloadResult` / `ComicSaveData` / `ImageMetadata` and the sidecar (Gson, missing in old sidecars)
+  - GraphQL `Strip.altText`
+  - promotion (`PromotionSourceService` / `DevPromotionService` copy the transcript today)
+- Fill it per source:
+  - xkcd: `alt` from `info.0.json`; move it out of the transcript, and fill `transcript` from the JSON's own `transcript` field where it has one
+  - GoComics and Comics Kingdom: check whether the RSC payload or page carries an alt or description for the strip image
+  - Freefall: none
+- Show it in Comics Hub:
+  - use it as the strip image's `alt` (better for screen readers)
+  - show it under the strip in the mobile and desktop readers and the grid reader, as a caption or a tap-to-reveal like the transcript toggle (hover tooltips don't work on phones)
+  - also show the transcript in the comic reader, which never shows it today
+- Backfill: strips already on disk have no alt text. Add a one-off job, or let the backfill fill missing alt text for indexed sources, where one JSON request per strip is cheap
+- Priority: Very-High
+
 ## Full-screen mode or app for mobile
 
 - Add a full-screen reading mode on phones, or make Comics Hub work as an installable app
@@ -45,6 +64,20 @@
   - **Migration:** one migration gives every comic a UUID and a slug, and rewrites the stores above from the old int ids, with an old-id → comic map kept so old URLs, bookmarks and preference entries redirect. The GraphQL API takes the UUID (or the slug where a URL is involved) and keeps accepting the old int for a deprecation period
   - **Still to decide:** whether the strip directories (`{ComicDir}`, name-based today) move to the slug, and how long old ids keep working
 - Priority: Medium. Each new id-handling surface can hit the negative-id case, and the migration grows with every store keyed by id
+
+## Generate missing transcripts with an LLM
+
+- Most strips have no transcript: only Freefall supplies one (and xkcd's alt text sits there for now). Transcripts make strips searchable and readable with a screen reader
+- Send strips that have no transcript to a vision-capable LLM (e.g. Claude through the Anthropic API) and store the text it writes as the transcript
+  - Mark it as generated in `ImageMetadata` / the sidecar (e.g. `transcriptSource: SOURCE | GENERATED`), so a source transcript always wins and the UI can label generated ones
+  - Keep a fixed transcript format (speaker: line, one panel per paragraph) in the prompt
+- Run it as a batch job:
+  - newest strips first, with a per-run and per-day cap to bound the cost
+  - skip strips that fail or that the model can't read, and remember them, like the backfill's give-ups
+  - the API key comes from an environment variable, never logged; the job is off when it isn't set
+- Check the per-strip cost and the transcript quality on a sample of comics before turning it on for the whole cache
+- Pairs with "Capture and show each strip's alt text", which shows the transcript in the comic reader
+- Priority: Medium
 
 ## Log server errors and show the error digest
 
@@ -204,11 +237,20 @@
 
 # Additional Source Ideas
 
-- **XKCD** — https://xkcd.com/archive/
-  - Indexed
-- **The Web Comic Factory** — http://www.thewebcomicfactory.com/
+Checked 2026-10-08, in suggested order:
 - **Kevin and Kell** — https://www.kevinandkell.com/archive/
+  - Daily; the image URL is predictable: `/{yyyy}/strips/kk{yyyyMMdd}.jpg`
+  - robots.txt: `Crawl-delay: 10`
+- **Sinfest** — https://www.sinfest.net (redirects to `sinfest.xyz`)
+  - Daily; `btphp/comics/{yyyy-MM-dd}.jpg`, image only like Kevin and Kell
+  - robots.txt: `Crawl-delay: 10`
 - **Questionable Content** — https://www.questionablecontent.net/QCR/archive.php
+  - Indexed: `comics/{n}.png`, and the front page's `img#strip` gives the latest number
+  - The pages carry no dates, so strips would get the date they're fetched and backfilled ones no real date
+  - robots.txt has only content signals
 - **Penny Arcade** — https://www.penny-arcade.com/comic
-- **Sinfest** — https://www.sinfest.net
+  - Daily (Mon/Wed/Fri), but at `/comic/{yyyy}/{MM}/{dd}/{slug}`: the slug isn't known from the date, so each date needs a lookup
+  - Full image in `og:image` (the page shows panels)
+- **The Web Comic Factory** — http://www.thewebcomicfactory.com/
+  - A WordPress hub of several series (Pandamodium, In a Relationship, …); needs a catalog and a choice of series
 - Priority: High

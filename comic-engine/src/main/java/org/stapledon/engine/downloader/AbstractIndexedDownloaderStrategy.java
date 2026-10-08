@@ -51,6 +51,18 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
     }
 
     /**
+     * Thrown by a fetch when the source has the strip but nothing to download (an interactive strip, say). Reported as unavailable, like a 404.
+     */
+    protected static final class StripUnavailableException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        public StripUnavailableException(String message) {
+            super(message);
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -80,7 +92,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
 
     /**
      * Turns a failed fetch into a result: a 429 backs the whole source off (no retry here; callers decide), a 403 means the source refused us,
-     * 404/410 means the strip does not exist, any other HTTP status is logged without a stack trace, and anything else is logged with one.
+     * 404/410 or a {@link StripUnavailableException} means there is no strip to keep, any other HTTP status is logged without a stack trace, and anything else is logged with one.
      */
     private ComicDownloadResult failureFor(ComicItem comic, String what, Exception e) {
         ComicDownloadRequest request = buildRequest(comic, LocalDate.now(clock));
@@ -102,6 +114,11 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
             String errorMessage = String.format("%s for %s not found at source (HTTP %d)", capitalize(what), comic.getName(), status);
             log.warn(errorMessage);
             return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE, status);
+        }
+        if (e instanceof StripUnavailableException) {
+            String errorMessage = String.format("%s for %s is unavailable: %s", capitalize(what), comic.getName(), e.getMessage());
+            log.warn(errorMessage);
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE);
         }
         String errorMessage = String.format("Error downloading %s for %s: %s", what, comic.getName(), e.getMessage());
         if (status > 0) {
