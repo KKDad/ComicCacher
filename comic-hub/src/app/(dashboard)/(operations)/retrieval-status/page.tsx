@@ -21,7 +21,7 @@ function readFilters(params: URLSearchParams): Filters {
   return {
     source: params.get('source'),
     query: params.get('q') ?? '',
-    showAll: params.get('all') === '1',
+    attentionOnly: params.get('attention') === '1',
     days: (WINDOWS as readonly number[]).includes(days) ? days : MAX_WINDOW,
   };
 }
@@ -30,7 +30,7 @@ function writeFilters(filters: Filters): string {
   const params = new URLSearchParams();
   if (filters.source) params.set('source', filters.source);
   if (filters.query) params.set('q', filters.query);
-  if (filters.showAll) params.set('all', '1');
+  if (filters.attentionOnly) params.set('attention', '1');
   if (filters.days !== MAX_WINDOW) params.set('days', String(filters.days));
   const query = params.toString();
   return query ? `?${query}` : '';
@@ -51,11 +51,11 @@ function RetrievalStatus() {
   const shown = useMemo(() => {
     const search = filters.query.trim().toLowerCase();
     return (health?.comics ?? [])
-      .filter((c) => filters.showAll || needsAttention(c))
+      .filter((c) => !filters.attentionOnly || needsAttention(c))
       .filter((c) => !filters.source || c.source === filters.source)
       .filter((c) => !search || c.comicName.toLowerCase().includes(search))
-      .toSorted(filters.showAll ? (a, b) => compareNames(a.comicName, b.comicName) : bySeverity);
-  }, [health, filters.query, filters.showAll, filters.source]);
+      .toSorted(filters.attentionOnly ? bySeverity : (a, b) => compareNames(a.comicName, b.comicName));
+  }, [health, filters.query, filters.attentionOnly, filters.source]);
 
   const setFilters = (next: Filters) => router.replace(`${pathname}${writeFilters(next)}`, { scroll: false });
   const selected: ComicHealth | null = health?.comics.find((c) => c.comicId === selectedId) ?? null;
@@ -89,7 +89,7 @@ function RetrievalStatus() {
   const attentionCount = health.comics.filter(needsAttention).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-layout="wide">
       <h1 className="text-3xl font-bold text-ink">Retrieval Status</h1>
 
       <LastRunBanner targetDate={health.targetDate} lastRun={health.lastRun} comics={health.comics} />
@@ -102,13 +102,14 @@ function RetrievalStatus() {
             <h2 className="text-lg font-semibold text-ink">Results by day</h2>
             <p className="text-sm text-ink-subtle">
               ✓ on disk · ✗ expected and missing · blank when no strip was due. An outlined ✓ was fixed by a later attempt.
+              Click a comic for its attempts.
             </p>
           </div>
           <RetrievalFilters filters={filters} sources={sources} onChange={setFilters} />
         </div>
         {shown.length > 0 ? (
           <ResultsGrid comics={shown} dates={dates} onSelect={(comic) => setSelectedId(comic.comicId)} />
-        ) : filters.showAll || attentionCount > 0 ? (
+        ) : !filters.attentionOnly || attentionCount > 0 ? (
           <p className="border-t border-border p-8 text-center text-ink-subtle">No comics match.</p>
         ) : (
           <p className="flex items-center justify-center gap-2 border-t border-border p-8 text-ink-subtle">

@@ -34,7 +34,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
         tabIndex={-1}
         className="relative z-base outline-none pt-[var(--header-height)] pb-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 md:pl-[var(--sidebar-collapsed)] lg:pl-[var(--sidebar-width)]"
       >
-        <div className="container mx-auto p-4 lg:p-6 max-w-[var(--content-max-width)]">
+        <div className="container mx-auto p-4 lg:p-6 max-w-[var(--content-max-width)] has-[[data-layout=wide]]:max-w-none">
           {children}
         </div>
       </main>

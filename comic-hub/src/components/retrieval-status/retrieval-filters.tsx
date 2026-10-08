@@ -11,7 +11,7 @@ export const ALL_SOURCES = '__all__';
 export interface Filters {
   source: string | null;
   query: string;
-  showAll: boolean;
+  attentionOnly: boolean;
   days: number;
 }
 
@@ -26,12 +26,12 @@ export function RetrievalFilters({ filters, sources, onChange }: RetrievalFilter
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <div className="flex items-center gap-2">
         <Switch
-          id="retrieval-show-all"
-          checked={filters.showAll}
-          onCheckedChange={(showAll) => onChange({ ...filters, showAll })}
+          id="retrieval-attention-only"
+          checked={filters.attentionOnly}
+          onCheckedChange={(attentionOnly) => onChange({ ...filters, attentionOnly })}
         />
-        <Label htmlFor="retrieval-show-all" className="text-sm text-ink-subtle">
-          Show every comic
+        <Label htmlFor="retrieval-attention-only" className="text-sm text-ink-subtle">
+          Only comics needing attention
         </Label>
       </div>
       <Select

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DayOutcome, RetrievalStatusEnum } from '@/generated/graphql';
 import { comic, days, record, TARGET_DATE } from '@/test/retrieval-health';
@@ -40,12 +40,18 @@ describe('ResultsGrid', () => {
     expect(screen.getByRole('img', { name: 'Peanuts, Oct 6: on disk, recovered after NETWORK ERROR' })).toBeInTheDocument();
   });
 
-  it('shows the streak, the last error and a reader link', () => {
+  it('shows the newest strip and a reader link', () => {
     grid();
 
+    const row = screen.getByRole('rowheader', { name: 'Garfield' }).closest('tr')!;
     expect(screen.getByRole('link', { name: 'Garfield' })).toHaveAttribute('href', '/comics/1/read');
-    expect(screen.getByText('RATE LIMITED')).toBeInTheDocument();
-    expect(screen.getByText('RATE_LIMITED message')).toBeInTheDocument();
+    expect(within(row).getByText('Oct 8')).toBeInTheDocument();
+  });
+
+  it('needs only enough width for its day columns', () => {
+    grid();
+
+    expect(screen.getByRole('table').style.minWidth).toBe('20.75rem');
   });
 
   it('selects the comic when its row is clicked', async () => {

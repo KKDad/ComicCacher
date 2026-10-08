@@ -66,6 +66,14 @@ describe('RetrievalStatusPage', () => {
     expect(screen.getByText('boom')).toBeInTheDocument();
   });
 
+  it('takes the full width of the page', () => {
+    givenHealth();
+
+    const { container } = render(<RetrievalStatusPage />);
+
+    expect(container.querySelector('[data-layout="wide"]')).not.toBeNull();
+  });
+
   it('asks for the 30-day window', () => {
     givenHealth();
 
@@ -74,16 +82,7 @@ describe('RetrievalStatusPage', () => {
     expect(useGetRetrievalHealthQuery).toHaveBeenCalledWith({ days: 30 });
   });
 
-  it('lists only the comics that need attention, worst first', () => {
-    givenHealth();
-
-    render(<RetrievalStatusPage />);
-
-    expect(gridRows()).toEqual(['Peanuts', 'Zits']);
-  });
-
-  it('lists every comic by name with all=1', () => {
-    mockSearchParams({ all: '1' });
+  it('lists every comic by name', () => {
     givenHealth();
 
     render(<RetrievalStatusPage />);
@@ -91,8 +90,17 @@ describe('RetrievalStatusPage', () => {
     expect(gridRows()).toEqual(['Garfield', 'Peanuts', 'Retired', 'Zits']);
   });
 
+  it('lists only the comics that need attention, worst first, with attention=1', () => {
+    mockSearchParams({ attention: '1' });
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+
+    expect(gridRows()).toEqual(['Peanuts', 'Zits']);
+  });
+
   it('filters by source and name from the URL', () => {
-    mockSearchParams({ all: '1', source: 'gocomics', q: 'pea' });
+    mockSearchParams({ source: 'gocomics', q: 'pea' });
     givenHealth();
 
     render(<RetrievalStatusPage />);
@@ -106,7 +114,7 @@ describe('RetrievalStatusPage', () => {
 
     render(<RetrievalStatusPage />);
 
-    expect(within(screen.getByRole('table')).getAllByRole('columnheader')).toHaveLength(7 + 4);
+    expect(within(screen.getByRole('table')).getAllByRole('columnheader')).toHaveLength(7 + 2);
   });
 
   it('writes a filter change to the URL', async () => {
@@ -114,12 +122,13 @@ describe('RetrievalStatusPage', () => {
     givenHealth();
 
     render(<RetrievalStatusPage />);
-    await userEvent.click(screen.getByRole('switch', { name: 'Show every comic' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Only comics needing attention' }));
 
-    expect(router.replace).toHaveBeenCalledWith('/?all=1', { scroll: false });
+    expect(router.replace).toHaveBeenCalledWith('/?attention=1', { scroll: false });
   });
 
   it('says so when every comic is up to date', () => {
+    mockSearchParams({ attention: '1' });
     givenHealth({ comics: [comic(1, 'Garfield')] });
 
     render(<RetrievalStatusPage />);
