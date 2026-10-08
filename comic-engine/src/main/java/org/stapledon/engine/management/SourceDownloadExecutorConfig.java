@@ -12,7 +12,7 @@ import org.stapledon.common.util.MdcTaskDecorator;
 
 /**
  * Provides the {@code sourceDownloadExecutor} bean used by {@link ComicManagementFacade} to run per-source download work in parallel. Pool sized for the known set of comic sources
- * (currently 3: gocomics, comicskingdom, freefall) plus headroom.
+ * (currently 4: gocomics, comicskingdom, freefall, xkcd) plus headroom.
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
@@ -24,8 +24,8 @@ public class SourceDownloadExecutorConfig {
     @Bean(name = "sourceDownloadExecutor", destroyMethod = "shutdown")
     public ThreadPoolTaskExecutor sourceDownloadExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(4);
+        executor.setCorePoolSize(6);
+        executor.setMaxPoolSize(6);
         executor.setQueueCapacity(16);
         executor.setThreadNamePrefix("comic-source-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());

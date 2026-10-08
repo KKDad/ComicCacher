@@ -90,7 +90,7 @@ sequenceDiagram
 
 ## Strategy Dispatch
 
-`ComicDownloaderFacade` keeps a map of registered strategies keyed by source (`gocomics`, `comicskingdom`, `freefall`) and routes each request to the daily (date-based) or indexed (strip-number) download path. Each strategy fetches the page with Jsoup, extracts the image and validates it before returning a `ComicDownloadResult`. [Downloader Strategies](downloader-strategies.md) has the class hierarchy, the per-source extraction details, throttling, and how to add a source.
+`ComicDownloaderFacade` keeps a map of registered strategies keyed by source (`gocomics`, `comicskingdom`, `freefall`, `xkcd`) and routes each request to the daily (date-based) or indexed (strip-number) download path. Each strategy fetches the page with Jsoup, extracts the image and validates it before returning a `ComicDownloadResult`. [Downloader Strategies](downloader-strategies.md) has the class hierarchy, the per-source extraction details, throttling, and how to add a source.
 
 ## Storage Pipeline
 

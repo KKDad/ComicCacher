@@ -59,6 +59,7 @@ Reading a four-panel strip online usually means autoplay video, cookie banners, 
 | [GoComics](https://www.gocomics.com) | 300+ |
 | [Comics Kingdom](https://comicskingdom.com) | 100+ |
 | [Freefall](http://freefall.purrsia.com) | 1 |
+| [xkcd](https://xkcd.com) | 1 |
 
 Adding a source means writing a downloader strategy; see [downloader strategies](docs/design/downloader-strategies.md).
 

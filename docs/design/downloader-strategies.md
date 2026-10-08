@@ -65,6 +65,12 @@ classDiagram
         +downloadAvatarImage(...) byte[]
     }
 
+    class XkcdDownloaderStrategy {
+        +fetchLatestStrip(comic) IndexedStripData
+        +fetchStrip(comic, stripNumber) IndexedStripData
+        +downloadAvatarImage(...) byte[]
+    }
+
     ComicDownloaderStrategy <|-- DailyComicDownloaderStrategy
     ComicDownloaderStrategy <|-- IndexedComicDownloaderStrategy
     ComicDownloaderStrategy <|.. AbstractComicDownloaderStrategy
@@ -75,6 +81,7 @@ classDiagram
     AbstractDailyDownloaderStrategy <|-- GoComicsDownloaderStrategy
     AbstractDailyDownloaderStrategy <|-- ComicsKingdomDownloaderStrategy
     AbstractIndexedDownloaderStrategy <|-- FreefallDownloaderStrategy
+    AbstractIndexedDownloaderStrategy <|-- XkcdDownloaderStrategy
 ```
 
 ## Two Comic Models
@@ -93,7 +100,7 @@ Date-based comics publish one strip per calendar date. The download request carr
 Strip-number-based comics are addressed by a sequential integer. The actual publication date is discovered from the page content after fetching. Backfill walks a strip-number range.
 
 **Interface:** `IndexedComicDownloaderStrategy`
-**Sources:** Freefall
+**Sources:** Freefall, xkcd
 
 Key differences from daily comics:
 
@@ -137,7 +144,7 @@ Template method for strip-number-based downloads:
    - `LocalDate actualDate` — the date parsed from the page
    - `int stripNumber` — the strip number
    - `String transcript` — optional transcript text
-3. Validates the image and builds a `ComicDownloadResult` with the discovered metadata. `downloadStrip()` classifies failures with the same `FailureKind` values as daily downloads; a 429 backs the source off once and is not retried.
+3. Validates the image and builds a `ComicDownloadResult` with the discovered metadata. A fetch that finds the strip but nothing to download (an interactive xkcd) throws `StripUnavailableException`, reported as `UNAVAILABLE` like a 404. `downloadStrip()` classifies failures with the same `FailureKind` values as daily downloads; a 429 backs the source off once and is not retried.
 
 Subclasses only implement `fetchLatestStrip()`, `fetchStrip()`, and `downloadAvatarImage()`.
 
@@ -162,7 +169,7 @@ All outbound requests are paced per source by `SourceThrottleService`, configure
 
 A 429 that surfaces as a Jsoup `HttpStatusException` (sources that fetch pages with `Jsoup.connect().get()`) is not retried, but still backs the source off and is reported as `RATE_LIMITED`.
 
-Only daily sources retry; indexed sources (Freefall) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
+Only daily sources retry; indexed sources (Freefall, xkcd) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
 
 **HTTP 403 handling:** a 403 is reported as `BLOCKED`, never retried, and doesn't back the source off. One 403 can be a single forbidden strip, but several in a row mean the source's firewall is refusing us, and every further request only deepens the block. So after `DownloaderConstants.BLOCKED_IN_A_ROW_TO_STOP_SOURCE` (3) blocked downloads in a row from one source, the daily download run (`ComicManagementFacade`) skips that source's remaining comics for the date, and the backfill and catalog start detection skip the rest until their next run. Each logs one WARN when it stops the source. In retrieval status a 403 stays `NETWORK_ERROR` with HTTP status 403.
 
@@ -200,6 +207,7 @@ Additional facade methods for indexed comics:
 | `gocomics` | `GoComicsDownloaderStrategy` | Daily | Jsoup (`BrowserFetcher`) | The date's strip object in the page's RSC payload |
 | `comicskingdom` | `ComicsKingdomDownloaderStrategy` | Daily | Jsoup | `og:image` meta tags (2nd for hi-res) |
 | `freefall` | `FreefallDownloaderStrategy` | Indexed | Jsoup | `<img>` tag matching strip number |
+| `xkcd` | `XkcdDownloaderStrategy` | Indexed | JSON API (via Jsoup) | `img` in `info.0.json` |
 
 ### FreefallDownloaderStrategy Details
 
@@ -209,6 +217,14 @@ Freefall is the first indexed comic source. Notable implementation details:
 - **Color preference:** Reads from `BackfillConfigurationService` to determine whether to fetch color (`fc`) or grayscale (`fv`) strips. Falls back to the alternate format on HTTP error.
 - **Date discovery:** Parsed from the `<title>` tag (`"Freefall NNNN Month DD, YYYY"`) or from HTML comment nodes for older strips.
 - **Transcript extraction:** Parses text after a `"TRANSCRIPT"` heading in the page, if present.
+
+### XkcdDownloaderStrategy Details
+
+- **API:** `https://xkcd.com/info.0.json` for the latest strip, `https://xkcd.com/{n}/info.0.json` for strip `n`. Each gives `num`, `year`/`month`/`day`, `img`, `safe_title` and `alt`.
+- **Date:** built from the JSON's `year`, `month` and `day`.
+- **Alt text:** the hover caption (`alt`) is kept as the strip's transcript until strips get their own alt-text field (see TODO.md).
+- **Gaps:** strip 404 doesn't exist (the API answers HTTP 404, so `UNAVAILABLE`). Interactive strips (#1608, #1663, …) give the bare image directory as `img`, so they throw `StripUnavailableException`.
+- **Avatar:** the logo on the home page (`img[alt*=logo]`); its file name is a content hash, so it isn't hard-coded.
 
 ## Adding a New Source
 

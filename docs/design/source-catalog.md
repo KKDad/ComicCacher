@@ -1,6 +1,6 @@
 # Comic Sources and Their Catalogs
 
-The **Sources** page in Comics Hub lists each place comics come from (GoComics, Comics Kingdom, Freefall). For each one it shows:
+The **Sources** page in Comics Hub lists each place comics come from (GoComics, Comics Kingdom, Freefall, xkcd). For each one it shows:
 - how many of the source's comics are configured;
 - the source's settings, read-only;
 - a catalog of every comic the source offers.
@@ -29,6 +29,7 @@ Every source is one Spring bean implementing `ComicSource` (`comic-engine`, `org
 | GoComics | The A–Z page (`/comics/a-to-z`), one page of about 400 comics. Each anchor carries a JSON-LD `ImageObject` with the title, author and badge image | `"firstDate"` in the RSC payload of the comic's page (`/{slug}` with `RSC: 1`; the HTML page is refused with 403 from our IP). A comic GoComics no longer has returns its not-found page, so no start | The comic's about page (`/{slug}/about`): the `ComicSeries` JSON-LD description, and `"comic":{"categories":[…]}` from the Next.js data (broad, e.g. "Newspaper Comic Strips") |
 | Comics Kingdom | The public WordPress API behind the site (`wp.comicskingdom.com/wp-json/wp/v2/ck_feature`), 100 per page, with each feature's byline, featured image and oldest strip | `ck_oldest_comic.date`, which comes with the catalog | `excerpt` and the `ck_genre-*` entries of `class_list`, which come with the catalog |
 | Freefall | One fixed entry, no request | Strip 1 | None |
+| xkcd | One fixed entry, no request | Strip 1 | None |
 
 Every catalog and start request goes through `SourceThrottleService.withRetries`, under the source's own throttle and 429 back-off. Details and thumbnails, which the job reads many of, fail fast instead: the first 429 backs the source off once and stops that source's work for the run (see [SourceCatalogJob](#sourcecatalogjob)). GoComics pages are fetched with `BrowserFetcher`, which sends the desktop Chrome headers Cloudflare expects. A catalog page that parses to nothing is treated as a failure (the layout probably changed), and the stored catalog is kept.
 
@@ -111,7 +112,7 @@ Strip images are fetched without credentials, so the REST endpoint can't tell an
 |------|---------|
 | `comic-engine/.../engine/source/ComicSource.java` | The source contract |
 | `comic-engine/.../engine/source/SourceRegistry.java` | Collects sources, registers downloaders |
-| `comic-engine/.../engine/source/GoComicsSource.java`, `ComicsKingdomSource.java`, `FreefallSource.java` | The three sources |
+| `comic-engine/.../engine/source/GoComicsSource.java`, `ComicsKingdomSource.java`, `FreefallSource.java`, `XkcdSource.java` | The four sources |
 | `comic-engine/.../engine/source/SourceCatalogService.java` | Refresh, join, add from catalog, start detection, details |
 | `comic-engine/.../engine/source/CatalogThumbnailService.java` | Catalog thumbnails: download, prefetch, purge |
 | `comic-engine/.../engine/source/SourceCatalogRepository.java` | `source-catalog.json` |

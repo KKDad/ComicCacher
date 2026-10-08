@@ -6,7 +6,7 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 
 | Package | Purpose |
 |---------|---------|
-| `engine.downloader` | `*DownloaderStrategy` per source (GoComics, ComicsKingdom, Freefall) plus `ComicDownloaderFacade` and `SourceThrottleService` |
+| `engine.downloader` | `*DownloaderStrategy` per source (GoComics, ComicsKingdom, Freefall, xkcd) plus `ComicDownloaderFacade` and `SourceThrottleService` |
 | `engine.batch` | Spring Batch jobs — `*JobConfig` per job under `engine.batch.config/` |
 | `engine.validation` | Image validation, dedup, metadata backfill |
 | `engine.analysis` | Color/grayscale detection |
@@ -20,7 +20,7 @@ The download and processing engine. Owns scrapers, Spring Batch jobs, the image 
 
 - A source is a downloader strategy plus one `ComicSource` bean (`engine.source`); `SourceRegistry` registers it everywhere. See [@~/docs/design/source-catalog.md](../docs/design/source-catalog.md).
 - Daily-strip sources extend `AbstractDailyDownloaderStrategy`. Indexed/archive-walk sources extend `AbstractIndexedDownloaderStrategy`. New sources should extend one of these — never `AbstractComicDownloaderStrategy` directly unless implementing a fundamentally different access pattern.
-- All production strategies (GoComics, ComicsKingdom, Freefall) use Jsoup. GoComics sits behind a bot-protecting CDN, so its pages are fetched with `BrowserFetcher`, which sends desktop-Chrome headers with `Sec-Ch-Ua` client hints derived from the configured UA. GoComics strips come from the date page's Next.js RSC payload (`BrowserFetcher.fetchNextJsFlight()`), never the HTML page, which its firewall refuses with 403 from our IP. See [GoComics page data](../docs/design/downloader-strategies.md#throttling-and-rate-limits).
+- All production strategies (GoComics, ComicsKingdom, Freefall, xkcd) use Jsoup; xkcd reads its JSON API through Jsoup too. GoComics sits behind a bot-protecting CDN, so its pages are fetched with `BrowserFetcher`, which sends desktop-Chrome headers with `Sec-Ch-Ua` client hints derived from the configured UA. GoComics strips come from the date page's Next.js RSC payload (`BrowserFetcher.fetchNextJsFlight()`), never the HTML page, which its firewall refuses with 403 from our IP. See [GoComics page data](../docs/design/downloader-strategies.md#throttling-and-rate-limits).
 - Throttling is mandatory. Pace each request via `SourceThrottleService` using the `downloader.sources.<source>.throttle.min-delay-ms`/`max-delay-ms` properties. GoComics in particular needs aggressive jitter (8–20 s) to stay under Cloudflare's bot threshold.
 - HTTP 429 handling: throw `RateLimitedException` (see `downloadImageData()` and `BrowserFetcher`); outside a strategy, wrap the request in `SourceThrottleService.withRetries()`. `AbstractDailyDownloaderStrategy` retries it via `SourceThrottleService.backOff()`, which honours `Retry-After` and pauses the whole source. Configure with `downloader.sources.<source>.retry.max-attempts` / `initial-backoff-ms` / `max-backoff-ms`; unset means no retries.
 - The global `downloader.user-agent.default-value` applies unless `downloader.sources.<source>.user-agent` overrides it. Keep its Chrome major version current, and bump `UserAgentService.FALLBACK_USER_AGENT` at the same time.
