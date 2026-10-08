@@ -80,9 +80,7 @@
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
 
-        <module name="JavadocStyle">
-            <property name="checkFirstSentence" value="false"/>
-        </module>
+        <module name="SummaryJavadoc"/>
         <module name="InvalidJavadocPosition"/>
 
         <module name="ArrayTypeStyle"/>

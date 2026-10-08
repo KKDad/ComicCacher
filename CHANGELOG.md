@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `last_errors.json` and `ErrorTrackingService`: the file repeated the failures in `retrieval-status.json`, and nothing in the app read it. `utils/verify-json-files.sh` now lists it as obsolete, with `combined-metrics.json`. The property `comics.metrics.error-tracking.max-errors-per-comic` is gone
 - `executionTime` in `batch-executions.json`, which duplicated `endTime`
 
+### Security
+- Overrode Jackson to 2.21.7 and 3.1.7 for the jackson-core and jackson-databind DoS and validator CVEs fixed in those releases; Spring Boot 4.1.1 still ships 2.21.5 and 3.1.5 (#446)
+- Updated Checkstyle from 13.3.0 to 14.3.0, which drops the vulnerable plexus-utils from the Checkstyle classpath. Checkstyle 13.9 removed `JavadocStyle`; its replacement `SummaryJavadoc` now reports Javadoc first sentences without an ending period (#446)
+- Updated the GraphQL codegen packages in Comics Hub so every copy of `@graphql-tools/utils` is 12.0.3 (`mergeDeep` prototype pollution, fixed in 12.0.1) (#446)
+
 ## [2.6.1] - 2026-10-02
 ### Added
 - Prod copies strips from dev instead of downloading them again. Dev serves `/api/v1/promotion/**` to requests carrying the shared `X-Promotion-Token`: a manifest of the strips on disk (at most 7 days) and each strip with its transcript. Prod's `PromoteFromDevJob` runs at 07:00, between dev's download and its own, and saves each strip it's missing through the same validation, duplicate check and indexing as a download, never overwriting one. A manual run takes `days` (up to 7), `source` and `comic`. Freefall is left out. Only prod sets `comics.promotion.source-url`; `run.sh` writes the shared token to `/root/comics-promotion.env` on the first deploy of either environment, which the compose files load as an optional `env_file` (Compose 2.24+) (#427)
