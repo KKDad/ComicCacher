@@ -29,8 +29,8 @@ sequenceDiagram
         Strategy->>Strategy: SourceThrottleService.await(source)
         Strategy->>Strategy: downloadComicImage(request) [abstract]
         Strategy->>Source: HTTP GET (Jsoup)
-        Source-->>Strategy: HTML page
-        Strategy->>Strategy: Extract image URL (og:image meta tag)
+        Source-->>Strategy: HTML page (GoComics: RSC page data)
+        Strategy->>Strategy: Extract image URL (og:image meta tag; GoComics: the date's strip object)
         Strategy->>Source: HTTP GET image URL
         Source-->>Strategy: byte[] imageData
 

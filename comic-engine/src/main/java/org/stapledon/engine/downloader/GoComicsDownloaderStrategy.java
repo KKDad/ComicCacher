@@ -8,7 +8,12 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.infrastructure.web.InspectorService;
@@ -25,6 +30,10 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
 
     private static final int TIMEOUT = 5 * 1000;
     private static final String SOURCE_IDENTIFIER = "gocomics";
+    private static final DateTimeFormatter PATH_DATE = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
+    /** A strip object in the RSC payload: its image URL, then its date (both come before any nested object). */
+    private static final Pattern COMIC_OBJECT = Pattern.compile("\"comic\":\\{[^{}]*?\"url\":\"([^\"]+)\"[^{}]*?\"date\":\"(\\d{4}-\\d{2}-\\d{2})T");
 
     private final BrowserFetcher browserFetcher;
 
@@ -41,38 +50,39 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Reads the strip from the date page's React Server Components payload, which the site's own router fetches when a reader clicks through to
+     * a date. GoComics' firewall has refused full page loads of strip pages while still serving these, so the HTML page isn't fetched at all.
      */
     @Override
     protected byte[] downloadComicImage(ComicDownloadRequest request) throws Exception {
-        String url = generateSiteURL(request);
-        log.debug("Fetching {}", url);
+        String slug = comicSlug(request);
+        String url = String.format("https://www.gocomics.com/%s/%s", slug, request.getDate().format(PATH_DATE));
+        log.debug("Fetching page data for {}", url);
 
-        Document doc = fetchDocument(url);
-
-        // Extract image URL from Open Graph metadata
-        String imageUrl = extractImageFromOpenGraph(doc);
-
-        if (imageUrl == null) {
-            log.warn("No Open Graph image found for {} on {} at {}", request.getComicName(), request.getDate(), url);
+        String flight = browserFetcher.fetchNextJsFlight(SOURCE_IDENTIFIER, url, "/" + slug, TIMEOUT, BrowserFetcher.DEFAULT_MAX_BODY_BYTES);
+        Optional<String> imageUrl = stripImageUrl(flight, request.getDate());
+        if (imageUrl.isEmpty()) {
+            log.warn("No strip for {} on {} in the page data from {}", request.getComicName(), request.getDate(), url);
             return null;
         }
 
-        log.debug("Found image via Open Graph metadata: {}", imageUrl);
-        return downloadImageData(imageUrl);
+        log.debug("Found strip image {}", imageUrl.get());
+        return downloadImageData(imageUrl.get());
     }
 
     /**
-     * Extracts the comic image URL from Open Graph metadata tags.
-     *
-     * @param doc the parsed HTML document
-     * @return the image URL from og:image meta tag, or null if not found
+     * Finds the strip for {@code date} in a date page's RSC payload. The payload holds several {@code "comic":{...}} objects (the page's strip
+     * plus related strips from other dates), so the one whose {@code date} matches is taken; none matching means the source has no strip that day.
      */
-    private String extractImageFromOpenGraph(Document doc) {
-        Element ogImage = doc.selectFirst("meta[property=og:image]");
-        if (ogImage != null && ogImage.hasAttr("content")) {
-            return ogImage.attr("content");
+    static Optional<String> stripImageUrl(String flight, LocalDate date) {
+        Matcher m = COMIC_OBJECT.matcher(flight);
+        while (m.find()) {
+            if (m.group(2).equals(date.toString())) {
+                return Optional.of(m.group(1));
+            }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -101,17 +111,12 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
     }
 
     /**
-     * Generates the URL for a specific comic and date.
+     * The comic's path on gocomics.com: its source identifier, or else its name without spaces, lower-cased.
      */
-    private String generateSiteURL(ComicDownloadRequest request) {
-        String comicNameParsed = request.getComicName().replace(" ", "");
+    private static String comicSlug(ComicDownloadRequest request) {
         String sourceIdentifier = request.getSourceIdentifier();
-        String dateString = request.getDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-
-        // Use either the source identifier or the comic name as the URL path
-        String urlPath = sourceIdentifier != null && !sourceIdentifier.isEmpty() ? sourceIdentifier : comicNameParsed;
-
-        return String.format("https://www.gocomics.com/%s/%s/", urlPath, dateString).toLowerCase();
+        String slug = sourceIdentifier != null && !sourceIdentifier.isEmpty() ? sourceIdentifier : request.getComicName().replace(" ", "");
+        return slug.toLowerCase(Locale.ROOT);
     }
 
     /**

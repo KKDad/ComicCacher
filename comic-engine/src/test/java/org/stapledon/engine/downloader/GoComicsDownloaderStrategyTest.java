@@ -129,6 +129,39 @@ class GoComicsDownloaderStrategyTest {
         assertThat(toString.contains("GoComicsDownloaderStrategy")).isTrue();
     }
 
+    /**
+     * The shape of a date page's RSC payload, trimmed: the page's strip, then a related strip from another date, and an escaped JSON-LD copy
+     * of the page's date inside a string.
+     */
+    private static final String FLIGHT = """
+            0:{"a":"$@1"}
+            2:["$","meta","9",{"property":"og:image","content":"https://featureassets.gocomics.com/assets/9ec074b0"}]
+            5:["$","div",null,{"children":["$","$L56",null,{"comic":{"aspectRatio":3.488,"url":"https://featureassets.gocomics.com/assets/9ec074b0","isRerun":false,"id":13126094,"featureId":322,"date":"2026-10-08T00:00:00","issueDate":"2026-10-08T00:00:00","width":900}}]}]
+            6:["$","script",null,{"children":"{\\\"comic\\\":{\\\"url\\\":\\\"https://example.com/ld\\\",\\\"date\\\":\\\"2026-10-07T00:00:00\\\"}}"}]
+            7:["$","$L56",null,{"comic":{"aspectRatio":3.345,"url":"https://featureassets.gocomics.com/assets/239495d0","isRerun":false,"id":12861641,"featureId":322,"date":"1978-06-19T00:00:00","width":900}}]
+            """;
+
+    @Test
+    void stripImageUrl_takesTheStripForTheRequestedDate() {
+        assertThat(GoComicsDownloaderStrategy.stripImageUrl(FLIGHT, LocalDate.of(2026, 10, 8)))
+                .contains("https://featureassets.gocomics.com/assets/9ec074b0");
+        assertThat(GoComicsDownloaderStrategy.stripImageUrl(FLIGHT, LocalDate.of(1978, 6, 19)))
+                .contains("https://featureassets.gocomics.com/assets/239495d0");
+    }
+
+    @Test
+    void stripImageUrl_emptyWhenNoStripHasTheDate() {
+        // 2026-10-07 only appears escaped inside a string, which isn't a strip object
+        assertThat(GoComicsDownloaderStrategy.stripImageUrl(FLIGHT, LocalDate.of(2026, 10, 7))).isEmpty();
+        assertThat(GoComicsDownloaderStrategy.stripImageUrl("", LocalDate.of(2026, 10, 8))).isEmpty();
+    }
+
+    @Test
+    void nextJsCacheBuster_matchesTheRouter() {
+        // SHA-256 of "0,0,0,/garfield", first 12 bytes, base64url: the value Chrome sent for this navigation
+        assertThat(BrowserFetcher.nextJsCacheBuster("/garfield")).isEqualTo("XmGbwMFLp8eH9Ryj");
+    }
+
     @Test
     void chromeClientHints_matchChromeMajorFromUserAgent() {
         String ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36";

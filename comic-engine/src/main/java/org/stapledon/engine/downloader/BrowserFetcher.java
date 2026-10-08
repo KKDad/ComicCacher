@@ -9,8 +9,14 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,7 +71,49 @@ public class BrowserFetcher {
         }
     }
 
+    /**
+     * Fetches a Next.js page's React Server Components payload ({@code text/x-component}), as the site's own router does when a reader clicks
+     * through to {@code url} from {@code fromPath}: an {@code RSC: 1} request with {@code Next-Url}, and the {@code _rsc} cache-busting parameter
+     * computed the way the router computes it.
+     *
+     * @param fromPath the site path the navigation starts from, such as {@code /garfield}
+     * @param maxBodyBytes the most to read, or 0 for no limit
+     */
+    public String fetchNextJsFlight(String source, String url, String fromPath, int timeoutMs, int maxBodyBytes) throws IOException {
+        URI uri = URI.create(url);
+        String origin = uri.getScheme() + "://" + uri.getAuthority();
+        String flightUrl = url + (uri.getRawQuery() == null ? "?" : "&") + "_rsc=" + nextJsCacheBuster(fromPath);
+        Connection.Response response = execute(source, flightUrl, "*/*", false, timeoutMs, maxBodyBytes, Map.of(
+                "RSC", "1",
+                "Next-Url", fromPath,
+                "Referer", origin + fromPath,
+                "Sec-Fetch-Site", "same-origin"));
+        Charset charset = Optional.ofNullable(response.charset()).map(Charset::forName).orElse(StandardCharsets.UTF_8);
+        try (InputStream body = decodedBody(response)) {
+            return new String(body.readAllBytes(), charset);
+        }
+    }
+
+    /**
+     * The {@code _rsc} value the Next.js router sends for a navigation with only {@code Next-Url} set: the first 12 bytes of the SHA-256 of
+     * {@code "<prefetch>,<segment-prefetch>,<state-tree>,<next-url>"} (absent headers count as {@code 0}), base64url without padding.
+     * The server doesn't check it; sending what a browser would keeps the request ordinary.
+     */
+    static String nextJsCacheBuster(String nextUrl) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(("0,0,0," + nextUrl).getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(Arrays.copyOf(digest, 12));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
+    }
+
     private Connection.Response execute(String source, String url, String accept, boolean navigation, int timeoutMs, int maxBodyBytes) throws IOException {
+        return execute(source, url, accept, navigation, timeoutMs, maxBodyBytes, Map.of());
+    }
+
+    private Connection.Response execute(String source, String url, String accept, boolean navigation, int timeoutMs, int maxBodyBytes,
+            Map<String, String> extraHeaders) throws IOException {
         long start = System.nanoTime();
         String userAgent = userAgentService.getUserAgent(source);
         Connection connection = Jsoup.connect(url)
@@ -93,6 +141,8 @@ public class BrowserFetcher {
                     .header("Sec-Fetch-Mode", "cors")
                     .header("Sec-Fetch-Site", "same-site");
         }
+        // Set last, so these replace any default above
+        connection.headers(extraHeaders);
         Connection.Response response = connection.execute();
         log.debug("GET {} [{}] -> HTTP {} in {}ms", url, source, response.statusCode(), (System.nanoTime() - start) / 1_000_000);
 

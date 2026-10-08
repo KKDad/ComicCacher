@@ -24,8 +24,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.stapledon.common.dto.ComicDownloadRequest;
@@ -42,6 +44,7 @@ import org.stapledon.engine.batch.JsonBatchExecutionTracker;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition.Option;
+import org.stapledon.engine.downloader.DownloaderConstants;
 import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.engine.source.SourceRegistry;
 
@@ -49,8 +52,9 @@ import org.stapledon.engine.source.SourceRegistry;
  * Spring Batch configuration for comic backfill job. Gradually backfills missing comic strips: recent days first, then older history.
  * <p>
  * The job runs at every cron time (several times a day), but a scheduled run is skipped without any web request when
- * {@link ComicBackfillService#hasMissingStrips(String)} finds nothing to do. Within a run, the first HTTP 429 from a source stops backfill for that source
- * until the next run. Unavailable and duplicate results are recorded in {@link BackfillStateService} so later runs can skip them.
+ * {@link ComicBackfillService#hasMissingStrips(String)} finds nothing to do. Within a run, the first HTTP 429 from a source, or
+ * {@link DownloaderConstants#BLOCKED_IN_A_ROW_TO_STOP_SOURCE} HTTP 403s in a row, stop backfill for that source until the next run.
+ * Unavailable and duplicate results are recorded in {@link BackfillStateService} so later runs can skip them.
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
@@ -156,7 +160,8 @@ public class ComicBackfillJobConfig {
      * Processor that downloads a comic for a specific date. Uses downloadComicForDate for efficient single-comic downloads - the comic has already been validated and filtered by
      * ComicBackfillService. Step-scoped so each run starts with an empty set of rate-limited sources.
      * <ul>
-     * <li>A 429 fails at once (the source still backs off) and stops that source's remaining tasks for this run.</li>
+     * <li>A 429 fails at once (the source still backs off) and stops that source's remaining tasks for this run; so do
+     * {@link DownloaderConstants#BLOCKED_IN_A_ROW_TO_STOP_SOURCE} 403s in a row.</li>
      * <li>Unavailable and duplicate results are recorded so later runs can give up on the date or learn the source's history horizon.</li>
      * </ul>
      */
@@ -165,10 +170,11 @@ public class ComicBackfillJobConfig {
     @Qualifier("backfillTaskProcessor")
     public ItemProcessor<BackfillTask, ComicDownloadResult> backfillTaskProcessor() {
         Set<String> stoppedSources = new HashSet<>();
+        Map<String, Integer> blockedInARow = new HashMap<>();
         return task -> {
             String source = task.comic().getSource();
             if (stoppedSources.contains(source)) {
-                log.debug("Skipping {} backfill for {} - source was rate limited this run", source, task.comic().getName());
+                log.debug("Skipping {} backfill for {} - source was stopped this run", source, task.comic().getName());
                 return null;
             }
             try (var _ = MDC.putCloseable(LogContext.COMIC, task.comic().getName());
@@ -183,16 +189,15 @@ public class ComicBackfillJobConfig {
                         log.info("Backfilling {} for date: {}", dateTask.comic().getName(), dateTask.date());
                         ComicDownloadResult result = managementFacade.downloadComicForDate(dateTask.comic(), dateTask.date(), true).orElse(null);
                         backfillState.recordAttempt(source);
-                        recordOutcome(dateTask, result, stoppedSources);
+                        recordOutcome(dateTask, result);
+                        noteSourceResponse(source, result, stoppedSources, blockedInARow);
                         yield result;
                     }
                     case StripBackfillTask(var comic, var stripNumber) -> {
                         log.info("Backfilling {} for strip #{}", comic.getName(), stripNumber);
                         ComicDownloadResult result = managementFacade.downloadComicByStripNumber(comic, stripNumber).orElse(null);
                         backfillState.recordAttempt(source);
-                        if (result != null && result.isRateLimited()) {
-                            stopSource(source, stoppedSources);
-                        }
+                        noteSourceResponse(source, result, stoppedSources, blockedInARow);
                         yield result;
                     }
                 };
@@ -243,17 +248,14 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Feeds one date task's result to the backfill state, and stops the source for this run on a 429.
+     * Feeds one date task's result to the backfill state.
      */
-    private void recordOutcome(DateBackfillTask task, ComicDownloadResult result, Set<String> stoppedSources) {
-        if (result == null) {
-            // Already cached, or the save failed: nothing learned about the source
+    private void recordOutcome(DateBackfillTask task, ComicDownloadResult result) {
+        if (result == null || result.isRateLimited() || result.isBlocked()) {
+            // Already cached, the save failed, or the source turned us away: nothing learned about the date
             return;
         }
-        String source = task.comic().getSource();
-        if (result.isRateLimited()) {
-            stopSource(source, stoppedSources);
-        } else if (result.isSuccessful() && result.getSaveOutcome() == SaveResult.Outcome.DUPLICATE_SKIPPED) {
+        if (result.isSuccessful() && result.getSaveOutcome() == SaveResult.Outcome.DUPLICATE_SKIPPED) {
             backfillState.recordUnavailable(task.comic(), task.date(), BackfillStateService.OUTCOME_DUPLICATE);
         } else if (result.isSuccessful()) {
             backfillState.recordSuccess(task.comic(), task.date());
@@ -263,9 +265,26 @@ public class ComicBackfillJobConfig {
         // Other failures (network errors, exceptions) are transient: retry next run
     }
 
-    private static void stopSource(String source, Set<String> stoppedSources) {
-        stoppedSources.add(source);
-        log.warn("Source {} rate limited backfill (HTTP 429); skipping its remaining backfill tasks until the next run", source);
+    /**
+     * Stops the source for this run on a 429, or on {@link DownloaderConstants#BLOCKED_IN_A_ROW_TO_STOP_SOURCE} 403s in a row.
+     */
+    private static void noteSourceResponse(String source, ComicDownloadResult result, Set<String> stoppedSources, Map<String, Integer> blockedInARow) {
+        if (result == null) {
+            // Already cached, or the save failed: the source wasn't asked
+            return;
+        }
+        if (result.isRateLimited()) {
+            stoppedSources.add(source);
+            log.warn("Source {} rate limited backfill (HTTP 429); skipping its remaining backfill tasks until the next run", source);
+            return;
+        }
+        int blocked = result.isBlocked() ? blockedInARow.merge(source, 1, Integer::sum) : 0;
+        if (blocked == 0) {
+            blockedInARow.remove(source);
+        } else if (blocked >= DownloaderConstants.BLOCKED_IN_A_ROW_TO_STOP_SOURCE) {
+            stoppedSources.add(source);
+            log.warn("Source {} refused {} backfill downloads in a row (HTTP 403); skipping its remaining backfill tasks until the next run", source, blocked);
+        }
     }
 
     /**

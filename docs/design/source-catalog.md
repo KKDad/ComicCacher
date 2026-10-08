@@ -26,7 +26,7 @@ Every source is one Spring bean implementing `ComicSource` (`comic-engine`, `org
 
 | Source | Catalog | Start | Details |
 |--------|---------|-------|---------|
-| GoComics | The A–Z page (`/comics/a-to-z`), one page of about 400 comics. Each anchor carries a JSON-LD `ImageObject` with the title, author and badge image | `"firstDate"` in the Next.js data of the comic's page | The comic's about page (`/{slug}/about`): the `ComicSeries` JSON-LD description, and `"comic":{"categories":[…]}` from the Next.js data (broad, e.g. "Newspaper Comic Strips") |
+| GoComics | The A–Z page (`/comics/a-to-z`), one page of about 400 comics. Each anchor carries a JSON-LD `ImageObject` with the title, author and badge image | `"firstDate"` in the RSC payload of the comic's page (`/{slug}` with `RSC: 1`; the HTML page is refused with 403 from our IP). A comic GoComics no longer has returns its not-found page, so no start | The comic's about page (`/{slug}/about`): the `ComicSeries` JSON-LD description, and `"comic":{"categories":[…]}` from the Next.js data (broad, e.g. "Newspaper Comic Strips") |
 | Comics Kingdom | The public WordPress API behind the site (`wp.comicskingdom.com/wp-json/wp/v2/ck_feature`), 100 per page, with each feature's byline, featured image and oldest strip | `ck_oldest_comic.date`, which comes with the catalog | `excerpt` and the `ck_genre-*` entries of `class_list`, which come with the catalog |
 | Freefall | One fixed entry, no request | Strip 1 | None |
 
@@ -51,7 +51,7 @@ A configured comic is matched to its catalog entry by `ComicSource.identifierFor
 3. Reads due [details](#details) for up to `batch.source-catalog.details-per-run` (100) comics per source.
 4. Deletes stale [thumbnails](#thumbnails), then downloads up to `batch.source-catalog.thumbnails-per-run` (100) due ones per source.
 
-Steps 2–4 stop a source at its first HTTP 429: the source has been backed off (honouring `Retry-After`), and the rest wait for the next day's run. Every request is paced by the source's throttle, the same one the daily download uses: at GoComics' 8–20 s, 100 about pages take about 25 minutes, so a full run ends before the 06:00 download. After the first week or so, most days have little to do.
+Steps 2–4 stop a source at its first HTTP 429, and start detection also after 3 HTTP 403s in a row (`DownloaderConstants.BLOCKED_IN_A_ROW_TO_STOP_SOURCE`): the source has been backed off (honouring `Retry-After`), and the rest wait for the next day's run. Every request is paced by the source's throttle, the same one the daily download uses: at GoComics' 8–20 s, 100 about pages take about 25 minutes, so a full run ends before the 06:00 download. After the first week or so, most days have little to do.
 
 A failed refresh fails the step after the other sources have run, so the batch history shows it. The page's **Refresh catalog** button runs this job for one source with `force=true`, so manual refreshes appear in the batch history and logs too. One refresh per source runs at a time.
 

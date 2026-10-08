@@ -371,6 +371,19 @@ class AbstractComicDownloaderStrategyTest {
     }
 
     @Test
+    void shouldClassifyHttp403AsBlocked() {
+        strategy.setExceptionToThrow(new HttpStatusException("HTTP error fetching URL", 403, "https://example.com/strip"));
+
+        ComicDownloadResult result = strategy.downloadComic(testRequest());
+
+        assertThat(result.isBlocked()).isTrue();
+        assertThat(result.getHttpStatus()).isEqualTo(403);
+        assertThat(result.getErrorMessage()).contains("Blocked (HTTP 403)");
+        assertThat(strategy.getDownloadCalls()).isEqualTo(1);
+        verify(throttleService, never()).backOff(any(), anyInt(), any());
+    }
+
+    @Test
     void shouldClassifyOtherHttpErrorsAsError() {
         strategy.setExceptionToThrow(new HttpStatusException("HTTP error fetching URL", 503, "https://example.com/strip"));
 

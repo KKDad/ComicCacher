@@ -286,6 +286,52 @@ class ComicBackfillJobConfigTest {
     }
 
     @Test
+    void backfillTaskProcessor_threeBlockedInARowStopThatSourceForTheRun() throws Exception {
+        LocalDate date = LocalDate.of(2025, 1, 1);
+        List<ComicItem> blocked = List.of(createComic(1, "One"), createComic(2, "Two"), createComic(3, "Three"));
+        ComicItem fourth = createComic(4, "Four");
+        ComicItem other = createComic(5, "Other");
+        other.setSource("other-source");
+        for (ComicItem comic : blocked) {
+            when(managementFacade.downloadComicForDate(eq(comic), any(LocalDate.class), anyBoolean()))
+                    .thenReturn(Optional.of(ComicDownloadResult.failure(request(comic, date), "403", FailureKind.BLOCKED, 403)));
+        }
+        when(managementFacade.downloadComicForDate(eq(other), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.success(request(other, date), new byte[0])));
+
+        ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
+
+        for (ComicItem comic : blocked) {
+            assertThat(processor.process(new DateBackfillTask(comic, date)).isBlocked()).isTrue();
+        }
+        assertThat(processor.process(new DateBackfillTask(fourth, date))).isNull();
+        assertThat(processor.process(new DateBackfillTask(other, date))).isNotNull();
+
+        verify(managementFacade, never()).downloadComicForDate(eq(fourth), any(LocalDate.class), anyBoolean());
+        verify(backfillState, never()).recordUnavailable(any(), any(), any());
+    }
+
+    @Test
+    void backfillTaskProcessor_successResetsTheBlockedCount() throws Exception {
+        LocalDate date = LocalDate.of(2025, 1, 1);
+        ComicItem blocked = createComic(1, "Blocked");
+        ComicItem fine = createComic(2, "Fine");
+        when(managementFacade.downloadComicForDate(eq(blocked), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.failure(request(blocked, date), "403", FailureKind.BLOCKED, 403)));
+        when(managementFacade.downloadComicForDate(eq(fine), any(LocalDate.class), anyBoolean()))
+                .thenReturn(Optional.of(ComicDownloadResult.success(request(fine, date), new byte[0])));
+
+        ItemProcessor<BackfillTask, ComicDownloadResult> processor = config.backfillTaskProcessor();
+        processor.process(new DateBackfillTask(blocked, date));
+        processor.process(new DateBackfillTask(blocked, date.plusDays(1)));
+        processor.process(new DateBackfillTask(fine, date));
+        processor.process(new DateBackfillTask(blocked, date.plusDays(2)));
+        processor.process(new DateBackfillTask(blocked, date.plusDays(3)));
+
+        verify(managementFacade, times(4)).downloadComicForDate(eq(blocked), any(LocalDate.class), anyBoolean());
+    }
+
+    @Test
     void backfillTaskProcessor_newRunStartsWithNoStoppedSources() throws Exception {
         ComicItem comic = createComic(1, "Comic");
         LocalDate date = LocalDate.of(2025, 1, 1);

@@ -79,8 +79,8 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
     }
 
     /**
-     * Turns a failed fetch into a result: a 429 backs the whole source off (no retry here; callers decide), 404/410 means the strip does not
-     * exist, any other HTTP status is logged without a stack trace, and anything else is logged with one.
+     * Turns a failed fetch into a result: a 429 backs the whole source off (no retry here; callers decide), a 403 means the source refused us,
+     * 404/410 means the strip does not exist, any other HTTP status is logged without a stack trace, and anything else is logged with one.
      */
     private ComicDownloadResult failureFor(ComicItem comic, String what, Exception e) {
         ComicDownloadRequest request = buildRequest(comic, LocalDate.now(clock));
@@ -92,6 +92,11 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
                     what, comic.getName(), backoff.toSeconds(), e.getMessage());
             log.warn(errorMessage);
             return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED, status);
+        }
+        if (status == DownloaderConstants.HTTP_FORBIDDEN) {
+            String errorMessage = String.format("Blocked (HTTP 403) downloading %s for %s: %s", what, comic.getName(), e.getMessage());
+            log.warn(errorMessage);
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.BLOCKED, status);
         }
         if (isNotFoundStatus(status)) {
             String errorMessage = String.format("%s for %s not found at source (HTTP %d)", capitalize(what), comic.getName(), status);
