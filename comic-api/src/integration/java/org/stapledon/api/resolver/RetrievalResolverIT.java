@@ -37,6 +37,24 @@ class RetrievalResolverIT extends AbstractHttpGraphQlIntegrationTest {
             }
             """;
 
+    private static final String QUERY_RETRIEVAL_HEALTH = """
+            query RetrievalHealth($days: Int) {
+                retrievalHealth(days: $days) {
+                    targetDate
+                    lastRun { executionId status }
+                    sources { source success unavailable rateLimited failed }
+                    todaysErrors { recovered record { id status errorMessage } }
+                    comics {
+                        comicId
+                        comicName
+                        stale
+                        missingStreak
+                        days { date outcome recovered record { status } }
+                    }
+                }
+            }
+            """;
+
     @BeforeEach
     void authenticate() {
         authenticateAsOperator();
@@ -60,5 +78,28 @@ class RetrievalResolverIT extends AbstractHttpGraphQlIntegrationTest {
                 .errors().verify()
                 .path("retrievalSummary.totalAttempts").entity(Integer.class).satisfies(count -> assertThat(count).isGreaterThanOrEqualTo(0))
                 .path("retrievalSummary.successRate").entity(Double.class).satisfies(rate -> assertThat(rate).isGreaterThanOrEqualTo(0.0));
+    }
+
+    @Test
+    void retrievalHealth_returnsADayPerComicForTheWindow() {
+        getGraphQlTester()
+                .document(QUERY_RETRIEVAL_HEALTH)
+                .variable("days", 14)
+                .execute()
+                .errors().verify()
+                .path("retrievalHealth.targetDate").entity(String.class).satisfies(date -> assertThat(date).isNotBlank())
+                .path("retrievalHealth.comics").entityList(Object.class).satisfies(list -> assertThat(list).isNotEmpty())
+                .path("retrievalHealth.comics[0].days").entityList(Object.class).hasSize(14)
+                .path("retrievalHealth.comics[0].days[0].outcome").entity(String.class)
+                .satisfies(outcome -> assertThat(outcome).isIn("ON_DISK", "MISSING", "OFF_DAY", "PENDING"));
+    }
+
+    @Test
+    void retrievalHealth_rejectsUserRole() {
+        authenticateUser();
+        getGraphQlTester()
+                .document(QUERY_RETRIEVAL_HEALTH)
+                .execute()
+                .errors().satisfy(errors -> assertThat(errors).anyMatch(e -> e.getMessage().contains("permission")));
     }
 }

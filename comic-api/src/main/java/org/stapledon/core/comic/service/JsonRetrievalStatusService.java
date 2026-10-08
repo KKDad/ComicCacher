@@ -60,9 +60,11 @@ public class JsonRetrievalStatusService implements RetrievalStatusService {
         // Total count
         summary.put("totalCount", records.size());
 
-        // Success rate
+        // Success rate over the attempts that could succeed: a strip the source doesn't have (COMIC_UNAVAILABLE) is neither
         long successCount = countsByStatus.getOrDefault(ComicRetrievalStatus.SUCCESS, 0L);
-        double successRate = records.isEmpty() ? 0 : (double) successCount / records.size();
+        long unavailableCount = countsByStatus.getOrDefault(ComicRetrievalStatus.COMIC_UNAVAILABLE, 0L);
+        long attemptable = records.size() - unavailableCount;
+        double successRate = attemptable == 0 ? 0 : (double) successCount / attemptable;
         summary.put("successRate", successRate);
 
         // Average duration for successful retrievals
@@ -73,17 +75,11 @@ public class JsonRetrievalStatusService implements RetrievalStatusService {
                 .orElse(0);
         summary.put("averageDurationMillis", avgDurationMillis);
 
-        // Most common error types
-        Map<ComicRetrievalStatus, Long> errorCounts = countsByStatus.entrySet().stream()
-                .filter(e -> e.getKey() != ComicRetrievalStatus.SUCCESS)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        summary.put("errorCounts", errorCounts);
-
-        // Comics with most failures
-        Map<String, Long> failuresByComic = records.stream()
-                .filter(r -> r.getStatus() != ComicRetrievalStatus.SUCCESS)
-                .collect(Collectors.groupingBy(ComicRetrievalRecord::getComicName, Collectors.counting()));
-        summary.put("comicsWithMostFailures", failuresByComic);
+        // Counts by status for each comic
+        Map<String, Map<ComicRetrievalStatus, Long>> countsByComic = records.stream()
+                .collect(Collectors.groupingBy(ComicRetrievalRecord::getComicName,
+                        Collectors.groupingBy(ComicRetrievalRecord::getStatus, Collectors.counting())));
+        summary.put("countsByComic", countsByComic);
 
         return summary;
     }

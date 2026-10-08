@@ -10,6 +10,8 @@ import org.stapledon.api.dto.payload.MutationPayloads.PurgeRetrievalRecordsPaylo
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.service.RetrievalStatusService;
+import org.stapledon.core.comic.service.RetrievalHealthService;
+import org.stapledon.core.comic.service.RetrievalHealthService.RetrievalHealth;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -29,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RetrievalResolver {
 
     private final RetrievalStatusService retrievalStatusService;
+    private final RetrievalHealthService retrievalHealthService;
 
     // =========================================================================
     // Queries
@@ -107,6 +110,16 @@ public class RetrievalResolver {
         return buildSummary(raw);
     }
 
+    /**
+     * The retrieval-status page's data: the latest run, today's results and errors, and each comic's result per day.
+     */
+    @QueryMapping
+    @PreAuthorize("hasRole('OPERATOR')")
+    public RetrievalHealth retrievalHealth(@Argument Integer days, @Argument Integer errorLimit) {
+        log.debug("Getting retrieval health: days={}, errorLimit={}", days, errorLimit);
+        return retrievalHealthService.getHealth(Optional.ofNullable(days).orElse(30), Optional.ofNullable(errorLimit).orElse(20));
+    }
+
     // =========================================================================
     // Mutations
     // =========================================================================
@@ -174,11 +187,17 @@ public class RetrievalResolver {
                 .map(e -> new StatusCountDto(e.getKey(), e.getValue().intValue()))
                 .toList();
 
-        Map<String, Long> failuresByComic =
-                (Map<String, Long>) raw.getOrDefault("comicsWithMostFailures", Map.of());
+        Map<String, Map<ComicRetrievalStatus, Long>> countsByComic =
+                (Map<String, Map<ComicRetrievalStatus, Long>>) raw.getOrDefault("countsByComic", Map.of());
 
-        List<ComicRetrievalSummaryDto> byComic = failuresByComic.entrySet().stream()
-                .map(e -> new ComicRetrievalSummaryDto(e.getKey(), e.getValue().intValue(), 0, e.getValue().intValue()))
+        List<ComicRetrievalSummaryDto> byComic = countsByComic.entrySet().stream()
+                .map(e -> {
+                    Map<ComicRetrievalStatus, Long> counts = e.getValue();
+                    long total = counts.values().stream().mapToLong(Long::longValue).sum();
+                    long success = counts.getOrDefault(ComicRetrievalStatus.SUCCESS, 0L);
+                    long unavailable = counts.getOrDefault(ComicRetrievalStatus.COMIC_UNAVAILABLE, 0L);
+                    return new ComicRetrievalSummaryDto(e.getKey(), (int) total, (int) success, (int) (total - success - unavailable));
+                })
                 .toList();
 
         return new RetrievalSummaryDto(

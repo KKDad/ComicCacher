@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.service.RetrievalStatusService;
+import org.stapledon.core.comic.service.RetrievalHealthService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,11 +34,14 @@ class RetrievalResolverTest {
     @Mock
     private RetrievalStatusService retrievalStatusService;
 
+    @Mock
+    private RetrievalHealthService retrievalHealthService;
+
     private RetrievalResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new RetrievalResolver(retrievalStatusService);
+        resolver = new RetrievalResolver(retrievalStatusService, retrievalHealthService);
     }
 
     // =========================================================================
@@ -150,7 +154,10 @@ class RetrievalResolverTest {
                 "countsByStatus", countsByStatus,
                 "successRate", 0.9,
                 "averageDurationMillis", 250.0,
-                "comicsWithMostFailures", Map.of("Garfield", 5L));
+                "countsByComic", Map.of("Garfield", Map.of(
+                        ComicRetrievalStatus.SUCCESS, 20L,
+                        ComicRetrievalStatus.NETWORK_ERROR, 5L,
+                        ComicRetrievalStatus.COMIC_UNAVAILABLE, 2L)));
 
         when(retrievalStatusService.getRetrievalSummary(isNull(), isNull())).thenReturn(rawSummary);
 
@@ -160,6 +167,7 @@ class RetrievalResolverTest {
         assertThat(result.successCount()).isEqualTo(90);
         assertThat(result.successRate()).isEqualTo(90.0);
         assertThat(result.averageDurationMs()).isEqualTo(250.0);
+        assertThat(result.byComic()).containsExactly(new RetrievalResolver.ComicRetrievalSummaryDto("Garfield", 27, 20, 5));
     }
 
     @Test
@@ -169,7 +177,7 @@ class RetrievalResolverTest {
                 "countsByStatus", Map.of(),
                 "successRate", 0.0,
                 "averageDurationMillis", 0.0,
-                "comicsWithMostFailures", Map.of());
+                "countsByComic", Map.of());
 
         when(retrievalStatusService.getRetrievalSummary(isNull(), isNull())).thenReturn(rawSummary);
 
@@ -178,6 +186,26 @@ class RetrievalResolverTest {
         assertThat(result.totalAttempts()).isEqualTo(0);
         assertThat(result.successCount()).isEqualTo(0);
         assertThat(result.averageDurationMs()).isNull();
+    }
+
+    // =========================================================================
+    // retrievalHealth
+    // =========================================================================
+
+    @Test
+    void retrievalHealthDefaultsToThirtyDaysAndTwentyErrors() {
+        var health = new RetrievalHealthService.RetrievalHealth(LocalDate.of(2026, 10, 8), null, List.of(), List.of(), List.of());
+        when(retrievalHealthService.getHealth(30, 20)).thenReturn(health);
+
+        assertThat(resolver.retrievalHealth(null, null)).isSameAs(health);
+    }
+
+    @Test
+    void retrievalHealthPassesArguments() {
+        var health = new RetrievalHealthService.RetrievalHealth(LocalDate.of(2026, 10, 8), null, List.of(), List.of(), List.of());
+        when(retrievalHealthService.getHealth(7, 5)).thenReturn(health);
+
+        assertThat(resolver.retrievalHealth(7, 5)).isSameAs(health);
     }
 
     // =========================================================================

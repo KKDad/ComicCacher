@@ -6,24 +6,23 @@
 - Starting point: `app/manifest.ts` already sets `display: 'standalone'` with icons, so the site can be added to the home screen. Check how well that works on iOS and Android today, and whether `fullscreen` display, a full-screen toggle in the reader (Fullscreen API, which iOS Safari only partly supports), or hiding the app chrome while reading covers the need before thinking about a native app
 - Priority: Very-High
 
-## Rework the retrieval-status page
-
-- `/retrieval-status` is of little use as it stands and needs a full rethink: what an operator needs from it, what to show, and how
-- Priority: Medium-High
-
 ## Flow the batch-job cards into the gap when one is expanded
 
 - On `/batch-jobs`, expanding a card leaves empty space beside it, because the cards sit in a grid (`grid-cols-[repeat(auto-fill,…)] items-start`) whose rows are as tall as their tallest card
 - Let the cards in the other column move up into that space, e.g. a masonry-style layout (CSS columns, or one flex column per grid column)
 - Priority: Medium-High
 
-## Check the operator role on the server for the operations pages
+## Retry a strip from the retrieval-status page
 
-- `/metrics`, `/retrieval-status` and `/batch-jobs` are hidden from USER accounts only by the nav (`isOperator` in `sidebar.tsx`, `nav-rail.tsx`, `header.tsx`). A USER who types the URL gets the page, and only the API's rejection of its queries stops them
-- Next's authentication and data-security guides put authorization checks in server code, next to the data, not in what the UI shows
-- Move the three pages into a route group (e.g. `(dashboard)/(operations)/layout.tsx`) whose server layout calls `getSession()` and `isOperator()`, and calls `notFound()` otherwise (or `forbidden()`, which needs the experimental `authInterrupts` flag). `/sources` already does this in `sources/layout.tsx`; follow that pattern
-- Confirm the API rejects each operations query and mutation for USER accounts too, and add a layout test for the USER case
-- Priority: Medium-High. Unchanged: authorization belongs on the server, and confirming the API side is cheap
+- The retrieval-status page shows which strips are missing and why, but fixing one means waiting for the next run or a backfill
+- Add an ADMIN mutation `retryComicRetrieval(comicId, date)`, queued like `fetchComicAvatar`, that calls `ComicManagementFacade.downloadComicForDate` and the usual save path, and a retry button on missing cells and in the comic's drawer
+- Priority: Medium. Deferred from the retrieval-status rework
+
+## Keep attempt history in retrieval records
+
+- `retrieval-status.json` keeps one record per comic and date, and a retry replaces it, so a strip that took three tries looks like one clean success. The retrieval-status grid can only mark a strip "recovered" while its record still says it failed
+- Add an `attempts` count and the first failure (status, time) to `ComicRetrievalRecord`, kept when a later attempt replaces the record, and show them in the drawer
+- Priority: Low. Deferred from the retrieval-status rework
 
 ## Log server errors and show the error digest
 

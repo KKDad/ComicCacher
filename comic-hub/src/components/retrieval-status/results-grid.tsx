@@ -1,0 +1,138 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { Check, X } from 'lucide-react';
+import { DayOutcome } from '@/generated/graphql';
+import { formatShortDate, parseDate } from '@/lib/date-utils';
+import { StatusBadge } from './status-badge';
+import { describeDay, type ComicHealth, type RetrievalDay } from './health';
+
+interface ResultsGridProps {
+  comics: ComicHealth[];
+  /** The days to show, oldest first. */
+  dates: string[];
+  onSelect: (comic: ComicHealth) => void;
+}
+
+/**
+ * One row per comic, one column per day: ✓ the strip is on disk, ✗ an expected strip is missing, blank when none was due.
+ * The files decide, so a failure that a later attempt fixed is a ✓ (outlined). Scrolls sideways inside its card on narrow
+ * screens, opening on the newest day.
+ */
+export function ResultsGrid({ comics, dates, onSelect }: ResultsGridProps) {
+  const scroller = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [dates.length]);
+
+  return (
+    <div ref={scroller} className="overflow-x-auto">
+      <table className="w-full border-separate border-spacing-0 text-sm">
+        <thead>
+          <tr className="text-left text-ink-subtle">
+            <th className="sticky left-0 z-base min-w-36 border-t border-border bg-card px-4 py-2 font-medium sm:min-w-48">Comic</th>
+            <th className="border-t border-border px-2 py-2 text-right font-medium" title="Expected strips missing in a row">
+              Streak
+            </th>
+            {dates.map((date) => {
+              const day = parseDate(date);
+              return (
+                <th key={date} className="border-t border-border px-0 py-2 text-center text-xs font-normal" title={formatShortDate(date)}>
+                  <span className="block text-ink-muted">{day.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
+                  <span className="block tabular-nums">{day.getDate()}</span>
+                </th>
+              );
+            })}
+            <th className="border-t border-border px-4 py-2 font-medium whitespace-nowrap">Newest</th>
+            <th className="border-t border-border px-4 py-2 font-medium">Last error</th>
+          </tr>
+        </thead>
+        <tbody>
+          {comics.map((comic) => {
+            const days = new Map(comic.days.map((d) => [d.date, d]));
+            return (
+              <tr key={comic.comicId} className="group cursor-pointer" onClick={() => onSelect(comic)}>
+                <th
+                  scope="row"
+                  className="sticky left-0 z-base border-t border-border bg-card px-4 py-1.5 text-left font-normal group-hover:bg-surface-hover"
+                >
+                  <Link
+                    href={`/comics/${comic.comicId}/read`}
+                    className="text-ink hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {comic.comicName}
+                  </Link>
+                  {!comic.active && <span className="ml-2 text-xs text-ink-muted">inactive</span>}
+                  {comic.stale && <span className="ml-2 text-xs text-error">stale</span>}
+                </th>
+                <td className="border-t border-border px-2 py-1.5 text-right tabular-nums group-hover:bg-surface-hover">
+                  {comic.missingStreak > 0 ? <span className="font-semibold text-error">{comic.missingStreak}</span> : ''}
+                </td>
+                {dates.map((date) => (
+                  <td key={date} className="border-t border-border p-0 text-center group-hover:bg-surface-hover">
+                    <DayCell comicName={comic.comicName} day={days.get(date)} />
+                  </td>
+                ))}
+                <td className="border-t border-border px-4 py-1.5 whitespace-nowrap text-ink-subtle group-hover:bg-surface-hover">
+                  {comic.newest ? formatShortDate(comic.newest) : '—'}
+                </td>
+                <td className="border-t border-border px-4 py-1.5 group-hover:bg-surface-hover">
+                  {comic.latestError ? (
+                    <span className="flex items-center gap-2">
+                      <StatusBadge status={comic.latestError.status} />
+                      <span className="max-w-xs truncate text-xs text-ink-subtle">{comic.latestError.errorMessage}</span>
+                    </span>
+                  ) : (
+                    ''
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DayCell({ comicName, day }: { comicName: string; day: RetrievalDay | undefined }) {
+  if (!day) return null;
+  const label = `${comicName}, ${formatShortDate(day.date)}: ${describeDay(day)}`;
+
+  switch (day.outcome) {
+    case DayOutcome.OnDisk:
+      return (
+        <span
+          role="img"
+          aria-label={label}
+          title={label}
+          className={`inline-flex h-6 w-6 items-center justify-center rounded text-success ${day.recovered ? 'ring-1 ring-warning ring-inset' : ''}`}
+        >
+          <Check className="h-3.5 w-3.5" />
+        </span>
+      );
+    case DayOutcome.Missing:
+      return (
+        <span
+          role="img"
+          aria-label={label}
+          title={label}
+          className="inline-flex h-6 w-6 items-center justify-center rounded bg-error-subtle text-error"
+        >
+          <X className="h-3.5 w-3.5" />
+        </span>
+      );
+    case DayOutcome.Pending:
+      return (
+        <span role="img" aria-label={label} title={label} className="inline-flex h-6 w-6 items-center justify-center text-ink-muted">
+          ·
+        </span>
+      );
+    default:
+      return <span role="img" aria-label={label} title={label} className="inline-block h-6 w-6" />;
+  }
+}
