@@ -99,7 +99,7 @@ public class BrowserFetcher {
      * {@code "<prefetch>,<segment-prefetch>,<state-tree>,<next-url>"} (absent headers count as {@code 0}), base64url without padding.
      * The server doesn't check it; sending what a browser would keeps the request ordinary.
      */
-    static String nextJsCacheBuster(String nextUrl) {
+    public static String nextJsCacheBuster(String nextUrl) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(("0,0,0," + nextUrl).getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(Arrays.copyOf(digest, 12));
