@@ -12,18 +12,6 @@
 - Starting point: `app/manifest.ts` already sets `display: 'standalone'` with icons, so the site can be added to the home screen. Check how well that works on iOS and Android today, and whether `fullscreen` display, a full-screen toggle in the reader (Fullscreen API, which iOS Safari only partly supports), or hiding the app chrome while reading covers the need before thinking about a native app
 - Priority: Very-High
 
-## Add filters to the metrics page and link each comic to its reader
-
-- `/metrics` has no filters. Add at least a name search, and consider sorting and a source filter
-- Make each comic's name a link to the catch-up reader for that comic (`/comics/[id]/read`)
-- Priority: High
-
-## Find out why the metrics page shows nothing for Carpe Diem and Mother Goose & Grimm
-
-- Both comics show no metrics on `/metrics`, which looks wrong
-- First lead: the page merges storage and access data by a normalized name (`normalizeKey` in `metrics/page.tsx` strips spaces, apostrophes and hyphens, then lowercases). Storage uses directory names and access uses display names, so a name with `&` or other punctuation, or a directory named differently from the display name, won't match. Check what the API returns for both comics before changing the page, and consider merging by comic id instead
-- Priority: High
-
 ## Rework the retrieval-status page
 
 - `/retrieval-status` is of little use as it stands and needs a full rethink: what an operator needs from it, what to show, and how

@@ -34,10 +34,16 @@ Storage metrics for a single comic.
 """
 type ComicStorageMetric {
     """
-    Comic ID.
+    Comic ID, or null when no configured comic matches the name (always null from the standalone storageMetrics query).
     """
     comicId: Int
-    
+
+    """
+    Source id of the comic (e.g. gocomics), or null when no configured comic matches the name (always null from the
+    standalone storageMetrics query).
+    """
+    source: String
+
     """
     Comic name.
     """
@@ -103,6 +109,16 @@ type AccessMetrics {
 Access metrics for a single comic.
 """
 type ComicAccessMetric {
+    """
+    Comic ID, or null when no configured comic matches the name.
+    """
+    comicId: Int
+
+    """
+    Source id of the comic (e.g. gocomics), or null when no configured comic matches the name.
+    """
+    source: String
+
     """
     Comic name.
     """

@@ -77,7 +77,7 @@ class AccessMetricsTypeResolverTest {
                 .accessCount(3).lastAccess("2024-01-14T09:00:00")
                 .totalAccessTimeMs(300L).build());
 
-        var preBuiltList = List.of(new ComicAccessMetricView("Calvin", 1, 10.0, null));
+        var preBuiltList = List.of(new ComicAccessMetricView(null, null, "Calvin", 1, 10.0, null));
 
         return Stream.of(
                 new ComicsCase("AccessMetricsData with comicMetrics",

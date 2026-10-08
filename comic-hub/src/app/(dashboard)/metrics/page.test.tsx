@@ -10,9 +10,9 @@ vi.mock('@/generated/graphql', () => ({
 }));
 
 const mockStorageComics = [
-  { comicId: 1, comicName: 'Garfield', totalBytes: 5242880, imageCount: 100 },
-  { comicId: 2, comicName: 'Calvin and Hobbes', totalBytes: 10485760, imageCount: 200 },
-  { comicId: 3, comicName: 'Peanuts', totalBytes: 1048576, imageCount: 50 },
+  { comicId: 1, source: 'gocomics', comicName: 'Garfield', totalBytes: 5242880, imageCount: 100 },
+  { comicId: 2, source: 'gocomics', comicName: 'Calvin and Hobbes', totalBytes: 10485760, imageCount: 200 },
+  { comicId: 3, source: 'comicskingdom', comicName: 'Peanuts', totalBytes: 1048576, imageCount: 50 },
 ];
 
 const mockAccessComics = [
@@ -376,6 +376,116 @@ describe('MetricsPage', () => {
     // imageCount and totalBytes should be 0 for access-only entry
     expect(cells[1].textContent).toBe('0');
     expect(cells[2].textContent).toBe('0 B');
+  });
+
+  it('keeps the images of a comic listed under both its directory and display names', () => {
+    // What the API returned before it joined by directory name: each name in both lists, the empty one last
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
+      data: {
+        combinedMetrics: {
+          lastUpdated: null,
+          storage: {
+            totalBytes: 1000,
+            comicCount: 2,
+            comics: [
+              { comicId: null, comicName: 'MotherGoose&Grimm', totalBytes: 1000, imageCount: 149 },
+              { comicId: null, comicName: 'Mother Goose & Grimm', totalBytes: 0, imageCount: 0 },
+            ],
+          },
+          access: {
+            totalAccesses: 6,
+            comics: [
+              { comicId: null, comicName: 'MotherGoose&Grimm', accessCount: 0, averageAccessTimeMs: 0, lastAccessed: null },
+              { comicId: null, comicName: 'Mother Goose & Grimm', accessCount: 6, averageAccessTimeMs: 3.0, lastAccessed: null },
+            ],
+          },
+        },
+      },
+      isLoading: false,
+      error: null,
+    }));
+    renderWithQuery(<MetricsPage />);
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
+    expect(within(table).getAllByRole('row').slice(1)).toHaveLength(1);
+    const cells = within(table).getByText('Mother Goose & Grimm').closest('tr')!.querySelectorAll('td');
+    expect(cells[1].textContent).toBe('149');
+    expect(cells[4].textContent).toBe('6');
+    expect(cells[5].textContent).toBe('3.0 ms');
+  });
+
+  it('merges rows by comic id when the names differ', () => {
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
+      data: {
+        combinedMetrics: {
+          lastUpdated: null,
+          storage: { totalBytes: 500, comicCount: 1, comics: [{ comicId: 4, comicName: 'Carpe Diem', totalBytes: 500, imageCount: 9 }] },
+          access: {
+            totalAccesses: 2,
+            comics: [{ comicId: 4, comicName: 'CarpeDiem (old name)', accessCount: 2, averageAccessTimeMs: 1.0, lastAccessed: null }],
+          },
+        },
+      },
+      isLoading: false,
+      error: null,
+    }));
+    renderWithQuery(<MetricsPage />);
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
+    expect(within(table).getAllByRole('row').slice(1)).toHaveLength(1);
+    const cells = within(table).getByText('Carpe Diem').closest('tr')!.querySelectorAll('td');
+    expect(cells[1].textContent).toBe('9');
+    expect(cells[4].textContent).toBe('2');
+  });
+
+  it('links each comic with an id to its reader', () => {
+    renderWithQuery(<MetricsPage />);
+    expect(screen.getByRole('link', { name: 'Calvin and Hobbes' })).toHaveAttribute('href', '/comics/2/read');
+  });
+
+  it('filters the table by name', async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<MetricsPage />);
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search comics' }), 'calvinand');
+    expect(within(table).getAllByRole('row').slice(1)).toHaveLength(1);
+    expect(within(table).getByText('Calvin and Hobbes')).toBeInTheDocument();
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Search comics' }));
+    await user.type(screen.getByRole('searchbox', { name: 'Search comics' }), 'dilbert');
+    expect(within(table).getByText('No comics match.')).toBeInTheDocument();
+  });
+
+  it('filters the table by source', async () => {
+    // jsdom lacks the pointer-capture and scrolling calls the Radix select makes when it opens
+    Element.prototype.hasPointerCapture ??= () => false;
+    Element.prototype.releasePointerCapture ??= () => {};
+    Element.prototype.scrollIntoView ??= () => {};
+    const user = userEvent.setup();
+    renderWithQuery(<MetricsPage />);
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
+    expect(screen.getByRole('combobox', { name: 'Source' })).toHaveTextContent('Every source');
+
+    await user.click(screen.getByRole('combobox', { name: 'Source' }));
+    await user.click(await screen.findByRole('option', { name: 'comicskingdom' }));
+
+    expect(within(table).getAllByRole('row').slice(1)).toHaveLength(1);
+    expect(within(table).getByText('Peanuts')).toBeInTheDocument();
+  });
+
+  it('hides the source filter when every comic has the same source', () => {
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
+      data: {
+        combinedMetrics: {
+          lastUpdated: null,
+          storage: { totalBytes: 500, comicCount: 1, comics: [{ comicId: 4, source: 'gocomics', comicName: 'Agnes', totalBytes: 500, imageCount: 9 }] },
+          access: { totalAccesses: 0, comics: [] },
+        },
+      },
+      isLoading: false,
+      error: null,
+    }));
+    renderWithQuery(<MetricsPage />);
+    expect(screen.queryByRole('combobox', { name: 'Source' })).not.toBeInTheDocument();
   });
 
   it('formats 0 bytes correctly', () => {

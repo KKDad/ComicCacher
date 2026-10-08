@@ -204,6 +204,7 @@ query GetCombinedMetrics {
       comicCount
       comics {
         comicId
+        source
         comicName
         totalBytes
         imageCount
@@ -218,6 +219,8 @@ query GetCombinedMetrics {
     access {
       totalAccesses
       comics {
+        comicId
+        source
         comicName
         accessCount
         averageAccessTimeMs

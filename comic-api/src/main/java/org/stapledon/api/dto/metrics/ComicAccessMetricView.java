@@ -6,6 +6,8 @@ import java.time.OffsetDateTime;
  * Typed wrapper for per-comic access metric data.
  */
 public record ComicAccessMetricView(
+        Integer comicId,
+        String source,
         String comicName,
         int accessCount,
         double averageAccessTimeMs,
