@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Tests for the SystemHealthService
+ * Tests for the SystemHealthService.
  */
 @ExtendWith(MockitoExtension.class)
 class SystemHealthServiceTest {
@@ -128,7 +128,7 @@ class SystemHealthServiceTest {
     }
 
     /**
-     * Creates a mock ImageCacheStats object with test data
+     * Creates a mock ImageCacheStats object with test data.
      */
     private ImageCacheStats createMockImageCacheStats() {
         Map<String, ComicStorageMetrics> perComicMetrics = new HashMap<>();

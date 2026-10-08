@@ -11,9 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Optional;
-
 
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;

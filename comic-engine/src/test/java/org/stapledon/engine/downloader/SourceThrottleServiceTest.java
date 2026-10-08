@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.stapledon.common.config.properties.DownloaderProperties;
 
-
 class SourceThrottleServiceTest {
 
     @Test

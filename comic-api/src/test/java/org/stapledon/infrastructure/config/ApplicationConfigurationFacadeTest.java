@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Unit tests for ApplicationConfigurationFacade
+ * Unit tests for ApplicationConfigurationFacade.
  */
 class ApplicationConfigurationFacadeTest {
 
@@ -44,7 +44,7 @@ class ApplicationConfigurationFacadeTest {
         private final Map<String, Object> configCache = new HashMap<>();
         private final File configRoot;
 
-        public TestConfigurationFacade(Gson gson, CacheProperties properties, File configRoot) {
+        TestConfigurationFacade(Gson gson, CacheProperties properties, File configRoot) {
             super(gson, properties, configRoot.getAbsolutePath());
             this.configRoot = configRoot;
         }
@@ -296,7 +296,7 @@ class ApplicationConfigurationFacadeTest {
     }
 
     /**
-     * Helper method to create a test configuration file
+     * Helper method to create a test configuration file.
      */
     private void createTestFile(String filename, String content) throws IOException {
         File file = new File(configRoot, filename);

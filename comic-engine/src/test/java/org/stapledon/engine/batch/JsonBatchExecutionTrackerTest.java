@@ -300,9 +300,9 @@ class JsonBatchExecutionTrackerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "COMPLETED, COMPLETED",
-            "FAILED, FAILED",
-            "STARTED, STARTED"
+        "COMPLETED, COMPLETED",
+        "FAILED, FAILED",
+        "STARTED, STARTED"
     })
     void afterJobCapturesCorrectStatus(String batchStatusName, String expectedStatus) {
         BatchStatus batchStatus = BatchStatus.valueOf(batchStatusName);
@@ -503,7 +503,6 @@ class JsonBatchExecutionTrackerTest {
         execution.setEndTime(endTime);
         return execution;
     }
-
 
     /** A Toronto tracker that keeps everything for 100 years, capped at 5 runs per job, and knows no job names (prunes none). */
     private JsonBatchExecutionTracker trackerWith(Clock clock) {

@@ -36,7 +36,7 @@ class UserConfigWriterTest {
         private final Path tempDir;
         private boolean simulateWriteFailure;
 
-        public TestUserConfigWriter(Gson gson, Path tempDir) {
+        TestUserConfigWriter(Gson gson, Path tempDir) {
             super(gson, createCacheProperties(tempDir), null);
             this.tempDir = tempDir;
             inMemoryConfig = new UserConfig();
@@ -502,9 +502,9 @@ class UserConfigWriterTest {
         Exception exception = assertThatExceptionOfType(JsonParseException.class).isThrownBy(exceptionWriter::loadUsers).actual();
 
         // Verify it's the right exception with a meaningful message
-        assertThat(exception.getMessage().contains("malformed") ||
-                exception.getMessage().contains("Expected") ||
-                exception.getMessage().contains("syntax")).isTrue();
+        assertThat(exception.getMessage().contains("malformed")
+                || exception.getMessage().contains("Expected")
+                || exception.getMessage().contains("syntax")).isTrue();
     }
 
     /**

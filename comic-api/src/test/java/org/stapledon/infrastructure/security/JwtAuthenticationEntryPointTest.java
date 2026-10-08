@@ -20,7 +20,7 @@ class JwtAuthenticationEntryPointTest {
     void commenceShouldSendUnauthorizedError(String message) throws Exception {
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
-        AuthenticationException exception = new AuthenticationException(message) {};
+        AuthenticationException exception = new AuthenticationException(message) { };
 
         entryPoint.commence(request, response, exception);
 

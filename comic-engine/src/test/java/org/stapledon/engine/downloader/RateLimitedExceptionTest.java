@@ -8,7 +8,6 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-
 class RateLimitedExceptionTest {
 
     private static final OffsetDateTime NOW = OffsetDateTime.of(2026, 9, 24, 6, 0, 0, 0, ZoneOffset.UTC);

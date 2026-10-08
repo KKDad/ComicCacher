@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.ComicDateIndex;
 import org.stapledon.common.util.GsonUtils;

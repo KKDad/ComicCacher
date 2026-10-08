@@ -47,11 +47,11 @@ class AccessMetricsCollectorTest {
 
     @ParameterizedTest(name = "After {0} hits and {1} misses, accessCount={2}, hitRatio={3}")
     @CsvSource({
-            "1, 0, 1, 1.0",
-            "0, 1, 1, 0.0",
-            "3, 2, 5, 0.6",
-            "5, 0, 5, 1.0",
-            "0, 3, 3, 0.0"
+        "1, 0, 1, 1.0",
+        "0, 1, 1, 0.0",
+        "3, 2, 5, 0.6",
+        "5, 0, 5, 1.0",
+        "0, 3, 3, 0.0"
     })
     void trackAccess_accumulates(int hits, int misses, int expectedCount, double expectedHitRatio) {
         for (int i = 0; i < hits; i++) {

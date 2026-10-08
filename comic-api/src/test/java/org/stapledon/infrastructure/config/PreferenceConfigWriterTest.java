@@ -26,7 +26,7 @@ class PreferenceConfigWriterTest {
     private static class TestPreferenceConfigWriter extends PreferenceConfigWriter {
         private final PreferenceConfig inMemoryConfig;
 
-        public TestPreferenceConfigWriter(Gson gson) {
+        TestPreferenceConfigWriter(Gson gson) {
             super(gson, CacheProperties.builder().build(), null);
             inMemoryConfig = new PreferenceConfig();
         }
@@ -301,7 +301,8 @@ class PreferenceConfigWriterTest {
         }
 
         @Override
-        public LocalDate deserialize(com.google.gson.JsonElement json, java.lang.reflect.Type typeOfT, com.google.gson.JsonDeserializationContext context) throws com.google.gson.JsonParseException {
+        public LocalDate deserialize(com.google.gson.JsonElement json, java.lang.reflect.Type typeOfT,
+                com.google.gson.JsonDeserializationContext context) throws com.google.gson.JsonParseException {
             return LocalDate.parse(json.getAsString());
         }
     }

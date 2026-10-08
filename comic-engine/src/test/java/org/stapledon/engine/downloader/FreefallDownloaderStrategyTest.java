@@ -2,7 +2,6 @@ package org.stapledon.engine.downloader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -154,14 +153,14 @@ class FreefallDownloaderStrategyTest {
 
     @ParameterizedTest
     @CsvSource({
-            "1, 100",
-            "100, 100",
-            "101, 200",
-            "200, 200",
-            "201, 300",
-            "4350, 4400",
-            "4400, 4400",
-            "4401, 4500"
+        "1, 100",
+        "100, 100",
+        "101, 200",
+        "200, 200",
+        "201, 300",
+        "4350, 4400",
+        "4400, 4400",
+        "4401, 4500"
     })
     void shouldCalculateFolderNumber(int stripNumber, int expectedFolder) {
         assertThat(strategy.calculateFolderNumber(stripNumber)).isEqualTo(expectedFolder);

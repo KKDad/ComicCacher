@@ -27,5 +27,4 @@ class BuildVersionTest {
         assertThatNoException().isThrownBy(version::logProperties);
     }
 
-
 }

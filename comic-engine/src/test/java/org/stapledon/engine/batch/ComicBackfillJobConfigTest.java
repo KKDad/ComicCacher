@@ -29,7 +29,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicDownloadResult.FailureKind;

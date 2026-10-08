@@ -89,8 +89,8 @@ class ComicIndexIntegrationTest {
                 hashCacheService,
                 analysisService,
                 metadataRepository,
-                indexService
-        , Clock.systemDefaultZone());
+                indexService,
+                Clock.systemDefaultZone());
     }
 
     @Test
@@ -179,8 +179,8 @@ class ComicIndexIntegrationTest {
                 hashCacheService,
                 analysisService,
                 metadataRepository,
-                newIndexService
-        , Clock.systemDefaultZone());
+                newIndexService,
+                Clock.systemDefaultZone());
 
         // Act - Save second strip after "restart"
         assertThat(newStorageFacade.saveComicStrip(COMIC, date2, imageData)).isTrue();

@@ -24,7 +24,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Optional;
 
-
 import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageFormat;
@@ -487,7 +486,7 @@ class AbstractComicDownloaderStrategyTest {
     }
 
     /**
-     * Test implementation of AbstractDailyDownloaderStrategy for testing purposes
+     * Test implementation of AbstractDailyDownloaderStrategy for testing purposes.
      */
     private static class TestComicDownloaderStrategy extends AbstractDailyDownloaderStrategy {
         private byte[] mockImageData;
@@ -497,7 +496,7 @@ class AbstractComicDownloaderStrategyTest {
         private int rateLimitsRemaining;
         private int downloadCalls;
 
-        public TestComicDownloaderStrategy(String source,
+        TestComicDownloaderStrategy(String source,
                 InspectorService webInspector,
                 ValidationService imageValidationService,
                 UserAgentService userAgentService,

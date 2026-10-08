@@ -25,11 +25,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
 
 import org.stapledon.common.config.CacheProperties;
@@ -43,7 +40,7 @@ import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.validation.DuplicateHashCacheService;
 
 /**
- * Unit tests for FileSystemComicStorageFacade
+ * Unit tests for FileSystemComicStorageFacade.
  */
 @ExtendWith(MockitoExtension.class)
 class FileSystemComicStorageFacadeTest {
@@ -120,7 +117,7 @@ class FileSystemComicStorageFacadeTest {
     }
 
     /**
-     * Creates a test comic directory with daily comic files
+     * Creates a test comic directory with daily comic files.
      */
     private void createTestDirectoryStructure() {
         try {
