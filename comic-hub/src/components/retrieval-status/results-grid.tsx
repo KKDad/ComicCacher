@@ -13,6 +13,8 @@ const MIN_DAY_REM = 1.25;
 
 interface ResultsGridProps {
   comics: ComicHealth[];
+  /** The comic shown in the detail panel or sheet, highlighted and kept in view. */
+  selectedId?: number | null;
   /** The days to show, oldest first. */
   dates: string[];
   onSelect: (comic: ComicHealth) => void;
@@ -23,8 +25,13 @@ interface ResultsGridProps {
  * The files decide, so a failure that a later attempt fixed is a ✓ (outlined). The day columns share the card's width; only
  * below the table's minimum width (phones) does it scroll sideways inside its card, opening on the newest day.
  */
-export function ResultsGrid({ comics, dates, onSelect }: ResultsGridProps) {
+export function ResultsGrid({ comics, selectedId = null, dates, onSelect }: ResultsGridProps) {
   const scroller = useRef<HTMLDivElement>(null);
+  const selectedRow = useRef<HTMLTableRowElement>(null);
+
+  useEffect(() => {
+    selectedRow.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [selectedId]);
 
   useEffect(() => {
     const el = scroller.current;
@@ -62,17 +69,27 @@ export function ResultsGrid({ comics, dates, onSelect }: ResultsGridProps) {
         <tbody>
           {comics.map((comic) => {
             const days = new Map(comic.days.map((d) => [d.date, d]));
+            const selected = comic.comicId === selectedId;
+            const rowBg = selected ? 'bg-surface-muted' : 'group-hover:bg-surface-muted';
             return (
-              <tr key={comic.comicId} className="group cursor-pointer" onClick={() => onSelect(comic)}>
+              <tr
+                key={comic.comicId}
+                ref={selected ? selectedRow : undefined}
+                aria-current={selected || undefined}
+                className="group cursor-pointer"
+                onClick={() => onSelect(comic)}
+              >
                 <th
                   scope="row"
-                  className="sticky left-0 z-base border-t border-border bg-card px-4 py-1.5 text-left font-normal group-hover:bg-surface-hover"
+                  className={`sticky left-0 z-base border-t border-border bg-card px-4 py-1.5 text-left font-normal ${rowBg} ${
+                    selected ? 'shadow-[inset_3px_0_0_var(--color-ink)]' : ''
+                  }`}
                 >
                   <span className="flex min-w-0 items-baseline gap-2">
                     <Link
                       href={`/comics/${comic.comicId}/read`}
                       title={comic.comicName}
-                      className="truncate text-ink hover:underline"
+                      className={`truncate text-ink hover:underline ${selected ? 'font-semibold' : ''}`}
                       onClick={(e) => e.stopPropagation()}
                     >
                       {comic.comicName}
@@ -82,11 +99,11 @@ export function ResultsGrid({ comics, dates, onSelect }: ResultsGridProps) {
                   </span>
                 </th>
                 {dates.map((date) => (
-                  <td key={date} className="border-t border-border p-0 text-center group-hover:bg-surface-hover">
+                  <td key={date} className={`border-t border-border p-0 text-center ${rowBg}`}>
                     <DayCell comicName={comic.comicName} day={days.get(date)} />
                   </td>
                 ))}
-                <td className="border-t border-border px-2 py-1.5 text-right whitespace-nowrap text-ink-subtle group-hover:bg-surface-hover">
+                <td className={`border-t border-border px-2 py-1.5 text-right whitespace-nowrap text-ink-subtle ${rowBg}`}>
                   {comic.newest ? formatShortDate(comic.newest) : '—'}
                 </td>
               </tr>

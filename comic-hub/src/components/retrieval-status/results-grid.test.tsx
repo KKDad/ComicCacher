@@ -6,7 +6,7 @@ import { ResultsGrid } from './results-grid';
 
 const MISSING_DAY = '2026-10-07';
 
-function grid(onSelect = vi.fn()) {
+function grid(onSelect = vi.fn(), selectedId: number | null = null) {
   const missing = record(MISSING_DAY, RetrievalStatusEnum.RateLimited, { httpStatusCode: 429 });
   const comics = [
     comic(1, 'Garfield', {
@@ -21,7 +21,7 @@ function grid(onSelect = vi.fn()) {
       days: days(3, { '2026-10-06': { recovered: true, record: record('2026-10-06', RetrievalStatusEnum.NetworkError) } }),
     }),
   ];
-  render(<ResultsGrid comics={comics} dates={comics[0].days.map((d) => d.date)} onSelect={onSelect} />);
+  render(<ResultsGrid comics={comics} selectedId={selectedId} dates={comics[0].days.map((d) => d.date)} onSelect={onSelect} />);
   return onSelect;
 }
 
@@ -68,5 +68,12 @@ describe('ResultsGrid', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Peanuts' }));
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('marks the selected comic’s row', () => {
+    grid(vi.fn(), 2);
+
+    expect(screen.getByRole('rowheader', { name: 'Peanuts' }).closest('tr')).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('rowheader', { name: 'Garfield' }).closest('tr')).not.toHaveAttribute('aria-current');
   });
 });

@@ -4,6 +4,7 @@ import { useGetRetrievalHealthQuery, DayOutcome, RetrievalStatusEnum } from '@/g
 import { mockQueryResult } from '@/test/mock-query';
 import { mockRouter, mockSearchParams } from '@/test/mock-next';
 import { comic, days, health, record, TARGET_DATE } from '@/test/retrieval-health';
+import { useResponsiveNav } from '@/hooks/use-responsive-nav';
 import RetrievalStatusPage from './page';
 
 vi.mock('@/generated/graphql', async (importOriginal) => ({
@@ -12,6 +13,8 @@ vi.mock('@/generated/graphql', async (importOriginal) => ({
 }));
 
 vi.mock('@/components/batch-jobs/log-viewer', () => ({ LogViewer: () => null }));
+
+vi.mock('@/hooks/use-responsive-nav', () => ({ useResponsiveNav: vi.fn() }));
 
 type Query = ReturnType<typeof useGetRetrievalHealthQuery>;
 
@@ -45,7 +48,12 @@ describe('RetrievalStatusPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSearchParams();
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'desktop' });
   });
+
+  function panel() {
+    return screen.getByRole('complementary');
+  }
 
   it('shows a skeleton while loading', () => {
     vi.mocked(useGetRetrievalHealthQuery).mockReturnValue(mockQueryResult<Query['data']>({ isLoading: true }) as Query);
@@ -137,16 +145,81 @@ describe('RetrievalStatusPage', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
-  it('opens a comic’s attempts when its row is clicked', async () => {
+  it('shows the worst comic in the panel when none is selected', () => {
     givenHealth();
 
     render(<RetrievalStatusPage />);
-    await userEvent.click(screen.getByRole('img', { name: /Peanuts, Oct 8: missing/ }));
+
+    expect(within(panel()).getByRole('heading', { name: 'Peanuts' })).toBeInTheDocument();
+    expect(within(panel()).getByText('Too many requests')).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'Peanuts' }).closest('tr')).toHaveAttribute('aria-current', 'true');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows the comic named in the URL', () => {
+    mockSearchParams({ comic: '3' });
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+
+    expect(within(panel()).getByRole('heading', { name: 'Zits' })).toBeInTheDocument();
+  });
+
+  it('selects a comic in the URL when its row is clicked, without a slide-over', async () => {
+    const router = mockRouter();
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+    await userEvent.click(screen.getByRole('img', { name: /Garfield, Oct 8/ }));
+
+    expect(router.replace).toHaveBeenCalledWith('/?comic=1', { scroll: false });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('steps to the next and previous comic with the arrow keys', async () => {
+    const router = mockRouter();
+    mockSearchParams({ comic: '2' });
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+    await userEvent.keyboard('{ArrowDown}');
+    expect(router.replace).toHaveBeenLastCalledWith('/?comic=4', { scroll: false });
+
+    await userEvent.keyboard('{ArrowUp}');
+    expect(router.replace).toHaveBeenLastCalledWith('/?comic=1', { scroll: false });
+  });
+
+  it('leaves the arrow keys to the search box', async () => {
+    const router = mockRouter();
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+    await userEvent.click(screen.getByRole('searchbox', { name: 'Search comics' }));
+    await userEvent.keyboard('{ArrowDown}');
+
+    expect(router.replace).not.toHaveBeenCalledWith(expect.stringContaining('comic='), expect.anything());
+  });
+
+  it('opens a slide-over for the selected comic on phones', async () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'mobile' });
+    mockSearchParams({ comic: '2' });
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
 
     const drawer = await screen.findByRole('dialog');
     expect(within(drawer).getByText('Peanuts')).toBeInTheDocument();
     expect(within(drawer).getByText('Too many requests')).toBeInTheDocument();
     expect(within(drawer).getByText('HTTP 429')).toBeInTheDocument();
+  });
+
+  it('opens no slide-over on phones until a comic is chosen', () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'mobile' });
+    givenHealth();
+
+    render(<RetrievalStatusPage />);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('shows the empty state without comics', () => {

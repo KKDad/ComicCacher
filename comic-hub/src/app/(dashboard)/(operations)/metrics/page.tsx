@@ -267,7 +267,7 @@ export default function MetricsPage() {
                 </thead>
                 <tbody>
                   {combinedComics.map((comic) => (
-                    <tr key={comic.comicId ?? comic.comicName} className="border-t border-border hover:bg-surface-hover">
+                    <tr key={comic.comicId ?? comic.comicName} className="border-t border-border hover:bg-surface-muted">
                       <td className="px-6 py-3 text-ink">
                         {comic.comicId != null ? (
                           <Link href={`/comics/${comic.comicId}/read`} className="hover:underline">

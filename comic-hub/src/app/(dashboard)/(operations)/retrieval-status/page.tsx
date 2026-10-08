@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -11,9 +11,17 @@ import { SourceHealth } from '@/components/retrieval-status/source-health';
 import { TodaysErrors } from '@/components/retrieval-status/todays-errors';
 import { ResultsGrid } from '@/components/retrieval-status/results-grid';
 import { ComicRetrievalDrawer } from '@/components/retrieval-status/comic-retrieval-drawer';
+import { ComicRetrievalPanel } from '@/components/retrieval-status/comic-retrieval-panel';
+import { useResponsiveNav } from '@/hooks/use-responsive-nav';
 import { RetrievalFilters, type Filters } from '@/components/retrieval-status/retrieval-filters';
 import { compareNames } from '@/lib/sort';
 import { MAX_WINDOW, WINDOWS, bySeverity, needsAttention, type ComicHealth } from '@/components/retrieval-status/health';
+
+/** Whether a key press came from a control that uses the arrow keys itself. */
+function isFromControl(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || target.closest('input, textarea, select, [role="combobox"], [role="switch"], [role="listbox"], [role="dialog"]') != null;
+}
 
 /** Reads the filters from the URL, so a filtered view can be linked to. */
 function readFilters(params: URLSearchParams): Filters {
@@ -26,12 +34,13 @@ function readFilters(params: URLSearchParams): Filters {
   };
 }
 
-function writeFilters(filters: Filters): string {
+function writeFilters(filters: Filters, comicId: number | null): string {
   const params = new URLSearchParams();
   if (filters.source) params.set('source', filters.source);
   if (filters.query) params.set('q', filters.query);
   if (filters.attentionOnly) params.set('attention', '1');
   if (filters.days !== MAX_WINDOW) params.set('days', String(filters.days));
+  if (comicId != null) params.set('comic', String(comicId));
   const query = params.toString();
   return query ? `?${query}` : '';
 }
@@ -41,7 +50,10 @@ function RetrievalStatus() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const filters = readFilters(new URLSearchParams(searchParams.toString()));
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const comicParam = Number(searchParams.get('comic'));
+  const selectedId = Number.isInteger(comicParam) && comicParam > 0 ? comicParam : null;
+  const { layout } = useResponsiveNav();
+  const mobile = layout === 'mobile';
 
   const { data, isLoading, error } = useGetRetrievalHealthQuery({ days: MAX_WINDOW });
   const health = data?.retrievalHealth;
@@ -57,8 +69,30 @@ function RetrievalStatus() {
       .toSorted(filters.attentionOnly ? bySeverity : (a, b) => compareNames(a.comicName, b.comicName));
   }, [health, filters.query, filters.attentionOnly, filters.source]);
 
-  const setFilters = (next: Filters) => router.replace(`${pathname}${writeFilters(next)}`, { scroll: false });
+  const select = (comicId: number | null, next: Filters = filters) =>
+    router.replace(`${pathname}${writeFilters(next, comicId)}`, { scroll: false });
+  const setFilters = (next: Filters) => select(selectedId, next);
   const selected: ComicHealth | null = health?.comics.find((c) => c.comicId === selectedId) ?? null;
+  // The panel is never empty: without a selection it shows the worst comic needing attention, or the first one listed
+  const panelComic: ComicHealth | null = useMemo(
+    () => selected ?? health?.comics.filter(needsAttention).toSorted(bySeverity)[0] ?? shown[0] ?? null,
+    [selected, health, shown],
+  );
+
+  // Up and down step through the listed comics, in the panel or the sheet
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.key !== 'ArrowDown' && e.key !== 'ArrowUp') || e.altKey || e.ctrlKey || e.metaKey || shown.length === 0) return;
+      if (mobile && selected == null) return;
+      if (isFromControl(e.target) && !(mobile && selected)) return;
+      const index = shown.findIndex((c) => c.comicId === panelComic?.comicId);
+      const next = e.key === 'ArrowDown' ? Math.min(index + 1, shown.length - 1) : Math.max(index - 1, 0);
+      e.preventDefault();
+      if (shown[next] && shown[next].comicId !== panelComic?.comicId) select(shown[next].comicId);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  });
 
   if (isLoading) return <PageSkeleton />;
 
@@ -96,30 +130,40 @@ function RetrievalStatus() {
       <SourceHealth sources={health.sources} />
       <TodaysErrors errors={health.todaysErrors} />
 
-      <Card>
-        <div className="space-y-4 p-6 pb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-ink">Results by day</h2>
-            <p className="text-sm text-ink-subtle">
-              ✓ on disk · ✗ expected and missing · blank when no strip was due. An outlined ✓ was fixed by a later attempt.
-              Click a comic for its attempts.
-            </p>
+      <div className="gap-6 md:grid md:grid-cols-[minmax(0,1fr)_18rem] md:items-start 2xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <Card className="min-w-0">
+          <div className="space-y-4 p-6 pb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-ink">Results by day</h2>
+              <p className="text-sm text-ink-subtle">
+                ✓ on disk · ✗ expected and missing · blank when no strip was due. An outlined ✓ was fixed by a later attempt.
+                Select a comic for its attempts; ↑ and ↓ step through the list.
+              </p>
+            </div>
+            <RetrievalFilters filters={filters} sources={sources} onChange={setFilters} />
           </div>
-          <RetrievalFilters filters={filters} sources={sources} onChange={setFilters} />
-        </div>
-        {shown.length > 0 ? (
-          <ResultsGrid comics={shown} dates={dates} onSelect={(comic) => setSelectedId(comic.comicId)} />
-        ) : !filters.attentionOnly || attentionCount > 0 ? (
-          <p className="border-t border-border p-8 text-center text-ink-subtle">No comics match.</p>
-        ) : (
-          <p className="flex items-center justify-center gap-2 border-t border-border p-8 text-ink-subtle">
-            <CheckCircle className="h-5 w-5 text-success" />
-            Every comic is up to date.
-          </p>
-        )}
-      </Card>
+          {shown.length > 0 ? (
+            <ResultsGrid
+              comics={shown}
+              selectedId={mobile ? selectedId : (panelComic?.comicId ?? null)}
+              dates={dates}
+              onSelect={(comic) => select(comic.comicId)}
+            />
+          ) : !filters.attentionOnly || attentionCount > 0 ? (
+            <p className="border-t border-border p-8 text-center text-ink-subtle">No comics match.</p>
+          ) : (
+            <p className="flex items-center justify-center gap-2 border-t border-border p-8 text-ink-subtle">
+              <CheckCircle className="h-5 w-5 text-success" />
+              Every comic is up to date.
+            </p>
+          )}
+        </Card>
+        <aside className="hidden md:block">
+          <ComicRetrievalPanel comic={panelComic} />
+        </aside>
+      </div>
 
-      <ComicRetrievalDrawer comic={selected} onOpenChange={(open) => !open && setSelectedId(null)} />
+      <ComicRetrievalDrawer comic={mobile ? selected : null} onOpenChange={(open) => !open && select(null)} />
     </div>
   );
 }
