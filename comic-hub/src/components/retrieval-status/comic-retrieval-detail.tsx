@@ -23,7 +23,8 @@ export function ComicRetrievalDetail({ comic }: { comic: ComicHealth }) {
   const days = comic.days.filter((d) => d.record != null || d.outcome === DayOutcome.Missing).toReversed();
 
   return (
-    <div className="space-y-6">
+    // min-w-0 and wrap-anywhere: an error with a long URL or token wraps instead of widening the panel
+    <div className="min-w-0 space-y-6">
       <dl className="grid grid-cols-2 gap-3 text-sm">
         <Fact label="Publishes" value={comic.publicationDays?.length ? comic.publicationDays.map((d) => d.slice(0, 3)).join(' ') : 'Daily'} />
         <Fact label="Newest on disk" value={comic.newest ? formatFullDate(comic.newest) : '—'} />
@@ -51,7 +52,7 @@ export function ComicRetrievalDetail({ comic }: { comic: ComicHealth }) {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-ink">{formatShortDate(day.date)}</span>
                   {day.record && <StatusBadge status={day.record.status} />}
-                  <span className="text-ink-subtle">{describeDay(day)}</span>
+                  <span className="min-w-0 wrap-anywhere text-ink-subtle">{describeDay(day)}</span>
                 </div>
                 {day.record && (
                   <>
@@ -62,7 +63,7 @@ export function ComicRetrievalDetail({ comic }: { comic: ComicHealth }) {
                       {day.record.imageSize != null && <span>{formatBytes(day.record.imageSize)}</span>}
                     </p>
                     {day.record.errorMessage && (
-                      <p className="break-words font-mono text-xs text-ink-subtle select-all">{day.record.errorMessage}</p>
+                      <p className="font-mono text-xs wrap-anywhere text-ink-subtle select-all">{day.record.errorMessage}</p>
                     )}
                   </>
                 )}

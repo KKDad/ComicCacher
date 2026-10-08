@@ -54,7 +54,7 @@ export function TodaysErrors({ errors }: { errors: TodaysError[] }) {
                   <span className="rounded-full bg-success-subtle px-2 py-0.5 text-xs font-medium text-success">since recovered</span>
                 )}
               </div>
-              {record.errorMessage && <p className="break-words text-xs text-ink-subtle">{record.errorMessage}</p>}
+              {record.errorMessage && <p className="text-xs wrap-anywhere text-ink-subtle">{record.errorMessage}</p>}
             </li>
           ))}
         </ul>
