@@ -176,6 +176,12 @@ type Query {
     """
     retrievalRecordsForComic(comicName: String!, limit: Int = 20): [RetrievalRecord!]! @hasRole(role: "OPERATOR")
 
+    """
+    The retrieval-status page's data: the latest run, today's results and errors, and each comic's result per day.
+    days is capped at the retrieval-record retention.
+    """
+    retrievalHealth(days: Int = 30, errorLimit: Int = 20): RetrievalHealth! @hasRole(role: "OPERATOR")
+
     # =========================================================================
     # Batch Jobs
     # =========================================================================

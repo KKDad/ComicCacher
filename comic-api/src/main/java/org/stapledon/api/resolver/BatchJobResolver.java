@@ -4,6 +4,7 @@ import org.springframework.batch.core.job.JobExecution;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +21,7 @@ import org.stapledon.api.dto.payload.MutationPayloads.ToggleJobSchedulerPayload;
 import org.stapledon.api.dto.payload.MutationPayloads.TriggerBatchJobPayload;
 import org.stapledon.api.dto.payload.UserError;
 import org.stapledon.common.util.DateTimeUtils;
+import org.stapledon.core.comic.service.RetrievalHealthService.RetrievalHealth;
 import org.stapledon.engine.batch.BatchJobBaseConfig;
 import org.stapledon.engine.batch.BatchJobMonitoringService;
 import org.stapledon.engine.batch.dto.BatchExecutionSummary;
@@ -119,6 +121,14 @@ public class BatchJobResolver {
         log.debug("GraphQL: Getting batch job execution {}", executionId);
         JobExecution execution = monitoringService.getJobExecution((long) executionId);
         return execution != null ? mapJobExecution(execution) : null;
+    }
+
+    /**
+     * The latest daily download run on the retrieval-status page, mapped like the other batch job queries.
+     */
+    @SchemaMapping(typeName = "RetrievalHealth", field = "lastRun")
+    public BatchJobDto lastRun(RetrievalHealth health) {
+        return health.lastRun() != null ? mapSummary(health.lastRun()) : null;
     }
 
     /**

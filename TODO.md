@@ -6,24 +6,45 @@
 - Starting point: `app/manifest.ts` already sets `display: 'standalone'` with icons, so the site can be added to the home screen. Check how well that works on iOS and Android today, and whether `fullscreen` display, a full-screen toggle in the reader (Fullscreen API, which iOS Safari only partly supports), or hiding the app chrome while reading covers the need before thinking about a native app
 - Priority: Very-High
 
-## Rework the retrieval-status page
-
-- `/retrieval-status` is of little use as it stands and needs a full rethink: what an operator needs from it, what to show, and how
-- Priority: Medium-High
-
 ## Flow the batch-job cards into the gap when one is expanded
 
 - On `/batch-jobs`, expanding a card leaves empty space beside it, because the cards sit in a grid (`grid-cols-[repeat(auto-fill,…)] items-start`) whose rows are as tall as their tallest card
 - Let the cards in the other column move up into that space, e.g. a masonry-style layout (CSS columns, or one flex column per grid column)
 - Priority: Medium-High
 
-## Check the operator role on the server for the operations pages
+## Retry a strip from the retrieval-status page
 
-- `/metrics`, `/retrieval-status` and `/batch-jobs` are hidden from USER accounts only by the nav (`isOperator` in `sidebar.tsx`, `nav-rail.tsx`, `header.tsx`). A USER who types the URL gets the page, and only the API's rejection of its queries stops them
-- Next's authentication and data-security guides put authorization checks in server code, next to the data, not in what the UI shows
-- Move the three pages into a route group (e.g. `(dashboard)/(operations)/layout.tsx`) whose server layout calls `getSession()` and `isOperator()`, and calls `notFound()` otherwise (or `forbidden()`, which needs the experimental `authInterrupts` flag). `/sources` already does this in `sources/layout.tsx`; follow that pattern
-- Confirm the API rejects each operations query and mutation for USER accounts too, and add a layout test for the USER case
-- Priority: Medium-High. Unchanged: authorization belongs on the server, and confirming the API side is cheap
+- The retrieval-status page shows which strips are missing and why, but fixing one means waiting for the next run or a backfill
+- Add an ADMIN mutation `retryComicRetrieval(comicId, date)`, queued like `fetchComicAvatar`, that calls `ComicManagementFacade.downloadComicForDate` and the usual save path, and a retry button on missing cells and in the comic's drawer
+- Priority: Medium. Deferred from the retrieval-status rework
+
+## Keep attempt history in retrieval records
+
+- `retrieval-status.json` keeps one record per comic and date, and a retry replaces it, so a strip that took three tries looks like one clean success. The retrieval-status grid can only mark a strip "recovered" while its record still says it failed
+- Add an `attempts` count and the first failure (status, time) to `ComicRetrievalRecord`, kept when a later attempt replaces the record, and show them in the drawer
+- Priority: Low. Deferred from the retrieval-status rework
+
+## Replace hash-derived comic ids
+
+- Older comics took their id from Java's `name.hashCode()` when they were bootstrapped, so ids are large and about half are negative (Drabble is −717937236, Garfield −1559823038). Comics added since get the highest id + 1 (`ComicManagementFacade.createComic`)
+- What it has cost so far: the retrieval-status page's `comic=` URL parameter rejected negative ids, so those comics couldn't be selected (fixed in #455). Anything else that parses an id as a positive number has the same bug
+- What else to fix:
+  - highest id + 1 overflows past `Integer.MAX_VALUE` when the largest hash is close to it
+  - the hashes are tied to names, which can be renamed
+  - two names can collide (rare)
+- Where ids live:
+  - `comics.json`
+  - users' favourites and last-read in the preferences
+  - `retrieval-status.json` record ids (`{comicId}_{date}`)
+  - the date index cache
+  - metrics, which are joined by directory name since #452
+  - every reader URL (`/comics/{id}/read`), so bookmarks and shared links carry the old ids
+- **Decision:** a UUID as the internal id and a readable slug for URLs
+  - **UUID:** the key in every store above. It's stable, can't collide, isn't tied to the name, and is never shown to readers
+  - **Slug:** taken from the name (`drabble`, `calvin-and-hobbes`), unique and kept when the comic is renamed, with the old slug redirecting. Reader URLs become `/comics/drabble/read`
+  - **Migration:** one migration gives every comic a UUID and a slug, and rewrites the stores above from the old int ids, with an old-id → comic map kept so old URLs, bookmarks and preference entries redirect. The GraphQL API takes the UUID (or the slug where a URL is involved) and keeps accepting the old int for a deprecation period
+  - **Still to decide:** whether the strip directories (`{ComicDir}`, name-based today) move to the slug, and how long old ids keep working
+- Priority: Medium. Each new id-handling surface can hit the negative-id case, and the migration grows with every store keyed by id
 
 ## Log server errors and show the error digest
 

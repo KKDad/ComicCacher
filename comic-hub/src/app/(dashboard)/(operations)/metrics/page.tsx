@@ -10,14 +10,7 @@ import { BarChart3, Database, Image, MousePointerClick, ArrowUpDown } from 'luci
 import { useGetCombinedMetricsQuery } from '@/generated/graphql';
 import { formatTimeAgo } from '@/lib/date-utils';
 import { compareNames } from '@/lib/sort';
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  const value = bytes / Math.pow(1024, i);
-  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
+import { formatBytes } from '@/lib/format';
 
 type SortDir = 'asc' | 'desc';
 
@@ -274,7 +267,7 @@ export default function MetricsPage() {
                 </thead>
                 <tbody>
                   {combinedComics.map((comic) => (
-                    <tr key={comic.comicId ?? comic.comicName} className="border-t border-border hover:bg-surface-hover">
+                    <tr key={comic.comicId ?? comic.comicName} className="border-t border-border hover:bg-surface-muted">
                       <td className="px-6 py-3 text-ink">
                         {comic.comicId != null ? (
                           <Link href={`/comics/${comic.comicId}/read`} className="hover:underline">

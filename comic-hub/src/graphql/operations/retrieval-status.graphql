@@ -1,51 +1,67 @@
 # Retrieval status queries for Comics Hub
 
-# Summary statistics for retrieval operations
-query GetRetrievalSummary($fromDate: Date, $toDate: Date) {
-  retrievalSummary(fromDate: $fromDate, toDate: $toDate) {
-    totalAttempts
-    successCount
-    failureCount
-    skippedCount
-    successRate
-    averageDurationMs
-    byStatus {
-      status
-      count
-    }
-    byComic {
-      comicName
-      totalAttempts
-      successCount
-      failureCount
-    }
-  }
+fragment RetrievalRecordFields on RetrievalRecord {
+  id
+  comicDate
+  status
+  errorMessage
+  httpStatusCode
+  retrievalDurationMs
+  imageSize
+  attemptedAt
 }
 
-# Individual retrieval records with optional filtering
-query GetRetrievalRecords(
-  $comicName: String
-  $status: RetrievalStatusEnum
-  $fromDate: Date
-  $toDate: Date
-  $limit: Int
-) {
-  retrievalRecords(
-    comicName: $comicName
-    status: $status
-    fromDate: $fromDate
-    toDate: $toDate
-    limit: $limit
-  ) {
-    id
-    comicName
-    comicDate
-    source
-    status
-    retrievalDurationMs
-    imageSize
-    httpStatusCode
-    attemptedAt
-    errorMessage
+# The retrieval-status page: the latest daily run, today's results and errors, and each comic's result per day
+query GetRetrievalHealth($days: Int, $errorLimit: Int) {
+  retrievalHealth(days: $days, errorLimit: $errorLimit) {
+    targetDate
+    lastRun {
+      executionId
+      jobName
+      status
+      startTime
+      endTime
+      durationMs
+    }
+    sources {
+      source
+      success
+      unavailable
+      rateLimited
+      failed
+    }
+    todaysErrors {
+      recovered
+      record {
+        ...RetrievalRecordFields
+        comicId
+        comicName
+        source
+      }
+    }
+    comics {
+      comicId
+      comicName
+      source
+      enabled
+      active
+      indexed
+      publicationDays
+      newest
+      expectedLatest
+      stale
+      missingStreak
+      latestError {
+        ...RetrievalRecordFields
+      }
+      days {
+        date
+        outcome
+        recovered
+        record {
+          ...RetrievalRecordFields
+        }
+      }
+    }
   }
 }

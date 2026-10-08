@@ -79,17 +79,17 @@ type RetrievalSummary {
     successCount: Int!
     
     """
-    Number of failed retrievals.
+    Number of failed retrievals, not counting COMIC_UNAVAILABLE.
     """
     failureCount: Int!
     
     """
-    Number of skipped retrievals.
+    Number of retrievals where the source had no strip (COMIC_UNAVAILABLE).
     """
     skippedCount: Int!
     
     """
-    Success rate as a percentage (0-100).
+    Success rate as a percentage (0-100) of the attempts that weren't COMIC_UNAVAILABLE.
     """
     successRate: Float!
     
@@ -129,7 +129,7 @@ type ComicRetrievalSummary {
     successCount: Int!
     
     """
-    Failed retrievals.
+    Failed retrievals, not counting COMIC_UNAVAILABLE.
     """
     failureCount: Int!
 }
@@ -162,4 +162,157 @@ enum RetrievalStatusEnum {
     STORAGE_ERROR
     SUCCESS
     UNKNOWN_ERROR
+}
+
+"""
+How the daily retrieval is doing: the latest run, today's results by source, today's errors, and each comic's final
+result for every day in the window.
+"""
+type RetrievalHealth {
+    """
+    Today, in the batch timezone.
+    """
+    targetDate: Date!
+
+    """
+    The latest ComicDownloadJob execution (null if it has never run).
+    """
+    lastRun: BatchJob
+
+    """
+    Today's retrieval results for each source.
+    """
+    sources: [SourceRetrievalHealth!]!
+
+    """
+    Today's failed attempts, newest first, up to errorLimit. COMIC_UNAVAILABLE (the source had no strip) isn't counted.
+    """
+    todaysErrors: [RetrievalError!]!
+
+    """
+    Every comic, with its result for each day of the window.
+    """
+    comics: [ComicRetrievalHealth!]!
+}
+
+"""
+Today's retrieval results for one source.
+"""
+type SourceRetrievalHealth {
+    source: String!
+    success: Int!
+    unavailable: Int!
+    rateLimited: Int!
+    failed: Int!
+}
+
+"""
+A failed retrieval attempt.
+"""
+type RetrievalError {
+    record: RetrievalRecord!
+
+    """
+    Whether the strip is on disk now, so a later attempt got it.
+    """
+    recovered: Boolean!
+}
+
+"""
+One comic's retrieval results over the window.
+"""
+type ComicRetrievalHealth {
+    comicId: Int!
+    comicName: String!
+    source: String
+
+    """
+    Whether readers see the comic.
+    """
+    enabled: Boolean!
+
+    """
+    Whether the comic is still publishing. The daily run skips inactive comics.
+    """
+    active: Boolean!
+
+    """
+    Whether the source is numbered (indexed) rather than dated, so no strip is expected on a given day.
+    """
+    indexed: Boolean!
+
+    publicationDays: [DayOfWeek!]
+
+    """
+    The newest strip on disk.
+    """
+    newest: Date
+
+    """
+    The latest publication day that should have a strip by now (null for inactive and indexed comics).
+    """
+    expectedLatest: Date
+
+    """
+    Whether the newest strip on disk is older than expectedLatest.
+    """
+    stale: Boolean!
+
+    """
+    Publication days in a row, counting back from the latest, with no strip on disk.
+    """
+    missingStreak: Int!
+
+    """
+    The newest failed attempt in the window.
+    """
+    latestError: RetrievalRecord
+
+    """
+    One entry per day of the window, oldest first.
+    """
+    days: [RetrievalDay!]!
+}
+
+"""
+A comic's final result for one day.
+"""
+type RetrievalDay {
+    date: Date!
+    outcome: DayOutcome!
+
+    """
+    Whether the strip is on disk although the day's retrieval record says it failed.
+    """
+    recovered: Boolean!
+
+    """
+    The day's retrieval record, if there is one.
+    """
+    record: RetrievalRecord
+}
+
+"""
+The final result for a comic on a day, judged by the files on disk first.
+"""
+enum DayOutcome {
+    """
+    The strip is on disk.
+    """
+    ON_DISK
+
+    """
+    A strip was expected and isn't on disk.
+    """
+    MISSING
+
+    """
+    No strip was expected: not a publication day, before the first strip, an inactive comic, or a numbered source with no failure.
+    """
+    OFF_DAY
+
+    """
+    Today, and the daily run hasn't finished yet.
+    """
+    PENDING
 }

@@ -17,7 +17,7 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 
 - **Server components by default.** Add `'use client'` only when you need state, effects, refs, browser APIs, or event handlers.
 - Auth and session checks belong in **server layouts**, never in client components. The canonical example is `src/app/(dashboard)/layout.tsx`, which calls `getSession()` server-side and redirects unauthenticated users.
-- Route groups: `(auth)` for login/registration, `(dashboard)` for the authenticated app, `(reader)` for the comic-reader experience.
+- Route groups: `(auth)` for login/registration, `(dashboard)` for the authenticated app, `(reader)` for the comic-reader experience. Inside `(dashboard)`, `(operations)` holds the operator pages (metrics, retrieval status, batch jobs): its server layout 404s anyone without OPERATOR or ADMIN, as `sources/layout.tsx` does for `/sources`. Put a new operator page there.
 - `src/proxy.ts` refreshes an expired access token before a page renders (server components can't set cookies), forwarding the new cookies to the render and the browser. It never redirects: auth gates live in server layouts, and route handlers own the auth boundary and their own refresh for `/api/*`, which the proxy skips.
 
 ## Data Fetching & Auth

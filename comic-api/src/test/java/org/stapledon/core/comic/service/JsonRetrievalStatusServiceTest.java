@@ -107,4 +107,19 @@ class JsonRetrievalStatusServiceTest {
         assertThat(countsByStatus.get(ComicRetrievalStatus.SUCCESS)).isEqualTo(1L);
         assertThat(countsByStatus.get(ComicRetrievalStatus.NETWORK_ERROR)).isEqualTo(1L);
     }
+
+    @Test
+    void getRetrievalSummaryLeavesUnavailableOutOfSuccessRateAndCountsEachComic() {
+        ComicRetrievalRecord unavailable = ComicRetrievalRecord.failure(3, "Peanuts", LocalDate.of(2026, 10, 7), "gocomics",
+                ComicRetrievalStatus.COMIC_UNAVAILABLE, "No strip", 50L, 404);
+        when(repository.getRecords(isNull(), isNull(), any(), any(), eq(Integer.MAX_VALUE)))
+                .thenReturn(List.of(successRecord, failureRecord, unavailable));
+
+        Map<String, Object> summary = service.getRetrievalSummary(null, null);
+
+        assertThat(summary.get("successRate")).isEqualTo(0.5);
+        @SuppressWarnings("unchecked") Map<String, Map<ComicRetrievalStatus, Long>> countsByComic =
+                (Map<String, Map<ComicRetrievalStatus, Long>>) summary.get("countsByComic");
+        assertThat(countsByComic.get("Peanuts")).containsEntry(ComicRetrievalStatus.COMIC_UNAVAILABLE, 1L);
+    }
 }
