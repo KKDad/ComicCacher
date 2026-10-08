@@ -93,7 +93,7 @@
 
 - The 2.5.0 UI revamp focused on the public pages (reader, auth, comics list). The admin pages (batch jobs, metrics, retrieval status, comic management) weren't reviewed
 - Check them against the revamped design: layout, spacing, typography, dark mode, mobile width, empty and loading states
-- Priority: Low. Lowered from Medium: only operators see these pages and they work. Fold it into the next change that touches them
+- Priority: Low. Lowered from Medium: only admins see these pages (nobody has OPERATOR) and they work. Fold it into the next change that touches them
 
 ## Share server lookups within a request
 

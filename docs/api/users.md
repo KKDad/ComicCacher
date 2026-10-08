@@ -315,7 +315,7 @@ Comics Hub stores these keys (see `comic-hub/src/lib/preferences-defaults.ts`): 
 | `displayName` | `String` | Display name |
 | `created` | `DateTime` | Account creation timestamp |
 | `lastLogin` | `DateTime` | Last login timestamp |
-| `roles` | `[String!]!` | Assigned roles: `USER`, `OPERATOR`, `ADMIN` |
+| `roles` | `[String!]!` | Assigned roles: `USER`, `OPERATOR`, `ADMIN`. Read-only here; see [Roles](overview.md#roles) for how they're assigned |
 
 ### UserPreference
 

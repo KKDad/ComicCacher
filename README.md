@@ -46,11 +46,11 @@ Reading a four-panel strip online usually means autoplay video, cookie banners, 
 ## Behind the scenes
 
 - **Hands-off downloads.** A scheduled job collects new strips each morning. If the server was off, it catches up on start-up.
-- **Self-healing.** Backfill jobs fill gaps, refresh avatars and repair metadata. Operators can watch every run from the admin pages.
+- **Self-healing.** Backfill jobs fill gaps, refresh avatars and repair metadata. Admins can watch every run from the operations pages.
 - **No duplicates.** Images are checked for integrity and compared by perceptual and cryptographic hashes, so a re-posted strip is skipped.
 - **Fast.** Strips are cached and prefetched, so the next one is usually on screen before you ask for it.
 - **Simple to host.** No database: two containers and a folder of files.
-- **Accounts and roles.** Readers, operators and admins, each seeing only what they need.
+- **Accounts and roles.** Readers and admins, each seeing only what they need, plus a read-only operator role for sharing the operations pages.
 
 ## Supported sources
 
