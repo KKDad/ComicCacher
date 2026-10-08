@@ -79,6 +79,18 @@ class AbstractIndexedDownloaderStrategyTest {
     }
 
     @Test
+    @DisplayName("a 403 on a strip is BLOCKED, with no back-off")
+    void blockedStrip() {
+        strategy.failWith(new HttpStatusException("HTTP error fetching URL", 403, "https://example.com/strip"));
+
+        ComicDownloadResult result = strategy.downloadStrip(comic, 42);
+
+        assertThat(result.isBlocked()).isTrue();
+        assertThat(result.getHttpStatus()).isEqualTo(403);
+        verify(throttleService, never()).backOff(any(), anyInt(), any());
+    }
+
+    @Test
     @DisplayName("a 404 on a strip is UNAVAILABLE, with no back-off")
     void missingStrip() {
         strategy.failWith(new HttpStatusException("HTTP error fetching URL", 404, "https://example.com/strip"));

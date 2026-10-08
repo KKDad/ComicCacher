@@ -123,7 +123,7 @@ Template method for date-based downloads:
 2. Calls `downloadComicImage(request)` (abstract — implemented by each source strategy).
 3. On `RateLimitedException` (HTTP 429), backs off and retries from step 1 until the source's `retry.max-attempts` is used up (see [Throttling and Rate Limits](#throttling-and-rate-limits)).
 4. Validates the image via `validateImage()`.
-5. Returns `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`. A failure carries a `FailureKind`: `UNAVAILABLE` (no image, empty or invalid image data, HTTP 404 or 410), `RATE_LIMITED` (HTTP 429), or `ERROR` (anything else).
+5. Returns `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`. A failure carries a `FailureKind`: `UNAVAILABLE` (no image, empty or invalid image data, HTTP 404 or 410), `RATE_LIMITED` (HTTP 429), `BLOCKED` (HTTP 403), or `ERROR` (anything else).
 
 Subclasses only implement `downloadComicImage()` and `downloadAvatarImage()`.
 
@@ -155,7 +155,7 @@ All outbound requests are paced per source by `SourceThrottleService`, configure
 
 **HTTP 429 handling:**
 
-1. `GoComicsDownloaderStrategy.fetchDocument()` and `downloadImageData()` turn a 429 into `RateLimitedException`, carrying the `Retry-After` value (delta-seconds or HTTP-date) when the server sends one.
+1. `BrowserFetcher` (GoComics pages and page data) and `downloadImageData()` turn a 429 into `RateLimitedException`, carrying the `Retry-After` value (delta-seconds or HTTP-date) when the server sends one.
 2. `AbstractDailyDownloaderStrategy` catches it and calls `SourceThrottleService.backOff(source, attempt, retryAfter)`. The backoff honours `Retry-After` when present, otherwise grows exponentially.
 3. `backOff()` pushes the **whole source's** next-allowed time forward, so other comics from the same source also wait rather than hitting the limit again.
 4. Each 429 is logged at WARN with the URL, attempt, `Retry-After` and backoff. When attempts run out the download fails with a `Rate limited (HTTP 429)` message.
@@ -164,7 +164,11 @@ A 429 that surfaces as a Jsoup `HttpStatusException` (sources that fetch pages w
 
 Only daily sources retry; indexed sources (Freefall) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
 
+**HTTP 403 handling:** a 403 is reported as `BLOCKED`, never retried, and doesn't back the source off. One 403 can be a single forbidden strip, but several in a row mean the source's firewall is refusing us, and every further request only deepens the block. So after `DownloaderConstants.BLOCKED_IN_A_ROW_TO_STOP_SOURCE` (3) blocked downloads in a row from one source, the daily download run (`ComicManagementFacade`) skips that source's remaining comics for the date, and the backfill skips its remaining tasks until the next run. Each logs one WARN when it stops the source. In retrieval status a 403 stays `NETWORK_ERROR` with HTTP status 403.
+
 **Browser identity:** GoComics sits behind Cloudflare, so requests present as desktop Chrome. `downloader.user-agent.default-value` carries the Chrome UA, and `BrowserFetcher` (used by `GoComicsDownloaderStrategy` and the GoComics catalog) derives matching `Sec-Ch-Ua` client hints from the Chrome major version in that UA (omitted for non-Chrome UAs). Keep the Chrome major version current ([Chromium Dash](https://chromiumdash.appspot.com/releases)); a stale browser version is a bot signal. Bump `UserAgentService.FALLBACK_USER_AGENT` at the same time. `Accept-Encoding` omits `zstd`, since only gzip and Brotli are decoded.
+
+**GoComics page data:** GoComics is a Next.js site. Since October 2026 its firewall (Bunny Shield) has answered full page loads of strip pages from our IP with 403, while still serving the React Server Components payload the site's router fetches when a reader clicks through to a date. `GoComicsDownloaderStrategy` therefore never loads the HTML page. `BrowserFetcher.fetchNextJsFlight()` requests `https://www.gocomics.com/<slug>/<yyyy>/<MM>/<dd>` with `RSC: 1`, `Next-Url: /<slug>` and the `_rsc` cache-busting parameter the router would send (SHA-256 of `0,0,0,<next-url>`, first 12 bytes, base64url; the server doesn't check it). The payload (`text/x-component`, about 350 KB) holds several `"comic":{...}` objects: the page's strip and related strips from other dates. The strategy takes the image `url` of the one whose `date` is the requested date; none means no strip that day (`UNAVAILABLE`). Avatars still come from the `/<slug>/about` HTML page, which the firewall allows.
 
 ## Strategy Dispatch
 
@@ -193,7 +197,7 @@ Additional facade methods for indexed comics:
 
 | Source identifier | Strategy class | Comic model | Scraping method | Image extraction |
 |-------------------|----------------|-------------|-----------------|------------------|
-| `gocomics` | `GoComicsDownloaderStrategy` | Daily | Jsoup | `og:image` meta tag |
+| `gocomics` | `GoComicsDownloaderStrategy` | Daily | Jsoup (`BrowserFetcher`) | The date's strip object in the page's RSC payload |
 | `comicskingdom` | `ComicsKingdomDownloaderStrategy` | Daily | Jsoup | `og:image` meta tags (2nd for hi-res) |
 | `freefall` | `FreefallDownloaderStrategy` | Indexed | Jsoup | `<img>` tag matching strip number |
 

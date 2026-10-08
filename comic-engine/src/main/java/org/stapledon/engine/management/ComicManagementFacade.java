@@ -47,6 +47,7 @@ import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.Direction;
 import org.stapledon.common.util.LogContext;
+import org.stapledon.engine.downloader.DownloaderConstants;
 import org.stapledon.engine.downloader.DownloaderFacade;
 
 /**
@@ -574,13 +575,23 @@ public class ComicManagementFacade implements ManagementFacade {
         List<ComicDownloadResult> sourceResults = new ArrayList<>(comics.size());
         log.info("Source thread starting: {} ({} comics for {})", source, comics.size(), date);
         long start = System.currentTimeMillis();
+        int blockedInARow = 0;
+        int skipped = 0;
         try {
             boolean indexed = downloaderFacade.isIndexedSource(source);
             for (ComicItem comic : comics) {
+                if (blockedInARow >= DownloaderConstants.BLOCKED_IN_A_ROW_TO_STOP_SOURCE) {
+                    if (skipped++ == 0) {
+                        log.warn("Source {} refused {} downloads in a row (HTTP 403); skipping its remaining comics for {}", source, blockedInARow, date);
+                    }
+                    continue;
+                }
                 try (var _ = MDC.putCloseable(LogContext.COMIC, comic.getName());
                         var _ = MDC.putCloseable(LogContext.DATE, date.toString())) {
                     if (indexed) {
-                        downloadLatestIndexedComic(comic).ifPresent(sourceResults::add);
+                        Optional<ComicDownloadResult> indexedResult = downloadLatestIndexedComic(comic);
+                        indexedResult.ifPresent(sourceResults::add);
+                        blockedInARow = indexedResult.filter(ComicDownloadResult::isBlocked).isPresent() ? blockedInARow + 1 : 0;
                         continue;
                     }
 
@@ -590,6 +601,7 @@ public class ComicManagementFacade implements ManagementFacade {
 
                     ComicDownloadResult result = downloaderFacade.downloadComic(request);
                     sourceResults.add(result);
+                    blockedInARow = result.isBlocked() ? blockedInARow + 1 : 0;
 
                     if (result.isSuccessful()) {
                         if (!saveDownloadResult(comic, date, result)) {
@@ -606,7 +618,8 @@ public class ComicManagementFacade implements ManagementFacade {
                 }
             }
         } finally {
-            log.info("Source thread finished: {} ({} results in {}ms)", source, sourceResults.size(), System.currentTimeMillis() - start);
+            log.info("Source thread finished: {} ({} results, {} skipped as blocked, in {}ms)", source, sourceResults.size(), skipped,
+                    System.currentTimeMillis() - start);
         }
         return sourceResults;
     }

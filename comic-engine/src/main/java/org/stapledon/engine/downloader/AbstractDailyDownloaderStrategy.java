@@ -100,6 +100,12 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
                 log.warn(errorMessage);
                 return ComicDownloadResult.failure(request, errorMessage, FailureKind.RATE_LIMITED, status);
             }
+            if (status == DownloaderConstants.HTTP_FORBIDDEN) {
+                String errorMessage = String.format("Blocked (HTTP 403) downloading comic %s for date %s: %s",
+                        request.getComicName(), request.getDate(), e.getMessage());
+                log.warn(errorMessage);
+                return ComicDownloadResult.failure(request, errorMessage, FailureKind.BLOCKED, status);
+            }
             if (isNotFoundStatus(status)) {
                 String errorMessage = String.format("Comic %s for date %s not found at source (HTTP %d)",
                         request.getComicName(), request.getDate(), status);

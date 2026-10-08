@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -414,6 +415,25 @@ class ComicManagementFacadeTest {
         // The interface promises false on failure; this used to return true regardless
         assertThat(facade.updateComic(1)).isFalse();
         verify(storageFacade, never()).saveComicStripWithResult(any(ComicIdentifier.class), any(), any(ComicSaveData.class));
+    }
+
+    @Test
+    void updateComicsForDateStopsASourceAfterThreeBlockedInARow() {
+        LocalDate date = LocalDate.of(2026, 10, 8);
+        ComicConfig comicConfig = new ComicConfig();
+        Map<Integer, ComicItem> items = new ConcurrentHashMap<>();
+        for (int id = 1; id <= 5; id++) {
+            items.put(id, testComic.toBuilder().id(id).name("Comic " + id).sourceIdentifier("comic" + id).build());
+        }
+        comicConfig.setItems(items);
+        when(configFacade.loadComicConfig()).thenReturn(comicConfig);
+        when(downloaderFacade.downloadComic(any())).thenAnswer(invocation -> ComicDownloadResult.failure(invocation.getArgument(0),
+                "Blocked (HTTP 403)", ComicDownloadResult.FailureKind.BLOCKED, 403));
+
+        List<ComicDownloadResult> results = facade.updateComicsForDate(date, null);
+
+        assertThat(results).hasSize(3).allMatch(ComicDownloadResult::isBlocked);
+        verify(downloaderFacade, times(3)).downloadComic(any());
     }
 
     @Test

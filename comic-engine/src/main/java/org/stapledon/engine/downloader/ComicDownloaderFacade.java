@@ -289,7 +289,8 @@ public class ComicDownloaderFacade implements DownloaderFacade {
 
     /**
      * Records a strategy's result. Failures are filed by what went wrong, keeping the source's HTTP status when there was one: only a genuinely
-     * missing or invalid strip counts as {@code COMIC_UNAVAILABLE}, and an HTTP 429 counts as {@code RATE_LIMITED}.
+     * missing or invalid strip counts as {@code COMIC_UNAVAILABLE}, an HTTP 429 counts as {@code RATE_LIMITED}, and an HTTP 403 stays
+     * {@code NETWORK_ERROR} with its status.
      */
     private void recordResult(ComicDownloadRequest request, ComicDownloadResult result, Instant startTime) {
         if (result.isSuccessful()) {
@@ -298,6 +299,7 @@ public class ComicDownloaderFacade implements DownloaderFacade {
         }
         ComicRetrievalStatus status = switch (result.getFailureKind()) {
             case RATE_LIMITED -> ComicRetrievalStatus.RATE_LIMITED;
+            case BLOCKED -> ComicRetrievalStatus.NETWORK_ERROR;
             case ERROR -> result.getHttpStatus() != null ? ComicRetrievalStatus.NETWORK_ERROR : ComicRetrievalStatus.UNKNOWN_ERROR;
             case UNAVAILABLE -> ComicRetrievalStatus.COMIC_UNAVAILABLE;
             case null -> ComicRetrievalStatus.COMIC_UNAVAILABLE;

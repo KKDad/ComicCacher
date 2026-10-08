@@ -23,6 +23,8 @@ public class ComicDownloadResult {
         ERROR,
         /** The source answered HTTP 429 (Too Many Requests). */
         RATE_LIMITED,
+        /** The source refused the request (HTTP 403 Forbidden), typically its firewall blocking us. */
+        BLOCKED,
         /** The source had nothing usable for the date (no image, empty or invalid image data, HTTP 404 or 410). */
         UNAVAILABLE
     }
@@ -148,5 +150,12 @@ public class ComicDownloadResult {
      */
     public boolean isRateLimited() {
         return failureKind == FailureKind.RATE_LIMITED;
+    }
+
+    /**
+     * True when the source refused this download (HTTP 403).
+     */
+    public boolean isBlocked() {
+        return failureKind == FailureKind.BLOCKED;
     }
 }
