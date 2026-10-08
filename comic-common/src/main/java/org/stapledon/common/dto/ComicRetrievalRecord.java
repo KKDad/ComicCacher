@@ -19,47 +19,47 @@ public class ComicRetrievalRecord {
     private final String id;
 
     /**
-     * The comic's id (null on records written before it was kept)
+     * The comic's id (null on records written before it was kept).
      */
     private final Integer comicId;
 
     /**
-     * The comic name
+     * The comic name.
      */
     private final String comicName;
 
     /**
-     * The date for which the comic was retrieved
+     * The date for which the comic was retrieved.
      */
     private final LocalDate comicDate;
 
     /**
-     * The source of the comic (e.g., "gocomics", "comicskingdom")
+     * The source of the comic (e.g., "gocomics", "comicskingdom").
      */
     private final String source;
 
     /**
-     * The retrieval status
+     * The retrieval status.
      */
     private final ComicRetrievalStatus status;
 
     /**
-     * Error message if retrieval failed
+     * Error message if retrieval failed.
      */
     private final String errorMessage;
 
     /**
-     * Duration of the retrieval operation in milliseconds
+     * Duration of the retrieval operation in milliseconds.
      */
     private final long retrievalDurationMs;
 
     /**
-     * Size of the retrieved image in bytes (if successful)
+     * Size of the retrieved image in bytes (if successful).
      */
     private final Long imageSize;
 
     /**
-     * HTTP status code from the comic source (if applicable)
+     * HTTP status code from the comic source (if applicable).
      */
     private final Integer httpStatusCode;
 
@@ -69,7 +69,7 @@ public class ComicRetrievalRecord {
     private final OffsetDateTime attemptedAt;
 
     /**
-     * Factory method to create a successful record
+     * Factory method to create a successful record.
      */
     public static ComicRetrievalRecord success(
             Integer comicId, String comicName, LocalDate comicDate,
@@ -87,7 +87,7 @@ public class ComicRetrievalRecord {
     }
 
     /**
-     * Factory method to create a failed record
+     * Factory method to create a failed record.
      */
     public static ComicRetrievalRecord failure(
             Integer comicId, String comicName, LocalDate comicDate,
@@ -107,7 +107,7 @@ public class ComicRetrievalRecord {
     }
 
     /**
-     * Generates a unique ID for this record
+     * Generates a unique ID for this record.
      */
     private static String generateId(Integer comicId, String comicName, LocalDate comicDate) {
         return (comicId != null ? comicId.toString() : comicName) + "_" + comicDate;

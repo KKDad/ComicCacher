@@ -104,7 +104,7 @@ public class ImageMetadataBackfillJobConfig {
     }
 
     /**
-     * Job for backfilling image metadata
+     * Job for backfilling image metadata.
      */
     @Bean
     public Job imageMetadataBackfillJob(JobRepository jobRepository, @Qualifier("imageBackfillStep") Step imageBackfillStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
@@ -113,7 +113,7 @@ public class ImageMetadataBackfillJobConfig {
     }
 
     /**
-     * Step for performing image metadata backfill
+     * Step for performing image metadata backfill.
      */
     @Bean
     public Step imageBackfillStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,

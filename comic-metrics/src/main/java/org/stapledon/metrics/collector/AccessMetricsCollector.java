@@ -53,7 +53,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Initialize by loading persisted access metrics from disk
+     * Initialize by loading persisted access metrics from disk.
      */
     @jakarta.annotation.PostConstruct
     public void init() {
@@ -61,7 +61,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Persist access metrics to disk on shutdown
+     * Persist access metrics to disk on shutdown.
      */
     @jakarta.annotation.PreDestroy
     public void shutdown() {
@@ -70,7 +70,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Load access metrics from persistent storage into in-memory maps
+     * Load access metrics from persistent storage into in-memory maps.
      */
     private void loadAccessMetrics() {
         AccessMetricsData data = accessMetricsRepository.get();
@@ -87,7 +87,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Persist current in-memory access metrics to disk
+     * Persist current in-memory access metrics to disk.
      */
     public void persistAccessMetrics() {
         AccessMetricsData data = AccessMetricsData.builder().build();
@@ -138,7 +138,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Get access count metrics for all comics
+     * Get access count metrics for all comics.
      *
      * @return Map of comic name to access count
      */
@@ -149,7 +149,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Get last access time for all comics
+     * Get last access time for all comics.
      *
      * @return Map of comic name to last access time
      */
@@ -158,7 +158,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Get average access time for all comics
+     * Get average access time for all comics.
      *
      * @return Map of comic name to average access time in milliseconds
      */
@@ -172,7 +172,7 @@ public class AccessMetricsCollector {
     }
 
     /**
-     * Get hit ratio for all comics
+     * Get hit ratio for all comics.
      *
      * @return Map of comic name to hit ratio (0.0-1.0)
      */

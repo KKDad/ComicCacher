@@ -170,7 +170,7 @@ class MetricsArchiveJobIT extends AbstractBatchJobIntegrationTest {
     }
 
     /**
-     * Helper method to get the expected archive file path for a date
+     * Helper method to get the expected archive file path for a date.
      */
     private Path getMetricsArchiveFile(LocalDate date) {
         String filename = date.format(DATE_FORMATTER) + ".json";

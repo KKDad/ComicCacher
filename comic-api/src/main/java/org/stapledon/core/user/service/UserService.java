@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface UserService {
 
     /**
-     * Register a new user
+     * Register a new user.
      *
      * @param registrationDto User registration data
      * @return The created user if successful, empty otherwise
@@ -16,7 +16,7 @@ public interface UserService {
     Optional<User> registerUser(UserRegistrationDto registrationDto);
 
     /**
-     * Authenticate a user
+     * Authenticate a user.
      *
      * @param username Username
      * @param password Raw password
@@ -25,7 +25,7 @@ public interface UserService {
     Optional<User> authenticateUser(String username, String password);
 
     /**
-     * Get a user by username
+     * Get a user by username.
      *
      * @param username Username
      * @return The user if found, empty otherwise
@@ -33,7 +33,7 @@ public interface UserService {
     Optional<User> getUser(String username);
 
     /**
-     * Update a user's profile
+     * Update a user's profile.
      *
      * @param user Updated user data
      * @return The updated user if successful, empty otherwise
@@ -41,7 +41,7 @@ public interface UserService {
     Optional<User> updateUser(User user);
 
     /**
-     * Update a user's password
+     * Update a user's password.
      *
      * @param username Username
      * @param newPassword New password

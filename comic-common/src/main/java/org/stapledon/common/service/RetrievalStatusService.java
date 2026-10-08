@@ -13,17 +13,17 @@ import java.util.Optional;
  */
 public interface RetrievalStatusService {
     /**
-     * Records a comic retrieval result
+     * Records a comic retrieval result.
      */
     void recordRetrievalResult(ComicRetrievalRecord record);
 
     /**
-     * Gets a specific retrieval record by ID
+     * Gets a specific retrieval record by ID.
      */
     Optional<ComicRetrievalRecord> getRetrievalRecord(String id);
 
     /**
-     * Gets retrieval records with optional filtering
+     * Gets retrieval records with optional filtering.
      */
     List<ComicRetrievalRecord> getRetrievalRecords(
             String comicName,
@@ -33,17 +33,17 @@ public interface RetrievalStatusService {
             int limit);
 
     /**
-     * Gets retrieval summary statistics
+     * Gets retrieval summary statistics.
      */
     Map<String, Object> getRetrievalSummary(LocalDate fromDate, LocalDate toDate);
 
     /**
-     * Deletes a specific retrieval record
+     * Deletes a specific retrieval record.
      */
     boolean deleteRetrievalRecord(String id);
 
     /**
-     * Purges retrieval records older than specified days
+     * Purges retrieval records older than specified days.
      */
     int purgeOldRecords(int daysToKeep);
 }

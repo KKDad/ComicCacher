@@ -12,17 +12,17 @@ import java.util.Optional;
  */
 public interface RetrievalStatusRepository {
     /**
-     * Save a new retrieval record
+     * Save a new retrieval record.
      */
     void saveRecord(ComicRetrievalRecord record);
 
     /**
-     * Get a specific retrieval record by ID
+     * Get a specific retrieval record by ID.
      */
     Optional<ComicRetrievalRecord> getRecord(String id);
 
     /**
-     * Get retrieval records with optional filtering
+     * Get retrieval records with optional filtering.
      *
      * All parameters are optional:
      * - When comicName or status are null, no filtering is applied for that field
@@ -37,17 +37,17 @@ public interface RetrievalStatusRepository {
             int limit);
 
     /**
-     * Delete a specific retrieval record
+     * Delete a specific retrieval record.
      */
     boolean deleteRecord(String id);
 
     /**
-     * Delete all records older than specified days
+     * Delete all records older than specified days.
      */
     int purgeOldRecords(int daysToKeep);
 
     /**
-     * Reset all records (for testing purposes)
+     * Reset all records (for testing purposes).
      */
     void resetRecords();
 }

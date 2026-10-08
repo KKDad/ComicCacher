@@ -98,7 +98,7 @@ public class ComicBackfillJobConfig {
     }
 
     /**
-     * Main job for comic backfill
+     * Main job for comic backfill.
      */
     @Bean
     @Qualifier("comicBackfillJob")

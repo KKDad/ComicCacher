@@ -24,7 +24,7 @@ import tools.jackson.databind.ObjectMapper;
  * Base class for all integration tests
  * Uses the main application security configuration with permissive settings for
  * testing
- * Provides common test utilities and helper methods
+ * Provides common test utilities and helper methods.
  */
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -155,7 +155,7 @@ public abstract class AbstractHttpGraphQlIntegrationTest {
 
     /**
      * Create a test user with the given username and attempt to authenticate
-     * Handles errors gracefully
+     * Handles errors gracefully.
      */
     protected String authenticateUser() {
         try {

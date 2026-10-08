@@ -64,7 +64,7 @@ public class RetrievalRecordPurgeJobConfig {
     }
 
     /**
-     * Job for purging old retrieval records and batch log files
+     * Job for purging old retrieval records and batch log files.
      */
     @Bean
     public Job retrievalRecordPurgeJob(JobRepository jobRepository, @Qualifier("recordPurgeStep") Step recordPurgeStep, @Qualifier("logPurgeStep") Step logPurgeStep,
@@ -78,7 +78,7 @@ public class RetrievalRecordPurgeJobConfig {
     }
 
     /**
-     * Step for performing record purge
+     * Step for performing record purge.
      */
     @Bean
     public Step recordPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
@@ -114,7 +114,7 @@ public class RetrievalRecordPurgeJobConfig {
     }
 
     /**
-     * Step for purging old batch log files
+     * Step for purging old batch log files.
      */
     @Bean
     public Step logPurgeStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,

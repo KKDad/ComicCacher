@@ -31,7 +31,7 @@ public class PreferenceConfigWriter {
     private PreferenceConfig preferenceConfig;
 
     /**
-     * Save user preferences to the preferences.json file
+     * Save user preferences to the preferences.json file.
      *
      * @param preference User preferences to save
      * @return true if successful, false otherwise
@@ -50,7 +50,7 @@ public class PreferenceConfigWriter {
     }
 
     /**
-     * Get user preferences by username
+     * Get user preferences by username.
      *
      * @param username Username
      * @return The user preferences if found, empty otherwise
@@ -79,7 +79,7 @@ public class PreferenceConfigWriter {
     }
 
     /**
-     * Add a comic to user's favorites
+     * Add a comic to user's favorites.
      *
      * @param username Username
      * @param comicId Comic ID
@@ -108,7 +108,7 @@ public class PreferenceConfigWriter {
     }
 
     /**
-     * Remove a comic from user's favorites
+     * Remove a comic from user's favorites.
      *
      * @param username Username
      * @param comicId Comic ID
@@ -134,7 +134,7 @@ public class PreferenceConfigWriter {
     }
 
     /**
-     * Update last read date for a comic
+     * Update last read date for a comic.
      *
      * @param username Username
      * @param comicId Comic ID
@@ -161,7 +161,7 @@ public class PreferenceConfigWriter {
     }
 
     /**
-     * Update display settings for a user
+     * Update display settings for a user.
      *
      * @param username Username
      * @param settings Display settings
@@ -187,7 +187,7 @@ public class PreferenceConfigWriter {
     }
 
     /**
-     * Load preferences from the preferences.json file
+     * Load preferences from the preferences.json file.
      *
      * @return PreferenceConfig containing user preferences
      */

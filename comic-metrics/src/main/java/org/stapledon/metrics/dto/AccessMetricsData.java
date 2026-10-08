@@ -31,7 +31,7 @@ public class AccessMetricsData {
     private Map<String, ComicAccessMetrics> comicMetrics = new HashMap<>();
 
     /**
-     * Individual comic access metrics
+     * Individual comic access metrics.
      */
     @Getter
     @Setter
@@ -60,7 +60,7 @@ public class AccessMetricsData {
         private int cacheMisses = 0;
 
         /**
-         * Calculate average access time
+         * Calculate average access time.
          *
          * @return Average access time in milliseconds
          */
@@ -69,7 +69,7 @@ public class AccessMetricsData {
         }
 
         /**
-         * Calculate hit ratio
+         * Calculate hit ratio.
          *
          * @return Hit ratio as a value between 0.0 and 1.0
          */

@@ -171,7 +171,7 @@ public class ImageAnalysisService implements AnalysisService {
     }
 
     /**
-     * Builds metadata with UNKNOWN color mode when image cannot be analyzed
+     * Builds metadata with UNKNOWN color mode when image cannot be analyzed.
      */
     private ImageMetadata buildUnknownMetadata(int comicId, String comicName, String filePath,
             ImageValidationResult validation, String sourceUrl) {

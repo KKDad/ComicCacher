@@ -42,7 +42,7 @@ public final class BatchJobBaseConfig {
             "PromoteFromDevJob", "RetrievalRecordPurgeJob", "SourceCatalogJob");
 
     /**
-     * Configuration property keys for batch jobs
+     * Configuration property keys for batch jobs.
      */
     public static final class PropertyKeys {
         public static final String COMIC_DOWNLOAD_ENABLED = "batch.comic-download.enabled";

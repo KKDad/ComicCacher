@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Integration tests for authentication features
  * Tests user login, registration, and token validation
- * These tests are tolerant of failures in the integration test environment
+ * These tests are tolerant of failures in the integration test environment.
  */
 @Slf4j
 class AuthenticationIT extends AbstractIntegrationTest {

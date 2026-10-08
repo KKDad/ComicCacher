@@ -99,7 +99,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Parse JWT from Authorization header
+     * Parse JWT from Authorization header.
      *
      * @param request HTTP request
      * @return JWT token or null

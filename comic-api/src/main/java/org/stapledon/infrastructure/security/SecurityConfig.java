@@ -39,7 +39,7 @@ public class SecurityConfig {
     /**
      * Main security filter chain used for all environments
      * Configures standard JWT-based authentication for REST endpoints
-     * Authentication required for all endpoints except specified public ones
+     * Authentication required for all endpoints except specified public ones.
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {

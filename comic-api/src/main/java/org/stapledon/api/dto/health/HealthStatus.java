@@ -10,7 +10,7 @@ import lombok.ToString;
 
 /**
  * DTO for system health status
- * Contains overall system health information and component-specific metrics
+ * Contains overall system health information and component-specific metrics.
  */
 @Data
 @Builder
@@ -20,43 +20,43 @@ import lombok.ToString;
 public class HealthStatus {
 
     /**
-     * Overall status of the application
+     * Overall status of the application.
      */
     @ToString.Include
     private Status status;
 
     /**
-     * Current server time when check was performed
+     * Current server time when check was performed.
      */
     private OffsetDateTime timestamp;
 
     /**
-     * Application uptime in milliseconds
+     * Application uptime in milliseconds.
      */
     private long uptime;
 
     /**
-     * Application version and build information
+     * Application version and build information.
      */
     private BuildInfo buildInfo;
 
     /**
-     * System resource metrics (CPU, memory, etc.)
+     * System resource metrics (CPU, memory, etc.).
      */
     private SystemResources systemResources;
 
     /**
-     * Cache status information
+     * Cache status information.
      */
     private CacheStatus cacheStatus;
 
     /**
-     * Status of individual components
+     * Status of individual components.
      */
     private Map<String, ComponentHealth> components;
 
     /**
-     * Possible health statuses
+     * Possible health statuses.
      */
     public enum Status {
         UP,

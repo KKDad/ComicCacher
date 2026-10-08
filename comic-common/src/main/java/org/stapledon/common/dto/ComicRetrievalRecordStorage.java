@@ -13,12 +13,12 @@ import lombok.Data;
 @Data
 public class ComicRetrievalRecordStorage {
     /**
-     * Last update timestamp
+     * Last update timestamp.
      */
     private OffsetDateTime lastUpdated;
 
     /**
-     * List of retrieval records
+     * List of retrieval records.
      */
     private List<ComicRetrievalRecord> records;
 

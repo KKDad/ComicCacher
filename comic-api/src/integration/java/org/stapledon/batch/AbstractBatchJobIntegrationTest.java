@@ -88,7 +88,7 @@ public abstract class AbstractBatchJobIntegrationTest {
     }
 
     /**
-     * Creates an empty JSON file (containing "{}")
+     * Creates an empty JSON file (containing "{}").
      */
     private static void createEmptyJsonFile(Path path) throws IOException {
         if (!Files.exists(path)) {

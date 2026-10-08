@@ -30,7 +30,7 @@ public class JwtTokenUtil {
     private final JwtProperties jwtProperties;
 
     /**
-     * Generate a JWT token for a user
+     * Generate a JWT token for a user.
      *
      * @param user User to generate token for
      * @return JWT token
@@ -52,7 +52,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Generate a refresh token for a user
+     * Generate a refresh token for a user.
      *
      * @param user User to generate refresh token for
      * @return Refresh token
@@ -70,7 +70,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Create JWT token DTO with token details
+     * Create JWT token DTO with token details.
      *
      * @param user User to create token for
      * @return JWT token DTO
@@ -89,7 +89,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Validate token against user details
+     * Validate token against user details.
      *
      * @param token       JWT token
      * @param userDetails User details
@@ -101,7 +101,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Extract username from token
+     * Extract username from token.
      *
      * @param token JWT token
      * @return Username
@@ -111,7 +111,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Extract expiration date from token
+     * Extract expiration date from token.
      *
      * @param token JWT token
      * @return Expiration date
@@ -156,7 +156,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Extract roles from token
+     * Extract roles from token.
      *
      * @param token JWT token
      * @return List of roles (empty list if no roles found)
@@ -169,7 +169,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Extract claim from token
+     * Extract claim from token.
      *
      * @param token          JWT token
      * @param claimsResolver Claims resolver
@@ -227,7 +227,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Check if token is expired
+     * Check if token is expired.
      *
      * @param token JWT token
      * @return true if expired, false otherwise
@@ -237,7 +237,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Extract all claims from token
+     * Extract all claims from token.
      *
      * @param token JWT token
      * @return Claims
@@ -251,7 +251,7 @@ public class JwtTokenUtil {
     }
 
     /**
-     * Get signing key from secret
+     * Get signing key from secret.
      *
      * @return Signing key
      */

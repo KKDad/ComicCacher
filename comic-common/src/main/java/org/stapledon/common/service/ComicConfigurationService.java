@@ -11,13 +11,13 @@ import java.io.File;
  */
 public interface ComicConfigurationService {
     /**
-     * Loads the comic configuration
+     * Loads the comic configuration.
      * @return The comic configuration
      */
     ComicConfig loadComicConfig();
 
     /**
-     * Saves the comic configuration
+     * Saves the comic configuration.
      * @param config The configuration to save
      * @return true if successful
      */

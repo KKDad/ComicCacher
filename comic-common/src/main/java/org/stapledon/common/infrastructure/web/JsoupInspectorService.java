@@ -7,7 +7,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Methods for debugging new site retrievals
+ * Methods for debugging new site retrievals.
  */
 @Slf4j
 @ToString

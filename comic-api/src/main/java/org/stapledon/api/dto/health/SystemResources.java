@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 /**
- * DTO for system resource information
+ * DTO for system resource information.
  */
 @Data
 @Builder
@@ -19,22 +19,22 @@ import lombok.ToString;
 public class SystemResources {
 
     /**
-     * Available processors
+     * Available processors.
      */
     @ToString.Include private int availableProcessors;
 
     /**
-     * Memory usage in MB
+     * Memory usage in MB.
      */
     @ToString.Include private MemoryInfo memory;
 
     /**
-     * Disk space information in MB
+     * Disk space information in MB.
      */
     @ToString.Include private DiskSpace diskSpace;
 
     /**
-     * Memory metrics
+     * Memory metrics.
      */
     @Data
     @Builder
@@ -52,7 +52,7 @@ public class SystemResources {
     }
 
     /**
-     * Disk space metrics
+     * Disk space metrics.
      */
     @Data
     @Builder

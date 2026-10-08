@@ -224,17 +224,17 @@ public interface ManagementFacade {
     Optional<LocalDate> getOldestDateWithComic(int comicId);
 
     /**
-     * Gets retrieval records for a specific comic
+     * Gets retrieval records for a specific comic.
      */
     List<ComicRetrievalRecord> getRetrievalRecords(String comicName, int limit);
 
     /**
-     * Gets retrieval summary statistics
+     * Gets retrieval summary statistics.
      */
     Map<String, Object> getRetrievalSummary(LocalDate fromDate, LocalDate toDate);
 
     /**
-     * Purges old retrieval records
+     * Purges old retrieval records.
      */
     int purgeOldRetrievalRecords(int daysToKeep);
 

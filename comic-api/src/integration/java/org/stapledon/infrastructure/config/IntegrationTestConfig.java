@@ -19,7 +19,7 @@ import org.mockito.Mockito;
 public class IntegrationTestConfig {
 
     /**
-     * Mock DailyJobScheduler for AvatarBackfillJob when disabled
+     * Mock DailyJobScheduler for AvatarBackfillJob when disabled.
      */
     @Bean
     @ConditionalOnProperty(name = "batch.avatar-backfill.enabled", havingValue = "false")
@@ -28,7 +28,7 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * Mock DailyJobScheduler for ComicBackfillJob when disabled
+     * Mock DailyJobScheduler for ComicBackfillJob when disabled.
      */
     @Bean
     @ConditionalOnProperty(name = "batch.comic-backfill.enabled", havingValue = "false")
@@ -37,7 +37,7 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * Mock DailyJobScheduler for ComicDownloadJob when disabled
+     * Mock DailyJobScheduler for ComicDownloadJob when disabled.
      */
     @Bean
     @ConditionalOnProperty(name = "batch.comic-download.enabled", havingValue = "false")
@@ -46,7 +46,7 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * Mock DailyJobScheduler for ImageMetadataBackfillJob when disabled
+     * Mock DailyJobScheduler for ImageMetadataBackfillJob when disabled.
      */
     @Bean
     @ConditionalOnProperty(name = "batch.image-backfill.enabled", havingValue = "false")
@@ -55,7 +55,7 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * Mock DailyJobScheduler for MetricsArchiveJob when disabled
+     * Mock DailyJobScheduler for MetricsArchiveJob when disabled.
      */
     @Bean
     @ConditionalOnProperty(name = "batch.metrics-archive.enabled", havingValue = "false")
@@ -64,7 +64,7 @@ public class IntegrationTestConfig {
     }
 
     /**
-     * Mock DailyJobScheduler for RetrievalRecordPurgeJob when disabled
+     * Mock DailyJobScheduler for RetrievalRecordPurgeJob when disabled.
      */
     @Bean
     @ConditionalOnProperty(name = "batch.record-purge.enabled", havingValue = "false")

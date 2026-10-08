@@ -69,7 +69,7 @@ public class ComicRetrievalJobConfig {
     }
 
     /**
-     * Main job for daily comic retrieval
+     * Main job for daily comic retrieval.
      */
     @Bean
     @Primary
@@ -80,7 +80,7 @@ public class ComicRetrievalJobConfig {
     }
 
     /**
-     * Step for processing comic retrieval
+     * Step for processing comic retrieval.
      */
     @Bean
     public Step comicRetrievalStep(JobRepository jobRepository, PlatformTransactionManager transactionManager, ItemReader<LocalDate> dateReader,
@@ -131,7 +131,7 @@ public class ComicRetrievalJobConfig {
     }
 
     /**
-     * Writer that handles the results (logging summary)
+     * Writer that handles the results (logging summary).
      */
     @Bean
     public ItemWriter<List<ComicDownloadResult>> comicResultWriter() {
