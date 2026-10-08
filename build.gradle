@@ -13,6 +13,8 @@ ext {
     bcryptVersion = '0.4'
     brotliDecVersion = '0.1.2'
     caffeineVersion = '3.2.3'
+    jackson2Version = '2.21.7'
+    jackson3Version = '3.1.7'
     jjwtVersion = '0.13.0'
     jsoupVersion = '1.23.2'
     lombokVersion = '1.18.44'
@@ -23,7 +25,7 @@ ext {
     jacocoVersion = '0.8.14'
 
     // Tool versions
-    checkstyleVersion = '13.3.0'
+    checkstyleVersion = '14.3.0'
 }
 
 subprojects {
@@ -83,6 +85,9 @@ subprojects {
     // Boot 4.1.1 ships Tomcat 11.0.24 (CVEs fixed in 11.0.25). Drop once Boot catches up.
     // Set as a project property so it also covers the BOM import the Boot plugin adds.
     ext['tomcat.version'] = rootProject.ext.tomcatVersion
+    // Boot 4.1.1 ships Jackson 2.21.5 / 3.1.5 (DoS CVEs fixed in 2.21.7 / 3.1.7). Drop once Boot catches up.
+    ext['jackson-2-bom.version'] = rootProject.ext.jackson2Version
+    ext['jackson-bom.version'] = rootProject.ext.jackson3Version
 
     pluginManager.withPlugin('io.spring.dependency-management') {
         dependencyManagement {
