@@ -21,7 +21,7 @@ export function ComicRetrievalDrawer({ comic, onOpenChange }: ComicRetrievalDraw
               <SheetDescription>{describeComic(comic)}</SheetDescription>
             </SheetHeader>
             <div className="px-4 pb-6">
-              <ComicRetrievalDetail comic={comic} />
+              <ComicRetrievalDetail key={comic.comicId} comic={comic} />
             </div>
           </>
         )}

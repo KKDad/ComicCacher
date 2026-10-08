@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DayOutcome } from '@/generated/graphql';
@@ -18,9 +21,26 @@ export function describeComic(comic: ComicHealth): string {
     .join(' · ');
 }
 
-/** A comic's schedule, links, and every day in the window that has a record or a missing strip, newest first. */
+/** Days listed before "Show all", so the panel fits beside the grid without scrolling on its own. */
+export const DAYS_SHOWN = 6;
+/** An error longer than this is cut to three lines until "Show full error". */
+const LONG_ERROR = 160;
+
+/**
+ * A comic's schedule, links, and every day in the window that has a record or a missing strip, newest first. Kept short (six
+ * days, errors cut to three lines) so the panel needs no scrollbar; render it with key={comicId} so a new comic starts folded.
+ */
 export function ComicRetrievalDetail({ comic }: { comic: ComicHealth }) {
+  const [allDays, setAllDays] = useState(false);
+  const [openErrors, setOpenErrors] = useState<ReadonlySet<string>>(new Set());
   const days = comic.days.filter((d) => d.record != null || d.outcome === DayOutcome.Missing).toReversed();
+  const visible = allDays ? days : days.slice(0, DAYS_SHOWN);
+  const toggleError = (date: string) =>
+    setOpenErrors((open) => {
+      const next = new Set(open);
+      if (!next.delete(date)) next.add(date);
+      return next;
+    });
 
   return (
     // min-w-0 and wrap-anywhere: an error with a long URL or token wraps instead of widening the panel
@@ -47,7 +67,7 @@ export function ComicRetrievalDetail({ comic }: { comic: ComicHealth }) {
           <p className="text-sm text-ink-subtle">No attempts or missing strips in the window.</p>
         ) : (
           <ul className="divide-y divide-border rounded border border-border">
-            {days.map((day) => (
+            {visible.map((day) => (
               <li key={day.date} className="space-y-1 p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-ink">{formatShortDate(day.date)}</span>
@@ -63,7 +83,11 @@ export function ComicRetrievalDetail({ comic }: { comic: ComicHealth }) {
                       {day.record.imageSize != null && <span>{formatBytes(day.record.imageSize)}</span>}
                     </p>
                     {day.record.errorMessage && (
-                      <p className="font-mono text-xs wrap-anywhere text-ink-subtle select-all">{day.record.errorMessage}</p>
+                      <ErrorText
+                        text={day.record.errorMessage}
+                        open={openErrors.has(day.date)}
+                        onToggle={() => toggleError(day.date)}
+                      />
                     )}
                   </>
                 )}
@@ -71,7 +95,26 @@ export function ComicRetrievalDetail({ comic }: { comic: ComicHealth }) {
             ))}
           </ul>
         )}
+        {days.length > DAYS_SHOWN && (
+          <Button variant="ghost" size="sm" className="mt-2" onClick={() => setAllDays((a) => !a)}>
+            {allDays ? 'Show fewer' : `Show all ${days.length}`}
+          </Button>
+        )}
       </section>
+    </div>
+  );
+}
+
+function ErrorText({ text, open, onToggle }: { text: string; open: boolean; onToggle: () => void }) {
+  const long = text.length > LONG_ERROR;
+  return (
+    <div>
+      <p className={`font-mono text-xs wrap-anywhere text-ink-subtle select-all ${long && !open ? 'line-clamp-3' : ''}`}>{text}</p>
+      {long && (
+        <button type="button" className="text-xs text-ink-muted underline-offset-2 hover:underline" onClick={onToggle}>
+          {open ? 'Show less' : 'Show full error'}
+        </button>
+      )}
     </div>
   );
 }

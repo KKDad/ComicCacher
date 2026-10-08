@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DayOfWeek, DayOutcome, RetrievalStatusEnum } from '@/generated/graphql';
 import { comic, days, record } from '@/test/retrieval-health';
 import { ComicRetrievalDetail, describeComic } from './comic-retrieval-detail';
@@ -47,5 +48,31 @@ describe('ComicRetrievalDetail', () => {
       'gocomics · numbered strips · inactive · hidden from readers',
     );
     expect(describeComic(comic(1, 'A'))).toBe('gocomics');
+  });
+
+  it('lists the six newest days until asked for the rest', async () => {
+    const failing = days(9).map((d) => ({ ...d, outcome: DayOutcome.Missing, record: record(d.date, RetrievalStatusEnum.NetworkError) }));
+    render(<ComicRetrievalDetail comic={comic(1, 'Garfield', { days: failing })} />);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(6);
+    await userEvent.click(screen.getByRole('button', { name: 'Show all 9' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(9);
+  });
+
+  it('cuts a long error to three lines until asked for all of it', async () => {
+    const long = 'HTTP error fetching URL https://www.gocomics.com/'.padEnd(400, 'x');
+    const day = record('2026-10-08', RetrievalStatusEnum.NetworkError, { errorMessage: long });
+    render(<ComicRetrievalDetail comic={comic(1, 'Garfield', { days: days(1, { '2026-10-08': { outcome: DayOutcome.Missing, record: day } }) })} />);
+
+    expect(screen.getByText(long)).toHaveClass('line-clamp-3');
+    await userEvent.click(screen.getByRole('button', { name: 'Show full error' }));
+    expect(screen.getByText(long)).not.toHaveClass('line-clamp-3');
+  });
+
+  it('shows a short error whole, without a toggle', () => {
+    render(<ComicRetrievalDetail comic={peanuts} />);
+
+    expect(screen.getByText('Forbidden')).not.toHaveClass('line-clamp-3');
+    expect(screen.queryByRole('button', { name: 'Show full error' })).not.toBeInTheDocument();
   });
 });
