@@ -1,6 +1,7 @@
 package org.stapledon.engine.source;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.StartSource;
 import org.stapledon.common.util.LogContext;
+import org.stapledon.engine.downloader.DownloaderConstants;
 import org.stapledon.engine.downloader.RateLimitedException;
 import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.engine.source.ComicValidator.Problem;
@@ -413,6 +415,8 @@ public class SourceCatalogService {
         NOT_FOUND,
         /** HTTP 429 after the throttle's retries; the source is backed off. */
         RATE_LIMITED,
+        /** HTTP 403: the source refused the request. */
+        BLOCKED,
         /** Recorded only: the comic has a value an admin set. */
         RECORDED
     }
@@ -444,6 +448,13 @@ public class SourceCatalogService {
         } catch (RateLimitedException e) {
             log.warn("Start detection for {} rate limited: {}", comic.getName(), e.getMessage());
             return DetectionOutcome.RATE_LIMITED;
+        } catch (HttpStatusException e) {
+            if (e.getStatusCode() == DownloaderConstants.HTTP_FORBIDDEN) {
+                log.warn("Start detection for {} blocked (HTTP 403): {}", comic.getName(), e.getUrl());
+                return DetectionOutcome.BLOCKED;
+            }
+            log.warn("Start detection for {} failed: {}", comic.getName(), e.toString());
+            return DetectionOutcome.FAILED;
         } catch (IOException | RuntimeException e) {
             log.warn("Start detection for {} failed: {}", comic.getName(), e.toString());
             return DetectionOutcome.FAILED;
@@ -452,6 +463,7 @@ public class SourceCatalogService {
 
     /**
      * Detects starts for up to {@code limit} configured comics of each source that have none yet, on the calling thread. Returns how many were saved.
+     * A 429, or {@link DownloaderConstants#BLOCKED_IN_A_ROW_TO_STOP_SOURCE} 403s in a row, stop that source for this run.
      */
     public int detectMissingStarts(int limit) {
         int applied = 0;
@@ -463,12 +475,17 @@ public class SourceCatalogService {
                     .filter(comic -> comic.getStartSource() == null && (source.indexed() ? comic.getFirstStripNumber() == null : comic.getSourceStartDate() == null))
                     .limit(limit)
                     .toList();
+            int blockedInARow = 0;
             for (ComicItem comic : missing) {
                 DetectionOutcome outcome = detectStart(comic);
+                blockedInARow = outcome == DetectionOutcome.BLOCKED ? blockedInARow + 1 : 0;
                 if (outcome == DetectionOutcome.APPLIED) {
                     applied++;
                 } else if (outcome == DetectionOutcome.RATE_LIMITED) {
                     log.warn("Start detection for {} stopped after HTTP 429; the rest wait for the next run", source.id());
+                    break;
+                } else if (blockedInARow >= DownloaderConstants.BLOCKED_IN_A_ROW_TO_STOP_SOURCE) {
+                    log.warn("Start detection for {} stopped after {} HTTP 403s in a row; the rest wait for the next run", source.id(), blockedInARow);
                     break;
                 }
             }

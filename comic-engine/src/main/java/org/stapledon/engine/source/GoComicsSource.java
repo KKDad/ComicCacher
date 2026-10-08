@@ -33,7 +33,7 @@ import org.stapledon.engine.downloader.SourceThrottleService;
 /**
  * GoComics (Andrews McMeel). The catalog is the A–Z page: one anchor per comic, each carrying a JSON-LD {@code ImageObject} with the title, author and
  * badge image. A strip page embeds the comic's first strip date ({@code "firstDate"}) in its Next.js data, and an about page its description and
- * categories.
+ * categories. The strip page is read as its RSC payload, as for downloads: GoComics' firewall refuses full page loads of strip pages from our IP.
  */
 @Slf4j
 @Component
@@ -121,12 +121,17 @@ public class GoComicsSource implements ComicSource {
         });
     }
 
+    /**
+     * Reads the comic page's RSC payload, as the site's router does when a reader clicks through from the home page. A comic GoComics no longer
+     * has comes back as its not-found page, with no {@code firstDate}.
+     */
     @Override
     public Optional<StartDetector> startDetector() {
         return Optional.of(comic -> {
             String url = baseUrl + "/" + identifierFor(comic);
-            Document page = throttle.withRetries(ID, () -> fetcher.fetchDocument(ID, url, BrowserFetcher.DEFAULT_TIMEOUT_MS, BrowserFetcher.DEFAULT_MAX_BODY_BYTES));
-            return parseFirstDate(page.outerHtml()).map(StartInfo::ofDate);
+            String flight = throttle.withRetries(ID, () -> fetcher.fetchNextJsFlight(ID, url, "/", BrowserFetcher.DEFAULT_TIMEOUT_MS,
+                    BrowserFetcher.DEFAULT_MAX_BODY_BYTES));
+            return parseFirstDate(flight).map(StartInfo::ofDate);
         });
     }
 
@@ -212,7 +217,7 @@ public class GoComicsSource implements ComicSource {
     }
 
     /**
-     * The {@code firstDate} a GoComics strip page embeds in its Next.js flight data.
+     * The {@code firstDate} a GoComics strip page embeds in its Next.js flight data (escaped inside the HTML page, plain in the RSC payload).
      */
     static Optional<LocalDate> parseFirstDate(String html) {
         Matcher m = FIRST_DATE.matcher(html);

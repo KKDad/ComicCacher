@@ -6,9 +6,11 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.jsoup.HttpStatusException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -271,6 +273,30 @@ class SourceCatalogServiceTest {
         assertThat(limitedService.detectMissingStarts(5)).isZero();
 
         verify(limited).detect(any());
+    }
+
+    @Test
+    void detectMissingStartsStopsTheSourceAfterThreeBlockedInARow() throws IOException {
+        StartDetector blocked = mock(StartDetector.class);
+        when(blocked.detect(any())).thenThrow(new HttpStatusException("HTTP error fetching URL", 403, "https://daily.example/one"));
+        StubSource blocking = new StubSource("daily") {
+            @Override
+            public Optional<StartDetector> startDetector() {
+                return Optional.of(blocked);
+            }
+        };
+        SourceRegistry registry = new SourceRegistry(List.of(blocking), mock(DownloaderFacade.class));
+        SourceCatalogService blockedService = new SourceCatalogService(registry, repository, comics, new ComicValidator(registry, comics, Clock.fixed(NOW,
+                ZoneOffset.UTC)), thumbnails, Runnable::run, Clock.fixed(NOW, ZoneOffset.UTC));
+        for (int i = 1; i <= 5; i++) {
+            stored.put(i, ComicItem.builder().id(i).name("C" + i).source("daily").sourceIdentifier("c" + i).build());
+        }
+
+        assertThat(blockedService.detectStart(stored.get(1))).isEqualTo(DetectionOutcome.BLOCKED);
+        assertThat(blockedService.detectMissingStarts(5)).isZero();
+
+        // One from detectStart, then three before the run stops
+        verify(blocked, times(4)).detect(any());
     }
 
     private void listWithoutDetails(String... identifiers) {

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.stapledon.common.config.properties.DownloaderProperties;
@@ -168,11 +169,39 @@ class GoComicsSourceTest {
     }
 
     @Test
-    void startDetectorReadsTheComicsPage() throws IOException {
-        serve("/calvinandhobbes", 200, fixture("gocomics-strip-page.html"));
+    void startDetectorReadsTheComicPagesRscPayload() throws IOException {
+        Map<String, String> seen = new ConcurrentHashMap<>();
+        server.createContext("/calvinandhobbes", exchange -> {
+            seen.put("query", String.valueOf(exchange.getRequestURI().getQuery()));
+            seen.put("rsc", String.valueOf(exchange.getRequestHeaders().getFirst("RSC")));
+            seen.put("next-url", String.valueOf(exchange.getRequestHeaders().getFirst("Next-Url")));
+            byte[] body = """
+                    1:"$Sreact.fragment"
+                    5:["$","$L17",null,{"featureId":104,"dates":["1985-11-18T00:00:00","2026-10-08T00:00:00"],"count":2,"firstDate":"1985-11-18T00:00:00","lastDate":"2026-10-08T00:00:00"}]
+                    """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "text/x-component");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
         ComicItem comic = ComicItem.builder().id(1).name("Calvin and Hobbes").source("gocomics").sourceIdentifier("calvinandhobbes").build();
 
         assertThat(source.startDetector().orElseThrow().detect(comic)).contains(StartInfo.ofDate(LocalDate.of(1985, 11, 18)));
+        assertThat(seen).containsEntry("rsc", "1").containsEntry("next-url", "/");
+        assertThat(seen.get("query")).startsWith("_rsc=");
+    }
+
+    @Test
+    void startDetectorFindsNothingOnTheNotFoundPage() throws IOException {
+        serve("/committed", 200, "0:{\"a\":\"NEXT_HTTP_ERROR_FALLBACK;404\"}\n");
+        ComicItem comic = ComicItem.builder().id(1).name("Committed").source("gocomics").sourceIdentifier("committed").build();
+
+        assertThat(source.startDetector().orElseThrow().detect(comic)).isEmpty();
+    }
+
+    @Test
+    void parseFirstDateReadsTheHtmlPageToo() throws IOException {
+        assertThat(GoComicsSource.parseFirstDate(fixture("gocomics-strip-page.html"))).contains(LocalDate.of(1985, 11, 18));
     }
 
     @Test
