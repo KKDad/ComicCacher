@@ -15,6 +15,15 @@
 - Show `error.digest` on the error pages ("Error reference: …") so a user report can be matched to the log line. Pairs with "Add timing metrics to diagnose slow page loads" and the comiccacher-logs frontend check
 - Priority: Medium-High. Small change. The comiccacher-logs frontend check now reads the `comics-ui` log, but a server render error only shows there as Next's `⨯` line with no path or request id, so it can only be matched to the API log by time
 
+## Show a batch job's log while it's running
+
+- "View Logs" on a RUNNING execution says "No logs available for this execution". The per-execution file (`batch-logs/{jobName}/{jobName}-{date}-{hash}.log`) is written from the start banner on, but `JsonBatchExecutionTracker` only records `logFileName` in `afterJob`. Until the job ends, `batchJobLog` finds no file name and returns null
+- Record `logFileName` in the STARTED entry `beforeJob` writes (the name is already chosen there for the `batchLogPath` MDC key), and keep it when `afterJob` updates the entry in place
+- `LogViewer` fetches once when it opens. While the execution is `STARTED`/`STARTING`, poll `GetBatchJobLog` (3s, like the batch-jobs page's `refetchInterval`), stop once it finishes, follow the tail unless the user has scrolled up or is searching, and show a "Running…" marker in the header
+- `batchJobLog` returns the whole file each time. Fine for today's sizes; if a long backfill log makes polling heavy, add an offset argument and return only the new bytes
+- Check that lines from the per-source download pool and the manual-launch executor (both use `MdcTaskDecorator`) reach the file mid-run, not only the job thread's. Add tests: tracker writes `logFileName` on start, resolver returns a partial log, viewer polls only while running
+- Priority: Medium-High. Today the only way to watch a long run (backfill, a manual retrieval) is `utils/logs.sh` on the host, and the data is already on disk
+
 ## Get ready for Next.js 17
 
 - Next.js 17 was released 2026-06-15; comic-hub is on `next` 16.3.6 with React 19.3.0
