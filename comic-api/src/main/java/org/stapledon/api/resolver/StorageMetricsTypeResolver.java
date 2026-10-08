@@ -85,6 +85,7 @@ public class StorageMetricsTypeResolver {
         for (java.util.Map.Entry<String, ComicStorageMetrics> entry : perComic.entrySet()) {
             ComicStorageMetrics m = entry.getValue();
             result.add(new ComicStorageMetricView(
+                    null,
                     entry.getKey(),
                     (double) m.getStorageBytes(),
                     m.getImageCount(),

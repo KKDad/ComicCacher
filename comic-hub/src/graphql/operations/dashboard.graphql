@@ -218,6 +218,7 @@ query GetCombinedMetrics {
     access {
       totalAccesses
       comics {
+        comicId
         comicName
         accessCount
         averageAccessTimeMs

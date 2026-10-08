@@ -88,50 +88,36 @@ public class MetricsUpdateService {
             // Build global metrics from storage stats
             GlobalMetrics globalMetrics = buildGlobalMetrics(storageStats);
 
-            // Build per-comic metrics
+            // Build per-comic metrics, keyed by directory name. Storage is keyed by directory name ("MotherGoose&Grimm") and
+            // access by display name ("Mother Goose & Grimm"), so access is re-keyed before the two are joined.
             Map<String, CombinedMetricsData.ComicCombinedMetrics> perComicMetrics = new HashMap<>();
+            Map<String, AccessMetricsData.ComicAccessMetrics> accessByDirectory = accessByDirectory(accessData);
 
             // Start with all comics from storage metrics
             if (storageStats != null && storageStats.getPerComicMetrics() != null) {
-                storageStats.getPerComicMetrics().forEach((comicName, storageMetric) -> {
+                storageStats.getPerComicMetrics().forEach((directoryName, storageMetric) -> {
+                    AccessMetricsData.ComicAccessMetrics accessMetric = accessByDirectory.get(directoryName);
                     CombinedMetricsData.ComicCombinedMetrics.ComicCombinedMetricsBuilder builder = CombinedMetricsData.ComicCombinedMetrics
-                            .builder().comicName(comicName)
+                            .builder().comicName(accessMetric != null ? accessMetric.getComicName() : directoryName)
                             .storageBytes(storageMetric.getStorageBytes()).imageCount(storageMetric.getImageCount())
                             .averageImageSize(storageMetric.getAverageImageSize())
                             .yearlyStorage(buildYearlyStorage(storageMetric));
 
-                    // Add access metrics if available
-                    if (accessData != null && accessData.getComicMetrics() != null) {
-                        AccessMetricsData.ComicAccessMetrics accessMetric = accessData.getComicMetrics().get(comicName);
-
-                        if (accessMetric != null) {
-                            builder.accessCount(accessMetric.getAccessCount()).lastAccess(accessMetric.getLastAccess())
-                                    .averageAccessTime(accessMetric.getAverageAccessTime())
-                                    .hitRatio(accessMetric.getHitRatio()).cacheHits(accessMetric.getCacheHits())
-                                    .cacheMisses(accessMetric.getCacheMisses());
-                        }
+                    if (accessMetric != null) {
+                        withAccess(builder, accessMetric);
                     }
 
-                    perComicMetrics.put(comicName, builder.build());
+                    perComicMetrics.put(directoryName, builder.build());
                 });
             }
 
             // Add any comics that only have access metrics but no storage metrics
-            if (accessData != null && accessData.getComicMetrics() != null) {
-                accessData.getComicMetrics().forEach((comicName, accessMetric) -> {
-                    if (!perComicMetrics.containsKey(comicName)) {
-                        CombinedMetricsData.ComicCombinedMetrics combined = CombinedMetricsData.ComicCombinedMetrics
-                                .builder().comicName(comicName).accessCount(accessMetric.getAccessCount())
-                                .lastAccess(accessMetric.getLastAccess())
-                                .averageAccessTime(accessMetric.getAverageAccessTime())
-                                .hitRatio(accessMetric.getHitRatio())
-                                .cacheHits(accessMetric.getCacheHits()).cacheMisses(accessMetric.getCacheMisses())
-                                .build();
-
-                        perComicMetrics.put(comicName, combined);
-                    }
-                });
-            }
+            accessByDirectory.forEach((directoryName, accessMetric) -> {
+                if (!perComicMetrics.containsKey(directoryName)) {
+                    perComicMetrics.put(directoryName,
+                            withAccess(CombinedMetricsData.ComicCombinedMetrics.builder().comicName(accessMetric.getComicName()), accessMetric).build());
+                }
+            });
 
             // Build combined metrics (no longer saved to disk)
             CombinedMetricsData combinedData = CombinedMetricsData.builder().globalMetrics(globalMetrics)
@@ -144,6 +130,54 @@ public class MetricsUpdateService {
             log.error("Failed to build combined metrics", e);
             return CombinedMetricsData.builder().lastUpdated(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC)).build();
         }
+    }
+
+    /**
+     * The comic's directory name: its name with spaces removed, as {@code ComicIdentifier.getDirectoryName()} builds it.
+     */
+    private static String directoryKey(String comicName) {
+        return comicName.replace(" ", "");
+    }
+
+    /**
+     * Access metrics keyed by directory name. Two entries for one comic (older files hold some under the directory name) are added
+     * together, keeping the display name.
+     */
+    private static Map<String, AccessMetricsData.ComicAccessMetrics> accessByDirectory(AccessMetricsData accessData) {
+        Map<String, AccessMetricsData.ComicAccessMetrics> result = new HashMap<>();
+        if (accessData == null || accessData.getComicMetrics() == null) {
+            return result;
+        }
+        accessData.getComicMetrics().forEach((comicName, metric) -> {
+            AccessMetricsData.ComicAccessMetrics keyed = AccessMetricsData.ComicAccessMetrics.builder()
+                    .comicName(comicName).accessCount(metric.getAccessCount()).lastAccess(metric.getLastAccess())
+                    .totalAccessTimeMs(metric.getTotalAccessTimeMs())
+                    .cacheHits(metric.getCacheHits()).cacheMisses(metric.getCacheMisses()).build();
+            result.merge(directoryKey(comicName), keyed, MetricsUpdateService::mergeAccess);
+        });
+        return result;
+    }
+
+    private static AccessMetricsData.ComicAccessMetrics mergeAccess(AccessMetricsData.ComicAccessMetrics a,
+            AccessMetricsData.ComicAccessMetrics b) {
+        String lastA = a.getLastAccess() == null ? "" : a.getLastAccess();
+        String lastB = b.getLastAccess() == null ? "" : b.getLastAccess();
+        return AccessMetricsData.ComicAccessMetrics.builder()
+                .comicName(a.getComicName().contains(" ") ? a.getComicName() : b.getComicName())
+                .accessCount(a.getAccessCount() + b.getAccessCount())
+                .lastAccess(lastA.compareTo(lastB) >= 0 ? lastA : lastB)
+                .totalAccessTimeMs(a.getTotalAccessTimeMs() + b.getTotalAccessTimeMs())
+                .cacheHits(a.getCacheHits() + b.getCacheHits())
+                .cacheMisses(a.getCacheMisses() + b.getCacheMisses())
+                .build();
+    }
+
+    private static CombinedMetricsData.ComicCombinedMetrics.ComicCombinedMetricsBuilder withAccess(
+            CombinedMetricsData.ComicCombinedMetrics.ComicCombinedMetricsBuilder builder, AccessMetricsData.ComicAccessMetrics accessMetric) {
+        return builder.accessCount(accessMetric.getAccessCount()).lastAccess(accessMetric.getLastAccess())
+                .averageAccessTime(accessMetric.getAverageAccessTime())
+                .hitRatio(accessMetric.getHitRatio()).cacheHits(accessMetric.getCacheHits())
+                .cacheMisses(accessMetric.getCacheMisses());
     }
 
     /**

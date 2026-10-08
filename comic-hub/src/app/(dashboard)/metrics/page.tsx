@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Database, Image, MousePointerClick, ArrowUpDown } from 'lucide-react';
 import { useGetCombinedMetricsQuery } from '@/generated/graphql';
@@ -24,6 +26,7 @@ export default function MetricsPage() {
   type SortKey = 'comicName' | 'imageCount' | 'totalBytes' | 'accessCount' | 'averageAccessTimeMs';
   const [sortKey, setSortKey] = useState<SortKey>('totalBytes');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [query, setQuery] = useState('');
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -87,59 +90,80 @@ export default function MetricsPage() {
 
   const totalImages = storage?.comics?.reduce((sum, c) => sum + c.imageCount, 0) ?? 0;
 
-  // Merge storage and access data by normalized name (strip spaces/punctuation, lowercase)
-  // Storage uses directory names (e.g. "Sherman'sLagoon") while access uses display names
-  // (e.g. "Sherman's Lagoon"), so we normalize to match them.
-  const normalizeKey = (name: string) => name.toLowerCase().replace(/[\s''-]/g, '');
+  // Merge storage and access rows by comic id. The API joins the two by directory name and fills in the comic's id; a row
+  // without one (a comic no longer configured, or an older API) falls back to the name without spaces or punctuation, so
+  // "MotherGoose&Grimm" and "Mother Goose & Grimm" still meet.
+  const normalizeKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  const comicMap = new Map<string, {
+  type ComicRow = {
+    comicId: number | null;
     comicName: string;
     imageCount: number;
     totalBytes: number;
     accessCount: number;
     averageAccessTimeMs: number | null;
     lastAccessed: string | null;
-  }>();
+  };
+  const rows: ComicRow[] = [];
+  const byId = new Map<number, ComicRow>();
+  const byName = new Map<string, ComicRow>();
 
-  for (const c of storage?.comics ?? []) {
-    comicMap.set(normalizeKey(c.comicName), {
-      comicName: c.comicName,
-      imageCount: c.imageCount,
-      totalBytes: c.totalBytes,
-      accessCount: 0,
-      averageAccessTimeMs: null,
-      lastAccessed: null,
-    });
-  }
-
-  for (const c of access?.comics ?? []) {
-    const key = normalizeKey(c.comicName);
-    const existing = comicMap.get(key);
-    if (existing) {
-      existing.accessCount = c.accessCount;
-      existing.averageAccessTimeMs = c.averageAccessTimeMs ?? null;
-      existing.lastAccessed = c.lastAccessed ?? null;
-      // Prefer the display name with spaces if available
-      if (c.comicName.includes(' ')) {
-        existing.comicName = c.comicName;
-      }
-    } else {
-      comicMap.set(key, {
+  function rowFor(c: { comicId?: number | null; comicName: string }): ComicRow {
+    const nameKey = normalizeKey(c.comicName);
+    let row = (c.comicId != null ? byId.get(c.comicId) : undefined) ?? byName.get(nameKey);
+    if (!row) {
+      row = {
+        comicId: null,
         comicName: c.comicName,
         imageCount: 0,
         totalBytes: 0,
-        accessCount: c.accessCount,
-        averageAccessTimeMs: c.averageAccessTimeMs ?? null,
-        lastAccessed: c.lastAccessed ?? null,
-      });
+        accessCount: 0,
+        averageAccessTimeMs: null,
+        lastAccessed: null,
+      };
+      rows.push(row);
+    } else if (c.comicName.includes(' ') && !row.comicName.includes(' ')) {
+      // Prefer the display name with spaces over the directory name
+      row.comicName = c.comicName;
+    }
+    if (c.comicId != null && row.comicId == null) {
+      row.comicId = c.comicId;
+      byId.set(c.comicId, row);
+    }
+    byName.set(nameKey, row);
+    return row;
+  }
+
+  // Older snapshots can hold one comic under both names, so add rows together rather than replace them
+  for (const c of storage?.comics ?? []) {
+    const row = rowFor(c);
+    row.imageCount += c.imageCount;
+    row.totalBytes += c.totalBytes;
+  }
+
+  for (const c of access?.comics ?? []) {
+    const row = rowFor(c);
+    if (c.accessCount > 0 && c.averageAccessTimeMs != null) {
+      const total = (row.averageAccessTimeMs ?? 0) * row.accessCount + c.averageAccessTimeMs * c.accessCount;
+      row.averageAccessTimeMs = total / (row.accessCount + c.accessCount);
+    }
+    row.accessCount += c.accessCount;
+    if (c.lastAccessed && (!row.lastAccessed || new Date(c.lastAccessed) > new Date(row.lastAccessed))) {
+      row.lastAccessed = c.lastAccessed;
     }
   }
 
-  const combinedComics = [...comicMap.values()].sort((a, b) => {
-    const dir = sortDir === 'asc' ? 1 : -1;
-    if (sortKey === 'comicName') return dir * compareNames(a.comicName, b.comicName);
-    return dir * ((a[sortKey] ?? 0) - (b[sortKey] ?? 0));
-  });
+  // Match the name as typed, or without spaces and punctuation ("mothergoose" finds "Mother Goose & Grimm")
+  const search = query.trim().toLowerCase();
+  const matches = (name: string) =>
+    !search || name.toLowerCase().includes(search) || normalizeKey(name).includes(normalizeKey(search));
+  const combinedComics = rows
+    .filter((c) => matches(c.comicName))
+    .sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      if (sortKey === 'comicName') return dir * compareNames(a.comicName, b.comicName);
+      return dir * ((a[sortKey] ?? 0) - (b[sortKey] ?? 0));
+    });
 
   const summaryCards = [
     { label: 'Total Storage', value: formatBytes(storage?.totalBytes ?? 0), icon: Database },
@@ -174,65 +198,85 @@ export default function MetricsPage() {
         })}
       </div>
 
-      {combinedComics.length > 0 && (
+      {rows.length > 0 && (
         <Card>
-          <div className="p-6 pb-4">
+          <div className="flex flex-col gap-3 p-6 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold text-ink">Metrics by Comic</h2>
+            <Input
+              type="search"
+              placeholder="Search comics"
+              aria-label="Search comics"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="sm:max-w-64"
+            />
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-t border-border text-left text-ink-subtle">
-                  <th className="px-6 py-3 font-medium">
-                    <button className="inline-flex items-center gap-1" onClick={() => toggleSort('comicName')}>
-                      Comic <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('imageCount')}>
-                      Images <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('totalBytes')}>
-                      Storage <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 font-medium text-right">Avg Size</th>
-                  <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('accessCount')}>
-                      Accesses <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 font-medium text-right">
-                    <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('averageAccessTimeMs')}>
-                      Avg Response <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 font-medium text-right">Last Accessed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {combinedComics.map((comic) => (
-                  <tr key={comic.comicName} className="border-t border-border hover:bg-surface-hover">
-                    <td className="px-6 py-3 text-ink">{comic.comicName}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">{comic.imageCount.toLocaleString()}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">{formatBytes(comic.totalBytes)}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">
-                      {comic.imageCount > 0 ? formatBytes(comic.totalBytes / comic.imageCount) : '—'}
-                    </td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">{comic.accessCount > 0 ? comic.accessCount.toLocaleString() : '—'}</td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">
-                      {comic.averageAccessTimeMs != null ? `${comic.averageAccessTimeMs.toFixed(1)} ms` : '—'}
-                    </td>
-                    <td className="px-6 py-3 text-right text-ink-subtle">
-                      {comic.lastAccessed ? formatTimeAgo(comic.lastAccessed) : '—'}
-                    </td>
+          {combinedComics.length === 0 ? (
+            <p className="border-t border-border p-8 text-center text-ink-subtle">No comics match.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-t border-border text-left text-ink-subtle">
+                    <th className="px-6 py-3 font-medium">
+                      <button className="inline-flex items-center gap-1" onClick={() => toggleSort('comicName')}>
+                        Comic <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 font-medium text-right">
+                      <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('imageCount')}>
+                        Images <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 font-medium text-right">
+                      <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('totalBytes')}>
+                        Storage <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 font-medium text-right">Avg Size</th>
+                    <th className="px-6 py-3 font-medium text-right">
+                      <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('accessCount')}>
+                        Accesses <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 font-medium text-right">
+                      <button className="inline-flex items-center gap-1 ml-auto" onClick={() => toggleSort('averageAccessTimeMs')}>
+                        Avg Response <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 font-medium text-right">Last Accessed</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {combinedComics.map((comic) => (
+                    <tr key={comic.comicId ?? comic.comicName} className="border-t border-border hover:bg-surface-hover">
+                      <td className="px-6 py-3 text-ink">
+                        {comic.comicId != null ? (
+                          <Link href={`/comics/${comic.comicId}/read`} className="hover:underline">
+                            {comic.comicName}
+                          </Link>
+                        ) : (
+                          comic.comicName
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-right text-ink-subtle">{comic.imageCount.toLocaleString()}</td>
+                      <td className="px-6 py-3 text-right text-ink-subtle">{formatBytes(comic.totalBytes)}</td>
+                      <td className="px-6 py-3 text-right text-ink-subtle">
+                        {comic.imageCount > 0 ? formatBytes(comic.totalBytes / comic.imageCount) : '—'}
+                      </td>
+                      <td className="px-6 py-3 text-right text-ink-subtle">{comic.accessCount > 0 ? comic.accessCount.toLocaleString() : '—'}</td>
+                      <td className="px-6 py-3 text-right text-ink-subtle">
+                        {comic.averageAccessTimeMs != null ? `${comic.averageAccessTimeMs.toFixed(1)} ms` : '—'}
+                      </td>
+                      <td className="px-6 py-3 text-right text-ink-subtle">
+                        {comic.lastAccessed ? formatTimeAgo(comic.lastAccessed) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
       )}
     </div>

@@ -74,6 +74,7 @@ public class AccessMetricsTypeResolver {
         for (Map.Entry<String, ComicAccessMetrics> entry : metrics.entrySet()) {
             ComicAccessMetrics m = entry.getValue();
             result.add(new ComicAccessMetricView(
+                    null,
                     entry.getKey(),
                     m.getAccessCount(),
                     m.getAverageAccessTime(),
