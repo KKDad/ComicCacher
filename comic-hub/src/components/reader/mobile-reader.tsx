@@ -6,14 +6,17 @@ import type { useReader } from '@/hooks/use-reader';
 import { useSwipe } from '@/hooks/use-swipe';
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronUp, ChevronDown, Maximize2, Minimize2 } from 'lucide-react';
 import { ReaderControls } from './reader-controls';
 import { StripSkeleton } from './strip-skeleton';
 import { ReadingListDrawer } from './reading-list-drawer';
 import { DatePickerPopover } from './date-picker-popover';
+import { InstallHint } from './install-hint';
 import { formatMediumDate } from '@/lib/date-utils';
 import { useGoBack } from '@/lib/navigation-history';
 import { useNewestFirst } from '@/hooks/use-newest-first';
+import { useFullscreen } from '@/hooks/use-fullscreen';
+import { usePhoneLandscape } from '@/hooks/use-phone-landscape';
 
 /** Duration (ms) for the swipe transition animation. */
 const SWIPE_TRANSITION_MS = 200;
@@ -138,11 +141,47 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
     },
   };
 
+  // Turning the phone sideways goes full screen and turning it back leaves. Browsers
+  // usually refuse full screen without a user gesture, so a refused request stays
+  // 'pending' and the next tap on the strip makes it.
+  const { supported: fullscreenSupported, isFullscreen, toggle: toggleFullscreen, enter: enterFullscreen, exit: exitFullscreen } =
+    useFullscreen();
+  const landscape = usePhoneLandscape();
+  const autoFullscreenRef = useRef<'pending' | 'entered' | null>(null);
+
+  const enterAutoFullscreen = useCallback(() => {
+    autoFullscreenRef.current = 'pending';
+    void enterFullscreen().then((entered) => {
+      if (entered && autoFullscreenRef.current === 'pending') autoFullscreenRef.current = 'entered';
+    });
+  }, [enterFullscreen]);
+
+  useEffect(() => {
+    if (!fullscreenSupported) return;
+    if (landscape) {
+      // Full screen already (the reader's own button): leave it to the reader
+      if (!document.fullscreenElement) enterAutoFullscreen();
+    } else if (autoFullscreenRef.current) {
+      if (autoFullscreenRef.current === 'entered') exitFullscreen();
+      autoFullscreenRef.current = null;
+    }
+  }, [landscape, fullscreenSupported, enterAutoFullscreen, exitFullscreen]);
+
+  const handleFullscreenButton = useCallback(() => {
+    autoFullscreenRef.current = null;
+    toggleFullscreen();
+    hideControlsAfterNav();
+  }, [toggleFullscreen, hideControlsAfterNav]);
+
   const toggleControls = useCallback(() => {
     if (isZoomed) return;
+    if (autoFullscreenRef.current === 'pending' && !document.fullscreenElement) {
+      enterAutoFullscreen();
+      return;
+    }
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     setControlsVisible((v) => !v);
-  }, [isZoomed]);
+  }, [isZoomed, enterAutoFullscreen]);
 
   useEffect(() => {
     hideTimerRef.current = setTimeout(() => setControlsVisible(false), INITIAL_CONTROLS_MS);
@@ -241,6 +280,18 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
           <span className="text-sm font-medium text-ink truncate ml-2 flex-1">
             {comicName}
           </span>
+          {fullscreenSupported && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleFullscreenButton}
+              aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+              aria-pressed={isFullscreen}
+              className="text-ink-subtle hover:text-ink hover:bg-muted"
+            >
+              {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+            </Button>
+          )}
           <ReadingListDrawer comicId={comicId} />
         </div>
 
@@ -290,6 +341,8 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
           </div>
         </div>
       </div>
+
+      <InstallHint fullscreenSupported={fullscreenSupported} />
     </div>
   );
 }
