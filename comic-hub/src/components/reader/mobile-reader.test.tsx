@@ -26,6 +26,20 @@ vi.mock('@/hooks/use-swipe', () => ({
 }));
 
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
+import { useFullscreen } from '@/hooks/use-fullscreen';
+import { usePhoneLandscape } from '@/hooks/use-phone-landscape';
+
+const fullscreen = vi.hoisted(() => ({
+  toggle: vi.fn(),
+  enter: vi.fn(),
+  exit: vi.fn(),
+}));
+vi.mock('@/hooks/use-fullscreen', () => ({
+  useFullscreen: vi.fn(() => ({ supported: false, isFullscreen: false, ...fullscreen })),
+}));
+vi.mock('@/hooks/use-phone-landscape', () => ({
+  usePhoneLandscape: vi.fn().mockReturnValue(false),
+}));
 import { imageSrc } from '@/test/test-utils';
 type SwipeOptions = Parameters<typeof useSwipe>[0];
 
@@ -667,6 +681,89 @@ describe('MobileReader', () => {
       swipes.up!();
       vi.advanceTimersByTime(500);
       expect(reader.goOlder).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('full screen', () => {
+    function mockFullscreen(isFullscreen = false) {
+      vi.mocked(useFullscreen).mockReturnValue({ supported: true, isFullscreen, ...fullscreen });
+    }
+
+    beforeEach(() => {
+      fullscreen.enter.mockResolvedValue(true);
+    });
+    afterEach(() => {
+      vi.mocked(useFullscreen).mockReturnValue({ supported: false, isFullscreen: false, ...fullscreen });
+      vi.mocked(usePhoneLandscape).mockReturnValue(false);
+    });
+
+    it('has no full-screen button where the browser has no Fullscreen API', () => {
+      render(<MobileReader comicId={1} reader={createMockReader()} />);
+      expect(screen.queryByRole('button', { name: /full screen/i })).not.toBeInTheDocument();
+    });
+
+    it('toggles full screen from the top bar', async () => {
+      mockFullscreen();
+      render(<MobileReader comicId={1} reader={createMockReader()} />);
+
+      const button = screen.getByRole('button', { name: 'Full screen' });
+      expect(button).toHaveAttribute('aria-pressed', 'false');
+      await userEvent.click(button);
+      expect(fullscreen.toggle).toHaveBeenCalledOnce();
+    });
+
+    it('offers to leave full screen while in it', () => {
+      mockFullscreen(true);
+      render(<MobileReader comicId={1} reader={createMockReader()} />);
+
+      expect(screen.getByRole('button', { name: 'Exit full screen' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('goes full screen when the phone turns sideways and leaves when it turns back', async () => {
+      mockFullscreen();
+      const { rerender } = render(<MobileReader comicId={1} reader={createMockReader()} />);
+      expect(fullscreen.enter).not.toHaveBeenCalled();
+
+      vi.mocked(usePhoneLandscape).mockReturnValue(true);
+      rerender(<MobileReader comicId={1} reader={createMockReader()} />);
+      expect(fullscreen.enter).toHaveBeenCalledOnce();
+      await act(async () => {});
+
+      vi.mocked(usePhoneLandscape).mockReturnValue(false);
+      rerender(<MobileReader comicId={1} reader={createMockReader()} />);
+      expect(fullscreen.exit).toHaveBeenCalledOnce();
+    });
+
+    it('goes full screen on the next tap when the browser refuses it on rotation', async () => {
+      mockFullscreen();
+      fullscreen.enter.mockResolvedValueOnce(false);
+      vi.mocked(usePhoneLandscape).mockReturnValue(true);
+      const { container } = render(<MobileReader comicId={1} reader={createMockReader()} />);
+      await act(async () => {});
+      expect(fullscreen.enter).toHaveBeenCalledOnce();
+
+      const overlay = container.querySelector('.pointer-events-none');
+      await userEvent.click(container.querySelector('.flex-1.flex')!);
+      expect(fullscreen.enter).toHaveBeenCalledTimes(2);
+      // The tap went to full screen, so the controls didn't toggle
+      expect(overlay?.className).toContain('opacity-100');
+    });
+
+    it('keeps the full screen picked with the button when the phone turns back', async () => {
+      mockFullscreen();
+      vi.mocked(usePhoneLandscape).mockReturnValue(true);
+      const { rerender } = render(<MobileReader comicId={1} reader={createMockReader()} />);
+      await act(async () => {});
+
+      mockFullscreen(true);
+      rerender(<MobileReader comicId={1} reader={createMockReader()} />);
+      // Pressing the button hands full screen to the user, so turning back leaves it on
+      await userEvent.click(screen.getByRole('button', { name: 'Exit full screen' }));
+      fullscreen.exit.mockClear();
+
+      vi.mocked(usePhoneLandscape).mockReturnValue(false);
+      rerender(<MobileReader comicId={1} reader={createMockReader()} />);
+      expect(fullscreen.exit).not.toHaveBeenCalled();
     });
   });
 });

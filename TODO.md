@@ -1,11 +1,5 @@
 # ComicCacher TODO
 
-## Full-screen mode or app for mobile
-
-- Add a full-screen reading mode on phones, or make Comics Hub work as an installable app
-- Starting point: `app/manifest.ts` already sets `display: 'standalone'` with icons, so the site can be added to the home screen. Check how well that works on iOS and Android today, and whether `fullscreen` display, a full-screen toggle in the reader (Fullscreen API, which iOS Safari only partly supports), or hiding the app chrome while reading covers the need before thinking about a native app
-- Priority: Very-High
-
 ## Flow the batch-job cards into the gap when one is expanded
 
 - On `/batch-jobs`, expanding a card leaves empty space beside it, because the cards sit in a grid (`grid-cols-[repeat(auto-fill,…)] items-start`) whose rows are as tall as their tallest card
