@@ -17,10 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicRetrievalRecord;
+import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.PromotionManifest;
 import org.stapledon.common.dto.SaveResult;
 import org.stapledon.common.service.ComicStorageFacade;
+import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.GsonUtils;
 import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.management.ManagementFacade;
@@ -59,6 +62,7 @@ class DevPromotionServiceTest {
     private ManagementFacade managementFacade;
     private ComicStorageFacade storageFacade;
     private DownloaderFacade downloaderFacade;
+    private RetrievalStatusService retrievalStatusService;
     private HttpServer server;
     private String baseUrl;
     private PromotionManifest manifest;
@@ -72,6 +76,7 @@ class DevPromotionServiceTest {
         managementFacade = mock(ManagementFacade.class);
         storageFacade = mock(ComicStorageFacade.class);
         downloaderFacade = mock(DownloaderFacade.class);
+        retrievalStatusService = mock(RetrievalStatusService.class);
         manifest = new PromotionManifest(YESTERDAY, TODAY, List.of());
         manifestStatus = 200;
 
@@ -111,7 +116,7 @@ class DevPromotionServiceTest {
     }
 
     private DevPromotionService service(String url, String token) {
-        return new DevPromotionService(managementFacade, storageFacade, downloaderFacade, gson, clock, HttpClient.newHttpClient(), url, token, 7);
+        return new DevPromotionService(managementFacade, storageFacade, downloaderFacade, retrievalStatusService, gson, clock, HttpClient.newHttpClient(), url, token, 7);
     }
 
     private static ComicItem comic(int id, String name, String source, String identifier) {
@@ -164,6 +169,14 @@ class DevPromotionServiceTest {
         verify(managementFacade).updateComic(eq(42), updated.capture());
         assertThat(updated.getValue().getNewest()).isEqualTo(TODAY);
         assertThat(updated.getValue().getOldest()).isEqualTo(TODAY);
+
+        ArgumentCaptor<ComicRetrievalRecord> record = ArgumentCaptor.forClass(ComicRetrievalRecord.class);
+        verify(retrievalStatusService).recordRetrievalResult(record.capture());
+        assertThat(record.getValue().getId()).isEqualTo("42_" + TODAY);
+        assertThat(record.getValue().getComicDate()).isEqualTo(TODAY);
+        assertThat(record.getValue().getSource()).isEqualTo("gocomics");
+        assertThat(record.getValue().getStatus()).isEqualTo(ComicRetrievalStatus.SUCCESS);
+        assertThat(record.getValue().getImageSize()).isEqualTo((long) IMAGE.length);
     }
 
     @Test
@@ -218,6 +231,7 @@ class DevPromotionServiceTest {
 
         assertThat(result).isEqualTo(new PromotionResult(true, 1, 0, 0, 1, 1, 0));
         verify(managementFacade, never()).updateComic(anyInt(), any());
+        verifyNoInteractions(retrievalStatusService);
     }
 
     @Test

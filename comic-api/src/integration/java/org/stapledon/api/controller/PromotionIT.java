@@ -15,8 +15,10 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.stapledon.AbstractIntegrationTest;
 import org.stapledon.batch.TestImageGenerator;
+import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.PromotionManifest;
+import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.engine.management.ManagementFacade;
 import org.stapledon.engine.promotion.DevPromotionService;
 import org.stapledon.engine.promotion.DevPromotionService.PromotionResult;
@@ -38,7 +40,7 @@ import com.sun.net.httpserver.HttpServer;
 /**
  * Promotion end to end. The serving side: the endpoints answer only a request carrying the shared token, and list and hand out the strips on
  * disk. The receiving side: PromoteFromDevJob's service, pointed at a stand-in for dev, writes a strip with its sidecar, date index and image
- * hashes, and a second run changes nothing.
+ * hashes and a successful retrieval record, and a second run changes nothing.
  */
 @TestPropertySource(properties = {
     "comics.promotion.serve=true",
@@ -86,6 +88,9 @@ class PromotionIT extends AbstractIntegrationTest {
 
     @Autowired
     private ManagementFacade managementFacade;
+
+    @Autowired
+    private RetrievalStatusService retrievalStatusService;
 
     @Autowired
     private Clock clock;
@@ -158,6 +163,9 @@ class PromotionIT extends AbstractIntegrationTest {
         assertThat(yearDir.resolve("image-hashes.json")).exists();
         assertThat(comicDir.resolve("available-dates.json")).content().contains(today.toString());
         assertThat(managementFacade.getComic(2)).get().extracting(comic -> comic.getNewest()).isEqualTo(today);
+        assertThat(retrievalStatusService.getRetrievalRecord("2_" + today)).get()
+                .extracting(record -> record.getStatus())
+                .isEqualTo(ComicRetrievalStatus.SUCCESS);
 
         PromotionResult second = promotionService.promote(1, "comicskingdom", null);
 
