@@ -6,32 +6,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Storage metrics are scanned in the background at startup (`StorageMetricsWarmup`, `comics.metrics.warm-on-startup`). Until the scan finishes, the metrics page shows the latest daily snapshot from `metrics-history/` instead of waiting: on prod the first metrics request after a restart took 53 s
-- Retrieval records carry `attemptedAt` (UTC, stamped on save) and `comicId`, in `retrieval-status.json` and the `RetrievalRecord` GraphQL type. The Retrieval Status page has an "Attempted" column
-- A catalog refresh fills in a configured comic's author from its catalog entry when it has none, or only the source's name ("Comics Kingdom")
+- Storage metrics are scanned in the background at startup (`StorageMetricsWarmup`, `comics.metrics.warm-on-startup`). Until the scan finishes, the metrics page shows the latest daily snapshot from `metrics-history/` instead of waiting: on prod the first metrics request after a restart took 53 s (#433)
+- Retrieval records carry `attemptedAt` (UTC, stamped on save) and `comicId`, in `retrieval-status.json` and the `RetrievalRecord` GraphQL type. The Retrieval Status page has an "Attempted" column (#433)
+- A catalog refresh fills in a configured comic's author from its catalog entry when it has none, or only the source's name ("Comics Kingdom") (#433)
 
 ### Changed
-- The storage metrics scan walks the cache once and reads each image's size once, filtering by file name first, so the metadata sidecars and indexes beside the strips are never stat'ed. Before, it walked the tree four times
-- GraphQL strips (`Comic.strip`, `strip`, navigation) read their size and transcript from the metadata sidecar instead of reading, decoding and base64-encoding the whole PNG, falling back to the image's header when there is no sidecar. The REST image endpoints read the PNG header for the size instead of decoding the image
-- Retrieval records are purged by when the attempt was made, so a backfill of an old strip keeps its record for the full retention window. Before, the purge went by the strip's date and deleted backfill records the next morning. Ids are `{comicId}_{date}`; a new attempt replaces an older record keyed by the comic's name
-- `batch-executions.json` keeps each job's runs from the last `batch.tracking.history-days` days (default 30), and always its newest run, instead of 30 runs per job (four days for `ComicBackfillJob`). History for jobs that no longer exist, such as `MetricsUpdateJob`, is dropped. Replaces `batch.tracking.max-history-per-job`
-- Startup no longer rewrites `comics.json` when only the oldest and newest strip dates changed: those are updated in memory from the index. It still saves when the avatar flag or a start date is corrected, and checks avatars by file existence instead of reading each one
+- The storage metrics scan walks the cache once and reads each image's size once, filtering by file name first, so the metadata sidecars and indexes beside the strips are never stat'ed. Before, it walked the tree four times (#433)
+- GraphQL strips (`Comic.strip`, `strip`, navigation) read their size and transcript from the metadata sidecar instead of reading, decoding and base64-encoding the whole PNG, falling back to the image's header when there is no sidecar. The REST image endpoints read the PNG header for the size instead of decoding the image (#433)
+- Retrieval records are purged by when the attempt was made, so a backfill of an old strip keeps its record for the full retention window. Before, the purge went by the strip's date and deleted backfill records the next morning. Ids are `{comicId}_{date}`; a new attempt replaces an older record keyed by the comic's name (#433)
+- `batch-executions.json` keeps each job's runs from the last `batch.tracking.history-days` days (default 30), and always its newest run, instead of 30 runs per job (four days for `ComicBackfillJob`). History for jobs that no longer exist, such as `MetricsUpdateJob`, is dropped. Replaces `batch.tracking.max-history-per-job` (#433)
+- Startup no longer rewrites `comics.json` when only the oldest and newest strip dates changed: those are updated in memory from the index. It still saves when the avatar flag or a start date is corrected, and checks avatars by file existence instead of reading each one (#433)
+- Comics Hub dev dependencies: ESLint 10.12, with `settings.react.version` set to 19.3 in `eslint.config.mjs` because `eslint-plugin-react` can't detect the React version under ESLint 10 yet, and @graphql-codegen/typescript 6.1 (#436, #445)
 
 ### Fixed
-- GoComics strips stopped downloading on 2026-10-05: GoComics' firewall answers every full page load of a strip page from our IP with HTTP 403. The GoComics downloader now reads the strip from the page's React Server Components payload (`?_rsc=` with `RSC: 1`), the request the site's own router makes when a reader clicks through to a date, which the firewall still serves. It takes the strip object whose date matches the requested day. Catalog start detection reads `firstDate` from the same payload for the comic's page
-- A source answering HTTP 403 is no longer asked for every remaining comic. A 403 is reported as `BLOCKED` (still `NETWORK_ERROR` with status 403 in retrieval status) and never retried, and after 3 in a row from one source the daily download run skips that source's other comics, and the backfill and catalog start detection stop it until their next run. Before, prod sent GoComics about 500 refused requests a day while blocked
-- The Home key in the grid reader went to 1900-01-01, expecting the API to clamp the date to the oldest strip, and showed an empty page that stayed in the URL. It now goes to the earliest strip date of the comics shown
-- Daily metrics snapshots (`MetricsArchiveJob`) stored the storage scan from the first metrics request after startup, so every snapshot since a restart had the same storage numbers. The job now rescans first
-- Per-comic, per-year image counts in the metrics were always 0
+- GoComics strips stopped downloading on 2026-10-05: GoComics' firewall answers every full page load of a strip page from our IP with HTTP 403. The GoComics downloader now reads the strip from the page's React Server Components payload (`?_rsc=` with `RSC: 1`), the request the site's own router makes when a reader clicks through to a date, which the firewall still serves. It takes the strip object whose date matches the requested day. Catalog start detection reads `firstDate` from the same payload for the comic's page (#443)
+- A source answering HTTP 403 is no longer asked for every remaining comic. A 403 is reported as `BLOCKED` (still `NETWORK_ERROR` with status 403 in retrieval status) and never retried, and after 3 in a row from one source the daily download run skips that source's other comics, and the backfill and catalog start detection stop it until their next run. Before, prod sent GoComics about 500 refused requests a day while blocked (#443)
+- The Home key in the grid reader went to 1900-01-01, expecting the API to clamp the date to the oldest strip, and showed an empty page that stayed in the URL. It now goes to the earliest strip date of the comics shown (#438)
+- Daily metrics snapshots (`MetricsArchiveJob`) stored the storage scan from the first metrics request after startup, so every snapshot since a restart had the same storage numbers. The job now rescans first (#433)
+- Per-comic, per-year image counts in the metrics were always 0 (#433)
 
 ### Removed
-- `last_errors.json` and `ErrorTrackingService`: the file repeated the failures in `retrieval-status.json`, and nothing in the app read it. `utils/verify-json-files.sh` now lists it as obsolete, with `combined-metrics.json`. The property `comics.metrics.error-tracking.max-errors-per-comic` is gone
-- `executionTime` in `batch-executions.json`, which duplicated `endTime`
+- `last_errors.json` and `ErrorTrackingService`: the file repeated the failures in `retrieval-status.json`, and nothing in the app read it. `utils/verify-json-files.sh` now lists it as obsolete, with `combined-metrics.json`. The property `comics.metrics.error-tracking.max-errors-per-comic` is gone (#433)
+- `executionTime` in `batch-executions.json`, which duplicated `endTime` (#433)
 
 ### Security
 - Overrode Jackson to 2.21.7 and 3.1.7 for the jackson-core and jackson-databind DoS and validator CVEs fixed in those releases; Spring Boot 4.1.1 still ships 2.21.5 and 3.1.5 (#446)
 - Updated Checkstyle from 13.3.0 to 14.3.0, which drops the vulnerable plexus-utils from the Checkstyle classpath. Checkstyle 13.9 removed `JavadocStyle`; its replacement `SummaryJavadoc` now reports Javadoc first sentences without an ending period (#446)
 - Updated the GraphQL codegen packages in Comics Hub so every copy of `@graphql-tools/utils` is 12.0.3 (`mergeDeep` prototype pollution, fixed in 12.0.1) (#446)
+- Updated the comic-api base image from `eclipse-temurin:25.0.4_7-jre-alpine-3.24` to `eclipse-temurin:25-jre-alpine-3.24` (#434)
+- Updated source-map-js from 1.2.1 to 1.2.2 in /comic-hub (CVE-2026-93749, denial of service from malicious indexed source maps) (#441)
+- Updated next from 16.3.6 to 16.3.8 and nine other npm dependencies in /comic-hub (#435)
+- Updated sharp from 0.35.4 to 0.35.5, shell-quote from 1.10.0 to 1.12.0 and @modelcontextprotocol/sdk from 1.30.1 to 1.32.1 in /comic-hub (#439, #440, #442)
 
 ## [2.6.1] - 2026-10-02
 ### Added
