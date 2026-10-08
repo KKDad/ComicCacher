@@ -51,7 +51,7 @@ public class MetricsArchiveJobConfig {
     }
 
     /**
-     * Job for archiving metrics
+     * Job for archiving metrics.
      */
     @Bean
     public Job metricsArchiveJob(JobRepository jobRepository, @Qualifier("metricsArchiveStep") Step metricsArchiveStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
@@ -60,7 +60,7 @@ public class MetricsArchiveJobConfig {
     }
 
     /**
-     * Step for performing metrics archiving
+     * Step for performing metrics archiving.
      */
     @Bean
     public Step metricsArchiveStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
@@ -69,7 +69,7 @@ public class MetricsArchiveJobConfig {
     }
 
     /**
-     * Tasklet that performs the actual metrics archiving
+     * Tasklet that performs the actual metrics archiving.
      */
     @Bean
     public Tasklet metricsArchiveTasklet() {

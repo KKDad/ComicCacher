@@ -3,12 +3,12 @@ package org.stapledon.common.model;
 import java.time.LocalDate;
 
 /**
- * Exception thrown when a comic image cannot be found
+ * Exception thrown when a comic image cannot be found.
  */
 public class ComicImageNotFoundException extends RuntimeException {
 
     /**
-     * Creates a new ComicImageNotFoundException with the specified comic ID and date
+     * Creates a new ComicImageNotFoundException with the specified comic ID and date.
      *
      * @param comicId ID of the comic
      * @param date Date of the image that could not be found
@@ -18,7 +18,7 @@ public class ComicImageNotFoundException extends RuntimeException {
     }
 
     /**
-     * Creates a new ComicImageNotFoundException with the specified comic name and date
+     * Creates a new ComicImageNotFoundException with the specified comic name and date.
      *
      * @param comicName Name of the comic
      * @param date Date of the image that could not be found
@@ -28,7 +28,7 @@ public class ComicImageNotFoundException extends RuntimeException {
     }
 
     /**
-     * Creates a new ComicImageNotFoundException for a comic avatar
+     * Creates a new ComicImageNotFoundException for a comic avatar.
      *
      * @param comicId ID of the comic
      */
@@ -37,7 +37,7 @@ public class ComicImageNotFoundException extends RuntimeException {
     }
 
     /**
-     * Creates a new ComicImageNotFoundException with a custom message
+     * Creates a new ComicImageNotFoundException with a custom message.
      *
      * @param message Custom error message
      */

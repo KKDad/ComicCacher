@@ -32,7 +32,7 @@ public final class ImageUtils {
     }
 
     /**
-     * Load an image from the filesystem and return a ImageDto object
+     * Load an image from the filesystem and return a ImageDto object.
      *
      * @param image Image to Load
      * @return ImageDto object

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 /**
- * DTO for cache status information
+ * DTO for cache status information.
  */
 @Data
 @Builder
@@ -19,32 +19,32 @@ import lombok.ToString;
 public class CacheStatus {
 
     /**
-     * Total comics cached
+     * Total comics cached.
      */
     @ToString.Include private int totalComics;
 
     /**
-     * Total cached images
+     * Total cached images.
      */
     @ToString.Include private int totalImages;
 
     /**
-     * Total storage used in bytes
+     * Total storage used in bytes.
      */
     private long totalStorageBytes;
 
     /**
-     * Age of oldest image in cache
+     * Age of oldest image in cache.
      */
     private String oldestImage;
 
     /**
-     * Age of newest image in cache
+     * Age of newest image in cache.
      */
     private String newestImage;
 
     /**
-     * Directory where cache is stored
+     * Directory where cache is stored.
      */
     private String cacheLocation;
 }

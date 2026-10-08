@@ -40,7 +40,7 @@ public class CombinedMetricsData {
     private Map<String, ComicCombinedMetrics> perComicMetrics = new HashMap<>();
 
     /**
-     * Combined storage and access metrics for a single comic
+     * Combined storage and access metrics for a single comic.
      */
     @Getter
     @Setter

@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface PreferenceService {
 
     /**
-     * Get user preferences by username
+     * Get user preferences by username.
      *
      * @param username Username
      * @return The user preferences if found, empty otherwise
@@ -17,7 +17,7 @@ public interface PreferenceService {
     Optional<UserPreference> getPreference(String username);
 
     /**
-     * Add a comic to user's favorites
+     * Add a comic to user's favorites.
      *
      * @param username Username
      * @param comicId Comic ID
@@ -26,7 +26,7 @@ public interface PreferenceService {
     Optional<UserPreference> addFavorite(String username, int comicId);
 
     /**
-     * Remove a comic from user's favorites
+     * Remove a comic from user's favorites.
      *
      * @param username Username
      * @param comicId Comic ID
@@ -35,7 +35,7 @@ public interface PreferenceService {
     Optional<UserPreference> removeFavorite(String username, int comicId);
 
     /**
-     * Update last read date for a comic
+     * Update last read date for a comic.
      *
      * @param username Username
      * @param comicId Comic ID
@@ -45,7 +45,7 @@ public interface PreferenceService {
     Optional<UserPreference> updateLastRead(String username, int comicId, LocalDate date);
 
     /**
-     * Update display settings for a user
+     * Update display settings for a user.
      *
      * @param username Username
      * @param settings Display settings

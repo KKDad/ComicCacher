@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 /**
- * DTO for component health status
+ * DTO for component health status.
  */
 @Data
 @Builder
@@ -20,17 +20,17 @@ import lombok.ToString;
 public class ComponentHealth {
 
     /**
-     * Status of the component
+     * Status of the component.
      */
     @ToString.Include private HealthStatus.Status status;
 
     /**
-     * Optional details specific to this component
+     * Optional details specific to this component.
      */
     private Map<String, Object> details;
 
     /**
-     * Optional reason for current status
+     * Optional reason for current status.
      */
     private String message;
 }

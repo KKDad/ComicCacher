@@ -168,8 +168,8 @@ class ImageAnalysisServiceTest {
         // Due to random sampling, this might be COLOR or GRAYSCALE
         // We just verify it doesn't crash and returns a valid value
         assertThat(colorMode).isNotNull();
-        assertThat(colorMode == ImageMetadata.ColorMode.COLOR ||
-                colorMode == ImageMetadata.ColorMode.GRAYSCALE).isTrue();
+        assertThat(colorMode == ImageMetadata.ColorMode.COLOR
+                || colorMode == ImageMetadata.ColorMode.GRAYSCALE).isTrue();
     }
 
     @Test

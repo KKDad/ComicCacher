@@ -6,13 +6,13 @@ import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.JsoupInspectorService;
 
 /**
- * Configuration for InspectorService dependency
+ * Configuration for InspectorService dependency.
  */
 @Configuration(proxyBeanMethods = false)
 public class InspectorServiceConfig {
 
     /**
-     * Creates a InspectorService bean for dependency injection
+     * Creates a InspectorService bean for dependency injection.
      *
      * @return Configured InspectorService instance
      */

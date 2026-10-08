@@ -44,14 +44,14 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
     private ComicRetrievalRecordStorage recordStorage;
 
     /**
-     * Reset the records (for testing purposes)
+     * Reset the records (for testing purposes).
      */
     public synchronized void resetRecords() {
         recordStorage = new ComicRetrievalRecordStorage();
     }
 
     /**
-     * Load records from storage file
+     * Load records from storage file.
      */
     private synchronized ComicRetrievalRecordStorage loadRecords() {
         if (recordStorage != null) {
@@ -83,7 +83,7 @@ public class JsonRetrievalStatusRepository implements RetrievalStatusRepository 
     }
 
     /**
-     * Save records to storage file using atomic write for NFS safety
+     * Save records to storage file using atomic write for NFS safety.
      */
     private synchronized void saveRecords() {
         if (recordStorage == null) {

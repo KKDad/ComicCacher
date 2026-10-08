@@ -1,12 +1,12 @@
 package org.stapledon.common.model;
 
 /**
- * Exception thrown when a requested comic cannot be found
+ * Exception thrown when a requested comic cannot be found.
  */
 public class ComicNotFoundException extends RuntimeException {
 
     /**
-     * Creates a new ComicNotFoundException with the specified comic ID
+     * Creates a new ComicNotFoundException with the specified comic ID.
      *
      * @param comicId ID of the comic that could not be found
      */
@@ -15,7 +15,7 @@ public class ComicNotFoundException extends RuntimeException {
     }
 
     /**
-     * Creates a new ComicNotFoundException with the specified comic name
+     * Creates a new ComicNotFoundException with the specified comic name.
      *
      * @param comicName Name of the comic that could not be found
      */

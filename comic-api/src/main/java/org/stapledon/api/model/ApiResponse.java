@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Standardized API response wrapper
+ * Standardized API response wrapper.
  *
  * @param <T> Type of data contained in the response
  */
@@ -26,7 +26,7 @@ public class ApiResponse<T> {
     private T data;
 
     /**
-     * Creates a successful response with data
+     * Creates a successful response with data.
      *
      * @param data The data to include in the response
      * @param <T> Type of the data
@@ -42,7 +42,7 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Creates a successful response with data and custom message
+     * Creates a successful response with data and custom message.
      *
      * @param data The data to include in the response
      * @param message Custom message
@@ -59,7 +59,7 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Creates an error response
+     * Creates an error response.
      *
      * @param status HTTP status code
      * @param message Error message

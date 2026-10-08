@@ -50,11 +50,11 @@ public abstract class AbstractJobScheduler {
      */
     public enum ScheduleType {
         /**
-         * Runs once per day at a scheduled cron time
+         * Runs once per day at a scheduled cron time.
          */
         DAILY,
         /**
-         * Runs periodically with a fixed delay between executions
+         * Runs periodically with a fixed delay between executions.
          */
         PERIODIC
     }

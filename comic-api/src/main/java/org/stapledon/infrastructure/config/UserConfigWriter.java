@@ -37,7 +37,7 @@ public class UserConfigWriter {
     private UserConfig userConfig;
 
     /**
-     * Save a user to the users.json file
+     * Save a user to the users.json file.
      *
      * @param user The user to save
      * @return true if successful, false otherwise
@@ -65,7 +65,7 @@ public class UserConfigWriter {
     }
 
     /**
-     * Register a new user
+     * Register a new user.
      *
      * @param registrationDto User registration data
      * @return The created user if successful, empty otherwise
@@ -114,7 +114,7 @@ public class UserConfigWriter {
     }
 
     /**
-     * Authenticate a user
+     * Authenticate a user.
      *
      * @param username Username
      * @param password Raw password
@@ -166,7 +166,7 @@ public class UserConfigWriter {
     }
 
     /**
-     * Get a user by username
+     * Get a user by username.
      *
      * @param username Username
      * @return The user if found, empty otherwise
@@ -194,7 +194,7 @@ public class UserConfigWriter {
     }
 
     /**
-     * Update a user's profile
+     * Update a user's profile.
      *
      * @param user Updated user data
      * @return The updated user if successful, empty otherwise
@@ -251,7 +251,7 @@ public class UserConfigWriter {
     }
 
     /**
-     * Update a user's password
+     * Update a user's password.
      *
      * @param username    Username
      * @param newPassword New password
@@ -292,7 +292,7 @@ public class UserConfigWriter {
     }
 
     /**
-     * Load users from the users.json file
+     * Load users from the users.json file.
      *
      * @return UserConfig containing users
      * @throws JsonParseException if the file is malformed JSON (for testing
@@ -315,7 +315,7 @@ public class UserConfigWriter {
     }
 
     /**
-     * Delete a user by username
+     * Delete a user by username.
      */
     public boolean deleteUser(String username) {
         if (username == null || username.isEmpty()) {

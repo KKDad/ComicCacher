@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.stapledon.common.config.properties.DownloaderProperties;
 
-
 class UserAgentServiceTest {
 
     private static final String CUSTOM_DEFAULT = "CustomAgent/1.0";

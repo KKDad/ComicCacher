@@ -23,45 +23,45 @@ import lombok.ToString;
 public class ComicNavigationResult {
 
     /**
-     * Whether the requested image was found
+     * Whether the requested image was found.
      */
     @ToString.Include
     private boolean found;
 
     /**
-     * The image data (null if not found)
+     * The image data (null if not found).
      */
     private ImageDto image;
 
     /**
      * Human-readable reason when image not found
-     * Possible values: "AT_END", "AT_BEGINNING", "NO_COMICS_AVAILABLE"
+     * Possible values: "AT_END", "AT_BEGINNING", "NO_COMICS_AVAILABLE".
      */
     private String reason;
 
     /**
-     * The date that was requested
+     * The date that was requested.
      */
     private LocalDate requestedDate;
 
     /**
-     * Nearest available date going backward from the requested date (null if none)
+     * Nearest available date going backward from the requested date (null if none).
      */
     private LocalDate nearestPreviousDate;
 
     /**
-     * Nearest available date going forward from the requested date (null if none)
+     * Nearest available date going forward from the requested date (null if none).
      */
     private LocalDate nearestNextDate;
 
     /**
      * The date of the current image being displayed (same as image.imageDate when
-     * found)
+     * found).
      */
     private LocalDate currentDate;
 
     /**
-     * Creates a successful result with an image
+     * Creates a successful result with an image.
      */
     public static ComicNavigationResult found(ImageDto image, LocalDate nearestPrev, LocalDate nearestNext) {
         return ComicNavigationResult.builder()
@@ -74,7 +74,7 @@ public class ComicNavigationResult {
     }
 
     /**
-     * Creates a not-found result with boundary information
+     * Creates a not-found result with boundary information.
      */
     public static ComicNavigationResult notFound(String reason, LocalDate requestedDate,
                                                  LocalDate nearestPrev, LocalDate nearestNext) {

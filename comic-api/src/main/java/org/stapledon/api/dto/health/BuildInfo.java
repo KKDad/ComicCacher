@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 /**
- * DTO for build-related information
+ * DTO for build-related information.
  */
 @Data
 @Builder
@@ -19,32 +19,32 @@ import lombok.ToString;
 public class BuildInfo {
 
     /**
-     * Application name
+     * Application name.
      */
     @ToString.Include private String name;
 
     /**
-     * Application artifact
+     * Application artifact.
      */
     private String artifact;
 
     /**
-     * Application group
+     * Application group.
      */
     private String group;
 
     /**
-     * Application version
+     * Application version.
      */
     @ToString.Include private String version;
 
     /**
-     * Build timestamp
+     * Build timestamp.
      */
     private String buildTime;
 
     /**
-     * Java version
+     * Java version.
      */
     private String javaVersion;
 }

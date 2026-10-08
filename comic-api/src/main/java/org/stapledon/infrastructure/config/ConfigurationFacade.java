@@ -13,26 +13,26 @@ import org.stapledon.common.service.ComicConfigurationService;
  */
 public interface ConfigurationFacade extends ComicConfigurationService {
     /**
-     * Loads the user configuration
+     * Loads the user configuration.
      * @return The user configuration
      */
     UserConfig loadUserConfig();
 
     /**
-     * Saves the user configuration
+     * Saves the user configuration.
      * @param config The user configuration to save
      * @return true if successful
      */
     boolean saveUserConfig(UserConfig config);
 
     /**
-     * Loads the preference configuration
+     * Loads the preference configuration.
      * @return The preference configuration
      */
     PreferenceConfig loadPreferenceConfig();
 
     /**
-     * Saves the preference configuration
+     * Saves the preference configuration.
      * @param config The preference configuration to save
      * @return true if successful
      */

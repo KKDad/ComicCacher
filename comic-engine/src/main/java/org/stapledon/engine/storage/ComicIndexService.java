@@ -40,7 +40,7 @@ public class ComicIndexService {
     public static final String INDEX_FILENAME = "available-dates.json";
     public static final String STRIP_INDEX_FILENAME = "downloaded-strips.json";
 
-    /** Synology NAS metadata directories - excluded from scanning */
+    /** Synology NAS metadata directories - excluded from scanning. */
     private static final String SYNOLOGY_METADATA_PREFIX = "@";
 
     @Qualifier("gsonWithLocalDate")
@@ -54,7 +54,7 @@ public class ComicIndexService {
     // In-memory cache of downloaded strip numbers for indexed comics.
     private final Map<Integer, Set<Integer>> stripIndexCache = new ConcurrentHashMap<>();
 
-    /** Marker for comics that have been verified as legitimately empty */
+    /** Marker for comics that have been verified as legitimately empty. */
     private final Set<Integer> verifiedEmptyComics = ConcurrentHashMap.newKeySet();
 
     // Per-comic locks for thread-safe index updates

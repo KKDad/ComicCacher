@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 import org.stapledon.common.config.CacheProperties;
 import org.stapledon.common.dto.HashAlgorithm;
 import org.stapledon.common.service.ImageHasher;

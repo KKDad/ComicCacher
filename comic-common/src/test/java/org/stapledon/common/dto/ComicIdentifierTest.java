@@ -11,9 +11,9 @@ class ComicIdentifierTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "Mother Goose & Grimm | MotherGoose&Grimm",
-            "Sherman's Lagoon     | Sherman'sLagoon",
-            "Frank-And-Ernest     | Frank-And-Ernest"
+        "Mother Goose & Grimm | MotherGoose&Grimm",
+        "Sherman's Lagoon     | Sherman'sLagoon",
+        "Frank-And-Ernest     | Frank-And-Ernest"
     })
     void getDirectoryName_removesSpacesAndKeepsOtherCharacters(String name, String expected) {
         assertThat(new ComicIdentifier(7, name).getDirectoryName()).isEqualTo(expected);

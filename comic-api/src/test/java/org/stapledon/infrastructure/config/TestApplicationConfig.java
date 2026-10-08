@@ -24,7 +24,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Central configuration class for test beans
- * Provides mock implementations for all required beans in tests
+ * Provides mock implementations for all required beans in tests.
  */
 @Configuration
 @Profile("test")

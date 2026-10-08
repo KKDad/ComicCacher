@@ -70,7 +70,7 @@ public class PreferenceResolver {
     }
 
     /**
-     * Convert Map<Integer, LocalDate> to List<LastReadEntry> for GraphQL, leaving out comics hidden from the user.
+     * Convert {@code Map<Integer, LocalDate>} to {@code List<LastReadEntry>} for GraphQL, leaving out comics hidden from the user.
      */
     @SchemaMapping(typeName = "UserPreference", field = "lastReadDates")
     public List<LastReadEntry> lastReadDates(UserPreference preference) {

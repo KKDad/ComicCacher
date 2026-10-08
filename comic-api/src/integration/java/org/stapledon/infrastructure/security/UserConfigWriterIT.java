@@ -11,7 +11,7 @@ import org.stapledon.api.dto.user.UserRegistrationDto;
 import org.stapledon.infrastructure.config.UserConfigWriter;
 
 /**
- * Integration test to verify UserConfigWriter in integration tests
+ * Integration test to verify UserConfigWriter in integration tests.
  */
 class UserConfigWriterIT extends AbstractIntegrationTest {
 

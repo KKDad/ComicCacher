@@ -25,7 +25,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Implementation of the health service
+ * Implementation of the health service.
  */
 @Service
 @RequiredArgsConstructor

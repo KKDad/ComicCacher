@@ -135,7 +135,7 @@ public class AccessMetricsRepository {
     }
 
     /**
-     * Create an empty AccessMetricsData object
+     * Create an empty AccessMetricsData object.
      *
      * @return Empty access metrics
      */

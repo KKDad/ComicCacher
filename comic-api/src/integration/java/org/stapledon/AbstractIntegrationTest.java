@@ -31,7 +31,7 @@ import tools.jackson.databind.ObjectMapper;
  * Base class for all integration tests
  * Uses the main application security configuration with permissive settings for
  * testing
- * Provides common test utilities and helper methods
+ * Provides common test utilities and helper methods.
  */
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -147,7 +147,7 @@ public abstract class AbstractIntegrationTest {
 
     /**
      * Create a test user with the given username and attempt to authenticate
-     * Handles errors gracefully
+     * Handles errors gracefully.
      */
     protected String authenticateUser() {
         try {
@@ -162,7 +162,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     /**
-     * Authenticate with the given credentials and extract JWT token from response
+     * Authenticate with the given credentials and extract JWT token from response.
      */
     protected String authenticateAndGetToken(String username, String password) throws Exception {
         try {
@@ -192,7 +192,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     /**
-     * Extract a value from a JSON response by path
+     * Extract a value from a JSON response by path.
      */
     @SuppressWarnings("unchecked")
     protected <T> T extractFromResponse(String responseContent, String path, Class<T> clazz) {

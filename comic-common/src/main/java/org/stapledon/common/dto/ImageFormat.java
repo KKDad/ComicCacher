@@ -6,37 +6,37 @@ package org.stapledon.common.dto;
  */
 public enum ImageFormat {
     /**
-     * Graphics Interchange Format
+     * Graphics Interchange Format.
      */
     GIF,
 
     /**
-     * Joint Photographic Experts Group format
+     * Joint Photographic Experts Group format.
      */
     JPEG,
 
     /**
-     * Portable Network Graphics format
+     * Portable Network Graphics format.
      */
     PNG,
 
     /**
-     * Tagged Image File Format
+     * Tagged Image File Format.
      */
     TIFF,
 
     /**
-     * Bitmap Image File format
+     * Bitmap Image File format.
      */
     BMP,
 
     /**
-     * WebP format (requires TwelveMonkeys ImageIO plugin)
+     * WebP format (requires TwelveMonkeys ImageIO plugin).
      */
     WEBP,
 
     /**
-     * Unknown or unsupported format
+     * Unknown or unsupported format.
      */
     UNKNOWN
 }

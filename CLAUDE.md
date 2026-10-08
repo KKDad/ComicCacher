@@ -37,7 +37,7 @@ graph TD
 | `./gradlew :comic-api:bootRun` | Run API server |
 | `./gradlew :comic-api:test` | Unit tests |
 | `./gradlew :comic-api:integrationTest` | Integration tests |
-| `./gradlew clean checkstyleMain` | Checkstyle (project-level only) |
+| `./gradlew clean checkstyleMain checkstyleTest checkstyleIntegration` | Checkstyle (any warning fails the build) |
 | `./gradlew rewriteRun` | Auto-fix imports/spacing/formatting |
 | **`./gradlew clean testAll`** | **Final verification before any task** |
 
