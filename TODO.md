@@ -1,5 +1,40 @@
 # ComicCacher TODO
 
+## Fix the GoComics site links on `/sources/gocomics`
+
+- The link from each catalog row to the comic on gocomics.com (`item.pageUrl` in `components/sources/catalog-row.tsx`) runs into the RSC bug: since 2026-10-05 GoComics' firewall answers full page loads of strip pages from our IP with 403, and the downloader only gets through by fetching the `_rsc` payload (#443)
+- Confirm what the link actually does from a browser on the home network, then pick a fix: point it at a page the firewall still serves (e.g. `/<slug>/about`), or drop it if no GoComics page works from here
+- Priority: Very-High
+
+## Full-screen mode or app for mobile
+
+- Add a full-screen reading mode on phones, or make Comics Hub work as an installable app
+- Starting point: `app/manifest.ts` already sets `display: 'standalone'` with icons, so the site can be added to the home screen. Check how well that works on iOS and Android today, and whether `fullscreen` display, a full-screen toggle in the reader (Fullscreen API, which iOS Safari only partly supports), or hiding the app chrome while reading covers the need before thinking about a native app
+- Priority: Very-High
+
+## Add filters to the metrics page and link each comic to its reader
+
+- `/metrics` has no filters. Add at least a name search, and consider sorting and a source filter
+- Make each comic's name a link to the catch-up reader for that comic (`/comics/[id]/read`)
+- Priority: High
+
+## Find out why the metrics page shows nothing for Carpe Diem and Mother Goose & Grimm
+
+- Both comics show no metrics on `/metrics`, which looks wrong
+- First lead: the page merges storage and access data by a normalized name (`normalizeKey` in `metrics/page.tsx` strips spaces, apostrophes and hyphens, then lowercases). Storage uses directory names and access uses display names, so a name with `&` or other punctuation, or a directory named differently from the display name, won't match. Check what the API returns for both comics before changing the page, and consider merging by comic id instead
+- Priority: High
+
+## Rework the retrieval-status page
+
+- `/retrieval-status` is of little use as it stands and needs a full rethink: what an operator needs from it, what to show, and how
+- Priority: Medium-High
+
+## Flow the batch-job cards into the gap when one is expanded
+
+- On `/batch-jobs`, expanding a card leaves empty space beside it, because the cards sit in a grid (`grid-cols-[repeat(auto-fill,…)] items-start`) whose rows are as tall as their tallest card
+- Let the cards in the other column move up into that space, e.g. a masonry-style layout (CSS columns, or one flex column per grid column)
+- Priority: Medium-High
+
 ## Check the operator role on the server for the operations pages
 
 - `/metrics`, `/retrieval-status` and `/batch-jobs` are hidden from USER accounts only by the nav (`isOperator` in `sidebar.tsx`, `nav-rail.tsx`, `header.tsx`). A USER who types the URL gets the page, and only the API's rejection of its queries stops them
