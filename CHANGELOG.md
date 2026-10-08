@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- A strip copied from dev by `PromoteFromDevJob` left the failed download's record in `retrieval-status.json`, so the Retrieval Status page showed it as failed although it was on disk. Each promoted strip now gets a successful retrieval record, replacing the failed one
 
 ## [2.6.2] - 2026-10-08
 ### Added

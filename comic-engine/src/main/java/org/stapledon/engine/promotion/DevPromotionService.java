@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.PromotionManifest;
 import org.stapledon.common.dto.SaveResult;
 import org.stapledon.common.service.ComicStorageFacade;
+import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.LogContext;
 import org.stapledon.engine.downloader.DownloaderFacade;
 import org.stapledon.engine.management.ManagementFacade;
@@ -39,7 +41,8 @@ import lombok.extern.slf4j.Slf4j;
  * The receiving side of promotion: copies the strips that another instance (dev, at {@code comics.promotion.source-url}) has and this one is
  * missing, so this instance doesn't download them a second time. Reads that instance's manifest for the last few days, then fetches each strip
  * this instance has no file for and saves it through {@link ComicStorageFacade#saveComicStripWithResult}, which validates it, skips duplicates
- * and updates the date index, image hashes and metadata sidecar like any download. Never overwrites a strip.
+ * and updates the date index, image hashes and metadata sidecar like any download. Never overwrites a strip. Each promoted strip gets a
+ * successful retrieval record, replacing any failed attempt this instance recorded for that date.
  * <p>
  * Comics are matched on source and source identifier. Only comics that exist and are enabled here are promoted; indexed sources (Freefall)
  * are left to their own download, since their strip numbers aren't part of the manifest.
@@ -56,6 +59,7 @@ public class DevPromotionService {
     private final ManagementFacade managementFacade;
     private final ComicStorageFacade storageFacade;
     private final DownloaderFacade downloaderFacade;
+    private final RetrievalStatusService retrievalStatusService;
     private final Gson gson;
     private final Clock clock;
     private final HttpClient http;
@@ -65,19 +69,20 @@ public class DevPromotionService {
 
     @Autowired
     public DevPromotionService(ManagementFacade managementFacade, ComicStorageFacade storageFacade, DownloaderFacade downloaderFacade,
-            @Qualifier("gsonWithLocalDate") Gson gson, Clock clock,
+            RetrievalStatusService retrievalStatusService, @Qualifier("gsonWithLocalDate") Gson gson, Clock clock,
             @Value("${comics.promotion.source-url:}") String sourceUrl,
             @Value("${comics.promotion.token:}") String token,
             @Value("${comics.promotion.max-days:7}") int maxDays) {
-        this(managementFacade, storageFacade, downloaderFacade, gson, clock,
+        this(managementFacade, storageFacade, downloaderFacade, retrievalStatusService, gson, clock,
                 HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).connectTimeout(TIMEOUT).build(), sourceUrl, token, maxDays);
     }
 
-    DevPromotionService(ManagementFacade managementFacade, ComicStorageFacade storageFacade, DownloaderFacade downloaderFacade, Gson gson,
-            Clock clock, HttpClient http, String sourceUrl, String token, int maxDays) {
+    DevPromotionService(ManagementFacade managementFacade, ComicStorageFacade storageFacade, DownloaderFacade downloaderFacade,
+            RetrievalStatusService retrievalStatusService, Gson gson, Clock clock, HttpClient http, String sourceUrl, String token, int maxDays) {
         this.managementFacade = managementFacade;
         this.storageFacade = storageFacade;
         this.downloaderFacade = downloaderFacade;
+        this.retrievalStatusService = retrievalStatusService;
         this.gson = gson;
         this.clock = clock;
         this.http = http;
@@ -179,6 +184,7 @@ public class DevPromotionService {
                             alreadyHere++;
                             continue;
                         }
+                        long stripStart = System.currentTimeMillis();
                         Optional<FetchedStrip> strip = fetchStrip(comic, date);
                         if (strip.isEmpty()) {
                             failed++;
@@ -188,6 +194,9 @@ public class DevPromotionService {
                                 ComicSaveData.builder().imageData(strip.get().imageData()).transcript(strip.get().transcript()).build());
                         if (result.wasSaved()) {
                             log.debug("Promoted {} {}", comic.getName(), date);
+                            // Replaces a failed download's record, so retrieval status matches what's on disk
+                            retrievalStatusService.recordRetrievalResult(ComicRetrievalRecord.success(comic.getId(), comic.getName(), date,
+                                    comic.getSource(), System.currentTimeMillis() - stripStart, (long) strip.get().imageData().length));
                             promoted++;
                             oldestSaved = oldestSaved == null || date.isBefore(oldestSaved) ? date : oldestSaved;
                             newestSaved = newestSaved == null || date.isAfter(newestSaved) ? date : newestSaved;
