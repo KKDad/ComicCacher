@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Database, Image, MousePointerClick, ArrowUpDown } from 'lucide-react';
 import { useGetCombinedMetricsQuery } from '@/generated/graphql';
@@ -20,6 +21,8 @@ function formatBytes(bytes: number): string {
 
 type SortDir = 'asc' | 'desc';
 
+const ALL_SOURCES = '__all__';
+
 export default function MetricsPage() {
   const { data, isLoading, error } = useGetCombinedMetricsQuery();
 
@@ -27,6 +30,7 @@ export default function MetricsPage() {
   const [sortKey, setSortKey] = useState<SortKey>('totalBytes');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [query, setQuery] = useState('');
+  const [source, setSource] = useState<string | null>(null);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -97,6 +101,7 @@ export default function MetricsPage() {
 
   type ComicRow = {
     comicId: number | null;
+    source: string | null;
     comicName: string;
     imageCount: number;
     totalBytes: number;
@@ -108,12 +113,13 @@ export default function MetricsPage() {
   const byId = new Map<number, ComicRow>();
   const byName = new Map<string, ComicRow>();
 
-  function rowFor(c: { comicId?: number | null; comicName: string }): ComicRow {
+  function rowFor(c: { comicId?: number | null; source?: string | null; comicName: string }): ComicRow {
     const nameKey = normalizeKey(c.comicName);
     let row = (c.comicId != null ? byId.get(c.comicId) : undefined) ?? byName.get(nameKey);
     if (!row) {
       row = {
         comicId: null,
+        source: null,
         comicName: c.comicName,
         imageCount: 0,
         totalBytes: 0,
@@ -130,6 +136,7 @@ export default function MetricsPage() {
       row.comicId = c.comicId;
       byId.set(c.comicId, row);
     }
+    row.source ??= c.source ?? null;
     byName.set(nameKey, row);
     return row;
   }
@@ -157,8 +164,9 @@ export default function MetricsPage() {
   const search = query.trim().toLowerCase();
   const matches = (name: string) =>
     !search || name.toLowerCase().includes(search) || normalizeKey(name).includes(normalizeKey(search));
+  const sources = [...new Set(rows.map((r) => r.source).filter((s): s is string => s != null))].sort();
   const combinedComics = rows
-    .filter((c) => matches(c.comicName))
+    .filter((c) => matches(c.comicName) && (source == null || c.source === source))
     .sort((a, b) => {
       const dir = sortDir === 'asc' ? 1 : -1;
       if (sortKey === 'comicName') return dir * compareNames(a.comicName, b.comicName);
@@ -202,14 +210,31 @@ export default function MetricsPage() {
         <Card>
           <div className="flex flex-col gap-3 p-6 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold text-ink">Metrics by Comic</h2>
-            <Input
-              type="search"
-              placeholder="Search comics"
-              aria-label="Search comics"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="sm:max-w-64"
-            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              {sources.length > 1 && (
+                <Select value={source ?? ALL_SOURCES} onValueChange={(value) => setSource(value === ALL_SOURCES ? null : value)}>
+                  <SelectTrigger aria-label="Source" className="sm:w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_SOURCES}>Every source</SelectItem>
+                    {sources.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Input
+                type="search"
+                placeholder="Search comics"
+                aria-label="Search comics"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="sm:max-w-64"
+              />
+            </div>
           </div>
           {combinedComics.length === 0 ? (
             <p className="border-t border-border p-8 text-center text-ink-subtle">No comics match.</p>

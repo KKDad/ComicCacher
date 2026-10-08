@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
  */
 public record ComicAccessMetricView(
         Integer comicId,
+        String source,
         String comicName,
         int accessCount,
         double averageAccessTimeMs,

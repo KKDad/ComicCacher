@@ -7,6 +7,7 @@ import java.util.Map;
  */
 public record ComicStorageMetricView(
         Integer comicId,
+        String source,
         String comicName,
         double totalBytes,
         int imageCount,

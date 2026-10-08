@@ -86,6 +86,7 @@ public class StorageMetricsTypeResolver {
             ComicStorageMetrics m = entry.getValue();
             result.add(new ComicStorageMetricView(
                     null,
+                    null,
                     entry.getKey(),
                     (double) m.getStorageBytes(),
                     m.getImageCount(),

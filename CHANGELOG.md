@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- The metrics page has a name search, and each comic's name links to its reader. `ComicAccessMetric` has a `comicId`, and `combinedMetrics` fills in `comicId` on both lists
+- The metrics page has a name search and a source filter, and each comic's name links to its reader. `ComicStorageMetric` and `ComicAccessMetric` have `comicId` and `source`, which `combinedMetrics` fills in
 
 ### Fixed
 - The metrics page showed no images or accesses for Mother Goose & Grimm and Sherman's Lagoon. `combinedMetrics` listed every comic whose name has a space twice, once under its directory name with the storage and once under its display name with the accesses, and the page kept whichever came last. The API now joins them by directory name, and the page merges rows by comic id

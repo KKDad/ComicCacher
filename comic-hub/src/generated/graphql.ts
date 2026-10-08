@@ -334,7 +334,7 @@ export type GetComicsForDateQuery = { comics: { totalCount: number, edges: Array
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCombinedMetricsQuery = { combinedMetrics: { lastUpdated: string | null, storage: { totalBytes: number | null, comicCount: number | null, lastUpdated: string | null, comics: Array<{ comicId: number | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown: Array<{ year: number, bytes: number, imageCount: number }> | null }> | null } | null, access: { totalAccesses: number | null, lastUpdated: string | null, comics: Array<{ comicId: number | null, comicName: string, accessCount: number, averageAccessTimeMs: number | null, lastAccessed: string | null }> | null } | null } | null };
+export type GetCombinedMetricsQuery = { combinedMetrics: { lastUpdated: string | null, storage: { totalBytes: number | null, comicCount: number | null, lastUpdated: string | null, comics: Array<{ comicId: number | null, source: string | null, comicName: string, totalBytes: number, imageCount: number, yearlyBreakdown: Array<{ year: number, bytes: number, imageCount: number }> | null }> | null } | null, access: { totalAccesses: number | null, lastUpdated: string | null, comics: Array<{ comicId: number | null, source: string | null, comicName: string, accessCount: number, averageAccessTimeMs: number | null, lastAccessed: string | null }> | null } | null } | null };
 
 export type GetRetrievalSummaryQueryVariables = Exact<{
   fromDate?: string | null | undefined;
@@ -1490,6 +1490,7 @@ export const GetCombinedMetricsDocument = new TypedDocumentString(`
       comicCount
       comics {
         comicId
+        source
         comicName
         totalBytes
         imageCount
@@ -1505,6 +1506,7 @@ export const GetCombinedMetricsDocument = new TypedDocumentString(`
       totalAccesses
       comics {
         comicId
+        source
         comicName
         accessCount
         averageAccessTimeMs

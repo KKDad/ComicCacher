@@ -75,6 +75,7 @@ public class AccessMetricsTypeResolver {
             ComicAccessMetrics m = entry.getValue();
             result.add(new ComicAccessMetricView(
                     null,
+                    null,
                     entry.getKey(),
                     m.getAccessCount(),
                     m.getAverageAccessTime(),

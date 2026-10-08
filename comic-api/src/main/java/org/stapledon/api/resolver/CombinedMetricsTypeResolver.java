@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Schema mappings for the CombinedMetrics GraphQL type.
  * Bridges CombinedMetricsData to the GraphQL schema using typed view records. Metrics are keyed by directory name; each entry
- * gets the id and display name of the configured comic with that directory, so clients can join the two lists by id.
+ * gets the id, source and display name of the configured comic with that directory, so clients can join the two lists by id.
  */
 @Controller
 @RequiredArgsConstructor
@@ -65,6 +65,7 @@ public class CombinedMetricsTypeResolver {
                 ComicItem comic = byDirectory.get(directoryKey(entry.getKey()));
                 comics.add(new ComicStorageMetricView(
                         comic != null ? comic.getId() : null,
+                        comic != null ? comic.getSource() : null,
                         displayName(entry.getKey(), m, comic),
                         (double) m.getStorageBytes(),
                         m.getImageCount(),
@@ -93,6 +94,7 @@ public class CombinedMetricsTypeResolver {
                 ComicItem comic = byDirectory.get(directoryKey(entry.getKey()));
                 comics.add(new ComicAccessMetricView(
                         comic != null ? comic.getId() : null,
+                        comic != null ? comic.getSource() : null,
                         displayName(entry.getKey(), m, comic),
                         m.getAccessCount(),
                         m.getAverageAccessTime(),

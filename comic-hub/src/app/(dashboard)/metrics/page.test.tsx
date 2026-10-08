@@ -10,9 +10,9 @@ vi.mock('@/generated/graphql', () => ({
 }));
 
 const mockStorageComics = [
-  { comicId: 1, comicName: 'Garfield', totalBytes: 5242880, imageCount: 100 },
-  { comicId: 2, comicName: 'Calvin and Hobbes', totalBytes: 10485760, imageCount: 200 },
-  { comicId: 3, comicName: 'Peanuts', totalBytes: 1048576, imageCount: 50 },
+  { comicId: 1, source: 'gocomics', comicName: 'Garfield', totalBytes: 5242880, imageCount: 100 },
+  { comicId: 2, source: 'gocomics', comicName: 'Calvin and Hobbes', totalBytes: 10485760, imageCount: 200 },
+  { comicId: 3, source: 'comicskingdom', comicName: 'Peanuts', totalBytes: 1048576, imageCount: 50 },
 ];
 
 const mockAccessComics = [
@@ -453,6 +453,39 @@ describe('MetricsPage', () => {
     await user.clear(screen.getByRole('searchbox', { name: 'Search comics' }));
     await user.type(screen.getByRole('searchbox', { name: 'Search comics' }), 'dilbert');
     expect(within(table).getByText('No comics match.')).toBeInTheDocument();
+  });
+
+  it('filters the table by source', async () => {
+    // jsdom lacks the pointer-capture and scrolling calls the Radix select makes when it opens
+    Element.prototype.hasPointerCapture ??= () => false;
+    Element.prototype.releasePointerCapture ??= () => {};
+    Element.prototype.scrollIntoView ??= () => {};
+    const user = userEvent.setup();
+    renderWithQuery(<MetricsPage />);
+    const table = screen.getByText('Metrics by Comic').closest<HTMLElement>('[class*="card"]')!;
+    expect(screen.getByRole('combobox', { name: 'Source' })).toHaveTextContent('Every source');
+
+    await user.click(screen.getByRole('combobox', { name: 'Source' }));
+    await user.click(await screen.findByRole('option', { name: 'comicskingdom' }));
+
+    expect(within(table).getAllByRole('row').slice(1)).toHaveLength(1);
+    expect(within(table).getByText('Peanuts')).toBeInTheDocument();
+  });
+
+  it('hides the source filter when every comic has the same source', () => {
+    vi.mocked(useGetCombinedMetricsQuery).mockReturnValue(mockQueryResult({
+      data: {
+        combinedMetrics: {
+          lastUpdated: null,
+          storage: { totalBytes: 500, comicCount: 1, comics: [{ comicId: 4, source: 'gocomics', comicName: 'Agnes', totalBytes: 500, imageCount: 9 }] },
+          access: { totalAccesses: 0, comics: [] },
+        },
+      },
+      isLoading: false,
+      error: null,
+    }));
+    renderWithQuery(<MetricsPage />);
+    expect(screen.queryByRole('combobox', { name: 'Source' })).not.toBeInTheDocument();
   });
 
   it('formats 0 bytes correctly', () => {

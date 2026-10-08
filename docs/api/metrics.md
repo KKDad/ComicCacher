@@ -84,7 +84,7 @@ query {
 
 **Returns:** `CombinedMetrics`
 
-One entry per comic in both `storage.comics` and `access.comics`, in the same order, with the comic's id and display name. Storage is scanned by directory name (`MotherGoose&Grimm`) and access is recorded by display name (`Mother Goose & Grimm`); the two are joined by directory name (the name without spaces).
+One entry per comic in both `storage.comics` and `access.comics`, in the same order, with the comic's id, source and display name. Storage is scanned by directory name (`MotherGoose&Grimm`) and access is recorded by display name (`Mother Goose & Grimm`); the two are joined by directory name (the name without spaces).
 
 ```graphql
 query {
@@ -181,6 +181,7 @@ mutation {
 | Field | Type | Description |
 |---|---|---|
 | `comicId` | `Int` | Comic ID; null when no configured comic matches, and always null from `storageMetrics` |
+| `source` | `String` | Source id (e.g. `gocomics`); null when `comicId` is |
 | `comicName` | `String!` | Comic name |
 | `totalBytes` | `Float!` | Total storage used by this comic in bytes |
 | `imageCount` | `Int!` | Number of cached images |
@@ -207,6 +208,7 @@ mutation {
 | Field | Type | Description |
 |---|---|---|
 | `comicId` | `Int` | Comic ID; null when no configured comic matches, and always null from `accessMetrics` |
+| `source` | `String` | Source id (e.g. `gocomics`); null when `comicId` is |
 | `comicName` | `String!` | Comic name |
 | `accessCount` | `Int!` | Total accesses for this comic |
 | `averageAccessTimeMs` | `Float` | Average access time in ms |

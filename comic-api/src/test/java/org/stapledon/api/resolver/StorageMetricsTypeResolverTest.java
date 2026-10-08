@@ -102,7 +102,7 @@ class StorageMetricsTypeResolverTest {
                 .storageBytes(1000L).imageCount(10)
                 .storageByYear(Map.of("2023", 500L)).build());
 
-        var preBuiltList = List.of(new ComicStorageMetricView(null, "Dilbert", 500.0, 5, Map.of()));
+        var preBuiltList = List.of(new ComicStorageMetricView(null, null, "Dilbert", 500.0, 5, Map.of()));
 
         return Stream.of(
                 new ComicsCase("ImageCacheStats with perComicMetrics",

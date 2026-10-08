@@ -30,8 +30,8 @@ class CombinedMetricsTypeResolverTest {
     void setUp() {
         ManagementFacade facade = mock(ManagementFacade.class);
         when(facade.getAllComics()).thenReturn(List.of(
-                ComicItem.builder().id(7).name("Mother Goose & Grimm").build(),
-                ComicItem.builder().id(9).name("Garfield").build()));
+                ComicItem.builder().id(7).name("Mother Goose & Grimm").source("gocomics").build(),
+                ComicItem.builder().id(9).name("Garfield").source("comicskingdom").build()));
         resolver = new CombinedMetricsTypeResolver(facade);
 
         Map<String, ComicCombinedMetrics> perComic = new LinkedHashMap<>();
@@ -43,24 +43,24 @@ class CombinedMetricsTypeResolverTest {
     }
 
     @Test
-    void storageEntriesCarryTheComicIdAndDisplayName() {
+    void storageEntriesCarryTheComicIdSourceAndDisplayName() {
         List<ComicStorageMetricView> comics = resolver.storage(data).comics();
 
-        assertThat(comics).extracting(ComicStorageMetricView::comicId, ComicStorageMetricView::comicName, ComicStorageMetricView::imageCount)
+        assertThat(comics).extracting(ComicStorageMetricView::comicId, ComicStorageMetricView::source, ComicStorageMetricView::comicName, ComicStorageMetricView::imageCount)
                 .containsExactly(
-                        tuple(7, "Mother Goose & Grimm", 149),
-                        tuple(9, "Garfield", 3),
-                        tuple(null, "Retired Strip", 0));
+                        tuple(7, "gocomics", "Mother Goose & Grimm", 149),
+                        tuple(9, "comicskingdom", "Garfield", 3),
+                        tuple(null, null, "Retired Strip", 0));
     }
 
     @Test
-    void accessEntriesCarryTheComicIdAndDisplayName() {
+    void accessEntriesCarryTheComicIdSourceAndDisplayName() {
         List<ComicAccessMetricView> comics = resolver.access(data).comics();
 
-        assertThat(comics).extracting(ComicAccessMetricView::comicId, ComicAccessMetricView::comicName, ComicAccessMetricView::accessCount)
+        assertThat(comics).extracting(ComicAccessMetricView::comicId, ComicAccessMetricView::source, ComicAccessMetricView::comicName, ComicAccessMetricView::accessCount)
                 .containsExactly(
-                        tuple(7, "Mother Goose & Grimm", 6),
-                        tuple(9, "Garfield", 0),
-                        tuple(null, "Retired Strip", 1));
+                        tuple(7, "gocomics", "Mother Goose & Grimm", 6),
+                        tuple(9, "comicskingdom", "Garfield", 0),
+                        tuple(null, null, "Retired Strip", 1));
     }
 }
