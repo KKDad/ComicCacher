@@ -5,13 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.6.3] - 2026-10-12
 ### Added
-- The metrics page has a name search and a source filter, and each comic's name links to its reader. `ComicStorageMetric` and `ComicAccessMetric` have `comicId` and `source`, which `combinedMetrics` fills in
+- xkcd as a comic source. `XkcdDownloaderStrategy` reads xkcd's JSON API (`/info.0.json`, `/{n}/info.0.json`) as an indexed source, like Freefall, and `XkcdSource` lists it on the Sources page. A strip with nothing to download (404, interactive strips) is reported as `UNAVAILABLE` with a WARN line. The alt text is kept as the strip's transcript. The per-source download pool grows from 4 to 6 threads (#457)
+- The metrics page has a name search and a source filter, and each comic's name links to its reader. `ComicStorageMetric` and `ComicAccessMetric` have `comicId` and `source`, which `combinedMetrics` fills in (#452)
+
+### Changed
+- The Retrieval Status page is built around a 30-day results grid. It shows the last daily run, per-source health, and today's errors. In the grid, the files on disk decide each cell, so a failure that a later backfill fixed no longer shows as an error. A detail panel shows the selected comic's schedule and attempts. Filters, window and selection are kept in the URL (#455)
 
 ### Fixed
-- The GoComics links on the Sources page went to each comic's page on gocomics.com, which GoComics' firewall has answered with HTTP 403 from our network since 2026-10-05. They now carry the `_rsc` parameter the site's router sends (`/<slug>?_rsc=…`), which the firewall lets through, and the page loads as usual
-- The metrics page showed no images or accesses for Mother Goose & Grimm and Sherman's Lagoon. `combinedMetrics` listed every comic whose name has a space twice, once under its directory name with the storage and once under its display name with the accesses, and the page kept whichever came last. The API now joins them by directory name, and the page merges rows by comic id
-- A strip copied from dev by `PromoteFromDevJob` left the failed download's record in `retrieval-status.json`, so the Retrieval Status page showed it as failed although it was on disk. Each promoted strip now gets a successful retrieval record, replacing the failed one
+- The GoComics links on the Sources page went to each comic's page on gocomics.com, which GoComics' firewall has answered with HTTP 403 from our network since 2026-10-05. They now carry the `_rsc` parameter the site's router sends (`/<slug>?_rsc=…`), which the firewall lets through, and the page loads as usual (#454)
+- The metrics page showed no images or accesses for Mother Goose & Grimm and Sherman's Lagoon. `combinedMetrics` listed every comic whose name has a space twice, once under its directory name with the storage and once under its display name with the accesses, and the page kept whichever came last. The API now joins them by directory name, and the page merges rows by comic id (#452)
+- A strip copied from dev by `PromoteFromDevJob` left the failed download's record in `retrieval-status.json`, so the Retrieval Status page showed it as failed although it was on disk. Each promoted strip now gets a successful retrieval record, replacing the failed one (#450)
 
 ## [2.6.2] - 2026-10-08
 ### Added
