@@ -40,6 +40,19 @@
   - **Still to decide:** whether the strip directories (`{ComicDir}`, name-based today) move to the slug, and how long old ids keep working
 - Priority: Medium. Each new id-handling surface can hit the negative-id case, and the migration grows with every store keyed by id
 
+## Generate missing transcripts with an LLM
+
+- Most strips have no transcript: only Freefall and older xkcd strips supply one. Transcripts make strips searchable and readable with a screen reader
+- Send strips that have no transcript to a vision-capable LLM (e.g. Claude through the Anthropic API) and store the text it writes as the transcript
+  - Mark it as generated in `ImageMetadata` / the sidecar (e.g. `transcriptSource: SOURCE | GENERATED`), so a source transcript always wins and the UI can label generated ones
+  - Keep a fixed transcript format (speaker: line, one panel per paragraph) in the prompt
+- Run it as a batch job:
+  - newest strips first, with a per-run and per-day cap to bound the cost
+  - skip strips that fail or that the model can't read, and remember them, like the backfill's give-ups
+  - the API key comes from an environment variable, never logged; the job is off when it isn't set
+- Check the per-strip cost and the transcript quality on a sample of comics before turning it on for the whole cache
+- Priority: Medium
+
 ## Log server errors and show the error digest
 
 - `error.tsx` and `global-error.tsx` only `console.error` in the browser. When a server render fails, the user sees a generic page and the `comics-ui` log has nothing to match it to
@@ -198,11 +211,20 @@
 
 # Additional Source Ideas
 
-- **XKCD** — https://xkcd.com/archive/
-  - Indexed
-- **The Web Comic Factory** — http://www.thewebcomicfactory.com/
+Checked 2026-10-08, in suggested order:
 - **Kevin and Kell** — https://www.kevinandkell.com/archive/
+  - Daily; the image URL is predictable: `/{yyyy}/strips/kk{yyyyMMdd}.jpg`
+  - robots.txt: `Crawl-delay: 10`
+- **Sinfest** — https://www.sinfest.net (redirects to `sinfest.xyz`)
+  - Daily; `btphp/comics/{yyyy-MM-dd}.jpg`, image only like Kevin and Kell
+  - robots.txt: `Crawl-delay: 10`
 - **Questionable Content** — https://www.questionablecontent.net/QCR/archive.php
+  - Indexed: `comics/{n}.png`, and the front page's `img#strip` gives the latest number
+  - The pages carry no dates, so strips would get the date they're fetched and backfilled ones no real date
+  - robots.txt has only content signals
 - **Penny Arcade** — https://www.penny-arcade.com/comic
-- **Sinfest** — https://www.sinfest.net
+  - Daily (Mon/Wed/Fri), but at `/comic/{yyyy}/{MM}/{dd}/{slug}`: the slug isn't known from the date, so each date needs a lookup
+  - Full image in `og:image` (the page shows panels)
+- **The Web Comic Factory** — http://www.thewebcomicfactory.com/
+  - A WordPress hub of several series (Pandamodium, In a Relationship, …); needs a catalog and a choice of series
 - Priority: High

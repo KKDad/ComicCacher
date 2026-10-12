@@ -65,6 +65,12 @@ classDiagram
         +downloadAvatarImage(...) byte[]
     }
 
+    class XkcdDownloaderStrategy {
+        +fetchLatestStrip(comic) IndexedStripData
+        +fetchStrip(comic, stripNumber) IndexedStripData
+        +downloadAvatarImage(...) byte[]
+    }
+
     ComicDownloaderStrategy <|-- DailyComicDownloaderStrategy
     ComicDownloaderStrategy <|-- IndexedComicDownloaderStrategy
     ComicDownloaderStrategy <|.. AbstractComicDownloaderStrategy
@@ -75,6 +81,7 @@ classDiagram
     AbstractDailyDownloaderStrategy <|-- GoComicsDownloaderStrategy
     AbstractDailyDownloaderStrategy <|-- ComicsKingdomDownloaderStrategy
     AbstractIndexedDownloaderStrategy <|-- FreefallDownloaderStrategy
+    AbstractIndexedDownloaderStrategy <|-- XkcdDownloaderStrategy
 ```
 
 ## Two Comic Models
@@ -93,7 +100,7 @@ Date-based comics publish one strip per calendar date. The download request carr
 Strip-number-based comics are addressed by a sequential integer. The actual publication date is discovered from the page content after fetching. Backfill walks a strip-number range.
 
 **Interface:** `IndexedComicDownloaderStrategy`
-**Sources:** Freefall
+**Sources:** Freefall, xkcd
 
 Key differences from daily comics:
 
@@ -103,7 +110,7 @@ Key differences from daily comics:
 | Date discovery | Known before download | Parsed from page after download |
 | Backfill iteration | Date range | Strip-number range |
 | Download method | `downloadComic(request)` | `downloadLatestStrip(comic)` / `downloadStrip(comic, stripNumber)` |
-| Result metadata | Date from request | Date, strip number, and optional transcript from page |
+| Result metadata | Date from request, plus any strip text | Date and strip number from page, plus any strip text |
 
 ## Base Classes
 
@@ -114,18 +121,30 @@ The root abstract class providing shared infrastructure for all strategies:
 - **`downloadAvatar()`** — Template method: calls the abstract `downloadAvatarImage()`, validates the result, returns `Optional<byte[]>`.
 - **`validateImage()`** — Delegates to `ValidationService` for null/empty/decode/dimension checks.
 - **`downloadImageData(url)`** — HTTP GET with the timeout from `DownloaderConstants` and the source's User-Agent from `UserAgentService`. Throws `RateLimitedException` on HTTP 429.
+- **`DownloadedStrip`** — what every strategy returns for a strip: the image bytes and a `StripText` (comic-common) holding the transcript and alt (hover) text the source gave with it. `DownloadedStrip.imageOnly(bytes)` is a strip with no text.
+
+#### Strip text
+
+`StripText` is carried unchanged from the strategy through `ComicDownloadResult.getText()`, `ComicSaveData.text()` and `AnalysisService.analyzeImage()` into the metadata sidecar's `transcript` and `altText`, and from there to GraphQL `Strip.transcript` / `Strip.altText` and the promotion endpoint's `X-Transcript` / `X-Alt-Text` headers. So a source starts supplying text by filling in `StripText` where it builds its strip, with no other changes. Blank values become null.
+
+| Source | Transcript | Alt text |
+|--------|------------|----------|
+| GoComics | — | — (the page data has none) |
+| Comics Kingdom | — | — (the page has none) |
+| Freefall | From the page | — |
+| xkcd | The JSON's `transcript`, which only older strips fill | The JSON's `alt` |
 
 ### AbstractDailyDownloaderStrategy
 
 Template method for date-based downloads:
 
 1. Waits on `SourceThrottleService.await(source)`.
-2. Calls `downloadComicImage(request)` (abstract — implemented by each source strategy).
+2. Calls `downloadStrip(request)` (abstract — implemented by each source strategy), which returns a `DownloadedStrip`, or null when the source has no strip for the date.
 3. On `RateLimitedException` (HTTP 429), backs off and retries from step 1 until the source's `retry.max-attempts` is used up (see [Throttling and Rate Limits](#throttling-and-rate-limits)).
 4. Validates the image via `validateImage()`.
-5. Returns `ComicDownloadResult.success()` or `ComicDownloadResult.failure()`. A failure carries a `FailureKind`: `UNAVAILABLE` (no image, empty or invalid image data, HTTP 404 or 410), `RATE_LIMITED` (HTTP 429), `BLOCKED` (HTTP 403), or `ERROR` (anything else).
+5. Returns `ComicDownloadResult.success()` (with the strip's text) or `ComicDownloadResult.failure()`. A failure carries a `FailureKind`: `UNAVAILABLE` (no image, empty or invalid image data, HTTP 404 or 410), `RATE_LIMITED` (HTTP 429), `BLOCKED` (HTTP 403), or `ERROR` (anything else).
 
-Subclasses only implement `downloadComicImage()` and `downloadAvatarImage()`.
+Subclasses only implement `downloadStrip()` and `downloadAvatarImage()`.
 
 ### AbstractIndexedDownloaderStrategy
 
@@ -136,8 +155,8 @@ Template method for strip-number-based downloads:
    - `byte[] imageData` — the raw image bytes
    - `LocalDate actualDate` — the date parsed from the page
    - `int stripNumber` — the strip number
-   - `String transcript` — optional transcript text
-3. Validates the image and builds a `ComicDownloadResult` with the discovered metadata. `downloadStrip()` classifies failures with the same `FailureKind` values as daily downloads; a 429 backs the source off once and is not retried.
+   - `StripText text` — the strip's transcript and alt text (`StripText.NONE` for none)
+3. Validates the image and builds a `ComicDownloadResult` with the discovered metadata. A fetch that finds the strip but nothing to download (an interactive xkcd) throws `StripUnavailableException`, reported as `UNAVAILABLE` like a 404. `downloadStrip()` classifies failures with the same `FailureKind` values as daily downloads; a 429 backs the source off once and is not retried.
 
 Subclasses only implement `fetchLatestStrip()`, `fetchStrip()`, and `downloadAvatarImage()`.
 
@@ -162,7 +181,7 @@ All outbound requests are paced per source by `SourceThrottleService`, configure
 
 A 429 that surfaces as a Jsoup `HttpStatusException` (sources that fetch pages with `Jsoup.connect().get()`) is not retried, but still backs the source off and is reported as `RATE_LIMITED`.
 
-Only daily sources retry; indexed sources (Freefall) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
+Only daily sources retry; indexed sources (Freefall, xkcd) and avatar downloads fail on the first 429. Callers that pass `failFastOnRateLimit` (the backfill) get no retries either.
 
 **HTTP 403 handling:** a 403 is reported as `BLOCKED`, never retried, and doesn't back the source off. One 403 can be a single forbidden strip, but several in a row mean the source's firewall is refusing us, and every further request only deepens the block. So after `DownloaderConstants.BLOCKED_IN_A_ROW_TO_STOP_SOURCE` (3) blocked downloads in a row from one source, the daily download run (`ComicManagementFacade`) skips that source's remaining comics for the date, and the backfill and catalog start detection skip the rest until their next run. Each logs one WARN when it stops the source. In retrieval status a 403 stays `NETWORK_ERROR` with HTTP status 403.
 
@@ -200,6 +219,7 @@ Additional facade methods for indexed comics:
 | `gocomics` | `GoComicsDownloaderStrategy` | Daily | Jsoup (`BrowserFetcher`) | The date's strip object in the page's RSC payload |
 | `comicskingdom` | `ComicsKingdomDownloaderStrategy` | Daily | Jsoup | `og:image` meta tags (2nd for hi-res) |
 | `freefall` | `FreefallDownloaderStrategy` | Indexed | Jsoup | `<img>` tag matching strip number |
+| `xkcd` | `XkcdDownloaderStrategy` | Indexed | JSON API (via Jsoup) | `img` in `info.0.json` |
 
 ### FreefallDownloaderStrategy Details
 
@@ -210,6 +230,14 @@ Freefall is the first indexed comic source. Notable implementation details:
 - **Date discovery:** Parsed from the `<title>` tag (`"Freefall NNNN Month DD, YYYY"`) or from HTML comment nodes for older strips.
 - **Transcript extraction:** Parses text after a `"TRANSCRIPT"` heading in the page, if present.
 
+### XkcdDownloaderStrategy Details
+
+- **API:** `https://xkcd.com/info.0.json` for the latest strip, `https://xkcd.com/{n}/info.0.json` for strip `n`. Each gives `num`, `year`/`month`/`day`, `img`, `safe_title`, `alt` and `transcript`.
+- **Date:** built from the JSON's `year`, `month` and `day`.
+- **Text:** the hover caption (`alt`) is the strip's alt text, and `transcript` its transcript where the JSON has one (only older strips do). Strips saved before alt text existed had `alt` in the transcript; `ImageMetadataBackfillJob` moves it.
+- **Gaps:** strip 404 doesn't exist (the API answers HTTP 404, so `UNAVAILABLE`). Interactive strips (#1608, #1663, …) give the bare image directory as `img`, so they throw `StripUnavailableException`.
+- **Avatar:** the logo on the home page (`img[alt*=logo]`); its file name is a content hash, so it isn't hard-coded.
+
 ## Adding a New Source
 
 A source is a downloader strategy plus one `ComicSource` bean. `SourceRegistry` picks the bean up, registers its downloader, and adds the source to the batch jobs' `source` parameter, comic validation and the Sources page. No other wiring is needed.
@@ -217,7 +245,7 @@ A source is a downloader strategy plus one `ComicSource` bean. `SourceRegistry` 
 ### Daily Comic Source
 
 1. Create a class extending `AbstractDailyDownloaderStrategy`.
-2. Implement `downloadComicImage(ComicDownloadRequest request)` — fetch the page and return raw image bytes.
+2. Implement `downloadStrip(ComicDownloadRequest request)` — fetch the page and return a `DownloadedStrip`: the image bytes, plus a `StripText` if the page has a transcript or alt text (`DownloadedStrip.imageOnly(bytes)` otherwise). Return null when there's no strip for the date.
 3. Implement `downloadAvatarImage(int comicId, String comicName, String sourceIdentifier)` — fetch the avatar image.
 4. Annotate with `@Component` and inject dependencies.
 5. Add a `@Component` implementing `ComicSource` (`engine.source`). It returns the strategy from `downloader()`, the downloader's name fallback from `identifierFor()`, and its image hosts. Implement `catalog()` and `startDetector()` if the source lists its comics or says where they start, pacing every request through `SourceThrottleService.withRetries`.
@@ -226,7 +254,7 @@ A source is a downloader strategy plus one `ComicSource` bean. `SourceRegistry` 
 ### Indexed Comic Source
 
 1. Create a class extending `AbstractIndexedDownloaderStrategy`.
-2. Implement `fetchLatestStrip(ComicItem comic)` — fetch the latest strip page, parse it, return `IndexedStripData`.
+2. Implement `fetchLatestStrip(ComicItem comic)` — fetch the latest strip page, parse it, return `IndexedStripData` (with a `StripText` if the page has a transcript or alt text).
 3. Implement `fetchStrip(ComicItem comic, int stripNumber)` — fetch a specific strip by number, return `IndexedStripData`.
 4. Implement `downloadAvatarImage(int comicId, String comicName, String sourceIdentifier)` — fetch the avatar image.
 5. Annotate with `@Component` and inject dependencies.

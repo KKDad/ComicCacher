@@ -53,8 +53,8 @@ class PromotionControllerTest {
     }
 
     @Test
-    void strip_returnsTheBytesAndTranscript() {
-        ImageDto image = ImageDto.builder().mimeType("image/png").imageData("AQID").transcript("Jon: Hi + bye").build();
+    void strip_returnsTheBytesTranscriptAndAltText() {
+        ImageDto image = ImageDto.builder().mimeType("image/png").imageData("AQID").transcript("Jon: Hi + bye").altText("Caption & more").build();
         when(sourceService.strip("gocomics", "garfield", DAY)).thenReturn(Optional.of(image));
 
         ResponseEntity<byte[]> response = controller.strip("gocomics", "garfield", DAY);
@@ -62,6 +62,7 @@ class PromotionControllerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).containsExactly(1, 2, 3);
         assertThat(URLDecoder.decode(response.getHeaders().getFirst("X-Transcript"), StandardCharsets.UTF_8)).isEqualTo("Jon: Hi + bye");
+        assertThat(URLDecoder.decode(response.getHeaders().getFirst("X-Alt-Text"), StandardCharsets.UTF_8)).isEqualTo("Caption & more");
     }
 
     @Test

@@ -22,6 +22,7 @@ import org.stapledon.common.dto.ComicRetrievalStatus;
 import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.PromotionManifest;
 import org.stapledon.common.dto.SaveResult;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.GsonUtils;
@@ -70,6 +71,7 @@ class DevPromotionServiceTest {
     private final Map<String, String> lastQuery = new ConcurrentHashMap<>();
     private final Map<String, Integer> stripStatus = new ConcurrentHashMap<>();
     private final Map<String, String> transcripts = new ConcurrentHashMap<>();
+    private final Map<String, String> altTexts = new ConcurrentHashMap<>();
 
     @BeforeEach
     void setUp() throws IOException {
@@ -95,6 +97,10 @@ class DevPromotionServiceTest {
             String transcript = transcripts.get(path);
             if (transcript != null) {
                 exchange.getResponseHeaders().add(DevPromotionService.TRANSCRIPT_HEADER, URLEncoder.encode(transcript, StandardCharsets.UTF_8));
+            }
+            String altText = altTexts.get(path);
+            if (altText != null) {
+                exchange.getResponseHeaders().add(DevPromotionService.ALT_TEXT_HEADER, URLEncoder.encode(altText, StandardCharsets.UTF_8));
             }
             respond(exchange, status, status == 200 ? IMAGE : new byte[0]);
         });
@@ -152,6 +158,7 @@ class DevPromotionServiceTest {
         when(storageFacade.comicStripExists(any(), eq(TODAY))).thenReturn(false);
         when(storageFacade.saveComicStripWithResult(any(), eq(TODAY), any(ComicSaveData.class))).thenReturn(SaveResult.saved());
         transcripts.put("gocomics/garfield/" + TODAY, "Jon: Hi, Garfield & Odie");
+        altTexts.put("gocomics/garfield/" + TODAY, "Mondays, again");
 
         PromotionResult result = service(baseUrl, TOKEN).promote(2, null, null);
 
@@ -162,7 +169,7 @@ class DevPromotionServiceTest {
         verify(storageFacade, never()).saveComicStripWithResult(any(), eq(YESTERDAY), any(ComicSaveData.class));
         assertThat(id.getValue().getId()).isEqualTo(42);
         assertThat(data.getValue().imageData()).isEqualTo(IMAGE);
-        assertThat(data.getValue().transcript()).isEqualTo("Jon: Hi, Garfield & Odie");
+        assertThat(data.getValue().text()).isEqualTo(new StripText("Jon: Hi, Garfield & Odie", "Mondays, again"));
         assertThat(lastQuery.get("query")).isEqualTo("from=" + YESTERDAY + "&to=" + TODAY + "&source=gocomics&sourceIdentifier=garfield");
 
         ArgumentCaptor<ComicItem> updated = ArgumentCaptor.forClass(ComicItem.class);

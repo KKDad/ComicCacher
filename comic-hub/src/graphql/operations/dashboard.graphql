@@ -157,6 +157,8 @@ query GetStripWindow($comicId: Int!, $center: Date!, $before: Int!, $after: Int!
       imageUrl
       width
       height
+      transcript
+      altText
     }
   }
 }
@@ -169,6 +171,8 @@ query GetRandomStrip($comicId: Int) {
     imageUrl
     width
     height
+    transcript
+    altText
   }
 }
 
@@ -189,6 +193,7 @@ query GetComicsForDate($first: Int, $date: Date!) {
           width
           height
           transcript
+          altText
         }
       }
     }

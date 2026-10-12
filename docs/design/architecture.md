@@ -49,7 +49,7 @@ Download engine, filesystem storage, image validation, and Spring Batch job infr
 
 | Area | Key Classes |
 |------|-------------|
-| Download strategies | `ComicDownloaderStrategy` (interface), `DailyComicDownloaderStrategy`, `IndexedComicDownloaderStrategy`, `AbstractComicDownloaderStrategy`, `AbstractDailyDownloaderStrategy`, `AbstractIndexedDownloaderStrategy`, `GoComicsDownloaderStrategy`, `ComicsKingdomDownloaderStrategy`, `FreefallDownloaderStrategy` |
+| Download strategies | `ComicDownloaderStrategy` (interface), `DailyComicDownloaderStrategy`, `IndexedComicDownloaderStrategy`, `AbstractComicDownloaderStrategy`, `AbstractDailyDownloaderStrategy`, `AbstractIndexedDownloaderStrategy`, `GoComicsDownloaderStrategy`, `ComicsKingdomDownloaderStrategy`, `FreefallDownloaderStrategy`, `XkcdDownloaderStrategy` |
 | Facades | `DownloaderFacade` / `ComicDownloaderFacade`, `ManagementFacade` / `ComicManagementFacade`, `ComicStorageFacade` / `FileSystemComicStorageFacade` |
 | Storage | `FileSystemComicStorageFacade`, `ComicIndexService`, `DuplicateImageHashRepository`, `ImageMetadataRepository`, `JsonRetrievalStatusRepository` |
 | Validation | `ImageValidationService`, `DuplicateImageValidationService`, `DuplicateHashCacheService`, `ImageHasherFactory` |
@@ -94,6 +94,7 @@ graph TD
     DF --> GoComics[GoComicsDownloaderStrategy\nDaily]
     DF --> CK[ComicsKingdomDownloaderStrategy\nDaily]
     DF --> FF[FreefallDownloaderStrategy\nIndexed]
+    DF --> XK[XkcdDownloaderStrategy\nIndexed]
     SF --> IV[ImageValidationService]
     SF --> DV[DuplicateImageValidationService]
     SF --> IA[ImageAnalysisService]
@@ -111,7 +112,7 @@ The top-level orchestrator. All API controllers talk to this facade. It coordina
 
 ### DownloaderFacade (ComicDownloaderFacade)
 
-Coordinates comic downloads using a strategy registry (`Map<String, ComicDownloaderStrategy>`). Strategies are registered at startup by source name (e.g., `"gocomics"`, `"comicskingdom"`, `"freefall"`). The facade:
+Coordinates comic downloads using a strategy registry (`Map<String, ComicDownloaderStrategy>`). Strategies are registered at startup by source name (e.g., `"gocomics"`, `"comicskingdom"`, `"freefall"`, `"xkcd"`). The facade:
 
 1. Resolves the correct strategy from the request's `source` field
 2. Routes to the appropriate download method based on strategy type (daily vs. indexed)

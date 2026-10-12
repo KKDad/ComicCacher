@@ -13,6 +13,7 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicDownloadResult.FailureKind;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
@@ -43,11 +44,30 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
     }
 
     /**
-     * Data returned by concrete strategies after fetching an indexed strip.
-     * Contains the raw image data and metadata discovered from the page.
+     * Data returned by concrete strategies after fetching an indexed strip: the image and text (as in {@link DownloadedStrip}), plus the date
+     * and strip number discovered from the page.
      */
     protected record IndexedStripData(byte[] imageData, LocalDate actualDate,
-            int stripNumber, String transcript) {
+            int stripNumber, StripText text) {
+
+        /**
+         * A null {@code text} becomes {@link StripText#NONE}.
+         */
+        public IndexedStripData {
+            text = StripText.orNone(text);
+        }
+    }
+
+    /**
+     * Thrown by a fetch when the source has the strip but nothing to download (an interactive strip, say). Reported as unavailable, like a 404.
+     */
+    protected static final class StripUnavailableException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        public StripUnavailableException(String message) {
+            super(message);
+        }
     }
 
     /**
@@ -80,7 +100,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
 
     /**
      * Turns a failed fetch into a result: a 429 backs the whole source off (no retry here; callers decide), a 403 means the source refused us,
-     * 404/410 means the strip does not exist, any other HTTP status is logged without a stack trace, and anything else is logged with one.
+     * 404/410 or a {@link StripUnavailableException} means there is no strip to keep, any other HTTP status is logged without a stack trace, and anything else is logged with one.
      */
     private ComicDownloadResult failureFor(ComicItem comic, String what, Exception e) {
         ComicDownloadRequest request = buildRequest(comic, LocalDate.now(clock));
@@ -102,6 +122,11 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
             String errorMessage = String.format("%s for %s not found at source (HTTP %d)", capitalize(what), comic.getName(), status);
             log.warn(errorMessage);
             return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE, status);
+        }
+        if (e instanceof StripUnavailableException) {
+            String errorMessage = String.format("%s for %s is unavailable: %s", capitalize(what), comic.getName(), e.getMessage());
+            log.warn(errorMessage);
+            return ComicDownloadResult.failure(request, errorMessage, FailureKind.UNAVAILABLE);
         }
         String errorMessage = String.format("Error downloading %s for %s: %s", what, comic.getName(), e.getMessage());
         if (status > 0) {
@@ -129,7 +154,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
 
         ComicDownloadRequest request = buildRequest(comic, data.actualDate());
         return ComicDownloadResult.successWithMetadata(request, data.imageData(),
-                data.actualDate(), data.stripNumber(), data.transcript());
+                data.actualDate(), data.stripNumber(), data.text());
     }
 
     /**
@@ -153,7 +178,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
      * Concrete strategies implement this to handle source-specific page fetching and parsing.
      *
      * @param comic The comic to fetch the latest strip for
-     * @return The fetched strip data including image, date, strip number, and transcript
+     * @return The fetched strip data including image, date, strip number, and text
      * @throws Exception If an error occurs during fetching
      */
     protected abstract IndexedStripData fetchLatestStrip(ComicItem comic) throws Exception;
@@ -164,7 +189,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
      *
      * @param comic The comic to fetch a strip for
      * @param stripNumber The strip number to fetch
-     * @return The fetched strip data including image, date, strip number, and transcript
+     * @return The fetched strip data including image, date, strip number, and text
      * @throws Exception If an error occurs during fetching
      */
     protected abstract IndexedStripData fetchStrip(ComicItem comic, int stripNumber) throws Exception;

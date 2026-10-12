@@ -40,14 +40,14 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
     @Override
     public ComicDownloadResult downloadComic(ComicDownloadRequest request) {
         try {
-            byte[] imageData;
+            DownloadedStrip strip;
             int maxAttempts = throttleService.maxAttempts(getSource());
             for (int attempt = 1; ; attempt++) {
                 throttleService.await(getSource());
                 log.info("Downloading comic {} for date {} from {}",
                         request.getComicName(), request.getDate(), getSource());
                 try {
-                    imageData = downloadComicImage(request);
+                    strip = downloadStrip(request);
                     break;
                 } catch (RateLimitedException e) {
                     if (request.isFailFastOnRateLimit()) {
@@ -72,6 +72,7 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
                 }
             }
 
+            byte[] imageData = strip != null ? strip.imageData() : null;
             if (imageData == null || imageData.length == 0) {
                 String errorMessage = String.format("Downloaded image data is empty for %s on %s", request.getComicName(), request.getDate());
                 log.warn(errorMessage);
@@ -89,7 +90,7 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
                         FailureKind.UNAVAILABLE);
             }
 
-            return ComicDownloadResult.success(request, imageData);
+            return ComicDownloadResult.success(request, imageData, strip.text());
         } catch (Exception e) {
             int status = httpStatus(e);
             if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
@@ -126,12 +127,10 @@ public abstract class AbstractDailyDownloaderStrategy extends AbstractComicDownl
     }
 
     /**
-     * Downloads the comic image from the source.
-     * This method must be implemented by concrete subclasses to handle source-specific logic.
+     * Downloads the strip for the request's date from the source: its image, plus any transcript or alt text the page gives
+     * ({@link DownloadedStrip#imageOnly} when it gives none). Returns null when the source has no strip for the date.
      *
-     * @param request The download request containing comic details and date
-     * @return The downloaded image data
      * @throws Exception If an error occurs during download
      */
-    protected abstract byte[] downloadComicImage(ComicDownloadRequest request) throws Exception;
+    protected abstract DownloadedStrip downloadStrip(ComicDownloadRequest request) throws Exception;
 }

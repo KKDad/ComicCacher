@@ -7,6 +7,7 @@ import { StripSkeleton } from './strip-skeleton';
 import { formatFullDate } from '@/lib/date-utils';
 import { BrokenIllustration } from '@/components/illustrations';
 import { STRIP_SIZES } from './strip-sizes';
+import { StripText, stripAlt } from './strip-text';
 
 interface StripCardProps {
   strip: Strip;
@@ -55,7 +56,7 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
           ) : (
             <Image
               src={strip.imageUrl}
-              alt={`${comicName} - ${formattedDate}`}
+              alt={stripAlt(comicName, formattedDate, strip.altText)}
               fill
               sizes={STRIP_SIZES}
               loading={priority ? 'eager' : 'lazy'}
@@ -75,6 +76,7 @@ export const StripCard = forwardRef<HTMLDivElement, StripCardProps>(
           )}
         </div>
         </div>
+        <StripText transcript={strip.transcript} altText={strip.altText} className="mt-2" />
       </div>
     );
   },

@@ -28,6 +28,7 @@ import org.stapledon.common.dto.ComicDownloadRequest;
 import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
@@ -86,6 +87,40 @@ class AbstractComicDownloaderStrategyTest {
         assertThat(validationResult.getFormat()).isEqualTo(ImageFormat.PNG);
         assertThat(validationResult.getWidth()).isEqualTo(800);
         assertThat(validationResult.getHeight()).isEqualTo(600);
+    }
+
+    @Test
+    void shouldCarryTheStripTextIntoTheResult() {
+        ComicDownloadRequest request = ComicDownloadRequest.builder()
+                .comicId(1)
+                .comicName("Test Comic")
+                .source("test-source")
+                .sourceIdentifier("test-comic")
+                .date(LocalDate.of(2026, 10, 8))
+                .build();
+        strategy.setMockImageData(validImageData);
+        strategy.setMockText(new StripText("Jon: Hi", "The hover caption"));
+        when(imageValidationService.validate(validImageData)).thenReturn(ImageValidationResult.success(ImageFormat.PNG, 800, 600, validImageData.length));
+
+        ComicDownloadResult result = strategy.downloadComic(request);
+
+        assertThat(result.isSuccessful()).isTrue();
+        assertThat(result.getText()).isEqualTo(new StripText("Jon: Hi", "The hover caption"));
+    }
+
+    @Test
+    void shouldGiveNoTextWhenTheSourceGivesNone() {
+        ComicDownloadRequest request = ComicDownloadRequest.builder()
+                .comicId(1)
+                .comicName("Test Comic")
+                .source("test-source")
+                .sourceIdentifier("test-comic")
+                .date(LocalDate.of(2026, 10, 8))
+                .build();
+        strategy.setMockImageData(validImageData);
+        when(imageValidationService.validate(validImageData)).thenReturn(ImageValidationResult.success(ImageFormat.PNG, 800, 600, validImageData.length));
+
+        assertThat(strategy.downloadComic(request).getText()).isEqualTo(StripText.NONE);
     }
 
     @Test
@@ -490,6 +525,7 @@ class AbstractComicDownloaderStrategyTest {
      */
     private static class TestComicDownloaderStrategy extends AbstractDailyDownloaderStrategy {
         private byte[] mockImageData;
+        private StripText mockText;
         private byte[] mockAvatarData;
         private boolean throwException;
         private Exception exceptionToThrow;
@@ -506,6 +542,10 @@ class AbstractComicDownloaderStrategyTest {
 
         public void setMockImageData(byte[] data) {
             this.mockImageData = data;
+        }
+
+        public void setMockText(StripText text) {
+            this.mockText = text;
         }
 
         public void setMockAvatarData(byte[] data) {
@@ -529,7 +569,7 @@ class AbstractComicDownloaderStrategyTest {
         }
 
         @Override
-        protected byte[] downloadComicImage(ComicDownloadRequest request) throws Exception {
+        protected DownloadedStrip downloadStrip(ComicDownloadRequest request) throws Exception {
             downloadCalls++;
             if (rateLimitsRemaining > 0) {
                 rateLimitsRemaining--;
@@ -541,7 +581,7 @@ class AbstractComicDownloaderStrategyTest {
             if (throwException) {
                 throw new Exception("Test exception");
             }
-            return mockImageData;
+            return mockImageData != null ? new DownloadedStrip(mockImageData, mockText) : null;
         }
 
         @Override

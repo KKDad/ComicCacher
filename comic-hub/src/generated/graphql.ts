@@ -327,14 +327,14 @@ export type GetStripWindowQueryVariables = Exact<{
 }>;
 
 
-export type GetStripWindowQuery = { comic: { id: number, name: string, oldest: string | null, newest: string | null, avatarUrl: string | null, stripWindow: Array<{ date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null }> } | null };
+export type GetStripWindowQuery = { comic: { id: number, name: string, oldest: string | null, newest: string | null, avatarUrl: string | null, stripWindow: Array<{ date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null, transcript: string | null, altText: string | null }> } | null };
 
 export type GetRandomStripQueryVariables = Exact<{
   comicId?: number | null | undefined;
 }>;
 
 
-export type GetRandomStripQuery = { randomStrip: { date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null } | null };
+export type GetRandomStripQuery = { randomStrip: { date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null, transcript: string | null, altText: string | null } | null };
 
 export type GetComicsForDateQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -342,7 +342,7 @@ export type GetComicsForDateQueryVariables = Exact<{
 }>;
 
 
-export type GetComicsForDateQuery = { comics: { totalCount: number, edges: Array<{ node: { id: number, name: string, avatarUrl: string | null, oldest: string | null, newest: string | null, strip: { date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null, transcript: string | null } | null } }> } };
+export type GetComicsForDateQuery = { comics: { totalCount: number, edges: Array<{ node: { id: number, name: string, avatarUrl: string | null, oldest: string | null, newest: string | null, strip: { date: string, available: boolean, imageUrl: string | null, width: number | null, height: number | null, transcript: string | null, altText: string | null } | null } }> } };
 
 export type GetCombinedMetricsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1330,6 +1330,8 @@ export const GetStripWindowDocument = new TypedDocumentString(`
       imageUrl
       width
       height
+      transcript
+      altText
     }
   }
 }
@@ -1385,6 +1387,8 @@ export const GetRandomStripDocument = new TypedDocumentString(`
     imageUrl
     width
     height
+    transcript
+    altText
   }
 }
     `);
@@ -1448,6 +1452,7 @@ export const GetComicsForDateDocument = new TypedDocumentString(`
           width
           height
           transcript
+          altText
         }
       }
     }

@@ -73,9 +73,9 @@ vi.mock('@/generated/graphql', () => ({
 function createMockReader(overrides?: Partial<ReturnType<typeof useReader>>): ReturnType<typeof useReader> {
   return {
     strips: [
-      { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300 },
-      { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
-      { date: '2026-03-16', available: true, imageUrl: 'https://example.com/16.png', width: 900, height: 300 },
+      { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300, transcript: null, altText: null },
+      { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300, transcript: null, altText: null },
+      { date: '2026-03-16', available: true, imageUrl: 'https://example.com/16.png', width: 900, height: 300, transcript: null, altText: null },
     ],
     currentIndex: 1,
     setCurrentIndex: vi.fn(),
@@ -125,6 +125,22 @@ describe('MobileReader', () => {
     expect(screen.getByText(/2026/)).toBeInTheDocument();
   });
 
+  it('offers the alt text, and closes it again on the next strip', async () => {
+    const strips = [
+      { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300, transcript: null, altText: 'First punchline' },
+      { date: '2026-03-16', available: true, imageUrl: 'https://example.com/16.png', width: 900, height: 300, transcript: null, altText: 'Second punchline' },
+    ];
+    const { rerender } = render(<MobileReader comicId={1} reader={createMockReader({ strips, currentIndex: 0 })} />);
+
+    expect(screen.getByRole('img')).toHaveAttribute('alt', expect.stringContaining('First punchline'));
+    await userEvent.click(screen.getByRole('button', { name: 'Show alt text' }));
+    expect(screen.getByText('First punchline')).toBeInTheDocument();
+
+    rerender(<MobileReader comicId={1} reader={createMockReader({ strips, currentIndex: 1 })} />);
+    expect(screen.queryByText('Second punchline')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show alt text' })).toBeInTheDocument();
+  });
+
   it('shows loading skeleton when isLoading', () => {
     const reader = createMockReader({ isLoading: true });
     const { container } = render(<MobileReader comicId={1} reader={reader} />);
@@ -134,7 +150,7 @@ describe('MobileReader', () => {
 
   it('shows unavailable message when strip has no image', () => {
     const reader = createMockReader({
-      strips: [{ date: '2026-03-15', available: false, imageUrl: null, width: null, height: null }],
+      strips: [{ date: '2026-03-15', available: false, imageUrl: null, width: null, height: null, transcript: null, altText: null }],
       currentIndex: 0,
     });
     render(<MobileReader comicId={1} reader={reader} />);
@@ -536,9 +552,9 @@ describe('MobileReader', () => {
       currentIndex: 2,
       hasNewer: false,
       strips: [
-        { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300 },
-        { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
-        { date: '2026-03-16', available: true, imageUrl: 'https://example.com/16.png', width: 900, height: 300 },
+        { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300, transcript: null, altText: null },
+        { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300, transcript: null, altText: null },
+        { date: '2026-03-16', available: true, imageUrl: 'https://example.com/16.png', width: 900, height: 300, transcript: null, altText: null },
       ],
     })} />);
 

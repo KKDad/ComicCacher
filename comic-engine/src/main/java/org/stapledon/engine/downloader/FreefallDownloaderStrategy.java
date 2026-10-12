@@ -19,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
@@ -153,7 +154,7 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         // Parse transcript
         String transcript = parseTranscript(doc);
 
-        return new IndexedStripData(imageData, actualDate, titleResult.stripNumber(), transcript);
+        return new IndexedStripData(imageData, actualDate, titleResult.stripNumber(), StripText.ofTranscript(transcript));
     }
 
     /**

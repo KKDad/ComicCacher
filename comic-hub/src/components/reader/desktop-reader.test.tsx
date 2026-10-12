@@ -47,8 +47,8 @@ vi.mock('sonner', () => ({
 function createMockReader(overrides?: Partial<ReturnType<typeof useReader>>): ReturnType<typeof useReader> {
   return {
     strips: [
-      { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300 },
-      { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300 },
+      { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: 900, height: 300, transcript: null, altText: null },
+      { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: 900, height: 300, transcript: null, altText: null },
     ],
     currentIndex: 0,
     setCurrentIndex: vi.fn(),
@@ -79,7 +79,7 @@ function stripsEndingMarch31(count: number): Strip[] {
   return Array.from({ length: count }, (_, i) => {
     const d = new Date(Date.UTC(2026, 2, 31 - (count - 1 - i)));
     const date = d.toISOString().slice(0, 10);
-    return { date, available: true, imageUrl: `https://example.com/${date}.png`, width: 900, height: 300 };
+    return { date, available: true, imageUrl: `https://example.com/${date}.png`, width: 900, height: 300, transcript: null, altText: null };
   });
 }
 
@@ -155,8 +155,8 @@ describe('DesktopReader', () => {
   it('renders with strips that have no dimensions (fallback aspect)', () => {
     const reader = createMockReader({
       strips: [
-        { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: null, height: null },
-        { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: null, height: null },
+        { date: '2026-03-14', available: true, imageUrl: 'https://example.com/14.png', width: null, height: null, transcript: null, altText: null },
+        { date: '2026-03-15', available: true, imageUrl: 'https://example.com/15.png', width: null, height: null, transcript: null, altText: null },
       ],
     });
     render(<DesktopReader comicId={1} reader={reader} />);

@@ -144,7 +144,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         // After successfully saving the image, analyze and save metadata (non-critical)
         try {
             ImageMetadata metadata = imageAnalysisService.analyzeImage(comic.getId(), comic.getName(), imageData,
-                    file.getAbsolutePath(), validation, null, data.transcript());
+                    file.getAbsolutePath(), validation, null, data.text());
             boolean saved = imageMetadataRepository.saveMetadata(metadata);
             if (saved) {
                 log.debug("Saved metadata for comic strip: {}", file.getAbsolutePath());
@@ -213,8 +213,10 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
         try {
             ImageDto dto = ImageUtils.getImageDto(file);
             imageMetadataRepository.loadMetadata(file.getAbsolutePath())
-                    .map(ImageMetadata::getTranscript)
-                    .ifPresent(dto::setTranscript);
+                    .ifPresent(metadata -> {
+                        dto.setTranscript(metadata.getTranscript());
+                        dto.setAltText(metadata.getAltText());
+                    });
             return Optional.of(dto);
         } catch (IOException e) {
             log.error("Failed to read comic strip {} for {} on {}", file.getAbsolutePath(), comic.getName(), date, e);
@@ -238,6 +240,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                         .height(metadata.get().getHeight())
                         .imageDate(date)
                         .transcript(metadata.get().getTranscript())
+                        .altText(metadata.get().getAltText())
                         .build());
             }
 
@@ -252,6 +255,7 @@ public class FileSystemComicStorageFacade implements ComicStorageFacade {
                     .height(size.height())
                     .imageDate(date)
                     .transcript(metadata.map(ImageMetadata::getTranscript).orElse(null))
+                    .altText(metadata.map(ImageMetadata::getAltText).orElse(null))
                     .build());
         } catch (IOException e) {
             log.error("Failed to read comic strip {} for {} on {}", file.getAbsolutePath(), comic.getName(), date, e);
