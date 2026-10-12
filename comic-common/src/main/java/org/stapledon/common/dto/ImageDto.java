@@ -31,4 +31,6 @@ public class ImageDto {
     LocalDate imageDate;
 
     String transcript;
+
+    String altText;
 }

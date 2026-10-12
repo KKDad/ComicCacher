@@ -11,6 +11,7 @@ import org.stapledon.common.dto.ComicRetrievalRecord;
 import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.PromotionManifest;
 import org.stapledon.common.dto.SaveResult;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.service.ComicStorageFacade;
 import org.stapledon.common.service.RetrievalStatusService;
 import org.stapledon.common.util.LogContext;
@@ -51,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class DevPromotionService {
 
+    public static final String ALT_TEXT_HEADER = "X-Alt-Text";
     public static final String TOKEN_HEADER = "X-Promotion-Token";
     public static final String TRANSCRIPT_HEADER = "X-Transcript";
 
@@ -191,7 +193,7 @@ public class DevPromotionService {
                             continue;
                         }
                         SaveResult result = storageFacade.saveComicStripWithResult(id, date,
-                                ComicSaveData.builder().imageData(strip.get().imageData()).transcript(strip.get().transcript()).build());
+                                ComicSaveData.builder().imageData(strip.get().imageData()).text(strip.get().text()).build());
                         if (result.wasSaved()) {
                             log.debug("Promoted {} {}", comic.getName(), date);
                             // Replaces a failed download's record, so retrieval status matches what's on disk
@@ -279,10 +281,8 @@ public class DevPromotionService {
                 log.warn("Couldn't promote {} {}: {} returned HTTP {}", comic.getName(), date, sourceUrl, response.statusCode());
                 return Optional.empty();
             }
-            String transcript = response.headers().firstValue(TRANSCRIPT_HEADER)
-                    .map(value -> URLDecoder.decode(value, StandardCharsets.UTF_8))
-                    .orElse(null);
-            return Optional.of(new FetchedStrip(response.body(), transcript));
+            StripText text = new StripText(header(response, TRANSCRIPT_HEADER), header(response, ALT_TEXT_HEADER));
+            return Optional.of(new FetchedStrip(response.body(), text));
         } catch (IOException e) {
             log.warn("Couldn't promote {} {}: {}", comic.getName(), date, e.toString());
             return Optional.empty();
@@ -290,6 +290,12 @@ public class DevPromotionService {
             Thread.currentThread().interrupt();
             throw new PromotionException("Interrupted while promoting " + comic.getName() + " " + date);
         }
+    }
+
+    private static String header(HttpResponse<?> response, String name) {
+        return response.headers().firstValue(name)
+                .map(value -> URLDecoder.decode(value, StandardCharsets.UTF_8))
+                .orElse(null);
     }
 
     private HttpRequest request(String url) {
@@ -308,6 +314,6 @@ public class DevPromotionService {
         return source + "/" + sourceIdentifier;
     }
 
-    private record FetchedStrip(byte[] imageData, String transcript) {
+    private record FetchedStrip(byte[] imageData, StripText text) {
     }
 }

@@ -754,7 +754,7 @@ public class ComicManagementFacade implements ManagementFacade {
     private SaveResult.Outcome saveDownloadResultWithOutcome(ComicItem comic, LocalDate date, ComicDownloadResult result) {
         ComicSaveData saveData = ComicSaveData.builder()
                 .imageData(result.getImageData())
-                .transcript(result.getTranscript())
+                .text(result.getText())
                 .stripNumber(result.getStripNumber())
                 .build();
 

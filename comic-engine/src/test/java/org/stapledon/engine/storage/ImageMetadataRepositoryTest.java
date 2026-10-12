@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -219,6 +220,8 @@ class ImageMetadataRepositoryTest {
                 .samplePercentage(5.0)
                 .captureTimestamp(OffsetDateTime.of(2023, 1, 15, 10, 30, 45, 0, java.time.ZoneOffset.UTC))
                 .sourceUrl("https://example.com/image.png")
+                .transcript("Jon: Hi")
+                .altText("The hover caption")
                 .build();
 
         // When
@@ -230,8 +233,25 @@ class ImageMetadataRepositoryTest {
         ImageMetadata loadedMetadata = loaded.get();
         assertThat(loadedMetadata.getSourceUrl()).isEqualTo("https://example.com/image.png");
         assertThat(loadedMetadata.getSamplePercentage()).isEqualTo(5.0);
+        assertThat(loadedMetadata.getTranscript()).isEqualTo("Jon: Hi");
+        assertThat(loadedMetadata.getAltText()).isEqualTo("The hover caption");
         assertThat(loadedMetadata.getCaptureTimestamp())
                 .isEqualTo(OffsetDateTime.of(2023, 1, 15, 10, 30, 45, 0, java.time.ZoneOffset.UTC));
+    }
+
+    @Test
+    void readsASidecarWrittenBeforeAltTextAsHavingNone() throws Exception {
+        String imagePath = tempDir.resolve("old.png").toString();
+        createEmptyFile(imagePath);
+        Files.writeString(tempDir.resolve("old.json"), """
+                {"comicId": 7, "comicName": "Old", "filePath": "%s", "format": "PNG", "width": 900, "height": 300, "sizeInBytes": 1000,
+                 "colorMode": "COLOR", "samplePercentage": 5.0, "transcript": "Hello"}
+                """.formatted(imagePath));
+
+        ImageMetadata loaded = repository.loadMetadata(imagePath).orElseThrow();
+
+        assertThat(loaded.getTranscript()).isEqualTo("Hello");
+        assertThat(loaded.getAltText()).isNull();
     }
 
     @Test

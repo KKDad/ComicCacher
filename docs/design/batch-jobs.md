@@ -183,7 +183,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 - Runs at 07:00, after dev's 06:00 download and before prod's own (07:30), so on most days prod's download finds every strip already cached
 - Parameters: `days` (default `batch.promote-from-dev.days`, 1 = today only; at most `comics.promotion.max-days`, 7), `source` (one source, or `ALL`) and `comic` (prod's comic id). A larger `days` fails the run at once
-- Reads dev's manifest for the window, then for each comic enabled on prod that matches on source and source identifier (the two instances number comics separately), fetches each strip prod has no file for and saves it with `ComicStorageFacade.saveComicStripWithResult`. That validates it, skips duplicates and writes the date index, image hashes and metadata sidecar (with dev's transcript), as a download would. A strip already on disk is never fetched or overwritten
+- Reads dev's manifest for the window, then for each comic enabled on prod that matches on source and source identifier (the two instances number comics separately), fetches each strip prod has no file for and saves it with `ComicStorageFacade.saveComicStripWithResult`. That validates it, skips duplicates and writes the date index, image hashes and metadata sidecar (with dev's transcript and alt text), as a download would. A strip already on disk is never fetched or overwritten
 - Raises the comic's `oldest` / `newest` in `comics.json` to cover what it saved
 - Indexed sources (Freefall) are left out: their strip numbers aren't in the manifest, and prod's own download tracks them
 - Only prod sets `comics.promotion.source-url`; elsewhere scheduled and startup makeup runs are skipped by its precondition and a manual run does nothing. The job stays registered on dev rather than being switched off, since `SchedulerHealthCheck` reports a known job with no scheduler as down
@@ -193,11 +193,11 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 
 ### ImageMetadataBackfillJob
 
-**Purpose:** Recalculates image dimensions and format metadata for existing images that lack metadata files.
+**Purpose:** Recalculates image dimensions and format metadata for existing images that lack metadata files, then moves xkcd's alt text out of the transcript in sidecars written before strips had alt text.
 
 **Config class:** `ImageMetadataBackfillJobConfig`
 
-**Pattern:** Tasklet (single step) with streaming file walk.
+**Pattern:** Two tasklet steps: `imageBackfillStep` (streaming file walk) and `stripTextMigrationStep`.
 
 - Walks the cache directory tree, filters for image files without metadata
 - Validates each image via `ImageValidationService`
@@ -205,6 +205,7 @@ All jobs follow the same pattern: a `@Configuration` class that defines a `Job` 
 - Saves metadata via `ImageMetadataRepository`
 - Processes up to `batchSize * 100` images per run (configurable via `batch.image-backfill.batch-size`, default 100)
 - Lazy-initializes a comic directory map from `ComicConfigurationService` for O(1) comic ID lookups
+- `stripTextMigrationStep` (`StripTextMigrationService`): for comics with source `xkcd`, a sidecar with a transcript and no alt text gets the text moved to `altText`. Local files only, and safe to repeat
 
 **Data source:** Filesystem walk of cache directory
 

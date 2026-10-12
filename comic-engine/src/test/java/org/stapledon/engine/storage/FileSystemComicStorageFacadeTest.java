@@ -423,13 +423,14 @@ class FileSystemComicStorageFacadeTest {
     void getComicStripInfo_readsTheSidecarWithoutTheImage() {
         File strip = new File(cacheRoot, COMIC_NAME_PARSED + "/2023/2023-01-15.png");
         when(imageMetadataRepository.loadMetadata(strip.getAbsolutePath()))
-                .thenReturn(Optional.of(ImageMetadata.builder().width(900).height(300).transcript("Hello").build()));
+                .thenReturn(Optional.of(ImageMetadata.builder().width(900).height(300).transcript("Hello").altText("Hover").build()));
 
         var info = storageFacade.getComicStripInfo(COMIC_IDENTIFIER, TEST_DATE).orElseThrow();
 
         assertThat(info.getWidth()).isEqualTo(900);
         assertThat(info.getHeight()).isEqualTo(300);
         assertThat(info.getTranscript()).isEqualTo("Hello");
+        assertThat(info.getAltText()).isEqualTo("Hover");
         assertThat(info.getImageDate()).isEqualTo(TEST_DATE);
         assertThat(info.getImageData()).isNull();
     }

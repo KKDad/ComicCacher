@@ -195,7 +195,9 @@ Each strip image has a companion JSON sidecar containing image analysis metadata
   "colorMode": "COLOR",
   "samplePercentage": 10.0,
   "captureTimestamp": "2025-03-18T06:30:45-04:00",
-  "sourceUrl": "https://assets.amuniversal.com/abc123"
+  "sourceUrl": "https://assets.amuniversal.com/abc123",
+  "transcript": "Calvin: ...",
+  "altText": "The hover caption"
 }
 ```
 
@@ -214,6 +216,8 @@ Each strip image has a companion JSON sidecar containing image analysis metadata
 | `samplePercentage` | `double` | Percentage of pixels sampled for color detection (0.0-100.0) |
 | `captureTimestamp` | `OffsetDateTime` | When metadata was captured |
 | `sourceUrl` | `String` (nullable) | Original download URL |
+| `transcript` | `String` (nullable) | Transcript the source gave with the strip |
+| `altText` | `String` (nullable) | Alt (hover) text the source gave with the strip. Missing in sidecars written before it was captured |
 
 ### Validation Rules
 

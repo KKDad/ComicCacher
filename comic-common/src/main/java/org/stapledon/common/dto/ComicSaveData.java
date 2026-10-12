@@ -10,7 +10,14 @@ import lombok.Builder;
 @Builder
 public record ComicSaveData(
         byte[] imageData,
-        String transcript,
+        StripText text,
         Integer stripNumber
 ) {
+
+    /**
+     * A null {@code text} becomes {@link StripText#NONE}.
+     */
+    public ComicSaveData {
+        text = StripText.orNone(text);
+    }
 }

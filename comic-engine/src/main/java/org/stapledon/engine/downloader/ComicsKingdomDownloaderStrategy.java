@@ -42,7 +42,7 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
      * {@inheritDoc}
      */
     @Override
-    protected byte[] downloadComicImage(ComicDownloadRequest request) throws Exception {
+    protected DownloadedStrip downloadStrip(ComicDownloadRequest request) throws Exception {
         String url = generateSiteURL(request);
         log.debug("Fetching {}", url);
 
@@ -62,7 +62,8 @@ public class ComicsKingdomDownloaderStrategy extends AbstractDailyDownloaderStra
         }
 
         Element imageElement = imageElements.first();
-        return downloadImageData(imageElement.attr("content"));
+        // The page gives no alt text or transcript for the strip
+        return DownloadedStrip.imageOnly(downloadImageData(imageElement.attr("content")));
     }
 
     /**

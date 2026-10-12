@@ -37,12 +37,14 @@ import org.stapledon.common.service.AnalysisService;
 import org.stapledon.common.service.ComicConfigurationService;
 import org.stapledon.common.service.ValidationService;
 import org.stapledon.engine.batch.JsonBatchExecutionTracker;
+import org.stapledon.engine.batch.StripTextMigrationService;
 import org.stapledon.engine.batch.scheduler.DailyJobScheduler;
 import org.stapledon.engine.batch.scheduler.JobParameterDefinition;
 import org.stapledon.engine.storage.ImageMetadataRepository;
 
 /**
- * Spring Batch configuration for image metadata backfill job. Backfills metadata for existing images that don't have metadata files.
+ * Spring Batch configuration for image metadata backfill job. Backfills metadata for existing images that don't have metadata files, then
+ * moves xkcd's alt text out of the transcript in sidecars written before strips had alt text ({@link StripTextMigrationService}).
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
@@ -57,6 +59,7 @@ public class ImageMetadataBackfillJobConfig {
     private final AnalysisService imageAnalysisService;
     private final ImageMetadataRepository imageMetadataRepository;
     private final ComicConfigurationService comicConfigurationService;
+    private final StripTextMigrationService stripTextMigrationService;
 
     private final Map<String, ComicItem> comicDirectoryMap = new HashMap<>();
 
@@ -107,9 +110,26 @@ public class ImageMetadataBackfillJobConfig {
      * Job for backfilling image metadata.
      */
     @Bean
-    public Job imageMetadataBackfillJob(JobRepository jobRepository, @Qualifier("imageBackfillStep") Step imageBackfillStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
+    public Job imageMetadataBackfillJob(JobRepository jobRepository, @Qualifier("imageBackfillStep") Step imageBackfillStep,
+            @Qualifier("stripTextMigrationStep") Step stripTextMigrationStep, JsonBatchExecutionTracker jsonBatchExecutionTracker) {
 
-        return new JobBuilder("ImageMetadataBackfillJob", jobRepository).listener(jsonBatchExecutionTracker).start(imageBackfillStep).build();
+        return new JobBuilder("ImageMetadataBackfillJob", jobRepository).listener(jsonBatchExecutionTracker).start(imageBackfillStep).next(stripTextMigrationStep).build();
+    }
+
+    /**
+     * Step that moves xkcd's alt text out of the transcript in older sidecars.
+     */
+    @Bean
+    public Step stripTextMigrationStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("stripTextMigrationStep", jobRepository).tasklet((contribution, chunkContext) -> {
+            int moved = stripTextMigrationService.moveXkcdAltText();
+            if (moved > 0) {
+                log.info("Strip text migration: moved the alt text out of the transcript in {} xkcd sidecars", moved);
+            } else {
+                log.debug("Strip text migration: nothing to move");
+            }
+            return RepeatStatus.FINISHED;
+        }, transactionManager).build();
     }
 
     /**

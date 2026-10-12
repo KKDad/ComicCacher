@@ -19,15 +19,15 @@ const defaultZoomState: ReturnType<typeof usePinchZoom> = {
 const mockComics: GridComic[] = [
   {
     id: 1, name: 'Garfield', avatarUrl: null, oldest: null, newest: null,
-    strip: { date: '2026-03-29', available: true, imageUrl: '/strip/1.png', width: 900, height: 300, transcript: null },
+    strip: { date: '2026-03-29', available: true, imageUrl: '/strip/1.png', width: 900, height: 300, transcript: null, altText: null },
   },
   {
     id: 2, name: 'Dilbert', avatarUrl: null, oldest: null, newest: null,
-    strip: { date: '2026-03-29', available: true, imageUrl: '/strip/2.png', width: 800, height: 400, transcript: null },
+    strip: { date: '2026-03-29', available: true, imageUrl: '/strip/2.png', width: 800, height: 400, transcript: null, altText: null },
   },
   {
     id: 3, name: 'Peanuts', avatarUrl: null, oldest: null, newest: null,
-    strip: { date: '2026-03-29', available: true, imageUrl: '/strip/3.png', width: 700, height: 350, transcript: null },
+    strip: { date: '2026-03-29', available: true, imageUrl: '/strip/3.png', width: 700, height: 350, transcript: null, altText: null },
   },
 ];
 

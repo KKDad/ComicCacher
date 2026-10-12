@@ -61,7 +61,7 @@ public class PromotionSourceService {
     }
 
     /**
-     * The strip (with its transcript) of the comic with this source and identifier on this date, if it is on disk.
+     * The strip (with its transcript and alt text) of the comic with this source and identifier on this date, if it is on disk.
      */
     public Optional<ImageDto> strip(String source, String sourceIdentifier, LocalDate date) {
         return managementFacade.getAllComics().stream()

@@ -78,6 +78,11 @@ public class ImageMetadata {
     private final String transcript;
 
     /**
+     * Alt (hover) text the source gave with the image (if available). Missing in sidecars written before it was captured.
+     */
+    private final String altText;
+
+    /**
      * Enum representing the color mode of an image.
      */
     public enum ColorMode {

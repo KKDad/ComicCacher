@@ -25,6 +25,7 @@ export interface GridComic {
     width: number | null;
     height: number | null;
     transcript: string | null;
+    altText: string | null;
   } | null;
 }
 
@@ -52,6 +53,7 @@ export function toLightboxItems(comics: GridComic[]): LightboxItem[] {
     imageUrl: c.strip?.imageUrl ?? null,
     width: c.strip?.width ?? null,
     height: c.strip?.height ?? null,
+    altText: c.strip?.altText ?? null,
   }));
 }
 
@@ -95,6 +97,7 @@ export function useGridReader({ initialDate }: UseGridReaderOptions = {}): UseGr
                 width: node.strip.width ?? null,
                 height: node.strip.height ?? null,
                 transcript: node.strip.transcript ?? null,
+                altText: node.strip.altText ?? null,
               }
             : null,
         };

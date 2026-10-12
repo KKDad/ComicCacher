@@ -7,18 +7,20 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePinchZoom } from '@/hooks/use-pinch-zoom';
 import { formatFullDate } from '@/lib/date-utils';
+import { stripAlt } from '@/components/reader/strip-text';
 
 // Strips without recorded dimensions reserve a typical 3:1 box until the image loads
 const FALLBACK_WIDTH = 900;
 const FALLBACK_HEIGHT = 300;
 
-/** One strip the lightbox can show: the comic's name, the strip date and its image. */
+/** One strip the lightbox can show: the comic's name, the strip date, its image and the source's alt text. */
 export interface LightboxItem {
   title: string;
   date: string;
   imageUrl: string | null;
   width: number | null;
   height: number | null;
+  altText?: string | null;
 }
 
 interface LightboxProps {
@@ -74,7 +76,7 @@ export function Lightbox({ items, currentIndex, onClose, onNext, onPrevious }: L
           >
             <Image
               src={item.imageUrl}
-              alt={`${item.title}, ${formatFullDate(item.date)}`}
+              alt={stripAlt(item.title, formatFullDate(item.date), item.altText)}
               width={item.width ?? FALLBACK_WIDTH}
               height={item.height ?? FALLBACK_HEIGHT}
               sizes="90vw"

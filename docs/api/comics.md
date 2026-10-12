@@ -420,6 +420,7 @@ GET /api/v1/comics/42/strip/2026-03-19
 | `width` | `Int` | Image width in pixels (null if not available) |
 | `height` | `Int` | Image height in pixels (null if not available) |
 | `transcript` | `String` | Transcript text from the comic page (null if not available) |
+| `altText` | `String` | Alt (hover) text the source gave with the strip (null if not available). For xkcd it's the caption |
 | `previous` | `ComicStrip` | Previous strip (null if at beginning) |
 | `next` | `ComicStrip` | Next strip (null if at end) |
 

@@ -34,7 +34,7 @@ vi.mock('@/generated/graphql', () => ({
 
 const mockReader = {
   strips: [
-    { date: '2026-03-15', available: true, imageUrl: 'https://example.com/strip.png', width: 900, height: 300 },
+    { date: '2026-03-15', available: true, imageUrl: 'https://example.com/strip.png', width: 900, height: 300, transcript: null, altText: null },
   ],
   currentIndex: 0,
   setCurrentIndex: vi.fn(),
