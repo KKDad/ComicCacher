@@ -33,6 +33,9 @@ const dynaPuff = DynaPuff({
 export const metadata: Metadata = {
   title: { template: "%s · Comics Hub", default: "Comics Hub" },
   description: "Your personal comic strip collection",
+  // The home-screen app on iOS: no Safari bars, its own short name. The default status
+  // bar keeps the page below it, so the headers need no top inset.
+  appleWebApp: { capable: true, title: "Comics", statusBarStyle: "default" },
 };
 
 // Browser chrome matches the canvas (Newsprint / Ink). It follows the OS scheme, since a

@@ -22,6 +22,11 @@ describe('RootLayout', () => {
     ]);
   });
 
+  it('sets up the iOS home-screen app', async () => {
+    const { metadata } = await import('./layout');
+    expect(metadata.appleWebApp).toEqual({ capable: true, title: 'Comics', statusBarStyle: 'default' });
+  });
+
   it('renders Providers wrapping children', async () => {
     const { default: RootLayout } = await import('./layout');
     render(RootLayout({ children: <div>app content</div> }));

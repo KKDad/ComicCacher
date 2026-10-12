@@ -2,6 +2,7 @@
 
 import { useResponsiveNav } from '@/hooks/use-responsive-nav';
 import { useReader } from '@/hooks/use-reader';
+import { usePhoneLandscape } from '@/hooks/use-phone-landscape';
 import { DesktopReader } from './desktop-reader';
 import { MobileReader } from './mobile-reader';
 import { StripSkeleton } from './strip-skeleton';
@@ -13,7 +14,9 @@ interface ComicReaderProps {
 
 export function ComicReader({ comicId, initialDate }: ComicReaderProps) {
   const { layout } = useResponsiveNav();
-  const isMobile = layout === 'mobile';
+  // A phone turned sideways is wider than md, but keeps the swipe reader
+  const phoneLandscape = usePhoneLandscape();
+  const isMobile = layout === 'mobile' || phoneLandscape;
 
   const reader = useReader({
     comicId,

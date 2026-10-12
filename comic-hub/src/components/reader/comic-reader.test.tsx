@@ -3,6 +3,7 @@ import { ComicReader } from './comic-reader';
 import { useResponsiveNav } from '@/hooks/use-responsive-nav';
 import { useReader } from '@/hooks/use-reader';
 import { useReadingList } from '@/hooks/use-reading-list';
+import { usePhoneLandscape } from '@/hooks/use-phone-landscape';
 
 // jsdom doesn't implement scrollIntoView or IntersectionObserver
 HTMLElement.prototype.scrollIntoView = vi.fn();
@@ -25,6 +26,7 @@ vi.mock('@/components/reader/favorite-button', () => ({
 vi.mock('@/hooks/use-responsive-nav');
 vi.mock('@/hooks/use-reader');
 vi.mock('@/hooks/use-reading-list');
+vi.mock('@/hooks/use-phone-landscape', () => ({ usePhoneLandscape: vi.fn().mockReturnValue(false) }));
 vi.mock('@/generated/graphql', () => ({
   useGetStripWindowQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
   useGetRandomStripQuery: vi.fn().mockReturnValue({ data: null, isLoading: false }),
@@ -97,6 +99,15 @@ describe('ComicReader', () => {
     render(<ComicReader comicId={1} />);
 
     expect(screen.getByText('Garfield')).toBeInTheDocument();
+  });
+
+  it('keeps the swipe reader on a phone turned sideways, which is tablet width', () => {
+    vi.mocked(useResponsiveNav).mockReturnValue({ layout: 'tablet' });
+    vi.mocked(usePhoneLandscape).mockReturnValueOnce(true);
+
+    render(<ComicReader comicId={1} />);
+
+    expect(useReader).toHaveBeenCalledWith(expect.objectContaining({ mode: 'snap' }));
   });
 
   it('passes initialDate to useReader', () => {
