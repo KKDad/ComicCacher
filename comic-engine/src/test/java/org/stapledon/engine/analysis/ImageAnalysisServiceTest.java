@@ -18,6 +18,7 @@ import javax.imageio.ImageIO;
 import org.stapledon.common.dto.ImageFormat;
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.StripText;
 
 class ImageAnalysisServiceTest {
 
@@ -97,6 +98,18 @@ class ImageAnalysisServiceTest {
         assertThat(metadata.getHeight()).isEqualTo(50);
         assertThat(metadata.getColorMode()).isEqualTo(ImageMetadata.ColorMode.COLOR);
         assertThat(metadata.getSourceUrl()).isNull();
+    }
+
+    @Test
+    void keepsTheStripTextInTheMetadata() throws Exception {
+        byte[] imageData = createColorImage(50, 50, Color.GREEN);
+        ImageValidationResult validation = ImageValidationResult.success(ImageFormat.PNG, 50, 50, imageData.length);
+
+        ImageMetadata metadata = service.analyzeImage(1, "TestComic", imageData, tempDir.resolve("text.png").toString(), validation, null,
+                new StripText("Jon: Hi", "The hover caption"));
+
+        assertThat(metadata.getTranscript()).isEqualTo("Jon: Hi");
+        assertThat(metadata.getAltText()).isEqualTo("The hover caption");
     }
 
     @Test

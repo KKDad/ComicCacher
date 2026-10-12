@@ -2,6 +2,7 @@ package org.stapledon.common.service;
 
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.StripText;
 
 import java.io.File;
 
@@ -21,26 +22,26 @@ public interface AnalysisService {
                                String sourceUrl);
 
     /**
-     * Analyzes image data in memory and creates comprehensive metadata, including transcript text.
+     * Analyzes image data in memory and creates comprehensive metadata, including the strip's transcript and alt text.
      *
      * @param comicId    ID of the comic
      * @param comicName  Name of the comic
      * @param filePath   path where the image will be/is stored
      * @param sourceUrl  optional source URL from which the image was downloaded
-     * @param transcript optional transcript text extracted from the comic page
+     * @param text       the transcript and alt text the source gave with the strip (null for none)
      */
     ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
-                                ImageValidationResult validation, String sourceUrl, String transcript);
+                                ImageValidationResult validation, String sourceUrl, StripText text);
 
     /**
      * Analyzes image data in memory and creates comprehensive metadata.
      * <p>
-     * Convenience overload that delegates to the transcript-aware version with null transcript.
+     * Convenience overload that delegates to the text-aware version with no text.
      * </p>
      */
     default ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
                                ImageValidationResult validation, String sourceUrl) {
-        return analyzeImage(comicId, comicName, imageData, filePath, validation, sourceUrl, null);
+        return analyzeImage(comicId, comicName, imageData, filePath, validation, sourceUrl, StripText.NONE);
     }
 
     /**

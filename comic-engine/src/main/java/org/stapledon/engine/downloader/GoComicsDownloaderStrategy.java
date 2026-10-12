@@ -55,7 +55,7 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
      * a date. GoComics' firewall has refused full page loads of strip pages while still serving these, so the HTML page isn't fetched at all.
      */
     @Override
-    protected byte[] downloadComicImage(ComicDownloadRequest request) throws Exception {
+    protected DownloadedStrip downloadStrip(ComicDownloadRequest request) throws Exception {
         String slug = comicSlug(request);
         String url = String.format("https://www.gocomics.com/%s/%s", slug, request.getDate().format(PATH_DATE));
         log.debug("Fetching page data for {}", url);
@@ -68,7 +68,8 @@ public class GoComicsDownloaderStrategy extends AbstractDailyDownloaderStrategy 
         }
 
         log.debug("Found strip image {}", imageUrl.get());
-        return downloadImageData(imageUrl.get());
+        // The page data has no alt text or transcript for the strip
+        return DownloadedStrip.imageOnly(downloadImageData(imageUrl.get()));
     }
 
     /**

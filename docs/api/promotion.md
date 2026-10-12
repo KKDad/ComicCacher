@@ -40,7 +40,7 @@ A reversed or too-long range gets a 400 with the reason as plain text.
 
 ### `GET /api/v1/promotion/strips/{source}/{sourceIdentifier}/{date}`
 
-Returns the strip's image bytes with its content type. When the strip has a transcript, it's sent URL-encoded in an `X-Transcript` header. The response is 404 when there's no such comic or strip. Unlike `/api/v1/comics/{id}/strip/{date}`, this endpoint serves disabled comics too and doesn't count toward access metrics.
+Returns the strip's image bytes with its content type. When the strip has a transcript or alt text, they're sent URL-encoded in `X-Transcript` and `X-Alt-Text` headers. The response is 404 when there's no such comic or strip. Unlike `/api/v1/comics/{id}/strip/{date}`, this endpoint serves disabled comics too and doesn't count toward access metrics.
 
 ## Configuration
 

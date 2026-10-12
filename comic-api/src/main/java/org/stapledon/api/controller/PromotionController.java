@@ -63,7 +63,7 @@ public class PromotionController {
     }
 
     /**
-     * One strip's image, with its transcript (URL-encoded) in {@code X-Transcript} when it has one. 404 when there's no such comic or strip.
+     * One strip's image, with its transcript and alt text (URL-encoded) in {@code X-Transcript} and {@code X-Alt-Text} when it has them. 404 when there's no such comic or strip.
      */
     @GetMapping("/strips/{source}/{sourceIdentifier}/{date}")
     public ResponseEntity<byte[]> strip(
@@ -74,11 +74,16 @@ public class PromotionController {
                 .map(image -> {
                     ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                             .contentType(MediaType.parseMediaType(image.getMimeType()));
-                    if (image.getTranscript() != null && !image.getTranscript().isBlank()) {
-                        builder.header(DevPromotionService.TRANSCRIPT_HEADER, URLEncoder.encode(image.getTranscript(), StandardCharsets.UTF_8));
-                    }
+                    addTextHeader(builder, DevPromotionService.TRANSCRIPT_HEADER, image.getTranscript());
+                    addTextHeader(builder, DevPromotionService.ALT_TEXT_HEADER, image.getAltText());
                     return builder.body(Base64.getDecoder().decode(image.getImageData()));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private static void addTextHeader(ResponseEntity.BodyBuilder builder, String name, String value) {
+        if (value != null && !value.isBlank()) {
+            builder.header(name, URLEncoder.encode(value, StandardCharsets.UTF_8));
+        }
     }
 }

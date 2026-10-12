@@ -11,6 +11,7 @@ import { ReaderControls } from './reader-controls';
 import { StripSkeleton } from './strip-skeleton';
 import { ReadingListDrawer } from './reading-list-drawer';
 import { DatePickerPopover } from './date-picker-popover';
+import { StripText, stripAlt } from './strip-text';
 import { formatMediumDate } from '@/lib/date-utils';
 import { useGoBack } from '@/lib/navigation-history';
 import { useNewestFirst } from '@/hooks/use-newest-first';
@@ -195,7 +196,7 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
               <>
                 <Image
                   src={currentStrip.imageUrl}
-                  alt={`${comicName} - ${formattedDate}`}
+                  alt={stripAlt(comicName, formattedDate, currentStrip.altText)}
                   // A 3:1 box for strips without recorded dimensions; h-auto takes the real ratio once loaded
                   width={currentStrip.width ?? 900}
                   height={currentStrip.height ?? 300}
@@ -209,6 +210,13 @@ export function MobileReader({ comicId, reader }: MobileReaderProps) {
                   }}
                 />
                 <p className="text-sm text-ink-subtle mt-3" aria-live="polite">{formattedDate}</p>
+                {/* Keyed by date so a toggle left open doesn't give away the next strip's text */}
+                <StripText
+                  key={currentStrip.date}
+                  transcript={currentStrip.transcript}
+                  altText={currentStrip.altText}
+                  className="mt-1 w-full max-h-[20vh] overflow-y-auto text-center"
+                />
               </>
             ) : (
               <p className="text-sm text-ink-subtle">

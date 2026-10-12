@@ -16,6 +16,8 @@ export interface Strip {
   imageUrl: string | null;
   width: number | null;
   height: number | null;
+  transcript: string | null;
+  altText: string | null;
 }
 
 interface UseReaderOptions {
@@ -81,6 +83,8 @@ function flattenStrips(pages: StripPage[] | undefined): Strip[] {
         imageUrl: s.imageUrl ?? null,
         width: s.width ?? null,
         height: s.height ?? null,
+        transcript: s.transcript ?? null,
+        altText: s.altText ?? null,
       });
     }
   }

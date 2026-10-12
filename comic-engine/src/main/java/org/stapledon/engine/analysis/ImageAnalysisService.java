@@ -16,6 +16,7 @@ import javax.imageio.ImageIO;
 
 import org.stapledon.common.dto.ImageMetadata;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.service.AnalysisService;
 
 /**
@@ -73,7 +74,7 @@ public class ImageAnalysisService implements AnalysisService {
 
     @Override
     public ImageMetadata analyzeImage(int comicId, String comicName, byte[] imageData, String filePath,
-            ImageValidationResult validation, String sourceUrl, String transcript) {
+            ImageValidationResult validation, String sourceUrl, StripText text) {
         if (imageData == null || imageData.length == 0) {
             log.warn("Image data is null or empty for path: {}", filePath);
             return buildUnknownMetadata(comicId, comicName, filePath, validation, sourceUrl);
@@ -101,9 +102,9 @@ public class ImageAnalysisService implements AnalysisService {
                     .captureTimestamp(OffsetDateTime.now(ZoneOffset.UTC))
                     .sourceUrl(sourceUrl);
 
-            if (transcript != null && !transcript.isBlank()) {
-                builder.transcript(transcript);
-            }
+            StripText stripText = StripText.orNone(text);
+            builder.transcript(stripText.transcript())
+                    .altText(stripText.altText());
 
             return builder.build();
         } catch (IOException e) {

@@ -17,20 +17,21 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 
 import org.stapledon.common.dto.ComicItem;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
 
 /**
  * Strategy implementation for downloading xkcd (xkcd.com). Strips are numbered, and the site's JSON API
- * ({@code /info.0.json} for the latest, {@code /{n}/info.0.json} for one strip) gives each strip's date, image and alt text.
+ * ({@code /info.0.json} for the latest, {@code /{n}/info.0.json} for one strip) gives each strip's date, image, alt text and (for older strips) transcript.
  */
 @Slf4j
 @ToString(callSuper = true)
 @Component
 public class XkcdDownloaderStrategy extends AbstractIndexedDownloaderStrategy {
 
-    static final String SOURCE_IDENTIFIER = "xkcd";
+    public static final String SOURCE_IDENTIFIER = "xkcd";
     static final String BASE_URL = "https://xkcd.com";
 
     private static final Gson GSON = new Gson();
@@ -87,7 +88,7 @@ public class XkcdDownloaderStrategy extends AbstractIndexedDownloaderStrategy {
             throw new StripUnavailableException(String.format("xkcd #%d (%s) has no image, likely an interactive strip", strip.num(), strip.safeTitle()));
         }
         log.debug("Downloading xkcd #{} image from {}", strip.num(), strip.img());
-        return new IndexedStripData(downloadImageData(strip.img()), strip.date(), strip.num(), strip.alt());
+        return new IndexedStripData(downloadImageData(strip.img()), strip.date(), strip.num(), strip.text());
     }
 
     /**
@@ -131,21 +132,20 @@ public class XkcdDownloaderStrategy extends AbstractIndexedDownloaderStrategy {
         } catch (NumberFormatException | DateTimeException e) {
             throw new IllegalStateException(String.format("xkcd #%d has no valid date (%s-%s-%s)", parsed.num(), parsed.year(), parsed.month(), parsed.day()), e);
         }
-        String alt = parsed.alt() == null || parsed.alt().isBlank() ? null : parsed.alt().trim();
-        return new XkcdStrip(parsed.num(), date, parsed.img(), parsed.safeTitle(), alt);
+        return new XkcdStrip(parsed.num(), date, parsed.img(), parsed.safeTitle(), new StripText(parsed.transcript(), parsed.alt()));
     }
 
     /**
      * The fields of {@code info.0.json} the strategy reads.
      */
     private record XkcdJson(int num, String year, String month, String day, String img,
-            @SerializedName("safe_title") String safeTitle, String alt) {
+            @SerializedName("safe_title") String safeTitle, String alt, String transcript) {
     }
 
     /**
-     * One parsed strip. The alt text (the hover caption) is kept as the transcript.
+     * One parsed strip. {@code text} holds the alt text (the hover caption, often the punchline) and the transcript, which only older strips have.
      */
-    record XkcdStrip(int num, LocalDate date, String img, String safeTitle, String alt) {
+    record XkcdStrip(int num, LocalDate date, String img, String safeTitle, StripText text) {
 
         /** Interactive strips give the bare image directory ({@code https://imgs.xkcd.com/comics/}) instead of a file. */
         boolean hasImage() {

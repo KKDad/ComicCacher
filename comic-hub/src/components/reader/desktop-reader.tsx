@@ -64,7 +64,7 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   // Fullscreen view: steps through the strips that have an image
   const viewable = useMemo(() => strips.filter((s) => s.available && s.imageUrl), [strips]);
   const lightboxItems = useMemo(
-    () => viewable.map((s) => ({ title: comicName, date: s.date, imageUrl: s.imageUrl, width: s.width, height: s.height })),
+    () => viewable.map((s) => ({ title: comicName, date: s.date, imageUrl: s.imageUrl, width: s.width, height: s.height, altText: s.altText })),
     [viewable, comicName],
   );
   const lightbox = useLightbox(viewable.length);

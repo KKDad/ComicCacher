@@ -13,6 +13,7 @@ import org.stapledon.common.dto.ComicDownloadResult;
 import org.stapledon.common.dto.ComicDownloadResult.FailureKind;
 import org.stapledon.common.dto.ComicItem;
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
@@ -43,11 +44,18 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
     }
 
     /**
-     * Data returned by concrete strategies after fetching an indexed strip.
-     * Contains the raw image data and metadata discovered from the page.
+     * Data returned by concrete strategies after fetching an indexed strip: the image and text (as in {@link DownloadedStrip}), plus the date
+     * and strip number discovered from the page.
      */
     protected record IndexedStripData(byte[] imageData, LocalDate actualDate,
-            int stripNumber, String transcript) {
+            int stripNumber, StripText text) {
+
+        /**
+         * A null {@code text} becomes {@link StripText#NONE}.
+         */
+        public IndexedStripData {
+            text = StripText.orNone(text);
+        }
     }
 
     /**
@@ -146,7 +154,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
 
         ComicDownloadRequest request = buildRequest(comic, data.actualDate());
         return ComicDownloadResult.successWithMetadata(request, data.imageData(),
-                data.actualDate(), data.stripNumber(), data.transcript());
+                data.actualDate(), data.stripNumber(), data.text());
     }
 
     /**
@@ -170,7 +178,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
      * Concrete strategies implement this to handle source-specific page fetching and parsing.
      *
      * @param comic The comic to fetch the latest strip for
-     * @return The fetched strip data including image, date, strip number, and transcript
+     * @return The fetched strip data including image, date, strip number, and text
      * @throws Exception If an error occurs during fetching
      */
     protected abstract IndexedStripData fetchLatestStrip(ComicItem comic) throws Exception;
@@ -181,7 +189,7 @@ public abstract class AbstractIndexedDownloaderStrategy extends AbstractComicDow
      *
      * @param comic The comic to fetch a strip for
      * @param stripNumber The strip number to fetch
-     * @return The fetched strip data including image, date, strip number, and transcript
+     * @return The fetched strip data including image, date, strip number, and text
      * @throws Exception If an error occurs during fetching
      */
     protected abstract IndexedStripData fetchStrip(ComicItem comic, int stripNumber) throws Exception;

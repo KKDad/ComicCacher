@@ -22,6 +22,7 @@ const mockComic: GridComic = {
     width: 900,
     height: 300,
     transcript: 'I hate Mondays',
+    altText: null,
   },
 };
 
@@ -34,6 +35,7 @@ const unavailableComic: GridComic = {
     width: null,
     height: null,
     transcript: null,
+    altText: null,
   },
 };
 
@@ -89,6 +91,14 @@ describe('GridStripCard', () => {
     const noTranscript = { ...mockComic, strip: { ...mockComic.strip!, transcript: null } };
     render(<GridStripCard comic={noTranscript} date="2026-03-29" onImageClick={vi.fn()} />);
     expect(screen.queryByText('Show transcript')).not.toBeInTheDocument();
+  });
+
+  it('offers the alt text and uses it as the image alt', () => {
+    const withAlt = { ...mockComic, strip: { ...mockComic.strip!, altText: 'Lasagna, again' } };
+    render(<GridStripCard comic={withAlt} date="2026-03-29" onImageClick={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Show alt text' })).toBeInTheDocument();
+    expect(screen.getByAltText(/Lasagna, again/)).toBeInTheDocument();
   });
 
   it('renders placeholder when no avatar', () => {

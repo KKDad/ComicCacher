@@ -4,6 +4,7 @@ import org.stapledon.common.dto.ComicIdentifier;
 import org.stapledon.common.dto.ComicSaveData;
 import org.stapledon.common.dto.ImageDto;
 import org.stapledon.common.dto.SaveResult;
+import org.stapledon.common.dto.StripText;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -44,15 +45,15 @@ public interface ComicStorageFacade {
     }
 
     /**
-     * Saves a comic strip image with transcript text.
+     * Saves a comic strip image with its transcript and alt text.
      * <p>
-     * Convenience overload that wraps image data and transcript into a {@link ComicSaveData}.
+     * Convenience overload that wraps image data and text into a {@link ComicSaveData}.
      * </p>
      */
     default SaveResult saveComicStripWithResult(ComicIdentifier comic, LocalDate date, byte[] imageData,
-                                                 String transcript) {
+                                                 StripText text) {
         return saveComicStripWithResult(comic, date,
-                ComicSaveData.builder().imageData(imageData).transcript(transcript).build());
+                ComicSaveData.builder().imageData(imageData).text(text).build());
     }
 
     /**
@@ -76,7 +77,7 @@ public interface ComicStorageFacade {
     Optional<ImageDto> getComicStrip(ComicIdentifier comic, LocalDate date);
 
     /**
-     * A strip's date, size and transcript, without its image data: what a GraphQL strip needs, read from the metadata sidecar
+     * A strip's date, size, transcript and alt text, without its image data: what a GraphQL strip needs, read from the metadata sidecar
      * instead of the image.
      */
     Optional<ImageDto> getComicStripInfo(ComicIdentifier comic, LocalDate date);

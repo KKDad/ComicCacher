@@ -79,14 +79,15 @@ class XkcdDownloaderStrategyTest {
     }
 
     @Test
-    void parsesTheStripNumberDateImageAndAltText() {
+    void parsesTheStripNumberDateImageAndText() {
         XkcdDownloaderStrategy.XkcdStrip strip = strategy.parseStrip(LATEST_JSON);
 
         assertThat(strip.num()).isEqualTo(3308);
         assertThat(strip.date()).isEqualTo(LocalDate.of(2026, 10, 7));
         assertThat(strip.img()).isEqualTo("https://imgs.xkcd.com/comics/juice.png");
         assertThat(strip.safeTitle()).isEqualTo("Juice");
-        assertThat(strip.alt()).isEqualTo("I need to push some updates to the remote sensing instruments.");
+        assertThat(strip.text().altText()).isEqualTo("I need to push some updates to the remote sensing instruments.");
+        assertThat(strip.text().transcript()).isNull();
         assertThat(strip.hasImage()).isTrue();
     }
 
@@ -95,7 +96,16 @@ class XkcdDownloaderStrategyTest {
         XkcdDownloaderStrategy.XkcdStrip strip = strategy.parseStrip(LATEST_JSON.replace(
                 "\"I need to push some updates to the remote sensing instruments.\"", "\" \""));
 
-        assertThat(strip.alt()).isNull();
+        assertThat(strip.text().altText()).isNull();
+    }
+
+    @Test
+    void keepsTheTranscriptWhereTheStripHasOne() {
+        XkcdDownloaderStrategy.XkcdStrip strip = strategy.parseStrip(FIRST_JSON.replace(
+                "\"transcript\": \"\"", "\"transcript\": \"[[A boy sits in a barrel.]]\""));
+
+        assertThat(strip.text().transcript()).isEqualTo("[[A boy sits in a barrel.]]");
+        assertThat(strip.text().altText()).isEqualTo("Don't we all.");
     }
 
     @Test
@@ -124,7 +134,8 @@ class XkcdDownloaderStrategyTest {
         assertThat(result.isSuccessful()).isTrue();
         assertThat(result.getStripNumber()).isEqualTo(3308);
         assertThat(result.getActualDate()).isEqualTo(LocalDate.of(2026, 10, 7));
-        assertThat(result.getTranscript()).isEqualTo("I need to push some updates to the remote sensing instruments.");
+        assertThat(result.getText().altText()).isEqualTo("I need to push some updates to the remote sensing instruments.");
+        assertThat(result.getText().transcript()).isNull();
         assertThat(result.getImageData()).isEqualTo(IMAGE);
         assertThat(strategy.imageUrls).containsExactly("https://imgs.xkcd.com/comics/juice.png");
     }

@@ -44,6 +44,9 @@ class ImageMetadataBackfillJobConfigTest {
     private ComicConfigurationService comicConfigurationService;
 
     @Mock
+    private StripTextMigrationService stripTextMigrationService;
+
+    @Mock
     private JobRepository jobRepository;
 
     @Mock
@@ -56,7 +59,8 @@ class ImageMetadataBackfillJobConfigTest {
 
     @BeforeEach
     void setUp() {
-        config = new ImageMetadataBackfillJobConfig(cacheProperties, imageValidationService, imageAnalysisService, imageMetadataRepository, comicConfigurationService);
+        config = new ImageMetadataBackfillJobConfig(cacheProperties, imageValidationService, imageAnalysisService, imageMetadataRepository, comicConfigurationService,
+                stripTextMigrationService);
         setField(config, "batchSize", 100);
     }
 
@@ -64,7 +68,7 @@ class ImageMetadataBackfillJobConfigTest {
     void imageMetadataBackfillJob_shouldBeCreated() {
         Step mockStep = mock(Step.class);
 
-        Job job = config.imageMetadataBackfillJob(jobRepository, mockStep, jsonBatchExecutionTracker);
+        Job job = config.imageMetadataBackfillJob(jobRepository, mockStep, mock(Step.class), jsonBatchExecutionTracker);
 
         assertThat(job).isNotNull();
         assertThat(job.getName()).isEqualTo("ImageMetadataBackfillJob");

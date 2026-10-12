@@ -10,6 +10,8 @@ describe('StripCard', () => {
     imageUrl: 'https://example.com/strip.png',
     width: 900,
     height: 300,
+    transcript: null,
+    altText: null,
   };
 
   const unavailableStrip: Strip = {
@@ -18,6 +20,8 @@ describe('StripCard', () => {
     imageUrl: null,
     width: null,
     height: null,
+    transcript: null,
+    altText: null,
   };
 
   it('loads lazily by default and eagerly with high priority when it is the priority strip', () => {
@@ -44,6 +48,20 @@ describe('StripCard', () => {
     const img = screen.getByRole('img');
     expect(imageSrc(img)).toBe('https://example.com/strip.png');
     expect(img).toHaveAttribute('alt', expect.stringContaining('Garfield'));
+  });
+
+  it('uses the alt text as the image alt and offers it under the strip', () => {
+    render(<StripCard strip={{ ...availableStrip, altText: 'The punchline', transcript: 'Jon: Hi' }} comicName="xkcd" />);
+
+    expect(screen.getByRole('img')).toHaveAttribute('alt', 'xkcd, Sun, March 15, 2026: The punchline');
+    expect(screen.getByRole('button', { name: 'Show alt text' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show transcript' })).toBeInTheDocument();
+  });
+
+  it('shows no text toggles when the strip has no text', () => {
+    render(<StripCard strip={availableStrip} comicName="Garfield" />);
+
+    expect(screen.queryByRole('button', { name: /show (alt text|transcript)/i })).not.toBeInTheDocument();
   });
 
   it('renders formatted date for available strip', () => {
@@ -81,6 +99,8 @@ describe('StripCard', () => {
       ...availableStrip,
       width: null,
       height: null,
+      transcript: null,
+      altText: null,
     };
     const { container } = render(
       <StripCard strip={noDimStrip} comicName="Garfield" />,

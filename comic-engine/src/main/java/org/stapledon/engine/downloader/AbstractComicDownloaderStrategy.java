@@ -14,6 +14,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import org.stapledon.common.dto.ImageValidationResult;
+import org.stapledon.common.dto.StripText;
 import org.stapledon.common.infrastructure.web.InspectorService;
 import org.stapledon.common.infrastructure.web.UserAgentService;
 import org.stapledon.common.service.ValidationService;
@@ -38,6 +39,27 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
     protected final ValidationService imageValidationService;
     protected final UserAgentService userAgentService;
     protected final SourceThrottleService throttleService;
+
+    /**
+     * A strip as a source gave it: the image, and any transcript or alt text from the same page. Every strategy returns its strips in this
+     * shape, so a source starts supplying text by filling in {@code text}, and the rest of the pipeline carries it without further changes.
+     */
+    protected record DownloadedStrip(byte[] imageData, StripText text) {
+
+        /**
+         * A null {@code text} becomes {@link StripText#NONE}.
+         */
+        public DownloadedStrip {
+            text = StripText.orNone(text);
+        }
+
+        /**
+         * A strip whose source gives no text with it, or null when there is no image (the strip isn't there).
+         */
+        public static DownloadedStrip imageOnly(byte[] imageData) {
+            return imageData != null ? new DownloadedStrip(imageData, StripText.NONE) : null;
+        }
+    }
 
     /**
      * Creates a new downloader strategy for the specified source.

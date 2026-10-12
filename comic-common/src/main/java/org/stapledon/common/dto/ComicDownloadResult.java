@@ -65,9 +65,10 @@ public class ComicDownloadResult {
     private final Integer stripNumber;
 
     /**
-     * Transcript text extracted from the comic page (nullable).
+     * The transcript and alt text the source gave with the strip. Never null: {@link StripText#NONE} when it gave none.
      */
-    private final String transcript;
+    @Builder.Default
+    private final StripText text = StripText.NONE;
 
     /**
      * Why the download failed. Null for successful results, and for failures that were not classified.
@@ -91,10 +92,18 @@ public class ComicDownloadResult {
      * Factory method to create a successful result.
      */
     public static ComicDownloadResult success(ComicDownloadRequest request, byte[] imageData) {
+        return success(request, imageData, StripText.NONE);
+    }
+
+    /**
+     * A successful result with the text the source gave with the strip.
+     */
+    public static ComicDownloadResult success(ComicDownloadRequest request, byte[] imageData, StripText text) {
         return ComicDownloadResult.builder()
                 .request(request)
                 .imageData(imageData)
                 .successful(true)
+                .text(StripText.orNone(text))
                 .build();
     }
 
@@ -102,14 +111,14 @@ public class ComicDownloadResult {
      * Factory method to create a successful result with metadata from indexed comics.
      */
     public static ComicDownloadResult successWithMetadata(ComicDownloadRequest request, byte[] imageData,
-            LocalDate actualDate, Integer stripNumber, String transcript) {
+            LocalDate actualDate, Integer stripNumber, StripText text) {
         return ComicDownloadResult.builder()
                 .request(request)
                 .imageData(imageData)
                 .successful(true)
                 .actualDate(actualDate)
                 .stripNumber(stripNumber)
-                .transcript(transcript)
+                .text(StripText.orNone(text))
                 .build();
     }
 

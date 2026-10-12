@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MoreVertical, Shuffle, ExternalLink, Info } from 'lucide-react';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { StripSkeleton } from '@/components/reader/strip-skeleton';
 import { STRIP_SIZES } from '@/components/reader/strip-sizes';
+import { StripText, stripAlt } from '@/components/reader/strip-text';
 import { formatFullDate } from '@/lib/date-utils';
 import { useUser } from '@/contexts/user-context';
 import { isAdmin } from '@/lib/roles';
@@ -122,7 +123,7 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
             ) : (
               <Image
                 src={strip.imageUrl!}
-                alt={`${comic.name} - ${formattedDate}`}
+                alt={stripAlt(comic.name, formattedDate, strip.altText)}
                 fill
                 sizes={STRIP_SIZES}
                 className={`strip-image object-contain transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
@@ -138,29 +139,10 @@ export function GridStripCard({ comic, date, onImageClick, onRandom }: GridStrip
         </div>
       )}
 
-      {/* Transcript */}
-      {strip?.transcript && <TranscriptToggle transcript={strip.transcript} />}
-    </div>
-  );
-}
-
-function TranscriptToggle({ transcript }: { transcript: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const id = useId();
-
-  return (
-    <div className="px-4 py-2 border-t border-border">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
-        aria-controls={id}
-        className="text-xs text-ink-subtle hover:text-ink transition-colors py-1"
-      >
-        {expanded ? 'Hide transcript' : 'Show transcript'}
-      </button>
-      {expanded && (
-        <p id={id} className="text-xs text-ink-subtle mt-1 whitespace-pre-wrap">{transcript}</p>
+      {/* Alt text and transcript */}
+      {(strip?.transcript || strip?.altText) && (
+        // Keyed by date so a toggle left open doesn't give away the next date's text
+        <StripText key={strip.date} transcript={strip.transcript} altText={strip.altText} className="px-4 py-2 border-t border-border" />
       )}
     </div>
   );
