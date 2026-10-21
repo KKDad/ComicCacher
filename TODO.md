@@ -18,6 +18,17 @@
 - Add an `attempts` count and the first failure (status, time) to `ComicRetrievalRecord`, kept when a later attempt replaces the record, and show them in the drawer
 - Priority: Low. Deferred from the retrieval-status rework
 
+## Fall back to Comics Kingdom when GoComics has no Shoe strip
+
+- GoComics sometimes publishes no strip for Shoe. On 2026-10-12 and 2026-10-13, both dev and prod got "Downloaded image data is empty", and readers in the comments on gocomics.com/shoe say this has happened before. Those readers find the missing strip on Comics Kingdom (`https://comicskingdom.com/shoe/2026-10-12`)
+- Add an optional fallback source to a comic in `comics.json` (e.g. `fallbackSource: comicskingdom`, `fallbackSourceIdentifier: shoe`)
+  - When the primary source returns `COMIC_UNAVAILABLE` for a date, `ComicDownloaderFacade` tries the fallback through its existing downloader (`ComicsKingdomDownloaderStrategy`) with that source's throttling
+  - The retrieval record and the strip's metadata sidecar note which source supplied the strip
+- The usual checks still apply to the fallback image, including duplicate detection against the previous days, because one source's art can differ from the other's
+- Backfill and the retrieval-status grid should count a fallback strip as retrieved. Backfill can fill in earlier gaps from Comics Kingdom's archive, e.g. prod's Shoe failures back to 2026-05-27
+- Alternative: move Shoe to Comics Kingdom altogether, if its feed there turns out to be complete and as timely. Compare a few weeks of both sources before choosing
+- Priority: Medium. Shoe is the only comic known to need this so far, but the fallback is general
+
 ## Replace hash-derived comic ids
 
 - Older comics took their id from Java's `name.hashCode()` when they were bootstrapped, so ids are large and about half are negative (Drabble is −717937236, Garfield −1559823038). Comics added since get the highest id + 1 (`ComicManagementFacade.createComic`)
