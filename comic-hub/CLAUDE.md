@@ -8,7 +8,7 @@ Next.js 16 / React 19 frontend. Server-rendered by default with TanStack Query f
 - React 19.x
 - TypeScript 6 (7 waits for typescript-eslint support)
 - Tailwind CSS 4 (zero-config, `@import "tailwindcss"` in `globals.css`)
-- TanStack Query v5 + `graphql-request` for server-side GraphQL fetches
+- TanStack Query v5 for client fetches; `serverGraphql` (`src/lib/auth/graphql-server.ts`) for server-side GraphQL fetches
 - Radix UI primitives + shadcn/ui generated components
 - React Hook Form + Zod for forms
 - Vitest + React Testing Library for tests

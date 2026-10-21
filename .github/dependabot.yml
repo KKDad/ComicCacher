@@ -18,6 +18,9 @@ updates:
       # typescript-eslint supports <6.1 (typescript-eslint#10940); lift once it supports 7
       - dependency-name: "typescript"
         versions: [">=6.1"]
+      # @graphql-codegen/typescript-react-query (7.0.5) caps its graphql peer at 16; lift once it accepts 17
+      - dependency-name: "graphql"
+        versions: [">=17"]
       # Track the Node LTS in .nvmrc; bump the major with the runtime (Node 26 LTS, late October 2026)
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
