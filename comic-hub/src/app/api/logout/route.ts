@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { JWT_COOKIE, REFRESH_COOKIE, REMEMBER_COOKIE } from '@/lib/auth/constants';
-import { getAuthenticatedClient } from '@/lib/auth/graphql-server';
+import { serverGraphql } from '@/lib/auth/graphql-server';
 import { LogoutDocument } from '@/generated/graphql';
 
 export async function POST() {
@@ -9,8 +9,7 @@ export async function POST() {
   // backend unreachable) we still clear client cookies — the alternative is
   // leaving the client logged in, which is worse.
   try {
-    const client = await getAuthenticatedClient();
-    await client.request(LogoutDocument.toString());
+    await serverGraphql(LogoutDocument.toString());
   } catch (error) {
     console.warn('Logout mutation failed; clearing client cookies anyway:', error);
   }

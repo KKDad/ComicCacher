@@ -3,7 +3,7 @@ import { POST } from './route';
 const requestMock = vi.fn();
 
 vi.mock('@/lib/auth/graphql-server', () => ({
-  getAuthenticatedClient: vi.fn(() => Promise.resolve({ request: requestMock })),
+  serverGraphql: (...args: unknown[]) => requestMock(...args),
 }));
 
 describe('POST /api/logout', () => {

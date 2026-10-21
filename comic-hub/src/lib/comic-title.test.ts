@@ -1,16 +1,12 @@
 import { comicTitle } from './comic-title';
-import { getAuthenticatedClient } from '@/lib/auth/graphql-server';
+import { serverGraphql } from '@/lib/auth/graphql-server';
 
 vi.mock('@/lib/auth/graphql-server', () => ({
-  getAuthenticatedClient: vi.fn(),
+  serverGraphql: vi.fn(),
 }));
 
-type Client = Awaited<ReturnType<typeof getAuthenticatedClient>>;
-
 function mockRequest(impl: () => Promise<unknown>) {
-  const request = vi.fn(impl);
-  vi.mocked(getAuthenticatedClient).mockResolvedValue({ request } as unknown as Client);
-  return request;
+  return vi.mocked(serverGraphql).mockImplementation(impl);
 }
 
 describe('comicTitle', () => {

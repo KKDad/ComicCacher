@@ -37,7 +37,7 @@ export function operationName(body: BodyInit | null | undefined): string {
   }
 }
 
-// Keeps the caller's header shape: graphql-request passes a Headers object, our own calls a plain object
+// Keeps the caller's header shape: a Headers object, an entry list or a plain object
 function withRequestId(headers: HeadersInit | undefined, requestId: string): HeadersInit {
   if (headers instanceof Headers) {
     const copy = new Headers(headers);
