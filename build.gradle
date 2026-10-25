@@ -4,8 +4,8 @@ buildscript {
         constraints {
             // The Boot 4.1.1 Gradle plugin pulls Jackson 3.1.5 onto the build classpath (DoS CVEs fixed in 3.1.7).
             // Build-time only, but the dependency graph flags it. Keep in step with jackson3Version; drop once Boot catches up.
-            classpath 'tools.jackson.core:jackson-core:3.2.3'
-            classpath 'tools.jackson.core:jackson-databind:3.2.3'
+            classpath 'tools.jackson.core:jackson-core:3.2.4'
+            classpath 'tools.jackson.core:jackson-databind:3.2.4'
         }
     }
 }
