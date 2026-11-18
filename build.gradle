@@ -22,7 +22,7 @@ ext {
     jacocoVersion = '0.8.14'
 
     // Tool versions
-    checkstyleVersion = '14.3.0'
+    checkstyleVersion = '14.4.0'
 }
 
 subprojects {
@@ -64,6 +64,15 @@ subprojects {
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
         configDirectory = rootProject.file('config/checkstyle')
         maxWarnings = 0
+    }
+
+    // The tools as ordinary dependencies, not just toolVersion: Dependabot only bumps a version it sees in a
+    // dependency string, so Checkstyle sat on 14.3.0 (and its vulnerable guava) with no PR. These replace the
+    // plugins' default dependencies, which are built from the same toolVersion.
+    dependencies {
+        checkstyle "com.puppycrawl.tools:checkstyle:${rootProject.ext.checkstyleVersion}"
+        jacocoAgent "org.jacoco:org.jacoco.agent:${rootProject.ext.jacocoVersion}"
+        jacocoAnt "org.jacoco:org.jacoco.ant:${rootProject.ext.jacocoVersion}"
     }
 
     checkstyleMain {

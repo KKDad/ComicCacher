@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tomcat is 11.0.27, the version Spring Boot 4.1.2 ships. `build.gradle` still forced 11.0.26, an override from when Boot shipped 11.0.24, so after the Boot update it held Tomcat a release behind. The Jackson overrides (2.21.7 / 3.1.7 for the app, and 3.3.0 on the build classpath) are gone too: Boot 4.1.2 ships 2.21.7 / 3.1.7, past every Jackson advisory, so the app runs the same versions and the build classpath goes back to 3.1.7
 - Pinned Jackson 3 on the Gradle build classpath, where the Spring Boot plugin put 3.1.5, first to 3.1.7 and then, through Dependabot, to 3.3.0. This is build-time only: the application still runs Jackson 3.1.7 (#468, #472, #473, #476, #478, #489, #490)
 - Updated vite from 8.3.1 to 8.3.5, hono from 4.13.9 to 4.13.13 and fast-uri from 3.1.8 to 3.1.9 in /comic-hub (#467, #469, #485)
+- Updated Checkstyle from 14.3.0 to 14.4.0, which brings in guava 33.7.2 (CVE-2026-102554, memory exhaustion when deserializing compact collections; Checkstyle never deserializes untrusted data, and guava is on no other classpath). Checkstyle and JaCoCo are now declared as dependencies, as well as by `toolVersion`, so Dependabot can see and bump them
 
 ## [2.6.3] - 2026-10-12
 ### Added
