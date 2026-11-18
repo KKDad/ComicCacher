@@ -5,8 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Comics Hub calls the API through a small `serverGraphql()` helper instead of graphql-request, which has had no release since 7.4.0 and whose graphql peer range stops at 16. It still sends the JWT cookie and request id through `timedGraphqlFetch`, and throws on a non-2xx status or any GraphQL error. Dependabot ignores graphql 17 until `@graphql-codegen/typescript-react-query` supports it (#470)
+- Comics Hub dependencies: @hookform/resolvers 7.0, Next 16.4.6, React 19.3.1, radix-ui 1.8, zustand 5.1, TanStack Query 5.107, Tailwind CSS 4.3.5, vitest 5.1, ESLint 10.14, and the `node:24.22-alpine` base image (#464, #465, #475, #480, #481, #484, #487, #491)
+- Build: Gradle 9.9.1, the integration-test plugin 2.2.6, actions/setup-java 6.1.0 and gradle/actions/setup-gradle 6.4.1 (#463, #474, #477, #483, #488)
+
 ### Fixed
-- Freefall downloads have failed since 2026-11-10, when freefall.purrsia.com started redirecting `http://` to `https://`. Its pages still loaded, but image downloads use `HttpURLConnection`, which never follows a redirect to another scheme, so every strip failed with HTTP 301. Freefall now uses `https://`. Its image URLs are resolved against the page they came from instead of being joined onto the base URL, which also produced a double slash (`…com//ff4500/…`). An image download that gets a 3xx now names the redirect target in its error, so a source that moved shows up in one log line
+- Freefall downloads have failed since 2026-11-10, when freefall.purrsia.com started redirecting `http://` to `https://`. Its pages still loaded, but image downloads use `HttpURLConnection`, which never follows a redirect to another scheme, so every strip failed with HTTP 301. Freefall now uses `https://`. Its image URLs are resolved against the page they came from instead of being joined onto the base URL, which also produced a double slash (`…com//ff4500/…`). An image download that gets a 3xx now names the redirect target in its error, so a source that moved shows up in one log line (#492)
+
+### Security
+- Updated org.springframework.boot from 4.1.1 to 4.1.2 (#482)
+- Pinned Jackson 3 on the Gradle build classpath, where the Spring Boot plugin put 3.1.5, first to 3.1.7 and then, through Dependabot, to 3.3.0. This is build-time only: the application still runs Jackson 3.1.7 (#468, #472, #473, #476, #478, #489, #490)
+- Updated vite from 8.3.1 to 8.3.5, hono from 4.13.9 to 4.13.13 and fast-uri from 3.1.8 to 3.1.9 in /comic-hub (#467, #469, #485)
 
 ## [2.6.3] - 2026-10-12
 ### Added
