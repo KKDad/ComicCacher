@@ -47,7 +47,7 @@ public class FreefallSource implements ComicSource {
 
     @Override
     public String comicPageUrl(String identifier) {
-        return "http://freefall.purrsia.com/";
+        return "https://freefall.purrsia.com/";
     }
 
     @Override
@@ -60,7 +60,7 @@ public class FreefallSource implements ComicSource {
         return Optional.of(new SourceCatalog() {
             @Override
             public String catalogUrl() {
-                return "http://freefall.purrsia.com/";
+                return "https://freefall.purrsia.com/";
             }
 
             @Override
