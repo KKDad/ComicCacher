@@ -225,7 +225,8 @@ Additional facade methods for indexed comics:
 
 Freefall is the first indexed comic source. Notable implementation details:
 
-- **URL scheme:** `http://freefall.purrsia.com/ff{folder}/fc{NNNNN}.htm` (color) or `fv{NNNNN}.htm` (grayscale), where `folder = ((stripNumber - 1) / 100 + 1) * 100`.
+- **URL scheme:** `https://freefall.purrsia.com/ff{folder}/fc{NNNNN}.htm` (color) or `fv{NNNNN}.htm` (grayscale), where `folder = ((stripNumber - 1) / 100 + 1) * 100`.
+- **Image URL:** the `<img>` whose `src` contains the strip number, resolved against the page's location (`absUrl`), so it keeps the scheme and host the page was served from. Image downloads don't follow redirects to another scheme; a 3xx names its `Location` in the error.
 - **Color preference:** Reads from `BackfillConfigurationService` to determine whether to fetch color (`fc`) or grayscale (`fv`) strips. Falls back to the alternate format on HTTP error.
 - **Date discovery:** Parsed from the `<title>` tag (`"Freefall NNNN Month DD, YYYY"`) or from HTML comment nodes for older strips.
 - **Transcript extraction:** Parses text after a `"TRANSCRIPT"` heading in the page, if present.

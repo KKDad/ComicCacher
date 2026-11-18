@@ -176,6 +176,12 @@ public abstract class AbstractComicDownloaderStrategy implements ComicDownloader
             if (status == RateLimitedException.HTTP_TOO_MANY_REQUESTS) {
                 throw RateLimitedException.of(imageUrl, conn.getHeaderField("Retry-After"));
             }
+            if (status >= HttpURLConnection.HTTP_MULT_CHOICE && status < HttpURLConnection.HTTP_BAD_REQUEST) {
+                // HttpURLConnection never follows a redirect to another scheme (http -> https), so name the target:
+                // a source that moved is then a one-line fix instead of a bare 301
+                throw new HttpStatusException("HTTP error fetching image (redirects to " + conn.getHeaderField("Location") + ", not followed)",
+                        status, imageUrl);
+            }
             if (status < HTTP_OK_MIN || status > HTTP_OK_MAX) {
                 throw new HttpStatusException("HTTP error fetching image", status, imageUrl);
             }

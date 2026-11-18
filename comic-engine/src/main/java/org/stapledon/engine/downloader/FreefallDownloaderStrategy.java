@@ -35,8 +35,7 @@ import org.stapledon.engine.batch.BackfillConfigurationService;
 public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrategy {
 
     static final String SOURCE_IDENTIFIER = "freefall";
-    // HTTPS is not available for freefall.purrsia.com
-    static final String BASE_URL = "http://freefall.purrsia.com";
+    static final String BASE_URL = "https://freefall.purrsia.com";
     private static final String AVATAR_URL = BASE_URL + "/fflogo.gif";
 
     private static final Pattern TITLE_PATTERN = Pattern.compile("Freefall\\s+(\\d+)(?:\\s+(.+))?");
@@ -141,11 +140,6 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         String imageUrl = extractImageUrl(doc, titleResult.stripNumber());
         if (imageUrl == null) {
             throw new IllegalStateException("Could not find image for strip #" + titleResult.stripNumber());
-        }
-
-        // Make URL absolute if needed
-        if (!imageUrl.startsWith("http")) {
-            imageUrl = BASE_URL + "/" + imageUrl;
         }
 
         log.debug("Downloading image from {}", imageUrl);
@@ -312,8 +306,10 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
     }
 
     /**
-     * Extracts the image URL from the document for the given strip number.
-     * Looks for an img tag whose src contains the padded strip number.
+     * Extracts the absolute image URL from the document for the given strip number.
+     * Looks for an img tag whose src contains the padded strip number, and resolves it against the page's location,
+     * so the scheme and host are the ones the page was actually served from. Returns null when no image matches or the
+     * document has no location to resolve against.
      */
     String extractImageUrl(Document doc, int stripNumber) {
         String padded = String.format("%05d", stripNumber);
@@ -321,17 +317,22 @@ public class FreefallDownloaderStrategy extends AbstractIndexedDownloaderStrateg
         // Safe to interpolate: padded is always numeric from String.format("%05d", stripNumber)
         Element img = doc.selectFirst("img[src*=" + padded + "]");
         if (img != null) {
-            return img.attr("src");
+            return absoluteOrNull(img);
         }
 
         // Try without padding
         String unpadded = String.valueOf(stripNumber);
         img = doc.selectFirst("img[src*=" + unpadded + "]");
         if (img != null) {
-            return img.attr("src");
+            return absoluteOrNull(img);
         }
 
         return null;
+    }
+
+    private static String absoluteOrNull(Element img) {
+        String url = img.absUrl("src");
+        return url.isEmpty() ? null : url;
     }
 
     /**

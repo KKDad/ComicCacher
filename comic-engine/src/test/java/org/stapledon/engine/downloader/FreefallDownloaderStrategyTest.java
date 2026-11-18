@@ -169,25 +169,42 @@ class FreefallDownloaderStrategyTest {
     @Test
     void shouldBuildStripPageUrl() {
         String url = strategy.buildStripPageUrl(4350);
-        assertThat(url).isEqualTo("http://freefall.purrsia.com/ff4400/fc04350.htm");
+        assertThat(url).isEqualTo("https://freefall.purrsia.com/ff4400/fc04350.htm");
     }
 
     @Test
     void shouldBuildStripPageUrlForLowNumber() {
         String url = strategy.buildStripPageUrl(1);
-        assertThat(url).isEqualTo("http://freefall.purrsia.com/ff100/fc00001.htm");
+        assertThat(url).isEqualTo("https://freefall.purrsia.com/ff100/fc00001.htm");
     }
 
     @Test
-    void shouldExtractImageUrl() {
+    void shouldExtractImageUrlResolvedAgainstThePage() {
+        // The site serves root-relative srcs; joining them onto BASE_URL by hand once gave "…com//ff4400/…"
         String html = "<html><body>"
-                + "<img src=\"ff4400/fc04350.png\" alt=\"strip\">"
+                + "<img src=\"/ff4400/fc04350.png\" alt=\"strip\">"
                 + "</body></html>";
-        Document doc = Jsoup.parse(html);
+        Document doc = Jsoup.parse(html, FreefallDownloaderStrategy.BASE_URL + "/ff4400/fc04350.htm");
 
         String result = strategy.extractImageUrl(doc, 4350);
 
-        assertThat(result).isEqualTo("ff4400/fc04350.png");
+        assertThat(result).isEqualTo("https://freefall.purrsia.com/ff4400/fc04350.png");
+    }
+
+    @Test
+    void shouldKeepTheSchemeThePageWasServedFrom() {
+        String html = "<html><body><img src=\"/ff4500/fc04454.png\"></body></html>";
+        Document doc = Jsoup.parse(html, "https://freefall.purrsia.com/default.htm");
+
+        assertThat(strategy.extractImageUrl(doc, 4454)).isEqualTo("https://freefall.purrsia.com/ff4500/fc04454.png");
+    }
+
+    @Test
+    void shouldReturnNullWhenThePageHasNoLocation() {
+        String html = "<html><body><img src=\"/ff4400/fc04350.png\"></body></html>";
+        Document doc = Jsoup.parse(html);
+
+        assertThat(strategy.extractImageUrl(doc, 4350)).isNull();
     }
 
     @Test
@@ -209,18 +226,18 @@ class FreefallDownloaderStrategyTest {
     void shouldParseModernPageWithTitleDateImageAndTranscript() {
         String html = "<html><head><title>Freefall 04350 March 18, 2026</title></head>"
                 + "<body>"
-                + "<img src=\"ff4400/fc04350.png\" alt=\"strip\">"
+                + "<img src=\"/ff4400/fc04350.png\" alt=\"strip\">"
                 + "<div><font size=+1>TRANSCRIPT</font><br>"
                 + "Florence: Test line.<br>"
                 + "</div></body></html>";
-        Document doc = Jsoup.parse(html);
+        Document doc = Jsoup.parse(html, FreefallDownloaderStrategy.BASE_URL + "/ff4400/fc04350.htm");
 
         FreefallDownloaderStrategy.TitleParseResult title = strategy.parseTitleTag(doc.title()).orElseThrow();
         assertThat(title.stripNumber()).isEqualTo(4350);
         assertThat(title.date()).isEqualTo(LocalDate.of(2026, 3, 18));
 
         String imageUrl = strategy.extractImageUrl(doc, title.stripNumber());
-        assertThat(imageUrl).isEqualTo("ff4400/fc04350.png");
+        assertThat(imageUrl).isEqualTo("https://freefall.purrsia.com/ff4400/fc04350.png");
 
         String transcript = strategy.parseTranscript(doc);
         assertThat(transcript).contains("Florence");
@@ -230,9 +247,9 @@ class FreefallDownloaderStrategyTest {
     void shouldParseOldPageWithCommentDateAndNoTranscript() {
         String html = "<html><head><title>Freefall 00001</title></head>"
                 + "<body><!- April 9, 1998 ->"
-                + "<img src=\"ff100/fv00001.gif\" alt=\"strip\">"
+                + "<img src=\"/ff100/fv00001.gif\" alt=\"strip\">"
                 + "</body></html>";
-        Document doc = Jsoup.parse(html);
+        Document doc = Jsoup.parse(html, FreefallDownloaderStrategy.BASE_URL + "/ff100/fv00001.htm");
 
         FreefallDownloaderStrategy.TitleParseResult title = strategy.parseTitleTag(doc.title()).orElseThrow();
         assertThat(title.stripNumber()).isEqualTo(1);
@@ -242,7 +259,7 @@ class FreefallDownloaderStrategyTest {
         assertThat(commentDate).isEqualTo(LocalDate.of(1998, 4, 9));
 
         String imageUrl = strategy.extractImageUrl(doc, title.stripNumber());
-        assertThat(imageUrl).isEqualTo("ff100/fv00001.gif");
+        assertThat(imageUrl).isEqualTo("https://freefall.purrsia.com/ff100/fv00001.gif");
 
         assertThat(strategy.parseTranscript(doc)).isNull();
     }

@@ -465,6 +465,30 @@ class AbstractComicDownloaderStrategyTest {
     }
 
     @Test
+    void downloadImageData_whenServerRedirectsToAnotherScheme_namesTheTarget() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/img", exchange -> {
+            exchange.getResponseHeaders().add("Location", "https://example.invalid/img");
+            exchange.sendResponseHeaders(301, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/img";
+
+            // HttpURLConnection won't follow http -> https; the error has to say where the source moved
+            assertThatThrownBy(() -> strategy.downloadImageData(url))
+                    .isInstanceOfSatisfying(HttpStatusException.class, e -> {
+                        assertThat(e.getStatusCode()).isEqualTo(301);
+                        assertThat(e.getUrl()).isEqualTo(url);
+                        assertThat(e.getMessage()).contains("redirects to https://example.invalid/img");
+                    });
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void downloadImageData_whenServerReturns429_throwsRateLimitedWithRetryAfter() throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         server.createContext("/img", exchange -> {
