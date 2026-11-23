@@ -15,7 +15,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           background: '#0a0a0a',
           color: '#fafafa',
           margin: 0,
-          minHeight: '100vh',
+          minHeight: '100dvh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

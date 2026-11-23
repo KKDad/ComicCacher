@@ -53,7 +53,7 @@ export function DesktopReader({ comicId, reader }: DesktopReaderProps) {
   // The reader keeps strips oldest to newest. With "Newest first" the list shows them
   // reversed, so list positions (virtualizer indexes, top and bottom) map through toList.
   const newestFirst = useNewestFirst();
-  const listStrips = useMemo(() => (newestFirst ? [...strips].reverse() : strips), [strips, newestFirst]);
+  const listStrips = useMemo(() => (newestFirst ? strips.toReversed() : strips), [strips, newestFirst]);
   // Converts between reader and list indexes (the mapping is its own inverse)
   const toList = useCallback(
     (index: number) => (newestFirst ? strips.length - 1 - index : index),

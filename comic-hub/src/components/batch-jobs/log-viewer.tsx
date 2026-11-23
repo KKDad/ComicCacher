@@ -157,6 +157,9 @@ export function LogViewer({ open, onOpenChange, executionId, jobName, jobLabel }
       }
       if (e.key === 'Enter' && document.activeElement === searchInputRef.current) {
         e.preventDefault();
+        // Enter also confirms an IME conversion (Japanese, Chinese, Korean); don't jump matches mid-word.
+        // Safari can clear isComposing before this keydown, so also check keyCode 229.
+        if (e.nativeEvent.isComposing || e.keyCode === 229) return;
         if (e.shiftKey) {
           goToPrevMatch();
         } else {

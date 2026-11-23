@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LogViewer } from './log-viewer';
 import { renderWithProviders } from '@/test/test-utils';
@@ -188,6 +188,24 @@ describe('LogViewer', () => {
 
     await userEvent.keyboard('{Shift>}{Enter}{/Shift}');
     expect(screen.getByTestId('match-count')).toHaveTextContent('2 of 2');
+  });
+
+  it('does not navigate on Enter that confirms an IME composition', async () => {
+    vi.mocked(useGetBatchJobLogQuery).mockReturnValue(mockQueryResult({
+      data: { batchJobLog: 'ERROR first\nERROR second' },
+      isLoading: false,
+    }));
+    renderWithProviders(<LogViewer {...defaultProps} />);
+    const searchInput = screen.getByLabelText('Search logs');
+    await userEvent.type(searchInput, 'ERROR');
+    expect(screen.getByTestId('match-count')).toHaveTextContent('1 of 2');
+
+    fireEvent.keyDown(searchInput, { key: 'Enter', isComposing: true });
+    expect(screen.getByTestId('match-count')).toHaveTextContent('1 of 2');
+
+    // Safari can clear isComposing before the confirming keydown; keyCode 229 still marks it
+    fireEvent.keyDown(searchInput, { key: 'Enter', keyCode: 229 });
+    expect(screen.getByTestId('match-count')).toHaveTextContent('1 of 2');
   });
 
   it('performs case-insensitive search', async () => {
