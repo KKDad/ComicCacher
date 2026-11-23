@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Freefall downloads have failed since 2026-11-10, when freefall.purrsia.com started redirecting `http://` to `https://`. Its pages still loaded, but image downloads use `HttpURLConnection`, which never follows a redirect to another scheme, so every strip failed with HTTP 301. Freefall now uses `https://`. Its image URLs are resolved against the page they came from instead of being joined onto the base URL, which also produced a double slash (`…com//ff4500/…`). An image download that gets a 3xx now names the redirect target in its error, so a source that moved shows up in one log line (#492)
+- The batch-job log search no longer jumps to the next match on the Enter that confirms an IME conversion (Japanese, Chinese, Korean), which moved the highlight mid-word. It checks `isComposing`, and `keyCode` 229 for Safari, which clears `isComposing` before that keydown
 
 ### Security
 - Updated org.springframework.boot from 4.1.1 to 4.1.2 (#482)
